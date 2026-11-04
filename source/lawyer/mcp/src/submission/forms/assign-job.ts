@@ -8,8 +8,7 @@
 // not assigned before its bring-forward date (tickets.bf_on, schema v74), a start date the
 // practitioner alone sets, changes and clears; a take-over, which matches only a wip job, does not
 // read it. A take-over names the last activity it saw on the card too, and writes only while the row still
-// shows it, so a job that moved since the check is never taken. A take-over never lands on a job active in
-// the last CHECK_AFTER_MINUTES. Without a take-over, a wip job whose lock has lapsed (job-activity.ts lapsedClause, ADR 0015)
+// shows it, so a job that moved since the check is never taken. Without a take-over, a wip job whose lock has lapsed (job-activity.ts lapsedClause, ADR 0015)
 // is assigned as a released one is, and the same transaction records the lapse in the job's history.
 // Every claim raises the job's claim number (job-activity.ts claimSql) in the same transaction, and the
 // call returns it: each holder-guarded write on the job then needs it (heldBy), so work begun under an
@@ -19,7 +18,7 @@
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
-import { CHECK_AFTER_MINUTES, LAPSE_AFTER_MINUTES, claimSql, idleClause, lapsedClause, lastActivitySql, nextClaimSql, recordLapseSql, touchStatements } from "./job-activity.js";
+import { LAPSE_AFTER_MINUTES, claimSql, lapsedClause, lastActivitySql, nextClaimSql, recordLapseSql, touchStatements } from "./job-activity.js";
 import { hasTable } from "../schema-capabilities.js";
 import { bfOnHeld, createdByHeld, deletedAtHeld, liveTicketClause } from "./query.js";
 
@@ -43,7 +42,7 @@ export interface AssignJobArgs {
 
 export interface AssignJobResult {
   ticket_id: number;
-  outcome: "assigned" | "lost_race" | "holder_changed" | "recently_active" | "not_created_here" | "before_bf" | "no_match";
+  outcome: "assigned" | "lost_race" | "holder_changed" | "not_created_here" | "before_bf" | "no_match";
   /** Rows the UPDATE changed: 1 when this call assigned the job, 0 otherwise. */
   changes: number;
   /** The confirm-read, as the hand-run SELECT returned it. */
@@ -72,10 +71,8 @@ interface ConfirmRow {
   bf_on?: string | null;
   /** Whether bf_on is later than the local date, by the same SQLite clock as the guard. */
   before_bf?: number;
-  /** Whether the job's lock has lapsed, and whether it has been idle long enough to take over, by the
-   * same SQLite clock as the guard. */
+  /** Whether the job's lock has lapsed, by the same SQLite clock as the guard. */
   lapsed: number;
-  takeable: number;
   last_activity: string | null;
   claim_no?: number | null;
 }
@@ -106,11 +103,9 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   const notBefore = bfHeld && !takeover ? ` AND ${ARRIVED}` : "";
   // A lapsed lock reads as released (ADR 0015).
   const lapsed = lapsedClause(args.db_path);
-  // A job active in the last CHECK_AFTER_MINUTES is never taken over (ADR 0015).
-  const takeable = idleClause(args.db_path, CHECK_AFTER_MINUTES);
   // A take-over lands only while the card it was decided on is still current.
   const last = lastActivitySql(args.db_path);
-  const guard = (takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ? AND ${last} = ? AND ${takeable}` : `(status = 'queued' AND locked_by IS NULL OR ${lapsed}) AND rejected_at IS NULL${live}${notBefore}`) + creator;
+  const guard = (takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ? AND ${last} = ?` : `(status = 'queued' AND locked_by IS NULL OR ${lapsed}) AND rejected_at IS NULL${live}${notBefore}`) + creator;
   const guardParams = [...(takeover ? [(args.expected_holder as string).trim(), (args.expected_last_activity as string).trim()] : []), ...(creatorHeld ? [args.session_token, args.session_token] : [])];
   const kv = hasTable(args.db_path, "kv_store");
   const record = !takeover && kv ? [{ sql: recordLapseSql(guard), params: [args.ticket_id, ...guardParams] }] : [];
@@ -127,7 +122,7 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   );
   const changes = written.ok ? written.results[record.length + claim.length].changes : written.changes;
   const tookLapsed = written.ok && record.length === 1 && written.results[0].changes === 1;
-  const columns = `locked_by, locked_at, status, rejected_at, ${lapsed} AS lapsed, ${takeable} AS takeable, ${last} AS last_activity${kv ? `, ${claimSql()} AS claim_no` : ""}${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${ARRIVED} AS before_bf` : ""}`;
+  const columns = `locked_by, locked_at, status, rejected_at, ${lapsed} AS lapsed, ${last} AS last_activity${kv ? `, ${claimSql()} AS claim_no` : ""}${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${ARRIVED} AS before_bf` : ""}`;
   const [read] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM tickets WHERE id = ?`, [args.ticket_id]).rows as unknown as ConfirmRow[];
   if (read === undefined) throw new NotFoundError(`${TOOL}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
@@ -137,7 +132,7 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   const beforeBf = !takeover && read.before_bf === 1;
   // The creator guard alone refused it: every other guard would have matched the row.
   const otherwiseEligible = read.rejected_at === null && !read.deleted_at && !beforeBf
-    && (takeover ? (read.status === "queued" || read.status === "wip") && read.locked_by !== null && read.locked_by.slice(-8) === (args.expected_holder as string).trim() && read.last_activity === (args.expected_last_activity as string).trim() && read.takeable === 1 : (read.status === "queued" && read.locked_by === null) || read.lapsed === 1);
+    && (takeover ? (read.status === "queued" || read.status === "wip") && read.locked_by !== null && read.locked_by.slice(-8) === (args.expected_holder as string).trim() && read.last_activity === (args.expected_last_activity as string).trim() : (read.status === "queued" && read.locked_by === null) || read.lapsed === 1);
   if (read.locked_by === args.session_token) {
     outcome = "assigned";
     note =
@@ -149,9 +144,6 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   } else if (changes === 0 && creatorHeld && otherwiseEligible && read.created_by !== args.session_token && createdAny(args.db_path, args.session_token)) {
     outcome = "not_created_here";
     note = `Job ${id} was not assigned: this session created jobs, and may be assigned only one of those. Nothing was written; never re-run to win.`;
-  } else if (takeover && read.rejected_at === null && !read.deleted_at && read.status === "wip" && read.locked_by?.slice(-8) === (args.expected_holder as string).trim() && read.takeable !== 1) {
-    outcome = "recently_active";
-    note = `Job ${id} was not taken over: it was active in the last ${CHECK_AFTER_MINUTES} minutes, and such a job is never taken over, so nothing was written. Say so in one line; never re-run to win.`;
   } else if (read.locked_by !== null && takeover) {
     outcome = "holder_changed";
     const what = read.locked_by.slice(-8) === (args.expected_holder as string).trim() ? `its last activity moved since the card was read (now ${read.last_activity ?? "(unknown time)"})` : `its holder changed since the card was read (locked at ${read.locked_at ?? "(unknown time)"})`;
