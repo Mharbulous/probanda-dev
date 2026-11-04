@@ -1,4 +1,4 @@
-// build-stamp: de4c1ec50f88
+// build-stamp: ef0f840e6784
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75264,7 +75264,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "de4c1ec50f88";
+var BUILD_STAMP = false ? null : "ef0f840e6784";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -77905,7 +77905,7 @@ function timecampingToolDefinitions() {
   ];
 }
 
-// src/knowledge/index.ts
+// src/knowledge/venues-kinds.ts
 var AUDIENCES = ["opposing-counsel", "opposing-party", "witness", "expert", "public-body", "non-party", "internal"];
 var ALIAS_SOURCES = ["official", "practitioner", "agent"];
 var NO_VENUE = "_NoVenue";
@@ -82997,13 +82997,13 @@ async function invoice_lines_query(store, args) {
 }
 
 // src/tools/practice/firm-profile.ts
-import { existsSync as existsSync9, mkdirSync as mkdirSync4, readFileSync as readFileSync9, writeFileSync as writeFileSync3 } from "node:fs";
+import { existsSync as existsSync8, mkdirSync as mkdirSync4, readFileSync as readFileSync9, writeFileSync as writeFileSync3 } from "node:fs";
 import { dirname as dirname6, join as join13 } from "node:path";
 import { inflateRawSync } from "node:zlib";
 
-// src/knowledge/sidecar.ts
-import { createHash as createHash3, randomUUID as randomUUID5 } from "node:crypto";
-import { closeSync as closeSync2, existsSync as existsSync8, mkdirSync as mkdirSync3, openSync as openSync2, statSync as statSync5, writeSync as writeSync2 } from "node:fs";
+// src/file-lock.ts
+import { randomUUID as randomUUID5 } from "node:crypto";
+import { closeSync as closeSync2, mkdirSync as mkdirSync3, openSync as openSync2, statSync as statSync5, writeSync as writeSync2 } from "node:fs";
 import { win32 as pathWin326 } from "node:path";
 
 // src/lock-claim.ts
@@ -83109,126 +83109,7 @@ function writeStatusFile(target, text8, { attempts = 10, delayMs = 50 } = {}) {
   return code;
 }
 
-// src/knowledge/sidecar.ts
-function passageHash(passage) {
-  return createHash3("sha256").update(passage.replace(/\s+/g, " ").trim(), "utf8").digest("hex");
-}
-function invalid2(file, where, rule) {
-  throw new DataServerError(`${file}: ${where}: ${rule}`, "invalid_sidecar");
-}
-function parseSidecar(text8, file, knowledgePath) {
-  let doc;
-  try {
-    doc = JSON.parse(text8);
-  } catch (err) {
-    return invalid2(file, "the sidecar", `is not valid JSON: ${err.message}`);
-  }
-  if (typeof doc !== "object" || doc === null || Array.isArray(doc)) invalid2(file, "the sidecar", "must be an object");
-  const top = doc;
-  const extra = Object.keys(top).filter((key) => key !== "file" && key !== "items");
-  if (extra.length) invalid2(file, "the sidecar", `unknown field(s) ${extra.join(", ")}`);
-  if (typeof top.file !== "string" || top.file.split("\\").join("/").toLowerCase() !== knowledgePath.toLowerCase()) {
-    invalid2(file, "file", `must name the file it sits beside, "${knowledgePath}"`);
-  }
-  if (!Array.isArray(top.items)) invalid2(file, "items", "must be an array");
-  const rows4 = [];
-  top.items.forEach((raw, i3) => {
-    const where = `items[${i3}]`;
-    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) invalid2(file, where, "must be an object");
-    const row2 = raw;
-    const unknown2 = Object.keys(row2).filter((key) => !["rule_ref", "status", "by", "on", "confirmed_against", "value", ...STAMP_KEYS].includes(key));
-    if (unknown2.length) invalid2(file, where, `unknown field(s) ${unknown2.join(", ")}`);
-    for (const key of ["rule_ref", "by", "on"]) {
-      if (typeof row2[key] !== "string" || row2[key] === "") invalid2(file, `${where}.${key}`, "must be a non-empty string");
-    }
-    if (row2.status !== "confirmed" && row2.status !== "corrected") invalid2(file, `${where}.status`, 'must be "confirmed" or "corrected"');
-    if (rows4.some((seen) => seen.rule_ref === row2.rule_ref)) invalid2(file, where, `rule_ref "${row2.rule_ref}" has two rows`);
-    const against = row2.confirmed_against;
-    if (typeof against !== "object" || against === null || Array.isArray(against)) {
-      invalid2(file, `${where}.confirmed_against`, "must be {passage_hash, currency}");
-    }
-    if (typeof against.passage_hash !== "string" || !/^[0-9a-f]{64}$/.test(against.passage_hash)) {
-      invalid2(file, `${where}.confirmed_against.passage_hash`, "must be a sha256 hex digest");
-    }
-    if (against.currency !== null && typeof against.currency !== "string") {
-      invalid2(file, `${where}.confirmed_against.currency`, "must be a string or null");
-    }
-    const extraAgainst = Object.keys(against).filter((key) => key !== "passage_hash" && key !== "currency");
-    if (extraAgainst.length) invalid2(file, `${where}.confirmed_against`, `unknown field(s) ${extraAgainst.join(", ")}`);
-    const corrected = row2.status === "corrected";
-    if (corrected !== Object.hasOwn(row2, "value")) {
-      invalid2(file, `${where}.value`, corrected ? "is required on a corrected row" : "appears only on a corrected row");
-    }
-    const stamp2 = stampProblem(row2);
-    if (stamp2) invalid2(file, `${where}.${stamp2[0]}`, stamp2[1]);
-    rows4.push({
-      rule_ref: row2.rule_ref,
-      status: row2.status,
-      by: row2.by,
-      on: row2.on,
-      confirmed_against: { passage_hash: against.passage_hash, currency: against.currency ?? null },
-      ...corrected ? { value: row2.value } : {},
-      ...row2.plugin_version !== void 0 ? { plugin_version: row2.plugin_version } : {},
-      ...row2.shipped_from !== void 0 ? { shipped_from: row2.shipped_from } : {}
-    });
-  });
-  return rows4;
-}
-function freshnessOf(item, checked) {
-  const facts = checked?.find((record2) => record2.record.toLowerCase() === item.record.toLowerCase());
-  const present3 = facts?.items?.find((entry3) => entry3.rule_ref === item.rule_ref)?.present;
-  if (present3 === true) return "verified";
-  if (present3 === false) return "missing";
-  return "not verified";
-}
-function effectiveStatus(input) {
-  const out = {
-    items: [],
-    stale_confirmation: [],
-    orphaned_confirmations: [],
-    currency_moved: [],
-    corrections: [],
-    sources_check: input.checked ? "consulted" : "none"
-  };
-  const byRef = new Map(input.rows.map((row2) => [row2.rule_ref, row2]));
-  for (const item of input.items) {
-    const hash = passageHash(item.passage);
-    const freshness = freshnessOf(item, input.checked);
-    const row2 = byRef.get(item.rule_ref);
-    let status3 = "unconfirmed";
-    let practitioner = false;
-    if (row2?.status === "corrected") {
-      status3 = "corrected";
-      out.corrections.push({ rule_ref: row2.rule_ref, value: row2.value, by: row2.by, on: row2.on, passage_changed: row2.confirmed_against.passage_hash !== hash });
-    } else if (row2?.status === "confirmed") {
-      if (row2.confirmed_against.passage_hash === hash) {
-        status3 = "confirmed";
-      } else {
-        out.stale_confirmation.push({ rule_ref: row2.rule_ref, by: row2.by, on: row2.on, confirmed_against: row2.confirmed_against, passage_hash: hash });
-      }
-    } else if (input.practitionerConfirms && item.source === "practitioner") {
-      status3 = "confirmed";
-      practitioner = true;
-    }
-    if (row2 && row2.confirmed_against.passage_hash === hash && row2.confirmed_against.currency !== item.currency) {
-      out.currency_moved.push({ rule_ref: row2.rule_ref, confirmed_currency: row2.confirmed_against.currency, currency: item.currency });
-    }
-    if (freshness === "missing" && (status3 === "confirmed" || status3 === "corrected")) status3 = "unconfirmed";
-    out.items.push({
-      rule_ref: item.rule_ref,
-      status: status3,
-      freshness,
-      passage_hash: hash,
-      currency: item.currency,
-      record: item.record,
-      ...item.from_file && item.page !== null ? { pdf_page: item.page } : {},
-      ...practitioner ? { practitioner_sourced: true } : {}
-    });
-  }
-  const refs = new Set(input.items.map((item) => item.rule_ref));
-  out.orphaned_confirmations = input.rows.filter((row2) => !refs.has(row2.rule_ref));
-  return out;
-}
+// src/file-lock.ts
 var LOCK_ATTEMPTS = 5;
 var LOCK_RETRY_MS = 400;
 var LOCK_STALE_MS = 6e4;
@@ -83280,22 +83161,6 @@ function writeTextAtomic(target, text8) {
 function writeBytesAtomic(target, bytes) {
   writeTextAtomic(target, bytes);
 }
-function readRows(sidecarAbs, knowledgePath) {
-  if (!existsSync8(sidecarAbs)) return [];
-  const text8 = readLayerBytes(sidecarAbs, "the confirmation sidecar").toString("utf-8");
-  return parseSidecar(text8.startsWith("\uFEFF") ? text8.slice(1) : text8, sidecarAbs, knowledgePath);
-}
-async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check3) {
-  return withFileLock(sidecarAbs, () => {
-    const rows4 = readRows(sidecarAbs, knowledgePath);
-    const at = rows4.findIndex((known) => known.rule_ref === row2.rule_ref);
-    if (at === -1) rows4.push(row2);
-    else rows4[at] = row2;
-    check3(rows4);
-    writeTextAtomic(sidecarAbs, JSON.stringify({ file: knowledgePath, items: rows4 }, null, 2) + "\n");
-    return rows4;
-  });
-}
 
 // src/tools/practice/firm-profile.ts
 var ROSTER_FIELDS = ["key", "name", "designation", "role", "email", "direct_line", "closing", "initials", "active"];
@@ -83320,7 +83185,7 @@ function readJson(path) {
 }
 function readConfig(env) {
   const path = configPath(env);
-  return existsSync9(path) ? readJson(path) : { version: 1 };
+  return existsSync8(path) ? readJson(path) : { version: 1 };
 }
 function writeJson(path, value2) {
   writeTextAtomic(path, JSON.stringify(value2, null, 2) + "\n");
@@ -83341,7 +83206,7 @@ async function firm_profile(env = process.env) {
 }
 function readFirmProfile(env = process.env, fallback) {
   const paths = firmPaths(env, fallback);
-  const firm = existsSync9(paths.firm) ? readJson(paths.firm) : void 0;
+  const firm = existsSync8(paths.firm) ? readJson(paths.firm) : void 0;
   const firmName2 = typeof firm?.firm_name === "string" ? firm.firm_name : "";
   if (!firm || firmName2 === "") {
     const missing = firm ? `firm_name in ${paths.firm}` : `firm.json (${paths.firm})`;
@@ -83351,7 +83216,7 @@ function readFirmProfile(env = process.env, fallback) {
   }
   const roster = rosterOf(firm, paths.firm);
   const config2 = configPath(env);
-  const machine = existsSync9(config2) ? readJson(config2) : void 0;
+  const machine = existsSync8(config2) ? readJson(config2) : void 0;
   const raw = machine?.person;
   const person2 = raw === void 0 || raw === null || raw === "" ? null : raw;
   const quirks = machine?.practice_quirks;
@@ -83369,8 +83234,8 @@ function readFirmProfile(env = process.env, fallback) {
   return {
     firm_name: firmName2,
     roster,
-    letterhead: existsSync9(paths.letterhead) ? paths.letterhead : null,
-    invoice_template: existsSync9(paths.invoiceTemplate) ? paths.invoiceTemplate : null,
+    letterhead: existsSync8(paths.letterhead) ? paths.letterhead : null,
+    invoice_template: existsSync8(paths.invoiceTemplate) ? paths.invoiceTemplate : null,
     person: person2,
     practice_quirks: typeof quirks === "string" && quirks !== "" ? quirks : null,
     ...isKeyList(firm.cc_on_counsel_email) && firm.cc_on_counsel_email.length > 0 ? { cc_on_counsel_email: firm.cc_on_counsel_email } : {},
@@ -83482,7 +83347,7 @@ async function upsert_firm_profile(args, env = process.env) {
   }
   const paths = resolved;
   const result = { changed: [], written: [] };
-  const current = resolved && existsSync9(paths.firm) ? readJson(paths.firm) : void 0;
+  const current = resolved && existsSync8(paths.firm) ? readJson(paths.firm) : void 0;
   let firm;
   if (args.firm_name !== void 0 || args.roster_entry !== void 0 || args.cc_on_counsel_email !== void 0 || args.billing_settings !== void 0 || args.style !== void 0) {
     firm = { firm_name: void 0, roster: [], ...current };
@@ -83529,7 +83394,7 @@ async function upsert_firm_profile(args, env = process.env) {
   }
   if (config2 && args.signature !== void 0) {
     const signature = asString(args.signature, "signature");
-    if (!existsSync9(signature)) throw new NotFoundError(`signature file not found: ${signature}`);
+    if (!existsSync8(signature)) throw new NotFoundError(`signature file not found: ${signature}`);
     config2.signature = signature;
     result.changed.push("signature");
   }
@@ -83548,7 +83413,7 @@ async function upsert_firm_profile(args, env = process.env) {
   let letterhead;
   if (args.letterhead !== void 0) {
     const source = asString(args.letterhead, "letterhead");
-    if (!existsSync9(source)) throw new NotFoundError(`letterhead source not found: ${source}`);
+    if (!existsSync8(source)) throw new NotFoundError(`letterhead source not found: ${source}`);
     letterhead = readFileSync9(source);
     const { major, minor } = checkLetterhead(letterhead, source);
     if (major !== void 0 && minor !== void 0 && major !== minor) result.theme_faces_differ = { major, minor };
@@ -83557,7 +83422,7 @@ async function upsert_firm_profile(args, env = process.env) {
   let invoiceTemplate;
   if (args.invoice_template !== void 0) {
     const source = asString(args.invoice_template, "invoice_template");
-    if (!existsSync9(source)) throw new NotFoundError(`invoice template source not found: ${source}`);
+    if (!existsSync8(source)) throw new NotFoundError(`invoice template source not found: ${source}`);
     invoiceTemplate = readFileSync9(source);
     if (readZipParts(invoiceTemplate, `invoice template ${source}`, (name) => name === "word/document.xml").size === 0) {
       throw new ValidationError(`invoice template ${source} is not a .docx: it has no document part`);
@@ -83598,7 +83463,7 @@ async function upsert_firm_profile(args, env = process.env) {
 }
 
 // src/tools/practice/folder-map.ts
-import { existsSync as existsSync10, mkdirSync as mkdirSync5, readdirSync as readdirSync9, readFileSync as readFileSync10, writeFileSync as writeFileSync4 } from "node:fs";
+import { existsSync as existsSync9, mkdirSync as mkdirSync5, readdirSync as readdirSync9, readFileSync as readFileSync10, writeFileSync as writeFileSync4 } from "node:fs";
 import { dirname as dirname7, join as join14, win32 as pathWin327 } from "node:path";
 var FLAGS = ["never_ingest", "privileged_by_default", "authority"];
 var GLOSSARY = "shared/document-types.md";
@@ -83606,7 +83471,7 @@ var ROW = /^\| `([a-z_]+)` \| ([^|]+?) \| ([^|]+?) \|([^|]*)\|$/;
 function documentTypes(env = process.env) {
   const root = resolveShippedRoot(GLOSSARY, env, { subject: "the document-type glossary", plugin: "lawyer" }).root;
   const path = join14(root, ...GLOSSARY.split("/"));
-  if (!existsSync10(path)) throw new DataServerError(`the document-type glossary is missing: ${path}`, "skills_root_missing");
+  if (!existsSync9(path)) throw new DataServerError(`the document-type glossary is missing: ${path}`, "skills_root_missing");
   const types = [];
   for (const line of readFileSync10(path, "utf-8").split(/\r?\n/)) {
     const m3 = ROW.exec(line.trim());
@@ -83627,7 +83492,7 @@ function folderMapPath(env, key) {
 }
 function machinePerson(env) {
   const config2 = configPath(env);
-  if (!existsSync10(config2)) return null;
+  if (!existsSync9(config2)) return null;
   let person2;
   try {
     person2 = JSON.parse(readFileSync10(config2, "utf-8"))?.person;
@@ -83673,7 +83538,7 @@ function readFolderMap(env = process.env, types = documentTypes(env)) {
     return { status: "no_map", person: null, map_path: null, reason: "this machine names no person, so no folder map applies" };
   }
   const path = folderMapPath(env, person2);
-  if (!existsSync10(path)) {
+  if (!existsSync9(path)) {
     return { status: "no_map", person: person2, map_path: path, reason: `no folder map is recorded for ${person2}` };
   }
   let parsed;
@@ -83753,7 +83618,7 @@ async function set_folder_map(args, env = process.env) {
 }
 
 // src/tools/practice/config.ts
-import { existsSync as existsSync11, mkdirSync as mkdirSync6, readdirSync as readdirSync10, readFileSync as readFileSync11, renameSync as renameSync2, statSync as statSync6, writeFileSync as writeFileSync5 } from "node:fs";
+import { existsSync as existsSync10, mkdirSync as mkdirSync6, readdirSync as readdirSync10, readFileSync as readFileSync11, renameSync as renameSync2, statSync as statSync6, writeFileSync as writeFileSync5 } from "node:fs";
 import { homedir as homedir6 } from "node:os";
 import { dirname as dirname8, isAbsolute as isAbsolute3, join as join15 } from "node:path";
 var DOCUMENTED_KEYS = [
@@ -83907,7 +83772,7 @@ async function config_set_root(args, env = process.env) {
       `Refused: ${practiceDb(root)} does not exist. case_data_root must name a folder that already holds _practice\\practice.db, unless initialize is true for a new device's approved root. Nothing was written.`
     );
   }
-  const created = !existsSync11(path);
+  const created = !existsSync10(path);
   let config2 = { version: 1 };
   if (!created) {
     try {
@@ -83944,7 +83809,7 @@ async function config_set_root(args, env = process.env) {
 }
 
 // src/tools/practice/practice-board.ts
-import { existsSync as existsSync12, readFileSync as readFileSync12 } from "node:fs";
+import { existsSync as existsSync11, readFileSync as readFileSync12 } from "node:fs";
 import { dirname as dirname9, join as join16 } from "node:path";
 
 // src/compose-template.ts
@@ -84412,7 +84277,7 @@ async function render_practice_board(store) {
   const data = await buildPracticeBoardData(store, /* @__PURE__ */ new Date());
   const { panels } = data;
   const file = join16(dirname9(resolvePracticeDbPath(store.env)), PRACTICE_BOARD_FILE);
-  if (existsSync12(file) && !readFileSync12(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
+  if (existsSync11(file) && !readFileSync12(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
     throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the Practice Board's marker, so this renderer did not write it`);
   }
   const code = writeStatusFile(file, renderPracticeBoardHtml(data));
@@ -84519,21 +84384,21 @@ async function callPracticeTool(store, name, args) {
 }
 
 // src/case/backend.ts
-import { existsSync as existsSync14, readFileSync as readFileSync15 } from "node:fs";
+import { existsSync as existsSync13, readFileSync as readFileSync15 } from "node:fs";
 import { join as join17 } from "node:path";
 
 // src/case/case-lock.ts
 import { readFileSync as readFileSync14, writeFileSync as writeFileSync6 } from "node:fs";
 
 // src/data-lock.ts
-import { createHash as createHash4, randomUUID as randomUUID6 } from "node:crypto";
-import { closeSync as closeSync3, existsSync as existsSync13, mkdirSync as mkdirSync7, openSync as openSync3, readFileSync as readFileSync13, statSync as statSync7, unlinkSync as unlinkSync5, writeSync as writeSync3 } from "node:fs";
+import { createHash as createHash3, randomUUID as randomUUID6 } from "node:crypto";
+import { closeSync as closeSync3, existsSync as existsSync12, mkdirSync as mkdirSync7, openSync as openSync3, readFileSync as readFileSync13, statSync as statSync7, unlinkSync as unlinkSync5, writeSync as writeSync3 } from "node:fs";
 import { homedir as homedir7 } from "node:os";
 import { win32 as pathWin328 } from "node:path";
 var LOCK_RETRY_MS2 = 400;
 var LOCK_STALE_MS2 = 9e5;
 function lockKey(target) {
-  return createHash4("sha256").update(pathWin328.normalize(target).toLowerCase()).digest("hex").slice(0, 16);
+  return createHash3("sha256").update(pathWin328.normalize(target).toLowerCase()).digest("hex").slice(0, 16);
 }
 function hostLocalDir(site, env) {
   const base = env[site.envVar] || pathWin328.join(env.LOCALAPPDATA || homedir7(), "Coclerk", site.dirName);
@@ -84625,7 +84490,7 @@ function holderDied(lock) {
 }
 function holderOf(lock) {
   try {
-    return (existsSync13(lock) ? readFileSync13(lock, "utf-8").trim() : "released") + orphanClaims(lock);
+    return (existsSync12(lock) ? readFileSync13(lock, "utf-8").trim() : "released") + orphanClaims(lock);
   } catch {
     return "unreadable";
   }
@@ -85120,7 +84985,7 @@ function caseDataTriggersSql(env) {
     plugin: "lawyer"
   });
   const path = join17(shipped.root, "matter-data", "references", "triggers.sql");
-  if (!existsSync14(path)) {
+  if (!existsSync13(path)) {
     throw new DataServerError(
       `matter_data__execute cannot load the cross-database trigger layer: ${path} not found. Nothing was written.`,
       "skills_root_missing"
@@ -85468,13 +85333,13 @@ async function ingestAuthority(request2, env = process.env) {
 }
 
 // src/case/ingest-run.ts
-import { createHash as createHash6, randomUUID as randomUUID8 } from "node:crypto";
-import { appendFileSync as appendFileSync2, closeSync as closeSync4, existsSync as existsSync16, mkdirSync as mkdirSync10, openSync as openSync4, readdirSync as readdirSync12, readFileSync as readFileSync17, readSync, renameSync as renameSync3, rmdirSync, rmSync as rmSync2, statSync as statSync10, truncateSync, unlinkSync as unlinkSync7, writeFileSync as writeFileSync9 } from "node:fs";
+import { createHash as createHash5, randomUUID as randomUUID8 } from "node:crypto";
+import { appendFileSync as appendFileSync2, closeSync as closeSync4, existsSync as existsSync15, mkdirSync as mkdirSync10, openSync as openSync4, readdirSync as readdirSync12, readFileSync as readFileSync17, readSync, renameSync as renameSync3, rmdirSync, rmSync as rmSync2, statSync as statSync10, truncateSync, unlinkSync as unlinkSync7, writeFileSync as writeFileSync9 } from "node:fs";
 import { win32 as pathWin329 } from "node:path";
 
 // src/files/extract/page-images.ts
-import { createHash as createHash5 } from "node:crypto";
-import { existsSync as existsSync15, mkdirSync as mkdirSync9, mkdtempSync, readFileSync as readFileSync16, statSync as statSync9, writeFileSync as writeFileSync8 } from "node:fs";
+import { createHash as createHash4 } from "node:crypto";
+import { existsSync as existsSync14, mkdirSync as mkdirSync9, mkdtempSync, readFileSync as readFileSync16, statSync as statSync9, writeFileSync as writeFileSync8 } from "node:fs";
 import { tmpdir as tmpdir3 } from "node:os";
 import { extname, isAbsolute as isAbsolute4, join as join20 } from "node:path";
 import { deflateSync } from "node:zlib";
@@ -91165,7 +91030,7 @@ function malloc(lib, bytes, code = "renderer_unavailable") {
 }
 async function withPdf(path, wasm, work) {
   if (!isAbsolute4(path)) throw new ValidationError(`path must be absolute: ${path}`);
-  if (!existsSync15(path) || !statSync9(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
+  if (!existsSync14(path) || !statSync9(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
   if (extname(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
   const data = readFileSync16(path);
   const pending3 = loadPdfium(wasm);
@@ -91232,7 +91097,7 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
     }
     const file = join20(renderDir, `${name}.png`);
     writeFileSync8(file, png);
-    const image = { path: file, sha256: createHash5("sha256").update(png).digest("hex"), width, height };
+    const image = { path: file, sha256: createHash4("sha256").update(png).digest("hex"), width, height };
     if (tile !== void 0) image.tile = tile;
     return image;
   });
@@ -91243,7 +91108,7 @@ function pdfPagePngs(path, pages, wasm = DEFAULT_WASM) {
 }
 async function renderScannedPages(args, wasm, keep) {
   return withPdf(args.path, wasm, async (lib, doc, data) => {
-    const sourceSha256 = createHash5("sha256").update(data).digest("hex");
+    const sourceSha256 = createHash4("sha256").update(data).digest("hex");
     const pageCount = lib.FPDF_GetPageCount(doc);
     const [first, last] = pageRange(args.pages, pageCount);
     const pages = [];
@@ -91534,7 +91399,7 @@ function leaseOrNull(dir) {
 }
 var dispatchPath = (dir, id) => pathWin329.join(dir, "dispatches", `${id}.json`);
 function readLease(dir) {
-  return existsSync16(leasePath(dir)) ? JSON.parse(readFileSync17(leasePath(dir), "utf-8")) : null;
+  return existsSync15(leasePath(dir)) ? JSON.parse(readFileSync17(leasePath(dir), "utf-8")) : null;
 }
 var HELD = ["EPERM", "EACCES", "EBUSY"];
 function whileHeld(op) {
@@ -91572,7 +91437,7 @@ function lastByte(path) {
 function journal(dir, event, runId, extra = {}) {
   const line = JSON.stringify({ ts: (/* @__PURE__ */ new Date()).toISOString(), event, run_id: runId, ...extra });
   const path = journalPath(dir);
-  if (existsSync16(path) && ![null, 10].includes(lastByte(path))) {
+  if (existsSync15(path) && ![null, 10].includes(lastByte(path))) {
     const bytes = readFileSync17(path);
     truncateSync(path, bytes.lastIndexOf(10) + 1);
     torn.add(dir);
@@ -91581,7 +91446,7 @@ function journal(dir, event, runId, extra = {}) {
 }
 function readJournal(dir) {
   const path = journalPath(dir);
-  if (!existsSync16(path)) return [];
+  if (!existsSync15(path)) return [];
   const lines2 = readFileSync17(path, "utf-8").split("\n");
   if (lines2.pop() !== "") {
     const key = `${dir}
@@ -91626,17 +91491,17 @@ function runEvents(dir) {
 var isLive = (lease) => lease !== null && lease.ended === null && Date.now() - Date.parse(lease.heartbeat) < LIVE_MS;
 var matterDirOf = (matterRoot, env) => pathWin329.join(hostLocalDir(SITE3, env), lockKey(matterRoot));
 function adoptOldLayout(matterDir) {
-  if (!existsSync16(leasePath(matterDir))) return;
+  if (!existsSync15(leasePath(matterDir))) return;
   const started = Date.parse(String(leaseOrNull(matterDir)?.started));
   const dir = pathWin329.join(matterDir, `legacy-${Number.isNaN(started) ? "unreadable" : started}`);
   mkdirSync10(dir, { recursive: true });
   for (const name of ["journal.jsonl", "dispatches", "lease.tmp", "lease.json"]) {
     const from = pathWin329.join(matterDir, name);
-    if (existsSync16(from)) whileHeld(() => renameSync3(from, pathWin329.join(dir, name)));
+    if (existsSync15(from)) whileHeld(() => renameSync3(from, pathWin329.join(dir, name)));
   }
 }
 function runFolders(matterDir) {
-  if (!existsSync16(matterDir)) return [];
+  if (!existsSync15(matterDir)) return [];
   return readdirSync12(matterDir, { withFileTypes: true }).filter((e3) => e3.isDirectory()).map((e3) => pathWin329.join(matterDir, e3.name));
 }
 function findRun(matterDir, runId) {
@@ -91667,13 +91532,13 @@ function hold(matterDir, runId) {
   return { ...lease, dir };
 }
 function removeOwn(path) {
-  const rest = existsSync16(path) ? readdirSync12(path).filter((name) => name !== "lease.json").map((name) => pathWin329.join(path, name)) : [];
+  const rest = existsSync15(path) ? readdirSync12(path).filter((name) => name !== "lease.json").map((name) => pathWin329.join(path, name)) : [];
   for (const target of [...rest, path]) rmSync2(target, { recursive: true, force: true });
 }
 var RENDERED = /^page-\d{4,}(-tile-\d+)?\.png$/;
 function removeImageFolder(folder) {
   try {
-    if (!existsSync16(folder)) return true;
+    if (!existsSync15(folder)) return true;
     for (const sub of readdirSync12(folder, { withFileTypes: true })) {
       if (!sub.isDirectory() || !/^[0-9a-f]{16}$/.test(sub.name)) continue;
       const pdfDir = pathWin329.join(folder, sub.name);
@@ -92158,7 +92023,7 @@ function storedForm(path, matterRoot) {
   return p3;
 }
 var outsideMatter = (stored) => /^[A-Za-z]:|^\\/.test(stored) || stored.split("\\").includes("..");
-var sha256 = (path) => createHash6("sha256").update(readFileSync17(path)).digest("hex");
+var sha256 = (path) => createHash5("sha256").update(readFileSync17(path)).digest("hex");
 function checkRoutes(routes, matterRoot) {
   return routes.map((r3, i3) => {
     if (!ROUTE_KINDS.includes(r3.kind)) throw new ValidationError(`routes[${i3}].kind must be one of ${ROUTE_KINDS.join(", ")}`);
@@ -92166,9 +92031,9 @@ function checkRoutes(routes, matterRoot) {
     const stored = storedForm(String(r3.file_path ?? ""), matterRoot);
     if (stored === "" || outsideMatter(stored)) throw new ValidationError(`routes[${i3}].file_path must be a file inside the matter folder`);
     const host = hostPath(matterRoot, stored);
-    if (!existsSync16(host)) throw new ValidationError(`routes[${i3}].file_path does not exist: ${stored}`);
+    if (!existsSync15(host)) throw new ValidationError(`routes[${i3}].file_path does not exist: ${stored}`);
     if (sha256(host) !== r3.file_hash) throw new ValidationError(`routes[${i3}].file_hash is not the hash of ${stored}`);
-    if (r3.rendering !== void 0 && !existsSync16(r3.rendering)) throw new ValidationError(`routes[${i3}].rendering does not exist`);
+    if (r3.rendering !== void 0 && !existsSync15(r3.rendering)) throw new ValidationError(`routes[${i3}].rendering does not exist`);
     if (r3.attachment_hashes?.some((hash) => !/^[0-9a-f]{64}$/.test(hash))) throw new ValidationError(`routes[${i3}].attachment_hashes must each be a file's SHA-256`);
     if (r3.kind !== "path_b" && r3.rendering === void 0 && pathWin329.extname(stored).toLowerCase() !== ".pdf") {
       throw new ValidationError(`routes[${i3}] is not a PDF, so it needs its rendering`);
@@ -92353,7 +92218,7 @@ async function runForWrite(matterRoot, runId, document2, contract, resultIds, en
     if (route2 && takenHashes(events).has(route2.file_hash)) return { ok: false, refused: "taken", say: TAKEN(shortName(route2.file_path)) };
     const answered = { facts: [], relief: [] };
     const last = route2 ? events.filter((e3) => e3.event === "dispatch" && e3.ref === route2.ref && e3.agent === "lawyer:extract-facts").pop() : void 0;
-    if (last && existsSync16(dispatchPath(dir, last.dispatch_id))) {
+    if (last && existsSync15(dispatchPath(dir, last.dispatch_id))) {
       const inputs = JSON.parse(readFileSync17(dispatchPath(dir, last.dispatch_id), "utf-8")).inputs;
       answered.facts = (inputs.ANSWERED_FACTS ?? []).map((f3) => f3.fact_key);
       answered.relief = (inputs.ANSWERED_RELIEF ?? []).map((r3) => r3.relief_key);
@@ -92416,13 +92281,13 @@ async function recordRefusal(matterRoot, runId, acks, bad2, env = process.env) {
 function dispatchInputs(dispatchId, env = process.env) {
   if (!UUID3.test(dispatchId ?? "")) throw new ValidationError("dispatch_id must be the id from your dispatch line");
   const root = hostLocalDir(SITE3, env);
-  const dirs = (existsSync16(root) ? readdirSync12(root, { withFileTypes: true }) : []).filter((entry3) => entry3.isDirectory()).flatMap((entry3) => {
+  const dirs = (existsSync15(root) ? readdirSync12(root, { withFileTypes: true }) : []).filter((entry3) => entry3.isDirectory()).flatMap((entry3) => {
     const matterDir = pathWin329.join(root, entry3.name);
     return [matterDir, ...runFolders(matterDir)];
   });
   for (const dir of dirs) {
     const path = dispatchPath(dir, dispatchId);
-    if (!existsSync16(path)) continue;
+    if (!existsSync15(path)) continue;
     const stored = JSON.parse(readFileSync17(path, "utf-8"));
     let text8 = JSON.stringify(stored.inputs);
     if (stored.session) {
@@ -92498,7 +92363,7 @@ async function ingestRun(args, env = process.env) {
         const report = [...swept.lines];
         const keys = [...swept.keys];
         const reply = (body) => ({ ...body, ...reportLines([...report, ...tornIn(matterDir).length > 0 ? [STEP_LOST] : []]) });
-        const unreadable = sayOnce(runFolders(matterDir).filter((dir2) => existsSync16(leasePath(dir2)) && leaseOrNull(dir2) === null), RUN_UNREADABLE);
+        const unreadable = sayOnce(runFolders(matterDir).filter((dir2) => existsSync15(leasePath(dir2)) && leaseOrNull(dir2) === null), RUN_UNREADABLE);
         report.push(...unreadable.lines);
         keys.push(...unreadable.keys);
         const now = (/* @__PURE__ */ new Date()).toISOString();
@@ -92603,7 +92468,7 @@ async function ingestRun(args, env = process.env) {
         if (args.dispatch_id === void 0) return { ok: true, items: [] };
         if (!UUID3.test(args.dispatch_id)) throw new ValidationError("dispatch_id must be the id from the dispatch line");
         const path = dispatchPath(dir, args.dispatch_id);
-        if (!existsSync16(path)) throw new ValidationError("no dispatch with that dispatch_id in this run");
+        if (!existsSync15(path)) throw new ValidationError("no dispatch with that dispatch_id in this run");
         const stored = JSON.parse(readFileSync17(path, "utf-8"));
         if (!Array.isArray(args.paths) || args.paths.length !== stored.stage.length) {
           throw new ValidationError(`paths must list the ${stored.stage.length} staged copies, in the order of stage`);
@@ -92656,7 +92521,7 @@ import { readFileSync as readFileSync19, unlinkSync as unlinkSync8 } from "node:
 import { join as join22 } from "node:path";
 
 // src/case/procedural-history.ts
-import { existsSync as existsSync17, readFileSync as readFileSync18, renameSync as renameSync4, writeFileSync as writeFileSync10 } from "node:fs";
+import { existsSync as existsSync16, readFileSync as readFileSync18, renameSync as renameSync4, writeFileSync as writeFileSync10 } from "node:fs";
 import { join as join21 } from "node:path";
 var FILE_NAME = "ProceduralHistory.md";
 var TITLE = "# Procedural history";
@@ -92741,7 +92606,7 @@ function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
   if (args.source_path !== void 0 && args.told_on !== void 0) {
     throw new ValidationError("matter_data__procedural_history_append takes source_path or told_on, never both", "invalid_entry");
   }
-  const existing = existsSync17(path) ? readFileSync18(path, "utf-8") : void 0;
+  const existing = existsSync16(path) ? readFileSync18(path, "utf-8") : void 0;
   const eol = existing?.includes("\r\n") ? "\r\n" : "\n";
   const { sections } = existing === void 0 ? { sections: [] } : parse3(existing);
   let bullet;
@@ -93364,7 +93229,7 @@ async function housekeepingLog(request2, env = process.env) {
 }
 
 // src/submission/repoint-documents.ts
-import { existsSync as existsSync18, readFileSync as readFileSync20 } from "node:fs";
+import { existsSync as existsSync17, readFileSync as readFileSync20 } from "node:fs";
 import { join as join23 } from "node:path";
 
 // src/submission/backend.ts
@@ -93987,7 +93852,7 @@ async function repointDocuments(request2, env = process.env) {
   assertStoredForm("old_path", request2.old_path);
   assertStoredForm("new_path", request2.new_path);
   const dbPath = resolveDbPath(validateMatterRoot(request2.matter_root));
-  if (!existsSync18(dbPath)) return { database: false, repointed: [] };
+  if (!existsSync17(dbPath)) return { database: false, repointed: [] };
   const shipped = resolveShippedRoot(REFERENCE, env, { subject: "the drafting-data document-paths reference", plugin: "litigator" });
   const text8 = readFileSync20(join23(shipped.root, ...REFERENCE.split("/")), "utf-8").replace(/\r\n/g, "\n");
   const values = {
@@ -94318,13 +94183,13 @@ async function timecampingCalls(args, store, env = process.env) {
 }
 
 // src/migrate-backups.ts
-import { existsSync as existsSync19, readdirSync as readdirSync13, unlinkSync as unlinkSync9 } from "node:fs";
+import { existsSync as existsSync18, readdirSync as readdirSync13, unlinkSync as unlinkSync9 } from "node:fs";
 import { basename as basename3, dirname as dirname10, join as join26 } from "node:path";
 var STAMP = /^\.bak-\d{8}T\d{6}Z(-\d+)?$/;
 function timestampedBackups(dbPath) {
   const dir = dirname10(dbPath);
   const name = basename3(dbPath);
-  return new Set(existsSync19(dir) ? readdirSync13(dir).filter((f3) => f3.startsWith(name) && STAMP.test(f3.slice(name.length))) : []);
+  return new Set(existsSync18(dir) ? readdirSync13(dir).filter((f3) => f3.startsWith(name) && STAMP.test(f3.slice(name.length))) : []);
 }
 function pruneBackups(dbPath, before) {
   const all = [...timestampedBackups(dbPath)];
@@ -94377,7 +94242,7 @@ function runDriver3(label2, driver, payload, env) {
 }
 
 // src/submission/migrate.ts
-import { existsSync as existsSync22, statSync as statSync11 } from "node:fs";
+import { existsSync as existsSync21, statSync as statSync11 } from "node:fs";
 import { join as join29 } from "node:path";
 
 // src/submission/parties-drift.ts
@@ -95809,7 +95674,7 @@ function rows(dbPath, sql, params = []) {
 }
 
 // src/loose-threads/backend.ts
-import { existsSync as existsSync20 } from "node:fs";
+import { existsSync as existsSync19 } from "node:fs";
 import { dirname as dirname11, join as join27 } from "node:path";
 var LOOSE_THREADS_FILE = "loose_threads.db";
 var THREAD_KINDS = ["idea", "proposition", "correspondence", "argument", "work_board"];
@@ -95835,7 +95700,7 @@ function run(dbPath, request2, env) {
 var memoKey = (dbPath) => JSON.stringify(["loose-threads", dbPath]);
 function readThreads(dbPath, env = process.env) {
   return oncePerCall(memoKey(dbPath), () => {
-    if (!existsSync20(looseThreadsPath(dbPath))) return [];
+    if (!existsSync19(looseThreadsPath(dbPath))) return [];
     const { items: items2 } = run(dbPath, { op: "list", namespace: THREADS }, env);
     return items2.map((i3) => ({ ...JSON.parse(i3.value), id: Number(i3.key) })).sort((a3, b3) => a3.id - b3.id);
   }).map((t3) => ({ ...t3 }));
@@ -95846,7 +95711,7 @@ function writeThreads(dbPath, threads, env = process.env) {
   run(dbPath, { op: "apply", writes: threads.map(({ id, ...value2 }) => ({ op: "set", namespace: THREADS, key: String(id), value: JSON.stringify(value2) })) }, env);
 }
 function readSeedsMoved(dbPath, env = process.env) {
-  if (!existsSync20(looseThreadsPath(dbPath))) return null;
+  if (!existsSync19(looseThreadsPath(dbPath))) return null;
   return run(dbPath, { op: "get", namespace: META2, key: SEEDS_MOVED }, env).value;
 }
 function stampSeedsMoved(dbPath, value2, env = process.env) {
@@ -96233,7 +96098,7 @@ function opposingPartyIds(parties2) {
 }
 
 // src/case/parties-of-record.ts
-import { existsSync as existsSync21 } from "node:fs";
+import { existsSync as existsSync20 } from "node:fs";
 import { join as join28 } from "node:path";
 var DRIVER6 = String.raw`
 import json, sys
@@ -96257,7 +96122,7 @@ function readPartiesById(caseDataDir, casePartyIds, env = process.env) {
   return read2(caseDataDir, { file_number: null, case_party_ids: casePartyIds }, env);
 }
 function read2(caseDataDir, request2, env) {
-  if (!existsSync21(join28(caseDataDir, "main.sqlite"))) {
+  if (!existsSync20(join28(caseDataDir, "main.sqlite"))) {
     return { status: "not_applicable", reason: `no matter-data database in ${caseDataDir}` };
   }
   return oncePerCall(JSON.stringify([caseDataDir, request2]), () => spawnRead(caseDataDir, request2, env));
@@ -96497,7 +96362,7 @@ async function submissionDataMigrate(dbPath, env = process.env) {
 }
 var COUNSEL_COPY_DROPPED = 43;
 function storedSchemaVersion(dbPath) {
-  if (!existsSync22(dbPath)) return null;
+  if (!existsSync21(dbPath)) return null;
   const [meta2] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'db_meta'").rows;
   if (meta2.n === 0) return null;
   const [row2] = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'").rows;
@@ -96777,8 +96642,8 @@ function repointThreads(dbPath, from, to2, env = process.env) {
 }
 
 // src/files/skill-source.ts
-import { createHash as createHash7 } from "node:crypto";
-import { existsSync as existsSync23, readFileSync as readFileSync22, readdirSync as readdirSync14, statSync as statSync12 } from "node:fs";
+import { createHash as createHash6 } from "node:crypto";
+import { existsSync as existsSync22, readFileSync as readFileSync22, readdirSync as readdirSync14, statSync as statSync12 } from "node:fs";
 import { win32 as pathWin3210 } from "node:path";
 var rootCache = /* @__PURE__ */ new Map();
 function servedRoot(shipped) {
@@ -96834,7 +96699,7 @@ function resolveReference(relative6, env, installRoot, from) {
       if (err instanceof DataServerError) continue;
       throw err;
     }
-    if (existsSync23(pathWin3210.join(root, candidate))) return candidate;
+    if (existsSync22(pathWin3210.join(root, candidate))) return candidate;
   }
   return normalized2;
 }
@@ -96874,7 +96739,7 @@ function skillSourceRead(relative6, env, from, match, installRoot) {
     path,
     dir: slash === -1 ? "" : path.slice(0, slash),
     size: bytes.byteLength,
-    sha256: createHash7("sha256").update(bytes).digest("hex"),
+    sha256: createHash6("sha256").update(bytes).digest("hex"),
     shipped_from: shipped.shipped_from,
     ...provenance3(shipped, installRoot)
   };
@@ -96973,13 +96838,13 @@ function walk(dirPath, root, recursive, shipped, out) {
 }
 
 // src/sources/fetch.ts
-import { createHash as createHash8 } from "node:crypto";
+import { createHash as createHash7 } from "node:crypto";
 import { mkdirSync as mkdirSync11 } from "node:fs";
 import * as https from "node:https";
 import { join as join31 } from "node:path";
 
 // src/sources/hosts.ts
-import { existsSync as existsSync24, readFileSync as readFileSync23 } from "node:fs";
+import { existsSync as existsSync23, readFileSync as readFileSync23 } from "node:fs";
 import { join as join30 } from "node:path";
 var SOURCES_ALLOWED_HOSTS = ["www.bclaws.gov.bc.ca", "bclaws.gov.bc.ca", "vaniac.org", "laws-lois.justice.gc.ca"];
 function loadFirmHosts(path) {
@@ -97030,7 +96895,7 @@ function overlayFirmHosts(env = process.env) {
 }
 function caseDataRootConfigured(env) {
   const configFile = configPath(env);
-  if (!existsSync24(configFile)) return false;
+  if (!existsSync23(configFile)) return false;
   try {
     const root = JSON.parse(readFileSync23(configFile, "utf-8")).case_data_root;
     return typeof root === "string" && root !== "";
@@ -97150,7 +97015,7 @@ async function followRedirects(start2, allowed, transport) {
       status: raw.status,
       content_type: raw.contentType,
       bytes: raw.bytes,
-      sha256: createHash8("sha256").update(raw.bytes).digest("hex"),
+      sha256: createHash7("sha256").update(raw.bytes).digest("hex"),
       hosts
     };
   }
@@ -97648,6 +97513,145 @@ async function checkKnowledgeFile(path, label2, seams, fetcher) {
   if (shadowedSources.size) result.shadowed_sources = [...shadowedSources.values()];
   knowledgeChecks.set(kp.path.toLowerCase(), result);
   return result;
+}
+
+// src/knowledge/sidecar.ts
+import { createHash as createHash8 } from "node:crypto";
+import { existsSync as existsSync24 } from "node:fs";
+function passageHash(passage) {
+  return createHash8("sha256").update(passage.replace(/\s+/g, " ").trim(), "utf8").digest("hex");
+}
+function invalid2(file, where, rule) {
+  throw new DataServerError(`${file}: ${where}: ${rule}`, "invalid_sidecar");
+}
+function parseSidecar(text8, file, knowledgePath) {
+  let doc;
+  try {
+    doc = JSON.parse(text8);
+  } catch (err) {
+    return invalid2(file, "the sidecar", `is not valid JSON: ${err.message}`);
+  }
+  if (typeof doc !== "object" || doc === null || Array.isArray(doc)) invalid2(file, "the sidecar", "must be an object");
+  const top = doc;
+  const extra = Object.keys(top).filter((key) => key !== "file" && key !== "items");
+  if (extra.length) invalid2(file, "the sidecar", `unknown field(s) ${extra.join(", ")}`);
+  if (typeof top.file !== "string" || top.file.split("\\").join("/").toLowerCase() !== knowledgePath.toLowerCase()) {
+    invalid2(file, "file", `must name the file it sits beside, "${knowledgePath}"`);
+  }
+  if (!Array.isArray(top.items)) invalid2(file, "items", "must be an array");
+  const rows4 = [];
+  top.items.forEach((raw, i3) => {
+    const where = `items[${i3}]`;
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) invalid2(file, where, "must be an object");
+    const row2 = raw;
+    const unknown2 = Object.keys(row2).filter((key) => !["rule_ref", "status", "by", "on", "confirmed_against", "value", ...STAMP_KEYS].includes(key));
+    if (unknown2.length) invalid2(file, where, `unknown field(s) ${unknown2.join(", ")}`);
+    for (const key of ["rule_ref", "by", "on"]) {
+      if (typeof row2[key] !== "string" || row2[key] === "") invalid2(file, `${where}.${key}`, "must be a non-empty string");
+    }
+    if (row2.status !== "confirmed" && row2.status !== "corrected") invalid2(file, `${where}.status`, 'must be "confirmed" or "corrected"');
+    if (rows4.some((seen) => seen.rule_ref === row2.rule_ref)) invalid2(file, where, `rule_ref "${row2.rule_ref}" has two rows`);
+    const against = row2.confirmed_against;
+    if (typeof against !== "object" || against === null || Array.isArray(against)) {
+      invalid2(file, `${where}.confirmed_against`, "must be {passage_hash, currency}");
+    }
+    if (typeof against.passage_hash !== "string" || !/^[0-9a-f]{64}$/.test(against.passage_hash)) {
+      invalid2(file, `${where}.confirmed_against.passage_hash`, "must be a sha256 hex digest");
+    }
+    if (against.currency !== null && typeof against.currency !== "string") {
+      invalid2(file, `${where}.confirmed_against.currency`, "must be a string or null");
+    }
+    const extraAgainst = Object.keys(against).filter((key) => key !== "passage_hash" && key !== "currency");
+    if (extraAgainst.length) invalid2(file, `${where}.confirmed_against`, `unknown field(s) ${extraAgainst.join(", ")}`);
+    const corrected = row2.status === "corrected";
+    if (corrected !== Object.hasOwn(row2, "value")) {
+      invalid2(file, `${where}.value`, corrected ? "is required on a corrected row" : "appears only on a corrected row");
+    }
+    const stamp2 = stampProblem(row2);
+    if (stamp2) invalid2(file, `${where}.${stamp2[0]}`, stamp2[1]);
+    rows4.push({
+      rule_ref: row2.rule_ref,
+      status: row2.status,
+      by: row2.by,
+      on: row2.on,
+      confirmed_against: { passage_hash: against.passage_hash, currency: against.currency ?? null },
+      ...corrected ? { value: row2.value } : {},
+      ...row2.plugin_version !== void 0 ? { plugin_version: row2.plugin_version } : {},
+      ...row2.shipped_from !== void 0 ? { shipped_from: row2.shipped_from } : {}
+    });
+  });
+  return rows4;
+}
+function freshnessOf(item, checked) {
+  const facts = checked?.find((record2) => record2.record.toLowerCase() === item.record.toLowerCase());
+  const present3 = facts?.items?.find((entry3) => entry3.rule_ref === item.rule_ref)?.present;
+  if (present3 === true) return "verified";
+  if (present3 === false) return "missing";
+  return "not verified";
+}
+function effectiveStatus(input) {
+  const out = {
+    items: [],
+    stale_confirmation: [],
+    orphaned_confirmations: [],
+    currency_moved: [],
+    corrections: [],
+    sources_check: input.checked ? "consulted" : "none"
+  };
+  const byRef = new Map(input.rows.map((row2) => [row2.rule_ref, row2]));
+  for (const item of input.items) {
+    const hash = passageHash(item.passage);
+    const freshness = freshnessOf(item, input.checked);
+    const row2 = byRef.get(item.rule_ref);
+    let status3 = "unconfirmed";
+    let practitioner = false;
+    if (row2?.status === "corrected") {
+      status3 = "corrected";
+      out.corrections.push({ rule_ref: row2.rule_ref, value: row2.value, by: row2.by, on: row2.on, passage_changed: row2.confirmed_against.passage_hash !== hash });
+    } else if (row2?.status === "confirmed") {
+      if (row2.confirmed_against.passage_hash === hash) {
+        status3 = "confirmed";
+      } else {
+        out.stale_confirmation.push({ rule_ref: row2.rule_ref, by: row2.by, on: row2.on, confirmed_against: row2.confirmed_against, passage_hash: hash });
+      }
+    } else if (input.practitionerConfirms && item.source === "practitioner") {
+      status3 = "confirmed";
+      practitioner = true;
+    }
+    if (row2 && row2.confirmed_against.passage_hash === hash && row2.confirmed_against.currency !== item.currency) {
+      out.currency_moved.push({ rule_ref: row2.rule_ref, confirmed_currency: row2.confirmed_against.currency, currency: item.currency });
+    }
+    if (freshness === "missing" && (status3 === "confirmed" || status3 === "corrected")) status3 = "unconfirmed";
+    out.items.push({
+      rule_ref: item.rule_ref,
+      status: status3,
+      freshness,
+      passage_hash: hash,
+      currency: item.currency,
+      record: item.record,
+      ...item.from_file && item.page !== null ? { pdf_page: item.page } : {},
+      ...practitioner ? { practitioner_sourced: true } : {}
+    });
+  }
+  const refs = new Set(input.items.map((item) => item.rule_ref));
+  out.orphaned_confirmations = input.rows.filter((row2) => !refs.has(row2.rule_ref));
+  return out;
+}
+function readRows(sidecarAbs, knowledgePath) {
+  if (!existsSync24(sidecarAbs)) return [];
+  const text8 = readLayerBytes(sidecarAbs, "the confirmation sidecar").toString("utf-8");
+  return parseSidecar(text8.startsWith("\uFEFF") ? text8.slice(1) : text8, sidecarAbs, knowledgePath);
+}
+async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check3) {
+  return withFileLock(sidecarAbs, () => {
+    const rows4 = readRows(sidecarAbs, knowledgePath);
+    const at = rows4.findIndex((known) => known.rule_ref === row2.rule_ref);
+    if (at === -1) rows4.push(row2);
+    else rows4[at] = row2;
+    check3(rows4);
+    writeTextAtomic(sidecarAbs, JSON.stringify({ file: knowledgePath, items: rows4 }, null, 2) + "\n");
+    return rows4;
+  });
 }
 
 // src/knowledge/declared-format.ts
@@ -98792,1037 +98796,6 @@ function lawStatementMarkers(row2, deployed = true) {
   ]);
 }
 
-// src/submission/forms/submission-reads.ts
-function fetchSubmissions(dbPath, filingId, document2) {
-  return rows(
-    dbPath,
-    `SELECT s.id, s.contention, fs.ordinal AS filing_ordinal, fs.id AS pointer_id, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()}
-     FROM filing_submissions fs
-     JOIN submissions s ON s.id = fs.submission_id
-     WHERE fs.filing_id = ? AND fs.document = ? AND s.killed_on IS NULL
-     ORDER BY fs.ordinal`,
-    [filingId, document2]
-  );
-}
-function fetchSubmissionLaw(dbPath, submissionIds) {
-  if (submissionIds.length === 0) return [];
-  const placeholders = submissionIds.map(() => "?").join(",");
-  return rows(
-    dbPath,
-    `SELECT sub_law.submission_id, la.id AS law_assertion_id, la.proposition, la.dead_end,
-            sl.id AS statement_id, sl.pinpoint, sl.excerpt, sl.doubt, sl.source, sl.verification, ${settledOnColumn(dbPath)},
-            ${excerptSpeakerColumn(dbPath)}, ${linkedProvisionsColumn(dbPath)},
-            auth.id AS authority_id,
-            auth.style_of_cause_or_title AS authority_title, auth.citation AS authority_citation, auth.treatment,
-            auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
-     FROM submission_law sub_law
-     JOIN law_assertions la ON la.id = sub_law.law_assertion_id
-     LEFT JOIN statements_of_law sl ON sl.law_assertion_id = la.id
-     LEFT JOIN authorities auth ON auth.id = sl.authority_id
-     WHERE sub_law.submission_id IN (${placeholders})
-     ORDER BY la.id, sl.id`,
-    submissionIds
-  );
-}
-function fetchSubmissionFacts(dbPath, submissionIds) {
-  if (submissionIds.length === 0) return [];
-  const placeholders = submissionIds.map(() => "?").join(",");
-  return rows(
-    dbPath,
-    `SELECT sf.submission_id, f.id AS fact_id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}
-     FROM submission_facts sf
-     JOIN facts f ON f.id = sf.fact_id
-     LEFT JOIN documents cr ON cr.id = f.court_record
-     WHERE sf.submission_id IN (${placeholders})
-     ORDER BY f.id`,
-    submissionIds
-  );
-}
-function fetchFactStatements(dbPath, factIds) {
-  if (factIds.length === 0) return [];
-  const placeholders = factIds.map(() => "?").join(",");
-  return rows(
-    dbPath,
-    `SELECT sof.fact_id, sof.id AS statement_id, sof.instrument AS instrument_id,
-            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
-            doc.instrument AS instrument_kind, doc.execution AS instrument_execution,
-            sof.exhibit_id, sof.exhibit_excerpt, sof.exhibit_pinpoint, sof.pinpoint, sof.excerpt, sof.interviewed, sof.purpose, sof.doubt
-     FROM statements_of_fact sof
-     JOIN witnesses w ON w.id = sof.witness_id
-     LEFT JOIN documents doc ON doc.id = sof.instrument
-     WHERE sof.fact_id IN (${placeholders})
-     ORDER BY sof.id`,
-    factIds
-  );
-}
-function fetchDeployedIds(dbPath, filingId, document2) {
-  return {
-    orderIds: new Set(
-      rows(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ? AND document = ?`, [filingId, document2]).map(
-        (r3) => r3.order_sought_id
-      )
-    ),
-    submissionIds: new Set(
-      rows(
-        dbPath,
-        `SELECT fs.submission_id FROM filing_submissions fs
-         JOIN submissions s ON s.id = fs.submission_id
-         WHERE fs.filing_id = ? AND fs.document = ? AND s.killed_on IS NULL`,
-        [filingId, document2]
-      ).map((r3) => r3.submission_id)
-    ),
-    factIds: new Set(
-      rows(dbPath, `SELECT fact_id FROM filing_facts WHERE filing_id = ? AND document = ?`, [filingId, document2]).map((r3) => r3.fact_id)
-    )
-  };
-}
-
-// src/submission/forms/exhibit-documents.ts
-function fetchDocumentLabels(dbPath, documentIds) {
-  if (documentIds.length === 0) return /* @__PURE__ */ new Map();
-  const placeholders = documentIds.map(() => "?").join(",");
-  const found2 = rows(dbPath, `SELECT id, label FROM documents WHERE id IN (${placeholders})`, documentIds);
-  return new Map(found2.map((d3) => [d3.id, d3.label]));
-}
-function fetchNotBestCopyMarkers(dbPath, proceedingId) {
-  return notBestCopyMarkers(
-    rows(dbPath, `SELECT id, label, is_best_copy FROM documents WHERE proceeding_id = ?`, [proceedingId])
-  );
-}
-function exhibitNumbersFromOrderedIds(documentIds) {
-  const map = /* @__PURE__ */ new Map();
-  documentIds.forEach((id, i3) => map.set(id, i3 + 1));
-  return map;
-}
-function fetchProceedingExhibitNumbers(dbPath, proceedingId) {
-  const ordered = rows(
-    dbPath,
-    `SELECT fd.document_id
-     FROM filing_documents fd
-     JOIN filings f ON f.id = fd.filing_id
-     WHERE f.proceeding_id = ?
-       AND f.kind = 'submissions_package'
-       AND fd.role != 'witness_statement'
-       AND NOT (f.retired_on IS NOT NULL AND f.filed_on IS NULL)
-     ORDER BY (f.filed_on IS NULL), f.filed_on, f.id, fd.ordinal`,
-    [proceedingId]
-  );
-  const seen = /* @__PURE__ */ new Set();
-  const firstOccurrence = [];
-  for (const r3 of ordered) {
-    if (seen.has(r3.document_id)) continue;
-    seen.add(r3.document_id);
-    firstOccurrence.push(r3.document_id);
-  }
-  return exhibitNumbersFromOrderedIds(firstOccurrence);
-}
-function exhibitNumbersForFiling(dbPath, filing, filingDocumentIds) {
-  return filing.kind === "submissions_package" ? fetchProceedingExhibitNumbers(dbPath, filing.proceeding_id) : exhibitNumbersFromOrderedIds(filingDocumentIds);
-}
-function fetchFilingDocuments(dbPath, filingId) {
-  return rows(
-    dbPath,
-    `SELECT fd.id, fd.document_id, fd.ordinal, fd.role, fd.provenance, d.label, d.document_date, d.description, d.file_path
-     FROM filing_documents fd
-     JOIN documents d ON d.id = fd.document_id
-     WHERE fd.filing_id = ? AND fd.role != 'witness_statement'
-     ORDER BY fd.ordinal`,
-    [filingId]
-  );
-}
-
-// src/submission/forms/review-state.ts
-function fetchReviewState(dbPath, proceedingId) {
-  const held2 = rhetoricHeld(dbPath);
-  const tables = Object.keys(REVIEW_SNAPSHOT_FIELDS).filter((t3) => held2 || t3 !== "rhetorical_paragraphs");
-  const scope = (t3) => t3 === "filing_prose" || t3 === "filing_orders" ? "filing_id IN (SELECT id FROM filings WHERE proceeding_id = ?)" : "proceeding_id = ?";
-  const noteHeld = treatmentNoteHeld(dbPath);
-  const current = rows(
-    dbPath,
-    tables.map((t3) => `SELECT '${t3}' AS entity, id AS entity_id, ${reviewSnapshotSql(t3, noteHeld)} AS snapshot FROM ${t3} WHERE ${scope(t3)}`).join(" UNION ALL "),
-    Array(tables.length).fill(proceedingId)
-  );
-  const approved = rows(
-    dbPath,
-    `SELECT entity, entity_id, snapshot FROM review_approvals ra
-     WHERE ra.id = (SELECT MAX(id) FROM review_approvals WHERE entity = ra.entity AND entity_id = ra.entity_id)`
-  );
-  return {
-    current: new Map(current.map((r3) => [reviewKey(r3.entity, r3.entity_id), r3.snapshot])),
-    approved: new Map(approved.map((r3) => [reviewKey(r3.entity, r3.entity_id), r3.snapshot]))
-  };
-}
-function reviewMarkerFor(review, inv, lineGlyphs, table2, id, item) {
-  if (review === void 0) return "";
-  const key = reviewKey(table2, id);
-  const current = review.current.get(key);
-  if (current === void 0) return "";
-  const approved = review.approved.get(key) ?? null;
-  const glyph2 = counselReviewMarker(lineGlyphs, current, approved);
-  if (glyph2 && inv) recordCriterionGlyphs(inv, glyph2, ["\u{1F9D0}"], { table: table2, id, item, ...approved === null ? {} : { changed: true } });
-  return glyph2;
-}
-function orderReviewMarkerFor(review, inv, lineGlyphs, order) {
-  const own = reviewMarkerFor(review, inv, lineGlyphs, "order_sought", order.id, order.wording);
-  const override2 = order.wording_override === null ? "" : reviewMarkerFor(review, inv, lineGlyphs, "filing_orders", order.pointer_id, order.wording);
-  return own || override2;
-}
-
-// src/submission/forms/statement-lines.ts
-function factStatementCitationLine(exhibitMap, labelMap, s3, prefix = "> ") {
-  const parts = [];
-  if (s3.instrument_id !== null) {
-    const instrumentLabel = labelMap.get(s3.instrument_id);
-    if (instrumentLabel !== void 0) parts.push(instrumentLabel);
-    if (s3.pinpoint) parts.push(s3.pinpoint);
-  } else if (s3.pinpoint) {
-    parts.push(s3.pinpoint);
-  }
-  if (s3.exhibit_id !== null) {
-    const num = exhibitMap.get(s3.exhibit_id);
-    const exhibitLabel = num !== void 0 ? `Ex. ${num}` : labelMap.get(s3.exhibit_id);
-    if (exhibitLabel !== void 0) parts.push(exhibitLabel);
-    if (s3.exhibit_pinpoint) parts.push(s3.exhibit_pinpoint);
-  }
-  return parts.length === 0 ? null : `${prefix}${parts.join(", ")}`;
-}
-function factStatementMarkers(s3, courtRecordLinked, admitted, copyMarker) {
-  if (isAdmittedGuard(courtRecordLinked, admitted)) return dedupeLineMarkers([doubtMarker(s3.doubt), copyMarker]);
-  return dedupeLineMarkers([
-    factExcerptMarker(s3),
-    exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint),
-    testimonyPinpointMarker(s3.instrument_id, s3.pinpoint),
-    statementOfFactMarkers({
-      interviewed: s3.interviewed,
-      instrument_id: s3.instrument_id,
-      instrument_kind: s3.instrument_kind,
-      instrument_execution: s3.instrument_execution,
-      fact_court_record_linked: courtRecordLinked,
-      fact_admitted_by_all_opposing: admitted
-    }),
-    doubtMarker(s3.doubt),
-    copyMarker
-  ]);
-}
-function pushStatementLines(lines2, excerpt, citationLine, markers, tag, id) {
-  lines2.push("");
-  if (excerpt) {
-    lines2.push("   ```");
-    for (const l3 of excerpt.split("\n")) lines2.push(l3 ? `   ${l3}` : "");
-    lines2.push("   ```");
-  }
-  if (citationLine) lines2.push(`   ${citationLine}`);
-  const idComment = `<!-- ${tag} ${id} -->`;
-  lines2.push(`   ${[markers, idComment].filter(Boolean).join(" ")}`);
-}
-
-// src/submission/forms/submission-groups.ts
-function groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGlyphs, suppressedFactIds = /* @__PURE__ */ new Set()) {
-  const statementsByFact = /* @__PURE__ */ new Map();
-  for (const s3 of statementRows) {
-    const list2 = statementsByFact.get(s3.fact_id) ?? [];
-    list2.push(s3);
-    statementsByFact.set(s3.fact_id, list2);
-  }
-  const result = /* @__PURE__ */ new Map();
-  for (const f3 of factRows) {
-    const list2 = result.get(f3.submission_id) ?? [];
-    list2.push({
-      factId: f3.fact_id,
-      postulate: f3.postulate,
-      courtRecord: f3.court_record,
-      courtRecordPinpoint: f3.court_record_pinpoint,
-      courtRecordExecution: f3.court_record_execution,
-      courtRecordExhibitLetters: f3.court_record_exhibit_letters,
-      admitted: admittedFactIds.has(f3.fact_id),
-      spentAdmissionGlyphs: spentGlyphs.get(f3.fact_id) ?? "",
-      witnessSuppressed: suppressedFactIds.has(f3.fact_id),
-      statements: statementsByFact.get(f3.fact_id) ?? []
-    });
-    result.set(f3.submission_id, list2);
-  }
-  return result;
-}
-function groupSubmissionLaw(lawRows) {
-  const bySubmission = /* @__PURE__ */ new Map();
-  for (const row2 of lawRows) {
-    let subMap = bySubmission.get(row2.submission_id);
-    if (!subMap) {
-      subMap = /* @__PURE__ */ new Map();
-      bySubmission.set(row2.submission_id, subMap);
-    }
-    let group = subMap.get(row2.law_assertion_id);
-    if (!group) {
-      group = { lawAssertionId: row2.law_assertion_id, proposition: row2.proposition, deadEnd: row2.dead_end, statements: [] };
-      subMap.set(row2.law_assertion_id, group);
-    }
-    if (row2.statement_id !== null) group.statements.push(row2);
-  }
-  const result = /* @__PURE__ */ new Map();
-  for (const [subId, subMap] of bySubmission) result.set(subId, [...subMap.values()]);
-  return result;
-}
-
-// src/submission/forms/brief-only-cap.ts
-var authorityNotKilled = (s3) => s3.authority_killed_on === null;
-var authorityNotOverruled = (s3) => s3.treatment !== "overruled";
-var countsAsSupport = (s3) => s3.verification === "verified" || s3.verification === "settled";
-var notFailed = (s3) => s3.verification !== "failed";
-var passesBriefOnlyCap = (s3) => countsAsSupport(s3) && authorityNotKilled(s3) && authorityNotOverruled(s3);
-var BRIEF_ONLY_CAP_SQL = "(a.killed_on IS NULL AND a.treatment IS NOT 'overruled' AND sl.verification IN ('verified', 'settled'))";
-
-// src/submission/forms/submission-paragraphs.ts
-function renderSubmissionParagraphs(submissionId, contention, startPara, facts, lawAssertions, exhibitMap, labelMap, copyMarkers, extraFirstParagraphMarker = "", renderedLawAssertions = /* @__PURE__ */ new Map(), opts = {}) {
-  const prefix = opts.paragraphPrefix ?? "";
-  const inv = opts.inventory;
-  const lines2 = [];
-  let para2 = startPara;
-  const submissionTrace = `<!-- submission_id ${submissionId} -->`;
-  const factParagraphs = opts.factParagraphs;
-  const factualBasis = facts.length === 0 && !opts.noFactsNeededOn ? factualBasisMarker(false) : "";
-  const ordinaryCosts = ordinaryCostsSubmission(contention, JSON.parse(opts.servedOrderWordings ?? "[]"));
-  const propositionNeeded = lawAssertions.length === 0 && !opts.noLawNeededOn && !ordinaryCosts ? propositionNeededMarker(false) : "";
-  const contentionMarker = dedupeLineMarkers([factualBasis, propositionNeeded, extraFirstParagraphMarker]);
-  if (inv) recordGlyphs(inv, factualBasis, ["\u{1F9FE}"], { table: "submissions", id: submissionId, item: contention });
-  if (inv) recordGlyphs(inv, propositionNeeded, ["\u{1F4DA}"], { table: "submissions", id: submissionId, item: contention });
-  const review1 = reviewMarkerFor(opts.review, inv, contentionMarker, "submissions", submissionId, contention);
-  const contentionLine = printMarkerSets([
-    dedupeLineMarkers(factParagraphs ? [propositionNeeded, review1] : [factualBasis, propositionNeeded, review1]),
-    extraFirstParagraphMarker
-  ]);
-  const noFactsTag = facts.length === 0 && opts.noFactsNeededOn ? ` (no stated fact needed, per counsel ${opts.noFactsNeededOn})` : "";
-  const noLawTag = lawAssertions.length === 0 && opts.noLawNeededOn ? ` (no stated law needed, per counsel ${opts.noLawNeededOn})` : "";
-  const unplacedFacts = factParagraphs ? facts.filter((f3) => !factParagraphs.has(f3.factId)) : [];
-  const printedFacts = !factParagraphs ? facts : opts.printUnplacedFacts ? unplacedFacts : [];
-  const refNumbers = factParagraphs ? facts.filter((f3) => factParagraphs.has(f3.factId)).map((f3) => factParagraphs.get(f3.factId)).sort((a3, b3) => a3 - b3) : [];
-  const refs = [
-    ...refNumbers.length > 0 ? [refNumbers.join(", ")] : [],
-    ...opts.printUnplacedFacts ? [] : unplacedFacts.map((f3) => `NOT PLACED: fact ${f3.factId} ${JSON.stringify(f3.postulate)}`)
-  ];
-  const factRefComment = !factParagraphs ? "" : refs.length > 0 ? ` <!-- supporting fact paragraphs: ${refs.join("; ")} -->` : factualBasis ? ` ${factualBasis}<!-- supporting fact paragraphs:  NONE -->` : "";
-  para2 += 1;
-  lines2.push("");
-  lines2.push(`${prefix}${para2}. ${contention}${noFactsTag}${noLawTag}${contentionLine ? ` ${contentionLine}` : ""} ${submissionTrace}${factRefComment}`);
-  for (const f3 of printedFacts) {
-    const courtRecordLinked = f3.courtRecord !== null;
-    const courtRecordPin = courtRecordPinpointMarker(f3.courtRecord, f3.courtRecordPinpoint, f3.courtRecordExecution, f3.courtRecordExhibitLetters);
-    const witnessMarker = noWitnessMarker(courtRecordLinked, f3.statements.length > 0, f3.admitted, f3.spentAdmissionGlyphs);
-    const marker = dedupeLineMarkers([suppressMarker(witnessMarker, f3.witnessSuppressed), courtRecordPin]);
-    if (inv) recordGlyphs(inv, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.factId, item: f3.postulate });
-    if (inv) recordCriterionGlyphs(inv, witnessMarker, ["\u{1F464}"], { table: "facts", id: f3.factId, item: f3.postulate, ...f3.witnessSuppressed ? { suppressed: true } : {} });
-    const factReview = reviewMarkerFor(opts.review, inv, marker, "facts", f3.factId, f3.postulate);
-    const factLine = printMarkerSets([dedupeLineMarkers([marker, factReview])]);
-    const courtRecordCite = courtRecordCitation(f3.courtRecord, f3.courtRecordPinpoint);
-    para2 += 1;
-    lines2.push("");
-    lines2.push(`${prefix}${para2}. ${f3.postulate}${courtRecordCite ? ` ${courtRecordCite}` : ""}${factLine ? ` ${factLine}` : ""} <!-- fact_id ${f3.factId} -->`);
-    for (const s3 of f3.statements) {
-      if (s3.purpose === "impeachment") continue;
-      const citationLine = factStatementCitationLine(exhibitMap, labelMap, s3);
-      const copyMarker = s3.instrument_id !== null ? copyMarkers.get(s3.instrument_id) ?? "" : "";
-      const statementGlyphs = factStatementMarkers(s3, courtRecordLinked, f3.admitted, copyMarker);
-      if (inv) recordFactStatementGlyphs(inv, statementGlyphs, s3, f3.postulate);
-      const statementReview = reviewMarkerFor(opts.review, inv, statementGlyphs, "statements_of_fact", s3.statement_id, `${s3.witness_name}: ${f3.postulate}`);
-      pushStatementLines(
-        lines2,
-        s3.exhibit_id !== null ? s3.exhibit_excerpt : s3.excerpt,
-        citationLine,
-        printMarkerSets([dedupeLineMarkers([statementGlyphs, statementReview])]),
-        "statement_of_fact_id",
-        s3.statement_id
-      );
-    }
-  }
-  for (const la2 of lawAssertions) {
-    const priorPara = renderedLawAssertions.get(la2.lawAssertionId);
-    if (priorPara !== void 0) {
-      para2 += 1;
-      lines2.push("");
-      lines2.push(`${prefix}${para2}. As set out in paragraph ${prefix}${priorPara}, above, ${la2.proposition} <!-- law_assertion_id ${la2.lawAssertionId} -->`);
-      continue;
-    }
-    const live = la2.statements.filter(authorityNotKilled);
-    const counted2 = live.filter(authorityNotOverruled).filter(notFailed);
-    const verifiedCounted = counted2.filter(countsAsSupport);
-    const printStatements = opts.includeLeadStatements ? la2.statements : verifiedCounted;
-    const bare2 = doctrinalSlotMarker({ dead_end: la2.deadEnd, countedStatements: counted2.length, verifiedStatements: verifiedCounted.length });
-    const rung = sourceRungMarker((verifiedCounted.length > 0 ? verifiedCounted : counted2).map((s3) => s3.source));
-    const overruled = live.some((s3) => s3.treatment === "overruled") ? treatmentMarker("overruled") : "";
-    const doctrinal = bare2 === "\u{1F6A7}" ? bare2 : bare2 === "\u{1F4D6}" ? dedupeLineMarkers([overruled, bare2]) : dedupeLineMarkers([overruled, bare2, rung]);
-    const scrutinyFailed = live.some((s3) => s3.verification === "failed");
-    if (inv) recordGlyphs(inv, doctrinal.replaceAll("\u{1F3C5}", ""), scrutinyFailed ? ["\u{1F949}", "\u{1F948}"] : ["\u{1F4D6}", "\u{1F949}", "\u{1F948}"], { table: "law_assertions", id: la2.lawAssertionId, item: la2.proposition });
-    if (inv) recordCriterionGlyphs(inv, doctrinal, scrutinyFailed ? ["\u{1F6A7}", "\u{1F52C}", "\u{1F3C5}", "\u{1F4D6}"] : ["\u{1F6A7}", "\u{1F52C}", "\u{1F3C5}"], { table: "law_assertions", id: la2.lawAssertionId, item: la2.proposition, instance: "proposition" });
-    const propositionReview = reviewMarkerFor(opts.review, inv, doctrinal, "law_assertions", la2.lawAssertionId, la2.proposition);
-    const propositionLine = printMarkerSets([dedupeLineMarkers([doctrinal, propositionReview])]);
-    const overruledMarkerPrinted = overruled !== "" && doctrinal.startsWith(overruled);
-    const overruledTag = overruledMarkerPrinted && !opts.includeLeadStatements ? ` ${overruledAuthorityTag(live)}` : "";
-    const failedTag = opts.includeLeadStatements ? "" : scrutinyFailedTag(live);
-    para2 += 1;
-    renderedLawAssertions.set(la2.lawAssertionId, para2);
-    lines2.push("");
-    lines2.push(`${prefix}${para2}. ${la2.proposition}${failedTag}${overruledTag}${propositionLine ? ` ${propositionLine}` : ""} <!-- law_assertion_id ${la2.lawAssertionId} -->`);
-    for (const s3 of printStatements) {
-      const statementGlyphs = lawStatementMarkers(s3, opts.scrutinyLive?.(la2.lawAssertionId) ?? true);
-      if (inv) recordLawStatementGlyphs(inv, statementGlyphs, { ...s3, statement_id: s3.statement_id });
-      const statementReview = reviewMarkerFor(opts.review, inv, statementGlyphs, "statements_of_law", s3.statement_id, lawItem(s3));
-      pushStatementLines(lines2, s3.excerpt, lawStatementCitationLine(s3), printMarkerSets([dedupeLineMarkers([statementGlyphs, statementReview])]), "statement_of_law_id", s3.statement_id);
-    }
-  }
-  return { lines: lines2, nextPara: para2 };
-}
-function overruledAuthorityTag(live) {
-  const names = /* @__PURE__ */ new Map();
-  for (const s3 of live) {
-    if (s3.treatment !== "overruled" || names.has(s3.authority_id)) continue;
-    const name = `${s3.authority_title ?? ""}${s3.authority_citation ? `, ${s3.authority_citation}` : ""}`;
-    names.set(s3.authority_id, name.replace(/\s+/g, " ").trim());
-  }
-  return `(overruled: ${[...names.values()].join("; ")})`;
-}
-function recordParagraph(ctx, submissionId, document2, startPara) {
-  if (!ctx.paragraphLedger.has(submissionId)) ctx.paragraphLedger.set(submissionId, { document: document2, para: startPara + 1 });
-}
-
-// src/submission/forms/orders-sought.ts
-function fetchOrdersSought(dbPath, filingId, document2) {
-  const orders = rows(
-    dbPath,
-    `SELECT o.id, o.wording, fo.wording_override, o.amount, o.template_key, o.template_values,
-            o.crossed_out_on, fo.ordinal AS filing_ordinal, fo.id AS pointer_id,
-            EXISTS(
-              SELECT 1 FROM order_sought_served_by sb
-              JOIN submissions s ON s.id = sb.submission_id
-              WHERE sb.order_sought_id = o.id AND s.killed_on IS NULL
-            ) AS has_served_by
-     FROM filing_orders fo
-     JOIN order_sought o ON o.id = fo.order_sought_id
-     WHERE fo.filing_id = ? AND fo.document = ?
-     ORDER BY fo.ordinal`,
-    [filingId, document2]
-  );
-  if (orders.length === 0) return [];
-  const ids = orders.map((o3) => o3.id);
-  const edgesByOrder = fetchJurisdictionEdges(dbPath, ids);
-  return orders.map((o3) => ({ ...o3, hasServedBy: o3.has_served_by === 1, requires: edgesByOrder.get(o3.id) ?? [] }));
-}
-function fetchJurisdictionEdges(dbPath, orderIds) {
-  const edgesByOrder = /* @__PURE__ */ new Map();
-  if (orderIds.length === 0) return edgesByOrder;
-  const placeholders = orderIds.map(() => "?").join(",");
-  const edges = rows(
-    dbPath,
-    `SELECT req.order_sought_id, req.basis_state, sl.id AS statement_id, sl.excerpt, sl.pinpoint, sl.source, sl.verification,
-            auth.treatment, auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, auth.killed_on AS authority_killed_on,
-            auth.id AS authority_id, auth.style_of_cause_or_title AS authority_title, auth.citation AS authority_citation
-     FROM order_sought_requires req
-     LEFT JOIN statements_of_law sl ON sl.id = req.excerpt_id
-     LEFT JOIN authorities auth ON auth.id = sl.authority_id
-     WHERE req.order_sought_id IN (${placeholders})`,
-    orderIds
-  );
-  for (const e3 of edges) {
-    const list2 = edgesByOrder.get(e3.order_sought_id) ?? [];
-    list2.push(e3);
-    edgesByOrder.set(e3.order_sought_id, list2);
-  }
-  return edgesByOrder;
-}
-
-// src/submission/forms/opposing-points.ts
-function fetchOpposingPoints(dbPath, proceedingId) {
-  return rows(
-    dbPath,
-    `SELECT op.id, op.component, op.pinpoint, op.verbatim_words, op.answered_by_submission_id,
-            s.contention AS answered_by_contention
-     FROM opposing_points op
-     LEFT JOIN submissions s ON s.id = op.answered_by_submission_id
-     WHERE op.proceeding_id = ?
-     ORDER BY op.ordinal`,
-    [proceedingId]
-  );
-}
-
-// src/submission/forms/admission-annotations.ts
-function fetchAdmissionStates(dbPath, whereClause, params) {
-  const inputRows = rows(
-    dbPath,
-    `SELECT
-       a.id,
-       a.fact_id,
-       a.party,
-       a.method,
-       a.instrument,
-       inst.served_on AS instrument_served_on,
-       a.instrument_pinpoint,
-       a.response_due,
-       a.response,
-       resp.document_date AS response_date,
-       a.response_pinpoint,
-       a.response_excerpt,
-       a.answer,
-       a.struck_on,
-       EXISTS(SELECT 1 FROM filing_documents fd WHERE fd.document_id = a.response) AS response_filing_selected,
-       EXISTS(
-         SELECT 1 FROM filing_documents fd1
-         WHERE fd1.document_id = a.instrument
-           AND EXISTS(SELECT 1 FROM filing_documents fd2 WHERE fd2.filing_id = fd1.filing_id AND fd2.role = 'affidavit')
-       ) AS instrument_and_service_selected,
-       EXISTS(
-         SELECT 1 FROM filings f
-         WHERE f.proceeding_id = a.proceeding_id AND f.kind = 'requisition_default_judgment'
-       ) AS default_judgment_requisition_exists
-     FROM admissions a
-     LEFT JOIN documents inst ON inst.id = a.instrument
-     LEFT JOIN documents resp ON resp.id = a.response
-     WHERE ${whereClause}`,
-    params
-  );
-  return inputRows.map((r3) => ({
-    id: r3.id,
-    factId: r3.fact_id,
-    partyId: r3.party,
-    input: {
-      method: r3.method,
-      instrument: r3.instrument,
-      instrumentServedOn: r3.instrument_served_on,
-      instrumentPinpoint: r3.instrument_pinpoint,
-      responseDue: r3.response_due,
-      response: r3.response,
-      responseDate: r3.response_date,
-      responsePinpoint: r3.response_pinpoint,
-      responseExcerpt: r3.response_excerpt,
-      answer: r3.answer,
-      struckOn: r3.struck_on,
-      responseFilingSelected: r3.response_filing_selected === 1,
-      instrumentAndServiceSelected: r3.instrument_and_service_selected === 1,
-      defaultJudgmentRequisitionExists: r3.default_judgment_requisition_exists === 1
-    }
-  }));
-}
-function fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today3) {
-  const spentGlyphByFact = /* @__PURE__ */ new Map();
-  if (factIds.length === 0) return { admittedFactIds: /* @__PURE__ */ new Set(), spentGlyphByFact, suppressedFactIds: /* @__PURE__ */ new Set() };
-  const placeholders = factIds.map(() => "?").join(",");
-  const byFact = /* @__PURE__ */ new Map();
-  const spentByFact = /* @__PURE__ */ new Map();
-  for (const r3 of fetchAdmissionStates(dbPath, `a.fact_id IN (${placeholders})`, factIds)) {
-    const state = admissionLadderState(r3.input, today3);
-    const role = admissionRole(state);
-    if (role === "tenders") {
-      const set = byFact.get(r3.factId) ?? /* @__PURE__ */ new Set();
-      set.add(r3.partyId);
-      byFact.set(r3.factId, set);
-    } else if (role === "spent") {
-      const list2 = spentByFact.get(r3.factId) ?? [];
-      list2.push(admissionRungMarker(state));
-      spentByFact.set(r3.factId, list2);
-    }
-  }
-  for (const [factId, glyphs] of spentByFact) spentGlyphByFact.set(factId, dedupeLineMarkers(glyphs));
-  const admittedFactIds = opposingIds.length === 0 ? /* @__PURE__ */ new Set() : new Set(factIds.filter((id) => admittedAgainstAllOpposing(byFact.get(id) ?? /* @__PURE__ */ new Set(), opposingIds)));
-  return { admittedFactIds, spentGlyphByFact, suppressedFactIds: suppressedWitnessFactIds(dbPath, factIds) };
-}
-function fetchFactAdmissionCoverage(dbPath, factIds, opposingIds, today3) {
-  return fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today3).admittedFactIds;
-}
-
-// src/submission/forms/components.ts
-var BLANK_UNDERLINE = "________";
-function frontmatterHeader(f3) {
-  const lists = (f3.lists ?? []).filter((l3) => l3.items.length > 0).flatMap((l3) => [`${l3.label}:`, ...l3.items.map((item) => `  - ${item}`)]);
-  return [
-    "---",
-    `Matter no: ${f3.matterNo}`,
-    `Matter Description: ${f3.matterDescription}`,
-    `Client Name: ${f3.clientName}`,
-    `Client no: ${f3.clientNo}`,
-    `Document Type: ${f3.documentType}`,
-    `Document Name: ${f3.documentName}`,
-    `Document Date: ${f3.documentDate}`,
-    `Venue: ${f3.venue}`,
-    `Proceeding File no: ${f3.proceedingFileNo}`,
-    `Revision: ${f3.revision}`,
-    `Rendered: ${f3.rendered}`,
-    ...lists,
-    "---"
-  ].join("\n");
-}
-function pluralizeRole(role, count2) {
-  if (count2 <= 1) return role;
-  return role.endsWith("s") ? role : `${role}s`;
-}
-function groupPartiesByRole(parties2) {
-  const sorted = [...parties2].sort((a3, b3) => a3.ordinal - b3.ordinal);
-  const groups = [];
-  for (const p3 of sorted) {
-    const last = groups[groups.length - 1];
-    if (last && last.role === p3.role) {
-      last.names.push(p3.name);
-    } else {
-      groups.push({ role: p3.role, names: [p3.name] });
-    }
-  }
-  return groups;
-}
-function formatNameList(names) {
-  if (names.length === 0) return "";
-  if (names.length === 1) return names[0];
-  if (names.length === 2) return `${names[0]} and ${names[1]}`;
-  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
-}
-function styleOfProceedingCaption(parties2, opts) {
-  const lines2 = [];
-  lines2.push("| | | |");
-  lines2.push("| :--- | :---: | ---: |");
-  const { heading } = opts;
-  if (heading.registry_label !== null) lines2.push(`| | | ${opts.registry ?? ""} ${heading.registry_label} |`);
-  if (heading.registry_label !== null || opts.fileNumber) lines2.push(`| | | ${heading.file_number_label} ${opts.fileNumber ?? ""} |`);
-  for (const line of [heading.caption_lines].flat()) lines2.push(`| | **${line}** | |`);
-  const groups = groupPartiesByRole(parties2);
-  groups.forEach((group, i3) => {
-    lines2.push(`| ${i3 === 0 ? "BETWEEN:" : "AND:"} | | |`);
-    lines2.push(`| | ${group.names.map((n3) => n3.toUpperCase()).join(" and ")} | |`);
-    lines2.push(`| | | *${pluralizeRole(group.role, group.names.length)}* |`);
-  });
-  if (opts.titleLine !== void 0) lines2.push(`| | **${opts.titleLine}** | |`);
-  return lines2.join("\n");
-}
-function signatureBlock(party, officerSigned) {
-  const lines2 = [];
-  lines2.push(`Date: ________________`);
-  if (party.counselName) {
-    lines2.push(`Signature of ${party.counselName}, lawyer for the ${party.role}, ${party.name}`);
-  } else {
-    lines2.push(`Signature of ${party.name}, ${party.role} (self-represented)`);
-  }
-  if (officerSigned) {
-    lines2.push("");
-    lines2.push("[ ] Party  [ ] Lawyer for party  [ ] Legal representative for party");
-  }
-  return lines2.join("\n");
-}
-function requisitionWrapper(f3) {
-  const lines2 = [];
-  lines2.push(f3.captionMarkdown);
-  lines2.push("");
-  lines2.push(`**Filed by:** ${f3.filedBy}`);
-  lines2.push("");
-  lines2.push(`**Required:** ${f3.required}`);
-  lines2.push("");
-  if (f3.checklistLeadIn) {
-    lines2.push(f3.checklistLeadIn);
-    lines2.push("");
-  }
-  f3.checklist.forEach((item, i3) => lines2.push(`${i3 + 1}. ${item}`));
-  return lines2.join("\n");
-}
-var STANDARD_MATERIAL_LINES = ["Pleadings filed in this proceeding", "Such further affidavits or filed court documents as this honourable court may allow"];
-function checkboxOrderBlock(rows4) {
-  const lines2 = [];
-  lines2.push("[ ] The order(s) set out in Part 1 of this notice were made in the terms requested in Part 1 of this notice.");
-  lines2.push("[ ] The order(s) set out in Part 1 of this notice were made with the following variations and additional terms:");
-  lines2.push("");
-  rows4.forEach((r3) => lines2.push(`- ${r3.text}${r3.marker ? ` ${r3.marker}` : ""}`));
-  return lines2.join("\n");
-}
-function buildLowerCourtRoleByRole(parties2) {
-  const valuesByRole = /* @__PURE__ */ new Map();
-  for (const p3 of parties2) {
-    const list2 = valuesByRole.get(p3.role) ?? [];
-    list2.push(p3.lower_court_role);
-    valuesByRole.set(p3.role, list2);
-  }
-  const result = {};
-  for (const [role, values] of valuesByRole) {
-    const first = values[0];
-    if (first !== null && values.every((v3) => v3 === first)) result[role] = first;
-  }
-  return result;
-}
-var CONTACT_COLUMNS = [
-  { column: "counsel_firm", missing: "firm" },
-  { column: "counsel_name", missing: "counsel" },
-  { column: "address_for_service", missing: "address for service" },
-  { column: "counsel_phone", missing: "telephone" },
-  { column: "counsel_email", missing: "email" }
-];
-function contactCells(c3, gapMarker2) {
-  const texts = [c3.counselFirm ?? gapMarker2, `Attn: ${c3.counselName ?? gapMarker2}`, c3.addressForService ?? gapMarker2, `Tel: ${c3.counselPhone ?? gapMarker2}`, c3.counselEmail ?? gapMarker2];
-  return CONTACT_COLUMNS.map((col, i3) => ({ ...col, text: texts[i3] }));
-}
-function bccaCoverPage(parties2, fields2) {
-  const lines2 = [];
-  lines2.push("| | | |");
-  lines2.push("| :--- | :---: | ---: |");
-  if (fields2.heading.registry_label !== null) {
-    lines2.push(`| | | ${fields2.registry ?? ""} ${fields2.heading.registry_label} |`);
-    lines2.push(`| | | ${fields2.heading.file_number_label} ${fields2.fileNumber ?? ""} |`);
-  }
-  lines2.push(`| | | ${fields2.recordLabel} |`);
-  lines2.push("| | **COURT OF APPEAL** | |");
-  if (fields2.onAppealFrom && fields2.onAppealFrom.judge && fields2.onAppealFrom.court && fields2.onAppealFrom.pronounced) {
-    lines2.push(
-      `| | ON APPEAL FROM the order of ${fields2.onAppealFrom.judge} of the ${fields2.onAppealFrom.court} pronounced on ${fields2.onAppealFrom.pronounced} | |`
-    );
-  }
-  const groups = groupPartiesByRole(parties2);
-  groups.forEach((group, i3) => {
-    lines2.push(`| ${i3 === 0 ? "BETWEEN:" : "AND:"} | | |`);
-    lines2.push(`| | ${group.names.map((n3) => n3.toUpperCase()).join(" and ")} | |`);
-    lines2.push(`| | | *${pluralizeRole(group.role, group.names.length)}* |`);
-    const lowerCourtRole = fields2.lowerCourtRoleByRole?.[group.role];
-    if (lowerCourtRole) lines2.push(`| | | *${lowerCourtRole}* |`);
-  });
-  if (fields2.accessRestrictions) {
-    for (const line of fields2.accessRestrictions.split("\n")) lines2.push(`| | ${line} | |`);
-  }
-  lines2.push(`| | **${fields2.titleLine}** | |`);
-  if (fields2.filingPartyPhrase) lines2.push(`| | ${fields2.filingPartyPhrase} | |`);
-  lines2.push("");
-  lines2.push(`| ${fields2.contacts.map((c3) => formatNameList(c3.names.map((n3) => n3.toUpperCase()))).join(" | ")} |`);
-  lines2.push(`| ${fields2.contacts.map(() => ":---").join(" | ")} |`);
-  const cells = fields2.contacts.map((c3) => contactCells(c3, fields2.gapMarker));
-  for (let row2 = 0; row2 < CONTACT_COLUMNS.length; row2++) lines2.push(`| ${cells.map((c3) => c3[row2].text).join(" | ")} |`);
-  lines2.push(`| ${fields2.contacts.map((c3) => `Counsel for the ${pluralizeRole(c3.role, c3.names.length)}`).join(" | ")} |`);
-  return lines2.join("\n");
-}
-function formatTimeEstimate(minutes) {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  const parts = [];
-  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
-  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
-  return parts.join(" ");
-}
-function pushExcerptBlockquote(lines2, excerpt, citationLine) {
-  if (!excerpt) return;
-  for (const line of excerpt.split("\n")) {
-    if (line.trim() === "") continue;
-    lines2.push(`> ${line}`);
-  }
-  if (citationLine) lines2.push(citationLine);
-}
-
-// src/submission/forms/vaniac-frontmatter.ts
-function frontmatterFor(documentType, proceeding, filing, revision, rendered, clientName, clientNo, matterNo, matterDescription) {
-  const fields2 = {
-    matterNo,
-    matterDescription,
-    clientName,
-    clientNo,
-    documentType,
-    documentName: filing.title,
-    documentDate: BLANK_UNDERLINE,
-    venue: proceeding.court_or_centre ?? captionHeadingFor(filing, proceeding).display_label,
-    proceedingFileNo: proceeding.file_number ?? "",
-    revision,
-    rendered
-  };
-  return frontmatterHeader(fields2);
-}
-
-// src/submission/forms/witness-statement-reads.ts
-function fetchWitnessStatements(dbPath, filingId) {
-  return rows(
-    dbPath,
-    `SELECT d.id, d.deponent AS witness_id, d.execution, d.signed_at, d.label, fd.ordinal,
-            w.name AS witness_name
-     FROM filing_documents fd
-     JOIN documents d ON d.id = fd.document_id
-     JOIN witnesses w ON w.id = d.deponent
-     WHERE fd.filing_id = ? AND fd.role = 'witness_statement'
-     ORDER BY fd.ordinal`,
-    [filingId]
-  );
-}
-function fetchStatementParagraphs(dbPath, documentId) {
-  return rows(
-    dbPath,
-    `SELECT id, ordinal, text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`,
-    [documentId]
-  );
-}
-function fetchParagraphFacts(dbPath, paragraphIds) {
-  if (paragraphIds.length === 0) return [];
-  const placeholders = paragraphIds.map(() => "?").join(",");
-  return rows(
-    dbPath,
-    `SELECT psof.statement_paragraph_id, sof.fact_id, psof.statement_of_fact_id
-     FROM paragraph_statements_of_fact psof
-     JOIN statements_of_fact sof ON sof.id = psof.statement_of_fact_id
-     WHERE psof.statement_paragraph_id IN (${placeholders})`,
-    paragraphIds
-  );
-}
-function fetchIncludedStatementsOfFactForWitness(dbPath, witnessId) {
-  return rows(
-    dbPath,
-    `SELECT sof.id, sof.fact_id, sof.interviewed, sof.pinpoint, sof.doubt,
-            sof.exhibit_id, sof.exhibit_pinpoint,
-            f.postulate, f.court_record AS fact_court_record
-     FROM statements_of_fact sof
-     JOIN facts f ON f.id = sof.fact_id
-     WHERE sof.witness_id = ? AND (sof.purpose IS NULL OR sof.purpose != 'impeachment')
-     ORDER BY sof.id`,
-    [witnessId]
-  );
-}
-function fetchDocumentsReliedOn(dbPath, statementDocumentId) {
-  return rows(
-    dbPath,
-    `SELECT DISTINCT d.id, d.label, d.document_date
-     FROM statement_paragraphs sp
-     JOIN paragraph_statements_of_fact psof ON psof.statement_paragraph_id = sp.id
-     JOIN statements_of_fact sof ON sof.id = psof.statement_of_fact_id
-     JOIN documents d ON d.id = sof.exhibit_id
-     WHERE sp.document_id = ? AND sof.exhibit_id IS NOT NULL
-     ORDER BY d.id`,
-    [statementDocumentId]
-  );
-}
-
-// src/submission/forms/render-witness-statements.ts
-function unlinkedFactMarkers(f3, admitted) {
-  const courtRecordLinked = f3.fact_court_record !== null;
-  if (isAdmittedGuard(courtRecordLinked, admitted)) return doubtMarker(f3.doubt);
-  return dedupeLineMarkers([
-    exhibitPinpointMarker(f3.exhibit_id, f3.exhibit_pinpoint),
-    statementOfFactMarkers({
-      interviewed: f3.interviewed,
-      instrument_id: null,
-      instrument_kind: null,
-      instrument_execution: null,
-      fact_court_record_linked: courtRecordLinked,
-      fact_admitted_by_all_opposing: admitted
-    }),
-    doubtMarker(f3.doubt)
-  ]);
-}
-function renderWitnessStatements(ctx) {
-  const statements = fetchWitnessStatements(ctx.dbPath, ctx.filing.id);
-  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-  const opposing = opposingPartyIds(ctx.parties);
-  const today3 = ctx.rendered.slice(0, 10);
-  const exhibitMap = exhibitNumbersForFiling(ctx.dbPath, ctx.filing, fetchFilingDocuments(ctx.dbPath, ctx.filing.id).map((d3) => d3.document_id));
-  return statements.map((s3) => {
-    const paragraphs = fetchStatementParagraphs(ctx.dbPath, s3.id);
-    const links = fetchParagraphFacts(
-      ctx.dbPath,
-      paragraphs.map((p3) => p3.id)
-    );
-    const factsByParagraph = /* @__PURE__ */ new Map();
-    for (const link2 of links) {
-      const list2 = factsByParagraph.get(link2.statement_paragraph_id) ?? [];
-      list2.push(link2.fact_id);
-      factsByParagraph.set(link2.statement_paragraph_id, list2);
-    }
-    const witnessFacts = fetchIncludedStatementsOfFactForWitness(ctx.dbPath, s3.witness_id);
-    const linkedSofIds = new Set(links.map((l3) => l3.statement_of_fact_id));
-    const unlinkedFacts = witnessFacts.filter((f3) => !linkedSofIds.has(f3.id));
-    const admittedFactIds = fetchFactAdmissionCoverage(
-      ctx.dbPath,
-      unlinkedFacts.map((f3) => f3.fact_id),
-      opposing,
-      today3
-    );
-    const lines2 = [];
-    lines2.push(
-      frontmatterFor("Witness_statement", ctx.proceeding, ctx.filing, ctx.revision, ctx.rendered, ctx.clientName, ctx.clientNo, ctx.matterNo, ctx.matterDescription)
-    );
-    lines2.push("");
-    lines2.push(
-      styleOfProceedingCaption(captionParties2, {
-        heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-        registry: ctx.proceeding.registry,
-        fileNumber: ctx.proceeding.file_number,
-        titleLine: `WITNESS STATEMENT OF ${s3.witness_name.toUpperCase()}`
-      })
-    );
-    lines2.push("");
-    lines2.push(`I, ${s3.witness_name}, state as follows:`);
-    lines2.push("");
-    paragraphs.forEach((p3, i3) => {
-      const factIds = factsByParagraph.get(p3.id) ?? [];
-      const tag = factIds.length > 0 ? ` [facts ${factIds.map((id) => `F${id}`).join(", ")}]` : ` ${gapMarker("gap")} [GAP -- no fact linked]`;
-      recordCriterionGlyphs(ctx.inventory, tag, ["\u{1F9E9}"], { table: "statement_paragraphs", id: p3.id, item: `${s3.witness_name}'s witness statement, paragraph ${i3 + 1}: linked fact` });
-      lines2.push(`${i3 + 1}. ${p3.text}${tag} <!-- statement_paragraph ${i3 + 1} -->`);
-    });
-    if (witnessFacts.length === 0) {
-      const line = `${gapMarker("gap")} no facts attributed to this witness`;
-      recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "witnesses", id: s3.witness_id, item: `${s3.witness_name}'s witness statement: attributed facts` });
-      lines2.push(line);
-    }
-    lines2.push("");
-    const reliedOn2 = fetchDocumentsReliedOn(ctx.dbPath, s3.id);
-    if (reliedOn2.length > 0) {
-      lines2.push("**Documents relied on**");
-      lines2.push("");
-      for (const d3 of reliedOn2) {
-        const exhibitNo = exhibitMap.get(d3.id);
-        const cite = exhibitNo !== void 0 ? `Ex. ${exhibitNo}` : d3.label;
-        const dated = d3.document_date ? `, dated ${d3.document_date}` : "";
-        lines2.push(`- ${cite} \u2014 ${d3.label}${dated} <!-- document_id ${d3.id} -->`);
-      }
-      lines2.push("");
-    }
-    const swearMarker = s3.execution === null && links.length > 0 ? "\u{1F58B}\uFE0F" : "";
-    recordGlyphs(ctx.inventory, swearMarker, ["\u{1F58B}\uFE0F"], { table: "documents", id: s3.id, item: s3.label, witness_id: s3.witness_id });
-    lines2.push(`I make this statement believing its contents to be true. ${swearMarker}`.trim());
-    lines2.push("");
-    lines2.push("________________________________");
-    lines2.push(s3.witness_name);
-    lines2.push("");
-    lines2.push(`Signed at: ${s3.signed_at ?? "________________"}`);
-    lines2.push(`Date: ${s3.execution ?? "________________"}`);
-    if (unlinkedFacts.length > 0) {
-      lines2.push("");
-      lines2.push("## Facts attributed to this witness, not yet in this statement");
-      lines2.push("");
-      for (const f3 of unlinkedFacts) {
-        const rung = unlinkedFactMarkers(f3, admittedFactIds.has(f3.fact_id));
-        recordFactStatementGlyphs(
-          ctx.inventory,
-          rung,
-          { statement_id: f3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: null, instrument_label: null },
-          f3.postulate
-        );
-        const printed = printMarkerSets([rung]);
-        lines2.push(`- ${f3.postulate}${printed ? ` ${printed}` : ""} <!-- statement_of_fact_id ${f3.id} -->`);
-      }
-    }
-    return { witnessName: s3.witness_name, markdown: lines2.join("\n").trimEnd() + "\n" };
-  });
-}
-
-// src/submission/forms/document-tenders.ts
-function fetchExhibitTenders(dbPath, documentIds) {
-  if (documentIds.length === 0) return [];
-  const placeholders = documentIds.map(() => "?").join(",");
-  return rows(
-    dbPath,
-    `SELECT sof.exhibit_id, 'witness' AS tender_kind, w.name AS name, inst.label AS instrument_label, sof.purpose, NULL AS admission_id, NULL AS fact_postulate, 0 AS tender_rank, sof.id AS tender_ord
-     FROM statements_of_fact sof
-     JOIN witnesses w ON w.id = sof.witness_id
-     LEFT JOIN documents inst ON inst.id = sof.instrument
-     WHERE sof.exhibit_id IN (${placeholders})
-     UNION ALL
-     SELECT a.exhibit AS exhibit_id, 'admission' AS tender_kind, p.name AS name, NULL AS instrument_label, NULL AS purpose, a.id AS admission_id, f.postulate AS fact_postulate, 1 AS tender_rank, a.id AS tender_ord
-     FROM admissions a
-     JOIN parties p ON p.id = a.party
-     JOIN facts f ON f.id = a.fact_id
-     WHERE a.exhibit IN (${placeholders})
-     ORDER BY tender_rank, tender_ord`,
-    [...documentIds, ...documentIds]
-  );
-}
-function tenderedByCitation(t3, admissionGlyphs) {
-  if (t3.tender_kind === "admission") {
-    const glyphs = t3.admission_id !== null ? admissionGlyphs.get(t3.admission_id) : void 0;
-    return `${t3.name} (admission${glyphs ? ` ${printMarkerSets([glyphs])}` : ""})`;
-  }
-  return t3.instrument_label ? `${t3.name} (${t3.instrument_label})` : t3.name;
-}
-function recordAdmissionGlyphs(dbPath, inventory, admissionRows, states, glyphs, tenders) {
-  const enterIdOf = (r3) => states.get(r3.id)?.base === "admitted" ? r3.input.response : r3.input.instrument;
-  const documentIds = [...new Set(admissionRows.flatMap((r3) => [r3.input.instrument, enterIdOf(r3)]).filter((id) => id !== null))];
-  const labels = fetchDocumentLabels(dbPath, documentIds);
-  const tenderByAdmission = new Map(tenders.filter((t3) => t3.admission_id !== null).map((t3) => [t3.admission_id, t3]));
-  for (const r3 of admissionRows) {
-    const printed = glyphs.get(r3.id) ?? "";
-    if (!printed) continue;
-    if (r3.input.instrument !== null) {
-      recordGlyphs(inventory, printed, ["\u{1F3BE}"], { table: "documents", id: r3.input.instrument, item: labels.get(r3.input.instrument) ?? "" });
-    }
-    const enterId = enterIdOf(r3);
-    if (enterId !== null) {
-      recordGlyphs(inventory, printed, ["\u{1F579}\uFE0F"], { table: "documents", id: enterId, item: labels.get(enterId) ?? "" });
-    }
-    const tender = tenderByAdmission.get(r3.id);
-    recordGlyphs(inventory, printed, ["\u{1F4D1}", "\u{1F4AC}", "\u{1F4CC}", "\u{1F9F7}"], {
-      table: "admissions",
-      id: r3.id,
-      item: tender ? `${tender.name}: ${tender.fact_postulate ?? ""}` : ""
-    });
-  }
-}
-function fetchDocumentTenderStatus(dbPath, documentIds, today3, inventory) {
-  const result = /* @__PURE__ */ new Map();
-  for (const id of documentIds) result.set(id, { hasTender: false, spentGlyphs: "", tenderedBy: "" });
-  const tenders = fetchExhibitTenders(dbPath, documentIds);
-  const tendersByDoc = /* @__PURE__ */ new Map();
-  for (const t3 of tenders) {
-    const list2 = tendersByDoc.get(t3.exhibit_id) ?? [];
-    list2.push(t3);
-    tendersByDoc.set(t3.exhibit_id, list2);
-  }
-  const admissionIds = [...new Set(tenders.filter((t3) => t3.admission_id !== null).map((t3) => t3.admission_id))];
-  const states = /* @__PURE__ */ new Map();
-  const glyphs = /* @__PURE__ */ new Map();
-  const admissionRows = [];
-  if (admissionIds.length > 0) {
-    const placeholders = admissionIds.map(() => "?").join(",");
-    for (const r3 of fetchAdmissionStates(dbPath, `a.id IN (${placeholders})`, admissionIds)) {
-      const state = admissionLadderState(r3.input, today3);
-      states.set(r3.id, state);
-      glyphs.set(r3.id, dedupeLineMarkers([admissionRungMarker(state), admissionCaptureMarkers(r3.input, state)]));
-      admissionRows.push(r3);
-    }
-  }
-  if (inventory && admissionRows.length > 0) recordAdmissionGlyphs(dbPath, inventory, admissionRows, states, glyphs, tenders);
-  const roleOf = (t3) => t3.tender_kind === "witness" ? "tenders" : admissionRole(states.get(t3.admission_id) ?? { state: "not_sought" });
-  for (const id of documentIds) {
-    const docTenders = tendersByDoc.get(id) ?? [];
-    const hasTender = docTenders.some((t3) => roleOf(t3) === "tenders");
-    const spentGlyphs = dedupeLineMarkers(
-      docTenders.filter((t3) => roleOf(t3) === "spent" && t3.admission_id !== null).map((t3) => {
-        const state = states.get(t3.admission_id);
-        if (!state) return "";
-        return hasTender ? "" : admissionRungMarker(state);
-      })
-    );
-    const tenderedBy = docTenders.filter((t3) => t3.purpose !== "impeachment" && roleOf(t3) !== "spent").map((t3) => tenderedByCitation(t3, glyphs)).join("; ");
-    result.set(id, { hasTender, spentGlyphs, tenderedBy });
-  }
-  return result;
-}
-
-// src/submission/forms/render-evidence-index.ts
-function renderEvidenceIndex(ctx) {
-  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const exhibitMap = exhibitNumbersForFiling(ctx.dbPath, ctx.filing, docs.map((d3) => d3.document_id));
-  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
-  const tenderStatus = fetchDocumentTenderStatus(ctx.dbPath, docs.map((d3) => d3.document_id), ctx.rendered.slice(0, 10), ctx.inventory);
-  const lines2 = [];
-  lines2.push(frontmatterFor("Evidence_index", ctx.proceeding, ctx.filing, ctx.revision, ctx.rendered, ctx.clientName, ctx.clientNo, ctx.matterNo, ctx.matterDescription));
-  lines2.push("");
-  lines2.push("| Ex. | Date | Description | Tendered by |");
-  lines2.push("| --- | --- | --- | --- |");
-  docs.forEach((d3) => {
-    const date3 = d3.document_date ?? "undated";
-    const status3 = tenderStatus.get(d3.document_id);
-    const eligible = isExhibitTenderRole(d3.role);
-    const marker = eligible ? unsponsoredExhibitMarker(status3.hasTender) : "";
-    const spentGlyphs = eligible ? status3.spentGlyphs : "";
-    const gap2 = d3.description ? "" : ` ${gapMarker("not_recorded")}`;
-    recordGlyphs(ctx.inventory, gap2.trim(), ["\u{1F3F7}\uFE0F"], { table: "documents", id: d3.document_id, item: d3.label });
-    const copyMarker = copyMarkers.get(d3.document_id) ?? "";
-    const markers = printMarkerSets([[gap2.trim(), spentGlyphs, marker, copyMarker].filter(Boolean).join(" ")]);
-    lines2.push(
-      `| Ex. ${exhibitMap.get(d3.document_id)} | ${date3} | ${d3.description ?? "(not recorded)"}${markers ? ` ${markers}` : ""} | ${status3.tenderedBy} | <!-- document_id ${d3.document_id} -->`
-    );
-  });
-  if (docs.some((d3) => d3.file_path)) {
-    lines2.push("");
-    lines2.push("## Source trace");
-    lines2.push("");
-    docs.forEach((d3) => {
-      if (!d3.file_path) return;
-      lines2.push(`- Ex. ${exhibitMap.get(d3.document_id)} \u2014 ${d3.file_path} <!-- document_id ${d3.document_id} -->`);
-    });
-  }
-  return lines2.join("\n").trimEnd() + "\n";
-}
-
 // src/submission/forms/proposal-inventory.ts
 var NON_GENERATING_GLYPHS = ["\u{1F9E9}", "\u{1F575}\uFE0F", "\u2B1C", "\u{1F464}", "\u{1F6A7}", "\u{1F443}", "\u21A9\uFE0F", "\u{1F3C6}", "\u{1F9D0}", "\u{1F3C5}", "\u{1F52C}", "\u{1F4D6}", "\u{1F4C7}"];
 function proposalKey(e3) {
@@ -100085,6 +99058,526 @@ function withNoteUpSteps(proposals, inventory, pinpoints, contentions) {
   });
 }
 
+// src/submission/forms/exhibit-documents.ts
+function fetchDocumentLabels(dbPath, documentIds) {
+  if (documentIds.length === 0) return /* @__PURE__ */ new Map();
+  const placeholders = documentIds.map(() => "?").join(",");
+  const found2 = rows(dbPath, `SELECT id, label FROM documents WHERE id IN (${placeholders})`, documentIds);
+  return new Map(found2.map((d3) => [d3.id, d3.label]));
+}
+function fetchNotBestCopyMarkers(dbPath, proceedingId) {
+  return notBestCopyMarkers(
+    rows(dbPath, `SELECT id, label, is_best_copy FROM documents WHERE proceeding_id = ?`, [proceedingId])
+  );
+}
+function exhibitNumbersFromOrderedIds(documentIds) {
+  const map = /* @__PURE__ */ new Map();
+  documentIds.forEach((id, i3) => map.set(id, i3 + 1));
+  return map;
+}
+function fetchProceedingExhibitNumbers(dbPath, proceedingId) {
+  const ordered = rows(
+    dbPath,
+    `SELECT fd.document_id
+     FROM filing_documents fd
+     JOIN filings f ON f.id = fd.filing_id
+     WHERE f.proceeding_id = ?
+       AND f.kind = 'submissions_package'
+       AND fd.role != 'witness_statement'
+       AND NOT (f.retired_on IS NOT NULL AND f.filed_on IS NULL)
+     ORDER BY (f.filed_on IS NULL), f.filed_on, f.id, fd.ordinal`,
+    [proceedingId]
+  );
+  const seen = /* @__PURE__ */ new Set();
+  const firstOccurrence = [];
+  for (const r3 of ordered) {
+    if (seen.has(r3.document_id)) continue;
+    seen.add(r3.document_id);
+    firstOccurrence.push(r3.document_id);
+  }
+  return exhibitNumbersFromOrderedIds(firstOccurrence);
+}
+function exhibitNumbersForFiling(dbPath, filing, filingDocumentIds) {
+  return filing.kind === "submissions_package" ? fetchProceedingExhibitNumbers(dbPath, filing.proceeding_id) : exhibitNumbersFromOrderedIds(filingDocumentIds);
+}
+function fetchFilingDocuments(dbPath, filingId) {
+  return rows(
+    dbPath,
+    `SELECT fd.id, fd.document_id, fd.ordinal, fd.role, fd.provenance, d.label, d.document_date, d.description, d.file_path
+     FROM filing_documents fd
+     JOIN documents d ON d.id = fd.document_id
+     WHERE fd.filing_id = ? AND fd.role != 'witness_statement'
+     ORDER BY fd.ordinal`,
+    [filingId]
+  );
+}
+
+// src/submission/forms/admission-annotations.ts
+function fetchAdmissionStates(dbPath, whereClause, params) {
+  const inputRows = rows(
+    dbPath,
+    `SELECT
+       a.id,
+       a.fact_id,
+       a.party,
+       a.method,
+       a.instrument,
+       inst.served_on AS instrument_served_on,
+       a.instrument_pinpoint,
+       a.response_due,
+       a.response,
+       resp.document_date AS response_date,
+       a.response_pinpoint,
+       a.response_excerpt,
+       a.answer,
+       a.struck_on,
+       EXISTS(SELECT 1 FROM filing_documents fd WHERE fd.document_id = a.response) AS response_filing_selected,
+       EXISTS(
+         SELECT 1 FROM filing_documents fd1
+         WHERE fd1.document_id = a.instrument
+           AND EXISTS(SELECT 1 FROM filing_documents fd2 WHERE fd2.filing_id = fd1.filing_id AND fd2.role = 'affidavit')
+       ) AS instrument_and_service_selected,
+       EXISTS(
+         SELECT 1 FROM filings f
+         WHERE f.proceeding_id = a.proceeding_id AND f.kind = 'requisition_default_judgment'
+       ) AS default_judgment_requisition_exists
+     FROM admissions a
+     LEFT JOIN documents inst ON inst.id = a.instrument
+     LEFT JOIN documents resp ON resp.id = a.response
+     WHERE ${whereClause}`,
+    params
+  );
+  return inputRows.map((r3) => ({
+    id: r3.id,
+    factId: r3.fact_id,
+    partyId: r3.party,
+    input: {
+      method: r3.method,
+      instrument: r3.instrument,
+      instrumentServedOn: r3.instrument_served_on,
+      instrumentPinpoint: r3.instrument_pinpoint,
+      responseDue: r3.response_due,
+      response: r3.response,
+      responseDate: r3.response_date,
+      responsePinpoint: r3.response_pinpoint,
+      responseExcerpt: r3.response_excerpt,
+      answer: r3.answer,
+      struckOn: r3.struck_on,
+      responseFilingSelected: r3.response_filing_selected === 1,
+      instrumentAndServiceSelected: r3.instrument_and_service_selected === 1,
+      defaultJudgmentRequisitionExists: r3.default_judgment_requisition_exists === 1
+    }
+  }));
+}
+function fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today3) {
+  const spentGlyphByFact = /* @__PURE__ */ new Map();
+  if (factIds.length === 0) return { admittedFactIds: /* @__PURE__ */ new Set(), spentGlyphByFact, suppressedFactIds: /* @__PURE__ */ new Set() };
+  const placeholders = factIds.map(() => "?").join(",");
+  const byFact = /* @__PURE__ */ new Map();
+  const spentByFact = /* @__PURE__ */ new Map();
+  for (const r3 of fetchAdmissionStates(dbPath, `a.fact_id IN (${placeholders})`, factIds)) {
+    const state = admissionLadderState(r3.input, today3);
+    const role = admissionRole(state);
+    if (role === "tenders") {
+      const set = byFact.get(r3.factId) ?? /* @__PURE__ */ new Set();
+      set.add(r3.partyId);
+      byFact.set(r3.factId, set);
+    } else if (role === "spent") {
+      const list2 = spentByFact.get(r3.factId) ?? [];
+      list2.push(admissionRungMarker(state));
+      spentByFact.set(r3.factId, list2);
+    }
+  }
+  for (const [factId, glyphs] of spentByFact) spentGlyphByFact.set(factId, dedupeLineMarkers(glyphs));
+  const admittedFactIds = opposingIds.length === 0 ? /* @__PURE__ */ new Set() : new Set(factIds.filter((id) => admittedAgainstAllOpposing(byFact.get(id) ?? /* @__PURE__ */ new Set(), opposingIds)));
+  return { admittedFactIds, spentGlyphByFact, suppressedFactIds: suppressedWitnessFactIds(dbPath, factIds) };
+}
+function fetchFactAdmissionCoverage(dbPath, factIds, opposingIds, today3) {
+  return fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today3).admittedFactIds;
+}
+
+// src/submission/forms/submission-reads.ts
+function fetchSubmissions(dbPath, filingId, document2) {
+  return rows(
+    dbPath,
+    `SELECT s.id, s.contention, fs.ordinal AS filing_ordinal, fs.id AS pointer_id, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()}
+     FROM filing_submissions fs
+     JOIN submissions s ON s.id = fs.submission_id
+     WHERE fs.filing_id = ? AND fs.document = ? AND s.killed_on IS NULL
+     ORDER BY fs.ordinal`,
+    [filingId, document2]
+  );
+}
+function fetchSubmissionLaw(dbPath, submissionIds) {
+  if (submissionIds.length === 0) return [];
+  const placeholders = submissionIds.map(() => "?").join(",");
+  return rows(
+    dbPath,
+    `SELECT sub_law.submission_id, la.id AS law_assertion_id, la.proposition, la.dead_end,
+            sl.id AS statement_id, sl.pinpoint, sl.excerpt, sl.doubt, sl.source, sl.verification, ${settledOnColumn(dbPath)},
+            ${excerptSpeakerColumn(dbPath)}, ${linkedProvisionsColumn(dbPath)},
+            auth.id AS authority_id,
+            auth.style_of_cause_or_title AS authority_title, auth.citation AS authority_citation, auth.treatment,
+            auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
+     FROM submission_law sub_law
+     JOIN law_assertions la ON la.id = sub_law.law_assertion_id
+     LEFT JOIN statements_of_law sl ON sl.law_assertion_id = la.id
+     LEFT JOIN authorities auth ON auth.id = sl.authority_id
+     WHERE sub_law.submission_id IN (${placeholders})
+     ORDER BY la.id, sl.id`,
+    submissionIds
+  );
+}
+function fetchSubmissionFacts(dbPath, submissionIds) {
+  if (submissionIds.length === 0) return [];
+  const placeholders = submissionIds.map(() => "?").join(",");
+  return rows(
+    dbPath,
+    `SELECT sf.submission_id, f.id AS fact_id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}
+     FROM submission_facts sf
+     JOIN facts f ON f.id = sf.fact_id
+     LEFT JOIN documents cr ON cr.id = f.court_record
+     WHERE sf.submission_id IN (${placeholders})
+     ORDER BY f.id`,
+    submissionIds
+  );
+}
+function fetchFactStatements(dbPath, factIds) {
+  if (factIds.length === 0) return [];
+  const placeholders = factIds.map(() => "?").join(",");
+  return rows(
+    dbPath,
+    `SELECT sof.fact_id, sof.id AS statement_id, sof.instrument AS instrument_id,
+            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
+            doc.instrument AS instrument_kind, doc.execution AS instrument_execution,
+            sof.exhibit_id, sof.exhibit_excerpt, sof.exhibit_pinpoint, sof.pinpoint, sof.excerpt, sof.interviewed, sof.purpose, sof.doubt
+     FROM statements_of_fact sof
+     JOIN witnesses w ON w.id = sof.witness_id
+     LEFT JOIN documents doc ON doc.id = sof.instrument
+     WHERE sof.fact_id IN (${placeholders})
+     ORDER BY sof.id`,
+    factIds
+  );
+}
+function fetchDeployedIds(dbPath, filingId, document2) {
+  return {
+    orderIds: new Set(
+      rows(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ? AND document = ?`, [filingId, document2]).map(
+        (r3) => r3.order_sought_id
+      )
+    ),
+    submissionIds: new Set(
+      rows(
+        dbPath,
+        `SELECT fs.submission_id FROM filing_submissions fs
+         JOIN submissions s ON s.id = fs.submission_id
+         WHERE fs.filing_id = ? AND fs.document = ? AND s.killed_on IS NULL`,
+        [filingId, document2]
+      ).map((r3) => r3.submission_id)
+    ),
+    factIds: new Set(
+      rows(dbPath, `SELECT fact_id FROM filing_facts WHERE filing_id = ? AND document = ?`, [filingId, document2]).map((r3) => r3.fact_id)
+    )
+  };
+}
+
+// src/submission/forms/orders-sought.ts
+function fetchOrdersSought(dbPath, filingId, document2) {
+  const orders = rows(
+    dbPath,
+    `SELECT o.id, o.wording, fo.wording_override, o.amount, o.template_key, o.template_values,
+            o.crossed_out_on, fo.ordinal AS filing_ordinal, fo.id AS pointer_id,
+            EXISTS(
+              SELECT 1 FROM order_sought_served_by sb
+              JOIN submissions s ON s.id = sb.submission_id
+              WHERE sb.order_sought_id = o.id AND s.killed_on IS NULL
+            ) AS has_served_by
+     FROM filing_orders fo
+     JOIN order_sought o ON o.id = fo.order_sought_id
+     WHERE fo.filing_id = ? AND fo.document = ?
+     ORDER BY fo.ordinal`,
+    [filingId, document2]
+  );
+  if (orders.length === 0) return [];
+  const ids = orders.map((o3) => o3.id);
+  const edgesByOrder = fetchJurisdictionEdges(dbPath, ids);
+  return orders.map((o3) => ({ ...o3, hasServedBy: o3.has_served_by === 1, requires: edgesByOrder.get(o3.id) ?? [] }));
+}
+function fetchJurisdictionEdges(dbPath, orderIds) {
+  const edgesByOrder = /* @__PURE__ */ new Map();
+  if (orderIds.length === 0) return edgesByOrder;
+  const placeholders = orderIds.map(() => "?").join(",");
+  const edges = rows(
+    dbPath,
+    `SELECT req.order_sought_id, req.basis_state, sl.id AS statement_id, sl.excerpt, sl.pinpoint, sl.source, sl.verification,
+            auth.treatment, auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, auth.killed_on AS authority_killed_on,
+            auth.id AS authority_id, auth.style_of_cause_or_title AS authority_title, auth.citation AS authority_citation
+     FROM order_sought_requires req
+     LEFT JOIN statements_of_law sl ON sl.id = req.excerpt_id
+     LEFT JOIN authorities auth ON auth.id = sl.authority_id
+     WHERE req.order_sought_id IN (${placeholders})`,
+    orderIds
+  );
+  for (const e3 of edges) {
+    const list2 = edgesByOrder.get(e3.order_sought_id) ?? [];
+    list2.push(e3);
+    edgesByOrder.set(e3.order_sought_id, list2);
+  }
+  return edgesByOrder;
+}
+
+// src/submission/forms/submission-groups.ts
+function groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGlyphs, suppressedFactIds = /* @__PURE__ */ new Set()) {
+  const statementsByFact = /* @__PURE__ */ new Map();
+  for (const s3 of statementRows) {
+    const list2 = statementsByFact.get(s3.fact_id) ?? [];
+    list2.push(s3);
+    statementsByFact.set(s3.fact_id, list2);
+  }
+  const result = /* @__PURE__ */ new Map();
+  for (const f3 of factRows) {
+    const list2 = result.get(f3.submission_id) ?? [];
+    list2.push({
+      factId: f3.fact_id,
+      postulate: f3.postulate,
+      courtRecord: f3.court_record,
+      courtRecordPinpoint: f3.court_record_pinpoint,
+      courtRecordExecution: f3.court_record_execution,
+      courtRecordExhibitLetters: f3.court_record_exhibit_letters,
+      admitted: admittedFactIds.has(f3.fact_id),
+      spentAdmissionGlyphs: spentGlyphs.get(f3.fact_id) ?? "",
+      witnessSuppressed: suppressedFactIds.has(f3.fact_id),
+      statements: statementsByFact.get(f3.fact_id) ?? []
+    });
+    result.set(f3.submission_id, list2);
+  }
+  return result;
+}
+function groupSubmissionLaw(lawRows) {
+  const bySubmission = /* @__PURE__ */ new Map();
+  for (const row2 of lawRows) {
+    let subMap = bySubmission.get(row2.submission_id);
+    if (!subMap) {
+      subMap = /* @__PURE__ */ new Map();
+      bySubmission.set(row2.submission_id, subMap);
+    }
+    let group = subMap.get(row2.law_assertion_id);
+    if (!group) {
+      group = { lawAssertionId: row2.law_assertion_id, proposition: row2.proposition, deadEnd: row2.dead_end, statements: [] };
+      subMap.set(row2.law_assertion_id, group);
+    }
+    if (row2.statement_id !== null) group.statements.push(row2);
+  }
+  const result = /* @__PURE__ */ new Map();
+  for (const [subId, subMap] of bySubmission) result.set(subId, [...subMap.values()]);
+  return result;
+}
+
+// src/submission/forms/review-state.ts
+function fetchReviewState(dbPath, proceedingId) {
+  const held2 = rhetoricHeld(dbPath);
+  const tables = Object.keys(REVIEW_SNAPSHOT_FIELDS).filter((t3) => held2 || t3 !== "rhetorical_paragraphs");
+  const scope = (t3) => t3 === "filing_prose" || t3 === "filing_orders" ? "filing_id IN (SELECT id FROM filings WHERE proceeding_id = ?)" : "proceeding_id = ?";
+  const noteHeld = treatmentNoteHeld(dbPath);
+  const current = rows(
+    dbPath,
+    tables.map((t3) => `SELECT '${t3}' AS entity, id AS entity_id, ${reviewSnapshotSql(t3, noteHeld)} AS snapshot FROM ${t3} WHERE ${scope(t3)}`).join(" UNION ALL "),
+    Array(tables.length).fill(proceedingId)
+  );
+  const approved = rows(
+    dbPath,
+    `SELECT entity, entity_id, snapshot FROM review_approvals ra
+     WHERE ra.id = (SELECT MAX(id) FROM review_approvals WHERE entity = ra.entity AND entity_id = ra.entity_id)`
+  );
+  return {
+    current: new Map(current.map((r3) => [reviewKey(r3.entity, r3.entity_id), r3.snapshot])),
+    approved: new Map(approved.map((r3) => [reviewKey(r3.entity, r3.entity_id), r3.snapshot]))
+  };
+}
+function reviewMarkerFor(review, inv, lineGlyphs, table2, id, item) {
+  if (review === void 0) return "";
+  const key = reviewKey(table2, id);
+  const current = review.current.get(key);
+  if (current === void 0) return "";
+  const approved = review.approved.get(key) ?? null;
+  const glyph2 = counselReviewMarker(lineGlyphs, current, approved);
+  if (glyph2 && inv) recordCriterionGlyphs(inv, glyph2, ["\u{1F9D0}"], { table: table2, id, item, ...approved === null ? {} : { changed: true } });
+  return glyph2;
+}
+function orderReviewMarkerFor(review, inv, lineGlyphs, order) {
+  const own = reviewMarkerFor(review, inv, lineGlyphs, "order_sought", order.id, order.wording);
+  const override2 = order.wording_override === null ? "" : reviewMarkerFor(review, inv, lineGlyphs, "filing_orders", order.pointer_id, order.wording);
+  return own || override2;
+}
+
+// src/submission/forms/brief-only-cap.ts
+var authorityNotKilled = (s3) => s3.authority_killed_on === null;
+var authorityNotOverruled = (s3) => s3.treatment !== "overruled";
+var countsAsSupport = (s3) => s3.verification === "verified" || s3.verification === "settled";
+var notFailed = (s3) => s3.verification !== "failed";
+var passesBriefOnlyCap = (s3) => countsAsSupport(s3) && authorityNotKilled(s3) && authorityNotOverruled(s3);
+var BRIEF_ONLY_CAP_SQL = "(a.killed_on IS NULL AND a.treatment IS NOT 'overruled' AND sl.verification IN ('verified', 'settled'))";
+
+// src/submission/forms/statement-lines.ts
+function factStatementCitationLine(exhibitMap, labelMap, s3, prefix = "> ") {
+  const parts = [];
+  if (s3.instrument_id !== null) {
+    const instrumentLabel = labelMap.get(s3.instrument_id);
+    if (instrumentLabel !== void 0) parts.push(instrumentLabel);
+    if (s3.pinpoint) parts.push(s3.pinpoint);
+  } else if (s3.pinpoint) {
+    parts.push(s3.pinpoint);
+  }
+  if (s3.exhibit_id !== null) {
+    const num = exhibitMap.get(s3.exhibit_id);
+    const exhibitLabel = num !== void 0 ? `Ex. ${num}` : labelMap.get(s3.exhibit_id);
+    if (exhibitLabel !== void 0) parts.push(exhibitLabel);
+    if (s3.exhibit_pinpoint) parts.push(s3.exhibit_pinpoint);
+  }
+  return parts.length === 0 ? null : `${prefix}${parts.join(", ")}`;
+}
+function factStatementMarkers(s3, courtRecordLinked, admitted, copyMarker) {
+  if (isAdmittedGuard(courtRecordLinked, admitted)) return dedupeLineMarkers([doubtMarker(s3.doubt), copyMarker]);
+  return dedupeLineMarkers([
+    factExcerptMarker(s3),
+    exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint),
+    testimonyPinpointMarker(s3.instrument_id, s3.pinpoint),
+    statementOfFactMarkers({
+      interviewed: s3.interviewed,
+      instrument_id: s3.instrument_id,
+      instrument_kind: s3.instrument_kind,
+      instrument_execution: s3.instrument_execution,
+      fact_court_record_linked: courtRecordLinked,
+      fact_admitted_by_all_opposing: admitted
+    }),
+    doubtMarker(s3.doubt),
+    copyMarker
+  ]);
+}
+function pushStatementLines(lines2, excerpt, citationLine, markers, tag, id) {
+  lines2.push("");
+  if (excerpt) {
+    lines2.push("   ```");
+    for (const l3 of excerpt.split("\n")) lines2.push(l3 ? `   ${l3}` : "");
+    lines2.push("   ```");
+  }
+  if (citationLine) lines2.push(`   ${citationLine}`);
+  const idComment = `<!-- ${tag} ${id} -->`;
+  lines2.push(`   ${[markers, idComment].filter(Boolean).join(" ")}`);
+}
+
+// src/submission/forms/submission-paragraphs.ts
+function renderSubmissionParagraphs(submissionId, contention, startPara, facts, lawAssertions, exhibitMap, labelMap, copyMarkers, extraFirstParagraphMarker = "", renderedLawAssertions = /* @__PURE__ */ new Map(), opts = {}) {
+  const prefix = opts.paragraphPrefix ?? "";
+  const inv = opts.inventory;
+  const lines2 = [];
+  let para2 = startPara;
+  const submissionTrace = `<!-- submission_id ${submissionId} -->`;
+  const factParagraphs = opts.factParagraphs;
+  const factualBasis = facts.length === 0 && !opts.noFactsNeededOn ? factualBasisMarker(false) : "";
+  const ordinaryCosts = ordinaryCostsSubmission(contention, JSON.parse(opts.servedOrderWordings ?? "[]"));
+  const propositionNeeded = lawAssertions.length === 0 && !opts.noLawNeededOn && !ordinaryCosts ? propositionNeededMarker(false) : "";
+  const contentionMarker = dedupeLineMarkers([factualBasis, propositionNeeded, extraFirstParagraphMarker]);
+  if (inv) recordGlyphs(inv, factualBasis, ["\u{1F9FE}"], { table: "submissions", id: submissionId, item: contention });
+  if (inv) recordGlyphs(inv, propositionNeeded, ["\u{1F4DA}"], { table: "submissions", id: submissionId, item: contention });
+  const review1 = reviewMarkerFor(opts.review, inv, contentionMarker, "submissions", submissionId, contention);
+  const contentionLine = printMarkerSets([
+    dedupeLineMarkers(factParagraphs ? [propositionNeeded, review1] : [factualBasis, propositionNeeded, review1]),
+    extraFirstParagraphMarker
+  ]);
+  const noFactsTag = facts.length === 0 && opts.noFactsNeededOn ? ` (no stated fact needed, per counsel ${opts.noFactsNeededOn})` : "";
+  const noLawTag = lawAssertions.length === 0 && opts.noLawNeededOn ? ` (no stated law needed, per counsel ${opts.noLawNeededOn})` : "";
+  const unplacedFacts = factParagraphs ? facts.filter((f3) => !factParagraphs.has(f3.factId)) : [];
+  const printedFacts = !factParagraphs ? facts : opts.printUnplacedFacts ? unplacedFacts : [];
+  const refNumbers = factParagraphs ? facts.filter((f3) => factParagraphs.has(f3.factId)).map((f3) => factParagraphs.get(f3.factId)).sort((a3, b3) => a3 - b3) : [];
+  const refs = [
+    ...refNumbers.length > 0 ? [refNumbers.join(", ")] : [],
+    ...opts.printUnplacedFacts ? [] : unplacedFacts.map((f3) => `NOT PLACED: fact ${f3.factId} ${JSON.stringify(f3.postulate)}`)
+  ];
+  const factRefComment = !factParagraphs ? "" : refs.length > 0 ? ` <!-- supporting fact paragraphs: ${refs.join("; ")} -->` : factualBasis ? ` ${factualBasis}<!-- supporting fact paragraphs:  NONE -->` : "";
+  para2 += 1;
+  lines2.push("");
+  lines2.push(`${prefix}${para2}. ${contention}${noFactsTag}${noLawTag}${contentionLine ? ` ${contentionLine}` : ""} ${submissionTrace}${factRefComment}`);
+  for (const f3 of printedFacts) {
+    const courtRecordLinked = f3.courtRecord !== null;
+    const courtRecordPin = courtRecordPinpointMarker(f3.courtRecord, f3.courtRecordPinpoint, f3.courtRecordExecution, f3.courtRecordExhibitLetters);
+    const witnessMarker = noWitnessMarker(courtRecordLinked, f3.statements.length > 0, f3.admitted, f3.spentAdmissionGlyphs);
+    const marker = dedupeLineMarkers([suppressMarker(witnessMarker, f3.witnessSuppressed), courtRecordPin]);
+    if (inv) recordGlyphs(inv, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.factId, item: f3.postulate });
+    if (inv) recordCriterionGlyphs(inv, witnessMarker, ["\u{1F464}"], { table: "facts", id: f3.factId, item: f3.postulate, ...f3.witnessSuppressed ? { suppressed: true } : {} });
+    const factReview = reviewMarkerFor(opts.review, inv, marker, "facts", f3.factId, f3.postulate);
+    const factLine = printMarkerSets([dedupeLineMarkers([marker, factReview])]);
+    const courtRecordCite = courtRecordCitation(f3.courtRecord, f3.courtRecordPinpoint);
+    para2 += 1;
+    lines2.push("");
+    lines2.push(`${prefix}${para2}. ${f3.postulate}${courtRecordCite ? ` ${courtRecordCite}` : ""}${factLine ? ` ${factLine}` : ""} <!-- fact_id ${f3.factId} -->`);
+    for (const s3 of f3.statements) {
+      if (s3.purpose === "impeachment") continue;
+      const citationLine = factStatementCitationLine(exhibitMap, labelMap, s3);
+      const copyMarker = s3.instrument_id !== null ? copyMarkers.get(s3.instrument_id) ?? "" : "";
+      const statementGlyphs = factStatementMarkers(s3, courtRecordLinked, f3.admitted, copyMarker);
+      if (inv) recordFactStatementGlyphs(inv, statementGlyphs, s3, f3.postulate);
+      const statementReview = reviewMarkerFor(opts.review, inv, statementGlyphs, "statements_of_fact", s3.statement_id, `${s3.witness_name}: ${f3.postulate}`);
+      pushStatementLines(
+        lines2,
+        s3.exhibit_id !== null ? s3.exhibit_excerpt : s3.excerpt,
+        citationLine,
+        printMarkerSets([dedupeLineMarkers([statementGlyphs, statementReview])]),
+        "statement_of_fact_id",
+        s3.statement_id
+      );
+    }
+  }
+  for (const la2 of lawAssertions) {
+    const priorPara = renderedLawAssertions.get(la2.lawAssertionId);
+    if (priorPara !== void 0) {
+      para2 += 1;
+      lines2.push("");
+      lines2.push(`${prefix}${para2}. As set out in paragraph ${prefix}${priorPara}, above, ${la2.proposition} <!-- law_assertion_id ${la2.lawAssertionId} -->`);
+      continue;
+    }
+    const live = la2.statements.filter(authorityNotKilled);
+    const counted2 = live.filter(authorityNotOverruled).filter(notFailed);
+    const verifiedCounted = counted2.filter(countsAsSupport);
+    const printStatements = opts.includeLeadStatements ? la2.statements : verifiedCounted;
+    const bare2 = doctrinalSlotMarker({ dead_end: la2.deadEnd, countedStatements: counted2.length, verifiedStatements: verifiedCounted.length });
+    const rung = sourceRungMarker((verifiedCounted.length > 0 ? verifiedCounted : counted2).map((s3) => s3.source));
+    const overruled = live.some((s3) => s3.treatment === "overruled") ? treatmentMarker("overruled") : "";
+    const doctrinal = bare2 === "\u{1F6A7}" ? bare2 : bare2 === "\u{1F4D6}" ? dedupeLineMarkers([overruled, bare2]) : dedupeLineMarkers([overruled, bare2, rung]);
+    const scrutinyFailed = live.some((s3) => s3.verification === "failed");
+    if (inv) recordGlyphs(inv, doctrinal.replaceAll("\u{1F3C5}", ""), scrutinyFailed ? ["\u{1F949}", "\u{1F948}"] : ["\u{1F4D6}", "\u{1F949}", "\u{1F948}"], { table: "law_assertions", id: la2.lawAssertionId, item: la2.proposition });
+    if (inv) recordCriterionGlyphs(inv, doctrinal, scrutinyFailed ? ["\u{1F6A7}", "\u{1F52C}", "\u{1F3C5}", "\u{1F4D6}"] : ["\u{1F6A7}", "\u{1F52C}", "\u{1F3C5}"], { table: "law_assertions", id: la2.lawAssertionId, item: la2.proposition, instance: "proposition" });
+    const propositionReview = reviewMarkerFor(opts.review, inv, doctrinal, "law_assertions", la2.lawAssertionId, la2.proposition);
+    const propositionLine = printMarkerSets([dedupeLineMarkers([doctrinal, propositionReview])]);
+    const overruledMarkerPrinted = overruled !== "" && doctrinal.startsWith(overruled);
+    const overruledTag = overruledMarkerPrinted && !opts.includeLeadStatements ? ` ${overruledAuthorityTag(live)}` : "";
+    const failedTag = opts.includeLeadStatements ? "" : scrutinyFailedTag(live);
+    para2 += 1;
+    renderedLawAssertions.set(la2.lawAssertionId, para2);
+    lines2.push("");
+    lines2.push(`${prefix}${para2}. ${la2.proposition}${failedTag}${overruledTag}${propositionLine ? ` ${propositionLine}` : ""} <!-- law_assertion_id ${la2.lawAssertionId} -->`);
+    for (const s3 of printStatements) {
+      const statementGlyphs = lawStatementMarkers(s3, opts.scrutinyLive?.(la2.lawAssertionId) ?? true);
+      if (inv) recordLawStatementGlyphs(inv, statementGlyphs, { ...s3, statement_id: s3.statement_id });
+      const statementReview = reviewMarkerFor(opts.review, inv, statementGlyphs, "statements_of_law", s3.statement_id, lawItem(s3));
+      pushStatementLines(lines2, s3.excerpt, lawStatementCitationLine(s3), printMarkerSets([dedupeLineMarkers([statementGlyphs, statementReview])]), "statement_of_law_id", s3.statement_id);
+    }
+  }
+  return { lines: lines2, nextPara: para2 };
+}
+function overruledAuthorityTag(live) {
+  const names = /* @__PURE__ */ new Map();
+  for (const s3 of live) {
+    if (s3.treatment !== "overruled" || names.has(s3.authority_id)) continue;
+    const name = `${s3.authority_title ?? ""}${s3.authority_citation ? `, ${s3.authority_citation}` : ""}`;
+    names.set(s3.authority_id, name.replace(/\s+/g, " ").trim());
+  }
+  return `(overruled: ${[...names.values()].join("; ")})`;
+}
+function recordParagraph(ctx, submissionId, document2, startPara) {
+  if (!ctx.paragraphLedger.has(submissionId)) ctx.paragraphLedger.set(submissionId, { document: document2, para: startPara + 1 });
+}
+
 // src/submission/forms/render-rhetoric.ts
 function fetchRhetoric(dbPath, filingId, document2, part) {
   if (!rhetoricHeld(dbPath)) return [];
@@ -100164,6 +99657,183 @@ function renderRhetoricFiled(row2, n3, prefix, citePrefix = "> ") {
     if (cite !== null) lines2.push(`${citePrefix}${cite}`);
   }
   return lines2;
+}
+
+// src/submission/forms/components.ts
+var BLANK_UNDERLINE = "________";
+function frontmatterHeader(f3) {
+  const lists = (f3.lists ?? []).filter((l3) => l3.items.length > 0).flatMap((l3) => [`${l3.label}:`, ...l3.items.map((item) => `  - ${item}`)]);
+  return [
+    "---",
+    `Matter no: ${f3.matterNo}`,
+    `Matter Description: ${f3.matterDescription}`,
+    `Client Name: ${f3.clientName}`,
+    `Client no: ${f3.clientNo}`,
+    `Document Type: ${f3.documentType}`,
+    `Document Name: ${f3.documentName}`,
+    `Document Date: ${f3.documentDate}`,
+    `Venue: ${f3.venue}`,
+    `Proceeding File no: ${f3.proceedingFileNo}`,
+    `Revision: ${f3.revision}`,
+    `Rendered: ${f3.rendered}`,
+    ...lists,
+    "---"
+  ].join("\n");
+}
+function pluralizeRole(role, count2) {
+  if (count2 <= 1) return role;
+  return role.endsWith("s") ? role : `${role}s`;
+}
+function groupPartiesByRole(parties2) {
+  const sorted = [...parties2].sort((a3, b3) => a3.ordinal - b3.ordinal);
+  const groups = [];
+  for (const p3 of sorted) {
+    const last = groups[groups.length - 1];
+    if (last && last.role === p3.role) {
+      last.names.push(p3.name);
+    } else {
+      groups.push({ role: p3.role, names: [p3.name] });
+    }
+  }
+  return groups;
+}
+function formatNameList(names) {
+  if (names.length === 0) return "";
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
+function styleOfProceedingCaption(parties2, opts) {
+  const lines2 = [];
+  lines2.push("| | | |");
+  lines2.push("| :--- | :---: | ---: |");
+  const { heading } = opts;
+  if (heading.registry_label !== null) lines2.push(`| | | ${opts.registry ?? ""} ${heading.registry_label} |`);
+  if (heading.registry_label !== null || opts.fileNumber) lines2.push(`| | | ${heading.file_number_label} ${opts.fileNumber ?? ""} |`);
+  for (const line of [heading.caption_lines].flat()) lines2.push(`| | **${line}** | |`);
+  const groups = groupPartiesByRole(parties2);
+  groups.forEach((group, i3) => {
+    lines2.push(`| ${i3 === 0 ? "BETWEEN:" : "AND:"} | | |`);
+    lines2.push(`| | ${group.names.map((n3) => n3.toUpperCase()).join(" and ")} | |`);
+    lines2.push(`| | | *${pluralizeRole(group.role, group.names.length)}* |`);
+  });
+  if (opts.titleLine !== void 0) lines2.push(`| | **${opts.titleLine}** | |`);
+  return lines2.join("\n");
+}
+function signatureBlock(party, officerSigned) {
+  const lines2 = [];
+  lines2.push(`Date: ________________`);
+  if (party.counselName) {
+    lines2.push(`Signature of ${party.counselName}, lawyer for the ${party.role}, ${party.name}`);
+  } else {
+    lines2.push(`Signature of ${party.name}, ${party.role} (self-represented)`);
+  }
+  if (officerSigned) {
+    lines2.push("");
+    lines2.push("[ ] Party  [ ] Lawyer for party  [ ] Legal representative for party");
+  }
+  return lines2.join("\n");
+}
+function requisitionWrapper(f3) {
+  const lines2 = [];
+  lines2.push(f3.captionMarkdown);
+  lines2.push("");
+  lines2.push(`**Filed by:** ${f3.filedBy}`);
+  lines2.push("");
+  lines2.push(`**Required:** ${f3.required}`);
+  lines2.push("");
+  if (f3.checklistLeadIn) {
+    lines2.push(f3.checklistLeadIn);
+    lines2.push("");
+  }
+  f3.checklist.forEach((item, i3) => lines2.push(`${i3 + 1}. ${item}`));
+  return lines2.join("\n");
+}
+var STANDARD_MATERIAL_LINES = ["Pleadings filed in this proceeding", "Such further affidavits or filed court documents as this honourable court may allow"];
+function checkboxOrderBlock(rows4) {
+  const lines2 = [];
+  lines2.push("[ ] The order(s) set out in Part 1 of this notice were made in the terms requested in Part 1 of this notice.");
+  lines2.push("[ ] The order(s) set out in Part 1 of this notice were made with the following variations and additional terms:");
+  lines2.push("");
+  rows4.forEach((r3) => lines2.push(`- ${r3.text}${r3.marker ? ` ${r3.marker}` : ""}`));
+  return lines2.join("\n");
+}
+function buildLowerCourtRoleByRole(parties2) {
+  const valuesByRole = /* @__PURE__ */ new Map();
+  for (const p3 of parties2) {
+    const list2 = valuesByRole.get(p3.role) ?? [];
+    list2.push(p3.lower_court_role);
+    valuesByRole.set(p3.role, list2);
+  }
+  const result = {};
+  for (const [role, values] of valuesByRole) {
+    const first = values[0];
+    if (first !== null && values.every((v3) => v3 === first)) result[role] = first;
+  }
+  return result;
+}
+var CONTACT_COLUMNS = [
+  { column: "counsel_firm", missing: "firm" },
+  { column: "counsel_name", missing: "counsel" },
+  { column: "address_for_service", missing: "address for service" },
+  { column: "counsel_phone", missing: "telephone" },
+  { column: "counsel_email", missing: "email" }
+];
+function contactCells(c3, gapMarker2) {
+  const texts = [c3.counselFirm ?? gapMarker2, `Attn: ${c3.counselName ?? gapMarker2}`, c3.addressForService ?? gapMarker2, `Tel: ${c3.counselPhone ?? gapMarker2}`, c3.counselEmail ?? gapMarker2];
+  return CONTACT_COLUMNS.map((col, i3) => ({ ...col, text: texts[i3] }));
+}
+function bccaCoverPage(parties2, fields2) {
+  const lines2 = [];
+  lines2.push("| | | |");
+  lines2.push("| :--- | :---: | ---: |");
+  if (fields2.heading.registry_label !== null) {
+    lines2.push(`| | | ${fields2.registry ?? ""} ${fields2.heading.registry_label} |`);
+    lines2.push(`| | | ${fields2.heading.file_number_label} ${fields2.fileNumber ?? ""} |`);
+  }
+  lines2.push(`| | | ${fields2.recordLabel} |`);
+  lines2.push("| | **COURT OF APPEAL** | |");
+  if (fields2.onAppealFrom && fields2.onAppealFrom.judge && fields2.onAppealFrom.court && fields2.onAppealFrom.pronounced) {
+    lines2.push(
+      `| | ON APPEAL FROM the order of ${fields2.onAppealFrom.judge} of the ${fields2.onAppealFrom.court} pronounced on ${fields2.onAppealFrom.pronounced} | |`
+    );
+  }
+  const groups = groupPartiesByRole(parties2);
+  groups.forEach((group, i3) => {
+    lines2.push(`| ${i3 === 0 ? "BETWEEN:" : "AND:"} | | |`);
+    lines2.push(`| | ${group.names.map((n3) => n3.toUpperCase()).join(" and ")} | |`);
+    lines2.push(`| | | *${pluralizeRole(group.role, group.names.length)}* |`);
+    const lowerCourtRole = fields2.lowerCourtRoleByRole?.[group.role];
+    if (lowerCourtRole) lines2.push(`| | | *${lowerCourtRole}* |`);
+  });
+  if (fields2.accessRestrictions) {
+    for (const line of fields2.accessRestrictions.split("\n")) lines2.push(`| | ${line} | |`);
+  }
+  lines2.push(`| | **${fields2.titleLine}** | |`);
+  if (fields2.filingPartyPhrase) lines2.push(`| | ${fields2.filingPartyPhrase} | |`);
+  lines2.push("");
+  lines2.push(`| ${fields2.contacts.map((c3) => formatNameList(c3.names.map((n3) => n3.toUpperCase()))).join(" | ")} |`);
+  lines2.push(`| ${fields2.contacts.map(() => ":---").join(" | ")} |`);
+  const cells = fields2.contacts.map((c3) => contactCells(c3, fields2.gapMarker));
+  for (let row2 = 0; row2 < CONTACT_COLUMNS.length; row2++) lines2.push(`| ${cells.map((c3) => c3[row2].text).join(" | ")} |`);
+  lines2.push(`| ${fields2.contacts.map((c3) => `Counsel for the ${pluralizeRole(c3.role, c3.names.length)}`).join(" | ")} |`);
+  return lines2.join("\n");
+}
+function formatTimeEstimate(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  const parts = [];
+  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
+  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
+  return parts.join(" ");
+}
+function pushExcerptBlockquote(lines2, excerpt, citationLine) {
+  if (!excerpt) return;
+  for (const line of excerpt.split("\n")) {
+    if (line.trim() === "") continue;
+    lines2.push(`> ${line}`);
+  }
+  if (citationLine) lines2.push(citationLine);
 }
 
 // src/submission/pre-filing/checks.ts
@@ -100822,6 +100492,20 @@ async function resnapshotWriting(dbPath, filingId, opts = {}) {
 
 // src/submission/forms/filler-registry.ts
 import { readFileSync as readFileSync28 } from "node:fs";
+
+// src/submission/forms/opposing-points.ts
+function fetchOpposingPoints(dbPath, proceedingId) {
+  return rows(
+    dbPath,
+    `SELECT op.id, op.component, op.pinpoint, op.verbatim_words, op.answered_by_submission_id,
+            s.contention AS answered_by_contention
+     FROM opposing_points op
+     LEFT JOIN submissions s ON s.id = op.answered_by_submission_id
+     WHERE op.proceeding_id = ?
+     ORDER BY op.ordinal`,
+    [proceedingId]
+  );
+}
 
 // src/submission/forms/filing-facts.ts
 var FACTS_PART = /* @__PURE__ */ new Map([
@@ -102117,7 +101801,7 @@ function fetchPlacedInProceeding(dbPath, proceedingId) {
   );
   return new Set(texts.flatMap((t3) => placedDocumentIds(t3.text)));
 }
-function frontmatterFor2(ctx) {
+function frontmatterFor(ctx) {
   const fields2 = {
     clientName: ctx.clientName,
     clientNo: ctx.clientNo,
@@ -102146,7 +101830,7 @@ function renderAffidavit(ctx, a3) {
   const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
   const deponent = a3.deponent_name ?? "________________";
   const lines2 = [];
-  lines2.push(frontmatterFor2(ctx));
+  lines2.push(frontmatterFor(ctx));
   lines2.push("");
   lines2.push(`This is Affidavit #${a3.affidavit_number ?? "____"} of ${deponent} in this case and was made on ${a3.execution ?? "________________"}.`);
   lines2.push("");
@@ -102223,7 +101907,7 @@ function fetchPlacedAlternativeIds(dbPath, filing) {
     [filing.id]
   ).map((r3) => r3.id);
 }
-function frontmatterFor3(ctx, documentType) {
+function frontmatterFor2(ctx, documentType) {
   const fields2 = {
     clientName: ctx.clientName,
     clientNo: ctx.clientNo,
@@ -102305,7 +101989,7 @@ function renderRequisitionDefaultJudgment(ctx) {
   checklist.push(`${orderGap ? `${orderGap} ` : ""}${orderItem}`);
   checklist.push(`${affidavitGap ? `${affidavitGap} ` : ""}${affidavitItem}`);
   const lines2 = [];
-  lines2.push(frontmatterFor3(ctx, "Requisition"));
+  lines2.push(frontmatterFor2(ctx, "Requisition"));
   lines2.push("");
   lines2.push(
     requisitionWrapper({
@@ -102333,7 +102017,7 @@ function renderForm8DefaultJudgment(ctx) {
     titleLine: "DEFAULT JUDGMENT"
   });
   const lines2 = [];
-  lines2.push(frontmatterFor3(ctx, "Default_judgment"));
+  lines2.push(frontmatterFor2(ctx, "Default_judgment"));
   lines2.push("");
   lines2.push(caption2);
   lines2.push("");
@@ -102387,7 +102071,7 @@ function renderRequisitionConsent(ctx) {
     "No party is under a legal disability."
   ];
   const lines2 = [];
-  lines2.push(frontmatterFor3(ctx, "Requisition"));
+  lines2.push(frontmatterFor2(ctx, "Requisition"));
   lines2.push("");
   lines2.push(
     requisitionWrapper({
@@ -102415,7 +102099,7 @@ function renderConsentOrder(ctx) {
     titleLine: "CONSENT ORDER"
   });
   const lines2 = [];
-  lines2.push(frontmatterFor3(ctx, "Consent_order"));
+  lines2.push(frontmatterFor2(ctx, "Consent_order"));
   lines2.push("");
   lines2.push(caption2);
   lines2.push("");
@@ -102466,7 +102150,7 @@ function writtenArgumentsVenue(proceeding) {
   }
   return venue;
 }
-function frontmatterFor4(ctx, documentType) {
+function frontmatterFor3(ctx, documentType) {
   const fields2 = {
     clientName: ctx.clientName,
     clientNo: ctx.clientNo,
@@ -102529,7 +102213,7 @@ function renderWrittenArguments(ctx, documentKey) {
     return served[0];
   }
   const lines2 = [];
-  lines2.push(frontmatterFor4(ctx, "Written_arguments"));
+  lines2.push(frontmatterFor3(ctx, "Written_arguments"));
   lines2.push("");
   lines2.push(
     styleOfProceedingCaption(captionParties2, {
@@ -102782,6 +102466,98 @@ function recordReserveInventory(ctx) {
   for (const s3 of held2) r3 = recordBody(s3, r3, renderedLawAssertions, "R").nextPara;
 }
 
+// src/submission/forms/document-tenders.ts
+function fetchExhibitTenders(dbPath, documentIds) {
+  if (documentIds.length === 0) return [];
+  const placeholders = documentIds.map(() => "?").join(",");
+  return rows(
+    dbPath,
+    `SELECT sof.exhibit_id, 'witness' AS tender_kind, w.name AS name, inst.label AS instrument_label, sof.purpose, NULL AS admission_id, NULL AS fact_postulate, 0 AS tender_rank, sof.id AS tender_ord
+     FROM statements_of_fact sof
+     JOIN witnesses w ON w.id = sof.witness_id
+     LEFT JOIN documents inst ON inst.id = sof.instrument
+     WHERE sof.exhibit_id IN (${placeholders})
+     UNION ALL
+     SELECT a.exhibit AS exhibit_id, 'admission' AS tender_kind, p.name AS name, NULL AS instrument_label, NULL AS purpose, a.id AS admission_id, f.postulate AS fact_postulate, 1 AS tender_rank, a.id AS tender_ord
+     FROM admissions a
+     JOIN parties p ON p.id = a.party
+     JOIN facts f ON f.id = a.fact_id
+     WHERE a.exhibit IN (${placeholders})
+     ORDER BY tender_rank, tender_ord`,
+    [...documentIds, ...documentIds]
+  );
+}
+function tenderedByCitation(t3, admissionGlyphs) {
+  if (t3.tender_kind === "admission") {
+    const glyphs = t3.admission_id !== null ? admissionGlyphs.get(t3.admission_id) : void 0;
+    return `${t3.name} (admission${glyphs ? ` ${printMarkerSets([glyphs])}` : ""})`;
+  }
+  return t3.instrument_label ? `${t3.name} (${t3.instrument_label})` : t3.name;
+}
+function recordAdmissionGlyphs(dbPath, inventory, admissionRows, states, glyphs, tenders) {
+  const enterIdOf = (r3) => states.get(r3.id)?.base === "admitted" ? r3.input.response : r3.input.instrument;
+  const documentIds = [...new Set(admissionRows.flatMap((r3) => [r3.input.instrument, enterIdOf(r3)]).filter((id) => id !== null))];
+  const labels = fetchDocumentLabels(dbPath, documentIds);
+  const tenderByAdmission = new Map(tenders.filter((t3) => t3.admission_id !== null).map((t3) => [t3.admission_id, t3]));
+  for (const r3 of admissionRows) {
+    const printed = glyphs.get(r3.id) ?? "";
+    if (!printed) continue;
+    if (r3.input.instrument !== null) {
+      recordGlyphs(inventory, printed, ["\u{1F3BE}"], { table: "documents", id: r3.input.instrument, item: labels.get(r3.input.instrument) ?? "" });
+    }
+    const enterId = enterIdOf(r3);
+    if (enterId !== null) {
+      recordGlyphs(inventory, printed, ["\u{1F579}\uFE0F"], { table: "documents", id: enterId, item: labels.get(enterId) ?? "" });
+    }
+    const tender = tenderByAdmission.get(r3.id);
+    recordGlyphs(inventory, printed, ["\u{1F4D1}", "\u{1F4AC}", "\u{1F4CC}", "\u{1F9F7}"], {
+      table: "admissions",
+      id: r3.id,
+      item: tender ? `${tender.name}: ${tender.fact_postulate ?? ""}` : ""
+    });
+  }
+}
+function fetchDocumentTenderStatus(dbPath, documentIds, today3, inventory) {
+  const result = /* @__PURE__ */ new Map();
+  for (const id of documentIds) result.set(id, { hasTender: false, spentGlyphs: "", tenderedBy: "" });
+  const tenders = fetchExhibitTenders(dbPath, documentIds);
+  const tendersByDoc = /* @__PURE__ */ new Map();
+  for (const t3 of tenders) {
+    const list2 = tendersByDoc.get(t3.exhibit_id) ?? [];
+    list2.push(t3);
+    tendersByDoc.set(t3.exhibit_id, list2);
+  }
+  const admissionIds = [...new Set(tenders.filter((t3) => t3.admission_id !== null).map((t3) => t3.admission_id))];
+  const states = /* @__PURE__ */ new Map();
+  const glyphs = /* @__PURE__ */ new Map();
+  const admissionRows = [];
+  if (admissionIds.length > 0) {
+    const placeholders = admissionIds.map(() => "?").join(",");
+    for (const r3 of fetchAdmissionStates(dbPath, `a.id IN (${placeholders})`, admissionIds)) {
+      const state = admissionLadderState(r3.input, today3);
+      states.set(r3.id, state);
+      glyphs.set(r3.id, dedupeLineMarkers([admissionRungMarker(state), admissionCaptureMarkers(r3.input, state)]));
+      admissionRows.push(r3);
+    }
+  }
+  if (inventory && admissionRows.length > 0) recordAdmissionGlyphs(dbPath, inventory, admissionRows, states, glyphs, tenders);
+  const roleOf = (t3) => t3.tender_kind === "witness" ? "tenders" : admissionRole(states.get(t3.admission_id) ?? { state: "not_sought" });
+  for (const id of documentIds) {
+    const docTenders = tendersByDoc.get(id) ?? [];
+    const hasTender = docTenders.some((t3) => roleOf(t3) === "tenders");
+    const spentGlyphs = dedupeLineMarkers(
+      docTenders.filter((t3) => roleOf(t3) === "spent" && t3.admission_id !== null).map((t3) => {
+        const state = states.get(t3.admission_id);
+        if (!state) return "";
+        return hasTender ? "" : admissionRungMarker(state);
+      })
+    );
+    const tenderedBy = docTenders.filter((t3) => t3.purpose !== "impeachment" && roleOf(t3) !== "spent").map((t3) => tenderedByCitation(t3, glyphs)).join("; ");
+    result.set(id, { hasTender, spentGlyphs, tenderedBy });
+  }
+  return result;
+}
+
 // src/submission/forms/render-notice-of-application.ts
 function fetchHearingDetails2(dbPath, filingId) {
   const found2 = rows(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
@@ -103030,6 +102806,61 @@ function renderNoticeOfApplication(ctx) {
   lines2.push(checkboxOrderBlock([]));
   lines2.push("");
   if (applicant) lines2.push(signatureBlock({ name: applicant.name, role: applicant.role, counselName: applicant.counsel_name }, true));
+  return lines2.join("\n").trimEnd() + "\n";
+}
+
+// src/submission/forms/vaniac-frontmatter.ts
+function frontmatterFor4(documentType, proceeding, filing, revision, rendered, clientName, clientNo, matterNo, matterDescription) {
+  const fields2 = {
+    matterNo,
+    matterDescription,
+    clientName,
+    clientNo,
+    documentType,
+    documentName: filing.title,
+    documentDate: BLANK_UNDERLINE,
+    venue: proceeding.court_or_centre ?? captionHeadingFor(filing, proceeding).display_label,
+    proceedingFileNo: proceeding.file_number ?? "",
+    revision,
+    rendered
+  };
+  return frontmatterHeader(fields2);
+}
+
+// src/submission/forms/render-evidence-index.ts
+function renderEvidenceIndex(ctx) {
+  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const exhibitMap = exhibitNumbersForFiling(ctx.dbPath, ctx.filing, docs.map((d3) => d3.document_id));
+  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
+  const tenderStatus = fetchDocumentTenderStatus(ctx.dbPath, docs.map((d3) => d3.document_id), ctx.rendered.slice(0, 10), ctx.inventory);
+  const lines2 = [];
+  lines2.push(frontmatterFor4("Evidence_index", ctx.proceeding, ctx.filing, ctx.revision, ctx.rendered, ctx.clientName, ctx.clientNo, ctx.matterNo, ctx.matterDescription));
+  lines2.push("");
+  lines2.push("| Ex. | Date | Description | Tendered by |");
+  lines2.push("| --- | --- | --- | --- |");
+  docs.forEach((d3) => {
+    const date3 = d3.document_date ?? "undated";
+    const status3 = tenderStatus.get(d3.document_id);
+    const eligible = isExhibitTenderRole(d3.role);
+    const marker = eligible ? unsponsoredExhibitMarker(status3.hasTender) : "";
+    const spentGlyphs = eligible ? status3.spentGlyphs : "";
+    const gap2 = d3.description ? "" : ` ${gapMarker("not_recorded")}`;
+    recordGlyphs(ctx.inventory, gap2.trim(), ["\u{1F3F7}\uFE0F"], { table: "documents", id: d3.document_id, item: d3.label });
+    const copyMarker = copyMarkers.get(d3.document_id) ?? "";
+    const markers = printMarkerSets([[gap2.trim(), spentGlyphs, marker, copyMarker].filter(Boolean).join(" ")]);
+    lines2.push(
+      `| Ex. ${exhibitMap.get(d3.document_id)} | ${date3} | ${d3.description ?? "(not recorded)"}${markers ? ` ${markers}` : ""} | ${status3.tenderedBy} | <!-- document_id ${d3.document_id} -->`
+    );
+  });
+  if (docs.some((d3) => d3.file_path)) {
+    lines2.push("");
+    lines2.push("## Source trace");
+    lines2.push("");
+    docs.forEach((d3) => {
+      if (!d3.file_path) return;
+      lines2.push(`- Ex. ${exhibitMap.get(d3.document_id)} \u2014 ${d3.file_path} <!-- document_id ${d3.document_id} -->`);
+    });
+  }
   return lines2.join("\n").trimEnd() + "\n";
 }
 
@@ -112361,6 +112192,179 @@ function draftDirOfCaller(dbPath, draftDir, param2 = "drafting_forms__render.dra
     throw new ValidationError(`${param2} ${draftDir}: it is not the 0. DRAFT folder of this database's matter, ${draftDirOf(dbPath)}`);
   }
   return draft;
+}
+
+// src/submission/forms/witness-statement-reads.ts
+function fetchWitnessStatements(dbPath, filingId) {
+  return rows(
+    dbPath,
+    `SELECT d.id, d.deponent AS witness_id, d.execution, d.signed_at, d.label, fd.ordinal,
+            w.name AS witness_name
+     FROM filing_documents fd
+     JOIN documents d ON d.id = fd.document_id
+     JOIN witnesses w ON w.id = d.deponent
+     WHERE fd.filing_id = ? AND fd.role = 'witness_statement'
+     ORDER BY fd.ordinal`,
+    [filingId]
+  );
+}
+function fetchStatementParagraphs(dbPath, documentId) {
+  return rows(
+    dbPath,
+    `SELECT id, ordinal, text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`,
+    [documentId]
+  );
+}
+function fetchParagraphFacts(dbPath, paragraphIds) {
+  if (paragraphIds.length === 0) return [];
+  const placeholders = paragraphIds.map(() => "?").join(",");
+  return rows(
+    dbPath,
+    `SELECT psof.statement_paragraph_id, sof.fact_id, psof.statement_of_fact_id
+     FROM paragraph_statements_of_fact psof
+     JOIN statements_of_fact sof ON sof.id = psof.statement_of_fact_id
+     WHERE psof.statement_paragraph_id IN (${placeholders})`,
+    paragraphIds
+  );
+}
+function fetchIncludedStatementsOfFactForWitness(dbPath, witnessId) {
+  return rows(
+    dbPath,
+    `SELECT sof.id, sof.fact_id, sof.interviewed, sof.pinpoint, sof.doubt,
+            sof.exhibit_id, sof.exhibit_pinpoint,
+            f.postulate, f.court_record AS fact_court_record
+     FROM statements_of_fact sof
+     JOIN facts f ON f.id = sof.fact_id
+     WHERE sof.witness_id = ? AND (sof.purpose IS NULL OR sof.purpose != 'impeachment')
+     ORDER BY sof.id`,
+    [witnessId]
+  );
+}
+function fetchDocumentsReliedOn(dbPath, statementDocumentId) {
+  return rows(
+    dbPath,
+    `SELECT DISTINCT d.id, d.label, d.document_date
+     FROM statement_paragraphs sp
+     JOIN paragraph_statements_of_fact psof ON psof.statement_paragraph_id = sp.id
+     JOIN statements_of_fact sof ON sof.id = psof.statement_of_fact_id
+     JOIN documents d ON d.id = sof.exhibit_id
+     WHERE sp.document_id = ? AND sof.exhibit_id IS NOT NULL
+     ORDER BY d.id`,
+    [statementDocumentId]
+  );
+}
+
+// src/submission/forms/render-witness-statements.ts
+function unlinkedFactMarkers(f3, admitted) {
+  const courtRecordLinked = f3.fact_court_record !== null;
+  if (isAdmittedGuard(courtRecordLinked, admitted)) return doubtMarker(f3.doubt);
+  return dedupeLineMarkers([
+    exhibitPinpointMarker(f3.exhibit_id, f3.exhibit_pinpoint),
+    statementOfFactMarkers({
+      interviewed: f3.interviewed,
+      instrument_id: null,
+      instrument_kind: null,
+      instrument_execution: null,
+      fact_court_record_linked: courtRecordLinked,
+      fact_admitted_by_all_opposing: admitted
+    }),
+    doubtMarker(f3.doubt)
+  ]);
+}
+function renderWitnessStatements(ctx) {
+  const statements = fetchWitnessStatements(ctx.dbPath, ctx.filing.id);
+  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+  const opposing = opposingPartyIds(ctx.parties);
+  const today3 = ctx.rendered.slice(0, 10);
+  const exhibitMap = exhibitNumbersForFiling(ctx.dbPath, ctx.filing, fetchFilingDocuments(ctx.dbPath, ctx.filing.id).map((d3) => d3.document_id));
+  return statements.map((s3) => {
+    const paragraphs = fetchStatementParagraphs(ctx.dbPath, s3.id);
+    const links = fetchParagraphFacts(
+      ctx.dbPath,
+      paragraphs.map((p3) => p3.id)
+    );
+    const factsByParagraph = /* @__PURE__ */ new Map();
+    for (const link2 of links) {
+      const list2 = factsByParagraph.get(link2.statement_paragraph_id) ?? [];
+      list2.push(link2.fact_id);
+      factsByParagraph.set(link2.statement_paragraph_id, list2);
+    }
+    const witnessFacts = fetchIncludedStatementsOfFactForWitness(ctx.dbPath, s3.witness_id);
+    const linkedSofIds = new Set(links.map((l3) => l3.statement_of_fact_id));
+    const unlinkedFacts = witnessFacts.filter((f3) => !linkedSofIds.has(f3.id));
+    const admittedFactIds = fetchFactAdmissionCoverage(
+      ctx.dbPath,
+      unlinkedFacts.map((f3) => f3.fact_id),
+      opposing,
+      today3
+    );
+    const lines2 = [];
+    lines2.push(
+      frontmatterFor4("Witness_statement", ctx.proceeding, ctx.filing, ctx.revision, ctx.rendered, ctx.clientName, ctx.clientNo, ctx.matterNo, ctx.matterDescription)
+    );
+    lines2.push("");
+    lines2.push(
+      styleOfProceedingCaption(captionParties2, {
+        heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+        registry: ctx.proceeding.registry,
+        fileNumber: ctx.proceeding.file_number,
+        titleLine: `WITNESS STATEMENT OF ${s3.witness_name.toUpperCase()}`
+      })
+    );
+    lines2.push("");
+    lines2.push(`I, ${s3.witness_name}, state as follows:`);
+    lines2.push("");
+    paragraphs.forEach((p3, i3) => {
+      const factIds = factsByParagraph.get(p3.id) ?? [];
+      const tag = factIds.length > 0 ? ` [facts ${factIds.map((id) => `F${id}`).join(", ")}]` : ` ${gapMarker("gap")} [GAP -- no fact linked]`;
+      recordCriterionGlyphs(ctx.inventory, tag, ["\u{1F9E9}"], { table: "statement_paragraphs", id: p3.id, item: `${s3.witness_name}'s witness statement, paragraph ${i3 + 1}: linked fact` });
+      lines2.push(`${i3 + 1}. ${p3.text}${tag} <!-- statement_paragraph ${i3 + 1} -->`);
+    });
+    if (witnessFacts.length === 0) {
+      const line = `${gapMarker("gap")} no facts attributed to this witness`;
+      recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "witnesses", id: s3.witness_id, item: `${s3.witness_name}'s witness statement: attributed facts` });
+      lines2.push(line);
+    }
+    lines2.push("");
+    const reliedOn2 = fetchDocumentsReliedOn(ctx.dbPath, s3.id);
+    if (reliedOn2.length > 0) {
+      lines2.push("**Documents relied on**");
+      lines2.push("");
+      for (const d3 of reliedOn2) {
+        const exhibitNo = exhibitMap.get(d3.id);
+        const cite = exhibitNo !== void 0 ? `Ex. ${exhibitNo}` : d3.label;
+        const dated = d3.document_date ? `, dated ${d3.document_date}` : "";
+        lines2.push(`- ${cite} \u2014 ${d3.label}${dated} <!-- document_id ${d3.id} -->`);
+      }
+      lines2.push("");
+    }
+    const swearMarker = s3.execution === null && links.length > 0 ? "\u{1F58B}\uFE0F" : "";
+    recordGlyphs(ctx.inventory, swearMarker, ["\u{1F58B}\uFE0F"], { table: "documents", id: s3.id, item: s3.label, witness_id: s3.witness_id });
+    lines2.push(`I make this statement believing its contents to be true. ${swearMarker}`.trim());
+    lines2.push("");
+    lines2.push("________________________________");
+    lines2.push(s3.witness_name);
+    lines2.push("");
+    lines2.push(`Signed at: ${s3.signed_at ?? "________________"}`);
+    lines2.push(`Date: ${s3.execution ?? "________________"}`);
+    if (unlinkedFacts.length > 0) {
+      lines2.push("");
+      lines2.push("## Facts attributed to this witness, not yet in this statement");
+      lines2.push("");
+      for (const f3 of unlinkedFacts) {
+        const rung = unlinkedFactMarkers(f3, admittedFactIds.has(f3.fact_id));
+        recordFactStatementGlyphs(
+          ctx.inventory,
+          rung,
+          { statement_id: f3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: null, instrument_label: null },
+          f3.postulate
+        );
+        const printed = printMarkerSets([rung]);
+        lines2.push(`- ${f3.postulate}${printed ? ` ${printed}` : ""} <!-- statement_of_fact_id ${f3.id} -->`);
+      }
+    }
+    return { witnessName: s3.witness_name, markdown: lines2.join("\n").trimEnd() + "\n" };
+  });
 }
 
 // src/submission/forms/render-documents.ts
