@@ -86,6 +86,34 @@ class Lanes(unittest.TestCase):
         self.assertEqual(ci.queue([closed], "local"), [])
 
 
+class OffPeak(unittest.TestCase):
+    ISSUES = [issue(3, "local", "off peak"), issue(4, "local"), issue(5, "cloud", "off peak"), issue(6, "cloud")]
+
+    def at(self, day, hour, minute=0):
+        return datetime(2026, 10, day, hour, minute, tzinfo=timezone.utc)
+
+    def test_held_in_both_lanes_during_peak(self):
+        self.assertEqual(ci.queue(self.ISSUES, "local", now=NOW), [4])
+        self.assertEqual(ci.queue(self.ISSUES, "cloud", now=NOW), [6])
+
+    def test_peak_is_12_to_19_utc_on_weekdays(self):
+        monday, saturday, sunday = 26, 24, 25
+        self.assertEqual(ci.queue(self.ISSUES, "local", now=self.at(monday, 11, 59)), [3, 4])
+        self.assertEqual(ci.queue(self.ISSUES, "local", now=self.at(monday, 12)), [4])
+        self.assertEqual(ci.queue(self.ISSUES, "local", now=self.at(monday, 18, 59)), [4])
+        self.assertEqual(ci.queue(self.ISSUES, "local", now=self.at(monday, 19)), [3, 4])
+        self.assertEqual(ci.queue(self.ISSUES, "local", now=self.at(saturday, 15)), [3, 4])
+        self.assertEqual(ci.queue(self.ISSUES, "local", now=self.at(sunday, 15)), [3, 4])
+
+    def test_pick_passes_over_it_during_peak_and_takes_it_after(self):
+        claims = {3: [], 4: []}
+        self.assertEqual(ci.pick(self.ISSUES, "local", claims, now=NOW)["issue"], 4)
+        self.assertEqual(ci.pick(self.ISSUES, "local", claims, now=self.at(26, 20))["issue"], 3)
+
+    def test_only_held_work_during_peak_chooses_none(self):
+        self.assertIsNone(ci.pick(self.ISSUES[:1], "local", {3: []}, now=NOW)["issue"])
+
+
 class Claims(unittest.TestCase):
     def test_live_claim_skipped_in_either_lane(self):
         issues = [issue(1, "local"), issue(2, "local"), issue(3, "cloud"), issue(4, "cloud")]
