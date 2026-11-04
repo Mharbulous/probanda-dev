@@ -1,4 +1,4 @@
-// build-stamp: 202295a781f1
+// build-stamp: 5c725a3120d6
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15768,6 +15768,14 @@ function isPlainObject3(value) {
 }
 
 // src/tool-list.ts
+var WithImages = class {
+  constructor(result, images) {
+    this.result = result;
+    this.images = images;
+  }
+  result;
+  images;
+};
 function defineTool(name, handler, flags) {
   return { name, handler: (args, context) => handler(args, context), flags };
 }
@@ -15803,7 +15811,16 @@ function pairTools(definitions, tools2) {
 var FAULT = /* @__PURE__ */ Symbol("fault");
 async function toolReply(name, run, replyText2 = jsonText) {
   try {
-    return { content: [{ type: "text", text: replyText2(name, await run()) }] };
+    const result = await run();
+    if (result instanceof WithImages) {
+      return {
+        content: [
+          { type: "text", text: replyText2(name, result.result) },
+          ...result.images.map((png) => ({ type: "image", data: png.toString("base64"), mimeType: "image/png" }))
+        ]
+      };
+    }
+    return { content: [{ type: "text", text: replyText2(name, result) }] };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     const payload = err instanceof DataServerError ? { error: { code: err.code, message, ...err.details ? { details: err.details } : {} } } : { error: { code: "data_error", message } };
@@ -15833,7 +15850,8 @@ var CONTENT_SOURCES = {
   sources__check: "web page",
   knowledge__read: "knowledge file",
   research_filing__law_folder_text: "law folder file",
-  research_filing__legislation_search: "law folder file"
+  research_filing__legislation_search: "law folder file",
+  research_filing__matter_folder: "matter folder file"
 };
 function jsonText(name, result) {
   const source = Object.hasOwn(CONTENT_SOURCES, name) ? CONTENT_SOURCES[name] : void 0;

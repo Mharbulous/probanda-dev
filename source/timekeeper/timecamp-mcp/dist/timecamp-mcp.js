@@ -1,4 +1,4 @@
-// build-stamp: 8120c998acb5
+// build-stamp: 74ab1244c2f8
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -6663,10 +6663,10 @@ var require_formats = __commonJS({
         return -1;
       return 0;
     }
-    var TIME = /^(\d\d):(\d\d):(\d\d(?:\.\d+)?)(z|([+-])(\d\d)(?::?(\d\d))?)?$/i;
+    var TIME2 = /^(\d\d):(\d\d):(\d\d(?:\.\d+)?)(z|([+-])(\d\d)(?::?(\d\d))?)?$/i;
     function getTime(strictTimeZone) {
       return function time3(str) {
-        const matches = TIME.exec(str);
+        const matches = TIME2.exec(str);
         if (!matches)
           return false;
         const hr = +matches[1];
@@ -6697,8 +6697,8 @@ var require_formats = __commonJS({
     function compareIsoTime(t1, t2) {
       if (!(t1 && t2))
         return void 0;
-      const a1 = TIME.exec(t1);
-      const a2 = TIME.exec(t2);
+      const a1 = TIME2.exec(t1);
+      const a2 = TIME2.exec(t2);
       if (!(a1 && a2))
         return void 0;
       t1 = a1[1] + a1[2] + a1[3];
@@ -15770,8 +15770,11 @@ var FORM = '<p>Find your token in TimeCamp: click your avatar, open Profile Sett
 
 // src/timecamp/tools.ts
 var DATE = "^\\d{4}-\\d{2}-\\d{2}$";
+var TIME = "^([01]\\d|2[0-3]):[0-5]\\d$";
 var PRINTABLE = /^[^\x00-\x1F\x7F]+$/;
 var STOP_RULE = "If status reports usable: false, stop and tell the practitioner its reason. Never open the TimeCamp web app instead.";
+var OUT_FILE_RULE = "With out_file, writes the rows as a JSON array to that new file instead and returns only the count and totals.";
+var OUT_FILE_INPUT = { type: "string", description: "Absolute path of a file that does not exist yet." };
 function timecampToolDefinitions() {
   return [
     {
@@ -15798,7 +15801,7 @@ function timecampToolDefinitions() {
     },
     {
       name: "entries",
-      description: "TimeCamp time entries from `from` to `to` (local dates, inclusive), every user's unless filtered. task_ids also takes in every active descendant of each task. Returns the rows as TimeCamp gives them and totals by user and by day in TimeCamp's own seconds, with hours as seconds / 3600, never rounded. With out_file, writes the rows as a JSON array to that new file instead and returns only the count and totals. Read-only. " + STOP_RULE,
+      description: "TimeCamp time entries from `from` to `to` (local dates, inclusive), every user's unless filtered. task_ids also takes in every active descendant of each task. Returns the rows as TimeCamp gives them and totals by user and by day in TimeCamp's own seconds, with hours as seconds / 3600, never rounded. " + OUT_FILE_RULE + " Read-only. " + STOP_RULE,
       inputSchema: {
         type: "object",
         properties: {
@@ -15807,7 +15810,7 @@ function timecampToolDefinitions() {
           task_ids: { type: "array", items: { type: "string" }, description: "Keep only entries on these tasks or their active descendants." },
           user_ids: { type: "array", items: { type: "string" }, description: "Keep only entries of these TimeCamp user ids." },
           billable: { type: "boolean", description: "true keeps billable entries only, false non-billable only." },
-          out_file: { type: "string", description: "Absolute path of a file that does not exist yet." }
+          out_file: OUT_FILE_INPUT
         },
         required: ["from", "to"],
         additionalProperties: false
@@ -15816,16 +15819,21 @@ function timecampToolDefinitions() {
     },
     {
       name: "activities",
-      description: "TimeCamp computer activities (applications and window titles tracked by the desktop app) for 1 to 20 dates, with application and window_title resolved to names. Returns the rows as TimeCamp gives them. Read-only. " + STOP_RULE,
+      description: "TimeCamp computer activities (applications and window titles tracked by the desktop app) for 1 to 20 dates, with application and window_title resolved to names. Filter with entry_ids, user_ids, from_time and to_time. Returns the rows as TimeCamp gives them and totals by entry in seconds. " + OUT_FILE_RULE + " Read-only. " + STOP_RULE,
       inputSchema: {
         type: "object",
         properties: {
-          dates: { type: "array", items: { type: "string", pattern: DATE }, description: "1 to 20 dates, YYYY-MM-DD." }
+          dates: { type: "array", items: { type: "string", pattern: DATE }, description: "1 to 20 dates, YYYY-MM-DD." },
+          entry_ids: { type: "array", items: { type: "string" }, description: 'Keep only rows carrying these entry ids; "0" means no entry.' },
+          user_ids: { type: "array", items: { type: "string" }, description: "Keep only rows of these TimeCamp user ids." },
+          from_time: { type: "string", pattern: TIME, description: "Keep only rows running after this local time on each date, HH:MM." },
+          to_time: { type: "string", pattern: TIME, description: "Keep only rows running before this local time on each date, HH:MM." },
+          out_file: OUT_FILE_INPUT
         },
         required: ["dates"],
         additionalProperties: false
       },
-      annotations: { readOnlyHint: true, openWorldHint: true }
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
     },
     {
       name: "update_entry",
@@ -15863,7 +15871,7 @@ async function callTool(state, name, args) {
   const token = requireToken(state);
   if (name === "tasks") return tasks(token, args.query);
   if (name === "entries") return entries(token, args);
-  if (name === "activities") return activities(token, stringList("activities.dates", args.dates) ?? []);
+  if (name === "activities") return activities(token, args);
   if (name === "update_entry") return updateEntry(token, args);
   throw new ValidationError(`Unknown tool "${name}"`);
 }
@@ -15873,6 +15881,12 @@ function stringList(label, value) {
     throw new ValidationError(`${label} must be an array of strings`);
   }
   return value.map(String);
+}
+function keepIds(rows, key, label, value) {
+  const ids = stringList(label, value);
+  if (!ids?.length) return rows;
+  const keep = new Set(ids);
+  return rows.filter((r) => keep.has(String(r[key])));
 }
 function date3(label, value) {
   if (typeof value !== "string" || !new RegExp(DATE).test(value)) throw new ValidationError(`${label} must be a date, YYYY-MM-DD`);
@@ -15966,8 +15980,7 @@ async function entries(token, args) {
   const from = date3("entries.from", args.from);
   const to = date3("entries.to", args.to);
   if (from > to) throw new ValidationError("entries.from must not be after entries.to");
-  const outFile = args.out_file;
-  if (outFile !== void 0 && !isAbsolute(outFile)) throw new ValidationError("entries.out_file must be an absolute path");
+  const outFile = checkedOutFile("entries", args);
   const body = await apiRequest(token, "GET", "entries/", new URLSearchParams({ from, to, format: "json" }));
   if (!Array.isArray(body)) throw new TimeCampError("TimeCamp's entries answer is not a list");
   let rows = body;
@@ -15976,27 +15989,31 @@ async function entries(token, args) {
     const keep = withDescendants(await allTasks(token), taskIds);
     rows = rows.filter((r) => keep.has(String(r.task_id)));
   }
-  const userIds = stringList("entries.user_ids", args.user_ids);
-  if (userIds?.length) {
-    const keep = new Set(userIds);
-    rows = rows.filter((r) => keep.has(String(r.user_id)));
-  }
+  rows = keepIds(rows, "user_id", "entries.user_ids", args.user_ids);
   if (typeof args.billable === "boolean") {
     const want = args.billable ? 1 : 0;
     rows = rows.filter((r) => Number(r.billable) === want);
   }
   const result = { from, to, count: rows.length, totals: totals(rows) };
   if (outFile === void 0) return { ...result, rows };
+  await writeRowsFile("entries", outFile, rows);
+  return { ...result, out_file: outFile };
+}
+function checkedOutFile(tool, args) {
+  const outFile = args.out_file;
+  if (outFile !== void 0 && !isAbsolute(outFile)) throw new ValidationError(`${tool}.out_file must be an absolute path`);
+  return outFile;
+}
+async function writeRowsFile(tool, outFile, rows) {
   await mkdir2(dirname2(outFile), { recursive: true });
   try {
     await writeFile2(outFile, JSON.stringify(rows), { flag: "wx" });
   } catch (error2) {
     if (error2?.code === "EEXIST") {
-      throw new ValidationError(`entries.out_file ${outFile} already exists; name a new file`);
+      throw new ValidationError(`${tool}.out_file ${outFile} already exists; name a new file`);
     }
     throw error2;
   }
-  return { ...result, out_file: outFile };
 }
 function totals(rows) {
   const byUser = /* @__PURE__ */ new Map();
@@ -16018,16 +16035,46 @@ function totals(rows) {
     by_day: [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date4, s]) => ({ date: date4, seconds: s, hours: s / 3600 }))
   };
 }
-async function activities(token, dates) {
+function timeOfDay(label, value) {
+  if (value === void 0 || value === null) return void 0;
+  if (typeof value !== "string" || !new RegExp(TIME).test(value)) throw new ValidationError(`${label} must be a time, HH:MM`);
+  return Number(value.slice(0, 2)) * 3600 + Number(value.slice(3)) * 60;
+}
+function endOfRow(row) {
+  const [h, m, s] = String(row.end_time).slice(11).split(":").map(Number);
+  return h * 3600 + m * 60 + s;
+}
+async function activities(token, args) {
+  const dates = stringList("activities.dates", args.dates) ?? [];
   if (dates.length < 1 || dates.length > 20) throw new ValidationError("activities.dates takes 1 to 20 dates");
   dates.forEach((d) => date3("activities.dates", d));
+  const from = timeOfDay("activities.from_time", args.from_time);
+  const to = timeOfDay("activities.to_time", args.to_time);
+  if (from !== void 0 && to !== void 0 && from >= to) throw new ValidationError("activities.from_time must be before activities.to_time");
+  const outFile = checkedOutFile("activities", args);
   const query = new URLSearchParams();
   for (const d of dates) query.append("dates[]", d);
   query.set("include", "application,window_title");
   query.set("format", "json");
   const body = await apiRequest(token, "GET", "activity/", query);
   if (!Array.isArray(body)) throw new TimeCampError("TimeCamp's activity answer is not a list");
-  return { dates, count: body.length, rows: body };
+  let rows = keepIds(body, "entry_id", "activities.entry_ids", args.entry_ids);
+  rows = keepIds(rows, "user_id", "activities.user_ids", args.user_ids);
+  if (from !== void 0) rows = rows.filter((r) => endOfRow(r) > from);
+  if (to !== void 0) rows = rows.filter((r) => endOfRow(r) - Number(r.time_span) < to);
+  const byEntry = /* @__PURE__ */ new Map();
+  for (const r of rows) byEntry.set(String(r.entry_id), (byEntry.get(String(r.entry_id)) ?? 0) + (Number(r.time_span) || 0));
+  const result = {
+    dates,
+    count: rows.length,
+    totals: {
+      seconds: [...byEntry.values()].reduce((sum, s) => sum + s, 0),
+      by_entry: [...byEntry.entries()].map(([entry_id, seconds]) => ({ entry_id, seconds }))
+    }
+  };
+  if (outFile === void 0) return { ...result, rows };
+  await writeRowsFile("activities", outFile, rows);
+  return { ...result, out_file: outFile };
 }
 async function updateEntry(token, args) {
   const sent = { id: String(args.entry_id), task_id: String(args.task_id), note: String(args.note) };

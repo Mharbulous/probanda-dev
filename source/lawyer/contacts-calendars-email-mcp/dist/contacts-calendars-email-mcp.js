@@ -1,4 +1,4 @@
-// build-stamp: 0c4e4840e48f
+// build-stamp: da7fe88111a4
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -108153,6 +108153,14 @@ function isPlainObject3(value) {
 }
 
 // src/tool-list.ts
+var WithImages = class {
+  constructor(result, images) {
+    this.result = result;
+    this.images = images;
+  }
+  result;
+  images;
+};
 function dispatchFrom(buildDefinitions, tools2, replyText = jsonText) {
   let table;
   const call = async (context, name2, rawArgs) => {
@@ -108185,7 +108193,16 @@ function pairTools(definitions, tools2) {
 var FAULT = /* @__PURE__ */ Symbol("fault");
 async function toolReply(name2, run, replyText = jsonText) {
   try {
-    return { content: [{ type: "text", text: replyText(name2, await run()) }] };
+    const result = await run();
+    if (result instanceof WithImages) {
+      return {
+        content: [
+          { type: "text", text: replyText(name2, result.result) },
+          ...result.images.map((png) => ({ type: "image", data: png.toString("base64"), mimeType: "image/png" }))
+        ]
+      };
+    }
+    return { content: [{ type: "text", text: replyText(name2, result) }] };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     const payload = err instanceof DataServerError ? { error: { code: err.code, message, ...err.details ? { details: err.details } : {} } } : { error: { code: "data_error", message } };
@@ -108215,7 +108232,8 @@ var CONTENT_SOURCES = {
   sources__check: "web page",
   knowledge__read: "knowledge file",
   research_filing__law_folder_text: "law folder file",
-  research_filing__legislation_search: "law folder file"
+  research_filing__legislation_search: "law folder file",
+  research_filing__matter_folder: "matter folder file"
 };
 function jsonText(name2, result) {
   const source = Object.hasOwn(CONTENT_SOURCES, name2) ? CONTENT_SOURCES[name2] : void 0;
@@ -118649,6 +118667,19 @@ function findFolder(list2, path) {
   return list2.find((f3) => f3.path === path || inbox && f3.path.toUpperCase() === "INBOX");
 }
 var folderMissing = (path) => new DataServerError(`no folder named "${path}"; take the exact name from mail__list_folders`, "mail_not_found");
+var leafKey = (path, delimiter = "/") => path.slice(path.lastIndexOf(delimiter) + 1).replace(/\s+/g, " ").trim().toLowerCase();
+async function namingFolder(client, folder, act) {
+  try {
+    return await act();
+  } catch (error2) {
+    const list2 = await client.list().catch(() => void 0);
+    if (!list2 || findFolder(list2, folder)) throw error2;
+    const sameLeaf = list2.filter((f3) => !f3.flags?.has("\\Noselect") && leafKey(f3.path, f3.delimiter) === leafKey(folder, f3.delimiter)).map((f3) => `"${f3.path}"`);
+    if (sameLeaf.length === 0) throw folderMissing(folder);
+    throw new DataServerError(`no folder named "${folder}"; folders with that last segment: ${sameLeaf.join(", ")}`, "mail_not_found");
+  }
+}
+var openReadOnly = (client, folder) => namingFolder(client, folder, () => client.mailboxOpen(folder, { readOnly: true }));
 
 // src/mail/dedupe.ts
 var SLICE_MS = 2e4;
@@ -118792,7 +118823,7 @@ async function requireTrashAndMove(client) {
   if (!trash) throw new DataServerError("no Trash folder was found, so nothing can be moved; nothing was changed", "mail_no_trash");
   return trash;
 }
-async function openReadOnly(client, folder) {
+async function openReadOnly2(client, folder) {
   const box = await client.mailboxOpen(folder, { readOnly: true });
   if (box.uidValidity === void 0) throw stale(`"${folder}" did not report its UIDVALIDITY, so its messages cannot be identified`);
   return String(box.uidValidity);
@@ -118878,7 +118909,7 @@ async function hashFolders(client, state, clock) {
   for (const scan of state.scans) {
     if (scan.uidValidity && scan.next >= scan.uids.length) continue;
     if (clock.spent()) return false;
-    const validity = await openReadOnly(client, scan.folder);
+    const validity = await openReadOnly2(client, scan.folder);
     if (!scan.uidValidity) {
       scan.uidValidity = validity;
       scan.uids = [...await client.search({ all: true }, { uid: true }) || []].sort((a3, b3) => a3 - b3);
@@ -118993,7 +119024,7 @@ async function compareGroups(client, state, clock) {
     for (const entry of group.copies) {
       if (entry.folder !== open) {
         const scan = state.scans.find((s3) => s3.folder === entry.folder);
-        if (await openReadOnly(client, entry.folder) !== scan.uidValidity) {
+        if (await openReadOnly2(client, entry.folder) !== scan.uidValidity) {
           throw stale(`"${entry.folder}" changed during the scan, so run a new scan`);
         }
         open = entry.folder;
@@ -119368,7 +119399,7 @@ async function verifyCopies(client, state, clock) {
     if (clock.spent()) return false;
     const copy2 = state.checks[state.checked];
     if (copy2.folder !== open) {
-      if (await openReadOnly(client, copy2.folder) !== copy2.uidvalidity) {
+      if (await openReadOnly2(client, copy2.folder) !== copy2.uidvalidity) {
         throw stale(`"${copy2.folder}" changed since the scan, so its messages can no longer be identified; nothing was moved. Run a new scan`);
       }
       open = copy2.folder;
@@ -121879,7 +121910,11 @@ function listFolders(run, args) {
 function folderStatus(run, args) {
   const folder = folderArg(args);
   return run(`reading the status of "${folder}"`, async (client) => {
-    const s3 = await client.status(folder, { messages: true, unseen: true, recent: true, uidNext: true, uidValidity: true });
+    const s3 = await namingFolder(
+      client,
+      folder,
+      () => client.status(folder, { messages: true, unseen: true, recent: true, uidNext: true, uidValidity: true })
+    );
     return {
       folder,
       total: s3.messages,
@@ -121895,7 +121930,7 @@ function getLatestEmails(run, args) {
   const count = intArg("mail__get_latest_emails.count", args.count, 10, 1, 200);
   const body = listBodyOptions("mail__get_latest_emails", args);
   return run(`reading the latest messages in "${folder}"`, async (client) => {
-    const box = await client.mailboxOpen(folder, { readOnly: true });
+    const box = await openReadOnly(client, folder);
     if (box.exists === 0) return { folder, messages: [] };
     const uids = [];
     for await (const m3 of client.fetch(`${Math.max(1, box.exists - count + 1)}:*`, { uid: true })) uids.push(m3.uid);
@@ -121914,7 +121949,7 @@ function searchEmails(run, args) {
   if (args.flagged !== void 0) criteria.flagged = args.flagged;
   if (Object.keys(criteria).length === 0) criteria.all = true;
   return run(`searching "${folder}"`, async (client) => {
-    await client.mailboxOpen(folder, { readOnly: true });
+    await openReadOnly(client, folder);
     const uids = await client.search(criteria, { uid: true }) || [];
     const newest = [...uids].sort((a3, b3) => a3 - b3).slice(-limit);
     const messages = (await fetchSummaries(client, folder, newest, body)).sort(byDateDesc).slice(0, limit);
@@ -121931,7 +121966,7 @@ function getEmail(run, args) {
     stripInlineImages: args.strip_inline_images === true
   };
   return run(`reading message ${uid} in "${folder}"`, async (client) => {
-    await client.mailboxOpen(folder, { readOnly: true });
+    await openReadOnly(client, folder);
     const m3 = await client.fetchOne(
       String(uid),
       { uid: true, source: true, flags: true, envelope: true, bodyStructure: true, internalDate: true },
@@ -122002,7 +122037,7 @@ async function downloadAttachment(run, args) {
   if (index === void 0 && !filename) throw new ValidationError("mail__download_attachment needs filename or index");
   const saveDir = saveDirArg("mail__download_attachment", args);
   const { entry, bytes } = await run(`downloading an attachment of message ${uid} in "${folder}"`, async (client) => {
-    await client.mailboxOpen(folder, { readOnly: true });
+    await openReadOnly(client, folder);
     const m3 = await client.fetchOne(String(uid), { uid: true, bodyStructure: true }, { uid: true });
     if (!m3) throw notFound(uid, folder);
     const entry2 = pickAttachment(attachmentList(m3.bodyStructure), filename, index);
@@ -122054,7 +122089,7 @@ async function saveMessage(run, args) {
   if (staging === (args.save_dir !== void 0)) throw new ValidationError("mail__save_message needs either save_dir or staging: true");
   const saveDir = staging ? void 0 : saveDirArg("mail__save_message", args);
   const { source, messageId, subject } = await run(`saving message ${uid} in "${folder}"`, async (client) => {
-    await client.mailboxOpen(folder, { readOnly: true });
+    await openReadOnly(client, folder);
     const m3 = await client.fetchOne(String(uid), { uid: true, source: true, envelope: true }, { uid: true });
     if (!m3 || !m3.source) throw notFound(uid, folder);
     return { source: m3.source, messageId: m3.envelope?.messageId, subject: m3.envelope?.subject };
@@ -122172,7 +122207,7 @@ function findThreadMessages(run, args) {
     throw new ValidationError("mail__find_thread_messages.search_folders must be a non-empty list of folder names");
   }
   return run(`tracing the thread of message ${uid} in "${folder}"`, async (client) => {
-    await client.mailboxOpen(folder, { readOnly: true });
+    await openReadOnly(client, folder);
     const m3 = await client.fetchOne(String(uid), { uid: true, envelope: true, headers: ["references"] }, { uid: true });
     if (!m3) throw notFound(uid, folder);
     const references = m3.headers?.toString("latin1").match(/<[^<>\s]+>/g) ?? [];
@@ -122189,7 +122224,7 @@ function findThreadMessages(run, args) {
     const or2 = ids.flatMap((id2) => [{ header: { "message-id": id2 } }, { header: { references: id2 } }, { header: { "in-reply-to": id2 } }]);
     const messages = [];
     for (const f3 of folders) {
-      await client.mailboxOpen(f3, { readOnly: true });
+      await openReadOnly(client, f3);
       const uids = await client.search(or2.length === 1 ? or2[0] : { or: or2 }, { uid: true }) || [];
       messages.push(...await fetchSummaries(client, f3, uids, body));
     }
