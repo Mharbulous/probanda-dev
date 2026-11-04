@@ -6,8 +6,8 @@ PC through remote-devices, `mcp__cowork__present_files` is absent and
 `SendUserFile` takes container paths only. A card made from a scratch copy in
 the container offers only "Download"; a card made from the path
 `device_stage_files` returns (under /mnt/user-data/uploads/) offers "Open in
-Word" and "Show in Explorer" (show-me/SKILL.md, "Presenting a file saved on the
-PC"). So, only when /mnt/user-data exists, this gate refuses a SendUserFile
+Word" and "Show in Explorer" (shared/present-files.md, "Fallback route: a file
+saved on the PC"). So, only when /mnt/user-data exists, this gate refuses a SendUserFile
 whose file is neither under /mnt/user-data/uploads/ nor a .png or .pdf.
 
 PNG and PDF pass anywhere, because show-me's highlight extracts are review

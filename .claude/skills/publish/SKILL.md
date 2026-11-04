@@ -46,6 +46,8 @@ expose them as global top-level skills.
 4. If no subskill fits the request, say so plainly rather than guessing --
    there is no fallback path.
 
+A subskill that shows the practitioner a file reads `shared/present-files.md`.
+
 ## Available Subskills
 
 - `subskills/publish-bcsc-form/SUBSKILL.md` -- fills BC Supreme Court .dotx

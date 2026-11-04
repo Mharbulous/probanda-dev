@@ -24,6 +24,13 @@ test("session entry and the fast open are /work's", () => {
   assert.ok(enter.every((id) => id.startsWith("work.")), enter.join(" "));
 });
 
+test("the folder grant is served on its own, and the plural-boards rule arrives with session entry", () => {
+  const enter = ids("enter");
+  assert.ok(enter.includes("work.open.all-boards"));
+  assert.ok(!enter.includes("work.enter.folder-grant"));
+  assert.deepEqual(ids("folder_grant"), ["work.enter.folder-grant"]);
+});
+
 test("dispatch is /work's, and one take call serves the judgements before the assigning write", () => {
   const dispatch = ids("dispatch");
   for (const id of ["work.dispatch", "work.dispatch.choose", "work.dispatch.work-gone", "work.dispatch.assign"]) {

@@ -78,7 +78,7 @@ Tools are named without their prefix. Call each under whichever of `mcp__plugin_
 
 9. **Any other refusal** (`invalid_format`, `letterhead_refused`, `no_stored_layout` and the rest, apart from a party-signed Writing's `missing_token` in step 4) is a defect: report the code and its detail to the practitioner, and never work around it.
 
-10. **Present the result.** Present the deliverable, and any review copy written, as clickable file cards (`shared/present-files.md`). On the fallback route, on a remote-device-only host, stage each saved file first and send the staged path (`/show-me`, "Presenting a file saved on the PC (fallback route)").
+10. **Present the result.** Present the deliverable, and any review copy written, as clickable file cards (`shared/present-files.md`). On the fallback route, on a remote-device-only host, stage each saved file first and send the staged path (`shared/present-files.md`, "Fallback route: a file saved on the PC").
 
 ## Boundaries
 
