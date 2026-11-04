@@ -100,3 +100,12 @@ After this, Brahm has two decisions left, #216 and #226, through `/hitl-triage`.
 ## Result of step 6 (2026-11-04)
 
 The narrow rules failed. One `claude -p` write in the clone was refused under `Write(.claude/skills/**)` with `Edit(.claude/skills/**)`, under the root forms `Write(/.claude/skills/**)` with `Edit(/.claude/skills/**)`, and under `Edit(/.claude/skills/**)` alone. `dontAsk` mode refuses a write under `.claude/` whatever the allowlist says, so the rules were removed, the local gate names the limit, and #191 stays `ready-for-human`.
+
+## Result of Part 2 (2026-11-04)
+
+Two issues differ from the table, both because a real human stop outranks queue flow.
+
+- **#191** stays `ready-for-human`, by step 6's result above.
+- **#187** stays `ready-for-human`. Its recorded go-ahead names `lawyer`, `researcher`, `timekeeper` and `file-manager`, but `litigator`, `solicitor` and `developer` pin `lawyer` to `^0.21.12`, so a `lawyer` minor makes each of them a minor too. Its new brief asks Brahm whether the go-ahead covers those three.
+
+So 10 issues are `ready-for-agent` and 4 are `ready-for-human`, in place of the 12 and 2 under Verification.
