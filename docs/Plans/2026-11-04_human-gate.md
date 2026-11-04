@@ -111,3 +111,17 @@ Two issues differ from the table, both because a real human stop outranks queue 
 So 10 issues are `ready-for-agent` and 4 are `ready-for-human`, in place of the 12 and 2 under Verification.
 
 Later on 2026-11-04, Brahm extended the #187 go-ahead to `litigator`, `solicitor` and `developer`, recorded in comment 6629202020. That makes 11 `ready-for-agent` and 3 `ready-for-human` (#191, #216, #226).
+
+## Result of the parallel batch (2026-11-04)
+
+Brahm asked for the queue to run in parallel for this night only. Sessions and the local implementer split it by shared files, and every issue kept its claim.
+
+- **In parallel, test-only:** #200 then #202 (one agent, because they share files), #212, #217, #220, #230.
+- **In parallel, with a release:** #223 in the shared checkout, beside #188 and then #206 in the implementer's clone. Their releases collided on version numbers and built files, and merging and rebuilding resolved each collision. That cost repeated re-releases of #188, which is why the lock normally keeps releases apart.
+- **In series:** #187 after #206, because both change `key-request/tools.ts`.
+
+#187's first run handed it back with `node-modules`, since its clone had no packages for the commons and canlii bundles. Brahm approved installing them, and `a8c5d9df` added both to `run-local-implementer.ps1`. Before that run could take it again, it was held out of the queue, because a second hand-back would have sent it to `ready-for-human`. It was relabelled `ready-for-agent` after the lock was released.
+
+#202 also converted `scripts/tests/test_stamp_dependencies.py`, outside the 8 files of its Scope. The file was added after the brief, and the brief's check covers every test file.
+
+An `off peak` label and queue rule were added and removed the same night (`bfa5b637`, reverted in `bfd50555`). They assumed peak hours cost more, but Anthropic removed that limit reduction for Claude Code on Pro and Max on 2026-05-06, and Brahm is on Max. Do not add it again without a source that says peak hours apply.
