@@ -1,4 +1,4 @@
-Read when: a mail tool returns `mail_not_configured`, a practice write fails for want of Probanda's key, or the practitioner asks about their key or whether Probanda verified them.
+Read when: a mail tool returns `mail_not_configured`, a practice write fails for want of Probanda's key, a skill checks the key before work that needs it, or the practitioner asks about their key or whether Probanda verified them.
 
 # Credentials
 
@@ -11,6 +11,8 @@ On a `mail_not_configured` error, call `mail__configure_status` first. It report
 ## Probanda's key
 
 Probanda's key is the one credential for every access to Probanda's Cloud: practice writes, the Suggestion Box and the legal commons. `practice_data__config_status` reports it as `cloud_credential`. It is set once per machine through `cloud_key__configure_credential`, which returns a link to a page on this computer. The practitioner pastes the key on that page, never in chat. The page checks the key against Probanda's Cloud and stores it in Windows Credential Manager as the generic credential `Probanda/cloud-key`: the same store inside and outside the Claude app, kept through a reinstall. A key an earlier version saved as a file is moved there the first time a session reads it. To forget the key on this computer, the practitioner removes that entry under Control Panel, Credential Manager, Windows Credentials. Never ask for the key in chat, and never echo it back.
+
+**Key check.** A plugin hook states at session start whether this computer holds the key, or that the session cannot see the key store, as in Cowork. It states facts only and never asks the session to act. A skill whose work needs the key (a suggestion, a practice write) checks it itself: unless the session-start note already says this computer holds no key, call `practice_data__config_status` in the same round trip as its first tool call and read `cloud_credential`. When this computer holds no key, tell the practitioner once in the session, in one sentence, that this computer has no Probanda key yet, so suggestions to the Probanda team cannot be sent and changes to practice records cannot be saved, and offer to ask Probanda for one now. On their yes, follow the key request below. Never ask for the key in chat.
 
 A practitioner who has no key asks Probanda for one. Call `key_request__submit` and send the practitioner the link it returns. On that page they type only what verifying a practising lawyer requires (full name, year of call, an optional call date and firm name) and an email and optional phone for contact, never in chat. Probanda verifies them and sends the key to the email address their firm's website or the directory lists for them. Call `key_request__status` to report where the request stands. When it reports `issued`, call `cloud_key__configure_credential` so they can paste the key they received.
 
