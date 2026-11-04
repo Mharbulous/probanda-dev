@@ -1,4 +1,4 @@
-// build-stamp: 639b900d413d
+// build-stamp: 076eb7be568d
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15468,7 +15468,7 @@ var PythonTimeoutError = class extends DataServerError {
   }
 };
 
-// src/knowledge/index.ts
+// src/knowledge/venues-kinds.ts
 var STAMP_KEYS = ["plugin_version", "shipped_from"];
 var VENUE_ROW_KEYS = ["code", "name", "aliases", "source", "ref", "recorded", ...STAMP_KEYS];
 var KIND_ROW_KEYS = ["file", "name", "aliases", "recipient", ...STAMP_KEYS];

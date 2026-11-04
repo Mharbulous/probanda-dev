@@ -1,4 +1,4 @@
-// build-stamp: 05e80d2d1c82
+// build-stamp: d9e240cd135e
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -107653,7 +107653,7 @@ var DataServerError = class extends Error {
 var ValidationError = class extends DataServerError {
 };
 
-// src/knowledge/index.ts
+// src/knowledge/venues-kinds.ts
 var STAMP_KEYS = ["plugin_version", "shipped_from"];
 var VENUE_ROW_KEYS = ["code", "name", "aliases", "source", "ref", "recorded", ...STAMP_KEYS];
 var KIND_ROW_KEYS = ["file", "name", "aliases", "recipient", ...STAMP_KEYS];
