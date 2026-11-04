@@ -305,7 +305,7 @@
     // this write), then its pending jobs. A path with nothing at it, or one that could not be read,
     // says so, never dropped.
     var ATTACHED_KINDS = { client_letter: "Client letter", reply: "Reply", opposing_filing: "Opposing filing" };
-    var PENDING_EMOJI = { ready: "🟢 Ready", wip: "🔵 In Progress", bring_forward: "📅 Bring Forward", waiting: "⛔ Blocked" };
+    var PENDING_EMOJI = { ready: "🟢 Ready", wip: "🔵 In Progress", bring_forward: "📅 Bring Forward", waiting: "🔴 Blocked" };
     function attachedCard(a) {
       var tile = el("li", "writing attachment");
       tile.setAttribute("data-long", a.name);
