@@ -9,9 +9,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { docBytes, docxBytes, pdfBytes } from "./helpers/synthetic-docs.mjs";
+import { docBytes, docxBytes, drawImage, imagePdfBytes, pdfBytes } from "./helpers/synthetic-docs.mjs";
 
 const { lawFolderText } = await import("../build/files/research-filing.js");
+const { pdfPageImages } = await import("../build/files/extract/page-images.js");
 
 // Forty lines of 40 characters: about 1,600 bytes on one page, well over the scanned threshold.
 const LINES = Array.from({ length: 40 }, (_, i) => `Placeholder line ${String(i).padStart(2, "0")} of the text layer.`).join("\n");
@@ -90,6 +91,38 @@ test("law_folder_text writes each readable file's text to the scratchpad and fla
     // A second call replaces its own text files rather than versioning them.
     await lawFolderText(f.matter, f.law);
     assert.deepEqual(readdirSync(outDir).sort(), TEXT_FILES);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("an ok PDF row is its page manifest, by the classification pdf_pages__images uses; a mixed PDF is unread", async () => {
+  const f = fixture();
+  const ocr = Array.from({ length: 40 }, (_, i) => `BT 3 Tr /F1 12 Tf 72 ${740 - 17 * i} Td (Placeholder hidden OCR line ${i} of the text layer) Tj ET`).join(" ");
+  const born = { content: ocr.replaceAll("3 Tr", "0 Tr") };
+  writeFileSync(join(f.law, "mixed.pdf"), imagePdfBytes({ pages: [born, { content: `${drawImage(0, 0, 612, 792)} ${ocr}` }] }));
+  try {
+    const rows = Object.fromEntries((await lawFolderText(f.matter, f.law)).files.map((row) => [row.file, row]));
+
+    assert.equal(rows["decision.pdf"].page_count, 2);
+    assert.deepEqual(rows["decision.pdf"].scanned_pages, []);
+    const images = await pdfPageImages({ path: join(f.law, "decision.pdf") });
+    assert.equal(images.page_count, rows["decision.pdf"].page_count);
+    assert.equal(images.render_dir, null);
+
+    assert.equal(rows["mixed.pdf"].status, "unread");
+    assert.equal(rows["mixed.pdf"].text_path, null);
+    assert.equal(rows["mixed.pdf"].reason, "ocr_unavailable: page 2 is a scanned or OCR'd page, whose text layer is never read");
+    assert.equal("page_count" in rows["mixed.pdf"], false);
+    assert.equal("scanned_pages" in rows["mixed.pdf"], false);
+    const mixed = await pdfPageImages({ path: join(f.law, "mixed.pdf"), destination_dir: f.matter });
+    assert.deepEqual(mixed.pages.map((page) => page.kind), ["born_digital", "scanned"]);
+
+    for (const file of ["memo.docx", "notes.txt"]) {
+      assert.equal(rows[file].status, "ok");
+      assert.equal("page_count" in rows[file], false);
+      assert.equal("scanned_pages" in rows[file], false);
+    }
   } finally {
     f.cleanup();
   }

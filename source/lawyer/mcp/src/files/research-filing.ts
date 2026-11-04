@@ -360,6 +360,8 @@ export interface LawTextRow {
   text_path: string | null;
   bytes: number;
   method?: "text" | "copy";
+  page_count?: number;
+  scanned_pages?: number[];
   status: "ok" | "unread";
   reason?: string;
 }
@@ -617,7 +619,9 @@ export async function lawFolderText(
     const textPath = pathWin32.join(outDir, `${file}.txt`);
     const body = Buffer.from(read.text, "utf-8");
     writeFileSync(textPath, body);
-    rows.push({ file, text_path: textPath, bytes: body.length, method: read.method, status: "ok" });
+    // extractText returns a PDF `ok` only when classifyPdfPages found no scanned page: this row is its page manifest.
+    const manifest = read.kind === "pdf" ? { page_count: read.pages as number, scanned_pages: [] } : {};
+    rows.push({ file, text_path: textPath, bytes: body.length, method: read.method, ...manifest, status: "ok" });
   }
   return { out_dir: outDir, files: rows };
 }

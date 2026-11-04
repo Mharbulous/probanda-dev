@@ -110,24 +110,23 @@ other question runs the duties in their numbered order.
 2. **Tier 3 text, from `research_filing__law_folder_text`.** The agent's grant
    cannot open a `.docx` or `.doc`. The tool extracts text-layer PDFs, `.docx` and
    `.doc` inside the data server, with no host Python or package; a PDF with any
-   scanned or OCR'd page comes back `ocr_unavailable`, because a scanned page's
-   text layer is never read. `law_folder_text` returns a PDF with any scanned
-   page as unread, even when its other pages are born-digital, such as a report
-   with a scanned cover. The session then reads it through a page manifest.
+   scanned or OCR'd page comes back `ocr_unavailable`, even when its other pages
+   are born-digital, because a scanned page's text layer is never read.
    Before each spawn
    or re-invocation, call `research_filing__law_folder_text` with the matter root
    and each issue's `6. LAW\<issue>\` folder. Pass its rows verbatim in the spawn
    prompt's `6. LAW listing and extracted text:` field, and name every
-   `status: unread` row there as UNREAD with its reason. The agent records that
-   file UNREAD, never absent, and caps its confidence. Then call lawyer's
-   `pdf_pages__images` for each PDF in that folder, and pass each PDF's page
+   `status: unread` row there as UNREAD with its reason. A PDF's `status: ok` row
+   is its page manifest: every page is born-digital (`scanned_pages: []`), and the
+   agent reads its `text_path`. For each `ocr_unavailable` row, call lawyer's
+   `pdf_pages__images`, and pass that PDF's page
    manifest, keyed by its path, in the spawn prompt's `6. LAW page manifests:`
    field: `{page, images}` for each scanned page, its images top to bottom, and
    `{pages: "a-b", pdf}` for each run of born-digital pages (`matter-data`
    design decision #71). A PDF the tool refuses goes in that field with its
    reason and no manifest. The agent reads a scanned page only from its images,
-   and records a PDF with no manifest UNREAD, never absent, with capped
-   confidence. Where the agent's `Read`
+   and records a file with neither text nor manifest UNREAD, never absent, with
+   capped confidence. Where the agent's `Read`
    cannot reach the host scratchpad, as in a cloud session with the matter on the
    desktop, stage only the rows' `text_path` files, at most 50 paths per
    `device_stage_files` call, the calls in parallel, confirm every file staged,

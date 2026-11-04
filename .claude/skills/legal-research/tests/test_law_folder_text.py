@@ -40,6 +40,12 @@ class DutyTwoTests(unittest.TestCase):
         for gone in ("soffice", "pdftotext", "stage every file"):
             self.assertNotIn(gone, duty)
 
+    def test_duty_two_renders_only_a_row_that_comes_back_ocr_unavailable(self):
+        duty = duty_two()
+        self.assertIn("A PDF's `status: ok` row is its page manifest", duty)
+        self.assertIn("For each `ocr_unavailable` row, call lawyer's `pdf_pages__images`", duty)
+        self.assertNotIn("`pdf_pages__images` for each PDF", duty)
+
     def test_the_tool_duty_two_names_is_registered(self):
         self.assertIn(f'name: "{TOOL}"', SCHEMA.read_text(encoding="utf-8"))
 

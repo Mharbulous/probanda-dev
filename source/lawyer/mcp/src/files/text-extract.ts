@@ -48,7 +48,8 @@ export async function extractText(path: string): Promise<TextExtraction> {
       result = { status: "ok", kind: "text", method: "copy", text: readFileSync(path, "utf-8"), pages: null };
     } else if (ext === ".pdf") {
       // A scanned or OCR'd page is read only from its image: its text layer may be garbled, or hidden.
-      const scanned = (await classifyPdfPages(path)).indexOf("scanned");
+      const kinds = await classifyPdfPages(path);
+      const scanned = kinds.indexOf("scanned");
       if (scanned >= 0) {
         return unread(`ocr_unavailable: page ${scanned + 1} is a scanned or OCR'd page, whose text layer is never read`);
       }
@@ -60,7 +61,7 @@ export async function extractText(path: string): Promise<TextExtraction> {
           `ocr_unavailable: ${bytes} bytes of text over ${pages.length} page(s), under ${SCANNED_BYTES_PER_PAGE} per page, so likely scanned`
         );
       }
-      result = { status: "ok", kind: "pdf", method: "text", text, pages: pages.length };
+      result = { status: "ok", kind: "pdf", method: "text", text, pages: kinds.length };
     } else if (ext === ".docx") {
       result = { status: "ok", kind: "docx", method: "text", text: docxText(path), pages: null };
     } else if (ext === ".doc") {
