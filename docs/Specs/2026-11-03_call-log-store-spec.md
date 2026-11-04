@@ -1,6 +1,6 @@
 # Consolidated call-log store
 
-Status: built 2026-11-03. Decided in a reviewed grilling session and the practitioner's answers of the same date.
+Status: built 2026-11-03. Decided in a reviewed grilling session and the practitioner's answers of the same date. Its route for a second provider (an adapter plus its own table) and the deferred Rogers adapter are replaced by `2026-11-03_call-log-any-provider-spec.md`.
 
 ## Requirements
 
