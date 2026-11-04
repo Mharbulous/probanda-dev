@@ -20,9 +20,11 @@ recorded `not run: no neutral citation`.
 
 ## What to record
 
-Each citing case as the citator lists it: citation, title and date. The CanLII
-citator returns citing cases with no treatment classification, so the record carries
-none. Make no second-hop call on the citing decisions themselves.
+The tool returns `total` and at most 5 citing cases, newest first by neutral citation
+(year, then number), because CanLII gives no date. Record `total`, and each returned case's
+citation and title as listed. The CanLII citator returns citing cases with no treatment
+classification, so the record carries none. Make no second-hop call on the citing decisions
+themselves.
 
 A runtime error is recorded as `not run: <the error message, verbatim>`. A missing key
 names itself: record it as `not run: no key`.
