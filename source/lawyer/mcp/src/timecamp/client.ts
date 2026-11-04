@@ -11,10 +11,10 @@
 import { join } from "node:path";
 
 import { defaultStateDir, readProtectedJson, writeProtectedJson } from "../../../../mcp-shared/dpapi-store.js";
+import { timedFetch } from "../../../../mcp-shared/timed-fetch.js";
 import { DataServerError } from "../errors.js";
 
 export const API_BASE = "https://www.timecamp.com/third_party/api/";
-const TIMEOUT_MS = 60_000;
 
 export interface TokenState {
   token: string | null;
@@ -55,7 +55,7 @@ export function missingTokenReason(state: TokenState): string | undefined {
 }
 
 export class TimeCampError extends DataServerError {
-  constructor(message: string, code = "timecamp_error") {
+  constructor(message: string, code = "data_error") {
     super(message, code);
   }
 }
@@ -75,20 +75,21 @@ export async function apiRequest(
   const url = API_BASE + path + (query ? `?${query.toString()}` : "");
   let res: Response;
   try {
-    res = await fetch(url, {
-      method,
-      redirect: "manual",
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-        ...(form ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
+    res = await timedFetch(url, {
+      label: "network: TimeCamp",
+      init: {
+        method,
+        redirect: "manual",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          ...(form ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
+        },
+        ...(form ? { body: form.toString() } : {}),
       },
-      ...(form ? { body: form.toString() } : {}),
     });
   } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    throw new TimeCampError(`network: TimeCamp could not be reached (${detail})`, "timecamp_network");
+    throw new TimeCampError((error as Error).message, "timecamp_network");
   }
   const text = await res.text();
   if (res.status >= 300 && res.status < 400) {

@@ -1,3 +1,4 @@
+import { timedFetch } from "../../../mcp-shared/timed-fetch.js";
 import { persistApiKey } from "./dpapi-store.js";
 
 // Every CanLII request goes through one CanliiClient: it holds the key, keeps the
@@ -17,7 +18,6 @@ export interface CanliiClientOptions {
 const API_BASE = "https://api.canlii.org/v1/";
 const MIN_INTERVAL_MS = 500;
 const DAILY_LIMIT = 5000;
-export const TIMEOUT_MS = 60_000;
 
 export function sanitizeError(message: string): string {
 	return message.replace(/api_key=[^&\s]*/gi, "api_key=REDACTED");
@@ -90,13 +90,8 @@ export class CanliiClient {
 			}
 			this.lastRequestTime = this.now();
 			this.dailyCount++;
-			try {
-				return await this.fetchImpl(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-			} catch (error) {
-				// The detail must never carry the URL: it holds api_key.
-				const detail = sanitizeError(error instanceof Error ? error.message : String(error));
-				throw new Error(`network: CanLII could not be reached (${detail})`);
-			}
+			// The error's detail must never carry the URL: it holds api_key.
+			return timedFetch(url, { fetch: this.fetchImpl, redact: sanitizeError, label: "network: CanLII" });
 		});
 		// A failed request must not leave the queue rejected, or every later
 		// request would fail with the same error.
@@ -116,7 +111,7 @@ export class CanliiClient {
 
 	// A page outside the CanLII API (BC Laws), so it takes no key and no rate limit.
 	async fetchText(url: string): Promise<string> {
-		const response = await this.fetchImpl(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+		const response = await timedFetch(url, { fetch: this.fetchImpl });
 		if (!response.ok) throw new Error(`HTTP ${response.status}`);
 		return response.text();
 	}

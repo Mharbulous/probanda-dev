@@ -1,9 +1,8 @@
 import { saveCommonsKey } from "../../../../mcp-shared/commons-key.js";
+import { timedFetch } from "../../../../mcp-shared/timed-fetch.js";
 import { loadCloudKey } from "../cloud-key.js";
 import { ValidationError } from "../errors.js";
 import { serveKeyPage } from "./page.js";
-
-const TIMEOUT_MS = 60_000;
 
 // cloud_key__configure_credential: sets Probanda's one Cloud key on this
 // computer, the Windows Credential Manager entry every server reads through
@@ -57,11 +56,8 @@ async function saveKey(typed: string, env: NodeJS.ProcessEnv): Promise<void> {
 async function probe(supabaseUrl: string, staticKey: string): Promise<void> {
   let res: Response;
   try {
-    res = await fetch(`${supabaseUrl.replace(/\/$/, "")}/functions/v1/items-sync`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", apikey: staticKey },
-      body: "{}",
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+    res = await timedFetch(`${supabaseUrl.replace(/\/$/, "")}/functions/v1/items-sync`, {
+      init: { method: "POST", headers: { "Content-Type": "application/json", apikey: staticKey }, body: "{}" },
     });
   } catch (error) {
     throw new ValidationError(

@@ -8,8 +8,9 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute } from "node:path";
 
-import { DataServerError, ValidationError } from "../errors.js";
+import { ValidationError } from "../errors.js";
 import type { ToolDefinition } from "../schema-gen.js";
+import { toolReply, type ToolReply } from "../tool-list.js";
 import { validateToolInput } from "../validate.js";
 import { apiRequest, missingTokenReason, persistToken, TimeCampError, type TokenState } from "./client.js";
 import { serveTokenPage } from "./page.js";
@@ -125,21 +126,13 @@ export function timecampToolDefinitions(): ToolDefinition[] {
 
 let definitions: Map<string, ToolDefinition> | undefined;
 
-export async function dispatchTimecampTool(
-  state: TokenState,
-  name: string,
-  rawArgs: unknown
-): Promise<{ content: Array<{ type: "text"; text: string }>; isError?: boolean }> {
-  try {
+export function dispatchTimecampTool(state: TokenState, name: string, rawArgs: unknown): Promise<ToolReply> {
+  return toolReply(name, () => {
     definitions ??= new Map(timecampToolDefinitions().map((tool) => [tool.name, tool]));
     const definition = definitions.get(name);
     if (!definition) throw new ValidationError(`Unknown tool "${name}"`);
-    return textResult(await callTool(state, name, validateToolInput(definition, rawArgs)));
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    const code = err instanceof DataServerError ? err.code : "timecamp_error";
-    return { ...textResult({ error: { code, message } }), isError: true };
-  }
+    return callTool(state, name, validateToolInput(definition, rawArgs));
+  });
 }
 
 async function callTool(state: TokenState, name: string, args: Args): Promise<unknown> {
@@ -153,25 +146,10 @@ async function callTool(state: TokenState, name: string, args: Args): Promise<un
   throw new ValidationError(`Unknown tool "${name}"`);
 }
 
-// validate.ts checks scalar types only, so arrays and dates are checked here.
-function stringList(label: string, value: unknown): string[] | undefined {
-  if (value === undefined || value === null) return undefined;
-  if (!Array.isArray(value) || value.some((v) => typeof v !== "string" && typeof v !== "number")) {
-    throw new ValidationError(`${label} must be an array of strings`);
-  }
-  return value.map(String);
-}
-
-function keepIds(rows: Row[], key: string, label: string, value: unknown): Row[] {
-  const ids = stringList(label, value);
-  if (!ids?.length) return rows;
-  const keep = new Set(ids);
+function keepIds(rows: Row[], key: string, ids: unknown): Row[] {
+  if (!(ids as string[] | null | undefined)?.length) return rows;
+  const keep = new Set(ids as string[]);
   return rows.filter((r) => keep.has(String(r[key])));
-}
-
-function date(label: string, value: unknown): string {
-  if (typeof value !== "string" || !new RegExp(DATE).test(value)) throw new ValidationError(`${label} must be a date, YYYY-MM-DD`);
-  return value;
 }
 
 function requireToken(state: TokenState): string {
@@ -280,8 +258,8 @@ function withDescendants(all: Map<string, Task>, ids: string[]): Set<string> {
 }
 
 async function entries(token: string, args: Args): Promise<unknown> {
-  const from = date("entries.from", args.from);
-  const to = date("entries.to", args.to);
+  const from = args.from as string;
+  const to = args.to as string;
   if (from > to) throw new ValidationError("entries.from must not be after entries.to");
   const outFile = checkedOutFile("entries", args);
 
@@ -289,12 +267,12 @@ async function entries(token: string, args: Args): Promise<unknown> {
   if (!Array.isArray(body)) throw new TimeCampError("TimeCamp's entries answer is not a list");
   let rows = body as Row[];
 
-  const taskIds = stringList("entries.task_ids", args.task_ids);
+  const taskIds = args.task_ids as string[] | null | undefined;
   if (taskIds?.length) {
     const keep = withDescendants(await allTasks(token), taskIds);
     rows = rows.filter((r) => keep.has(String(r.task_id)));
   }
-  rows = keepIds(rows, "user_id", "entries.user_ids", args.user_ids);
+  rows = keepIds(rows, "user_id", args.user_ids);
   if (typeof args.billable === "boolean") {
     const want = args.billable ? 1 : 0;
     rows = rows.filter((r) => Number(r.billable) === want);
@@ -358,9 +336,8 @@ function endOfRow(row: Row): number {
 }
 
 async function activities(token: string, args: Args): Promise<unknown> {
-  const dates = stringList("activities.dates", args.dates) ?? [];
+  const dates = args.dates as string[];
   if (dates.length < 1 || dates.length > 20) throw new ValidationError("activities.dates takes 1 to 20 dates");
-  dates.forEach((d) => date("activities.dates", d));
   const from = timeOfDay("activities.from_time", args.from_time);
   const to = timeOfDay("activities.to_time", args.to_time);
   if (from !== undefined && to !== undefined && from >= to) throw new ValidationError("activities.from_time must be before activities.to_time");
@@ -372,8 +349,8 @@ async function activities(token: string, args: Args): Promise<unknown> {
   query.set("format", "json");
   const body = await apiRequest(token, "GET", "activity/", query);
   if (!Array.isArray(body)) throw new TimeCampError("TimeCamp's activity answer is not a list");
-  let rows = keepIds(body as Row[], "entry_id", "activities.entry_ids", args.entry_ids);
-  rows = keepIds(rows, "user_id", "activities.user_ids", args.user_ids);
+  let rows = keepIds(body as Row[], "entry_id", args.entry_ids);
+  rows = keepIds(rows, "user_id", args.user_ids);
   // Overlap, not end-inside-window, so a row running across the window's edge is kept.
   if (from !== undefined) rows = rows.filter((r) => endOfRow(r) > from);
   if (to !== undefined) rows = rows.filter((r) => endOfRow(r) - Number(r.time_span) < to);
@@ -403,8 +380,4 @@ async function updateEntry(token: string, args: Args): Promise<unknown> {
     echo,
     next: "Re-read this entry's date with entries and compare task_id and description; only that confirms the write.",
   };
-}
-
-function textResult(result: unknown): { content: Array<{ type: "text"; text: string }> } {
-  return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
 }

@@ -15,6 +15,7 @@
 // "sending") under the lock, posted, then updated under the lock again.
 
 import type { CloudKeyStore } from "../../../../mcp-shared/commons-key.js";
+import { timedFetch } from "../../../../mcp-shared/timed-fetch.js";
 import { loadCloudKey } from "../cloud-key.js";
 import { ValidationError } from "../errors.js";
 import { findSuggestionHits } from "../preferences/redact.js";
@@ -40,7 +41,6 @@ const PATHS = {
   attach: "functions/v1/suggestion-attach-specification",
 } as const;
 
-const TIMEOUT_MS = 60_000;
 const MAX_STATUS_IDS = 50;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -70,11 +70,8 @@ type Posted = { ok: true; status: number; json: Record<string, unknown> } | { ok
 async function post(supabaseUrl: string, staticKey: string, path: string, body: string): Promise<Posted> {
   let res: Response;
   try {
-    res = await fetch(`${supabaseUrl.replace(/\/+$/, "")}/${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", apikey: staticKey },
-      body,
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+    res = await timedFetch(`${supabaseUrl.replace(/\/+$/, "")}/${path}`, {
+      init: { method: "POST", headers: { "Content-Type": "application/json", apikey: staticKey }, body },
     });
   } catch (err) {
     const cause = (err as { cause?: { code?: string; message?: string } }).cause;

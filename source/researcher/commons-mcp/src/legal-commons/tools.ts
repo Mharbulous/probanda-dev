@@ -136,7 +136,6 @@ async function push(client: LegalCommonsClient, args: Record<string, unknown>): 
   // so they are checked here (vocabulary constants below).
   for (const [i, a] of (Array.isArray(args.authorities) ? args.authorities : []).entries()) {
     const auth = (a ?? {}) as Record<string, unknown>;
-    refuseNoteUpDate(`push.authorities[${i}]`, auth);
     if (auth.relationship !== undefined && auth.relationship !== null) {
       requireOneOf(`push.authorities[${i}].relationship`, auth.relationship, RELATIONSHIP_VALUES);
     }
@@ -238,14 +237,6 @@ export const EDGE_TREATMENT_VALUES = [
   "abrogated",
 ] as const;
 
-// The input validator checks top-level fields only, and these authority objects
-// travel to the RPC as given, so a note-up date inside one is refused here.
-function refuseNoteUpDate(label: string, authority: unknown): void {
-  if (typeof authority === "object" && authority !== null && "last_verified_at" in authority) {
-    throw new ValidationError(`${label} received unknown field "last_verified_at"`);
-  }
-}
-
 function requireOneOf(label: string, value: unknown, allowed: readonly string[]): string {
   const text = String(value);
   if (!allowed.includes(text)) {
@@ -264,7 +255,6 @@ async function recordTreatment(client: LegalCommonsClient, args: Record<string, 
   if (typeof treating !== "object" || treating === null || Array.isArray(treating)) {
     throw new ValidationError("record_treatment requires treating as an object with a citation");
   }
-  refuseNoteUpDate("record_treatment.treating", treating as Record<string, unknown>);
   const citation = String((treating as Record<string, unknown>).citation ?? "").trim();
   if (!citation) throw new ValidationError("record_treatment requires treating.citation");
 

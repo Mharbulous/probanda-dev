@@ -1,7 +1,6 @@
+import { timedFetch } from "../../../../mcp-shared/timed-fetch.js";
 import { TransportError, ValidationError } from "../errors.js";
 import type { LegalCommonsConfig } from "./config.js";
-
-const TIMEOUT_MS = 60_000;
 
 // Slim PostgREST client for the layer-3 pool. It uses a static credential and a
 // non-public Postgres schema reached via PostgREST profile headers
@@ -165,22 +164,23 @@ export class LegalCommonsClient {
     const label = this.config.label ?? "legal_commons";
     let res: Response;
     try {
-      res = await fetch(`${url}${path}`, {
-        method,
-        redirect: "manual",
-        headers: {
-          apikey: this.config.staticKey,
-          Authorization: `Bearer ${this.config.staticKey}`,
-          "Content-Type": "application/json",
-          ...extraHeaders,
+      res = await timedFetch(`${url}${path}`, {
+        label,
+        init: {
+          method,
+          redirect: "manual",
+          headers: {
+            apikey: this.config.staticKey,
+            Authorization: `Bearer ${this.config.staticKey}`,
+            "Content-Type": "application/json",
+            ...extraHeaders,
+          },
+          body: body === undefined ? undefined : JSON.stringify(body),
         },
-        body: body === undefined ? undefined : JSON.stringify(body),
-        signal: AbortSignal.timeout(TIMEOUT_MS),
       });
     } catch (error) {
       // No response at all, so no status.
-      const detail = error instanceof Error ? error.message : String(error);
-      throw new TransportError(`${label} could not be reached (${detail})`);
+      throw new TransportError((error as Error).message);
     }
     const text = await res.text();
     if (res.status >= 300 && res.status < 400) {

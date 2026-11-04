@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { join } from "node:path";
 
 import { defaultStateDir, readProtectedJson, writeProtectedJson } from "../../../../mcp-shared/dpapi-store.js";
+import { timedFetch } from "../../../../mcp-shared/timed-fetch.js";
 import { loadCloudKey } from "../cloud-key.js";
 import { ValidationError } from "../errors.js";
 import { defineTool, type Tool } from "../tool-list.js";
@@ -34,7 +35,6 @@ export const REQUEST_FIELDS = ["full_name", "year_of_call", "call_date", "firm_n
 const MAX_NAME = 200;
 const MAX_EMAIL = 254;
 const MAX_PHONE = 40;
-const TIMEOUT_MS = 60_000;
 const TITLE = "Ask Probanda for a key";
 
 interface SavedRequest {
@@ -132,11 +132,8 @@ const NEXT: Record<string, string> = {
 async function post(projectUrl: string, path: string, body: Record<string, unknown>, what: string): Promise<Record<string, unknown>> {
   let res: Response;
   try {
-    res = await fetch(`${projectUrl.replace(/\/$/, "")}/${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+    res = await timedFetch(`${projectUrl.replace(/\/$/, "")}/${path}`, {
+      init: { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) },
     });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);

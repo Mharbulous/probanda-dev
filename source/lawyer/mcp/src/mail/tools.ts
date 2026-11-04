@@ -120,27 +120,17 @@ type Run = <T>(what: string, fn: (client: ImapClientLike) => Promise<T>) => Prom
 
 // --- argument helpers ---------------------------------------------------------------
 
-function intArg(label: string, value: unknown, fallback: number | undefined, min: number, max = Infinity): number {
-  if (value === undefined) {
-    if (fallback === undefined) throw new ValidationError(`${label} is required`);
-    return fallback;
-  }
-  if (typeof value !== "number" || !Number.isInteger(value) || value < min || value > max) {
-    throw new ValidationError(
-      max === Infinity ? `${label} must be an integer of at least ${min}` : `${label} must be an integer from ${min} to ${max}`
-    );
-  }
-  return value;
-}
+// The schema's integer rules and bounds are checked before a handler runs (validate.js).
+const intArg = (value: unknown, fallback: number): number => (value as number | null | undefined) ?? fallback;
 
 const folderArg = (args: Args): string => (args.folder as string | undefined) ?? "INBOX";
 
 /** The five body options, or undefined when the call asks for no body. */
-function listBodyOptions(tool: string, args: Args): BodyOptions | undefined {
+function listBodyOptions(args: Args): BodyOptions | undefined {
   if (args.include_body !== true) return undefined;
   return {
     format: (args.body_format as BodyFormat | undefined) ?? "text",
-    maxLength: intArg(`${tool}.body_max_length`, args.body_max_length, 10000, 1),
+    maxLength: intArg(args.body_max_length, 10000),
     stripQuoted: args.strip_quoted === true,
     stripInlineImages: args.strip_inline_images === true,
   };
@@ -186,7 +176,7 @@ async function fetchSummaries(client: ImapClientLike, folder: string, uids: numb
 async function configureCredential(context: MailContext, args: Args): Promise<unknown> {
   const host = String(args.host ?? "").trim();
   const username = String(args.username ?? "").trim();
-  const port = intArg("mail__configure_credential.port", args.port, 993, 1, 65535);
+  const port = intArg(args.port, 993);
   const fromAddress = String(args.from_address ?? "").trim();
   for (const [label, value] of [["host", host], ["username", username]]) {
     if (!value) throw new ValidationError(`mail__configure_credential requires ${label}`);
@@ -344,8 +334,8 @@ function folderStatus(run: Run, args: Args): Promise<unknown> {
 
 function getLatestEmails(run: Run, args: Args): Promise<unknown> {
   const folder = folderArg(args);
-  const count = intArg("mail__get_latest_emails.count", args.count, 10, 1, 200);
-  const body = listBodyOptions("mail__get_latest_emails", args);
+  const count = intArg(args.count, 10);
+  const body = listBodyOptions(args);
   return run(`reading the latest messages in "${folder}"`, async (client) => {
     const box = await openReadOnly(client, folder);
     if (box.exists === 0) return { folder, messages: [] };
@@ -358,8 +348,8 @@ function getLatestEmails(run: Run, args: Args): Promise<unknown> {
 
 function searchEmails(run: Run, args: Args): Promise<unknown> {
   const folder = folderArg(args);
-  const limit = intArg("mail__search_emails.limit", args.limit, 50, 1, 500);
-  const body = listBodyOptions("mail__search_emails", args);
+  const limit = intArg(args.limit, 50);
+  const body = listBodyOptions(args);
   const criteria: Record<string, unknown> = {};
   for (const key of ["from", "to", "subject", "body"]) if (args[key]) criteria[key] = args[key];
   for (const key of ["since", "before"]) if (args[key]) criteria[key] = ymd(`mail__search_emails.${key}`, args[key]);
@@ -379,10 +369,10 @@ function searchEmails(run: Run, args: Args): Promise<unknown> {
 
 function getEmail(run: Run, args: Args): Promise<unknown> {
   const folder = folderArg(args);
-  const uid = intArg("mail__get_email.uid", args.uid, undefined, 1);
+  const uid = args.uid as number;
   const options: BodyOptions = {
     format: (args.body_format as BodyFormat | undefined) ?? "text",
-    maxLength: intArg("mail__get_email.max_length", args.max_length, 20000, 1),
+    maxLength: intArg(args.max_length, 20000),
     stripQuoted: args.strip_quoted === true,
     stripInlineImages: args.strip_inline_images === true,
   };
@@ -469,8 +459,8 @@ function saveDirArg(tool: string, args: Args): string {
 
 async function downloadAttachment(run: Run, args: Args): Promise<unknown> {
   const folder = folderArg(args);
-  const uid = intArg("mail__download_attachment.uid", args.uid, undefined, 1);
-  const index = args.index === undefined ? undefined : intArg("mail__download_attachment.index", args.index, undefined, 0);
+  const uid = args.uid as number;
+  const index = (args.index as number | null | undefined) ?? undefined;
   const filename = args.filename as string | undefined;
   if (index === undefined && !filename) throw new ValidationError("mail__download_attachment needs filename or index");
   const saveDir = saveDirArg("mail__download_attachment", args);
@@ -530,7 +520,7 @@ function stagingDir(): string {
 // byte-for-byte copy and no inline image or header is lost to a rebuild.
 async function saveMessage(run: Run, args: Args): Promise<unknown> {
   const folder = folderArg(args);
-  const uid = intArg("mail__save_message.uid", args.uid, undefined, 1);
+  const uid = args.uid as number;
   const staging = args.staging === true;
   if (staging === (args.save_dir !== undefined)) throw new ValidationError("mail__save_message needs either save_dir or staging: true");
   const saveDir = staging ? undefined : saveDirArg("mail__save_message", args);
@@ -605,8 +595,8 @@ function readCache(path: string): Record<string, CachedHashes> {
 // can see that a folder was renumbered between two pages.
 function listHeaders(context: MailContext, args: Args): Promise<unknown> {
   const folder = args.folder as string;
-  const uidFrom = intArg("mail__list_headers.uid_from", args.uid_from, 1, 1);
-  const limit = intArg("mail__list_headers.limit", args.limit, 200, 1, 500);
+  const uidFrom = intArg(args.uid_from, 1);
+  const limit = intArg(args.limit, 200);
   return connect(context, `listing the messages in "${folder}"`, async (client) => {
     const box = await client.mailboxOpen(folder, { readOnly: true });
     if (box.uidValidity === undefined) throw new DataServerError(`"${folder}" did not report its UIDVALIDITY, so its messages cannot be identified`, "mail_error");
@@ -680,8 +670,8 @@ function findByMessageId(run: Run, args: Args): Promise<unknown> {
 
 function findThreadMessages(run: Run, args: Args): Promise<unknown> {
   const folder = folderArg(args);
-  const uid = intArg("mail__find_thread_messages.uid", args.uid, undefined, 1);
-  const body = listBodyOptions("mail__find_thread_messages", args);
+  const uid = args.uid as number;
+  const body = listBodyOptions(args);
   const named = args.search_folders as unknown[] | undefined;
   if (named !== undefined && (!Array.isArray(named) || named.length === 0 || named.some((f) => typeof f !== "string" || !f))) {
     throw new ValidationError("mail__find_thread_messages.search_folders must be a non-empty list of folder names");

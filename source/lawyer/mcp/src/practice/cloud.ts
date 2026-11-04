@@ -5,6 +5,7 @@
 // out, or part-way through the reply, is neither: the cloud may have saved
 // (docs/Plans/2026-10-14_practice-db-conversion.md, "When the cloud cannot be reached").
 
+import { timedFetch } from "../../../../mcp-shared/timed-fetch.js";
 import { loadCloudKey } from "../cloud-key.js";
 import { DataServerError } from "../errors.js";
 
@@ -34,8 +35,6 @@ export class CloudResetError extends DataServerError {
     super(`Probanda's Cloud may have received this request: the connection was reset before its answer arrived (${detail}).`, "cloud_reset");
   }
 }
-
-const TIMEOUT_MS = 60_000;
 
 // The fetch failures that can come after the request went out. A timeout is one too.
 const RESET_CODES = new Set(["ECONNRESET", "UND_ERR_SOCKET"]);
@@ -68,11 +67,8 @@ export async function callItems(
   const { supabaseUrl, staticKey } = await cloudCredential(env);
   let res: Response;
   try {
-    res = await fetch(`${supabaseUrl.replace(/\/+$/, "")}/${PATHS[fn]}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", apikey: staticKey },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+    res = await timedFetch(`${supabaseUrl.replace(/\/+$/, "")}/${PATHS[fn]}`, {
+      init: { method: "POST", headers: { "Content-Type": "application/json", apikey: staticKey }, body: JSON.stringify(body) },
     });
   } catch (err) {
     const { detail, code } = failure(err);
