@@ -107,39 +107,28 @@ other question runs the duties in their numbered order.
    unaudited, and proceed. Where the agent you are spawning holds the pool tools
    itself (per its roster tool grant, not its description), skip this — it audits
    the layer directly.
-2. **Tier 3 text, from `research_filing__law_folder_text`.** The agent's grant
-   cannot open a `.docx` or `.doc`. The tool extracts text-layer PDFs, `.docx` and
+2. **Tier 3 text, from `research_filing__law_folder_text`.** The tool extracts
+   text-layer PDFs, `.docx` and
    `.doc` inside the data server, with no host Python or package; a PDF with any
-   scanned or OCR'd page comes back `ocr_unavailable`, because a scanned page's
-   text layer is never read. `law_folder_text` returns a PDF with any scanned
-   page as unread, even when its other pages are born-digital, such as a report
-   with a scanned cover. The session then reads it through a page manifest.
+   scanned or OCR'd page comes back `ocr_unavailable`, even when its other pages
+   are born-digital, because a scanned page's text layer is never read.
    Before each spawn
    or re-invocation, call `research_filing__law_folder_text` with the matter root
    and each issue's `6. LAW\<issue>\` folder. Pass its rows verbatim in the spawn
-   prompt's `6. LAW listing and extracted text:` field, and name every
-   `status: unread` row there as UNREAD with its reason. The agent records that
-   file UNREAD, never absent, and caps its confidence. Then call lawyer's
-   `pdf_pages__images` for each PDF in that folder, and pass each PDF's page
-   manifest, keyed by its path, in the spawn prompt's `6. LAW page manifests:`
-   field: `{page, images}` for each scanned page, its images top to bottom, and
-   `{pages: "a-b", pdf}` for each run of born-digital pages (`matter-data`
-   design decision #71). A PDF the tool refuses goes in that field with its
-   reason and no manifest. The agent reads a scanned page only from its images,
-   and records a PDF with no manifest UNREAD, never absent, with capped
-   confidence. Where the agent's `Read`
-   cannot reach the host scratchpad, as in a cloud session with the matter on the
-   desktop, stage only the rows' `text_path` files, at most 50 paths per
-   `device_stage_files` call, the calls in parallel, confirm every file staged,
-   and name the staged paths. Stage each manifest's PNGs the same way, rendered
-   by `/matter-data`'s verify-law operation §2, and name their staged paths in
-   the manifest. Never stage or convert the `6. LAW` files
-   themselves. When only some lines of one filed file are needed, such as one
+   prompt's `6. LAW listing and extracted text:` field, and, but for an
+   `ocr_unavailable` row, name every
+   `status: unread` row there as UNREAD with its reason. A PDF's `status: ok` row
+   is its page manifest: every page is born-digital (`scanned_pages: []`). The
+   agent reads each `text_path`, and the PDF of each `ocr_unavailable` row, through
+   `research_filing__research_folder`, whichever host it runs on. The agent reads a
+   scanned page only from its images, and records a file it cannot read UNREAD, never
+   absent, with capped confidence. When only some lines of one filed file are needed,
+   such as one
    provision to quote into the spawn prompt, call `law_folder_text` with `file`
-   and a `pattern` instead of extracting and staging the folder: the matching
+   and a `pattern` instead of extracting the folder: the matching
    lines come back inline with their line numbers and context, beside the file's
-   first lines and its manifest currency marker, and nothing is written or
-   staged. Pass that currency marker on with the lines. An HTML page is never
+   first lines and its manifest currency marker, and nothing is written.
+   Pass that currency marker on with the lines. An HTML page is never
    matched: the tool searches its `.md` or `.txt` sibling or refuses.
 3. **Tier 4, Westlaw — before the audit, never after it.** After tiers 1–3, for
    each issue no pinpointable text on disk answers, run Westlaw without asking unless the practitioner declined it this run:
@@ -149,11 +138,10 @@ other question runs the duties in their numbered order.
       existing `6. LAW\<issue>\` folder;
    3. dispatch `researcher:research-paralegal` in **citation** mode, `source: westlaw-first`,
       for every citation already known on the issue (from the matter, a prior memo,
-      or a prior research-agent answer), into the same folder. Split the known
-      citations into batches of at most the per-invocation cap its citation playbook
-      (`shared/research-paralegal/citation-download.md`) sets, and dispatch the
-      batches one after another: a dispatch's citation list is never longer than
-      the cap;
+      or a prior research-agent answer), into the same folder. Split the citations
+      into batches of at most 5, the per-invocation cap of this mode and of
+      `citation-checker`, and dispatch the batches one after another: a dispatch's
+      citation list is never longer than the cap;
    4. only then, once duties 4 and 5 have run, spawn the audit agent, naming the memo
       and decision files retrieved.
 
@@ -245,12 +233,13 @@ other question runs the duties in their numbered order.
    Record every instrument in the spawn prompt's `Legislation:` field.
 5. **Note-up, before the audit.** For each court decision the question asks to have
    noted up (a note-up request, such as a `/draft` note-up step or the `Note up all
-   cited authorities` job), dispatch `researcher:citation-checker` once, after duty 3's dispatches
-   have returned: `{citations: [{citation, since?}], client_matter_id,
+   cited authorities` job), dispatch `researcher:citation-checker` in batches by duty 3's rule, after duty 3's
+   dispatches have returned: `{citations: [{citation, since?}], client_matter_id,
    destination_dir}`, with duty 3's verified client-matter ID and the issue's existing
    `6. LAW\<issue>\` folder. A caller working a `/draft` job adds its `db_path`,
    `ticket_id`, `session_token` and `claim_no`. Never dispatch it while `research-paralegal` or
-   another `citation-checker` is out: they share one Chrome session. It runs KeyCite
+   another `citation-checker` is out: they share one Chrome session. A citation it
+   returns as `not reached: batch cap` goes in the next batch. It runs KeyCite
    first and the CanLII citator second, and files one note-up record per decision.
    Name each record on the spawn prompt's `Note-up:` line. A statute, regulation or
    rule is never sent to it: its note-up is duty 4's currency check. A decision the
@@ -300,7 +289,7 @@ Preflight: all ok / <row>: <state>[; <row>: <state>]
 Westlaw: <issue>: run, memo(s): <paths>; decisions: <paths> / not run: tiers 1–3 held pinpointable text: <file> para <n>[; <file> para <n>] / not run: practitioner declined / not run: point-in-time legislation question
 Legislation: <citation>: filed <path>, current to <marker>, currency <value> / already on disk <path>, currency <value> / not retrieved: <reason>, currency <value> / filed <path>, as made, not current law, no currency marker, made on <made_on>, currency <value> / on disk from case data <path>[, pp. <X–Y>], official: false, currency <value>
 Secondary: <title>: filed <path>, dated <marker>, from <publisher_host> / not retrieved: <reason> / none
-6. LAW listing and extracted text: <the listing, and the text or text path of each file extracted or staged>
+6. LAW listing and extracted text: <the listing, and the text or text path of each file extracted>
 Note-up: <citation>: record <path> / <citation>: not filed: <citation-checker's status line> / none
 Re-invocation: no / yes: Westlaw did not return <citations, or none>; paralegal: <its status line, or practitioner declined> / yes: review
 Review: <memo-reviewer's last JSON, verbatim> / none
@@ -415,9 +404,10 @@ practitioner as "A research question holds one question" says.
 
 **memo-reviewer checks every memo before it is saved.** Spawn `researcher:memo-reviewer`
 on every return that carries a memo, with the spawn prompt's `Question:`, `Job question:`,
-`Facts:`, `Matter:`, `Asked by:` and `Origin:` lines, and the full text of the memo and of
-the notes, read from the return's `Memo scratch:` and `Notes scratch:` paths, or as the return
-gives them, pasted in. It reviews one question at most three times. A return that is not its
+`Facts:`, `Matter:`, `Asked by:` and `Origin:` lines, `Matter root:` the matter folder's host path,
+`Memo:` the return's `Memo scratch:` path and `Notes:` its `Notes scratch:` path. It reads both
+itself. Where a save was refused and the return gives that section in place of its path, give
+that section. It reviews one question at most three times. A return that is not its
 JSON object (`verdict`, `required`, `out_of_scope`, `identifiers`, `findings`), `rules unavailable`
 included, saves nothing: stop and relay it verbatim. On the object, re-invoke the agent with
 `Review:` the reviewer's JSON:
@@ -488,8 +478,7 @@ complete before the session ends: never leave a session with a cited decision un
    dispatch `researcher:research-paralegal` in
    citation mode, `source: canlii-only`, with that same research folder as the
    destination, whichever issue the decision is cited on. Step 1's save means the
-   folder exists before dispatch. Split the citations into batches as duty 3 does,
-   no batch longer than the playbook's cap, one dispatch at a time.
+   folder exists before dispatch. Batch the citations by duty 3's rule.
 3. Run `/ingest` on each cited decision file case data does not hold, whether it
    was downloaded now or before the audit, and on each legislation file
    `legislation-fetcher` filed in this run. A case brief file names the decision's citation

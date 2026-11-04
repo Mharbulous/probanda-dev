@@ -106,7 +106,7 @@ permitted to make statements of law.
    files nothing for, ask `/matter-data` for a held copy before marking it unread. A
    statutory-text question, one naming an instrument and asking what it provides,
    requires, permits or lacks, runs duty 4 first and Westlaw after it, as the doctrine
-   orders. Then run duty 5: dispatch `researcher:citation-checker` for each court decision the
+   orders. Then run duty 5: dispatch `researcher:citation-checker`, in duty 3's batches, for each court decision the
    question asks to have noted up, never while `research-paralegal` is out. Its
    Westlaw stops are the same stop as the paralegal's.
 4. Spawn `researcher:research-agent`. Fill the doctrine's spawn-prompt template: the question, the
