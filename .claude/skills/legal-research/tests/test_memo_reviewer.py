@@ -32,10 +32,30 @@ def between(text, start, end):
 class ScopeTestTest(unittest.TestCase):
     def test_step_four_opens_with_the_scope_test(self):
         step_four = flat(between(read("shared", "legal-audit-protocol.md"), "### Step 4", "### Step 5"))
-        self.assertTrue(step_four.startswith("### Step 4 — Disclosure gate **The scope test.** Research is required "
-                                             "only if the Issue, as framed, cannot be answered without it."))
-        self.assertIn("Never call it required and never say more research is needed on it.", step_four)
+        self.assertTrue(step_four.startswith("### Step 4 — Disclosure gate **The scope test.** The Issue's question "
+                                             "as asked decides what the memo holds and what research is required."))
+        self.assertIn("Research is required only if the Issue, as framed, cannot be answered without it, or it is a "
+                      "cited case's history check (Step 2).", step_four)
+        self.assertIn("Never call other research required and never say more research is needed on it.", step_four)
         self.assertIn("A spawn prompt's `Review:` line is memo-reviewer's verdict on your last memo", step_four)
+
+    def test_a_passage_answering_another_question_is_out_of_scope(self):
+        protocol = read("shared", "legal-audit-protocol.md")
+        step_four = flat(between(protocol, "### Step 4", "### Step 5"))
+        self.assertIn("A passage answering a question the Issue does not ask is out of scope: it goes to Step 5 as an "
+                      "offer, never into the memo.", step_four)
+        for neighbour in ("what must be proved", "how to apply for it", "when a court may refuse it", "why it exists",
+                          "against whom else it runs", "how a court managed a hearing"):
+            self.assertIn(neighbour, step_four)
+        self.assertIn("`No authority located in <the tiers searched>.`", step_four)
+        step_five = flat(between(protocol, "### Step 5", "### Step 6"))
+        self.assertIn("you hold material it puts out of scope", step_five)
+
+    def test_an_item_supporting_no_conclusion_sentence_is_out_of_scope_by_one_rule(self):
+        rule = "Each item supports a sentence of a Conclusion: an item that supports none is out of scope"
+        self.assertIn(rule, flat(read("shared", "research-memo-template.md")))
+        for text in (read("shared", "legal-audit-protocol.md"), AGENT.read_text(encoding="utf-8")):
+            self.assertNotIn("supports none", flat(text))
 
     def test_no_closed_gate_and_no_sub_issues_left(self):
         paths = list((SKILLS / "shared").rglob("*.md")) + [
@@ -55,8 +75,9 @@ class ScopeTestTest(unittest.TestCase):
 
     def test_review_line_forbids_retrieval_and_a_rewrite_reruns_nothing(self):
         step_four = flat(between(read("shared", "legal-audit-protocol.md"), "### Step 4", "### Step 5"))
-        self.assertIn("cut each `out_of_scope` and `identifiers` passage from the memo, and rewrite each `findings` "
-                      "item as one finding or cut the item.", step_four)
+        self.assertIn("cut each `identifiers` passage from the memo, move each `out_of_scope` passage to a Step 5 "
+                      "offer, rewrite a `Conclusion shape:` item's Conclusion as one paragraph, and rewrite each "
+                      "`findings` item as one finding or cut the item.", step_four)
         self.assertIn("With any `Review:` but `none`, return no `needs_download` or `needs_note_up`.", step_four)
         self.assertIn("A `Review:` with no `required` item asks only for a rewrite: rewrite the memo from the sources "
                       "already held, without re-running the audit.", step_four)
@@ -100,8 +121,17 @@ class AgentContractTest(unittest.TestCase):
         body = flat(self.agent)
         self.assertIn("Research already run is never `required`", body)
         self.assertIn("in one of the tier forms of Step 4's `gap:` line", body)
-        self.assertIn("Yes, and the memo itself raises it: an `out_of_scope` item, quoting the memo's words.", body)
-        self.assertIn("Yes, and only a `gap:` line or a Step 5 offer raises it: nothing.", body)
+        self.assertIn("Research not required: an `out_of_scope` item, quoting the memo's words, when the memo itself "
+                      "raises it, and nothing when only a `gap:` line or a Step 5 offer raises it.", body)
+        self.assertIn("Apply Step 4's scope test and the template's rule on what an item supports to each Conclusion "
+                      "sentence, each numbered item and each piece of research", body)
+        self.assertIn("A Conclusion sentence or a numbered item out of scope: an `out_of_scope` item, the sentence's "
+                      "words or `¶<n>: <its words>`.", body)
+        self.assertIn("A Conclusion that is a list or more than one paragraph, the open-issues paragraph apart: an "
+                      "`out_of_scope` item, `Conclusion shape: <its first words>`.", body)
+        self.assertNotIn("beyond the Issue", body)
+        self.assertNotIn("can the Issue, as framed, be answered without it?", body)
+        self.assertIn("You judge only what the Issue asks, whether a passage answers that", body)
         self.assertIn("The verdict is `send_back` when `required`, `out_of_scope`, `identifiers` or `findings` holds "
                       "anything", body)
         self.assertIn("Quote each Application item that holds more than one finding, or that is neither a finding of "

@@ -265,31 +265,31 @@ Rubric:
 
 ### Step 4 — Disclosure gate
 
-**The scope test.** Research is required only if the Issue, as framed, cannot be answered
-without it. For each piece of research not done, ask: can the Issue be answered without it?
-No: it is required, and the memo is incomplete: name it in the open-issues paragraph below,
-and on a job it becomes a step on the job. Yes: it is not required, except a cited case's
-history check (Step 2), which always is. Never call it required
-and never say more research is needed on it. If it may still be worth doing, it is a Step 5
-offer, outside the memo; otherwise say nothing.
+**The scope test.** The Issue's question as asked decides what the memo holds and what research
+is required. A passage answering a question the Issue does not ask is out of scope: it goes to
+Step 5 as an offer, never into the memo. Unless the Issue asks it, that includes what must be
+proved to get the thing asked about, how to apply for it, when a court may refuse it, why it
+exists, against whom else it runs and how a court managed a hearing. Research is required only
+if the Issue, as framed, cannot be answered without it, or it is a cited case's history check
+(Step 2). Required research not done makes the memo incomplete: name it in the open-issues
+paragraph, and on a job it becomes a step. Never call other research required and never say
+more research is needed on it. If worth doing, it is a Step 5 offer; otherwise say nothing.
 
 **The memo always answers.** Write the memo whatever the coverage. Its Conclusion answers
 the Issue from the sources held: the principle(s) with pinpoint citations, the factual
 comparison and the distinguishability flags. A part no held authority answers is answered in
-one sentence naming what was searched: `No authority located in <the tiers searched>.` A
-proposition whose authority you located but could not pinpoint never enters the memo: it goes
-to Step 5 as an offer.
+one sentence naming what was searched: `No authority located in <the tiers searched>.`
 
 **Open issues.** When the scope test leaves research required, end the Conclusion with one
 paragraph opening `More research is needed on the following issues:` that lists each as a
 question, and write the header's `Confidence:` as `INCOMPLETE: <the research named>`. Nothing
-else in the memo defers to further research, offers research or names a tier not run. With
-no research required, write no such paragraph. A spawn prompt's `Review:` line is
-memo-reviewer's verdict on your last memo: treat each `required` item as required, and cut
-each `out_of_scope` and `identifiers` passage from the memo, and rewrite each `findings` item
-as one finding or cut the item. With any `Review:` but `none`, return no `needs_download`
-or `needs_note_up`. A `Review:` with no `required` item asks only for a rewrite: rewrite the
-memo from the sources already held, without re-running the audit.
+else in the memo defers to further research, offers research or names a tier not run. A spawn
+prompt's `Review:` line is memo-reviewer's verdict on your last memo: treat each `required` item
+as required, cut each `identifiers` passage from the memo, move each `out_of_scope` passage to
+a Step 5 offer, rewrite a `Conclusion shape:` item's Conclusion as one paragraph, and rewrite
+each `findings` item as one finding or cut the item. With any `Review:` but `none`, return no
+`needs_download` or `needs_note_up`. A `Review:` with no `required` item asks only for a
+rewrite: rewrite the memo from the sources already held, without re-running the audit.
 
 For each issue the paragraph names, write one line under a `Gaps` heading in the
 notes, in exactly this shape: `gap: <issue> : tiers not run: <tier>[; <tier>]`. Name each tier as
@@ -312,8 +312,8 @@ memo, the passages sit in the Rule: Step 6).
 
 ### Step 5 — Offer the research path
 
-Wherever research the scope test (Step 4) finds not required may still be worth doing, or
-you located an authority you could not pinpoint, end
+Wherever research the scope test (Step 4) finds not required may still be worth doing, you
+hold material it puts out of scope, or you located an authority you could not pinpoint, end
 with concrete offers: what further research it is, and whether it
 needs a note-up, the commons pool, or a Westlaw Deep Research run (hand-off packet
 below). Each authority you located but could not pinpoint gets its own offer in the shape shown under the non-negotiable rule: citation,

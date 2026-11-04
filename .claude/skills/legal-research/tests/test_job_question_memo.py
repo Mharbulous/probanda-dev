@@ -53,7 +53,7 @@ class JobQuestionMemoTest(unittest.TestCase):
             self.assertIn(rule, flat(template))
         self.assertNotIn("Sub-issue <n>", template)
         self.assertNotIn("**Several issues.**", template)
-        self.assertIn("No other issue or topic heading", template)
+        self.assertNotIn("No other issue or topic heading", template)
         self.assertIn("Confidence:", template)
         self.assertIn("## Sources", template)
 
