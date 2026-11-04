@@ -12,10 +12,12 @@ under the current user. Needs no administrator rights.
 2. Fetches origin and fast-forwards main. A clone that is dirty, off main, or has
    diverged from origin/main is left for Brahm, and the run stops.
 3. Runs scripts/local_implementer_guard.py in the clone, which refuses any other folder.
-4. Runs npm ci --ignore-scripts in source/lawyer/mcp, from the committed lockfile, so
-   the run's Node builds and tests work and the model never installs anything. Brahm
-   approved this on 2026-11-02: the user-level package-install guard reserves installs
-   for the human, and this script is the one he registered.
+4. Runs npm ci --ignore-scripts in source/lawyer/mcp, source/researcher/commons-mcp and
+   source/researcher/canlii-mcp, each from its committed lockfile, so the run's Node
+   builds and tests work and the model never installs anything. Brahm approved this on
+   2026-11-02 and, for the two researcher folders, on 2026-11-04: the user-level
+   package-install guard reserves installs for the human, and this script is the one
+   he registered.
 5. Runs Claude Code headless there: claude -p "/implement-queue local".
    It passes --permission-mode dontAsk, so a user-wide default of plan mode
    cannot stop the run before it writes, and anything not allowed is refused
@@ -131,11 +133,13 @@ try {
     # 4. The Node packages, from the committed lockfile, with no install scripts.
     $Npm = Find-Exe @('npm.cmd', 'npm')
     if (-not $Npm) { Stop-Run 'npm is not on PATH.' }
-    Push-Location -LiteralPath (Join-Path $Clone 'source\lawyer\mcp')
-    try {
-        if ((Invoke-Logged $Npm @('ci', '--ignore-scripts')) -ne 0) { Stop-Run 'npm ci failed (see the lines above).' }
-    } finally {
-        Pop-Location
+    foreach ($package in @('source\lawyer\mcp', 'source\researcher\commons-mcp', 'source\researcher\canlii-mcp')) {
+        Push-Location -LiteralPath (Join-Path $Clone $package)
+        try {
+            if ((Invoke-Logged $Npm @('ci', '--ignore-scripts')) -ne 0) { Stop-Run 'npm ci failed (see the lines above).' }
+        } finally {
+            Pop-Location
+        }
     }
 
     if ($PrepareOnly) {
