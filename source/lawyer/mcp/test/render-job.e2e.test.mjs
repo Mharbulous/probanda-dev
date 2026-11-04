@@ -350,7 +350,8 @@ test("a graceful exit mid-job marks the status aborted and releases the lock", a
 // filings, not double -- here as two real server processes released together over a dead holder's
 // lock, so they also race each other's takeover. Both run with no model credential in their
 // environment (brief D4), and the board flow ends with the page status done.
-test("two processes bootstrapping one matter at once render each stale filing exactly once, with no API key", { timeout: 120000 }, async () => {
+// Timeout 180000: the test measured 115 s alone on 2026-11-04, so 120000 left almost no margin on a busy machine.
+test("two processes bootstrapping one matter at once render each stale filing exactly once, with no API key", { timeout: 180000 }, async () => {
   const m = await matter(40, { draft: true });
   const go = join(m.dir, "go");
   try {
