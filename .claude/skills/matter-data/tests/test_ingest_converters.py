@@ -17,9 +17,11 @@ SCRIPTS_DIR = CASE_DATA_ROOT / "references" / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 import ingest_affidavit  # noqa: E402
+import ingest_authority  # noqa: E402
 import ingest_common  # noqa: E402
 import ingest_facts  # noqa: E402
 import ingest_privileged  # noqa: E402
+import resolve_paths  # noqa: E402
 
 SCHEMA = (CASE_DATA_ROOT / "references" / "schema.sql").read_text(encoding="utf-8")
 TRIGGERS = (CASE_DATA_ROOT / "references" / "triggers.sql").read_text(encoding="utf-8")
@@ -83,6 +85,8 @@ def run_plan(con, plan):
             named[st["value_as"]] = rows[0][0] if rows else None
         if st.get("ask"):
             asks += [dict(zip([d[0] for d in cur.description], r)) for r in rows]
+        if st.get("report"):
+            reports += [r[0] for r in rows]
     con.execute("ROLLBACK" if refused else "COMMIT")
     return {"refused": refused, "failed": failed, "named": named, "counts": counts, "asks": asks, "reports": reports}
 
@@ -295,6 +299,249 @@ class Converters(unittest.TestCase):
         self.assertEqual(len(report), 2)
         self.assertEqual(report[0], "This document sets a date: trial, 2026-09-01, p. 1. Record it as an anchor through the docket "
                                     "clerk, citing source {source} (Notice of Civil Claim). Nothing was recorded here.")
+
+    # ---------------------------------------------------------------- transcripts (Path A step 7)
+
+    def test_a_transcript_notes_each_contradiction_of_a_pleaded_position_and_resolves_nothing(self):
+        self.write(ingest_facts, self.request("facts", [self.facts()]))
+        H2 = "b" * 64
+        answer = self.facts(facts=[], relief_items=[], relief_positions=[], fact_positions=[
+            {"target_fact_key": "fact:1", "party_name": "Ada Quill", "value": "deny", "position_basis": None,
+             "qualification": None, "source_locator": "p. 12, l. 4"}])
+        answer["document"]["category"] = "production"
+        req = self.request("facts", [answer], file_hash=H2, answered={"facts": ["fact:1"], "relief": []},
+                           route={"ref": "f2", "kind": "facts", "transcript": True, "answers_source_id": 1})
+        _, out = self.write(ingest_facts, req)
+        self.assertEqual(self.q("SELECT position, notes, verified FROM positions WHERE source_id = 2"),
+                         [("deny", "DISCREPANCY: contradicts pleaded position #1", 2)])
+        self.assertEqual(self.q("SELECT position, valid_to, notes FROM positions WHERE position_id = 1"),
+                         [("claim", None, None)], "the pleaded position stands")
+        self.assertEqual(len(out["reports"]), 1)
+        self.write(ingest_facts, req)
+        self.assertEqual(self.q("SELECT count(*) FROM positions WHERE source_id = 2"), [(1,)], "a repeat adds nothing")
+
+    def test_a_document_that_is_no_transcript_notes_nothing(self):
+        self.write(ingest_facts, self.request("facts", [self.facts()]))
+        answer = self.facts(facts=[], relief_items=[], relief_positions=[], fact_positions=[
+            {"target_fact_key": "fact:1", "party_name": "Ada Quill", "value": "deny", "position_basis": None,
+             "qualification": None, "source_locator": "para. 9"}])
+        req = self.request("facts", [answer], file_hash="b" * 64, answered={"facts": ["fact:1"], "relief": []},
+                           route={"ref": "f2", "kind": "facts", "answers_source_id": 1})
+        self.write(ingest_facts, req)
+        self.assertEqual(self.q("SELECT notes FROM positions WHERE source_id = 2"), [(None,)])
+
+    # ---------------------------------------------------------------- version pairs (Substitution 1j)
+
+    def test_a_route_naming_held_rows_marks_the_row_in_the_documents_transaction(self):
+        self.con.execute("INSERT INTO sources (source_id, category, title, file_hash) VALUES (34, 'court', 'Held', 'b')")
+        req = self.request("facts", [self.facts()], mode="unattended",
+                           route={"ref": "f1", "kind": "facts", "possible_versions": [34]})
+        self.write(ingest_facts, req)
+        notes = self.q("SELECT notes FROM sources WHERE source_id <> 34")[0][0]
+        self.assertIn("SUPERSEDE-PENDING: possible other version of source #34.", notes)
+
+    def test_two_newcomers_are_marked_with_each_other_once_both_have_rows(self):
+        other = "b" * 64
+        first = self.request("facts", [self.facts()], mode="unattended",
+                             route={"ref": "f1", "kind": "facts", "version_newcomers": [other]})
+        self.write(ingest_facts, first)
+        self.assertNotIn("SUPERSEDE-PENDING", self.q("SELECT notes FROM sources")[0][0], "no row yet, so no marker")
+        second = self.request("facts", [self.facts()], mode="unattended", file_hash=other,
+                              route={"ref": "f2", "kind": "facts", "version_newcomers": [H]})
+        self.write(ingest_facts, second)
+        notes = dict(self.q("SELECT file_hash, notes FROM sources"))
+        self.assertIn("SUPERSEDE-PENDING: possible other version of source #2.", notes[H])
+        self.assertIn("SUPERSEDE-PENDING: possible other version of source #1.", notes[other])
+
+    def test_a_version_newcomer_that_is_no_hash_is_refused_rather_than_spliced(self):
+        req = self.request("facts", [self.facts()], route={"ref": "f1", "kind": "facts", "version_newcomers": ["x' OR '1"]})
+        with self.assertRaises(ValueError):
+            ingest_facts.plan(req)
+
+    # ---------------------------------------------------------------- an email's attachments (#51, #53, #54)
+
+    ATTACHMENT = {"name": "Invoice.pdf", "file_hash": "e" * 64}
+
+    def email(self):
+        doc = self.facts()
+        doc["document"]["category"] = "correspondence"
+        self.write(ingest_facts, self.request("facts", [doc], file_path="3. CORRESPONDENCE\\mail.eml"))
+
+    def attachment(self, doc, **extra):
+        doc = {**doc, "contract": "attachment", "ref": "f1:a1"}
+        return self.request("attachment", [doc], attachment=self.ATTACHMENT, file_path="3. CORRESPONDENCE\\mail.eml", **extra)
+
+    def test_an_attachment_is_a_child_row_with_its_own_hash_no_path_and_its_file_name(self):
+        self.email()
+        doc = self.facts(facts=[{"fact_key": "new:1", "source_locator": "p1", "description": "An invoice issued.",
+                                 "category": "contract", "date_of_fact": None,
+                                 "evidence": {"is_proof_source": True, "strength": 1, "notes": None}}],
+                         fact_positions=[], relief_items=[], relief_positions=[])
+        doc["document"]["category"] = "production"
+        plan, out = self.write(ingest_facts, self.attachment(doc))
+        self.assertEqual(plan["post"], [], "the after-completion passes are the top-level row's")
+        rows = self.q("SELECT title, file_path, file_hash, parent_source_id, ingestion_status, category "
+                      "FROM sources WHERE parent_source_id IS NOT NULL")
+        self.assertEqual(rows, [("Invoice.pdf", None, "e" * 64, 1, "complete", "production")])
+        self.assertEqual(self.q("SELECT count(*) FROM facts WHERE source_id = 2"), [(1,)])
+        self.assertEqual(self.q("SELECT count(*) FROM evidence_links WHERE source_id = 2"), [(1,)])
+        self.assertEqual(out["named"]["source_id"], 2)
+        _, again = self.write(ingest_facts, self.attachment(doc))
+        self.assertEqual(self.q("SELECT count(*) FROM sources"), [(2,)])
+        self.assertEqual(self.q("SELECT count(*) FROM facts WHERE source_id = 2"), [(1,)], "a repeat adds nothing")
+        self.assertEqual(again["named"]["prior"], "complete")
+
+    def test_an_attachment_registered_anywhere_else_writes_nothing(self):
+        self.email()
+        self.con.execute("INSERT INTO sources (category, title, file_hash) VALUES ('production', 'Filed copy', ?)", ("e" * 64,))
+        self.con.commit()
+        _, out = self.write(ingest_facts, self.attachment(self.facts()))
+        self.assertTrue(out["refused"][0].startswith("attachment_held"), out)
+        self.assertEqual(self.q("SELECT count(*) FROM sources WHERE parent_source_id IS NOT NULL"), [(0,)])
+
+    def test_an_attachment_that_may_be_privileged_is_held_pending_with_facts_only(self):
+        self.email()
+        doc = self.facts(flags=[{"kind": "privilege_signal", "ref": "f1:a1"}])
+        plan, _ = self.write(ingest_facts, self.attachment(doc))
+        self.assertEqual([a["kind"] for a in plan["asks"]], ["privilege"])
+        self.assertEqual(self.q("SELECT category, privilege_status, listed FROM sources WHERE parent_source_id = 1"),
+                         [("work_product", "pending", 0)])
+        self.assertEqual(self.q("SELECT count(*) FROM positions WHERE source_id = 2"), [(0,)])
+        self.assertEqual(self.q("SELECT count(*) FROM facts WHERE source_id = 2"), [(2 - 1,)])
+
+    def test_an_attachment_whose_extraction_failed_twice_is_registered_failed(self):
+        self.email()
+        req = self.request("attachment", [], attachment=self.ATTACHMENT, route={"ref": "f1", "kind": "facts"})
+        plan, _ = self.write(ingest_facts, req)
+        self.assertTrue(plan["failed"])
+        self.assertEqual(self.q("SELECT title, ingestion_status, file_path FROM sources WHERE parent_source_id = 1"),
+                         [("Invoice.pdf", "failed", None)])
+        doc = self.facts()
+        doc["document"]["category"] = "production"
+        self.write(ingest_facts, self.attachment(doc))
+        self.assertEqual(self.q("SELECT count(*), max(ingestion_status) FROM sources WHERE parent_source_id = 1"),
+                         [(1, "complete")], "a later reading reuses the row")
+
+    def test_an_attachment_before_its_email_waits(self):
+        _, out = self.write(ingest_facts, self.attachment(self.facts()))
+        self.assertTrue(out["refused"][0].startswith("waiting"))
+
+    # ---------------------------------------------------------------- authorities (Path D, through the run)
+
+    def authority(self, **extra):
+        result = {"contract": "caselaw", "contract_version": 2, "ref": "f1", "flags": [],
+                  "authority": {"title": "Quillfeather v. Plumtree", "citation": "2026 BCCA 999", "authority_type": "case_law",
+                                "jurisdiction": "BC"},
+                  "authority_disposition": "Appeal dismissed.", "fact_pattern": "A landlord and a tenant.",
+                  "loss_description": None,
+                  "treats_prior": {"citation": "2020 BCSC 1", "title": "An earlier case", "treatment": "affirms", "scope": "full"},
+                  "concepts": [{"name": "Invented test", "jurisdiction": "BC", "concept_kind": "legal test", "description": "d",
+                                "authority_role": "establishes", "authority_proposition": "A rule.",
+                                "criteria": [{"requirement_kind": "mandatory element", "criterion_order": 1,
+                                              "criterion_description": "An element.",
+                                              "determined_by_concept_name": "Sub test"}]}]}
+        result.update(extra)
+        return result
+
+    def authority_request(self, results, contract="caselaw", route=None):
+        return self.request(contract, results, file_path="6. LAW\\Quillfeather.pdf",
+                            route=route or {"ref": "f1", "kind": contract})
+
+    def test_a_decision_is_written_and_its_treatment_is_a_pending_marker_never_a_treatment(self):
+        plan, out = self.write(ingest_authority, self.authority_request([self.authority()]))
+        self.assertNotIn("treats_prior", plan)
+        self.assertEqual(self.q("SELECT citation, disposition, file_path, notes, last_verified_at FROM law.authorities"),
+                         [("2026 BCCA 999", "Appeal dismissed.", "6. LAW\\Quillfeather.pdf",
+                           "[TREATMENT-PENDING:2020 BCSC 1|affirms|full]", None)])
+        self.assertEqual(self.q("SELECT count(*) FROM law.authority_treatments"), [(0,)], "matching stays an attended judgment")
+        self.assertEqual(out["named"]["source_id"], 1)
+        self.assertEqual(out["named"]["prior"], None)
+        self.assertEqual(self.q("SELECT count(*) FROM law.concept_authorities"), [(1,)])
+        self.assertEqual(self.q("SELECT count(*) FROM law.legal_criteria"), [(1,)])
+        self.assertTrue(any("Sub test" in line for line in out["reports"]), "a stub is reported")
+        _, again = self.write(ingest_authority, self.authority_request([self.authority()]))
+        self.assertEqual(again["named"]["prior"], 1)
+        self.assertEqual(sum(again["counts"].values()), 0)
+        self.assertEqual(self.q("SELECT notes FROM law.authorities"), [("[TREATMENT-PENDING:2020 BCSC 1|affirms|full]",)], "one marker")
+
+    def test_the_markers_field_separators_cannot_come_from_the_result(self):
+        doc = self.authority(treats_prior=[{"citation": "A|B] C", "treatment": "varies", "scope": "partial"},
+                                           {"title": "Second", "treatment": "overrules"}])
+        self.write(ingest_authority, self.authority_request([doc]))
+        self.assertEqual(self.q("SELECT notes FROM law.authorities"),
+                         [("[TREATMENT-PENDING:A B  C|varies|partial]\n[TREATMENT-PENDING:Second|overrules|full]",)])
+
+    def test_ingest_status_reports_a_pending_treatment_on_the_authority(self):
+        self.write(ingest_authority, self.authority_request([self.authority()]))
+        operation = (CASE_DATA_ROOT / "operations" / "ingest-status.md").read_text(encoding="utf-8")
+        probe = re.search(r"```sql\n(-- ingest-status probe.*?)```", operation, re.S).group(1)
+        code = re.search(r"```python\n(.*?def ingest_status.*?)```", operation, re.S).group(1)
+        self.con.row_factory = sqlite3.Row
+        rows = [dict(r) for r in self.con.execute(probe, (json.dumps([H]),)).fetchall()]
+        self.con.row_factory = None
+        namespace = {"stored_form": lambda path, root: path}
+        exec(code, namespace)
+        [entry] = namespace["ingest_status"]([{"path": "6. LAW\\Quillfeather.pdf", "hash": H}], rows, "root", str(self.dir))
+        self.assertEqual((entry["verdict"], entry["store"], entry["pending"]), ("ingested", "law", ["treatment"]))
+
+    def test_a_provision_stores_null_for_the_keys_it_lacks_and_one_calling_itself_case_law_is_set_aside(self):
+        result = {"contract": "provision", "contract_version": 2, "ref": "f1", "flags": [],
+                  "authority": {"title": "An Act", "citation": "RSBC 1996, c 1", "authority_type": "statute", "jurisdiction": "BC"},
+                  "concepts": [{"name": "A duty", "jurisdiction": "BC", "concept_kind": "doctrine", "description": "d",
+                                "authority_role": "establishes", "authority_proposition": "A duty.", "criteria": []}]}
+        self.write(ingest_authority, self.authority_request([result], "provision"))
+        self.assertEqual(self.q("SELECT authority_type, disposition, fact_pattern, notes FROM law.authorities"),
+                         [("statute", None, None, None)])
+        wrong = {**result, "authority": {**result["authority"], "authority_type": "case_law"}}
+        plan = ingest_authority.plan(self.authority_request([wrong], "provision"))
+        self.assertEqual(plan, {"blocked": "set_aside"})
+
+    def test_a_result_that_fails_its_check_writes_nothing(self):
+        plan = ingest_authority.plan(self.authority_request([self.authority(concepts=[{"name": None}])]))
+        self.assertIn("problems", plan)
+
+    def test_a_file_held_under_another_citation_is_refused(self):
+        self.write(ingest_authority, self.authority_request([self.authority()]))
+        other = self.authority(authority={"title": "Other", "citation": "2026 BCCA 1", "authority_type": "case_law"})
+        _, out = self.write(ingest_authority, self.authority_request([other]))
+        self.assertTrue(out["refused"][0].startswith("refused:"))
+
+    def test_a_second_copy_is_recorded_by_reference_and_follows_a_tombstone(self):
+        self.con.execute("INSERT INTO law.authorities (authority_id, title, citation, authority_type, notes) "
+                         "VALUES (7, 'Canonical', '2026 BCCA 7', 'case_law', 'A note'), "
+                         "(8, 'Merged', '2026 BCCA 8', 'case_law', '[MERGED-INTO:#7 2026-01-01 practitioner]')")
+        self.con.commit()
+        req = self.authority_request([], route={"ref": "f1", "kind": "caselaw", "second_copy_of": 8})
+        _, out = self.write(ingest_authority, req)
+        self.assertEqual(out["named"]["source_id"], 7)
+        self.assertEqual(out["named"]["prior"], None)
+        self.assertEqual(self.q("SELECT notes FROM law.authorities WHERE authority_id = 7"), [(f"A note\n[SECOND-COPY:{H}]",)])
+        _, again = self.write(ingest_authority, req)
+        self.assertEqual(again["named"]["prior"], 7, "a re-presented file is a no-op")
+        self.assertEqual(self.q("SELECT notes FROM law.authorities WHERE authority_id = 7"), [(f"A note\n[SECOND-COPY:{H}]",)])
+
+    def test_a_second_copy_of_an_authority_no_longer_on_file_is_refused(self):
+        req = self.authority_request([], route={"ref": "f1", "kind": "caselaw", "second_copy_of": 99})
+        _, out = self.write(ingest_authority, req)
+        self.assertTrue(out["refused"][0].startswith("refused:"))
+
+    def test_an_authority_whose_extraction_failed_twice_writes_nothing(self):
+        plan, _ = self.write(ingest_authority, self.authority_request([]))
+        self.assertTrue(plan["failed"])
+        self.assertEqual(self.q("SELECT count(*) FROM law.authorities"), [(0,)])
+
+    def test_the_legal_context_takes_out_every_party_name_and_serves_the_vocabulary(self):
+        self.con.execute("INSERT INTO issues (title, description, issue_type, status, our_position) VALUES "
+                         "('Did Quill rely on the promise?', 'Plum Holdings Ltd. says no.', 'legal', 'open', 'Secret'), "
+                         "('A fact only', 'x', 'factual', 'open', NULL), ('Old', 'x', 'legal', 'resolved', NULL)")
+        self.con.commit()
+        self.con.execute(f"PRAGMA user_version = {resolve_paths.EXPECTED_USER_VERSION}")
+        self.con.close()
+        out = ingest_authority.dispatch_context({"case_data_dir": str(self.dir)})
+        self.con = sqlite3.connect(self.dir / "main.sqlite")
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["legal_context"], [{"title": "Did a party rely on the promise?", "description": "a party says no."}])
+        self.assertIn("establishes", out["treatment_vocabulary"])
 
     # ---------------------------------------------------------------- privileged (Path B)
 

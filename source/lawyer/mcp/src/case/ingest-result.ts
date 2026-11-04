@@ -24,23 +24,30 @@ import { caseDataFolder } from "./locate.js";
 import { runCaseScript } from "./case-script.js";
 import {
   affidavitRun, checkRun, CONTRACT_VERSION, noteWriteWait, outsideMatter, recordRefusal, recordWrite, runForWrite, storedForm,
-  type Refusal,
+  type Refusal, type Route, type RouteAttachment,
 } from "./ingest-run.js";
 import { proceduralHistoryAppend } from "./procedural-history.js";
 import { resolveParticipant } from "./resolve-participant.js";
 import { stagedResultPath } from "./stage-result.js";
 
-/** The contracts built in stage D2 (§11), each with its converter module. */
+/** The contracts built (§11, #79), each with its converter module. `attachment` is one attachment of
+ *  an email, read by the facts extractor and written as the email's child. */
 const CONVERTERS: Record<string, string> = {
   facts: "ingest_facts",
+  attachment: "ingest_facts",
   affidavit_body: "ingest_affidavit",
   affidavit_exhibits: "ingest_affidavit",
   sought_orders: "ingest_sought_orders",
   privileged: "ingest_privileged",
+  caselaw: "ingest_authority",
+  provision: "ingest_authority",
 };
-const LATER = ["caselaw", "provision", "efiling_statement", "register_only"];
-/** The contracts whose `result_ids: []` closes an item whose extraction failed twice (R4). */
-const CLOSABLE = ["facts", "affidavit_body", "affidavit_exhibits", "sought_orders"];
+const LATER = ["efiling_statement", "register_only"];
+/** The contracts whose `result_ids: []` closes an item whose extraction failed twice (R4). An authority's
+ *  route matched by citation is closed the same way: nothing was read, and the file is recorded by reference. */
+const CLOSABLE = ["facts", "attachment", "affidavit_body", "affidavit_exhibits", "sought_orders", "caselaw", "provision"];
+/** The contracts written only for a file routed in this run. */
+const ROUTED_ONLY = ["attachment", "caselaw", "provision", "affidavit_body", "affidavit_exhibits"];
 const COUNTS = ["facts", "positions", "relief", "links", "exhibits"] as const;
 /** The output cap (est., spec §1.5, §2.1). */
 export const RESULT_CAP = 600;
@@ -86,6 +93,8 @@ type Plan =
       other_title?: string | null;
       /** Exhibit letters whose result failed its contract: recorded for review, read once more. */
       invalid?: string[];
+      /** The document's report line, where the count of facts and positions would mean nothing. */
+      summary?: string;
     };
 
 export interface IngestResultOutput {
@@ -112,6 +121,7 @@ const SAY_REFUSED: Record<string, string> = {
   path_b: "This document may be privileged, so nothing was recorded from its reading. It will be read here instead, once its privilege is decided.",
   set_aside: "This document is a legal authority, so it was not recorded in this run. It will be ingested on its own once the run ends.",
   already_held: "This document has already been recorded in another session, so it was not recorded again.",
+  attachment_held: "This attachment is already on file, so it was not recorded again.",
   refused: "This document could not be recorded, so nothing from its reading was kept.",
 };
 
@@ -138,7 +148,7 @@ function partyNames(contract: string, result: Record<string, unknown>): string[]
       for (const f of fields) names.push(row?.[f]);
     }
   };
-  if (contract === "facts") {
+  if (contract === "facts" || contract === "attachment") {
     each("fact_positions", ["party_name"]);
     each("relief_items", ["seeking_party_name", "against_party_name"]);
     each("relief_positions", ["party_name"]);
@@ -269,7 +279,7 @@ export async function ingestResult(args: IngestResultArgs, env: NodeJS.ProcessEn
 }
 
 /** Refusals no repeat of the same call can clear: a result to read again, or a document set aside. */
-const DEFINITE = ["invalid", "contract_mismatch", "contract_version", "race", "store_change", "path_b", "set_aside", "unresolved", "refused", "already_held", "taken"];
+const DEFINITE = ["invalid", "contract_mismatch", "contract_version", "race", "store_change", "path_b", "set_aside", "unresolved", "refused", "already_held", "attachment_held", "taken"];
 
 type Staged = { result_id: string; path: string; ref: string; doc: Record<string, unknown> };
 
@@ -289,7 +299,7 @@ async function checkAndWrite(args: IngestResultArgs, env: NodeJS.ProcessEnv, dro
   }
   const run = await runForWrite(args.matter_root, args.run_id, document, args.contract, args.result_ids, env);
   if ("refused" in run) return { outcome: "refused", refused: run.refused, ask: [], report: [run.say] };
-  if (args.contract.startsWith("affidavit_") && !run.route) throw new ValidationError("an affidavit is written only for a file routed in this run");
+  if (ROUTED_ONLY.includes(args.contract) && !run.route) throw new ValidationError(`contract ${args.contract} is written only for a file routed in this run`);
   // The stored form the run recorded, or the one the server derives (S-m7): never a host path.
   const filePath = run.route?.file_path ?? storedForm(String(document.file_path ?? ""), args.matter_root);
   const fileHash = run.route?.file_hash ?? String(document.file_hash ?? "");
@@ -372,6 +382,7 @@ async function write(
   lock: CaseLock,
 ): Promise<IngestResultOutput> {
   const fileRef = run.route?.ref ?? "";
+  const attachment = args.contract === "attachment" ? attachmentOf(run.route, args.document.ref) : undefined;
   const exhibits = args.contract === "affidavit_exhibits"
     ? await affidavitRun(args.matter_root, args.run_id, fileRef, results.map((r) => r.ref), env)
     : null;
@@ -380,6 +391,7 @@ async function write(
   const refs = [...new Set([
     fileRef || results[0]?.ref || fileHash,
     ...(args.contract === "sought_orders" && fileRef ? [`${fileRef}:so`] : []),
+    ...(attachment ? [args.document.ref as string] : []),
     ...results.map((r) => r.ref),
   ])];
   // A Path B object names no dispatched item, so it journals no reply (N1).
@@ -467,6 +479,7 @@ async function write(
     participants,
     route,
     exhibits,
+    ...(attachment ? { attachment: { name: attachment.name, file_hash: attachment.file_hash } } : {}),
     answered: run.answered,
     // Read only where the delivery check can fire: an attended document with a letter flag (N-2).
     firm_name: run.mode === "attended" && results.some((r) => flagged(r.doc, "outgoing_letter")) ? firmName(env) : null,
@@ -605,10 +618,11 @@ async function write(
       ? `Exhibit ${letterOf(f.ref)} could not be read after two attempts; it is marked for review.`
       : `Exhibit ${letterOf(f.ref)} could not be recorded as read; it is marked for review and will be read again.`);
   }
-  if (plan.title && !plan.failed) {
+  if (plan.summary) report.unshift(plan.summary);
+  else if (plan.title && !plan.failed) {
     report.unshift(`${plan.title.slice(0, 60)}: ${counts.facts} facts, ${counts.positions} positions, ${counts.relief} relief items, ${counts.links} evidence links${counts.exhibits ? `, ${counts.exhibits} exhibits` : ""}.`);
   }
-  if (plan.failed) report.unshift(`${(plan.title ?? "This document").slice(0, 60)} could not be read and is recorded as not read.`);
+  if (plan.failed && !plan.summary) report.unshift(`${(plan.title ?? "This document").slice(0, 60)} could not be read and is recorded as not read.`);
   // An exhibit rolled back is read again, so its question waits for that reading.
   const asked = asks.filter((a) => !(args.contract === "affidavit_exhibits" && badLetters.includes(a.ref)));
 
@@ -633,7 +647,17 @@ async function write(
     dropAlso.push(...results.filter((r) => pending.includes(letterOf(r.ref))
       || (badLetters.includes(letterOf(r.ref)) && flagged(r.doc, "privilege_signal"))).map((r) => r.path));
   }
+  // An attachment held pending: its reading leaves staging once this reply carries the question (G4).
+  if (attachment && out.ask.some((a) => a.kind === "privilege")) dropAlso.push(...results.map((r) => r.path));
   return out;
+}
+
+/** The route's attachment a child ref (`f3:a2`) names. */
+function attachmentOf(route: Route | null, ref: string | undefined): RouteAttachment {
+  const found = /:a(\d+)$/.exec(ref ?? "");
+  const attachment = found ? route?.attachments?.[Number(found[1]) - 1] : undefined;
+  if (!attachment) throw new ValidationError("document.ref must name an attachment of this run's email");
+  return attachment;
 }
 
 /** Pass 1's exhibit list as the body write journals it: letters and page ranges only (N9). */

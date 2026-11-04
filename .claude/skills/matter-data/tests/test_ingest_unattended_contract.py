@@ -33,6 +33,7 @@ class IngestUnattendedContractTests(unittest.TestCase):
         self.assertIn("'LINKAGE-PENDING:'", probe)
         self.assertIn("'DATE-ANCHOR-PENDING:'", probe)
         self.assertIn("'[SECOND-COPY:'", probe)
+        self.assertIn("'[TREATMENT-PENDING:'", probe)
 
     def test_path_d_owns_the_second_copy_write(self):
         extract = (OPERATIONS / "ingest-extract.md").read_text(encoding="utf-8")
@@ -40,16 +41,16 @@ class IngestUnattendedContractTests(unittest.TestCase):
         self.assertIn("[SECOND-COPY:<hash>]", path_d)
         self.assertIn("conventions §11", path_d)
         scan = (OPERATIONS / "extract-facts.md").read_text(encoding="utf-8")
-        callers = {
-            "ingest-unattended.md": UNATTENDED.split("3. **An authority matched by citation.**", 1)[1]
-                                              .split("\n## ", 1)[0],
-            "extract-facts.md": scan.split("\n## 4.", 1)[1].split("\n## ", 1)[0],
-        }
-        for name, text in callers.items():
-            with self.subTest(file=name):
-                self.assertIn("Path D's second-copy rule", text)
-                self.assertNotIn("append `[SECOND-COPY:", text)
+        text = scan.split("\n## 4.", 1)[1].split("\n## ", 1)[0]
+        self.assertIn("Path D's second-copy rule", text)
+        self.assertNotIn("append `[SECOND-COPY:", text)
         self.assertIn("Path D", CONVENTIONS.split("## 11. Pending markers", 1)[1].split("| Marker", 1)[0])
+
+    def test_an_authority_matched_by_citation_is_recorded_by_the_tool(self):
+        rule = UNATTENDED.split("3. **An authority matched by citation.**", 1)[1].split("\n## ", 1)[0]
+        self.assertIn("`second_copy_of`", rule)
+        self.assertIn("`ingested_by_reference`", rule)
+        self.assertNotIn("append `[SECOND-COPY:", rule)
 
     def test_each_question_becomes_a_named_stop(self):
         for reason in ("target_pleading", "classification", "authority_kind", "other"):
@@ -75,10 +76,32 @@ class IngestUnattendedContractTests(unittest.TestCase):
         unattended_step_2 = UNATTENDED.split("## Step 2", 1)[1].split("## Step 3", 1)[0]
         self.assertIn("a kind ingest cannot read", unattended_step_2)
 
-    def test_reads_batch_by_ten_and_writes_follow_list_order(self):
-        self.assertRegex(UNATTENDED, r"batches of up to 10")
-        self.assertIn("in list order", UNATTENDED)
+    def test_reads_run_ten_at_a_time_and_writes_one_at_a_time(self):
+        self.assertIn("at most 10 at a time", UNATTENDED)
+        self.assertIn("one at a time", UNATTENDED)
         self.assertIn("registered `partial`", UNATTENDED)
+
+    def test_the_run_is_the_orchestrators_and_the_session_stays_out_of_each_write(self):
+        self.assertIn("`orchestrator: true`", UNATTENDED)
+        self.assertIn("ingest-orchestrator", UNATTENDED)
+        self.assertIn("routing.md", UNATTENDED)
+        self.assertNotIn("sql_script", UNATTENDED)
+
+    def test_what_the_run_cannot_read_unattended_is_held_with_nothing_written(self):
+        held = UNATTENDED.split("| `held` |", 1)[1].split("\n", 1)[0]
+        self.assertIn("nothing was written", held.lower())
+        self.assertIn("no review-log row", held)
+        for reason in ("compound book", "book-of-authorities cascade", "continuation"):
+            with self.subTest(reason=reason):
+                self.assertIn(reason, UNATTENDED)
+
+    def test_housekeeping_never_files_a_held_row_as_read(self):
+        skills = CASE_DATA_ROOT.parent / "housekeeping" / "references"
+        self.assertIn("`held`", (skills / "work-list-and-reading.md").read_text(encoding="utf-8"))
+        rows = (skills / "compose-and-rows.md").read_text(encoding="utf-8")
+        rule = next(line for line in rows.splitlines() if line.startswith("- **Held"))
+        self.assertIn("`stuck`", rule)
+        self.assertIn("never `file_no_ingest`", rule.lower())
 
 
 if __name__ == "__main__":

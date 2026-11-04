@@ -20,6 +20,20 @@ category `privileged`) writes nothing and is `blocked` `path_b`: the main thread
 reads it as Path B with its privilege question. The category `authority` is
 `blocked` `set_aside`, for /ingest's own path. An unresolved target locator is
 `blocked` `unresolved` with the smallest one reported (Path A step 3).
+
+A route with `transcript: true` adds Path A step 7: each current position of the
+transcript that differs from a current position of the same party on the same
+fact in a court document takes a `DISCREPANCY:` note, in the same transaction,
+and nothing is resolved.
+
+Contract `attachment` writes one attachment of an email that was just written
+(`request["attachment"]` {name, file_hash}), design decisions #51, #53, #54: a
+child row of the email with its own hash, no path and its file name as title,
+then the same rows, on that child. A hash registered anywhere else writes
+nothing (`attachment_held`). A reading that may be privileged is never Path B,
+because a privileged row cannot be a child: it takes Path B's Unclear branch,
+`pending`, facts only, and an ask. With no result the child is registered
+`failed`, so a standalone copy of it is read afresh (#54).
 """
 
 import json
@@ -171,6 +185,66 @@ WHERE s.source_id = {c.SOURCE} AND s.proceeding_id IS NOT NULL
                     AND w.witness_type = json_extract(:doc, '$.witness.type'))
 """
 
+# Path A step 7, by the identity a position already has: same fact, same party.
+_CONTRADICTED = f"""(SELECT min(o.position_id) FROM main.positions o
+        JOIN main.sources s ON s.source_id = o.source_id
+        WHERE o.fact_id = main.positions.fact_id AND o.party_id = main.positions.party_id
+          AND o.valid_to IS NULL AND o.source_id IS NOT {c.SOURCE} AND s.category = 'court'
+          AND o.position <> main.positions.position)"""
+
+NOTE_CONTRADICTIONS = f"""
+UPDATE main.positions
+SET notes = 'DISCREPANCY: contradicts pleaded position #' || {_CONTRADICTED}, verified = 2
+WHERE source_id = {c.SOURCE} AND valid_to IS NULL AND notes IS NULL AND {_CONTRADICTED} IS NOT NULL
+"""
+
+REPORT_CONTRADICTIONS = {'sql': f"""
+SELECT 'This transcript contradicts ' || count(*) || ' pleaded position(s). Each is noted for review.'
+FROM main.positions
+WHERE source_id = {c.SOURCE} AND valid_to IS NULL AND notes LIKE 'DISCREPANCY: contradicts pleaded position #%'
+HAVING count(*) > 0
+""", 'report': True}
+
+_PARENT = c.top_level('$.parent_hash')
+_CHILD = f"""(SELECT min(s.source_id) FROM main.sources s
+        WHERE s.file_hash = json_extract(:doc, '$.source.file_hash') AND s.parent_source_id = {_PARENT})"""
+
+GUARD_PARENT = {'sql': f"SELECT 'waiting: the email is not recorded yet' WHERE {_PARENT} IS NULL", 'refuse': True}
+
+GUARD_ATTACHMENT_HELD = {'sql': f"""
+SELECT 'attachment_held: this attachment is already registered'
+WHERE EXISTS (SELECT 1 FROM main.sources s WHERE s.file_hash = json_extract(:doc, '$.source.file_hash')
+                AND s.parent_source_id IS NOT {_PARENT})
+   OR EXISTS (SELECT 1 FROM privileged.privileged_sources p
+              WHERE p.file_hash = json_extract(:doc, '$.source.file_hash'))
+""", 'refuse': True}
+
+REGISTER_CHILD = f"""
+INSERT INTO main.sources (proceeding_id, category, title, description, date, file_path, file_hash, listed,
+                          verified, parent_source_id, ingestion_status, privilege_status)
+SELECT p.proceeding_id, json_extract(:doc, '$.source.category'), json_extract(:doc, '$.source.title'),
+       json_extract(:doc, '$.source.description'), json_extract(:doc, '$.source.date'), NULL,
+       json_extract(:doc, '$.source.file_hash'), 0, 0, p.source_id, json_extract(:doc, '$.source.status'),
+       json_extract(:doc, '$.source.privilege_status')
+FROM main.sources p
+WHERE p.source_id = {_PARENT} AND {_CHILD} IS NULL
+"""
+
+
+def _as_child(statement):
+    """A top-level document's statement, on the attachment's child row instead."""
+    return {**statement, 'sql': statement['sql'].replace(c.SOURCE, _CHILD)}
+
+
+def _failed_child(request, attachment):
+    route = request.get('route') or {}
+    source = {'category': route.get('category') or 'correspondence', 'title': attachment['name'], 'description': None,
+              'date': None, 'file_hash': attachment['file_hash'], 'status': 'failed', 'privilege_status': None}
+    return {'params': {'doc': json.dumps({'source': source, 'parent_hash': request['file_hash']}, ensure_ascii=False)},
+            'statements': [GUARD_PARENT, GUARD_ATTACHMENT_HELD, _as_child(c.PRIOR_STATUS), {'sql': REGISTER_CHILD},
+                           _as_child(c.SELECT_SOURCE)],
+            'post': [], 'markers': [], 'asks': [], 'report': [], 'title': attachment['name'], 'failed': True,
+            'summary': f'Attachment {attachment["name"][:60]} could not be read and is recorded as not read.'}
 
 
 def _party(name, participants, asks, where):
@@ -236,7 +310,10 @@ def failed_plan(request, category):
 def plan(request):
     route = request.get('route') or {}
     answers = request.get('answers') or {}
+    attachment = request.get('attachment')
     if not request.get('results'):
+        if attachment:
+            return _failed_child(request, attachment)
         return failed_plan(request, answers.get('category') or route.get('category'))
     if len(request['results']) != 1:
         return {'problems': ['contract facts takes one result per document']}
@@ -248,14 +325,15 @@ def plan(request):
 
     # K-M4: a document that may be privileged never reaches main from an extractor's reading; it
     # goes to Path B with its question. An authority keeps /ingest's own path in v1.
-    if category == 'privileged' or (c.flags_of(doc, 'privilege_signal') and answers.get('category') is None):
+    may_be_privileged = category == 'privileged' or (c.flags_of(doc, 'privilege_signal') and answers.get('category') is None)
+    if may_be_privileged and not attachment:
         return {'blocked': 'path_b', 'asks': [{'kind': 'privilege', 'ref': title[:80],
                 'say': f'"{title[:80]}" may be privileged. Is it privileged, not privileged, or unclear for now?'}]}
     if category == 'authority':
         return {'blocked': 'set_aside'}
 
     # The answered pleading's keys as they were dispatched, never the extraction's own (K-m2).
-    answered = request.get('answered') or {}
+    answered = {} if attachment else request.get('answered') or {}
     try:
         validate_extraction(doc, set(answered.get('facts') or []), set(answered.get('relief') or []))
     except ExtractionError as exc:
@@ -268,11 +346,21 @@ def plan(request):
     except (KeyError, TypeError) as exc:
         return {'problems': [f'invalid: {exc}']}
 
+    pending = bool(attachment) and may_be_privileged
+    if pending:
+        # Path B's Unclear branch: facts only, and neither a position nor a link on a pending source.
+        category = 'work_product'
+        doc = {**doc, 'facts': [{**f, 'evidence': None} for f in doc['facts']], 'fact_positions': [],
+               'relief_items': [], 'relief_positions': [], 'source_references': []}
     asks = []
     if category not in c.SOURCE_CATEGORIES:
-        asks.append({'kind': 'category', 'ref': c.title_from_path(request['file_path']), 'say': CATEGORY_SAY})
+        asks.append({'kind': 'category', 'ref': attachment['name'] if attachment else c.title_from_path(request['file_path']),
+                     'say': CATEGORY_SAY})
     participants = request.get('participants') or {}
     source = source_row(request, read, document, category)
+    if attachment:
+        source.update(title=attachment['name'], file_hash=attachment['file_hash'], file_path=None,
+                      execution_status=None, privilege_status='pending' if pending else None)
     filer = read.text(document, 'author_or_filing_party', 'document')
     if filer and category == 'court':
         # A court document's filing party is resolved (spec 2.2); 0 answers "none of the parties".
@@ -350,6 +438,9 @@ def plan(request):
     if asks:
         return {'asks': asks}
 
+    if attachment:
+        return _attachment_plan(request, attachment, source, facts, positions, relief, relief_positions, references, pending)
+
     witness = None
     if route.get('witness') in ('fact', 'expert') and filer:
         witness = {'name': filer, 'type': route['witness']}
@@ -370,6 +461,8 @@ def plan(request):
         {'sql': CLOSE_RELIEF_POSITIONS}, {'sql': INSERT_RELIEF_POSITIONS},
         {'sql': INSERT_REFERENCES},
     ]
+    if route.get('transcript'):
+        statements += [{'sql': NOTE_CONTRADICTIONS}, REPORT_CONTRADICTIONS]
     if witness:
         statements += [{'sql': INSERT_WITNESS}, {'sql': FILL_EXPERT_REPORT}, {'sql': ASSIGN_WITNESS}]
     statements += [c.flip()] + c.marker_statements(markers) + [c.SELECT_SOURCE]
@@ -378,3 +471,22 @@ def plan(request):
     return {'params': {'doc': json.dumps(payload, ensure_ascii=False)}, 'statements': statements,
             'post': passes, 'markers': markers, 'asks': [], 'report': report, 'title': source['title'],
             'date': source['date'], 'other_title': other_title}
+
+
+def _attachment_plan(request, attachment, source, facts, positions, relief, relief_positions, references, pending):
+    payload = {'source': source, 'parent_hash': request['file_hash'], 'facts': facts, 'positions': positions,
+               'relief': relief, 'relief_positions': relief_positions, 'references': references, 'answered_source_id': None}
+    statements = [GUARD_PARENT, GUARD_ATTACHMENT_HELD, _as_child(c.PRIOR_STATUS), {'sql': REGISTER_CHILD}] + [
+        _as_child(st) for st in (
+            {'sql': c.REFRESH}, c.insert_facts(), c.insert_links(),
+            {'sql': CLOSE_POSITIONS}, {'sql': INSERT_POSITIONS, 'count': 'positions'},
+            {'sql': INSERT_RELIEF, 'count': 'relief'},
+            {'sql': CLOSE_RELIEF_POSITIONS}, {'sql': INSERT_RELIEF_POSITIONS},
+            {'sql': INSERT_REFERENCES}, c.flip(), c.SELECT_SOURCE)]
+    asks = []
+    if pending:
+        asks.append({'kind': 'privilege', 'ref': attachment['name'][:80],
+                     'say': f'Attachment {attachment["name"][:80]} may be privileged. Is it privileged, not privileged, '
+                            'or unclear for now? Its facts are held back until you decide.'})
+    return {'params': {'doc': json.dumps(payload, ensure_ascii=False)}, 'statements': statements, 'post': [],
+            'markers': [], 'asks': asks, 'report': [], 'title': attachment['name']}

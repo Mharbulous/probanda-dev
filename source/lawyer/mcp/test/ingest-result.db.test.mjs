@@ -97,7 +97,7 @@ test("the tools are defined: ingest_result's input, dispatch_inputs by id alone"
   const result = defs.find((d) => d.name === "matter_data__ingest_result");
   assert.deepEqual(result.inputSchema.required, ["matter_root", "run_id", "document", "contract", "result_ids"]);
   assert.deepEqual(result.inputSchema.properties.contract.enum,
-    ["facts", "affidavit_body", "affidavit_exhibits", "sought_orders", "caselaw", "provision", "efiling_statement", "register_only", "privileged"]);
+    ["facts", "attachment", "affidavit_body", "affidavit_exhibits", "sought_orders", "caselaw", "provision", "efiling_statement", "register_only", "privileged"]);
   assert.match(result.description, /600 bytes/, "the schema states the cap (§1.5)");
   const inputs = defs.find((d) => d.name === "matter_data__dispatch_inputs");
   assert.deepEqual(Object.keys(inputs.inputSchema.properties), ["dispatch_id"]);
@@ -334,4 +334,123 @@ test("a bridged run lists the files to stage, and dispatch_inputs serves the ses
   const inputs = await callTool({}, "matter_data__dispatch_inputs", { dispatch_id: d.dispatch_id });
   assert.equal(inputs.DOCUMENT.path, "/sessions/x/e.pdf");
   assert.deepEqual(inputs.PAGE_MANIFEST, [{ pages: "1-1", pdf: "/sessions/x/e.pdf" }]);
+});
+
+const AUTHORITY = (ref, extra = {}) => ({
+  contract: "caselaw", contract_version: 2, ref, flags: [],
+  authority: { title: "Quillfeather v. Plumtree", citation: "2026 BCCA 999", authority_type: "case_law", jurisdiction: "BC" },
+  authority_disposition: "Appeal dismissed.",
+  treats_prior: { citation: "2020 BCSC 1", title: "An earlier case", treatment: "affirms", scope: "full" },
+  concepts: [{ name: "Invented reliance test", jurisdiction: "BC", concept_kind: "legal test", authority_role: "establishes", authority_proposition: "A rule.", criteria: [] }],
+  ...extra,
+});
+
+test("a decision is dispatched by id with no party's name, and its staged result written with its treatment pending", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const doc = pdf(matterRoot, "2026 BCCA 999.pdf", ["Reasons for judgment"]);
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "unattended", orchestrator: true });
+  const first = await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "caselaw" }] });
+  const [d] = first.dispatch;
+  assert.deepEqual([d.agent, d.model, d.effort, d.ref, d.contract], ["lawyer:extract-caselaw", "opus", "high", "f1", "caselaw"]);
+
+  const inputs = await callTool({}, "matter_data__dispatch_inputs", { dispatch_id: d.dispatch_id });
+  assert.equal(inputs.MATTER_CONTEXT, undefined, "the matter's parties never reach it");
+  assert.deepEqual(inputs.LEGAL_CONTEXT, []);
+  assert.match(inputs.TREATMENT_VOCABULARY, /establishes/);
+  assert.deepEqual(inputs.PAGE_MANIFEST, [{ pages: "1-1", pdf: join(matterRoot, doc.file_path) }]);
+  assert.deepEqual(inputs.CONTRACT, { id: "caselaw", version: 2 });
+  assert.equal(inputs.DOCUMENT.date, undefined);
+  assert.doesNotMatch(JSON.stringify({ ...inputs, PAGE_MANIFEST: null, DOCUMENT: null, TREATMENT_VOCABULARY: null }), /Quill|Plum Holdings/);
+
+  const { result_id } = await stage(AUTHORITY("f1"));
+  const out = await write(matterRoot, run_id, { ref: "f1" }, "caselaw", [result_id]);
+  assert.equal(out.outcome, "written", JSON.stringify(out));
+  assert.equal(out.treats_prior, undefined);
+  for (const line of out.report) assert.doesNotMatch(line, DENY);
+  assert.match(out.report[0], /recorded as a legal authority/);
+  assert.deepEqual(sql(caseDataDir, "SELECT authority_id, file_path, notes FROM authorities", "law"),
+    [{ authority_id: out.source_id, file_path: doc.file_path, notes: "[TREATMENT-PENDING:2020 BCSC 1|affirms|full]" }]);
+  assert.equal((await write(matterRoot, run_id, doc, "caselaw", [result_id])).outcome, "already_written");
+  const after = await run(matterRoot, { action: "next", run_id });
+  assert.deepEqual([after.dispatch, after.write, after.close], [[], [], []]);
+});
+
+test("a statute takes its own extractor, and a route matched by citation reads nothing and records the file by reference", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const seeded = spawnSync(process.env.COCLERK_PYTHON || "python", ["-c", "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute(sys.argv[2]); c.commit()", join(caseDataDir, "law.sqlite"),
+    "INSERT INTO authorities (authority_id, title, citation, authority_type) VALUES (5, 'Held', '2026 BCCA 5', 'case_law')"], { encoding: "utf-8" });
+  assert.equal(seeded.status, 0, seeded.stderr);
+  const statute = pdf(matterRoot, "An Act.pdf", ["An Act"]);
+  const copy = pdf(matterRoot, "2026 BCCA 5 copy.pdf", ["Reasons"]);
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "unattended", orchestrator: true });
+  const first = await run(matterRoot, { action: "next", run_id, routes: [{ ...statute, kind: "provision" }, { ...copy, kind: "caselaw", second_copy_of: 5 }] });
+  assert.deepEqual(first.dispatch.map((d) => [d.agent, d.ref]), [["lawyer:extract-provision", "f1"]]);
+  assert.deepEqual(first.close, [{ ref: "f2", contract: "caselaw" }]);
+  const out = await write(matterRoot, run_id, { ref: "f2" }, "caselaw", []);
+  assert.equal(out.outcome, "written", JSON.stringify(out));
+  assert.equal(out.source_id, 5);
+  assert.equal(sql(caseDataDir, "SELECT notes FROM authorities WHERE authority_id = 5", "law")[0].notes, `[SECOND-COPY:${copy.file_hash}]`);
+  assert.deepEqual((await run(matterRoot, { action: "next", run_id })).close, []);
+  const repeat = await write(matterRoot, run_id, { ref: "f2" }, "caselaw", []);
+  assert.equal(repeat.outcome, "already_written");
+});
+
+test("an email's attachments wait for its write, are read as child items, and each is written as its child", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const email = pdf(matterRoot, "mail.pdf", ["An email"]);
+  const invoice = pdf(matterRoot, "Invoice.pdf", ["An invoice"]);
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "unattended", orchestrator: true });
+  const attachment = { name: "Invoice.pdf", file_hash: invoice.file_hash, path: join(matterRoot, invoice.file_path) };
+  const first = await run(matterRoot, { action: "next", run_id, routes: [{ ...email, kind: "facts", attachments: [attachment, attachment] }] });
+  assert.deepEqual(first.dispatch.map((d) => d.ref), ["f1"], "an attachment waits for its email's write");
+
+  const parent = await stage(FACTS("f1"));
+  assert.equal((await write(matterRoot, run_id, { ref: "f1" }, "facts", [parent.result_id])).outcome, "written");
+  const second = await run(matterRoot, { action: "next", run_id });
+  assert.deepEqual(second.dispatch.map((d) => [d.agent, d.ref, d.contract]), [["lawyer:extract-facts", "f1:a1", "attachment"]], "two with one hash are read once");
+  const inputs = await callTool({}, "matter_data__dispatch_inputs", { dispatch_id: second.dispatch[0].dispatch_id });
+  assert.deepEqual(inputs.PAGE_MANIFEST, [{ pages: "1-1", pdf: attachment.path }]);
+  assert.deepEqual(inputs.ANSWERED_FACTS, []);
+
+  const child = await stage(FACTS("f1:a1", { contract: "attachment" }));
+  const out = await write(matterRoot, run_id, { ref: "f1:a1" }, "attachment", [child.result_id]);
+  assert.equal(out.outcome, "written", JSON.stringify(out));
+  assert.deepEqual(out.post, []);
+  assert.deepEqual(sql(caseDataDir, "SELECT title, file_path, file_hash, parent_source_id, ingestion_status FROM sources WHERE parent_source_id IS NOT NULL"),
+    [{ title: "Invoice.pdf", file_path: null, file_hash: invoice.file_hash, parent_source_id: 1, ingestion_status: "complete" }]);
+  const end = await run(matterRoot, { action: "next", run_id });
+  assert.deepEqual([end.dispatch, end.write, end.close, end.path_b], [[], [], [], undefined]);
+  assert.equal(sql(caseDataDir, "SELECT count(*) AS n FROM sources")[0].n, 2);
+});
+
+test("a privileged email's attachments are never read: its Path B line is all the run lists", async (t) => {
+  const { matterRoot } = fixture(t);
+  const email = pdf(matterRoot, "advice.pdf", ["Advice"]);
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "unattended", orchestrator: true });
+  await assert.rejects(run(matterRoot, { action: "next", run_id, routes: [{ ...email, kind: "path_b", attachments: [] }] }), /only on an email routed facts/);
+  const out = await run(matterRoot, { action: "next", run_id, routes: [{ ...email, kind: "path_b", attachment_hashes: ["f".repeat(64)] }] });
+  assert.deepEqual([out.dispatch, out.path_b], [[], [{ ref: "f1", file_path: email.file_path }]]);
+});
+
+test("an unattended route's possible versions and a transcript's contradictions are written with the document", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const pleading = pdf(matterRoot, "NOCC.pdf", ["Claim"]);
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "unattended", orchestrator: true });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...pleading, kind: "facts" }] });
+  const claim = await stage(FACTS("f1"));
+  assert.equal((await write(matterRoot, run_id, { ref: "f1" }, "facts", [claim.result_id])).outcome, "written");
+
+  const transcript = pdf(matterRoot, "Discovery.pdf", ["Examination for discovery"]);
+  const second = await run(matterRoot, { action: "next", run_id, routes: [{ ...transcript, kind: "facts", transcript: true, answers_source_id: 1, possible_versions: [1] }] });
+  assert.deepEqual(second.dispatch.map((d) => d.ref), ["f2"]);
+  const inputs = await callTool({}, "matter_data__dispatch_inputs", { dispatch_id: second.dispatch[0].dispatch_id });
+  const answer = FACTS("f2", { facts: [], relief_items: [], relief_positions: [],
+    fact_positions: [{ target_fact_key: inputs.ANSWERED_FACTS[0].fact_key, party_name: "Ada Quill", value: "deny", position_basis: null, qualification: null, source_locator: "p. 3" }] });
+  answer.document = { ...answer.document, category: "production", title: "Discovery" };
+  const staged = await stage(answer);
+  const out = await write(matterRoot, run_id, { ref: "f2" }, "facts", [staged.result_id]);
+  assert.equal(out.outcome, "written", JSON.stringify(out));
+  assert.deepEqual(sql(caseDataDir, "SELECT position, verified, notes FROM positions WHERE source_id = 2"),
+    [{ position: "deny", verified: 2, notes: "DISCREPANCY: contradicts pleaded position #1" }]);
+  assert.match(sql(caseDataDir, "SELECT notes FROM sources WHERE source_id = 2")[0].notes, /SUPERSEDE-PENDING: possible other version of source #1\./);
 });

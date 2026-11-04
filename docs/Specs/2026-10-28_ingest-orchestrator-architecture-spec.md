@@ -132,7 +132,7 @@ Paths below are relative to `.claude/skills/matter-data/` unless they start with
 
 **Behaviour:**
 - It generalizes `matter_data__ingest_authority` (`source/lawyer/mcp/src/case/ingest-authority.ts`, #68).
-  - `caselaw` reuses `references/scripts/ingest_authority.py` unchanged.
+  - `caselaw` and `provision` use `references/scripts/ingest_authority.py`, which takes a request with `results` for this path. A treatment becomes a `[TREATMENT-PENDING:]` marker, and a route's `second_copy_of` a `[SECOND-COPY:]` one (#79).
   - Each other contract gets one converter script in `references/scripts/`, for example `ingest_facts.py` and `ingest_affidavit.py`.
   - The `privileged` converter writes all three of Path B's branches (`ingest-extract.md` "Path B", L240–252), chosen by `answers.privilege`:
     - *Yes*: the privileged source, bare `main.facts` rows, provenance with `source_note`, and client instructions, by `operations/bare-privileged-facts.md`;
@@ -238,7 +238,7 @@ Today the main thread applies these while composing SQL. The converters implemen
   - Why the server runs it: a file the session writes is invisible to the host in Cowork (#76). So a session-written "staged SQL file" cannot work, and the server must produce the SQL itself.
 - **Size cap:** an inline `sql_script` over 8 KB (est.) is refused with "too long to send inline: use a generator or ingest_result", but **only on a call inside a run the orchestrator began** (`begin` with `orchestrator: true`, kept on the lease).
   - Existing large callers are unaffected: those without a `run_id` (the statute path, #68, 16–43 KB; merge-authorities; the submission-law bridge), and D1's single-document ingest paths, whose `run_id` calls carry Path A, Path C and Path E transactions that can exceed 8 KB and have no generator or `ingest_result` to turn to.
-  - So the cap binds attended orchestrator runs only. `ingest-unattended.md` begins its run without `orchestrator`, because the same run also writes the files it keeps on D1's paths (authorities, books, transcripts, a `partial` affidavit's continuation).
+  - The cap binds every run the orchestrator began. `ingest-unattended.md` begins its run with `orchestrator: true` (#79): it no longer keeps any file on D1's paths, and what they alone can do is its `held` outcome.
   - The refusal is in the tool, not a hook, because the tool is Probanda's own.
 
 ---
@@ -662,6 +662,7 @@ Each stage is a separate release by the CLAUDE.md version rule. **Minor** marks 
 | D11 | OCR, only if Q1 is answered yes | Needs D4 | text-less scans at tier S | minor if it raises bundle requirements |
 
 - **D2 as built (2026-10-28):** the three extractors take both forms, prompt-borne inputs for today's single-document path and `DISPATCH <id>` for the orchestrator. v1 sets authorities, compound books, emails with attachments, transcripts (their contradiction check is not built) and already-held files aside for `/ingest`'s single-document path. Only party fields (positions, relief, filing party, a client instruction's party) are resolved to party ids; a deponent and an informant stay text. An informant the extractor marks `informant_privileged` is written NULL and asked about, and the answer records it in that privileged source's provenance.
+- **Every unattended route (2026-11-04, #79):** `ingest-unattended.md` now runs only through this orchestrator. Authorities (`caselaw`, `provision`, unattended only), emails with attachments (a child item per attachment, contract `attachment`, unattended only) and transcripts (`transcript: true`, both modes, with Path A step 7 in the tool) are routed. Compound books, the book-of-authorities cascade and partial continuations are `held` unattended and stay set aside attended. `matter_data__dispatch_inputs` serves an authority `LEGAL_CONTEXT` and `TREATMENT_VOCABULARY` in place of `MATTER_CONTEXT`.
 - **Main estimated savings:** D1–D3 carry most of it, because C1 is most of the $22.49. D4–D7 carry most of the time saving.
 - **Ordering:** the value order is write path and context, then script boundaries, then tiering, then batching, then triage. The script half of triage moves up to D4, because the script boundaries are computed by it. Only housekeeping's write (D10) stays near the end.
 

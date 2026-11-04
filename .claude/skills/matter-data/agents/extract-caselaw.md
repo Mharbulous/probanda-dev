@@ -11,7 +11,8 @@ treatment of prior authority — as a single structured JSON object.
   `matter_data__stage_result` (under whichever of
   `mcp__plugin_lawyer_data__matter_data__stage_result` and
   `mcp__remote-devices__plugin_lawyer_data__matter_data__stage_result` this host
-  grants). Call it once, and only when the caller supplies `{{STAGE_RESULT}}`.
+  grants). Call it once, and only when the caller supplies `{{STAGE_RESULT}}` or
+  in a dispatch by id (below), which also gives you `matter_data__dispatch_inputs`.
   No write, edit, shell, network, or skill access. You own no IDs; the main
   agent performs all database writes.
 - **Output is a single JSON object and NOTHING else.** No prose, no fences.
@@ -215,3 +216,26 @@ Notes:
   nothing else: `ok <result_id> <bytes>`. The reply carries no JSON.
 - If the call fails, call it no more and reply with one line and nothing
   else: `failed <reason>`.
+
+## Dispatch by id
+
+When your prompt is the one line `DISPATCH <dispatch_id>`, your inputs do not come in
+the prompt, and you reply with one line instead of the JSON object.
+
+1. Your first call is `matter_data__dispatch_inputs` with that `dispatch_id`, under
+   whichever of `mcp__plugin_lawyer_data__matter_data__dispatch_inputs` and
+   `mcp__remote-devices__plugin_lawyer_data__matter_data__dispatch_inputs` this host
+   grants. It returns `LEGAL_CONTEXT`, `TREATMENT_VOCABULARY`, `DOCUMENT`, and
+   `PAGE_MANIFEST` or `RENDERING`, each as described above (a rendering is read whole,
+   one judgment paragraph per line), plus `ITEMS` (one `{ref, page_range}`) and
+   `CONTRACT` (`{id, version}`).
+2. Do the work exactly as above.
+3. Call `matter_data__stage_result` once (either prefix), with `result` set to the
+   output contract's object plus four keys: `contract` (`CONTRACT`'s `id`),
+   `contract_version` (its `version`), `ref` (the item's `ref`) and `flags` (an empty
+   list). It returns `result_id` and `bytes`.
+4. Reply with one line and nothing else: `ok <ref> <result_id> <bytes>`. When you
+   cannot do the work, reply `failed <ref> <reason>` instead, the reason one of
+   `unreadable` (the pages cannot be read), `stage_refused` (`stage_result` refused the
+   result) or `not_this_type` (the document is not the kind you read). Never put
+   concepts, counts or doubts in the reply.

@@ -56,7 +56,7 @@ Build every row from Steps 7 to 11, using **Rows** (below) for its section, its 
 | `draft` Looks like your unfinished draft | 14 | Step 8 |
 | `question` Reading stopped on a question | 10, stopped | `ingest-unattended` `stopped` |
 | `partial` Reading not finished | 10, partial | verdict or outcome `partial` |
-| `follow_up` Waiting on a follow-up step | 10, order-effects, linkage or date-anchor pending | `pending` markers |
+| `follow_up` Waiting on a follow-up step | 10, order-effects, linkage, date-anchor or treatment pending | `pending` markers |
 | `authority_copy` Second copy of a case or statute | 10, authority second copy, or a suspected authority duplicate reported for merge | `ingested_by_reference` from store `law`; `ingest-unattended` notes |
 | `attachment_copy` Copy of an email attachment already read | 10, attachment copy | `ingested_by_reference` from store `main` |
 | `contradiction` Contradicts itself | 5 | namer `contradiction`; Step 12 cross-check |
@@ -92,7 +92,8 @@ Choose one action per row:
 - **Duplicate:** `duplicate`. Keep both (`file`/`rename`/`move` with `file_no_ingest`) only when the twin is ingested and the name does not clash with it.
 - **Another matter:** `misfiled` with the matter's code or name.
 - **Folder unclear:** pick the folder the evidence supports (a court file by action number); none: `stuck`.
-- **Partial, a suspected authority duplicate reported for merge, any path holding a `privileged` or `disclosed` folder, no naming rule, contradictions or a component not established:** `stuck`, with the reason ("reading not finished; the next run carries on", "possible second copy of an authority; resolve with /matter-data first", "in a privileged folder, which housekeeping never moves", "no naming rule for a bill of costs", "heading and jurat name different deponents").
+- **Held** (`ingest-unattended` `held`): `stuck`, with the reason "needs an attended /ingest", and `ingest_outcome` the file's state as it stands (`none`, or `partial` for a continuation). Never `file_no_ingest`: the `not_ingested` review row it writes stops the ingest arm, and the file would never be read.
+- **Partial, a suspected authority duplicate reported for merge, any path holding a `privileged` or `disclosed` folder, no naming rule, contradictions or a component not established:** `stuck`, with the reason ("reading not finished; an attended /ingest carries on", "possible second copy of an authority; resolve with /matter-data first", "in a privileged folder, which housekeeping never moves", "no naming rule for a bill of costs", "heading and jurat name different deponents").
 - **Everything else carrying signals (follow-up pending, authority second copy, attachment copy, misfiled within the matter, name taken, name check):** propose the move or rename when a clean name and folder exist, else `stuck`.
 
-An order-effects, linkage or date-anchor row is filed normally: it is shown in the run that ingests the file, and once filed it is not re-admitted while the marker stays for its follow-up step. An authority second copy and a copy of an email attachment already read are both filed as ingested by reference.
+An order-effects, linkage, date-anchor or treatment row is filed normally: it is shown in the run that ingests the file, and once filed it is not re-admitted while the marker stays for its follow-up step. An authority second copy and a copy of an email attachment already read are both filed as ingested by reference.

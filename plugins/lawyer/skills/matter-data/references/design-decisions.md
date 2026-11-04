@@ -1227,7 +1227,7 @@ Path D described its writes in prose, so every session rebuilt the same SQL and 
 
 **Case law only, for now.** The provision extractor's result has the same shape with fewer keys and the tool accepts it, but that extractor writes no result file, so the statute path still writes through `matter_data__execute`.
 
-No agent is granted the tool. `matter_data__execute` is granted to none either, and the session that runs Path D calls both. The extractor hands its result over through `matter_data__stage_result`, not a file (#76).
+No agent is granted the tool. `matter_data__execute` is granted to none either, and the session that runs Path D calls both. The extractor hands its result over through `matter_data__stage_result`, not a file (#76). An unattended run takes neither call: `matter_data__ingest_result`'s `caselaw` and `provision` contracts write the same statements from the same script, and a treatment waits as a marker (#79).
 
 ## 69. Contacts and their matter roles are practice data (ADR 0009, 2026-10-16)
 
@@ -1336,3 +1336,25 @@ Sessions reading a matter's correspondence had no record of which folder in the 
 **Why here and not practice-data.** The matter session already holds the case database, and a key in the existing key-value table needs no schema change and no new tool. Practice-data's matters table has fixed columns behind fixed tools, so the same field there would need both.
 
 **What the key is not.** It is not identity and not a completeness key: `profile` never reports it missing, and it is not seeded by `initialize`. It is a pointer into one mailbox, the one the mail tools' credential reads. Which folder trees hold matter folders is not stored here: it is a fact about the practitioner's setup, so it lives in their environment note (`/practice-data`, Practice quirks). A second practitioner reading the same matter from another mailbox would need a key of their own, which needs its own entry here first.
+
+## 79. An unattended ingest reaches every route through the orchestrator's tools (2026-11-04, #191)
+
+A housekeeping ingest kept documents' extractor output and hand-written SQL out of its session only on the routes #191's first stage built. Transcripts, authorities, emails with attachments and partial continuations still went through `operations/ingest-extract.md`, so one file's results and its whole write could cross the session. `operations/ingest-unattended.md` now names neither that operation nor `matter_data__execute`: `begin` passes `orchestrator: true`, and every read and write runs through `ingest_run` and `ingest_result`. The session keeps one line per file.
+
+**A separate worker agent was rejected.** Only the main thread can start agents, so a worker could not start the readers. Path B's inline read stays, because a privileged document never reaches a subagent (#2).
+
+**`held` is the new outcome**, for what cannot run without a person: a compound book, the book-of-authorities cascade and a partial continuation. Nothing is written, no review-log row is left, and one report line says so. `/housekeeping` shows it `stuck`, never `file_no_ingest`, because a `not_ingested` row would stop the ingest arm for good.
+
+**A treatment waits as a marker.** Matching a treated authority is a judgment (#16), so the converter records `[TREATMENT-PENDING:<citation>|<treatment>|<scope>]` in the authority's transaction and returns no `treats_prior`. `ingest-status` reports it, housekeeping's follow-up signal fires, and an attended Path D run or `operations/verify-law.md` §6 applies and clears it. This is why an attended orchestrator run still sets authorities aside: it can ask, and the single-document path applies the treatment at once.
+
+**An authority's extractor is served no party's name.** `ingest_authority.py`'s `dispatch_context` serves open legal and mixed issues, with each party's name and each word of four letters or more in it replaced, because an issue's own text often names them (#10). It serves the treatment vocabulary whole, and never `our_position` or `opposing_position`. Its PDF is still named by its path, as an attended Path D dispatch does.
+
+**A second copy reads nothing.** A route with `second_copy_of` is a `close` line: one fixed statement appends `[SECOND-COPY:<hash>]`, following a tombstone to its canonical row, and a repeat is a no-op.
+
+**An attachment is a child item, contract `attachment`.** It waits for its email's own write, and its write follows #51, #53 and #54. A separate contract keeps its journal lines from reading as the email's. A reading that may be privileged takes Path B's Unclear branch rather than Path B, because the privileged store has no children, and a privileged email keeps its attachments report-only. A book, an affidavit or a nested email inside an attachment is reported and not read, because each would need a route of its own.
+
+**A transcript's contradiction check is by identity.** Path A step 7 compares a position with a party's current position on the same `fact_id` in a court document. A difference takes a `DISCREPANCY:` note at `verified = 2` on the transcript's position, in its transaction. Nothing is resolved. A transcript that answers no pleading (no `ANSWERED_FACTS`) has no shared fact to compare.
+
+**Version pairs travel on the route.** `possible_versions` holds held rows and `version_newcomers` the hashes of other files of the run, so the marker lands in the document's transaction, and two newcomers each take the other's id once both have rows. The session no longer writes one.
+
+**What did not change.** One call and per-file claims, one transaction per document, Path B's `privileged` contract and the `path_b` refusal, the journal, `status` and `begin` with `resume`. An attended Path D or Path E is as before, and attended authorities and emails with attachments keep `/ingest`'s path.

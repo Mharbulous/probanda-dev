@@ -38,7 +38,7 @@ A file is **ingested** when its hash matches one of:
 | `moved` | true when the stored path names another place and no file with this hash is there: the file was moved by hand. The verdict stands; [`relocate-source.md`](relocate-source.md) repairs the stored path when the caller files the file |
 | `duplicate_of` | set when this file is a copy of another file (Step 2): the other copy's path, in stored form. The verdict is then `none`, and the file is never re-pointed |
 | `twin_ingested` | with `duplicate_of`: whether the other copy counts as ingested (its verdict is `ingested`, `ingested_by_reference` or `superseded`) |
-| `pending` | the pending markers on the main source (conventions §11): `order_effects`, `linkage`, `date_anchor`, `supersede`, or empty |
+| `pending` | the pending markers on the deciding record (conventions §11): `order_effects`, `linkage`, `date_anchor`, `supersede` on a main source, `treatment` on an authority, or empty |
 | `possible_version_of` | with `supersede` in `pending`: the id of the source the `SUPERSEDE-PENDING:` marker names, which may be another version of this file. Where the row carries several such markers, the first in its notes. Null with no marker. Read from the marker only, never from a free-text note |
 | `superseded_by` | with `superseded`: the id of the source kept in its place |
 | `move_pending` | with `superseded`: true when the row's stored path lies outside `0. DRAFT*\Superseded\`, so the move [`supersede-draft.md`](supersede-draft.md) §6 makes did not happen. The attended gate and folder scan offer it again (§6c); this operation, like every unattended path, only reports it |
@@ -70,6 +70,7 @@ SELECT c.ord, 'main' AS store, s.source_id AS id, s.parent_source_id,
        instr(coalesce(s.notes, ''), 'LINKAGE-PENDING:') > 0 AS linkage_pending,
        instr(coalesce(s.notes, ''), 'DATE-ANCHOR-PENDING:') > 0 AS date_anchor_pending,
        instr(coalesce(s.notes, ''), 'SUPERSEDE-PENDING:') > 0 AS supersede_pending,
+       0 AS treatment_pending,
        0 AS second_copy,
        NULL AS merged_into,
        CASE WHEN instr(coalesce(s.notes, ''), '[SUPERSEDED-BY:#') > 0
@@ -92,7 +93,7 @@ SELECT c.ord, 'privileged', p.source_id, NULL, p.file_path, NULL,
        (SELECT count(*) FROM privileged.fact_provenance WHERE source_id = p.source_id)
      + (SELECT count(*) FROM privileged.client_instructions
         WHERE source_id = p.source_id AND valid_to IS NULL),
-       0, 0, 0, 0, 0, NULL, NULL, NULL,
+       0, 0, 0, 0, 0, 0, NULL, NULL, NULL,
        json_object('title', p.title, 'description', p.description,
                    'category', p.category, 'author', p.author,
                    'recipient', p.recipient, 'date', p.date)
@@ -100,6 +101,7 @@ FROM c
 JOIN privileged.privileged_sources p ON p.file_hash = c.hash
 UNION ALL
 SELECT c.ord, 'law', a.authority_id, NULL, a.file_path, NULL, NULL, 0, 0, 0, 0,
+       instr(coalesce(a.notes, ''), '[TREATMENT-PENDING:') > 0,
        coalesce(a.file_hash, '') <> c.hash,
        CASE WHEN a.notes LIKE '[MERGED-INTO:#%'
             THEN CAST(substr(a.notes, 15, instr(substr(a.notes, 15), ' ') - 1) AS INTEGER)
@@ -197,7 +199,8 @@ def ingest_status(files, rows, matter_root, matter_folder):
             pending=[name for name, key in (('order_effects', 'order_effects_pending'),
                                             ('linkage', 'linkage_pending'),
                                             ('date_anchor', 'date_anchor_pending'),
-                                            ('supersede', 'supersede_pending')) if rec[key]])
+                                            ('supersede', 'supersede_pending'),
+                                            ('treatment', 'treatment_pending')) if rec[key]])
         if verdict == 'ingested_by_reference':
             continue
         stored = stored_form(rec['file_path'], matter_root) if rec['file_path'] else None

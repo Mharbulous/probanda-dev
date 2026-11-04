@@ -252,7 +252,7 @@ export interface CardInput {
 
 /** suggestion_card__build's arguments, checked. */
 export function cardInput(args: Record<string, unknown>): CardInput {
-  onlyKeys("the card", args, ["origin", "source", "skill", "pain_point", "items", "context_lines", "raw_observation", "tool_names", "held_id", "observation_id", "session_id"]);
+  onlyKeys("the card", args, ["origin", "source", "skill", "pain_point", "items", "context_lines", "raw_observation", "tool_names", "held_id", "observation_id", "chat_session"]);
   if (args.origin !== "practitioner" && args.origin !== "probanda") throw new ValidationError("origin must be practitioner or probanda");
   if (args.source !== "user" && args.source !== "assisted" && args.source !== "llm") throw new ValidationError("source must be user, assisted or llm");
   const skill = args.skill === undefined ? null : text("skill", args.skill);
@@ -298,13 +298,13 @@ export function cardInput(args: Record<string, unknown>): CardInput {
   if (args.observation_id !== undefined) {
     // An AI-noticed card: its raw observation and skill come from the observation's record alone.
     observationId = text("observation_id", args.observation_id);
-    sessionId = sessionIdOf(args.session_id);
+    sessionId = sessionIdOf(args.chat_session);
     if (args.origin !== "probanda" || args.source !== "llm") throw new ValidationError("a card for an observation has origin probanda and source llm");
     if (args.raw_observation !== undefined) throw new ValidationError("a card for an observation takes its raw observation from the observation, so raw_observation is not given");
     if (args.skill !== undefined) throw new ValidationError("a card for an observation takes its skill from the observation, so skill is not given");
     if (heldId !== null) throw new ValidationError("a card for an observation offers no held draft");
-  } else if (args.session_id !== undefined) {
-    throw new ValidationError("session_id goes only with observation_id");
+  } else if (args.chat_session !== undefined) {
+    throw new ValidationError("chat_session goes only with observation_id");
   }
   return {
     origin: args.origin, source: args.source, skill, pain_point: pain, items, context_lines: contextLines, raw_observation: rawObservation,
