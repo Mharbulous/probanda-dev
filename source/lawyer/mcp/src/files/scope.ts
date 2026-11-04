@@ -127,17 +127,21 @@ function resolveDeepestExisting(target: string): string {
   }
 }
 
+export function isContained(canonRoot: string, resolved: string): boolean {
+  const needle = resolved.toLowerCase();
+  const prefix = (canonRoot.endsWith(pathWin32.sep) ? canonRoot : canonRoot + pathWin32.sep)
+    .toLowerCase();
+
+  return needle === canonRoot.toLowerCase() || needle.startsWith(prefix);
+}
+
 export function assertContained(
   canonRoot: string,
   resolved: string,
   label: string,
   original: string
 ): void {
-  const needle = resolved.toLowerCase();
-  const prefix = (canonRoot.endsWith(pathWin32.sep) ? canonRoot : canonRoot + pathWin32.sep)
-    .toLowerCase();
-
-  if (needle !== canonRoot.toLowerCase() && !needle.startsWith(prefix)) {
+  if (!isContained(canonRoot, resolved)) {
     throw new PathOutOfScopeError(
       `${label} resolves outside its permitted root (${original} -> ${resolved})`
     );

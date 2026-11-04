@@ -4,6 +4,9 @@
 // every path, as given and as resolved, is held to the "read" zone, and a name search also skips what
 // a scan skips. An HTML file is never read, because a Probanda page is made for a person to view
 // (shared/html-pages.md), and this tool sits outside the hook that refuses a page elsewhere.
+//
+// research_filing__research_folder: the same reader for research-agent and memo-reviewer, confined
+// by the tool to the matter's `6. LAW` tree and the research agent's scratchpad.
 
 import { readdirSync, readFileSync, realpathSync, statSync, type Stats } from "node:fs";
 import { win32 as pathWin32 } from "node:path";
@@ -14,7 +17,8 @@ import { WithImages } from "../tool-list.js";
 import { classifyPdfPages, pageRange, pdfPagePngs } from "./extract/page-images.js";
 import { pdfPages, PdfExtractorUnavailable } from "./extract/pdf.js";
 import { validateMatterRoot } from "./matter-root.js";
-import { assertContained, assertRelativeSyntax, resolveWithin } from "./scope.js";
+import { researchTrees } from "./research-filing.js";
+import { assertContained, assertRelativeSyntax, isContained, PathOutOfScopeError, resolveWithin } from "./scope.js";
 import { extractText } from "./text-extract.js";
 import { zoneProblem } from "./zones.js";
 
@@ -74,13 +78,13 @@ function resolveInMatter(root: string, given: string | undefined): string {
   return full;
 }
 
-/** A folder entry's real path and stat, or why it is left out: a barred zone, or a link out of the matter. */
-function inspect(root: string, full: string): { real: string; stat: Stats } | { reason: string } {
+/** A folder entry's real path and stat, or why it is left out: a barred zone, or a link out of `within`. */
+function inspect(within: string, full: string): { real: string; stat: Stats } | { reason: string } {
   try {
     const problem = zoneProblem("read", full);
     if (problem) return { reason: problem };
     const real = realpathSync.native(full);
-    assertContained(root, real, "path", full);
+    assertContained(within, real, "path", full);
     const realProblem = zoneProblem("read", real);
     if (realProblem) return { reason: realProblem };
     return { real, stat: statSync(real) };
@@ -99,13 +103,13 @@ function sortedNames(dir: string): string[] {
   return readdirSync(dir).sort((a, b) => a.localeCompare(b));
 }
 
-function listFolder(root: string, dir: string) {
+function listFolder(root: string, dir: string, within: string) {
   const entries: Entry[] = [];
   const skipped: Skipped[] = [];
   const names = sortedNames(dir);
   for (const name of names) {
     const full = pathWin32.join(dir, name);
-    const seen = inspect(root, full);
+    const seen = inspect(within, full);
     if ("reason" in seen) skipped.push({ path: pathWin32.relative(root, full), reason: seen.reason });
     else if (entries.length < ENTRY_LIMIT) entries.push(entry(root, full, seen.stat));
   }
@@ -113,7 +117,7 @@ function listFolder(root: string, dir: string) {
 }
 
 /** Files and folders under `start` whose own name holds every word of `name`, in any case and order. */
-function findByName(root: string, start: string, name: string) {
+function findByName(root: string, start: string, name: string, within: string) {
   const words = name.toLowerCase().split(/\s+/).filter(Boolean);
   if (words.length === 0) throw new DataServerError("name must hold at least one word", "invalid_argument");
   const matches: Entry[] = [];
@@ -129,7 +133,7 @@ function findByName(root: string, start: string, name: string) {
         return;
       }
       const full = pathWin32.join(dir, child);
-      const seen = inspect(root, full);
+      const seen = inspect(within, full);
       if ("reason" in seen) {
         skipped.push({ path: pathWin32.relative(root, full), reason: seen.reason });
         continue;
@@ -232,15 +236,27 @@ async function readFile(root: string, full: string, args: MatterFolderArgs): Pro
   return { path, type: read.kind, ...textWindow(read.text, offset) };
 }
 
-export async function matterFolder(args: MatterFolderArgs): Promise<unknown> {
-  const root = validateMatterRoot(args.matter_root);
-  const full = resolveInMatter(root, args.path);
+/** `full`, a real path: a folder listed or searched, or a file read. A path comes back relative to the matter; links must stay in `within`. */
+async function serve(root: string, full: string, args: MatterFolderArgs, within: string): Promise<unknown> {
   if (statSync(full).isDirectory()) {
     if (args.pages !== undefined || args.offset !== undefined) {
       throw new DataServerError("pages and offset apply only to a file", "invalid_argument");
     }
-    return args.name === undefined ? listFolder(root, full) : findByName(root, full, args.name);
+    return args.name === undefined ? listFolder(root, full, within) : findByName(root, full, args.name, within);
   }
   if (args.name !== undefined) throw new DataServerError("name searches a folder, and path is a file", "invalid_argument");
   return readFile(root, full, args);
+}
+
+export async function matterFolder(args: MatterFolderArgs): Promise<unknown> {
+  const root = validateMatterRoot(args.matter_root);
+  return serve(root, resolveInMatter(root, args.path), args, root);
+}
+
+export async function researchFolder(args: MatterFolderArgs): Promise<unknown> {
+  const root = validateMatterRoot(args.matter_root);
+  const full = resolveInMatter(root, args.path);
+  const tree = researchTrees(root).find((candidate) => isContained(candidate, full));
+  if (tree === undefined) throw new PathOutOfScopeError(`path is not in the matter's 6. LAW tree or the research scratchpad: ${full}`);
+  return serve(root, full, args, tree);
 }

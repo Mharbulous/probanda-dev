@@ -144,6 +144,7 @@ const CONTENT_SOURCES: Record<string, string> = {
   research_filing__law_folder_text: "law folder file",
   research_filing__legislation_search: "law folder file",
   research_filing__matter_folder: "matter folder file",
+  research_filing__research_folder: "research folder file",
 };
 
 export function jsonText(name: string, result: unknown): string {

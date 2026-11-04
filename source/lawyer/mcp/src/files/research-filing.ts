@@ -25,6 +25,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   statSync,
   writeFileSync,
 } from "node:fs";
@@ -353,6 +354,22 @@ function researchScratchDir(root: string): { dir: string; created: boolean } {
     assertUnprotected(canonicalRoot(dir, `scratchpad folder does not resolve: ${dir}`, "not_found"));
   }
   return { dir, created };
+}
+
+/** research_filing__research_folder's two trees in `root`, a real path: its `6. LAW` folder and the
+ * research agent's scratchpad, each only where it exists and is its own real path, so a junction at
+ * either opens nothing. Creates nothing. */
+export function researchTrees(root: string): string[] {
+  const draft = findDraftDir(root);
+  const places = [pathWin32.join(root, LAW_SEGMENT)];
+  if (draft !== undefined) places.push(pathWin32.join(draft, ...SCRATCH_SUBFOLDERS));
+  return places.filter((place) => {
+    try {
+      return realpathSync.native(place).toLowerCase() === place.toLowerCase();
+    } catch {
+      return false;
+    }
+  });
 }
 
 export interface LawTextRow {

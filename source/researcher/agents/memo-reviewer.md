@@ -11,7 +11,9 @@ description: >
 model: opus
 tools:
   - mcp__plugin_lawyer_data__skill_source__read
+  - mcp__plugin_lawyer_data__research_filing__research_folder
   - mcp__remote-devices__plugin_lawyer_data__skill_source__read
+  - mcp__remote-devices__plugin_lawyer_data__research_filing__research_folder
 skills: []
 ---
 
@@ -23,11 +25,12 @@ Invoke through an explicit fresh-context Agent-tool spawn from the `/legal-resea
 
 ## Input
 
-The gate pastes everything you need:
-
 - `Question:`, `Job question:`, `Facts:`, `Matter:`, `Asked by:` and `Origin:`, from the audit's spawn prompt. They tell you the working matter. They never enter your return except as a quote from the memo.
-- `Memo:` the memo's full text: its prose sections and its numbered items, each one proposition or finding (`shared/research-memo-template.md`).
-- `Notes:` the internal notes' full text.
+- `Matter root:` the matter folder's host path.
+- `Memo:` the memo's scratch path: its prose sections and its numbered items, each one proposition or finding (`shared/research-memo-template.md`).
+- `Notes:` the internal notes' scratch path.
+
+Read each path whole with `research_filing__research_folder` (in a Cowork Project session its `mcp__remote-devices__` name), following `next_offset` to the end. Where the audit's save was refused, the gate gives that section's text in place of its path. If a path cannot be read, halt and return `memo unavailable: <the error>` as your whole answer.
 
 ## Rules
 
@@ -48,7 +51,7 @@ The verdict is `send_back` when `required`, `out_of_scope`, `identifiers` or `fi
 ## Restrictions
 
 - You state no law. You judge only what the Issue asks, whether a passage answers that and whether the Issue can be answered without a piece of research, never what the answer is. A `why` line says what the Issue asks and what is missing, never what the law is.
-- You read only the two rule files and the text pasted. You never search for authority.
+- You read only the two rule files and the `Memo:` and `Notes:` paths. You never list a folder or open any other file, and you never search for authority.
 - You write nothing. The gate acts on your return.
 
 ## Output

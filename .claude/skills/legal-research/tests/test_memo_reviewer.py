@@ -106,11 +106,23 @@ class AgentContractTest(unittest.TestCase):
     def test_frontmatter(self):
         self.assertIn("name: memo-reviewer", self.front)
         self.assertIn("model: opus", self.front)
-        # No Read: the body reads only through skill_source__read. No preloaded skill: the
-        # legal-research front door stops any agent without the Agent tool.
+        # No Read: the body reads through skill_source__read and the narrow research_folder, on any
+        # host. No preloaded skill: the legal-research front door stops any agent without the Agent tool.
         self.assertIn("tools:\n  - mcp__plugin_lawyer_data__skill_source__read\n"
-                      "  - mcp__remote-devices__plugin_lawyer_data__skill_source__read\nskills: []\n", self.front)
+                      "  - mcp__plugin_lawyer_data__research_filing__research_folder\n"
+                      "  - mcp__remote-devices__plugin_lawyer_data__skill_source__read\n"
+                      "  - mcp__remote-devices__plugin_lawyer_data__research_filing__research_folder\n"
+                      "skills: []\n", self.front)
         self.assertNotIn("  - Read\n", self.front)
+        self.assertNotIn("matter_folder", self.agent)
+
+    def test_reads_the_memo_and_notes_by_path_and_nothing_else(self):
+        body = flat(self.agent)
+        self.assertIn("`Memo:` the memo's scratch path", body)
+        self.assertIn("`Notes:` the internal notes' scratch path", body)
+        self.assertIn("You read only the two rule files and the `Memo:` and `Notes:` paths.", body)
+        self.assertNotIn("The gate pastes", body)
+        self.assertNotIn("text pasted", body)
 
     def test_reviews_the_numbered_items_and_names_each_by_number(self):
         body = flat(self.agent)
@@ -177,6 +189,11 @@ class GateLoopTest(unittest.TestCase):
         review = self.text.index("**memo-reviewer checks every memo before it is saved.**")
         self.assertLess(held, review)
         self.assertLess(review, self.text.index("Persist in this order."))
+
+    def test_the_gate_gives_the_reviewer_paths_not_the_memo(self):
+        self.assertIn("`Matter root:` the matter folder's host path, `Memo:` the return's `Memo scratch:` path and "
+                      "`Notes:` its `Notes scratch:` path", self.rule)
+        self.assertNotIn("pasted", self.rule)
 
     def test_send_backs_and_the_bound(self):
         self.assertIn("Spawn `researcher:memo-reviewer` on every return that carries a memo", self.rule)
