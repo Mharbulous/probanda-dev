@@ -220,6 +220,10 @@ The `main.facts` row for a Fact known **only through privileged sources**: an ID
 A distinct legal footing for an order sought, or for opposing one: **jurisdictional** (the court's authority to make the order on this application) or **doctrinal** (the doctrine or rule that supports or defeats it). An order may rest, or be opposed, on as many bases as the material supports.
 _Avoid_: ground, grounds; issue (the question a basis answers); point; defence.
 
+**Bill in progress**:
+A matter's one unfinished bill, identified by the matter and its last signed invoice, from the first work on that bill until the signed invoice is recorded as issued. It is not an invoice record, and its billing period stays open until the practitioner says the draft is ready for signature.
+_Avoid_: billing run, session (a bill in progress outlives both); draft invoice (one rendered document of it).
+
 **Bundle (application)**:
 An application as a whole: the lead Writing, its supporting documents, and the surrounding work of the availability letter, filing and service, and the application book. No stored record. Every bundle-level job is scoped to the lead Writing, whose Work Board and completion-criteria card are the tracker. Not **Bundle (ingest)**.
 _Avoid_: package (the assembled files the gate reads); application book (one product within it).
