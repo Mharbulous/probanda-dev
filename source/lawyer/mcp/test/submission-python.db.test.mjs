@@ -11,7 +11,8 @@ import test from "node:test";
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { pythonStarts } = await import("../build/python-spawn.js");
 const { withTempDir } = await import("./helpers/temp-dir.mjs");
-const { currentSchemaVersion, submissionDataMigrate } = await import("../build/submission/migrate.js");
+const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
+const { currentSchemaVersion } = await import("../build/submission/migrate.js");
 const { submissionFormsBootstrap } = await import("../build/submission/forms.js");
 const { resolveRepoRoot } = await import("../build/repo-root.js");
 
@@ -20,7 +21,7 @@ const TIMEOUT_VAR = "COCLERK_SUBMISSION_PYTHON_TIMEOUT_MS";
 async function migratedDb() {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-submission-python-"));
   const dbPath = join(dir, "submission.sqlite");
-  await submissionDataMigrate(dbPath);
+  await freshSubmissionDb(dbPath);
   return { dbPath, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
