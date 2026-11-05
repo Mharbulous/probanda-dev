@@ -79,6 +79,17 @@ class EmailFirstTests(unittest.TestCase):
             with self.subTest(words=words):
                 self.assertIn(words, rule)
 
+    def test_a_left_out_party_is_named_with_any_email_in_its_notes(self):
+        fast = atom(SKILL, "draft.email-first")
+        step = fast[fast.index("4. `write_email`"):]
+        self.assertLess(step.index("notes read"), step.index("present the draft"))
+        rule = EMAIL[EMAIL.index("The result's `addressed`"):EMAIL.index("- `subject`")]
+        for words in ("Before presenting", "`/matter-data`", "`contact_info`", "`replaced_representative`",
+                      "With the draft", "a line for each one not reached", "quoting any email",
+                      "never a former lawyer's", "on the practitioner's word", "`no_recipients`"):
+            with self.subTest(words=words):
+                self.assertIn(words, rule)
+
 
 if __name__ == "__main__":
     unittest.main()
