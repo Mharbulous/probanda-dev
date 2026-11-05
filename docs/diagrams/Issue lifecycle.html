@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <!--
-  Each diagram has its own tag: the commit it was checked against and when it was last updated.
-  To update a tag: re-read that diagram's sources at the new commit, correct the chart if needed,
-  then change both data- attributes and the visible stamp. Updating one diagram leaves the other's tag alone.
+  This diagram's tag gives the commit it was checked against and when it was last updated.
+  To update it: re-read the sources at the new commit, correct the chart if needed,
+  then change both data- attributes and the visible stamp.
 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>What happens to a probanda-dev issue</title>
+<title>The life of a probanda-dev issue</title>
 <style>
-/* Single light theme by choice: the diagrams' colours carry meaning and stay fixed. */
+/* Single light theme by choice: the diagram's colours carry meaning and stay fixed. */
 :root {
   color-scheme: light;
   --ink: #1d2733;
@@ -24,7 +24,6 @@
 body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--body); }
 main { max-width: 1500px; margin: 0 auto; padding: 28px 20px 48px; display: grid; gap: 20px; }
 h1 { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 600; text-wrap: balance; }
-h2 { margin: 0; font-size: 21px; line-height: 1.25; font-weight: 600; }
 p { margin: 0; max-width: 70ch; }
 code { font: 500 0.92em var(--mono); }
 figure { margin: 0; display: grid; gap: 12px; }
@@ -42,29 +41,27 @@ pre.mermaid svg { display: block; margin: 0 auto; }
 </head>
 <body>
 <main>
-  <h1>What is supposed to happen to a probanda-dev issue</h1>
-  <p>Every issue passes through triage, which labels its state and where the work can run. A label then decides who works on it next.</p>
-  <p>The queue stops only when no issues are left, when only issues needing a person are left, when only <code>local</code> issues are left while the PC is unavailable, or for a mix of the last two.</p>
-  <div class="legend" aria-label="Colour key">
-    <span><i style="background:#eef1f5;border-color:#5b6675"></i>How an issue or a start begins</span>
-    <span><i style="background:#e3eefb;border-color:#2563a8"></i>Runs in the cloud, unattended</span>
-    <span><i style="background:#efe8fb;border-color:#6b46b0"></i>Runs on Brahm's PC, unattended</span>
-    <span><i style="background:#fdf0d5;border-color:#b7791f"></i>Needs Brahm</span>
-    <span><i style="background:#e2f3e6;border-color:#2f7d46"></i>Finished</span>
-    <span><i style="background:#eceff2;border-color:#8a94a0"></i>Parked or left alone</span>
-  </div>
-
   <figure class="diagram" id="issue-lifecycle"
           data-based-on-commit="d06e50fa26ec0e534acabab63cc1943a61fe0e3c"
           data-updated="2026-11-05T01:34:00-07:00">
     <figcaption>
-      <h2>Diagram 1: the life of an issue</h2>
+      <h1>The life of a probanda-dev issue</h1>
       <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/d06e50fa26ec0e534acabab63cc1943a61fe0e3c"><code>d06e50fa</code></a> on main · Last updated 2026-11-05 01:34 -07:00</p>
     </figcaption>
+    <p>Every issue passes through triage, which labels its state and where the work can run. A label then decides who works on it next.</p>
+    <p>The queue stops only when no issues are left, when only issues needing a person are left, when only <code>local</code> issues are left while the PC is unavailable, or for a mix of the last two.</p>
+    <div class="legend" aria-label="Colour key">
+      <span><i style="background:#eef1f5;border-color:#5b6675"></i>How an issue begins</span>
+      <span><i style="background:#e3eefb;border-color:#2563a8"></i>Runs in the cloud, unattended</span>
+      <span><i style="background:#efe8fb;border-color:#6b46b0"></i>Runs on the developer's PC, unattended</span>
+      <span><i style="background:#fdf0d5;border-color:#b7791f"></i>Needs the developer</span>
+      <span><i style="background:#e2f3e6;border-color:#2f7d46"></i>Finished</span>
+      <span><i style="background:#eceff2;border-color:#8a94a0"></i>Parked or left alone</span>
+    </div>
     <div class="chart">
 <pre class="mermaid">
 flowchart TD
-    A1["Brahm or a session opens an issue"]
+    A1["The developer or a session opens an issue"]
     A2["A scheduled test run fails<br/>data-mcp-tests: one issue per failing file<br/>skills-python-tests: one per failing folder<br/>already open: a comment instead"]
     A3["A suggestion is saved<br/>/intake-suggestions files it<br/>labels: suggestion, needs-triage, lane"]
     T0["Triage starts<br/>event: issue opened<br/>backstop: nightly sweep"]
@@ -72,13 +69,13 @@ flowchart TD
     T2["Run red tests against main<br/>suggestions: repeat check and fix-planner first<br/>Write the Agent Brief"]
     T3{"Which state and location?"}
     H0["ready-for-human<br/>one open decision each"]
-    H1["Brahm runs /hitl-triage<br/>and answers each decision"]
-    H2["New brief posted<br/>relabelled ready-for-agent on Brahm's yes"]
+    H1["The developer runs /hitl-triage<br/>and answers each decision"]
+    H2["New brief posted<br/>relabelled ready-for-agent on the developer's yes"]
     HN["Implement it now<br/>suggestions only, built in this session"]
     QC["ready-for-agent + cloud"]
     QL["ready-for-agent + local"]
     IC["Cloud implementer<br/>cloud lock on #189"]
-    IL["Local implementer<br/>own clone, local lock on #189<br/>started as in Diagram 2"]
+    IL["Local implementer<br/>own clone, local lock on #189<br/>started as in Local implementer start"]
     P["Pick and claim the next issue<br/>maintainer, then user, then AI<br/>lowest number first<br/>claim refused or blocked: pick again"]
     QE["None takeable<br/>release the lock<br/>cloud run: list once more<br/>nothing left: stop"]
     G{"Can this lane's gate pass it?"}
@@ -111,10 +108,10 @@ flowchart TD
     H1 -->|"go ahead"| H2
     H2 -->|"label trigger"| QC
     H2 -->|"label trigger, and /hitl-triage starts the PC task"| QL
-    H2 -->|"Brahm chooses"| HN
+    H2 -->|"the developer chooses"| HN
     HN --> L
     QC -->|"at once after triage or a label<br/>backstop: daily routine"| IC
-    QL -->|"see Diagram 2"| IL
+    QL -->|"see Local implementer start"| IL
     IC --> P
     IL --> P
     P -->|"an issue"| G
@@ -128,7 +125,7 @@ flowchart TD
     B -->|"every red test already passes"| E1
     B -->|"checks pass"| L
     L --> E4
-    L -.->|"cloud run: next issue<br/>local run: exits, Diagram 2 starts the next session"| P
+    L -.->|"cloud run: next issue<br/>local run: exits, the local start starts the next session"| P
     HB -->|"closed-list reason, suggestion,<br/>or second hand-back"| H0
     HB -->|"first hand-back, any other reason"| NT
     NT --> T0
@@ -148,7 +145,7 @@ flowchart TD
 </pre>
     </div>
     <div class="note">
-      <p>Pick to push is one procedure shared by both implementers, so it is drawn once, in blue, wherever a given run happens. Not drawn:</p>
+      <p>Pick to push is one procedure shared by both implementers, so it is drawn once, in blue, wherever a given run happens. What starts the local implementer is drawn in <a href="Local implementer start.html">Local implementer start</a>. Not drawn:</p>
       <ul>
         <li>Each lane's gate is the full list in <code>implement-queue.md</code>.</li>
         <li>In a cloud run, every outcome returns to Pick, not only the dashed one. A local run exits after one issue, whatever the outcome.</li>
@@ -161,75 +158,7 @@ flowchart TD
     </div>
   </figure>
 
-  <figure class="diagram" id="local-implementer-start"
-          data-based-on-commit="d06e50fa26ec0e534acabab63cc1943a61fe0e3c"
-          data-updated="2026-11-05T01:34:00-07:00">
-    <figcaption>
-      <h2>Diagram 2: what starts the local implementer</h2>
-      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/d06e50fa26ec0e534acabab63cc1943a61fe0e3c"><code>d06e50fa</code></a> on main · Last updated 2026-11-05 01:34 -07:00</p>
-    </figcaption>
-    <div class="chart">
-<pre class="mermaid">
-flowchart TD
-    S1["A label leaves an issue<br/>ready-for-agent + local<br/>not withdrawn, no wayfinder label"]
-    S2["Any issue is opened<br/>not one filed by a workflow's token"]
-    S3["Brahm runs /CPR"]
-    S5["Daily task<br/>random time 02:01 to 02:59, plus up to 10 min<br/>also the one start that recovers a lapsed claim on a quiet repo"]
-    S6["/hitl-triage relabels a local issue<br/>or Brahm starts it by hand"]
-    R["local-implementer-trigger.yml<br/>on the self-hosted runner<br/>PC asleep: waits in GitHub's queue, dropped after 24 hours<br/>task running: waits, then starts it"]
-    TK["Scheduled task: Probanda local implementer<br/>run-local-implementer.ps1, in its own clone"]
-    C1{"Clone on main,<br/>with no leftover work?"}
-    C2["Save leftovers to a patch file<br/>reset to origin/main"]
-    X1["Stop<br/>clone off main, or leftovers while the lock is live"]
-    GD{"local_implementer_guard.py<br/>passes?"}
-    GT{"Gate: choose_issue.py pick<br/>is an issue takeable?"}
-    X2["Exit<br/>seconds, no tokens"]
-    N["npm ci --ignore-scripts"]
-    CC["claude -p /implement-queue local<br/>works one issue, then exits"]
-    PR["Delete any lock stamp the run left"]
-    PG{"Next takeable issue?"}
-    X3["Stop rule<br/>same issue as the round started with:<br/>a failing issue cannot loop"]
-    X4["No next round"]
-
-    S1 --> R
-    S2 --> R
-    S3 --> R
-    R --> TK
-    S5 --> TK
-    S6 --> TK
-    TK --> C1
-    C1 -->|"yes"| GD
-    C1 -->|"leftovers, lock not live"| C2
-    C1 -->|"no"| X1
-    C2 --> GD
-    GD -->|"no"| X1
-    GD -->|"yes"| GT
-    GT -->|"no"| X2
-    GT -->|"yes"| N
-    N --> CC
-    CC -->|"whatever its exit code"| PR
-    PR --> PG
-    PG -->|"none"| X4
-    PG -->|"same issue"| X3
-    PG -->|"a different one: gh workflow run"| R
-
-    classDef source fill:#eef1f5,stroke:#5b6675,color:#1d2733
-    classDef pc fill:#efe8fb,stroke:#6b46b0,color:#1d2733
-    classDef human fill:#fdf0d5,stroke:#b7791f,color:#1d2733
-    classDef parked fill:#eceff2,stroke:#8a94a0,color:#1d2733
-    class S1,S2,S5 source
-    class S3,S6 human
-    class R,TK,C1,C2,GD,GT,N,CC,PR,PG pc
-    class X1,X2,X3,X4 parked
-</pre>
-    </div>
-    <div class="note">
-      <p>The cloud lane has no gate and no jolt, because each start would be a paid session. It starts on labels, after triage, and from its daily routine.</p>
-      <p>Sources: <code>.github/workflows/local-implementer-trigger.yml</code>, <code>scripts/local-implementer/run-local-implementer.ps1</code>, <code>scripts/local-implementer/register-local-implementer.ps1</code>, <code>scripts/local_implementer_guard.py</code>, <code>scripts/choose_issue.py</code>, <code>.claude/skills/CPR/SKILL.md</code>, <code>docs/agents/issue-tracker.md</code>.</p>
-    </div>
-  </figure>
-
-  <p class="note">The commit tag cannot pin things outside the repo. Those are the cloud routines' schedules and event wiring, and the tasks registered on the PC. The event routes in Diagram 1 rest on <code>docs/agents/issue-tracker.md</code>, not on a read of that wiring.</p>
+  <p class="note">The commit tag cannot pin things outside the repo. Here that is the cloud routines' schedules and event wiring. The event routes rest on <code>docs/agents/issue-tracker.md</code>, not on a read of that wiring.</p>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
 <script>
