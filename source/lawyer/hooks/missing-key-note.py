@@ -17,8 +17,8 @@ Outside Windows (Cowork's VM) the store is out of reach, so the hook says only
 that the session cannot see the key. No branch asks the model to act or names a
 tool or a skill (context-engineering rule 19, issue #227).
 
-With the key present, the hook names any suggestions held unposted, so each is
-offered once as a suggestion card. Nothing is held any more: a suggestion submitted
+With the key present, the hook names how many suggestions are held unposted and
+says none has been sent. Nothing is held any more: a suggestion submitted
 from its card with no key is kept unsent and sent by the data server once the key is
 stored. The held drafts are the held records of the lawyer data
 server's suggestion store, suggestions/suggestions.json beside probanda.json
