@@ -1,5 +1,5 @@
 ---
-description: Under the implementer lock, work the implement queue (every open `ready-for-agent` + `cloud` issue), maintainer lane first, then user, then AI, oldest first within each, relabel any that cannot be done in the cloud `local`, and push each finished one to main. With `local` first, the local implementer works the `local` issues instead, in its own clone on Brahm's machine.
+description: Under the implementer lock, work the implement queue (every open `ready-for-agent` + `cloud` issue), maintainer lane first, then user, then AI, oldest first within each, relabel any that cannot be done in the cloud `local`, and push each finished one to main. With `local` first, the local implementer works one `local` issue instead, in its own clone on Brahm's machine.
 argument-hint: [local] [issue number]
 ---
 
@@ -33,7 +33,8 @@ With `local` as the first argument, this run is the **local implementer**: the `
 - **Hand back** (the section below step 7) replaces step 7, "Mark local", wherever a step names it.
 - **Packages.** `run-local-implementer.ps1` has already run `npm ci --ignore-scripts` in `source/lawyer/mcp`, `source/researcher/commons-mcp` and `source/researcher/canlii-mcp`, so skip step 5's `npm ci`. When `node_modules` is missing in one of them, because the run was started another way, hand the issue back naming that.
 - The sandbox SQLite workaround in step 5 is for the cloud only. Skip it.
-- Step 8 releases the local implementer lock, and lists the queue again as the local Pick does.
+- **One issue per session.** The run ends after the first issue it lands, closes as already fixed, hands back or stops as withdrawn: where a step then says to go back to step 2, go to step 8 instead. A refused or `blocked` claim still goes back to step 2, because no issue was worked. The script's check after the run starts the next session, so each issue gets a fresh context.
+- Step 8 releases the local implementer lock and reports. It does not list the queue again, because that check does.
 
 ## GitHub calls
 

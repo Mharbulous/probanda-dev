@@ -31,8 +31,9 @@ Needs no administrator rights.
    register-local-implementer.ps1) and the user's Claude Code settings grant.
 6. After Claude Code exits, whatever its exit code, deletes any local lock stamp the run left
    behind, then asks the gate again. When a takeable issue differs from the one this round
-   started with, it fires the trigger workflow, so a crash or usage limit does not end the
-   chain. An issue that keeps failing without leaving the queue stops the chain.
+   started with, it fires the trigger workflow. Each Claude Code session works one issue, so
+   this is how the next issue gets a fresh session, and a crash or usage limit does not end
+   the chain. An issue that keeps failing without leaving the queue stops the chain.
 
 Each run logs to $env:LOCALAPPDATA\probanda-local-implementer\logs\run-<time>.log.
 The log holds what git, the guard and Claude Code print, and never the environment.
