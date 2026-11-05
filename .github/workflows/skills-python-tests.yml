@@ -76,7 +76,7 @@ jobs:
       # (python-docx). show-me's tests and highlight_pages.py import pdfplumber, pypdf and reportlab.
       # verify-law's tests skip their pypdf cases when pypdf is absent, so pypdf also runs those.
       # Windows ships no IANA timezone database, so zoneinfo needs tzdata.
-      - run: pip install pytest pymupdf lxml numpy scipy python-docx pdfplumber pypdf reportlab tzdata
+      - run: pip install pytest pyyaml pymupdf lxml numpy scipy python-docx pdfplumber pypdf reportlab tzdata
 
       # The log feeds the issue step below. bash runs with pipefail, so `|| code=$?` keeps pytest's
       # exit code through tee.

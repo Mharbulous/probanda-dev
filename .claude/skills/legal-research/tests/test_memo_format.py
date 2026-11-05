@@ -6,12 +6,15 @@ scratchpad through `research_filing__write_scratch`, never into the saved memo. 
 2026-10-15 the header and body skeletons moved to `shared/research-memo-template.md`, with
 a fuller header and a CRAC body (IRAC or CREAC only when asked), and the agent returns
 `Audit:` (was `Confidence:`), `Notes scratch:` and `Memo scratch:` lines instead of the memo's text. On
-2026-11-03 the header shrank to Date, Document (with the job number), Status, From and Re.
+2026-11-03 the header shrank to Date, Document (with the job number), Status, From and Re. On
+2026-11-05 the job number moved to its own `Job:` key, because `#` starts a YAML comment.
 Inventory and note-up dispatches keep their own shapes.
 """
 import json
 import unittest
 from pathlib import Path
+
+import yaml
 
 
 SHARED = Path(__file__).resolve().parents[2] / "shared"
@@ -26,7 +29,7 @@ ITEM = """```
    Pinpoint: <the pinpoint>
    > <the verbatim passage at that pinpoint>
 ```"""
-HEADER = ["---", "Date:", "Document: MEMORANDUM OF LAW for Job #", "Status: DRAFT", "From:", "Re:", "---"]
+HEADER = ["---", "Date:", "Document: MEMORANDUM OF LAW", "Job:", "Status: DRAFT", "From:", "Re:", "---"]
 ICRA = "```\n## Issue\n## Conclusion\n## Rule\n## Application\n```"
 IRAC = "```\n## Issue\n## Rule\n## Application\n## Conclusion\n```"
 CREAC = "```\n## Issue\n## Conclusion\n## Rule\n## Explanation\n## Application\n## Conclusion\n```"
@@ -65,7 +68,20 @@ class ProtocolStepSixTests(unittest.TestCase):
         self.assertEqual(len(found), len(HEADER))
         for expected, line in zip(HEADER, found):
             self.assertTrue(line.startswith(expected), f"{line!r} should start with {expected!r}")
-        self.assertIn("/ MEMORANDUM OF LAW when it reads none", found[2])
+        self.assertEqual(found[2], "Document: MEMORANDUM OF LAW")
+        self.assertIn("Leave this line out when it reads none", found[3])
+        self.assertNotIn("#", "".join(found))
+
+    def test_a_filled_header_keeps_its_job_number_as_yaml(self):
+        for job in ([], ["Job: 33"]):
+            text = NL.join(["Date: 2026-11-05", "Document: MEMORANDUM OF LAW"] + job
+                           + ["Status: DRAFT", "From: model", 'Re: "Is a \\"term\\" implied?"'])
+            header = yaml.safe_load(text)
+            self.assertEqual(header["Document"], "MEMORANDUM OF LAW")
+            self.assertEqual(header.get("Job"), 33 if job else None)
+            self.assertEqual(header["Re"], 'Is a "term" implied?')
+        self.assertEqual(yaml.safe_load("Document: MEMORANDUM OF LAW for Job #33")["Document"],
+                         "MEMORANDUM OF LAW for Job", "the old form loses the number")
 
     def test_header_names_no_matter_practitioner_or_privilege(self):
         template = read("research-memo-template.md")
