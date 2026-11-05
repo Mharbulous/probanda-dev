@@ -13,7 +13,16 @@ import { fileURLToPath } from "node:url";
 
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-saved-brief-locks-"));
 process.env.COCLERK_REPO_ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
-after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
+// create_writing reads the firm's knowledge overlay, which needs a device's case data root.
+const device = mkdtempSync(join(tmpdir(), "coclerk-saved-brief-device-"));
+const caseDataRoot = join(device, "case-data");
+mkdirSync(caseDataRoot);
+process.env.COCLERK_CONFIG_PATH = join(device, "probanda.json");
+writeFileSync(process.env.COCLERK_CONFIG_PATH, JSON.stringify({ case_data_root: caseDataRoot }), "utf-8");
+after(() => {
+  rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+  rmSync(device, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+});
 
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
