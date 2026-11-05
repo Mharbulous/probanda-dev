@@ -1,15 +1,26 @@
 <#
 .SYNOPSIS
-Registers, or unregisters, the daily scheduled task that runs the local implementer.
+Registers, or unregisters, the scheduled tasks that run the local implementer and
+the GitHub Actions runner that starts it.
 
 .DESCRIPTION
 Registers the task "Probanda local implementer" for the current user only, with
 no administrator rights: it runs as you, only while you are logged on, at limited
 rights, and starts a missed run once you next log on. It runs once a day
-overnight, outside Claude's weekday peak hours (05:00 to 11:00 Pacific), at a
-time picked at random between 02:01 and 02:59 when registered (or the time given
-with -At), plus up to 10 minutes of random delay each day. It wakes the PC from
-sleep to run, but cannot run while you are signed out or the PC is shut down.
+overnight, at a time picked at random between 02:01 and 02:59 when registered (or
+the time given with -At), plus up to 10 minutes of random delay each day. It wakes
+the PC from sleep to run, but cannot run while you are signed out or the PC is
+shut down. The daily run is the backstop.
+
+It also registers the task "Probanda local runner", which starts GitHub's Actions
+runner at logon and keeps it running, the same way: as you, at limited rights, with
+no stored password. The runner is what lets .github/workflows/local-implementer-trigger.yml
+start the implementer task when a label puts an issue in the local lane. Install it
+first in $env:LOCALAPPDATA\probanda-local-implementer\runner: extract GitHub's
+actions-runner-win-x64 zip there, after checking its SHA-256 against the release notes,
+then run config.cmd --unattended --url https://github.com/Mharbulous/probanda-dev
+--token <token from POST repos/Mharbulous/probanda-dev/actions/runners/registration-token>
+--labels probanda-local.
 
 Before registering, it runs run-local-implementer.ps1 -PrepareOnly, which creates
 the dedicated clone ($env:LOCALAPPDATA\probanda-local-implementer\probanda-dev)
@@ -25,7 +36,8 @@ Run it again to change the time; -Force replaces the old task.
 The daily start time, as HH:mm. Default: a random minute from 02:01 to 02:59.
 
 .PARAMETER Unregister
-Remove the task instead. The clone and its logs are left in place.
+Remove both tasks instead, stopping the runner. The clone, its logs and the runner's
+folder and GitHub registration are left in place.
 #>
 [CmdletBinding()]
 param(
@@ -37,20 +49,30 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $TaskName = 'Probanda local implementer'
+$RunnerTaskName = 'Probanda local runner'
 
 if ($Unregister) {
-    $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
-    if (-not $task) {
-        Write-Host "No task named '$TaskName' is registered."
-        exit 0
+    foreach ($name in @($TaskName, $RunnerTaskName)) {
+        $task = Get-ScheduledTask -TaskName $name -ErrorAction SilentlyContinue
+        if (-not $task) {
+            Write-Host "No task named '$name' is registered."
+            continue
+        }
+        if ($name -eq $RunnerTaskName) { Stop-ScheduledTask -TaskName $name }
+        Unregister-ScheduledTask -TaskName $name -Confirm:$false
+        Write-Host "Unregistered '$name'."
     }
-    Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
-    Write-Host "Unregistered '$TaskName'. The clone and logs under $env:LOCALAPPDATA\probanda-local-implementer are left in place."
+    Write-Host "The clone, logs and runner under $env:LOCALAPPDATA\probanda-local-implementer are left in place."
     exit 0
 }
 
 if (-not $env:LOCALAPPDATA) { throw 'LOCALAPPDATA is not set.' }
 $Clone = Join-Path (Join-Path $env:LOCALAPPDATA 'probanda-local-implementer') 'probanda-dev'
+$RunnerDir = Join-Path (Join-Path $env:LOCALAPPDATA 'probanda-local-implementer') 'runner'
+$RunnerCmd = Join-Path $RunnerDir 'run.cmd'
+if (-not (Test-Path -LiteralPath (Join-Path $RunnerDir '.runner'))) {
+    throw "No configured runner in $RunnerDir. Install it first (see this script's description)."
+}
 $HereRun = Join-Path $PSScriptRoot 'run-local-implementer.ps1'
 $CloneRun = Join-Path $Clone 'scripts\local-implementer\run-local-implementer.ps1'
 
@@ -94,3 +116,15 @@ Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Se
     -Description 'Runs /implement-queue local in its own clone of probanda-dev, once a day.' | Out-Null
 
 Write-Host ("Registered '{0}' for {1}: daily at {2:HH:mm}, plus up to 10 minutes. Runs {3}" -f $TaskName, $user, $time, $CloneRun)
+
+# The runner, kept up while signed in. No time limit, and a restart if it dies.
+$runnerArgs = '-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -Command "& ''{0}''"' -f $RunnerCmd
+$runnerAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $runnerArgs -WorkingDirectory $RunnerDir
+$runnerTrigger = New-ScheduledTaskTrigger -AtLogOn -User $user
+$runnerSettings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) `
+    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
+Register-ScheduledTask -TaskName $RunnerTaskName -Action $runnerAction -Trigger $runnerTrigger -Settings $runnerSettings `
+    -Principal $principal -Force `
+    -Description 'Runs the GitHub Actions runner that starts the local implementer when a label queues an issue.' | Out-Null
+Start-ScheduledTask -TaskName $RunnerTaskName
+Write-Host "Registered and started '$RunnerTaskName': starts at logon. Runs $RunnerCmd"

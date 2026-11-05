@@ -3,14 +3,17 @@
 Runs the local implementer once: the local lane of /implement-queue, in its own clone.
 
 .DESCRIPTION
-Started each day by the scheduled task that register-local-implementer.ps1 registers
-under the current user. Needs no administrator rights.
+Started by the scheduled task that register-local-implementer.ps1 registers under the
+current user: when a label puts an issue in the local lane, and once a day as a backstop.
+Needs no administrator rights.
 
 1. Creates the dedicated clone on first run:
    $env:LOCALAPPDATA\probanda-local-implementer\probanda-dev
    It is never the shared checkout or a worktree of it.
-2. Fetches origin and fast-forwards main. A clone that is dirty, off main, or has
-   diverged from origin/main is left for Brahm, and the run stops.
+2. Fetches origin and fast-forwards main. A clone off main stops the run. A clone that is
+   dirty or holds unpushed commits, left by an earlier run, is saved to
+   logs\recovered-<time>.patch and reset to origin/main, unless the local implementer lock
+   is live, which stops the run.
 3. Runs scripts/local_implementer_guard.py in the clone, which refuses any other folder.
 4. Runs npm ci --ignore-scripts in source/lawyer/mcp, source/researcher/commons-mcp and
    source/researcher/canlii-mcp, each from its committed lockfile, so the run's Node
@@ -18,7 +21,8 @@ under the current user. Needs no administrator rights.
    2026-11-02 and, for the two researcher folders, on 2026-11-04: the user-level
    package-install guard reserves installs for the human, and this script is the one
    he registered.
-5. Runs Claude Code headless there: claude -p "/implement-queue local".
+5. Exits when the local queue is empty, so an extra start costs no tokens. Otherwise runs
+   Claude Code headless there: claude -p "/implement-queue local".
    It passes --permission-mode dontAsk, so a user-wide default of plan mode
    cannot stop the run before it writes, and anything not allowed is refused
    without a prompt. The run gets only the permissions the repo's
@@ -41,6 +45,10 @@ $ErrorActionPreference = 'Stop'
 
 $RepoUrl = 'https://github.com/Mharbulous/probanda-dev.git'
 $Prompt = '/implement-queue local'
+$RepoApi = 'repos/Mharbulous/probanda-dev'
+
+# gh prefers GH_TOKEN over its keyring login, and a stale value fails every call.
+Remove-Item Env:GH_TOKEN -ErrorAction SilentlyContinue
 
 if (-not $env:LOCALAPPDATA) {
     Write-Error 'LOCALAPPDATA is not set, so the local implementer has no home folder.'
@@ -98,6 +106,19 @@ function Find-Exe([string[]]$Names) {
     return $null
 }
 
+# Saves a GitHub list to a file and returns choose_issue.py's reply about it for the local lane.
+# cmd's redirect keeps gh's UTF-8 bytes, which a PowerShell 5.1 redirect would re-encode.
+function Get-ChooseIssue([string]$Endpoint, [string]$Command, [string]$FileFlag) {
+    $tmp = Join-Path $AppHome 'tmp'
+    New-Item -ItemType Directory -Force -Path $tmp | Out-Null
+    $file = Join-Path $tmp 'choose-issue-input.json'
+    cmd /c "gh api --paginate `"$Endpoint`" > `"$file`" 2>> `"$Log`""
+    if ($LASTEXITCODE -ne 0) { Stop-Run "gh could not read $Endpoint." }
+    $reply = & $Python (Join-Path $Clone 'scripts\choose_issue.py') $Command '--lane' 'local' $FileFlag $file
+    if ($LASTEXITCODE -ne 0) { Stop-Run "choose_issue.py $Command could not read $Endpoint." }
+    return ($reply | Out-String | ConvertFrom-Json)
+}
+
 Write-Log "Local implementer run. Clone: $Clone"
 
 $Git = Find-Exe @('git')
@@ -118,9 +139,25 @@ $branch = Get-GitOutput @('rev-parse', '--abbrev-ref', 'HEAD')
 if ($branch -ne 'main') { Stop-Run "the clone is on '$branch', not main. Left for Brahm." }
 $dirty = Get-GitOutput @('status', '--porcelain')
 if ($null -eq $dirty) { Stop-Run 'git status failed.' }
-if ($dirty -ne '') { Stop-Run 'the clone has uncommitted changes, left by an earlier run. Left for Brahm.' }
+$unpushed = Get-GitOutput @('rev-list', '--count', 'origin/main..HEAD')
+if ($null -eq $unpushed) { Stop-Run 'git rev-list failed.' }
+if ($dirty -ne '' -or $unpushed -ne '0') {
+    # Work left by an earlier run. Nothing is lost: the patch holds it, against the commit it names.
+    if ((Get-ChooseIssue "$RepoApi/issues/189/comments?per_page=100" 'lock' '--comments').state -ne 'free') {
+        Stop-Run 'the clone holds uncommitted or unpushed work and the local implementer lock is live.'
+    }
+    $base = Get-GitOutput @('merge-base', 'HEAD', 'origin/main')
+    if (-not $base) { Stop-Run 'git merge-base failed.' }
+    $patch = Join-Path $LogDir ('recovered-{0}.patch' -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
+    if ((Invoke-Logged $Git @('-C', $Clone, 'log', '--oneline', 'origin/main..HEAD')) -ne 0) { Stop-Run 'git log failed.' }
+    if ((Invoke-Logged $Git @('-C', $Clone, 'add', '-A')) -ne 0) { Stop-Run 'git add failed.' }
+    if ((Invoke-Logged $Git @('-C', $Clone, 'diff', '--cached', '--binary', "--output=$patch", $base)) -ne 0) { Stop-Run 'saving the patch failed.' }
+    if ((Invoke-Logged $Git @('-C', $Clone, 'reset', '--hard', 'origin/main')) -ne 0) { Stop-Run 'git reset failed.' }
+    if ((Invoke-Logged $Git @('-C', $Clone, 'clean', '-fd')) -ne 0) { Stop-Run 'git clean failed.' }
+    Write-Log "Recovered leftover work to $patch, against $base."
+}
 if ((Invoke-Logged $Git @('-C', $Clone, 'merge', '--ff-only', 'origin/main')) -ne 0) {
-    Stop-Run 'main cannot fast-forward to origin/main: the clone holds unpushed commits. Left for Brahm.'
+    Stop-Run 'main cannot fast-forward to origin/main.'
 }
 
 # 3. The guard.
@@ -147,7 +184,13 @@ try {
         exit 0
     }
 
-    # 5. Claude Code, headless, on the local lane.
+    # 5. Claude Code, headless, on the local lane, unless the queue is empty.
+    $queue = @((Get-ChooseIssue "$RepoApi/issues?labels=ready-for-agent,local&state=open&per_page=100" 'queue' '--issues').queue)
+    if ($queue.Count -eq 0) {
+        Write-Log 'The local queue is empty. Claude Code not started.'
+        exit 0
+    }
+    Write-Log ("Local queue: {0}" -f ($queue -join ' '))
     $Claude = Find-Exe @('claude')
     if (-not $Claude) { Stop-Run 'claude is not on PATH.' }
     $code = Invoke-Logged $Claude @('-p', $Prompt, '--permission-mode', 'dontAsk')

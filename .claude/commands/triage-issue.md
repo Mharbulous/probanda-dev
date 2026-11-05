@@ -53,7 +53,9 @@ A sweep catches the issues the event route missed.
 - carries any `wayfinder:*` label, or its parent carries `wayfinder:map` (the wayfinder skill owns those);
 - carries `withdrawn`: its sender withdrew the suggestion, and `/intake-suggestions` closes it. This holds even when the issue is named in the arguments;
 - already carries a state label (`ready-for-agent`, `ready-for-human`, `needs-info`, `wontfix`) and was not named in the arguments;
-- in a sweep, already carries an `## Agent Brief` comment (**Brief read** in `docs/agents/issue-tracker.md`) and does not carry `needs-triage`: it has been triaged already. An issue with a brief and `needs-triage` was handed back by an implementer: read its latest `Hand-back (` comment, and write a new brief that removes that cause. Keep every `### Decisions` line word for word. When a decision cannot stand, the state is `ready-for-human` with the reason `wrong-rule`.
+- in a sweep, already carries an `## Agent Brief` comment (**Brief read** in `docs/agents/issue-tracker.md`) and does not carry `needs-triage`: it has been triaged already.
+
+In any run, an issue with a brief and `needs-triage` was handed back by an implementer: read its latest `Hand-back (` comment, and write a new brief that removes that cause. Keep every `### Decisions` line word for word. When a decision cannot stand, the state is `ready-for-human` with the reason `wrong-rule`.
 
 A **suggestion issue** is one labelled `suggestion` whose body ends with a `Suggestion <suggestion_id>` line. Its body is intake's paraphrase. Read the cloud record by its id (**Read one**): the record, not the issue body, is what step 3 plans. If the Suggestion Box holds no such row, or its status is `withdrawn`, stop and report it, writing nothing. Otherwise open it for review now (**Open for review**, with this issue's number). A refusal because another issue is recorded means the suggestion is filed under that issue: stop and report both numbers.
 

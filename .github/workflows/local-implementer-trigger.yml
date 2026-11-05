@@ -1,0 +1,35 @@
+name: local-implementer-trigger
+
+# Starts the local implementer on Brahm's PC when a label leaves an issue in the local lane,
+# through the self-hosted runner docs/agents/issue-tracker.md describes. The job's `if` means
+# other label events never need the runner. The concurrency group sits on the job, not the
+# workflow: at workflow level, a skipped run would replace a pending real one and lose its start.
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  start:
+    if: >-
+      github.event_name == 'workflow_dispatch' || (
+        contains(github.event.issue.labels.*.name, 'ready-for-agent') &&
+        contains(github.event.issue.labels.*.name, 'local') &&
+        !contains(github.event.issue.labels.*.name, 'withdrawn')
+      )
+    runs-on: [self-hosted, probanda-local]
+    # Longer than the task's own 4-hour limit, so the wait below always ends first.
+    timeout-minutes: 300
+    concurrency:
+      group: local-implementer-trigger
+      cancel-in-progress: false
+    steps:
+      # A start while the task runs is ignored, and that run may already have listed an empty
+      # queue, which would strand the issue until the nightly run. So wait, then start.
+      - shell: powershell
+        run: |
+          $name = 'Probanda local implementer'
+          while ((Get-ScheduledTask -TaskName $name).State -eq 'Running') { Start-Sleep -Seconds 30 }
+          Start-ScheduledTask -TaskName $name
