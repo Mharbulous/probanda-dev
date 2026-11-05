@@ -15,5 +15,23 @@
       "marketplace": "Probanda_Legal_experimental",
       "version": "^0.23.0"
     }
-  ]
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__.+skill_source__read$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/payload-probe.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Payload probe"
+          }
+        ]
+      }
+    ]
+  }
 }

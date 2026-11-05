@@ -225,7 +225,9 @@
         "fix-maker",
         "fix-planner"
       ],
-      "hooks": {},
+      "hooks": {
+        "payload-probe": "source/developer/hooks/payload-probe.py"
+      },
       "servers": []
     },
     "tokeneconomizer": {
