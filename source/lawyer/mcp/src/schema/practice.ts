@@ -410,7 +410,7 @@ export function practiceToolDefinitions(): ToolDefinition[] {
     },
     {
       name: practicePrefixed("folder_map"),
-      description: "This practitioner's folder map: where they keep each document type. Returns document_types, the shipped glossary (id, name, definition, flags never_ingest, privileged_by_default, authority), every time. The map is the one for the roster person this machine's probanda.json names, read from <case_data_root>\\_practice\\firm\\folder-maps\\<person>.json. With no person set, or no file for that person, status is no_map with a reason: tell the practitioner that Probanda does not yet know where they keep each kind of document, and offer to set it up (/probanda-setup). Never assume any layout, and never use another person's map. With a map, status is ok and entries lists {type, folders}: folder globs relative to the matter folder, segments split by \\, * and ? matching within one folder name, case-insensitive. One type may have several folders and one folder may serve several types. Given paths (relative to the matter folder, stored form), paths returns for each the types whose folders hold it, in glossary order (empty when no mapped folder does), and never_ingest, privileged and authority, each true only when every one of those types carries the flag. Given types, folders maps each to its globs (empty when the map gives it none). Read-only.",
+      description: "This practitioner's folder map: where they keep each document type. Returns document_types, the shipped glossary (id, name, definition, flags never_ingest, privileged_by_default, authority), every time. The map is the one for the roster person this machine's probanda.json names, read from <case_data_root>\\_practice\\firm\\folder-maps\\<person>.json. With no person set, or no file for that person, status is no_map with a reason: tell the practitioner that Probanda does not yet know where they keep each kind of document, and offer to set it up (/probanda-setup). Never assume any layout, and never use another person's map. With a map, status is ok and entries lists {type, folders}: folder globs relative to the matter folder, segments split by \\, * and ? matching within one folder name, case-insensitive. One type may have several folders and one folder may serve several types. Given paths (relative to the matter folder, stored form), paths returns for each the types whose folders hold it, in glossary order (empty when no mapped folder does), and never_ingest, privileged and authority, each true only when every one of those types carries the flag. Given types, folders maps each to its globs (empty when the map gives it none). When this person's precedent settings are recorded, precedents holds folder and name_pattern as recorded and path, the folder as a full path on this device. Read-only.",
       inputSchema: {
         type: "object",
         properties: {
@@ -423,7 +423,7 @@ export function practiceToolDefinitions(): ToolDefinition[] {
     },
     {
       name: practicePrefixed("set_folder_map"),
-      description: "Replace the folder map of the roster person this machine's probanda.json names, at <case_data_root>\\_practice\\firm\\folder-maps\\<person>.json. entries is the whole map, [{type, folders}]: each type a glossary id (practice_data__folder_map's document_types), at most once; folders a non-empty list of globs relative to the matter folder. A type the practitioner never files is left out. Refused, writing nothing, when an entry names an unknown type, repeats a type, or gives an absolute glob or a . or .. segment, and when this machine names no person. Returns the person, the path written and the entries.",
+      description: "Replace the folder map, the precedent settings or both of the roster person this machine's probanda.json names, at <case_data_root>\\_practice\\firm\\folder-maps\\<person>.json. Whichever is not passed stays as recorded. entries is the whole map, [{type, folders}]: each type a glossary id (practice_data__folder_map's document_types), at most once; folders a non-empty list of globs relative to the matter folder. A type the practitioner never files is left out. precedents is {folder, name_pattern}: folder absolute, or relative to the folder holding the case data root; name_pattern a file name stem built from {YYYY-MM-DD}, {vN} and {description}, which it must hold exactly once. Refused, writing nothing, when an entry names an unknown type, repeats a type, or gives an absolute glob or a . or .. segment, when precedents breaks those rules, when neither is passed, when entries is omitted and no map is recorded, and when this machine names no person. Returns the person, the path written, the entries and any precedents.",
       inputSchema: {
         type: "object",
         properties: {
@@ -439,8 +439,16 @@ export function practiceToolDefinitions(): ToolDefinition[] {
               additionalProperties: false,
             },
           },
+          precedents: {
+            type: "object",
+            properties: {
+              folder: { type: "string" },
+              name_pattern: { type: "string" },
+            },
+            required: ["folder", "name_pattern"],
+            additionalProperties: false,
+          },
         },
-        required: ["entries"],
         additionalProperties: false,
       },
     },

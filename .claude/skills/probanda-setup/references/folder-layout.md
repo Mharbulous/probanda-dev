@@ -13,11 +13,12 @@ When the practitioner's matters lack either, say what it is used for and advise 
 
 ## Procedure (step 6 of setup)
 
-1. Call `practice_data__folder_map` with no arguments. Keep its `document_types`. When it says this device names no person, run Step 4 first, then call it again. With `status` `ok`, a map is already recorded: show it under `/show-me` as a table of type name and folders, and ask whether to keep it or revise it. Keep ends this step.
+1. Call `practice_data__folder_map` with no arguments. Keep its `document_types`. When it says this device names no person, run Step 4 first, then call it again. With `status` `ok`, a map is already recorded: show it under `/show-me` as a table of type name and folders, and ask whether to keep it or revise it. Keep goes to step 7.
 2. List a typical matter folder's subfolders, two levels deep, read only. Open no file in it.
 3. Propose a map: for each document type, the subfolders that hold it, judged from the folder names and the type definitions. One type may have several folders, and one folder may serve several types. Write each folder as a glob relative to the matter folder, with `*` where matters differ (a court file number, a party's name, a trailing plural). Leave out a type the practitioner does not seem to keep. Name every subfolder the proposal does not use.
 4. Show the proposal, one row per type: its name, its definition and its folders.
 5. Call `practice_data__set_folder_map` with the whole map. Relay a refusal word for word and correct the map.
 6. Change nothing on disk. Setup never creates, renames or moves a folder inside a matter. The practitioner makes any change they choose.
+7. When the answer has no `precedents`, ask where they keep their Word precedents and how they name them, from one of their file names. A precedents folder sits outside any matter. Record both with `practice_data__set_folder_map`, passing only `precedents`: the folder relative to the folder holding their case data, or a full path when it lies elsewhere, and the pattern using `{YYYY-MM-DD}`, `{vN}` and `{description}`, for example `{YYYY-MM-DD} {description} - PRECEDENT`. Assume no folder or pattern. If they keep no precedents yet, leave this unset.
 
 A kind of document that fits no type is proposed as a new type through `/suggestion`.

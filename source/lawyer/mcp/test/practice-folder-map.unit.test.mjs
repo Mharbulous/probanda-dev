@@ -161,6 +161,74 @@ test("set_folder_map refuses when this machine names no person", async (t) => {
   assert.equal(existsSync(join(root, "_practice", "firm", "folder-maps")), false);
 });
 
+const PRECEDENTS = { folder: "ADMIN\\Precedents", name_pattern: "{YYYY-MM-DD} {description} - PRECEDENT" };
+
+test("precedent settings round trip, with the folder resolved beside the case data root", async (t) => {
+  const { env, scratch } = fixture(t);
+  await set_folder_map({ entries: ONE_TO_MANY_MANY_TO_ONE, precedents: PRECEDENTS }, env);
+  const read = await folder_map({}, env);
+  assert.deepEqual(read.precedents, { ...PRECEDENTS, path: join(scratch, "ADMIN", "Precedents") });
+});
+
+test("an absolute precedents folder is used as it stands", async (t) => {
+  const { env } = fixture(t);
+  const folder = "C:\\Firm\\Precedents";
+  await set_folder_map({ entries: ONE_TO_MANY_MANY_TO_ONE, precedents: { ...PRECEDENTS, folder } }, env);
+  assert.equal((await folder_map({}, env)).precedents.path, folder);
+});
+
+test("setting one half keeps the other", async (t) => {
+  const { env } = fixture(t);
+  await set_folder_map({ entries: ONE_TO_MANY_MANY_TO_ONE }, env);
+  assert.equal((await folder_map({}, env)).precedents, undefined, "there is no default for any user");
+
+  const written = await set_folder_map({ precedents: PRECEDENTS }, env);
+  assert.deepEqual(written.entries, ONE_TO_MANY_MANY_TO_ONE);
+  assert.deepEqual(written.precedents, PRECEDENTS);
+
+  const entries = [{ type: "drafts", folders: ["Working"] }];
+  await set_folder_map({ entries }, env);
+  const read = await folder_map({}, env);
+  assert.deepEqual(read.entries, entries);
+  assert.equal(read.precedents.name_pattern, PRECEDENTS.name_pattern);
+});
+
+test("entries may be left out only when a map is recorded", async (t) => {
+  const { env } = fixture(t);
+  await assert.rejects(set_folder_map({ precedents: PRECEDENTS }, env), /no folder map is recorded/);
+  assert.equal(existsSync(folderMapPath(env, "pe")), false);
+  await assert.rejects(set_folder_map({}, env), /entries, precedents or both/);
+});
+
+test("no map means no precedent settings", async (t) => {
+  const { env } = fixture(t);
+  const read = await folder_map({}, env);
+  assert.equal(read.status, "no_map");
+  assert.equal(read.precedents, undefined);
+});
+
+test("set_folder_map refuses bad precedent settings and writes nothing", async (t) => {
+  const { env } = fixture(t);
+  const cases = {
+    "not an object": "ADMIN",
+    "an unknown field": { ...PRECEDENTS, note: "x" },
+    "no folder": { name_pattern: PRECEDENTS.name_pattern },
+    "an empty folder": { ...PRECEDENTS, folder: " " },
+    "a parent segment": { ...PRECEDENTS, folder: "..\\ADMIN" },
+    "a parent segment in an absolute folder": { ...PRECEDENTS, folder: "C:\\Firm\\..\\Other" },
+    "a drive with no full path": { ...PRECEDENTS, folder: "C:ADMIN" },
+    "no pattern": { folder: "ADMIN" },
+    "no description": { ...PRECEDENTS, name_pattern: "{YYYY-MM-DD} PRECEDENT" },
+    "two descriptions": { ...PRECEDENTS, name_pattern: "{description} {description}" },
+    "an unknown part": { ...PRECEDENTS, name_pattern: "{DDDD-MM-YY} {description}" },
+    "a separator in the pattern": { ...PRECEDENTS, name_pattern: "Forms\\{description}" },
+  };
+  for (const [label, precedents] of Object.entries(cases)) {
+    await assert.rejects(set_folder_map({ entries: ONE_TO_MANY_MANY_TO_ONE, precedents }, env), undefined, label);
+  }
+  assert.equal(existsSync(folderMapPath(env, "pe")), false);
+});
+
 test("expandGlob lists the existing folders a glob matches", (t) => {
   const { scratch } = fixture(t);
   const matter = join(scratch, "matter");

@@ -571,6 +571,10 @@ _Avoid_: Work Board (its name before 2026-11-01, now one board's page); `Work_bo
 A proceeding with no Writing yet. Its forum may not yet be chosen (`forum` NULL). A Writing that needs no forum parts, such as a demand letter, may be created before the forum is chosen, and one that needs forum parts only after. It holds jobs and loose threads, for example the work of choosing the forum, on a Work Board of its own. Its first Writing ends it, with or without a forum: see **Work Board**. Choosing the forum updates the same proceeding. A second forum is a new proceeding, and no job moves between them.
 _Avoid_: pre-litigation matter (the matter exists either way); undecided forum as a stored value (it is NULL, not a sentinel); pre-filing for a proceeding whose only Writing is a demand letter (nothing has gone to a forum, but it has a Writing, so it is not one).
 
+**Precedent**:
+A firm's reusable Word document made from a finished one: a copy of the practitioner's saved `.docx` with every variable field in square brackets and highlighted yellow, in the body, headers and footers alike, and every layout choice kept. It holds no client detail, in its text or its file name. Each practitioner sets their own precedents folder and naming pattern. Made, versioned and tidied by `/precedents`. Not case law, which is an **Authority**, and not the saved layout of "Keep the layout", which is not a Word file.
+_Avoid_: template (also means a court form or a drafting layout); form (names a published form).
+
 **Preference**:
 One person's saved instruction to a named skill, in generic terms, made when a fix worked for them ("Show the deadline summary before the full list"). It takes effect for that person only, from the moment it is saved, and holds no client content. Stored per person in the firm's `0. CASE DATA` folder.
 _Avoid_: personal memory (the design's working name); memory (Claude's own feature); practice quirk (a device's environment note).

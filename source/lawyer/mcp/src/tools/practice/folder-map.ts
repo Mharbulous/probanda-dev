@@ -28,8 +28,14 @@ export interface FolderMapEntry {
   folders: string[];
 }
 
+/** Where this person keeps their precedents and how they name them. Firm-level, so not a folder map entry. */
+export interface PrecedentSettings {
+  folder: string;
+  name_pattern: string;
+}
+
 export type FolderMap =
-  | { status: "ok"; person: string; map_path: string; entries: FolderMapEntry[] }
+  | { status: "ok"; person: string; map_path: string; entries: FolderMapEntry[]; precedents?: PrecedentSettings }
   | { status: "no_map"; person: string | null; map_path: string | null; reason: string };
 
 export interface PathTypes {
@@ -121,6 +127,36 @@ export function checkEntries(raw: unknown, types: DocumentType[], where: string)
   });
 }
 
+const NAME_TOKENS = new Set(["{YYYY-MM-DD}", "{vN}", "{description}"]);
+
+/** `folder` is absolute, or relative to the folder holding the case data root. `name_pattern` needs {description} once. */
+export function checkPrecedents(raw: unknown, where: string): PrecedentSettings {
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) throw new ValidationError(`${where} must be an object`);
+  const { folder, name_pattern, ...rest } = raw as Record<string, unknown>;
+  if (Object.keys(rest).length) throw new ValidationError(`${where} has unknown field(s) ${Object.keys(rest).join(", ")}`);
+  if (typeof folder !== "string" || folder.trim() === "") throw new ValidationError(`${where}: folder must be a non-empty string`);
+  const absolute = pathWin32.isAbsolute(folder);
+  if (!absolute && /^[a-z]:/i.test(folder)) throw new ValidationError(`${where}: "${folder}" has a drive but no full path`);
+  if (splitGlob(folder).some((s) => s === "." || s === ".." || (!absolute && s === ""))) {
+    throw new ValidationError(`${where}: "${folder}" has an empty, "." or ".." segment`);
+  }
+  if (typeof name_pattern !== "string") throw new ValidationError(`${where}: name_pattern must be a string`);
+  const tokens = name_pattern.match(/\{[^{}]*\}/g) ?? [];
+  const bad = tokens.filter((t) => !NAME_TOKENS.has(t));
+  if (bad.length) throw new ValidationError(`${where}: name_pattern has unknown part(s) ${bad.join(", ")}`);
+  if (tokens.filter((t) => t === "{description}").length !== 1) {
+    throw new ValidationError(`${where}: name_pattern must hold {description} exactly once`);
+  }
+  if (/[<>:"\\/|?*]/.test(name_pattern)) throw new ValidationError(`${where}: name_pattern holds a character a file name cannot`);
+  return { folder, name_pattern };
+}
+
+/** The settings' folder as a full path on this device. */
+function precedentsPath(settings: PrecedentSettings, env: NodeJS.ProcessEnv): string {
+  if (pathWin32.isAbsolute(settings.folder)) return settings.folder;
+  return join(dirname(resolveCaseDataRoot(env)), ...splitGlob(settings.folder));
+}
+
 /** The folder map of the person this machine's probanda.json names, or the no-map case. */
 export function readFolderMap(env: NodeJS.ProcessEnv = process.env, types: DocumentType[] = documentTypes(env)): FolderMap {
   const person = machinePerson(env);
@@ -137,8 +173,10 @@ export function readFolderMap(env: NodeJS.ProcessEnv = process.env, types: Docum
   } catch (err) {
     throw new ValidationError(`${path} is not valid JSON: ${(err as Error).message}`);
   }
-  const entries = checkEntries((parsed as Record<string, unknown> | null)?.entries, types, path);
-  return { status: "ok", person, map_path: path, entries };
+  const stored = parsed as Record<string, unknown> | null;
+  const entries = checkEntries(stored?.entries, types, path);
+  const precedents = stored?.precedents === undefined ? undefined : checkPrecedents(stored.precedents, `${path}: precedents`);
+  return { status: "ok", person, map_path: path, entries, ...(precedents ? { precedents } : {}) };
 }
 
 function segmentMatches(glob: string, name: string): boolean {
@@ -207,21 +245,31 @@ export async function folder_map(args: Record<string, unknown>, env: NodeJS.Proc
   return {
     ...map,
     document_types: types,
+    ...(map.precedents ? { precedents: { ...map.precedents, path: precedentsPath(map.precedents, env) } } : {}),
     ...(paths ? { paths: classifyPaths(map.entries, types, paths) } : {}),
     ...(asked ? { folders: Object.fromEntries(asked.map((id) => [id, globsFor(map.entries, [id])])) } : {}),
   };
 }
 
-/** practice_data__set_folder_map: replaces the folder map of the person this machine names. */
+/** practice_data__set_folder_map: replaces this person's map, their precedent settings, or both.
+ * Whichever is not passed stays as recorded. */
 export async function set_folder_map(args: Record<string, unknown>, env: NodeJS.ProcessEnv = process.env): Promise<unknown> {
   const types = documentTypes(env);
-  const entries = checkEntries(args.entries, types, "entries");
+  const newEntries = args.entries === undefined ? undefined : checkEntries(args.entries, types, "entries");
+  const newPrecedents = args.precedents === undefined ? undefined : checkPrecedents(args.precedents, "precedents");
+  if (newEntries === undefined && newPrecedents === undefined) throw new ValidationError("pass entries, precedents or both. Nothing was written.");
   const person = readFirmProfile(env).person;
   if (person === null) {
     throw new ValidationError("this machine names no person, so there is no one to record a folder map for. Set person with practice_data__upsert_firm_profile first. Nothing was written.");
   }
+  const current = readFolderMap(env, types);
+  const held = current.status === "ok" ? current : null;
+  const entries = newEntries ?? held?.entries;
+  if (entries === undefined) throw new ValidationError(`no folder map is recorded for ${person}, so entries is required. Nothing was written.`);
+  const precedents = newPrecedents ?? held?.precedents;
   const path = folderMapPath(env, person);
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, JSON.stringify({ entries }, null, 2) + "\n", "utf-8");
-  return { person, written: path, entries };
+  const record = { entries, ...(precedents ? { precedents } : {}) };
+  writeFileSync(path, JSON.stringify(record, null, 2) + "\n", "utf-8");
+  return { person, written: path, ...record };
 }
