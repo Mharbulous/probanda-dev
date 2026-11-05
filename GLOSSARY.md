@@ -221,7 +221,7 @@ A distinct legal footing for an order sought, or for opposing one: **jurisdictio
 _Avoid_: ground, grounds; issue (the question a basis answers); point; defence.
 
 **Bill in progress**:
-A matter's one unfinished bill, identified by the matter and its last signed invoice, from the first work on that bill until the signed invoice is recorded as issued. It is not an invoice record, and its billing period stays open until the practitioner says the draft is ready for signature.
+A matter's one unfinished bill, identified by the matter and its last signed invoice. It is under way until the practitioner says the draft is ready for signature, which closes its billing period, and it then waits for signature unless reopened. It ends when the signed invoice is recorded as issued, or when the practitioner starts it over, which puts a new bill in progress in its place that keeps only the evidence and the time judgments. It is not an invoice record.
 _Avoid_: billing run, session (a bill in progress outlives both); draft invoice (one rendered document of it).
 
 **Bundle (application)**:
