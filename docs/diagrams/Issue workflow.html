@@ -55,11 +55,11 @@ pre.mermaid svg { display: block; margin: 0 auto; }
   </div>
 
   <figure class="diagram" id="issue-lifecycle"
-          data-based-on-commit="295116df4cd148c97ee7e24fa010726935c7ac0d"
-          data-updated="2026-11-05T00:42:00-07:00">
+          data-based-on-commit="d06e50fa26ec0e534acabab63cc1943a61fe0e3c"
+          data-updated="2026-11-05T01:34:00-07:00">
     <figcaption>
       <h2>Diagram 1: the life of an issue</h2>
-      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/295116df4cd148c97ee7e24fa010726935c7ac0d"><code>295116df</code></a> on main · Last updated 2026-11-05 00:42 -07:00</p>
+      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/d06e50fa26ec0e534acabab63cc1943a61fe0e3c"><code>d06e50fa</code></a> on main · Last updated 2026-11-05 01:34 -07:00</p>
     </figcaption>
     <div class="chart">
 <pre class="mermaid">
@@ -151,7 +151,7 @@ flowchart TD
       <p>Pick to push is one procedure shared by both implementers, so it is drawn once, in blue, wherever a given run happens. Not drawn:</p>
       <ul>
         <li>Each lane's gate is the full list in <code>implement-queue.md</code>.</li>
-        <li>Every outcome returns to Pick, not only the dashed one.</li>
+        <li>In a cloud run, every outcome returns to Pick, not only the dashed one. A local run exits after one issue, whatever the outcome.</li>
         <li>A sender can withdraw a suggestion before the push, which discards the unpushed build. Intake then closes the issue.</li>
         <li>Suggestions merged by fingerprint take the decision of the issue they merge into.</li>
         <li>Locks: triage #61, intake #190. Claims: 5 hours per issue, 1 hour for <code>/hitl-triage</code>.</li>
@@ -162,11 +162,11 @@ flowchart TD
   </figure>
 
   <figure class="diagram" id="local-implementer-start"
-          data-based-on-commit="295116df4cd148c97ee7e24fa010726935c7ac0d"
-          data-updated="2026-11-05T00:42:00-07:00">
+          data-based-on-commit="d06e50fa26ec0e534acabab63cc1943a61fe0e3c"
+          data-updated="2026-11-05T01:34:00-07:00">
     <figcaption>
       <h2>Diagram 2: what starts the local implementer</h2>
-      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/295116df4cd148c97ee7e24fa010726935c7ac0d"><code>295116df</code></a> on main · Last updated 2026-11-05 00:42 -07:00</p>
+      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/d06e50fa26ec0e534acabab63cc1943a61fe0e3c"><code>d06e50fa</code></a> on main · Last updated 2026-11-05 01:34 -07:00</p>
     </figcaption>
     <div class="chart">
 <pre class="mermaid">
