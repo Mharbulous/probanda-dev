@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
@@ -49,8 +49,9 @@ const PREDATING_WORDS = new Set([
 
 // A matter-data identifier that one file must write because another contract names it: `lawyer_name` is
 // a key of the publish sidecar (publish-bcsc-form's assembly-input-contract.md), filled from the
-// runtime's own counsel_name. Allowed in that file only.
-const CONTRACT_KEYS = new Set(["publish-sidecar.ts: lawyer_name"]);
+// runtime's own counsel_name. The case-brief contract (shared/case-brief-template.md) names the slot
+// `obiter`, which the renderer checks by name in filing_prose. Each is allowed in that file only.
+const CONTRACT_KEYS = new Set(["publish-sidecar.ts: lawyer_name", "forms/projections.ts: obiter"]);
 
 function tsFiles(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
@@ -74,7 +75,7 @@ test("no matter-data table or column name appears in the TypeScript under src/su
   for (const file of tsFiles(SRC)) {
     const text = readFileSync(file, "utf-8");
     for (const name of forbidden) {
-      if (new RegExp(`(?<![A-Za-z0-9_])${name}(?![A-Za-z0-9_])`).test(text)) hits.push(`${relative(SRC, file)}: ${name}`);
+      if (new RegExp(`(?<![A-Za-z0-9_])${name}(?![A-Za-z0-9_])`).test(text)) hits.push(`${relative(SRC, file).split(sep).join("/")}: ${name}`);
     }
   }
   assert.deepEqual(hits.filter((hit) => !CONTRACT_KEYS.has(hit)), []);
