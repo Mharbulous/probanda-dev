@@ -1,4 +1,4 @@
-// build-stamp: 25f0e5fc76cc
+// build-stamp: 1f66560e30bd
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75261,7 +75261,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "25f0e5fc76cc";
+var BUILD_STAMP = false ? null : "1f66560e30bd";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -77193,7 +77193,7 @@ function practiceToolDefinitions() {
     },
     {
       name: practicePrefixed("folder_map"),
-      description: "This practitioner's folder map: where they keep each document type. Returns document_types, the shipped glossary (id, name, definition, flags never_ingest, privileged_by_default, authority), every time. The map is the one for the roster person this machine's probanda.json names, read from <case_data_root>\\_practice\\firm\\folder-maps\\<person>.json. With no person set, or no file for that person, status is no_map with a reason: tell the practitioner that Probanda does not yet know where they keep each kind of document, and offer to set it up (/probanda-setup). Never assume any layout, and never use another person's map. With a map, status is ok and entries lists {type, folders}: folder globs relative to the matter folder, segments split by \\, * and ? matching within one folder name, case-insensitive. One type may have several folders and one folder may serve several types. Given paths (relative to the matter folder, stored form), paths returns for each the types whose folders hold it, in glossary order (empty when no mapped folder does), and never_ingest, privileged and authority, each true only when every one of those types carries the flag. Given types, folders maps each to its globs (empty when the map gives it none). Read-only.",
+      description: "This practitioner's folder map: where they keep each document type. Returns document_types, the shipped glossary (id, name, definition, flags never_ingest, privileged_by_default, authority), every time. The map is the one for the roster person this machine's probanda.json names, read from <case_data_root>\\_practice\\firm\\folder-maps\\<person>.json. With no person set, or no file for that person, status is no_map with a reason: tell the practitioner that Probanda does not yet know where they keep each kind of document, and offer to set it up (/probanda-setup). Never assume any layout, and never use another person's map. With a map, status is ok and entries lists {type, folders}: folder globs relative to the matter folder, segments split by \\, * and ? matching within one folder name, case-insensitive. One type may have several folders and one folder may serve several types. Given paths (relative to the matter folder, stored form), paths returns for each the types whose folders hold it, in glossary order (empty when no mapped folder does), and never_ingest, privileged and authority, each true only when every one of those types carries the flag. Given types, folders maps each to its globs (empty when the map gives it none). When this person's precedent settings are recorded, precedents holds folder and name_pattern as recorded and path, the folder as a full path on this device. Read-only.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77206,7 +77206,7 @@ function practiceToolDefinitions() {
     },
     {
       name: practicePrefixed("set_folder_map"),
-      description: "Replace the folder map of the roster person this machine's probanda.json names, at <case_data_root>\\_practice\\firm\\folder-maps\\<person>.json. entries is the whole map, [{type, folders}]: each type a glossary id (practice_data__folder_map's document_types), at most once; folders a non-empty list of globs relative to the matter folder. A type the practitioner never files is left out. Refused, writing nothing, when an entry names an unknown type, repeats a type, or gives an absolute glob or a . or .. segment, and when this machine names no person. Returns the person, the path written and the entries.",
+      description: "Replace the folder map, the precedent settings or both of the roster person this machine's probanda.json names, at <case_data_root>\\_practice\\firm\\folder-maps\\<person>.json. Whichever is not passed stays as recorded. entries is the whole map, [{type, folders}]: each type a glossary id (practice_data__folder_map's document_types), at most once; folders a non-empty list of globs relative to the matter folder. A type the practitioner never files is left out. precedents is {folder, name_pattern}: folder absolute, or relative to the folder holding the case data root; name_pattern a file name stem built from {YYYY-MM-DD}, {vN} and {description}, which it must hold exactly once. Refused, writing nothing, when an entry names an unknown type, repeats a type, or gives an absolute glob or a . or .. segment, when precedents breaks those rules, when neither is passed, when entries is omitted and no map is recorded, and when this machine names no person. Returns the person, the path written, the entries and any precedents.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77221,9 +77221,17 @@ function practiceToolDefinitions() {
               required: ["type", "folders"],
               additionalProperties: false
             }
+          },
+          precedents: {
+            type: "object",
+            properties: {
+              folder: { type: "string" },
+              name_pattern: { type: "string" }
+            },
+            required: ["folder", "name_pattern"],
+            additionalProperties: false
           }
         },
-        required: ["entries"],
         additionalProperties: false
       }
     },
@@ -83608,6 +83616,31 @@ function checkEntries(raw, types, where) {
     return { type, folders: folders2.map((g3) => checkGlob(g3, at)) };
   });
 }
+var NAME_TOKENS = /* @__PURE__ */ new Set(["{YYYY-MM-DD}", "{vN}", "{description}"]);
+function checkPrecedents(raw, where) {
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) throw new ValidationError(`${where} must be an object`);
+  const { folder, name_pattern, ...rest } = raw;
+  if (Object.keys(rest).length) throw new ValidationError(`${where} has unknown field(s) ${Object.keys(rest).join(", ")}`);
+  if (typeof folder !== "string" || folder.trim() === "") throw new ValidationError(`${where}: folder must be a non-empty string`);
+  const absolute = pathWin327.isAbsolute(folder);
+  if (!absolute && /^[a-z]:/i.test(folder)) throw new ValidationError(`${where}: "${folder}" has a drive but no full path`);
+  if (splitGlob(folder).some((s3) => s3 === "." || s3 === ".." || !absolute && s3 === "")) {
+    throw new ValidationError(`${where}: "${folder}" has an empty, "." or ".." segment`);
+  }
+  if (typeof name_pattern !== "string") throw new ValidationError(`${where}: name_pattern must be a string`);
+  const tokens2 = name_pattern.match(/\{[^{}]*\}/g) ?? [];
+  const bad2 = tokens2.filter((t3) => !NAME_TOKENS.has(t3));
+  if (bad2.length) throw new ValidationError(`${where}: name_pattern has unknown part(s) ${bad2.join(", ")}`);
+  if (tokens2.filter((t3) => t3 === "{description}").length !== 1) {
+    throw new ValidationError(`${where}: name_pattern must hold {description} exactly once`);
+  }
+  if (/[<>:"\\/|?*]/.test(name_pattern)) throw new ValidationError(`${where}: name_pattern holds a character a file name cannot`);
+  return { folder, name_pattern };
+}
+function precedentsPath(settings, env) {
+  if (pathWin327.isAbsolute(settings.folder)) return settings.folder;
+  return join14(dirname7(resolveCaseDataRoot(env)), ...splitGlob(settings.folder));
+}
 function readFolderMap(env = process.env, types = documentTypes(env)) {
   const person2 = machinePerson(env);
   if (person2 === null) {
@@ -83623,8 +83656,10 @@ function readFolderMap(env = process.env, types = documentTypes(env)) {
   } catch (err) {
     throw new ValidationError(`${path} is not valid JSON: ${err.message}`);
   }
-  const entries = checkEntries(parsed?.entries, types, path);
-  return { status: "ok", person: person2, map_path: path, entries };
+  const stored = parsed;
+  const entries = checkEntries(stored?.entries, types, path);
+  const precedents = stored?.precedents === void 0 ? void 0 : checkPrecedents(stored.precedents, `${path}: precedents`);
+  return { status: "ok", person: person2, map_path: path, entries, ...precedents ? { precedents } : {} };
 }
 function segmentMatches(glob, name) {
   const pattern = glob.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".");
@@ -83676,21 +83711,30 @@ async function folder_map(args, env = process.env) {
   return {
     ...map,
     document_types: types,
+    ...map.precedents ? { precedents: { ...map.precedents, path: precedentsPath(map.precedents, env) } } : {},
     ...paths ? { paths: classifyPaths(map.entries, types, paths) } : {},
     ...asked ? { folders: Object.fromEntries(asked.map((id) => [id, globsFor(map.entries, [id])])) } : {}
   };
 }
 async function set_folder_map(args, env = process.env) {
   const types = documentTypes(env);
-  const entries = checkEntries(args.entries, types, "entries");
+  const newEntries = args.entries === void 0 ? void 0 : checkEntries(args.entries, types, "entries");
+  const newPrecedents = args.precedents === void 0 ? void 0 : checkPrecedents(args.precedents, "precedents");
+  if (newEntries === void 0 && newPrecedents === void 0) throw new ValidationError("pass entries, precedents or both. Nothing was written.");
   const person2 = readFirmProfile(env).person;
   if (person2 === null) {
     throw new ValidationError("this machine names no person, so there is no one to record a folder map for. Set person with practice_data__upsert_firm_profile first. Nothing was written.");
   }
+  const current = readFolderMap(env, types);
+  const held2 = current.status === "ok" ? current : null;
+  const entries = newEntries ?? held2?.entries;
+  if (entries === void 0) throw new ValidationError(`no folder map is recorded for ${person2}, so entries is required. Nothing was written.`);
+  const precedents = newPrecedents ?? held2?.precedents;
   const path = folderMapPath(env, person2);
   mkdirSync5(dirname7(path), { recursive: true });
-  writeFileSync4(path, JSON.stringify({ entries }, null, 2) + "\n", "utf-8");
-  return { person: person2, written: path, entries };
+  const record2 = { entries, ...precedents ? { precedents } : {} };
+  writeFileSync4(path, JSON.stringify(record2, null, 2) + "\n", "utf-8");
+  return { person: person2, written: path, ...record2 };
 }
 
 // src/tools/practice/config.ts
