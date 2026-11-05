@@ -130,8 +130,6 @@ SAMPLES = {
         "namespace": "timeline", "path": "/x/gone.jsonl",
         "expect": {"added": 2, "replaced": 1, "removed": 3, "file_sha256": "ab"}},
         "adding 2 new item(s), replacing 1 existing item(s), removing 3 item(s), in the activity history on this computer"),
-    "mcp__plugin_timekeeper_timecamp__update_entry": ("timekeeper", {"entry_id": "e5", "task_id": "t6", "note": "Call  re motion"},
-                                                      'move TimeCamp entry e5 to task t6 and replace its note with "Call re motion"'),
     "mcp__plugin_file-manager_files__file_ops__comment_pdf": ("file-manager", {
         "matter_root": "/m", "path": "/m/a.pdf", "comments": [{"page": 3, "text": "x"}, {"page": 1, "text": "y"}]},
         "write 2 comment(s) on page(s) 1, 3 into the PDF a.pdf"),
@@ -391,136 +389,6 @@ def test_a_dedupe_move_from_a_subagent_is_refused(tmp_path):
     assert reason and "subagent" in reason
 
 
-def test_a_time_entry_change_says_it_can_be_changed_back_never_one_way(tmp_path):
-    tool = "mcp__plugin_timekeeper_timecamp__update_entry"
-    call = {"entry_id": "e5", "task_id": "t6", "note": "Call re motion"}
-    s = Session(tmp_path)
-    s.say("Correct that entry.")
-    reason = s.gate(name=tool, tool_input=call, plugin="timekeeper")
-    block = block_of(reason)
-    assert "It can be undone by changing the entry back." in block
-    assert "**This step changes the time record in TimeCamp: it can be changed back.**" in reason
-    for wording in ("one-way", "irreversible", "costly to reverse", "The old task and note are not kept"):
-        assert wording not in reason
-    s.say(block)
-    assert s.gate(name=tool, tool_input=call, plugin="timekeeper") is None
-
-
-ENTRY = "mcp__plugin_timekeeper_timecamp__update_entry"
-
-
-def entry_call(n):
-    return {"entry_id": f"e{n}", "task_id": f"t{n}", "note": f"Call {n} re motion"}
-
-
-def entry_gate(s, n):
-    return s.gate(name=ENTRY, tool_input=entry_call(n), plugin="timekeeper")
-
-
-def entry_list(*reasons, modifications="NONE"):
-    """The one block a practitioner pastes for a list: every entry's first line, then one Modifications line."""
-    lines = [block_of(reason).split("\nModifications:")[0] for reason in reasons]
-    return "\n".join(lines) + "\nModifications: " + modifications
-
-
-def refused_entries(s, count):
-    return [entry_gate(s, n) for n in range(1, count + 1)]
-
-
-def test_one_pasted_list_approves_each_entry_on_it_once(tmp_path):
-    s = Session(tmp_path)
-    s.say("Write back the day.")
-    reasons = refused_entries(s, 3)
-    assert all(MARKER.search(reason) for reason in reasons)
-    s.say(entry_list(*reasons))
-    for n in (3, 1, 2):
-        assert entry_gate(s, n) is None, n
-    for n in (1, 2, 3):
-        assert entry_gate(s, n), n
-
-
-def test_an_entry_missing_from_the_pasted_list_is_refused(tmp_path):
-    s = Session(tmp_path)
-    s.say("Write back the day.")
-    reasons = refused_entries(s, 3)
-    s.say(entry_list(reasons[0], reasons[2]))
-    assert entry_gate(s, 1) is None
-    assert entry_gate(s, 2)
-    assert entry_gate(s, 3) is None
-
-
-def test_a_list_entry_changed_after_the_paste_is_refused(tmp_path):
-    s = Session(tmp_path)
-    s.say("Write back the day.")
-    s.say(entry_list(*refused_entries(s, 2)))
-    assert s.gate(name=ENTRY, tool_input={**entry_call(1), "note": "Another note"}, plugin="timekeeper")
-
-
-def test_a_failed_list_entry_does_not_use_its_line(tmp_path):
-    s = Session(tmp_path)
-    s.say("Write back the day.")
-    s.say(entry_list(*refused_entries(s, 2)))
-    assert s.gate(name=ENTRY, tool_input=entry_call(1), plugin="timekeeper", answered=False) is None
-    s.call(ENTRY, entry_call(1), '{"error": "timeout"}', is_error=True)
-    assert entry_gate(s, 1) is None
-
-
-def test_a_list_with_written_modifications_is_refused(tmp_path):
-    s = Session(tmp_path)
-    s.say("Write back the day.")
-    s.say(entry_list(*refused_entries(s, 2), modifications="skip the second one"))
-    reason = entry_gate(s, 1)
-    assert reason and "list" in reason
-
-
-def test_an_old_list_pasted_again_with_no_new_refusals_is_refused(tmp_path):
-    s = Session(tmp_path)
-    s.say("Write back the day.")
-    reasons = refused_entries(s, 2)
-    s.say(entry_list(*reasons))
-    assert entry_gate(s, 1) is None
-    assert entry_gate(s, 2) is None
-    s.say(entry_list(*reasons))
-    assert entry_gate(s, 1)
-
-
-def test_a_list_after_a_compaction_is_refused(tmp_path):
-    s = Session(tmp_path)
-    s.say("Write back the day.")
-    reasons = refused_entries(s, 2)
-    s.add({"type": "system", "subtype": "compact_boundary"})
-    s.say(entry_list(*reasons))
-    assert entry_gate(s, 1)
-
-
-def test_a_list_entry_from_a_subagent_is_refused(tmp_path):
-    s = Session(tmp_path)
-    s.say("Write back the day.")
-    s.say(entry_list(*refused_entries(s, 2)))
-    reason = s.gate(name=ENTRY, tool_input=entry_call(1), plugin="timekeeper", agent_id="a1", agent_type="general-purpose")
-    assert reason and "subagent" in reason
-
-
-def test_refused_calls_of_two_different_tools_are_not_a_list(tmp_path):
-    s = Session(tmp_path)
-    s.say("Go ahead.")
-    first = entry_gate(s, 1)
-    second = s.gate(name="mcp__plugin_lawyer_data__time_pipeline__delete", tool_input={"namespace": "timeline", "key": "k1"},
-                    plugin="timekeeper")
-    s.say(entry_list(first, second))
-    assert entry_gate(s, 1)
-
-
-def test_a_list_does_not_reach_other_gated_tools(tmp_path):
-    s = Session(tmp_path)
-    s.say("Delete those anchors.")
-    first = s.gate()
-    second = s.gate(tool_input={"anchor_id": 8})
-    s.say(entry_list(first, second))
-    assert s.gate()
-    assert s.gate(tool_input={"anchor_id": 8})
-
-
 def test_a_sent_record_still_says_one_way(tmp_path):
     s = Session(tmp_path)
     s.say("Record it as sent.")
@@ -546,8 +414,7 @@ GATED = {
                   "mcp__plugin_lawyer_data__drafting_data__record_served"],
     "lawyer": ["mcp__plugin_lawyer_data__practice_data__delete_anchor", "mcp__plugin_lawyer_data__practice_data__merge_contact",
                DEDUPE, "mcp__remote-devices__plugin_lawyer_contacts-calendars-email__mail__dedupe_apply"],
-    "timekeeper": ["mcp__plugin_lawyer_data__time_pipeline__delete", "mcp__plugin_lawyer_data__time_pipeline__bulk_apply",
-                   "mcp__plugin_timekeeper_timecamp__update_entry"],
+    "timekeeper": ["mcp__plugin_lawyer_data__time_pipeline__delete", "mcp__plugin_lawyer_data__time_pipeline__bulk_apply"],
     "file-manager": ["mcp__plugin_file-manager_files__file_ops__comment_pdf"],
     "researcher": ["mcp__plugin_researcher_commons__troubleshoot__record",
                    "mcp__remote-devices__plugin_researcher_commons__troubleshoot__record"],
@@ -569,6 +436,7 @@ UNGATED = [
     "mcp__plugin_lawyer_contacts-calendars-email__mail__list_headers",
     "mcp__plugin_lawyer_contacts-calendars-email__mail__save_message",
     "mcp__plugin_lawyer_contacts-calendars-email__mail__move_messages",
+    "mcp__plugin_timekeeper_timecamp__update_entry", "mcp__remote-devices__plugin_timekeeper_timecamp__update_entry",
 ]
 
 

@@ -106,8 +106,7 @@ export function timecampToolDefinitions(): ToolDefinition[] {
       name: "update_entry",
       description:
         "Move one TimeCamp time entry to another task and set its note (read back as `description`). The entry's billable " +
-        "flag follows the new task. Changes TimeCamp. Call it only after the practitioner has pasted the approval for the list that holds this entry's exact change; " +
-        "the approval covers the entries on that list and no others. The answer is not the check: re-read the entry's date with entries " +
+        "flag follows the new task. Changes TimeCamp. Call it only after the practitioner has said to commit this entry's change. The answer is not the check: re-read the entry's date with entries " +
         "and compare task_id and description. " + STOP_RULE,
       inputSchema: {
         type: "object",

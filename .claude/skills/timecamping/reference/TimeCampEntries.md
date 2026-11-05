@@ -114,8 +114,8 @@ restored it exactly. The shape comes from a public client
 own docs page renders only in a browser.
 
 The write is the connector's `update_entry` with `entry_id`, `task_id` (the
-matter's TimeCamp task) and `note`, sent only after the practitioner has pasted
-the approval for the list that holds that entry. The connector sends TimeCamp's form-encoded
+matter's TimeCamp task) and `note`, sent only after the practitioner has said
+to commit (`SKILL.md` Step 7). The connector sends TimeCamp's form-encoded
 `PUT` on the same trailing-slash `/entries/` URL as the read.
 
 - **The note is sent as `note` but read back as `description`.**

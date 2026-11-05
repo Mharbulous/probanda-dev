@@ -1,4 +1,4 @@
-// build-stamp: 459ad4519c9f
+// build-stamp: ddbbc33e892e
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75261,7 +75261,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "459ad4519c9f";
+var BUILD_STAMP = false ? null : "ddbbc33e892e";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -122651,7 +122651,7 @@ function timecampToolDefinitions() {
     },
     {
       name: "update_entry",
-      description: "Move one TimeCamp time entry to another task and set its note (read back as `description`). The entry's billable flag follows the new task. Changes TimeCamp. Call it only after the practitioner has pasted the approval for the list that holds this entry's exact change; the approval covers the entries on that list and no others. The answer is not the check: re-read the entry's date with entries and compare task_id and description. " + STOP_RULE,
+      description: "Move one TimeCamp time entry to another task and set its note (read back as `description`). The entry's billable flag follows the new task. Changes TimeCamp. Call it only after the practitioner has said to commit this entry's change. The answer is not the check: re-read the entry's date with entries and compare task_id and description. " + STOP_RULE,
       inputSchema: {
         type: "object",
         properties: {

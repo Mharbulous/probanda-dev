@@ -21,10 +21,6 @@ cannot write:
 - no successful call of the refused tool follows that turn (an approval is used once);
 - with `Modifications: NONE` (or no Modifications line) the call's hash equals the refused hash;
   with written modifications the call may differ but must be the same tool.
-A tool in LISTABLE (update_entry) may instead be refused once per entry, and one pasted turn holding every
-entry's first line then approves each entry's call, once. Each call is checked on its own line in that
-turn, and any Modifications other than NONE refuses the whole list (why_not_listed). Other tools, and a
-mix of tools, keep the rule of exactly one refused act.
 A call from a subagent (`agent_id` in the payload) is refused: its calls and results go to its
 own transcript, which the gate cannot read. Plan: docs/Plans/2026-10-28_untrusted-content-and-approvals.md.
 
@@ -59,8 +55,6 @@ ACTS = {
                              "The deleted value is not kept",
     "time_pipeline__bulk_apply": "update {store} so it can be {use}, {changes}, in the {store} on this computer. "
                                  "The old values are not kept",
-    "update_entry": "move TimeCamp entry {entry_id} to task {task_id} and replace its note with \"{note}\", to correct "
-                    "the time record",
     "comment_pdf": "write {count} comment(s) on page(s) {pages} into the PDF {file_name}, so they stay with the "
                    "document. They become part of the file",
     "troubleshoot__record": "add this entry to Probanda's shared store, where other Probanda users can read it: "
@@ -75,14 +69,7 @@ REVERSIBLE = {
         "warning": "**This step moves email to Trash: it can be recovered from there until the mail server empties "
                    "Trash on its own schedule.**",
     },
-    "update_entry": {
-        "understand": "It can be undone by changing the entry back.",
-        "warning": "**This step changes the time record in TimeCamp: it can be changed back.**",
-    },
 }
-# Gated acts that one pasted turn may approve as a list: the tool is called once per entry, each call is
-# refused, and the practitioner pastes every entry's line together (why_not_listed).
-LISTABLE = ("update_entry",)
 # What each part of the time store holds and what it is for, in the practitioner's words.
 TIME_STORES = {
     "timeline": ("activity history", "used to build your time records"),
@@ -205,29 +192,6 @@ def events(path):
     return out
 
 
-def why_not_listed(found, last, refused, name, act):
-    """None when the latest turn approves this call as one entry of a list: several calls of one listable
-    tool refused since the previous turn, all pasted back together. Each call needs its own line in the
-    turn and passes once. A written change is refused, since it cannot say which entry it changes."""
-    if name != next(iter(refused.values()))[1]:
-        return "The approval was for a different step."
-    if act not in refused:
-        return "The call is not one of the steps on the list."
-    at, refused_name, refused_input = refused[act]
-    if transcript.norm(first_line(refused_name, refused_input)) not in transcript.norm(found[last][1]):
-        return "The pasted approval does not list this step."
-    if any(event[0] == "boundary" for event in found[at + 1:]):
-        return "The conversation was compacted after the step was refused."
-    if any(event[0] == "call" and event[1]["name"] == refused_name and event[1]["input"] == refused_input
-           and event[1]["result"] is not None and not event[1]["is_error"] for event in found[last + 1:]):
-        return "That step on the list was already approved and used."
-    modifications = MODIFICATIONS.search(found[last][1])
-    if modifications is not None and transcript.norm(modifications.group(1)).rstrip(".") != "none":
-        return ("A list is approved as it stands. Show the list again with the change made, and ask for the "
-                "pasted approval of that list.")
-    return None
-
-
 def why_not(path, name, act):
     """None when the transcript approves this call, else the reason it does not."""
     found = events(path)
@@ -242,9 +206,6 @@ def why_not(path, name, act):
             match = MARKER.search(found[i][1]["result"])
             if match:
                 refused[match.group(1)] = (i, found[i][1]["name"], found[i][1]["input"])
-    if len(refused) > 1 and len({entry[1] for entry in refused.values()}) == 1 and any(
-            name.endswith("__" + key) for key in LISTABLE):
-        return why_not_listed(found, last, refused, name, act)
     if len(refused) != 1:
         return ("The pasted approval follows no refusal." if not refused else
                 "More than one step was waiting for approval, so the pasted approval cannot say which.")

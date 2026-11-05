@@ -19,7 +19,7 @@ dependencies:
 | Queries | The practitioner asks one of the listed questions. A Backfill reads `reference/backfill.md` |
 | A candidate list | `/bill-client` opened this skill, or the practitioner gave a matter's candidate-dates file |
 
-This skill deliberately carries no `disable-model-invocation` line: `/bill-client` opens it through the Skill tool, which refuses a skill carrying that line. It is a stated exception. Do not add the line back. It never starts a correction unasked: the bill starts only when the practitioner types it, and every `update_entry` still needs the practitioner's pasted approval, one paste for a whole day's list.
+This skill deliberately carries no `disable-model-invocation` line: `/bill-client` opens it through the Skill tool, which refuses a skill carrying that line. It is a stated exception. Do not add the line back. It never starts a correction unasked: the bill starts only when the practitioner types it, and nothing is written to TimeCamp until the practitioner says to commit (Step 7).
 
 # Timecamping
 
@@ -39,8 +39,8 @@ when, not hoping it holds back.
 
 ## Critical constraints
 
-- **No write-back without the practitioner's explicit pasted approval of the
-  list that holds the entry, ever** — Step 7 is dry-run by default regardless of how confident a proposal is;
+- **No write-back until the practitioner explicitly says to commit, ever** —
+  Step 7 is dry-run by default regardless of how confident a proposal is;
   a silent *commit* (Step 6) is never a silent *write* (Step 7).
 - **The TimeCamp write-back is confirmed for matter + note only** (live,
   2026-09-22, `reference/TimeCampEntries.md`). Any other field
@@ -227,8 +227,9 @@ Produce a report of every proposal now ready to write back — silent commits
 included — and of every uncovered proposal, and **stop there** until the practitioner explicitly says to
 commit.
 
-When the practitioner says to commit, ask for **one pasted approval for the
-day's whole list**, then write the entries **one at a time**. The request is
+When the practitioner says to commit, write the entries **one at a time**. No
+pasted approval is asked: the original evidence stays on file, and a note is
+not primary evidence, so a wrong write can be rebuilt. The request is
 `reference/TimeCampEntries.md`'s confirmed write, the `timecamp` connector's
 `update_entry` (entry id, the matter's TimeCamp `task_id`, the Step 5 note).
 Call the connector's `status` first: if it reports the API unusable, stop,
@@ -244,27 +245,16 @@ app to make the change instead.
    a child task." This rests on one refused write, to `PERSONAL` (#1097);
    every successful write so far went to a level-2 task. The entries left
    are the list.
-2. Call `update_entry` once for each entry on the list, with that entry's
-   exact request. The approval hook refuses each call and writes nothing; each
-   refusal holds that entry's block. **If any of these calls is not refused,
-   stop**: that entry was written, so re-read it, report it, and send nothing
-   further.
-3. Show the list in one message: for each entry, its id, date and time,
-   current task → new task (name and `task_id`) and the whole note, with the
-   refusal's bold warning above it. Below it put one fenced text block holding
-   every entry's first line from its refusal, in list order, then a single
-   `Modifications: NONE`, and ask the practitioner to paste that block back
-   once. A change to the list means redoing step 2 for the changed list: the
-   hook refuses a paste that carries written modifications. One paste covers
-   the entries on that list and no others.
-4. After the paste, for each entry in list order: call `update_entry` with the
-   same request, then re-fetch that date with the connector's `entries` and
+2. For each entry on the list, in order: call `update_entry` with its
+   request, then re-fetch that date with the connector's `entries` and
    compare the entry's `task_id` and `description` with what was sent. A
    non-200, or a re-read that does not match, stops the whole write-back:
    report it and send nothing further.
+3. Report each entry written: its id, date and time, old task → new task
+   (name and `task_id`) and the whole note.
 
-Any entry not approved stays in the dry-run report, which the practitioner
-can still apply by hand.
+Any entry skipped or not sent stays in the dry-run report, which the
+practitioner can still apply by hand.
 
 An uncovered proposal has no entry to write to, so it is never sent. The
 report lists every one under **Possible unbilled time** — matter, date,

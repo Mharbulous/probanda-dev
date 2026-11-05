@@ -9,7 +9,7 @@ dependencies:
   - time-sorting             # first-run handoff; reuses its TimeCamp task-tree sync rather than refetching
 ---
 
-<!-- timekeeper v0.8.3 -->
+<!-- timekeeper v0.8.4 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. Before each fresh read (a file not already in context), list only `${CLAUDE_SKILL_DIR}/../../..` (the folder holding this plugin's folder). If it holds this plugin's folder name, with any `~g<N>` suffix removed, plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if `${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session: take the highest `~g<N>` copy and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, authors or requests a screenshot of one, but may present one to a human user to view, staging it first where presenting needs that, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -23,7 +23,7 @@ dependencies:
 | Queries | The practitioner asks one of the listed questions. A Backfill reads `reference/backfill.md` |
 | A candidate list | `/bill-client` opened this skill, or the practitioner gave a matter's candidate-dates file |
 
-This skill deliberately carries no `disable-model-invocation` line: `/bill-client` opens it through the Skill tool, which refuses a skill carrying that line. It is a stated exception. Do not add the line back. It never starts a correction unasked: the bill starts only when the practitioner types it, and every `update_entry` still needs a pasted approval.
+This skill deliberately carries no `disable-model-invocation` line: `/bill-client` opens it through the Skill tool, which refuses a skill carrying that line. It is a stated exception. Do not add the line back. It never starts a correction unasked: the bill starts only when the practitioner types it, and nothing is written to TimeCamp until the practitioner says to commit (Step 7).
 
 # Timecamping
 
@@ -43,8 +43,8 @@ when, not hoping it holds back.
 
 ## Critical constraints
 
-- **No write-back without explicit, per-entry practitioner approval, ever**
-  — Step 7 is dry-run by default regardless of how confident a proposal is;
+- **No write-back until the practitioner explicitly says to commit, ever** —
+  Step 7 is dry-run by default regardless of how confident a proposal is;
   a silent *commit* (Step 6) is never a silent *write* (Step 7).
 - **The TimeCamp write-back is confirmed for matter + note only** (live,
   2026-09-22, `reference/TimeCampEntries.md`). Any other field
@@ -231,32 +231,34 @@ Produce a report of every proposal now ready to write back — silent commits
 included — and of every uncovered proposal, and **stop there** until the practitioner explicitly says to
 commit.
 
-When the practitioner says to commit, write **one entry at a time**, each
-with its own approval. The request is `reference/TimeCampEntries.md`'s
-confirmed write, the `timecamp` connector's `update_entry` (entry id, the
-matter's TimeCamp `task_id`, the Step 5 note). Call the connector's `status`
-first: if it reports the API unusable, stop, send nothing, and tell the
-practitioner its reason. Never open the TimeCamp web app to make the change
-instead. For each entry:
+When the practitioner says to commit, write the entries **one at a time**. No
+pasted approval is asked: the original evidence stays on file, and a note is
+not primary evidence, so a wrong write can be rebuilt. The request is
+`reference/TimeCampEntries.md`'s confirmed write, the `timecamp` connector's
+`update_entry` (entry id, the matter's TimeCamp `task_id`, the Step 5 note).
+Call the connector's `status` first: if it reports the API unusable, stop,
+send nothing, and tell the practitioner its reason. Never open the TimeCamp web
+app to make the change instead.
 
-1. Skip it and say so if it is `locked` = `"1"` (invoiced), or if its matter
+1. Skip an entry and say so if it is `locked` = `"1"` (invoiced), or if its matter
    does not resolve to exactly one TimeCamp `task_id` in the synced task
    tree. Also skip any proposal, from any rule, whose target task has
    `level` 1 in the synced task tree, with the reason: "Skipped: target task
    `<name>` (`<task_id>`) is a top-level project (level 1); TimeCamp's API
    refuses time on that level (403). Move it by hand in TimeCamp, or choose
    a child task." This rests on one refused write, to `PERSONAL` (#1097);
-   every successful write so far went to a level-2 task.
-2. Show the practitioner the exact request for this entry: entry id, date and
-   time, current task → new task (name and `task_id`), and the note. Send it
-   only on an explicit yes for this entry. Approval of one entry never covers
-   the next.
-3. Re-fetch that date with the connector's `entries` and compare the entry's
-   `task_id` and `description` with what was sent. A non-200, or a re-read that does not match, stops
-   the whole write-back: report it and send nothing further.
+   every successful write so far went to a level-2 task. The entries left
+   are the list.
+2. For each entry on the list, in order: call `update_entry` with its
+   request, then re-fetch that date with the connector's `entries` and
+   compare the entry's `task_id` and `description` with what was sent. A
+   non-200, or a re-read that does not match, stops the whole write-back:
+   report it and send nothing further.
+3. Report each entry written: its id, date and time, old task → new task
+   (name and `task_id`) and the whole note.
 
-Any entry not approved stays in the dry-run report, which the practitioner
-can still apply by hand.
+Any entry skipped or not sent stays in the dry-run report, which the
+practitioner can still apply by hand.
 
 An uncovered proposal has no entry to write to, so it is never sent. The
 report lists every one under **Possible unbilled time** — matter, date,

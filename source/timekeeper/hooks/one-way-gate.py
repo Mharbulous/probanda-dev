@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Hold timekeeper's one-way calls until the practitioner pastes the approval block.
 
-Hook event: PreToolUse, matcher mcp__.+time_pipeline__(delete|bulk_apply)$|mcp__.+timecamp__update_entry$.
+Hook event: PreToolUse, matcher mcp__.+time_pipeline__(delete|bulk_apply)$.
+TimeCamp's update_entry is not gated: its original evidence stays on file, so a wrong note can be
+rebuilt (practitioner decision, 2026-11-05).
 A bulk_apply is one-way only when it removes or replaces something. This hook cannot see the
 file or the store (in Cowork both are on another machine), so it goes by the counts in the call's
 `expect`, which the server produced in a preview and refuses to write against if they are wrong.
