@@ -58,7 +58,7 @@ What the stores show: [state]
 - The case-data root holds no `timecamping`, `triage-billing-dates`, `vet-billable-time` or `bill-client` working folder.
 - The matter files hold two candidate lists, last modified on 2026-11-03 and 2026-11-04. They hold no billable time audit, draft invoice, `vetted.json` or `judged-dates.jsonl`.
 
-So the run reached Phase 3's first save, the list, and the list reached this machine's matter files, which sync. Its evidence rows did not reach this machine's store, and no log of the session that wrote the list is here. Whether the session ran on another machine or another route, and whether it wrote rows to a store that never reached this one, these facts do not say. [inferred] Whether the two lists say anything about the save was not read: a keyword search of them had not returned when this file landed.
+So the run reached Phase 3's first save, the list, and the list reached this machine's matter files, which sync. Its evidence rows did not reach this machine's store, and no log of the session that wrote the list is here. Whether the session ran on another machine or another route, and whether it wrote rows to a store that never reached this one, these facts do not say. [inferred] A keyword search of the two lists found no mention of an evidence store, a held save, an approval or a superseded list. They were searched, not read through.
 
 Ruled out as a cause of a first save being held:
 
