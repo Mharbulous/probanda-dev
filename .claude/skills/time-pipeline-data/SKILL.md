@@ -1,7 +1,7 @@
 ---
 name: time-pipeline-data
 user-invocable: false
-description: Sole gatekeeper for the time-pipeline key-value store (timeline/timesort/tedraft/evidence namespaces).
+description: Sole gatekeeper for the time-pipeline key-value store (timeline/timesort/tedraft/evidence/bill namespaces).
 ---
 
 ## Contents
@@ -78,7 +78,7 @@ Call it twice. `preview: true` does the work, rolls it back and returns `{ lines
 
 ## Namespaces
 
-Four namespaces exist today, each owned by exactly one consumer skill for
+Five namespaces exist today, each owned by exactly one consumer skill for
 writes (any skill may `get`/`list` another skill's namespace when its own
 workflow legitimately needs to read it — e.g. time-sorting reads `timeline`):
 
@@ -88,6 +88,9 @@ workflow legitimately needs to read it — e.g. time-sorting reads `timeline`):
 | `timesort` | time-sorting | Classified day objects, project tree, corrections |
 | `tedraft` | time-entry-drafting | Draft entries, UTBMS metadata, description patterns |
 | `evidence` | timecamping-data, whose table names each family's writer | Billing evidence with no table of its own |
+| `bill` | bill-client | A bill in progress: its state and each step's completion |
+
+`bill-client` and `issue-invoice` ship in `lawyer`, which names nothing in this plugin, so they call the `time_pipeline__*` tools directly for `bill` instead of invoking this skill. They use `set`, `get` and `list` only.
 
 ## Conventions
 
@@ -131,8 +134,8 @@ workflow legitimately needs to read it — e.g. time-sorting reads `timeline`):
 - **Treating a `get` miss as an error.** An absent key returns
   `{ value: null }`; that is the normal "not yet fetched/sorted/drafted"
   state, not a failure to handle specially.
-- **Inventing a namespace outside the three above** without updating this
-  file. A fourth namespace is a routing decision, not something a consumer
+- **Inventing a namespace outside the five above** without updating this
+  file. A new namespace is a routing decision, not something a consumer
   skill decides unilaterally.
 - **Reading another skill's namespace to derive facts that skill already
   computes.** For example, deriving "is this day sorted" by hand from
