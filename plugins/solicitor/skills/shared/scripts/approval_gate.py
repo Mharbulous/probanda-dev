@@ -2,7 +2,7 @@
 
     return approval_gate.check(payload)   # in a PreToolUse hook on a one-way tool
 
-A one-way call (sending, filing, deleting or merging records, changing a time entry, writing
+A one-way call (sending, filing, deleting or merging records, writing
 into a PDF) passes only on the practitioner's pasted approval. With none, the gate refuses and
 its refusal carries the call's hash: sha256 of the tool name, its canonical-JSON arguments and
 the sha256 of every file an argument names (never a database file, whose unrelated writes would
@@ -56,7 +56,7 @@ ACTS = {
     "time_pipeline__bulk_apply": "update {store} so it can be {use}, {changes}, in the {store} on this computer. "
                                  "The old values are not kept",
     "update_entry": "move TimeCamp entry {entry_id} to task {task_id} and replace its note with \"{note}\", to correct "
-                    "the time record. The old task and note are not kept",
+                    "the time record",
     "comment_pdf": "write {count} comment(s) on page(s) {pages} into the PDF {file_name}, so they stay with the "
                    "document. They become part of the file",
     "troubleshoot__record": "add this entry to Probanda's shared store, where other Probanda users can read it: "
@@ -70,6 +70,10 @@ REVERSIBLE = {
         "understand": "They can be recovered from Trash, but the mail server may empty Trash on its own schedule.",
         "warning": "**This step moves email to Trash: it can be recovered from there until the mail server empties "
                    "Trash on its own schedule.**",
+    },
+    "update_entry": {
+        "understand": "It can be undone by changing the entry back.",
+        "warning": "**This step changes the time record in TimeCamp: it can be changed back.**",
     },
 }
 # What each part of the time store holds and what it is for, in the practitioner's words.

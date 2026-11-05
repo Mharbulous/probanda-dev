@@ -391,6 +391,31 @@ def test_a_dedupe_move_from_a_subagent_is_refused(tmp_path):
     assert reason and "subagent" in reason
 
 
+def test_a_time_entry_change_says_it_can_be_changed_back_never_one_way(tmp_path):
+    tool = "mcp__plugin_timekeeper_timecamp__update_entry"
+    call = {"entry_id": "e5", "task_id": "t6", "note": "Call re motion"}
+    s = Session(tmp_path)
+    s.say("Correct that entry.")
+    reason = s.gate(name=tool, tool_input=call, plugin="timekeeper")
+    block = block_of(reason)
+    assert "It can be undone by changing the entry back." in block
+    assert "**This step changes the time record in TimeCamp: it can be changed back.**" in reason
+    for wording in ("one-way", "irreversible", "costly to reverse", "The old task and note are not kept"):
+        assert wording not in reason
+    s.say(block)
+    assert s.gate(name=tool, tool_input=call, plugin="timekeeper") is None
+
+
+def test_a_sent_record_still_says_one_way(tmp_path):
+    s = Session(tmp_path)
+    s.say("Record it as sent.")
+    reason = s.gate(name="mcp__plugin_lawyer_data__drafting_data__record_sent",
+                    tool_input={"db_path": "m.db", "filing_id": 4, "sent_on": "2026-10-28", "expect_revision": 3},
+                    plugin="litigator")
+    assert "**This step is a one-way door: easy to pass through and costly to reverse.**" in reason
+    assert "I understand it is one-way and irreversible." in reason
+
+
 def test_an_existing_acts_wording_is_unchanged(tmp_path):
     s = Session(tmp_path)
     s.say("Delete that anchor.")
