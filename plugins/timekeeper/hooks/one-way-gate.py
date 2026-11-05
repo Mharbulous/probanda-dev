@@ -2,11 +2,13 @@
 """Hold timekeeper's one-way calls until the practitioner pastes the approval block.
 
 Hook event: PreToolUse, matcher mcp__.+time_pipeline__(delete|bulk_apply)$|mcp__.+timecamp__update_entry$.
-A bulk_apply is one-way only when its file carries a delete or delete_prefix line; any other
-passes. The rules are shared/scripts/approval_gate.py's. Refuses by a JSON permissionDecision
-on stdout, exit 0; allows by exiting 0 silently. Fails CLOSED on its own error.
+A bulk_apply is one-way only when it removes or replaces something. This hook cannot see the
+file or the store (in Cowork both are on another machine), so it goes by the counts in the call's
+`expect`, which the server produced in a preview and refuses to write against if they are wrong.
+A preview writes nothing and passes. The rules are shared/scripts/approval_gate.py's. Refuses by
+a JSON permissionDecision on stdout, exit 0; allows by exiting 0 silently. Fails CLOSED on its
+own error.
 """
-import json
 import sys
 from pathlib import Path
 
@@ -21,29 +23,26 @@ except Exception as exc:  # a crash would let the call through
     sys.stderr.write(f"Refused: one-way-gate cannot load its helper: {exc!r}\n")
     sys.exit(2)
 
-DELETES = {"delete", "delete_prefix"}
+PREVIEW_FIRST = ("Refused: call this tool with preview true first, then call it again with the counts the "
+                 "preview returned as expect. Nothing was written.")
 
 
-def deletes(path):
-    """Whether a bulk_apply file holds a delete line. A file that cannot be read is gated."""
-    try:
-        lines = Path(path).read_text(encoding="utf-8").splitlines()
-    except (OSError, ValueError, TypeError):
-        return True
-    for line in lines:
-        try:
-            if line.strip() and json.loads(line).get("op") in DELETES:
-                return True
-        except (ValueError, AttributeError):
-            return True
-    return False
+def whole_counts(expect):
+    return isinstance(expect, dict) and all(
+        type(expect.get(count)) is int and expect[count] >= 0 for count in ("added", "replaced", "removed"))
 
 
 def main():
     payload = hook_io.payload()
-    if (payload.get("tool_name") or "").endswith("time_pipeline__bulk_apply") and \
-            not deletes((payload.get("tool_input") or {}).get("path")):
-        return 0
+    if (payload.get("tool_name") or "").endswith("time_pipeline__bulk_apply"):
+        tool_input = payload.get("tool_input") or {}
+        if tool_input.get("preview") is True:
+            return 0
+        expect = tool_input.get("expect")
+        if not whole_counts(expect):
+            return hook_io.deny(PREVIEW_FIRST)
+        if not expect["replaced"] and not expect["removed"]:
+            return 0
     return approval_gate.check(payload)
 
 

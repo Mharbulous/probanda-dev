@@ -7,7 +7,10 @@ into a PDF) passes only on the practitioner's pasted approval. With none, the ga
 its refusal carries the call's hash: sha256 of the tool name, its canonical-JSON arguments and
 the sha256 of every file an argument names (never a database file, whose unrelated writes would
 void the approval). The refusal tells the model to show a bold one-way-door warning and a block
-whose first line names the act in plain words (first_line, from ACTS and the call's arguments).
+whose first line states in plain words what the act does, why, and why it cannot be undone
+(first_line, from ACTS and the call's arguments). It names no file path, tool or field: the hash
+binds those. In Cowork a hook cannot see the practitioner's files, so what a block says about a
+file's content comes from counts the server produced and verifies (time_pipeline__bulk_apply).
 
 A retry passes only when all of these hold, read from the harness transcript, which the session
 cannot write:
@@ -36,16 +39,26 @@ import transcript
 PREFIX = "By cutting and pasting this message I approve"
 # One plain sentence per gated tool, keyed by the end of its name, filled from the call's arguments.
 ACTS = {
-    "record_filed": "record Writing {filing_id} as filed on {filed_on}, in the database {db_path}",
-    "record_sent": "record Writing {filing_id} as sent on {sent_on}, in the database {db_path}{sent_copy}{waiver}",
-    "record_served": "record Writing {filing_id} as served on {served_on}, in the database {db_path}",
-    "delete_anchor": "delete anchor {anchor_id} and its sources and derived deadlines",
-    "merge_contact": "merge contact {spare_id} into contact {keep_id}, deleting contact {spare_id}",
-    "issue_invoice": "record invoice {invoice_number} for {amount} as issued, locking its lines and time entries",
-    "time_pipeline__delete": "delete the key {key} from the time-pipeline namespace {namespace}",
-    "time_pipeline__bulk_apply": "apply the writes in {path}, which include deletes, to the time-pipeline namespace {namespace}",
-    "update_entry": "move TimeCamp entry {entry_id} to task {task_id} and replace its note with \"{note}\"",
-    "comment_pdf": "write {count} comment(s) on page(s) {pages} into the PDF {path}",
+    "record_filed": "record Writing {filing_id} as filed on {filed_on}, in the drafting records of {matter}, "
+                    "so the file shows when it was filed. Later steps rely on that record",
+    "record_sent": "record Writing {filing_id} as sent on {sent_on}, in the drafting records of {matter}{sent_copy}{waiver}, "
+                   "so the file shows when it was sent. Later steps rely on that record",
+    "record_served": "record Writing {filing_id} as served on {served_on}, in the drafting records of {matter}, "
+                     "so the file shows when it was served. Later steps rely on that record",
+    "delete_anchor": "delete anchor {anchor_id} and its sources and derived deadlines, so those dates stop being "
+                     "tracked. The deleted dates are not kept",
+    "merge_contact": "merge contact {spare_id} into contact {keep_id}, deleting contact {spare_id}, so the person has "
+                     "one record. The deleted contact is not kept",
+    "issue_invoice": "record invoice {invoice_number} for {amount} as issued, locking its lines and time entries, so "
+                     "the bill's record is fixed. The lock is not lifted afterwards",
+    "time_pipeline__delete": "delete the item {key} from the {store} on this computer, so it is no longer used. "
+                             "The deleted value is not kept",
+    "time_pipeline__bulk_apply": "update {store} so it can be {use}, {changes}, in the {store} on this computer. "
+                                 "The old values are not kept",
+    "update_entry": "move TimeCamp entry {entry_id} to task {task_id} and replace its note with \"{note}\", to correct "
+                    "the time record. The old task and note are not kept",
+    "comment_pdf": "write {count} comment(s) on page(s) {pages} into the PDF {file_name}, so they stay with the "
+                   "document. They become part of the file",
     "troubleshoot__record": "add this entry to Probanda's shared store, where other Probanda users can read it: "
                             "symptom \"{symptom}\", cause \"{cause}\", fix \"{fix}\"",
     "dedupe_apply": "move {expected_count} duplicate email copies, listed in plan {plan_id}, to Trash",
@@ -59,6 +72,14 @@ REVERSIBLE = {
                    "Trash on its own schedule.**",
     },
 }
+# What each part of the time store holds and what it is for, in the practitioner's words.
+TIME_STORES = {
+    "timeline": ("activity history", "used to build your time records"),
+    "timesort": ("sorted days", "used to draft your time entries"),
+    "tedraft": ("draft time entries", "reviewed before you bill"),
+    "evidence": ("billing evidence", "checked when you bill"),
+}
+OTHER_TIME_STORE = ("time records", "used in your time work")
 MARKER = re.compile(r"\[approval-gate act=([0-9a-f]{64})\]")
 MODIFICATIONS = re.compile(r"modifications:(.*)", re.I | re.S)
 DATABASE_SUFFIXES = {".db", ".sqlite", ".sqlite3"}
@@ -85,6 +106,25 @@ def call_hash(name, tool_input):
     return digest.hexdigest()
 
 
+def path_parts(path):
+    """A path's parts, whichever machine's separators it holds: the hook may run on Linux while the
+    path is the practitioner's Windows one."""
+    return re.split(r"[\\/]", path or "")
+
+
+def matter(db_path):
+    """A drafting database's folder, which is the matter's case-data folder."""
+    parts = path_parts(db_path)
+    return parts[-2] if len(parts) > 1 and parts[-2] else "this matter"
+
+
+def changes(expect):
+    """A bulk write's counts in words, leaving out any that are zero."""
+    return ", ".join(f"{verb} {expect[count]} {noun}" for count, verb, noun in (
+        ("added", "adding", "new item(s)"), ("replaced", "replacing", "existing item(s)"), ("removed", "removing", "item(s)"),
+    ) if expect.get(count))
+
+
 def first_line(name, tool_input):
     """The approval's first line, naming the act this call performs. Raises for a gated tool with no
     sentence or a call missing a field, which the hook turns into a refusal."""
@@ -92,9 +132,15 @@ def first_line(name, tool_input):
     if key is None:
         raise ValueError(f"no act sentence for {name}")
     comments = tool_input.get("comments") or []
+    store, use = TIME_STORES.get(tool_input.get("namespace"), OTHER_TIME_STORE)
     fields = {
         **{k: " ".join(v.split()) if isinstance(v, str) else v for k, v in tool_input.items()},
-        "sent_copy": (f", with the sent copy {tool_input['sent_copy_path']}" if tool_input.get("sent_copy_path") else
+        "matter": matter(tool_input.get("db_path")),
+        "file_name": path_parts(tool_input.get("path"))[-1],
+        "store": store,
+        "use": use,
+        "changes": changes(tool_input.get("expect") or {}),
+        "sent_copy": (f", with the sent copy {path_parts(tool_input['sent_copy_path'])[-1]}" if tool_input.get("sent_copy_path") else
                       ", with pasted text as the sent copy" if tool_input.get("sent_copy_text") else ""),
         "waiver": ", waiving the pre-send hold" if tool_input.get("send_anyway") else "",
         "count": len(comments),

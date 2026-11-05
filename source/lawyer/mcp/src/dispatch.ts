@@ -214,7 +214,8 @@ export const dataTools: Tool<DispatchContext>[] = [
     timePipelineSet(args.namespace, args.key, args.value)),
   defineTool("time_pipeline__list", (args: { namespace: string; prefix?: string }) => timePipelineList(args.namespace, args.prefix)),
   defineTool("time_pipeline__delete", (args: { namespace: string; key: string }) => timePipelineDelete(args.namespace, args.key)),
-  defineTool("time_pipeline__bulk_apply", (args: { namespace: string; path: string }) => timePipelineBulkApply(args.namespace, args.path)),
+  defineTool("time_pipeline__bulk_apply", (args: { namespace: string; path: string } & Parameters<typeof timePipelineBulkApply>[2]) =>
+    timePipelineBulkApply(args.namespace, args.path, args)),
   defineTool("time_pipeline__export", (args: { namespace: string; prefix?: string; path: string }) =>
     timePipelineExport(args.namespace, args.prefix, args.path)),
 

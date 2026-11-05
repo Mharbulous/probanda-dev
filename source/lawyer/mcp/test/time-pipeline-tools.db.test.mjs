@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -13,6 +14,7 @@ const {
   timePipelineBulkApply,
   timePipelineExport,
 } = await import("../build/time-pipeline/backend.js");
+const { callTool } = await import("../build/dispatch.js");
 
 function fixture(t) {
   const scratch = mkdtempSync(join(tmpdir(), "coclerk-time-pipeline-"));
@@ -116,6 +118,15 @@ function jsonl(t, lines) {
   return jsonlFile(t, lines.map((l) => JSON.stringify(l)).join("\n") + "\n");
 }
 
+function previewThenApply(namespace, path, env) {
+  const { added, replaced, removed, file_sha256 } = timePipelineBulkApply(namespace, path, { preview: true }, env);
+  return timePipelineBulkApply(namespace, path, { expect: { added, replaced, removed, file_sha256 } }, env);
+}
+
+function sha256(text) {
+  return createHash("sha256").update(text).digest("hex");
+}
+
 test("bulk_apply writes every set line in one call, and blank lines are ignored", (t) => {
   const f = fixture(t);
   const p = jsonlFile(
@@ -126,8 +137,11 @@ test("bulk_apply writes every set line in one call, and blank lines are ignored"
       "\n",
   );
 
-  const counts = timePipelineBulkApply("timeline", p, f.env);
-  assert.deepEqual(counts, { lines: 2, sets: 2, deletes: 0, merges: 0, deleted_by_prefix: 0 });
+  const counts = previewThenApply("timeline", p, f.env);
+  assert.deepEqual(counts, {
+    lines: 2, sets: 2, deletes: 0, merges: 0, deleted_by_prefix: 0,
+    added: 2, replaced: 0, removed: 0, file_sha256: sha256(readFileSync(p)), applied: true,
+  });
   assert.deepEqual(timePipelineGet("timeline", "activity:chrometa:a", f.env), { value: '{"id":"a"}' });
   assert.deepEqual(timePipelineGet("timeline", "activity:chrometa:b", f.env), { value: "2" });
 });
@@ -140,7 +154,7 @@ test("delete_prefix removes only matching keys, stays inside its namespace, and 
   timePipelineSet("timeline", "activity:chrometaXX:d", "4", f.env);
   timePipelineSet("timesort", "activity:chrometa:a", "other-namespace", f.env);
 
-  const counts = timePipelineBulkApply(
+  const counts = previewThenApply(
     "timeline",
     jsonl(t, [{ op: "delete_prefix", prefix: "activity:chrometa:" }]),
     f.env,
@@ -153,7 +167,7 @@ test("delete_prefix removes only matching keys, stays inside its namespace, and 
 
   // `_` is a SQL wildcard unless escaped: `activity:chrometa_` must not match
   // `activity:chrometaXX:d`.
-  const literal = timePipelineBulkApply(
+  const literal = previewThenApply(
     "timeline",
     jsonl(t, [{ op: "delete_prefix", prefix: "activity:chrometa_" }]),
     f.env,
@@ -171,7 +185,7 @@ test("merge keeps another source's ids, drops its own, de-duplicates, and create
     f.env,
   );
 
-  const counts = timePipelineBulkApply(
+  const counts = previewThenApply(
     "timeline",
     jsonl(t, [
       {
@@ -203,7 +217,7 @@ test("a merge that empties an index deletes the key rather than storing []", (t)
   const f = fixture(t);
   timePipelineSet("timeline", "index:activity:by-date:2019-01-05", '["chrometa:gone"]', f.env);
 
-  timePipelineBulkApply(
+  previewThenApply(
     "timeline",
     jsonl(t, [
       { op: "merge", key: "index:activity:by-date:2019-01-05", add: [], drop_prefix: "chrometa:" },
@@ -228,7 +242,7 @@ test("a malformed line rolls the whole file back and the error names the line nu
       "\nnot json at all\n",
   );
 
-  assert.throws(() => timePipelineBulkApply("timeline", p, f.env), /line 3/);
+  assert.throws(() => previewThenApply("timeline", p, f.env), /line 3/);
   assert.deepEqual(timePipelineGet("timeline", "activity:chrometa:x", f.env), { value: null });
   assert.deepEqual(timePipelineGet("timeline", "activity:chrometa:keep", f.env), { value: "before" });
 });
@@ -236,14 +250,14 @@ test("a malformed line rolls the whole file back and the error names the line nu
 test("an unknown op, a non-array merge target, and a missing file each fail clearly", (t) => {
   const f = fixture(t);
   assert.throws(
-    () => timePipelineBulkApply("timeline", jsonl(t, [{ op: "upsert", key: "k", value: "v" }]), f.env),
+    () => previewThenApply("timeline", jsonl(t, [{ op: "upsert", key: "k", value: "v" }]), f.env),
     /unknown op/,
   );
 
   timePipelineSet("timeline", "index:activity:by-date:2019-07-02", '{"not":"an array"}', f.env);
   assert.throws(
     () =>
-      timePipelineBulkApply(
+      previewThenApply(
         "timeline",
         jsonl(t, [{ op: "merge", key: "index:activity:by-date:2019-07-02", add: ["chrometa:a"] }]),
         f.env,
@@ -252,7 +266,7 @@ test("an unknown op, a non-array merge target, and a missing file each fail clea
   );
 
   assert.throws(
-    () => timePipelineBulkApply("timeline", join(tmpdir(), "coclerk-no-such-bulk-file.jsonl"), f.env),
+    () => previewThenApply("timeline", join(tmpdir(), "coclerk-no-such-bulk-file.jsonl"), f.env),
     /file not found/,
   );
 });
@@ -272,7 +286,7 @@ test("delete_prefix then set in one file is the Chrometa replace-and-insert shap
   timePipelineSet("timeline", "activity:chrometa:old", "stale", f.env);
   timePipelineSet("timeline", "config:timecamp_token", "keep-me", f.env);
 
-  const counts = timePipelineBulkApply(
+  const counts = previewThenApply(
     "timeline",
     jsonl(t, [
       { op: "delete_prefix", prefix: "activity:chrometa:" },
@@ -282,10 +296,93 @@ test("delete_prefix then set in one file is the Chrometa replace-and-insert shap
     f.env,
   );
 
-  assert.deepEqual(counts, { lines: 3, sets: 1, deletes: 1, merges: 0, deleted_by_prefix: 1 });
+  assert.equal(counts.lines, 3);
+  assert.equal(counts.sets, 1);
+  assert.equal(counts.deletes, 1);
+  assert.equal(counts.deleted_by_prefix, 1);
   assert.deepEqual(timePipelineGet("timeline", "activity:chrometa:old", f.env), { value: null });
   assert.deepEqual(timePipelineGet("timeline", "activity:chrometa:fresh", f.env), { value: '{"id":"fresh"}' });
   assert.deepEqual(timePipelineGet("timeline", "config:timecamp_token", f.env), { value: "keep-me" });
+});
+
+test("a preview reports the net effect, writes nothing, and the apply it describes does what it said", (t) => {
+  const f = fixture(t);
+  timePipelineSet("timeline", "same", "1", f.env);
+  timePipelineSet("timeline", "changed", "old", f.env);
+  timePipelineSet("timeline", "gone", "1", f.env);
+  timePipelineSet("timeline", "prefix:a", "1", f.env);
+  timePipelineSet("timeline", "prefix:b", "1", f.env);
+  timePipelineSet("timeline", "index", '["x:1","y:1"]', f.env);
+  timePipelineSet("timesort", "gone", "another namespace is not counted", f.env);
+  const p = jsonl(t, [
+    { op: "set", key: "same", value: "1" }, // an identical value loses nothing, so it is not a replacement
+    { op: "set", key: "changed", value: "new" },
+    { op: "set", key: "new", value: "1" },
+    { op: "delete", key: "gone" },
+    { op: "delete", key: "never-existed" },
+    { op: "delete_prefix", prefix: "prefix:" },
+    { op: "merge", key: "index", add: ["x:2"], drop_prefix: "x:" },
+    { op: "set", key: "brief", value: "1" }, // added then removed in one file: no net effect
+    { op: "delete", key: "brief" },
+  ]);
+  const before = timePipelineList("timeline", "", f.env).items;
+
+  const preview = timePipelineBulkApply("timeline", p, { preview: true }, f.env);
+  assert.equal(preview.added, 1);
+  assert.equal(preview.replaced, 2);
+  assert.equal(preview.removed, 3);
+  assert.equal(preview.file_sha256, sha256(readFileSync(p)));
+  assert.equal(preview.applied, false);
+  assert.deepEqual(timePipelineList("timeline", "", f.env).items, before);
+
+  const { added, replaced, removed, file_sha256 } = preview;
+  const applied = timePipelineBulkApply("timeline", p, { expect: { added, replaced, removed, file_sha256 } }, f.env);
+  assert.deepEqual({ ...applied, applied: false }, preview);
+  assert.equal(applied.applied, true);
+  assert.deepEqual(timePipelineGet("timeline", "changed", f.env), { value: "new" });
+  assert.deepEqual(timePipelineGet("timeline", "gone", f.env), { value: null });
+});
+
+test("an apply whose counts or fingerprint differ from the file's writes nothing", (t) => {
+  const f = fixture(t);
+  timePipelineSet("timeline", "k", "old", f.env);
+  const p = jsonl(t, [{ op: "set", key: "k", value: "new" }, { op: "delete_prefix", prefix: "other:" }]);
+  const right = { added: 0, replaced: 1, removed: 0, file_sha256: sha256(readFileSync(p)) };
+  for (const wrong of [{ added: 1 }, { replaced: 0 }, { removed: 1 }, { file_sha256: "0".repeat(64) }]) {
+    assert.throws(
+      () => timePipelineBulkApply("timeline", p, { expect: { ...right, ...wrong } }, f.env),
+      /nothing was written/,
+    );
+    assert.deepEqual(timePipelineGet("timeline", "k", f.env), { value: "old" });
+  }
+  // The file changing after its preview is the same refusal.
+  writeFileSync(p, JSON.stringify({ op: "delete", key: "k" }) + "\n", "utf-8");
+  assert.throws(() => timePipelineBulkApply("timeline", p, { expect: right }, f.env), /nothing was written/);
+  assert.deepEqual(timePipelineGet("timeline", "k", f.env), { value: "old" });
+});
+
+test("bulk_apply takes exactly one of preview and expect", (t) => {
+  const f = fixture(t);
+  const p = jsonl(t, [{ op: "set", key: "k", value: "1" }]);
+  const expect = { added: 1, replaced: 0, removed: 0, file_sha256: sha256(readFileSync(p)) };
+  assert.throws(() => timePipelineBulkApply("timeline", p, {}, f.env), /preview or expect/);
+  assert.throws(() => timePipelineBulkApply("timeline", p, { preview: true, expect }, f.env), /preview or expect/);
+  assert.deepEqual(timePipelineGet("timeline", "k", f.env), { value: null });
+});
+
+test("the tool takes preview then expect through dispatch", async (t) => {
+  const f = fixture(t);
+  const dbPath = join(f.root, "tool.db");
+  process.env.COCLERK_TIME_PIPELINE_DB_PATH = dbPath;
+  t.after(() => delete process.env.COCLERK_TIME_PIPELINE_DB_PATH);
+  const path = jsonl(t, [{ op: "set", key: "k", value: "1" }]);
+  const call = { namespace: "timeline", path };
+
+  await assert.rejects(callTool({}, "time_pipeline__bulk_apply", call), /preview or expect/);
+  const { added, replaced, removed, file_sha256 } = await callTool({}, "time_pipeline__bulk_apply", { ...call, preview: true });
+  assert.equal(timePipelineGet("timeline", "k", { ...f.env, COCLERK_TIME_PIPELINE_DB_PATH: dbPath }).value, null);
+  await callTool({}, "time_pipeline__bulk_apply", { ...call, expect: { added, replaced, removed, file_sha256 } });
+  assert.equal(timePipelineGet("timeline", "k", { ...f.env, COCLERK_TIME_PIPELINE_DB_PATH: dbPath }).value, "1");
 });
 
 // --- export -----------------------------------------------------------------
@@ -349,8 +446,9 @@ test("an exported file re-applies through bulk_apply into a fresh namespace byte
 
   const first = exportPath(t, "first.jsonl");
   assert.equal(timePipelineExport("timeline", "activity:gcal:", first, f.env).items, 3);
-  const counts = timePipelineBulkApply("timesort", first, f.env);
-  assert.deepEqual(counts, { lines: 3, sets: 3, deletes: 0, merges: 0, deleted_by_prefix: 0 });
+  const counts = previewThenApply("timesort", first, f.env);
+  assert.equal(counts.sets, 3);
+  assert.equal(counts.added, 3);
   for (const [key, value] of Object.entries(values)) {
     assert.deepEqual(timePipelineGet("timesort", key, f.env), { value });
   }

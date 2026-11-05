@@ -277,7 +277,7 @@ test("a time-pipeline bulk_apply killed mid-transaction leaves the database unch
   for (let i = 0; i < 40000; i++) lines.push(JSON.stringify({ op: "merge", key: "index", add: [`id-${i}`] }));
   const file = join(f.scratch, "bulk.jsonl");
   writeFileSync(file, lines.join("\n"), "utf-8");
-  assert.throws(() => timePipelineBulkApply("timeline", file, { ...f.env, [TIME_PIPELINE_VAR]: "3000" }), isWriteTimeout);
+  assert.throws(() => timePipelineBulkApply("timeline", file, { preview: true }, { ...f.env, [TIME_PIPELINE_VAR]: "3000" }), isWriteTimeout);
   assert.deepEqual(timePipelineList("timeline", "", f.env).items, [{ key: "before", value: "\"kept\"" }]);
 });
 

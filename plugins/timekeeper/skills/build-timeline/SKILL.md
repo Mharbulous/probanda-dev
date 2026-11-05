@@ -293,8 +293,8 @@ once per date. For each source fetched:
    line with `drop_prefix` `{source}:` and `add` the ids that index should hold
    from this source.
 
-Then apply the file once. A first fetch of a date has no `delete` line, so it
-asks for no approval.
+Then apply the file once. It asks for approval unless it only adds new keys, so
+a fetch that changes an index already stored asks too.
 
 The practical effect: re-fetching Telus for 2026-04-15 wipes only Telus rows
 in that date; TimeCamp and GCal rows for the same day are untouched.

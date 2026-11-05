@@ -24,7 +24,8 @@
 
 import { join } from "node:path";
 
-import { isKvRead, type KvOp, type KvRequest, runKv } from "../kv/backend.js";
+import { ValidationError } from "../errors.js";
+import { type BulkApplyExpect, isKvRead, type KvOp, type KvRequest, runKv } from "../kv/backend.js";
 import { resolveCaseDataRoot } from "../practice/backend.js";
 import { EXECUTE_TIMEOUT_MS, pythonTimeoutMs, READ_TIMEOUT_MS, WRITE_TIMEOUT_MS } from "../python-timeout.js";
 
@@ -45,6 +46,11 @@ export interface BulkApplyCounts {
   deletes: number;
   merges: number;
   deleted_by_prefix: number;
+  added: number;
+  replaced: number;
+  removed: number;
+  file_sha256: string;
+  applied: boolean;
 }
 
 /** Issue #693. bulk_apply is the ~58k-row Chrometa import in one transaction: killing a slow but
@@ -112,13 +118,20 @@ export function timePipelineDelete(
 // the Chrometa historical import is ~58k rows / ~25 MB, which fits neither an
 // argument payload nor an agent loop of one `set` call per row. The helper
 // reads the file itself and applies every line in a single transaction.
+// `preview` rolls that transaction back and reports what it would do; `expect`
+// carries those numbers back and commits only if they still hold. The approval
+// gate is a hook that cannot see this machine in Cowork, so these are its only facts.
 export function timePipelineBulkApply(
   namespace: string,
   path: string,
+  mode: { preview?: boolean; expect?: BulkApplyExpect },
   env: NodeJS.ProcessEnv = process.env
 ): BulkApplyCounts {
+  if ((mode.preview === true) === (mode.expect !== undefined)) {
+    throw new ValidationError("time_pipeline__bulk_apply takes preview or expect, not both and not neither");
+  }
   const db_path = resolveTimePipelineDbPath(env);
-  return runHelper({ op: "bulk_apply", db_path, namespace, path }, env) as unknown as BulkApplyCounts;
+  return runHelper({ op: "bulk_apply", db_path, namespace, path, expect: mode.expect }, env) as unknown as BulkApplyCounts;
 }
 
 // The read twin of bulk_apply: a whole prefix (a source's full history can run

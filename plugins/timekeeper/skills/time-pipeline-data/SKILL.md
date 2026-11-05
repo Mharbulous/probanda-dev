@@ -43,7 +43,7 @@ the skill never sees SQL, schema, or the database path.
 | set | `time_pipeline__set` | `namespace`, `key`, `value`. Overwrites any existing value at that key. |
 | list | `time_pipeline__list` | `namespace`, optional `prefix`. Prefix scan within one namespace only, sorted by key; omit `prefix` to list the whole namespace. |
 | delete | `time_pipeline__delete` | `namespace`, `key`. Returns `{ ok: true, deleted: false }` when the key was already absent. |
-| bulk apply | `time_pipeline__bulk_apply` | `namespace`, `path`. Applies a whole file of writes in one transaction. See below. |
+| bulk apply | `time_pipeline__bulk_apply` | `namespace`, `path`, then `preview` or `expect`. Applies a whole file of writes in one transaction. See below. |
 | export | `time_pipeline__export` | `namespace`, `path`, optional `prefix`. Writes every key under the prefix to a file of bulk-apply `set` lines. See Export, below. |
 
 ## Bulk apply
@@ -74,7 +74,9 @@ another consumer's entries. `merge` lets a caller replace only its own.
 Failures are hard and nothing partial is written: a missing file, a line that
 is not valid JSON, an unrecognised `op`, or a `merge` target that does not hold
 a JSON array of strings aborts the call before the commit and names the line
-number. On success it returns `{ lines, sets, deletes, merges, deleted_by_prefix }`.
+number.
+
+Call it twice. `preview: true` does the work, rolls it back and returns `{ lines, sets, deletes, merges, deleted_by_prefix, added, replaced, removed, file_sha256, applied: false }`. The second call passes `expect: { added, replaced, removed, file_sha256 }` from that reply, and commits only if they still match the file and the store. On a mismatch nothing is written: preview again. A second call that replaces or removes anything waits for the practitioner's pasted approval and cannot run from a subagent. One that only adds does not wait.
 
 **Export.** `export` is bulk apply's read twin. It writes every `(key, value)` in the namespace whose key starts with `prefix` (matched literally; omit it for the whole namespace) to the JSONL file at `path`, an absolute path on this machine, sorted by key, one `{"op":"set","key":...,"value":...}` line per key. It creates the file's parent directory, overwrites any file already there, and returns `{ items, path }`. The file re-applies with `bulk_apply` as it stands. Use it when a consumer needs many stored values in a file rather than in its context. The file holds every value verbatim, so never export a prefix that takes in `config:` keys (a store set up before the timecamp connector may still hold a TimeCamp token there) to a shared or synced location.
 

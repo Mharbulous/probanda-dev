@@ -132,7 +132,7 @@ python scripts/chrometa_to_jsonl.py --out {path}.jsonl
 
 It prints a JSON summary carrying every number the Logging section below asks for. On the current export that is 57,979 rows read, 2 footer rows skipped, 124 duplicates collapsed, 57,853 activities, 277 dates with rows, 36 cross-midnight activities, and 58,313 lines written (about 43 MB).
 
-**Step 2 — apply it.** Invoke `time-pipeline-data` with the `bulk apply` operation, `namespace: "timeline"` and `path` set to the file from step 1. It applies every line in one transaction. `deleted_by_prefix` in the result is 0 on a first run and 57,853 on a re-run, which is what distinguishes "all new" from "all replaced" in the summary.
+**Step 2 — apply it.** Invoke `time-pipeline-data` with the `bulk apply` operation, `namespace: "timeline"` and `path` set to the file from step 1. It previews, then applies every line in one transaction. `deleted_by_prefix` in the result is 0 on a first run and 57,853 on a re-run, which is what distinguishes "all new" from "all replaced" in the summary.
 
 The file's own lines carry the whole plan: one `delete_prefix` on `activity:chrometa:` that replaces Step 4's by-source walk outright, then the rows, then this source's own by-source index, then one `merge` line per local date in the fixed window, then the two `source:chrometa:*` metadata keys.
 

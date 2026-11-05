@@ -17,7 +17,8 @@ HOOKS = {plugin: REPO / "source" / plugin / "hooks" / "one-way-gate.py"
 TOOL = "mcp__plugin_lawyer_data__practice_data__delete_anchor"
 ARGS = {"anchor_id": 7}
 FIRST_LINE = ("By cutting and pasting this message I approve this step: delete anchor 7 and its sources and "
-              "derived deadlines. I understand it is one-way and irreversible.")
+              "derived deadlines, so those dates stop being tracked. The deleted dates are not kept. "
+              "I understand it is one-way and irreversible.")
 BLOCK = FIRST_LINE + "\nModifications: NONE"
 MARKER = re.compile(r"\[approval-gate act=([0-9a-f]{64})\]")
 
@@ -84,16 +85,17 @@ def test_the_block_unchanged_passes(tmp_path):
     s.say("Delete that anchor.")
     assert s.gate()
     s.say("  by cutting AND pasting this message I approve this step: delete anchor 7 and its\n"
-          "sources and derived deadlines. I understand it is one-way and irreversible.\nModifications: NONE")
+          "sources and derived deadlines, so those dates stop being tracked. The deleted dates are not kept. "
+          "I understand it is one-way and irreversible.\nModifications: NONE")
     assert s.gate() is None
 
 
 def test_a_filed_record_names_the_writing_and_date(tmp_path):
     s = Session(tmp_path)
-    call = {"db_path": "matter.db", "filing_id": 12, "filed_on": "2026-10-29", "expect_revision": 2}
+    call = {"db_path": r"C:\cases\Matter A\submission.sqlite", "filing_id": 12, "filed_on": "2026-10-29", "expect_revision": 2}
     s.say("Record it as filed.")
     reason = s.gate(name=GATED["litigator"][1], tool_input=call, plugin="litigator")
-    assert "record Writing 12 as filed on 2026-10-29, in the database matter.db." in reason
+    assert "record Writing 12 as filed on 2026-10-29, in the drafting records of Matter A," in reason
     assert "process described above" not in reason
     s.say(block_of(reason))
     assert s.gate(name=GATED["litigator"][1], tool_input=call, plugin="litigator") is None
@@ -123,14 +125,16 @@ SAMPLES = {
     "mcp__plugin_lawyer_data__practice_data__issue_invoice": ("lawyer", {"invoice_number": "101", "amount": 50},
                                                               "record invoice 101 for 50 as issued"),
     "mcp__plugin_lawyer_data__time_pipeline__delete": ("timekeeper", {"namespace": "timeline", "key": "k1"},
-                                                       "delete the key k1 from the time-pipeline namespace timeline"),
-    "mcp__plugin_lawyer_data__time_pipeline__bulk_apply": ("timekeeper", {"namespace": "timeline", "path": "/x/gone.jsonl"},
-                                                           "apply the writes in /x/gone.jsonl, which include deletes"),
+                                                       "delete the item k1 from the activity history on this computer"),
+    "mcp__plugin_lawyer_data__time_pipeline__bulk_apply": ("timekeeper", {
+        "namespace": "timeline", "path": "/x/gone.jsonl",
+        "expect": {"added": 2, "replaced": 1, "removed": 3, "file_sha256": "ab"}},
+        "adding 2 new item(s), replacing 1 existing item(s), removing 3 item(s), in the activity history on this computer"),
     "mcp__plugin_timekeeper_timecamp__update_entry": ("timekeeper", {"entry_id": "e5", "task_id": "t6", "note": "Call  re motion"},
                                                       'move TimeCamp entry e5 to task t6 and replace its note with "Call re motion"'),
     "mcp__plugin_file-manager_files__file_ops__comment_pdf": ("file-manager", {
         "matter_root": "/m", "path": "/m/a.pdf", "comments": [{"page": 3, "text": "x"}, {"page": 1, "text": "y"}]},
-        "write 2 comment(s) on page(s) 1, 3 into the PDF /m/a.pdf"),
+        "write 2 comment(s) on page(s) 1, 3 into the PDF a.pdf"),
     "mcp__plugin_researcher_commons__troubleshoot__record": ("researcher", {"symptom": "s1", "cause": "c1", "fix": "f1"},
                                                              'symptom "s1", cause "c1", fix "f1"'),
     "mcp__remote-devices__plugin_researcher_commons__troubleshoot__record": ("researcher", {
@@ -152,6 +156,25 @@ def test_every_gated_tool_names_its_act_in_the_block(tmp_path):
         assert "process described above" not in reason, name
         s.say(block_of(reason))
         assert s.gate(name=name, tool_input=call, plugin=plugin) is None, name
+
+
+def test_no_block_holds_a_path_or_an_internal_word(tmp_path):
+    for name, (plugin, call, _) in SAMPLES.items():
+        s = Session(tmp_path)
+        s.say("Go ahead.")
+        block = block_of(s.gate(name=name, tool_input=call, plugin=plugin))
+        for word in ("/", "\\", "the writes in", "namespace", "time-pipeline", "database", name, "__"):
+            assert word not in block, (name, word)
+
+
+def test_a_sent_copy_on_a_windows_path_is_named_by_its_file_alone(tmp_path):
+    s = Session(tmp_path)
+    call = {"db_path": r"C:\cases\Matter A\submission.sqlite", "filing_id": 4, "sent_on": "2026-10-28",
+            "expect_revision": 3, "sent_copy_path": r"C:\cases\Matter A\sent letter.pdf"}
+    s.say("Record it as sent.")
+    block = block_of(s.gate(name=GATED["litigator"][0], tool_input=call, plugin="litigator"))
+    assert "with the sent copy sent letter.pdf" in block
+    assert "\\" not in block
 
 
 def test_none_then_a_changed_call_is_refused(tmp_path):
@@ -257,15 +280,71 @@ def test_a_file_an_argument_names_is_part_of_the_act(tmp_path):
     assert s.gate(name=name, tool_input=call, plugin="file-manager")
 
 
-def test_a_bulk_apply_with_no_delete_passes_and_one_with_a_delete_is_gated(tmp_path):
+BULK = "mcp__plugin_lawyer_data__time_pipeline__bulk_apply"
+# The hook never reads this file: in Cowork it runs where the practitioner's files cannot be seen.
+BULK_CALL = {"namespace": "evidence", "path": "/not/visible/from/the/hook.jsonl"}
+
+
+def bulk_gate(s, **args):
+    return s.gate(name=BULK, tool_input={**BULK_CALL, **args}, plugin="timekeeper")
+
+
+def expecting(added=0, replaced=0, removed=0):
+    return {"added": added, "replaced": replaced, "removed": removed, "file_sha256": "ab"}
+
+
+def test_a_bulk_preview_writes_nothing_so_it_passes(tmp_path):
     s = Session(tmp_path)
-    sets, deletes = tmp_path / "sets.jsonl", tmp_path / "deletes.jsonl"
-    sets.write_text('{"op":"set","key":"a","value":"1"}\n', encoding="utf-8")
-    deletes.write_text('{"op":"set","key":"a","value":"1"}\n{"op":"delete_prefix","prefix":"b"}\n', encoding="utf-8")
-    name = "mcp__plugin_lawyer_data__time_pipeline__bulk_apply"
     s.say("Apply the file.")
-    assert s.gate(name=name, tool_input={"namespace": "timeline", "path": str(sets)}, plugin="timekeeper") is None
-    assert s.gate(name=name, tool_input={"namespace": "timeline", "path": str(deletes)}, plugin="timekeeper")
+    assert bulk_gate(s, preview=True) is None
+
+
+def test_a_bulk_write_of_only_new_items_passes(tmp_path):
+    s = Session(tmp_path)
+    s.say("Apply the file.")
+    assert bulk_gate(s, expect=expecting(added=96)) is None
+
+
+def test_a_bulk_write_that_replaces_stops_and_says_nothing_of_deletes(tmp_path):
+    s = Session(tmp_path)
+    s.say("Apply the file.")
+    block = block_of(bulk_gate(s, expect=expecting(added=90, replaced=6)))
+    assert ("update billing evidence so it can be checked when you bill, adding 90 new item(s), replacing 6 existing "
+            "item(s), in the billing evidence on this computer. The old values are not kept.") in block
+    for word in ("delet", "remov"):
+        assert word not in block.lower()
+
+
+def test_a_bulk_write_that_removes_stops_and_says_so(tmp_path):
+    s = Session(tmp_path)
+    s.say("Apply the file.")
+    block = block_of(bulk_gate(s, expect=expecting(removed=2)))
+    assert "removing 2 item(s)" in block
+    for word in ("adding", "replacing"):
+        assert word not in block
+
+
+def test_a_bulk_call_with_no_preview_and_no_counts_is_sent_to_preview_first(tmp_path):
+    s = Session(tmp_path)
+    s.say("Apply the file.")
+    reason = bulk_gate(s)
+    assert "preview" in reason and not MARKER.search(reason)
+
+
+def test_a_bulk_count_that_is_not_a_whole_number_is_sent_to_preview_first(tmp_path):
+    for bad in ("0", None, True, -1, 1.5):
+        s = Session(tmp_path)
+        s.say("Apply the file.")
+        reason = bulk_gate(s, expect=expecting(added=1) | {"removed": bad})
+        assert "preview" in reason and not MARKER.search(reason), bad
+
+
+def test_a_bulk_block_pasted_back_approves_only_those_counts(tmp_path):
+    s = Session(tmp_path)
+    s.say("Apply the file.")
+    s.say(block_of(bulk_gate(s, expect=expecting(replaced=6))))
+    assert bulk_gate(s, expect=expecting(replaced=7))
+    assert bulk_gate(s, expect=expecting(replaced=6)) is None
 
 
 def test_a_troubleshooting_entry_goes_to_the_store_only_on_the_pasted_block(tmp_path):
