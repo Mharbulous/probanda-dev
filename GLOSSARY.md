@@ -224,6 +224,10 @@ _Avoid_: ground, grounds; issue (the question a basis answers); point; defence.
 A matter's one unfinished bill, identified by the matter and its last signed invoice. It is under way until the practitioner says the draft is ready for signature, which closes its billing period, and it then waits for signature unless reopened. It ends when the signed invoice is recorded as issued, or when the practitioner starts it over, which puts a new bill in progress in its place that keeps only the evidence and the time judgments. It is not an invoice record.
 _Avoid_: billing run, session (a bill in progress outlives both); draft invoice (one rendered document of it).
 
+**Billing period**:
+The dates a bill in progress covers: from the day after the last billed date through the day before the bill date. Work done on the bill date waits for the next bill, so no day is billed in part. The period keeps widening until the practitioner says the draft is ready for signature.
+_Avoid_: unbilled window; a period that runs to today.
+
 **Bundle (application)**:
 An application as a whole: the lead Writing, its supporting documents, and the surrounding work of the availability letter, filing and service, and the application book. No stored record. Every bundle-level job is scoped to the lead Writing, whose Work Board and completion-criteria card are the tracker. Not **Bundle (ingest)**.
 _Avoid_: package (the assembled files the gate reads); application book (one product within it).
@@ -679,6 +683,10 @@ _Avoid_: bare "rules"; an instrument's short name (SCCR) used as a general term.
 **Scope**:
 The set of database rows an assigned job's writes may touch (`ticket_scope`), checked before every `drafting_data__execute` call the job makes. Expandable by the practitioner at any time; the expansion is itself in scope. A scope row on `board_attachments` also links the job to that attached draft, whose card on the Work Board counts it while it is pending.
 _Avoid_: permission (this is a work boundary, not an access-control concept).
+
+**Settled item**:
+Something the practitioner has answered on a bill in progress, such as a line's confirmation or a disbursement ruling. It stands until what they were shown changes, and then it alone reopens and they are told what changed. On a bill waiting for signature, a change is only reported, with an offer to reopen. Later evidence about a settled line does not reopen it. The trust balance and the invoice date are never settled.
+_Avoid_: approved item (an approval is only one kind of answer); done step (a step holds many items).
 
 **Severance**:
 The push-time act of stripping everything matter-identifying from a principle before it leaves the privileged working layer for the shared pool. Up goes the generalized text, public citation, and doctrinal metadata; no column, relation, or free-text in the pool may point back to a matter.
