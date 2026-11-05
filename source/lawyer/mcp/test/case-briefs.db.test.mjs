@@ -15,6 +15,15 @@ import vm from "node:vm";
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-case-briefs-locks-"));
 process.env.COCLERK_REPO_ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
 after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
+// A device settings file of its own, with an empty overlay: creating or rendering a Writing reads the knowledge
+// merge, which needs a case data root, and must never read this machine's real settings or overlay.
+const settingsRoot = mkdtempSync(join(tmpdir(), "coclerk-case-briefs-settings-"));
+after(() => rmSync(settingsRoot, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
+mkdirSync(join(settingsRoot, "Probanda"));
+mkdirSync(join(settingsRoot, "0. CASE DATA"));
+writeFileSync(join(settingsRoot, "Probanda", "probanda.json"), JSON.stringify({ case_data_root: join(settingsRoot, "0. CASE DATA") }));
+process.env.APPDATA = settingsRoot;
+delete process.env.COCLERK_CONFIG_PATH;
 
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
