@@ -104,7 +104,7 @@ If the user asks to fill a form marked `—`, respond:
 
 ## Solicitor Details (from the firm profile)
 
-Fill every solicitor/lawyer field through `/practice-data`: the firm profile (`practice_data__firm_profile`), the matter lookup, and this machine's Roaming `Coclerk\probanda.json` (layout owned by `/practice-data`):
+Fill every solicitor/lawyer field through `/practice-data`: the firm profile (`practice_data__firm_profile`), the matter lookup, and this machine's Roaming `Probanda\probanda.json` (layout owned by `/practice-data`):
 
 | Field | Source |
 |-------|--------|
