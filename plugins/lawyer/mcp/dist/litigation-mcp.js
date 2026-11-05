@@ -1,4 +1,4 @@
-// build-stamp: a0f56ed3b094
+// build-stamp: 25f0e5fc76cc
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75261,7 +75261,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "a0f56ed3b094";
+var BUILD_STAMP = false ? null : "25f0e5fc76cc";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -76122,7 +76122,7 @@ function removeKilledStaging(tag, description = "staging copy of the database") 
 
 // src/kv/backend.ts
 var PY_HELPER = String.raw`
-import datetime, json, os, sqlite3, sys
+import datetime, hashlib, io, json, os, sqlite3, sys
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS kv_store (
@@ -76208,16 +76208,28 @@ def merge_ids(con, namespace, key, add, drop_prefix, line_no):
         con.execute("DELETE FROM kv_store WHERE namespace = ? AND key = ?", (namespace, key))
 
 
-def bulk_apply(con, namespace, path):
+def namespace_rows(con, namespace):
+    return dict(con.execute("SELECT key, value FROM kv_store WHERE namespace = ?", (namespace,)))
+
+
+def bulk_apply(con, namespace, path, expect):
     """Apply a whole JSONL file of writes to one namespace in ONE transaction.
     Reading the file here rather than through tool arguments is what makes a
     58k-row import possible; one transaction is what makes it one process
     instead of 58k. Any bad line raises before the commit, so the caller either
-    gets the whole file or none of it."""
+    gets the whole file or none of it.
+    With no expect it previews: the same work, rolled back, reporting the net
+    effect on the namespace and the fingerprint of the bytes it read. With
+    expect it commits only if those match, which is what makes the counts a
+    hook shows the practitioner true."""
     if not os.path.isfile(path):
         raise SystemExit("file not found: %s" % path)
+    with open(path, "rb") as fh:
+        data = fh.read()
+    con.execute("BEGIN IMMEDIATE")
+    before = namespace_rows(con, namespace)
     counts = {"lines": 0, "sets": 0, "deletes": 0, "merges": 0, "deleted_by_prefix": 0}
-    with open(path, "r", encoding="utf-8") as fh:
+    with io.TextIOWrapper(io.BytesIO(data), encoding="utf-8") as fh:
         for line_no, raw in enumerate(fh, 1):
             raw = raw.strip()
             if not raw:
@@ -76255,8 +76267,20 @@ def bulk_apply(con, namespace, path):
                 counts["merges"] += 1
             else:
                 raise SystemExit("line %d has unknown op %r" % (line_no, op))
-    con.commit()
-    return counts
+    after = namespace_rows(con, namespace)
+    effect = {
+        "added": sum(key not in before for key in after),
+        "replaced": sum(key in before and before[key] != value for key, value in after.items()),
+        "removed": sum(key not in after for key in before),
+        "file_sha256": hashlib.sha256(data).hexdigest(),
+    }
+    if expect is None:
+        con.rollback()
+    elif any(expect.get(name) != value for name, value in effect.items()):
+        raise SystemExit("nothing was written: the file would now do %s, not what was approved; preview it again" % json.dumps(effect))
+    else:
+        con.commit()
+    return {**counts, **effect, "applied": expect is not None}
 
 
 def export(con, namespace, prefix, path):
@@ -76347,7 +76371,7 @@ def main():
             con.commit()
             return {"ok": True, "deleted": cur.rowcount > 0}
         if op == "bulk_apply":
-            return bulk_apply(con, namespace, req["path"])
+            return bulk_apply(con, namespace, req["path"], req.get("expect"))
         if op == "export":
             return export(con, namespace, req.get("prefix") or "", req["path"])
         raise SystemExit("unknown op: %s" % op)
@@ -77795,10 +77819,12 @@ function timePipelineToolDefinitions() {
     },
     {
       name: timePipelinePrefixed("bulk_apply"),
-      description: 'Apply a whole file of writes to one namespace of the time-pipeline key-value store, in a single transaction. `path` is an absolute path to a JSONL file on this machine -- one JSON object per line, applied in file order. Four line types: {"op":"set","key":...,"value":...} stores one value verbatim; {"op":"delete","key":...} removes one key; {"op":"delete_prefix","prefix":...} removes every key in the namespace starting with that prefix, matched literally; {"op":"merge","key":...,"add":[...],"drop_prefix":...} treats the value as a JSON array of strings, drops every element starting with `drop_prefix`, appends the elements of `add` not already present, and deletes the key if nothing remains. The server reads the file itself, so a bulk import never passes through tool arguments. A missing file, a malformed line, an unknown op, or a merge target that is not a JSON array of strings aborts the whole call before the commit and names the line number -- nothing partial is written. Returns { lines, sets, deletes, merges, deleted_by_prefix }. Only the /time-pipeline-data skill may call this tool -- see time_pipeline__get for how a caller from another skill\'s workflow satisfies that.',
+      description: 'Apply a whole file of writes to one namespace of the time-pipeline key-value store, in a single transaction. `path` is an absolute path to a JSONL file on this machine -- one JSON object per line, applied in file order. Four line types: {"op":"set","key":...,"value":...} stores one value verbatim; {"op":"delete","key":...} removes one key; {"op":"delete_prefix","prefix":...} removes every key in the namespace starting with that prefix, matched literally; {"op":"merge","key":...,"add":[...],"drop_prefix":...} treats the value as a JSON array of strings, drops every element starting with `drop_prefix`, appends the elements of `add` not already present, and deletes the key if nothing remains. The server reads the file itself, so a bulk import never passes through tool arguments. A missing file, a malformed line, an unknown op, or a merge target that is not a JSON array of strings aborts the whole call before the commit and names the line number -- nothing partial is written. Call it twice: first with preview true, which writes nothing and returns { lines, sets, deletes, merges, deleted_by_prefix, added, replaced, removed, file_sha256, applied: false }; then with expect holding that added, replaced, removed and file_sha256, which commits only if they still match the file and the store, and otherwise writes nothing. Only the /time-pipeline-data skill may call this tool -- see time_pipeline__get for how a caller from another skill\'s workflow satisfies that.',
       inputSchema: objectSchema([
         { name: "namespace", type: "str" },
-        { name: "path", type: "str" }
+        { name: "path", type: "str" },
+        { name: "preview", type: "bool" },
+        { name: "expect", type: "obj" }
       ], ["namespace", "path"]),
       annotations: { destructiveHint: true, openWorldHint: false }
     },
@@ -94008,9 +94034,12 @@ function timePipelineDelete(namespace, key, env = process.env) {
   const db_path = resolveTimePipelineDbPath(env);
   return runHelper3({ op: "delete", db_path, namespace, key }, env);
 }
-function timePipelineBulkApply(namespace, path, env = process.env) {
+function timePipelineBulkApply(namespace, path, mode, env = process.env) {
+  if (mode.preview === true === (mode.expect !== void 0)) {
+    throw new ValidationError("time_pipeline__bulk_apply takes preview or expect, not both and not neither");
+  }
   const db_path = resolveTimePipelineDbPath(env);
-  return runHelper3({ op: "bulk_apply", db_path, namespace, path }, env);
+  return runHelper3({ op: "bulk_apply", db_path, namespace, path, expect: mode.expect }, env);
 }
 function timePipelineExport(namespace, prefix, path, env = process.env) {
   const db_path = resolveTimePipelineDbPath(env);
@@ -127955,7 +127984,7 @@ var dataTools = [
   defineTool("time_pipeline__set", (args) => timePipelineSet(args.namespace, args.key, args.value)),
   defineTool("time_pipeline__list", (args) => timePipelineList(args.namespace, args.prefix)),
   defineTool("time_pipeline__delete", (args) => timePipelineDelete(args.namespace, args.key)),
-  defineTool("time_pipeline__bulk_apply", (args) => timePipelineBulkApply(args.namespace, args.path)),
+  defineTool("time_pipeline__bulk_apply", (args) => timePipelineBulkApply(args.namespace, args.path, args)),
   defineTool("time_pipeline__export", (args) => timePipelineExport(args.namespace, args.prefix, args.path)),
   defineTool("timecamping_data__query", (args) => timecampingDataQuery(args.sql, args.params)),
   defineTool("timecamping_data__execute", (args) => timecampingDataExecute(args.sql_script)),
