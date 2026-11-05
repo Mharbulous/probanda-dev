@@ -11,7 +11,15 @@ import { fileURLToPath } from "node:url";
 
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-case-brief-rebrief-locks-"));
 process.env.COCLERK_REPO_ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
-after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
+const configDir = mkdtempSync(join(tmpdir(), "coclerk-case-brief-rebrief-config-"));
+const caseDataRoot = join(configDir, "0. CASE DATA");
+mkdirSync(caseDataRoot);
+process.env.COCLERK_CONFIG_PATH = join(configDir, "probanda.json");
+writeFileSync(process.env.COCLERK_CONFIG_PATH, JSON.stringify({ case_data_root: caseDataRoot }), "utf-8");
+after(() => {
+  rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+  rmSync(configDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+});
 
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
