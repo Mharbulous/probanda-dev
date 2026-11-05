@@ -43,6 +43,7 @@ Writings, one whose recorded pure-law decision that placement would clear.
 """
 
 import json
+import os
 import re
 import shutil
 import sqlite3
@@ -465,6 +466,11 @@ def migrate(
     (source/lawyer/mcp/src/migrate-backups.ts). A refusal before a hop (the 27 -> 28, 28 -> 29,
     29 -> 30, 42 -> 43, 46 -> 47 and 58 -> 59 checks) leaves the database at the
     version the hops before it reached.
+    A fresh create skips the disk sync and the new journal file of each
+    statement, which took nearly all of its time (#241), and syncs the file
+    once at the end. The journal stays on disk, so a killed run still rolls
+    back its open statement, and a power cut during a create falls under
+    delete-and-rerun. A pre-existing database is migrated with the defaults.
     Returns the list of (from, to) hops applied -- an empty list means the
     database was already at target_version."""
     migrations = _load_migrations(migrations_sql_path)
@@ -476,6 +482,9 @@ def migrate(
         current = _current_version(con)
         if db_existed and current < target_version:
             _backup_db(db_path)
+        if not db_existed:
+            con.execute("PRAGMA synchronous = OFF")
+            con.execute("PRAGMA journal_mode = PERSIST")
         while current < target_version:
             hop = next(
                 ((f, t) for (f, t) in migrations if f == current), None
@@ -502,8 +511,13 @@ def migrate(
             con.commit()
             applied.append(hop)
             current = hop[1]
+        if not db_existed:
+            con.execute("PRAGMA journal_mode = DELETE")
     finally:
         con.close()
+    if not db_existed:
+        with open(db_path, "r+b") as created:
+            os.fsync(created.fileno())
     return applied
 
 
