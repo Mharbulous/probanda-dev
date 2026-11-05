@@ -1,4 +1,4 @@
-// build-stamp: 5030f8429f9c
+// build-stamp: eb418cfc257a
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15940,7 +15940,7 @@ function timecampToolDefinitions() {
     },
     {
       name: "update_entry",
-      description: "Move one TimeCamp time entry to another task and set its note (read back as `description`). The entry's billable flag follows the new task. Changes TimeCamp. Call it only after the practitioner has explicitly approved this one entry's exact change; approval of one entry never covers the next. The answer is not the check: re-read the entry's date with entries and compare task_id and description. " + STOP_RULE,
+      description: "Move one TimeCamp time entry to another task and set its note (read back as `description`). The entry's billable flag follows the new task. Changes TimeCamp. Call it only after the practitioner has pasted the approval for the list that holds this entry's exact change; the approval covers the entries on that list and no others. The answer is not the check: re-read the entry's date with entries and compare task_id and description. " + STOP_RULE,
       inputSchema: {
         type: "object",
         properties: {

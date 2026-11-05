@@ -406,6 +406,121 @@ def test_a_time_entry_change_says_it_can_be_changed_back_never_one_way(tmp_path)
     assert s.gate(name=tool, tool_input=call, plugin="timekeeper") is None
 
 
+ENTRY = "mcp__plugin_timekeeper_timecamp__update_entry"
+
+
+def entry_call(n):
+    return {"entry_id": f"e{n}", "task_id": f"t{n}", "note": f"Call {n} re motion"}
+
+
+def entry_gate(s, n):
+    return s.gate(name=ENTRY, tool_input=entry_call(n), plugin="timekeeper")
+
+
+def entry_list(*reasons, modifications="NONE"):
+    """The one block a practitioner pastes for a list: every entry's first line, then one Modifications line."""
+    lines = [block_of(reason).split("\nModifications:")[0] for reason in reasons]
+    return "\n".join(lines) + "\nModifications: " + modifications
+
+
+def refused_entries(s, count):
+    return [entry_gate(s, n) for n in range(1, count + 1)]
+
+
+def test_one_pasted_list_approves_each_entry_on_it_once(tmp_path):
+    s = Session(tmp_path)
+    s.say("Write back the day.")
+    reasons = refused_entries(s, 3)
+    assert all(MARKER.search(reason) for reason in reasons)
+    s.say(entry_list(*reasons))
+    for n in (3, 1, 2):
+        assert entry_gate(s, n) is None, n
+    for n in (1, 2, 3):
+        assert entry_gate(s, n), n
+
+
+def test_an_entry_missing_from_the_pasted_list_is_refused(tmp_path):
+    s = Session(tmp_path)
+    s.say("Write back the day.")
+    reasons = refused_entries(s, 3)
+    s.say(entry_list(reasons[0], reasons[2]))
+    assert entry_gate(s, 1) is None
+    assert entry_gate(s, 2)
+    assert entry_gate(s, 3) is None
+
+
+def test_a_list_entry_changed_after_the_paste_is_refused(tmp_path):
+    s = Session(tmp_path)
+    s.say("Write back the day.")
+    s.say(entry_list(*refused_entries(s, 2)))
+    assert s.gate(name=ENTRY, tool_input={**entry_call(1), "note": "Another note"}, plugin="timekeeper")
+
+
+def test_a_failed_list_entry_does_not_use_its_line(tmp_path):
+    s = Session(tmp_path)
+    s.say("Write back the day.")
+    s.say(entry_list(*refused_entries(s, 2)))
+    assert s.gate(name=ENTRY, tool_input=entry_call(1), plugin="timekeeper", answered=False) is None
+    s.call(ENTRY, entry_call(1), '{"error": "timeout"}', is_error=True)
+    assert entry_gate(s, 1) is None
+
+
+def test_a_list_with_written_modifications_is_refused(tmp_path):
+    s = Session(tmp_path)
+    s.say("Write back the day.")
+    s.say(entry_list(*refused_entries(s, 2), modifications="skip the second one"))
+    reason = entry_gate(s, 1)
+    assert reason and "list" in reason
+
+
+def test_an_old_list_pasted_again_with_no_new_refusals_is_refused(tmp_path):
+    s = Session(tmp_path)
+    s.say("Write back the day.")
+    reasons = refused_entries(s, 2)
+    s.say(entry_list(*reasons))
+    assert entry_gate(s, 1) is None
+    assert entry_gate(s, 2) is None
+    s.say(entry_list(*reasons))
+    assert entry_gate(s, 1)
+
+
+def test_a_list_after_a_compaction_is_refused(tmp_path):
+    s = Session(tmp_path)
+    s.say("Write back the day.")
+    reasons = refused_entries(s, 2)
+    s.add({"type": "system", "subtype": "compact_boundary"})
+    s.say(entry_list(*reasons))
+    assert entry_gate(s, 1)
+
+
+def test_a_list_entry_from_a_subagent_is_refused(tmp_path):
+    s = Session(tmp_path)
+    s.say("Write back the day.")
+    s.say(entry_list(*refused_entries(s, 2)))
+    reason = s.gate(name=ENTRY, tool_input=entry_call(1), plugin="timekeeper", agent_id="a1", agent_type="general-purpose")
+    assert reason and "subagent" in reason
+
+
+def test_refused_calls_of_two_different_tools_are_not_a_list(tmp_path):
+    s = Session(tmp_path)
+    s.say("Go ahead.")
+    first = entry_gate(s, 1)
+    second = s.gate(name="mcp__plugin_lawyer_data__time_pipeline__delete", tool_input={"namespace": "timeline", "key": "k1"},
+                    plugin="timekeeper")
+    s.say(entry_list(first, second))
+    assert entry_gate(s, 1)
+
+
+def test_a_list_does_not_reach_other_gated_tools(tmp_path):
+    s = Session(tmp_path)
+    s.say("Delete those anchors.")
+    first = s.gate()
+    second = s.gate(tool_input={"anchor_id": 8})
+    s.say(entry_list(first, second))
+    assert s.gate()
+    assert s.gate(tool_input={"anchor_id": 8})
+
+
 def test_a_sent_record_still_says_one_way(tmp_path):
     s = Session(tmp_path)
     s.say("Record it as sent.")
