@@ -58,3 +58,21 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 
 Read `shared/email.md`, the `write_email` recipient code and the party table definition; confirm the quoted lines and the empty-field behaviour.
+
+### Verification against HEAD (a00c125c, 2026-11-04)
+
+| Claim | Result | Where |
+|---|---|---|
+| `shared/email.md` says "tell the practitioner each one in one line" | Confirmed, the only handling of `not_addressed` in any skill | `.claude/skills/shared/email.md`, the `cc` paragraph |
+| Reason text "case data holds no email for it" | Confirmed | `source/lawyer/mcp/src/submission/email-recipients.ts`, `Lists.recipient` |
+| `to_service_list` addresses from the counsel email field only | Confirmed: `email: party.counsel_email`, which case data fills from `lawyer_email` or its per-proceeding override | `source/lawyer/mcp/src/submission/forms/query.ts` `fetchServiceListCounsel`; `.claude/skills/matter-data/references/scripts/parties_of_record.py` `_FIELDS` |
+| For a party with no counsel the field is empty, so the party lands in `not_addressed` | Confirmed, and pinned | `source/lawyer/mcp/test/write-email-recipients.db.test.mjs`, "a party with no counsel email is reported, never guessed" |
+| With nobody left in To, nothing is written | Confirmed: `no_recipients`, whose result also carries `not_addressed` | `source/lawyer/mcp/src/submission/draft-harness.ts` `writeEmail`; the same test file |
+| Withdrawn counsel and a self-represented party look different in the result | **Not so.** Both have no `lawyer_name` or `lawyer_email`, so both read as the party's own name with the same reason. Only `replaced_representative` tells them apart | test file above, "withdrawn counsel yields no address"; `.claude/skills/matter-data/operations/order-effects.md`, "A Notice of Withdrawal is symmetric" |
+| The notes are free text in `contact_info`, and no structured field holds a party's own email | Confirmed | `.claude/skills/matter-data/references/schema.sql`, `parties` |
+| Ingest could fill a party's own email (§4.1, §6 option 2) | **Not so.** No ingest captures it as a separate value: a notice fills `address` and counsel's fields, and `contact_info` is no longer written (design decision #69). Option 2 is not triggered | `.claude/skills/matter-data/operations/order-effects.md`, table and constraints |
+| A session on the email route can read the notes | Confirmed, through `/matter-data` (`operations/query.md`, ad-hoc read-only SQL on `matter_data__query`), the route `/draft`'s Ingestion check already uses after an `.eml`. `list_parties.py` has no model-facing tool | `.claude/skills/matter-data/SKILL.md`; `source/lawyer/mcp/src/case/list-parties.ts` |
+| `to` can join `to_service_list` | **No.** The server refuses it, so a noted address goes in `cc` on the next version | `draft-harness.ts` `recipientSource` |
+| Spec's paths (litigator v0.18.0, installed copy) | Source is `.claude/skills/shared/email.md` and `source/lawyer/mcp/src/`, as above. Shared text ships in all seven plugins | `source/assignment.json` |
+
+Consequence: §6 option 1 stands, and §9's open question does not arise under it. Design decision #69 also means a party added since 2026-10-16 has no notes to read: its details are in its practice-data contact, which this spec does not reach.
