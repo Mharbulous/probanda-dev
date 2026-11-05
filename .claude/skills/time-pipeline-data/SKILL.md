@@ -115,7 +115,7 @@ workflow legitimately needs to read it — e.g. time-sorting reads `timeline`):
   `practice_data__*`.
 - If a tool returns a path-resolution error, the runtime could not locate
   `time_pipeline.db`: confirm `case_data_root` is set in
-  `AppData\Roaming\Coclerk\probanda.json` (or the file `COCLERK_CONFIG_PATH`
+  `AppData\Roaming\Probanda\probanda.json` (or the file `COCLERK_CONFIG_PATH`
   names; the same config practice-data resolves against, see its SKILL.md's
   Configuration section), or the
   `COCLERK_TIME_PIPELINE_DB_PATH` test override.
