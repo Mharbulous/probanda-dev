@@ -68,6 +68,17 @@ class EmailFirstTests(unittest.TestCase):
         self.assertLess(review, fast.index("4. `write_email`"))
         self.assertIn("An empty body needs none", fast)
 
+    def test_a_counsels_copying_request_is_looked_for_before_the_draft_is_shown(self):
+        fast = atom(SKILL, "draft.email-first")
+        step = fast[fast.index("4. `write_email`"):]
+        self.assertLess(step.index("copying-request look"), step.index("present the draft"))
+        self.assertIn("`mail__search_emails`", atom(SKILL, "draft.each-step"))
+        rule = EMAIL[EMAIL.index("**A counsel's copying request.**"):EMAIL.index("**Present.**")]
+        for words in ("Before presenting", "`mail__search_emails`", "On the practitioner's word",
+                      "in `cc`", "name each address added", "name each counsel with none found"):
+            with self.subTest(words=words):
+                self.assertIn(words, rule)
+
 
 if __name__ == "__main__":
     unittest.main()
