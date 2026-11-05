@@ -58,7 +58,11 @@ if ($Unregister) {
             Write-Host "No task named '$name' is registered."
             continue
         }
-        if ($name -eq $RunnerTaskName) { Stop-ScheduledTask -TaskName $name }
+        if ($name -eq $RunnerTaskName) {
+            Stop-ScheduledTask -TaskName $name
+            # Stopping the task leaves the runner's own process alive (seen 2026-11-04).
+            Stop-Process -Name 'Runner.Listener' -Force -ErrorAction SilentlyContinue
+        }
         Unregister-ScheduledTask -TaskName $name -Confirm:$false
         Write-Host "Unregistered '$name'."
     }
