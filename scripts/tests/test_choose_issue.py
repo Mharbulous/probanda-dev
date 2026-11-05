@@ -62,6 +62,11 @@ class Lanes(unittest.TestCase):
         self.assertEqual(ci.pick(two, "cloud", claims, now=NOW)["issue"], 7)
         self.assertEqual(ci.pick(two, "local", claims, now=NOW)["issue"], 8)
 
+    def test_wayfinder_issue_is_in_no_lane(self):
+        issues = [issue(5, "local", "wayfinder:task"), issue(6, "cloud", "wayfinder:map"), issue(7, "local")]
+        self.assertEqual(ci.queue(issues, "local"), [7])
+        self.assertEqual(ci.queue(issues, "cloud"), [])
+
     def test_lane_order_then_oldest_first(self):
         issues = [issue(5, "local", "lane:ai"), issue(9, "local"), issue(3, "local", "lane:user"),
                   issue(4, "local"), issue(2, "local", "lane:ai")]

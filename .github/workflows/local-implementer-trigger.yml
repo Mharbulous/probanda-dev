@@ -1,12 +1,15 @@
 name: local-implementer-trigger
 
-# Starts the local implementer on Brahm's PC when a label leaves an issue in the local lane,
-# through the self-hosted runner docs/agents/issue-tracker.md describes. The job's `if` means
-# other label events never need the runner. The concurrency group sits on the job, not the
-# workflow: at workflow level, a skipped run would replace a pending real one and lose its start.
+# Starts the local implementer on Brahm's PC when a label leaves an issue in the local lane, when
+# any issue is opened (a backup jolt), or on workflow_dispatch (/CPR and the script's post-run beat),
+# through the self-hosted runner docs/agents/issue-tracker.md describes. The script's gate decides
+# whether Claude Code starts, so a jolt costs seconds, and a wayfinder issue only jolts: the gate
+# ignores it. The job's `if` means other label events never need the runner. The concurrency group
+# sits on the job, not the workflow: at workflow level, a skipped run would replace a pending real
+# one and lose its start.
 on:
   issues:
-    types: [labeled]
+    types: [labeled, opened]
   workflow_dispatch:
 
 permissions: {}
@@ -14,10 +17,11 @@ permissions: {}
 jobs:
   start:
     if: >-
-      github.event_name == 'workflow_dispatch' || (
+      github.event_name == 'workflow_dispatch' || github.event.action == 'opened' || (
         contains(github.event.issue.labels.*.name, 'ready-for-agent') &&
         contains(github.event.issue.labels.*.name, 'local') &&
-        !contains(github.event.issue.labels.*.name, 'withdrawn')
+        !contains(github.event.issue.labels.*.name, 'withdrawn') &&
+        !contains(join(github.event.issue.labels.*.name, ','), 'wayfinder:')
       )
     runs-on: [self-hosted, probanda-local]
     # Longer than the task's own 4-hour limit, so the wait below always ends first.

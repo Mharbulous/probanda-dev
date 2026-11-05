@@ -4,7 +4,8 @@ Runs the local implementer once: the local lane of /implement-queue, in its own 
 
 .DESCRIPTION
 Started by the scheduled task that register-local-implementer.ps1 registers under the
-current user: when a label puts an issue in the local lane, and once a day as a backstop.
+current user: through local-implementer-trigger.yml (a label that puts an issue in the local
+lane, any issue opened, /CPR, or the beat in step 6), and once a day as a backstop.
 Needs no administrator rights.
 
 1. Creates the dedicated clone on first run:
@@ -15,25 +16,29 @@ Needs no administrator rights.
    logs\recovered-<time>.patch and reset to origin/main, unless the local implementer lock
    is live, which stops the run.
 3. Runs scripts/local_implementer_guard.py in the clone, which refuses any other folder.
-4. Runs npm ci --ignore-scripts in source/lawyer/mcp, source/researcher/commons-mcp and
+4. Exits when choose_issue.py pick finds no issue the local lane can take, so an extra start
+   costs seconds and no tokens: an issue with a live claim does not count.
+5. Runs npm ci --ignore-scripts in source/lawyer/mcp, source/researcher/commons-mcp and
    source/researcher/canlii-mcp, each from its committed lockfile, so the run's Node
    builds and tests work and the model never installs anything. Brahm approved this on
    2026-11-02 and, for the two researcher folders, on 2026-11-04: the user-level
    package-install guard reserves installs for the human, and this script is the one
-   he registered.
-5. Exits when the local queue is empty, so an extra start costs no tokens. Otherwise runs
-   Claude Code headless there: claude -p "/implement-queue local".
+   he registered. Then runs Claude Code headless there: claude -p "/implement-queue local".
    It passes --permission-mode dontAsk, so a user-wide default of plan mode
    cannot stop the run before it writes, and anything not allowed is refused
    without a prompt. The run gets only the permissions the repo's
    .claude/settings.json, the clone's own .claude/settings.local.json (written by
    register-local-implementer.ps1) and the user's Claude Code settings grant.
+6. After Claude Code exits, whatever its exit code, deletes any local lock stamp the run left
+   behind, then asks the gate again. When a takeable issue differs from the one this round
+   started with, it fires the trigger workflow, so a crash or usage limit does not end the
+   chain. An issue that keeps failing without leaving the queue stops the chain.
 
 Each run logs to $env:LOCALAPPDATA\probanda-local-implementer\logs\run-<time>.log.
 The log holds what git, the guard and Claude Code print, and never the environment.
 
 .PARAMETER PrepareOnly
-Create or update the clone, run the guard and install the packages, but do not start Claude Code.
+Create or update the clone, run the guard and install the packages, but skip the gate and do not start Claude Code.
 #>
 [CmdletBinding()]
 param(
@@ -106,17 +111,40 @@ function Find-Exe([string[]]$Names) {
     return $null
 }
 
-# Saves a GitHub list to a file and returns choose_issue.py's reply about it for the local lane.
+# Saves a GitHub list to a file under the app's tmp folder and returns the file's path.
 # cmd's redirect keeps gh's UTF-8 bytes, which a PowerShell 5.1 redirect would re-encode.
-function Get-ChooseIssue([string]$Endpoint, [string]$Command, [string]$FileFlag) {
+function Save-GitHubList([string]$Endpoint, [string]$FileName) {
     $tmp = Join-Path $AppHome 'tmp'
     New-Item -ItemType Directory -Force -Path $tmp | Out-Null
-    $file = Join-Path $tmp 'choose-issue-input.json'
+    $file = Join-Path $tmp $FileName
     cmd /c "gh api --paginate `"$Endpoint`" > `"$file`" 2>> `"$Log`""
     if ($LASTEXITCODE -ne 0) { Stop-Run "gh could not read $Endpoint." }
-    $reply = & $Python (Join-Path $Clone 'scripts\choose_issue.py') $Command '--lane' 'local' $FileFlag $file
-    if ($LASTEXITCODE -ne 0) { Stop-Run "choose_issue.py $Command could not read $Endpoint." }
+    return $file
+}
+
+# Returns choose_issue.py's reply for the local lane.
+function Invoke-ChooseIssue([string[]]$Arguments) {
+    $reply = & $Python (Join-Path $Clone 'scripts\choose_issue.py') @Arguments
+    if ($LASTEXITCODE -ne 0) { Stop-Run "choose_issue.py $($Arguments[0]) could not read its input." }
     return ($reply | Out-String | ConvertFrom-Json)
+}
+
+# The gate: what /implement-queue local would pick now, by the same rule, so an issue with a
+# live claim does not count as work.
+function Get-Takeable {
+    $issues = Save-GitHubList "$RepoApi/issues?labels=ready-for-agent,local&state=open&per_page=100" 'gate-issues.json'
+    $pickArgs = @('pick', '--lane', 'local', '--issues', $issues)
+    foreach ($n in @((Invoke-ChooseIssue @('queue', '--lane', 'local', '--issues', $issues)).queue)) {
+        $comments = Save-GitHubList "$RepoApi/issues/$n/comments?per_page=100" "gate-comments-$n.json"
+        $pickArgs += @('--comments', "$n=$comments")
+    }
+    return (Invoke-ChooseIssue $pickArgs)
+}
+
+# The local implementer lock, as choose_issue.py reads it.
+function Get-LocalLock {
+    $file = Save-GitHubList "$RepoApi/issues/189/comments?per_page=100" 'lock-comments.json'
+    return (Invoke-ChooseIssue @('lock', '--lane', 'local', '--comments', $file))
 }
 
 Write-Log "Local implementer run. Clone: $Clone"
@@ -143,7 +171,7 @@ $unpushed = Get-GitOutput @('rev-list', '--count', 'origin/main..HEAD')
 if ($null -eq $unpushed) { Stop-Run 'git rev-list failed.' }
 if ($dirty -ne '' -or $unpushed -ne '0') {
     # Work left by an earlier run. Nothing is lost: the patch holds it, against the commit it names.
-    if ((Get-ChooseIssue "$RepoApi/issues/189/comments?per_page=100" 'lock' '--comments').state -ne 'free') {
+    if ((Get-LocalLock).state -ne 'free') {
         Stop-Run 'the clone holds uncommitted or unpushed work and the local implementer lock is live.'
     }
     $base = Get-GitOutput @('merge-base', 'HEAD', 'origin/main')
@@ -167,7 +195,18 @@ try {
         Stop-Run 'the guard refused this folder (see the line above).'
     }
 
-    # 4. The Node packages, from the committed lockfile, with no install scripts.
+    # 4. The gate, before anything slow, so an extra start costs seconds.
+    if (-not $PrepareOnly) {
+        $gate = Get-Takeable
+        if ($null -eq $gate.issue) {
+            Write-Log ("No takeable issue (queue: {0}; skipped as claimed: {1}). Claude Code not started." -f
+                (@($gate.queue) -join ' '), (@($gate.skipped | ForEach-Object { $_.issue }) -join ' '))
+            exit 0
+        }
+        Write-Log ("Takeable: #{0} (queue: {1})." -f $gate.issue, (@($gate.queue) -join ' '))
+    }
+
+    # 5. The Node packages, from the committed lockfile, with no install scripts.
     $Npm = Find-Exe @('npm.cmd', 'npm')
     if (-not $Npm) { Stop-Run 'npm is not on PATH.' }
     foreach ($package in @('source\lawyer\mcp', 'source\researcher\commons-mcp', 'source\researcher\canlii-mcp')) {
@@ -184,17 +223,32 @@ try {
         exit 0
     }
 
-    # 5. Claude Code, headless, on the local lane, unless the queue is empty.
-    $queue = @((Get-ChooseIssue "$RepoApi/issues?labels=ready-for-agent,local&state=open&per_page=100" 'queue' '--issues').queue)
-    if ($queue.Count -eq 0) {
-        Write-Log 'The local queue is empty. Claude Code not started.'
-        exit 0
-    }
-    Write-Log ("Local queue: {0}" -f ($queue -join ' '))
+    # Claude Code, headless, on the local lane.
     $Claude = Find-Exe @('claude')
     if (-not $Claude) { Stop-Run 'claude is not on PATH.' }
+    $holderBefore = (Get-LocalLock).holder
     $code = Invoke-Logged $Claude @('-p', $Prompt, '--permission-mode', 'dontAsk')
     Write-Log "Claude Code exited with $code."
+
+    # 6. The beat. A run that died left its lock stamp, which would refuse the next round for 90 minutes.
+    # A holder that was not there before Claude Code started is that run's stamp.
+    $holder = (Get-LocalLock).holder
+    if ($null -ne $holder -and ($null -eq $holderBefore -or $holder.id -ne $holderBefore.id)) {
+        if ((Invoke-Logged 'gh' @('api', '--method', 'DELETE', "$RepoApi/issues/comments/$($holder.id)")) -ne 0) {
+            Write-Log "Could not delete the lock stamp $($holder.id) this run left."
+        }
+    }
+    $next = Get-Takeable
+    if ($null -eq $next.issue) {
+        Write-Log 'Post-run gate: no takeable issue. No next round.'
+    } elseif ($next.issue -eq $gate.issue) {
+        Write-Log ("Post-run gate: #{0} is the issue this round started with. No next round." -f $next.issue)
+    } else {
+        Write-Log ("Post-run gate: #{0} is takeable. Firing the next round." -f $next.issue)
+        if ((Invoke-Logged 'gh' @('workflow', 'run', 'local-implementer-trigger.yml', '--ref', 'main')) -ne 0) {
+            Write-Log 'gh workflow run failed, so the next round waits for the next start.'
+        }
+    }
     exit $code
 } finally {
     Pop-Location
