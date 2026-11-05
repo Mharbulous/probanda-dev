@@ -58,3 +58,20 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 
 Read `shared/email.md`, `/draft` SKILL.md's email section and the `write_email` source; confirm the `cc` parameter and the quoted lines above still exist.
+
+### Verification at HEAD, 2026-11-04 (commit 0f75fda4)
+
+| Item | Result | Where |
+|---|---|---|
+| `write_email` takes `cc`, also with `to_service_list` | Confirmed. It is added after the addresses read from case data | `source/lawyer/mcp/src/schema/submission-forms.ts:836`, `source/lawyer/mcp/src/submission/draft-harness.ts:156` |
+| Quoted line "Case data holds each lawyer's email as one value..." | Confirmed, with "(split on ; and ,)" after "several addresses" | `submission-forms.ts:777-779` |
+| `addressed.cc` holds the firm's cc people and any later addresses in counsel's value | Confirmed | `source/lawyer/mcp/src/submission/email-recipients.ts:76-78,137-147` |
+| `/draft` step 4 names no check for a copying request | Confirmed | `.claude/skills/draft/SKILL.md:103` |
+| `shared/email.md`: "`cc` adds address strings in every case" | Confirmed, and it is the file's only word on such a request | `.claude/skills/shared/email.md:17` |
+| A session can search mail for the request | Confirmed. `mail__search_emails` takes `from` and `body`, and returns each message's `cc` with no body by default. No hook's matcher covers the mail read tools, and each is marked read-only | `source/lawyer/mcp/src/schema/mail.ts:24,123-148`, `source/lawyer/plugin.json`, `source/litigator/plugin.json` |
+| A second `write_email` with the same body passes the review gate | Confirmed. The gate tests the body only, and `cc` does not enter it | `source/litigator/hooks/correspondence-review-gate.py:97-105` |
+| Case data's reader needs no change | Confirmed. Out of scope | `email-recipients.ts` |
+
+**Option 2 is not cheap, so it is left out, and section 9's question does not arise.** The one home `to_service_list` already reads is counsel's email value (`parties.lawyer_email`). A later address there would reach Cc with no code change, but the court forms print the same value as counsel's email (`source/lawyer/mcp/src/submission/forms/emit-bcca-factum.ts:214`, `render-bcca-factum.ts:311`, `.claude/skills/matter-data/references/design-decisions.md:1036`), so an assistant's address would be printed on filings. `to_service_list` does not read practice contacts. Any other home is new schema and new reading code.
+
+**The look runs after the first `write_email`, not before it.** Section 4 assumed the session knows each counsel's address first. On the fast path it does not: `to_service_list` exists so that no address passes through the model, /draft loads no case-data read before the `.eml`, and the case-data reader `list_parties.py` has no model-facing tool. The result's `addressed.to` is the exact list. The order is `write_email`, look, present, then on the practitioner's word the next " vN" with `cc`. No version carries the address before that word, whichever comes first, so the goal in section 3 holds. Criterion 1's "before a service-list email is written" holds for the version that carries `cc`, not for the first version.
