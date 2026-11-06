@@ -57,17 +57,8 @@ test("no registered type declares a folder code: each Writing's folder is named 
   for (const key of REGISTERED_FILLERS) assert.equal(Object.hasOwn(resolveTypeFile(key.venue, key.kind).block, "folder_code"), false, key.kind);
 });
 
-test("each registered type declares the companions the render path's retired kind list implied", () => {
-  const companions = Object.fromEntries(REGISTERED_FILLERS.map((key) => [key.kind, resolveTypeFile(key.venue, key.kind).block.companions ?? []]));
-  assert.deepEqual(companions, {
-    submissions_package: [],
-    notice_of_application: ["written-arguments"],
-    requisition_default_judgment: ["written-arguments"],
-    requisition_consent: ["written-arguments"],
-    application_response: ["written-arguments"],
-    bcca_stay_response: [],
-    bcca_factum: [],
-  });
+test("no registered type declares a companion: a Writing gets Written Arguments only when asked for", () => {
+  for (const key of REGISTERED_FILLERS) assert.equal(Object.hasOwn(resolveTypeFile(key.venue, key.kind).block, "companions"), false, key.kind);
 });
 
 const BESPOKE = { renderer: "bespoke", needs_forum_parts: true, folder_code: "FIX", title: "Fixture", exhibit_numbering: "writing" };

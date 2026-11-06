@@ -522,7 +522,7 @@ export const SYMBOLS: readonly SymbolRow[] = [
     work: "reconcile the two",
     actor: "drafter",
     slug: "loose-thread", title: "Reconcile the loose thread",
-    condition: "item pointed by the venue form, unpointed by the WA — derived from the pointer lists, no column",
+    condition: "item pointed by the venue form, unpointed by the WA, on a Writing with a WA — derived from the pointer lists, no column",
     history: "pointer model v10 (#380); render shipped #384",
   },
   {

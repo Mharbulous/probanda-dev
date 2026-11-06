@@ -701,7 +701,7 @@ function inventoryOf(result) {
  * is the one the v30 backfill writes, unless `snapshot` is false (a database not yet at v30). */
 async function seedNoticeOfApplication(dbPath, { snapshot = true } = {}) {
   // A database not yet at v30 has no case_party_id either; the v30 test links after migrating.
-  await seedBcscDefaultJudgment(dbPath, { link: snapshot });
+  await seedBcscDefaultJudgment(dbPath, { link: snapshot, layout: snapshot });
   await submissionDataExecute(dbPath, "UPDATE filings SET kind = 'notice_of_application', subkind = NULL, title = 'Notice of Application' WHERE id = 1;");
   if (snapshot) await snapshotFromShipped(dbPath, 1, "notice-of-application");
 }
@@ -715,10 +715,11 @@ function shippedBlock(rel) {
 }
 
 /** The stored layout the v30 backfill writes on a BCSC Writing (filing-checklists.md §13): the
- * shipped type block and venue block, verbatim, citing nothing. The Work Board reads its criteria
- * from it, never from the kind. */
+ * shipped type block and venue block, verbatim, citing nothing, with the Written Arguments its type
+ * then declared. The Work Board reads its criteria from it, never from the kind. */
 async function snapshotFromShipped(dbPath, filingId, typeFile) {
-  const stored = { layout: shippedBlock(`BCSC/Documents/${typeFile}.md`), venue: shippedBlock("BCSC/venue.md"), passage_hashes: {} };
+  const layout = { ...shippedBlock(`BCSC/Documents/${typeFile}.md`), companions: ["written-arguments"] };
+  const stored = { layout, venue: shippedBlock("BCSC/venue.md"), passage_hashes: {} };
   await submissionDataWrite(dbPath, "UPDATE filings SET layout_snapshot = ? WHERE id = ?", [JSON.stringify(stored), filingId]);
 }
 

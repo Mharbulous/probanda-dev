@@ -420,9 +420,23 @@ export const DEFAULT_JUDGMENT_CASE_DATA = {
   ],
 };
 
-/** `link` false leaves the parties unlinked, for a database migrated only to a version before
- * case_party_id (v41). */
-export async function seedBcscDefaultJudgment(dbPath, { link = true } = {}) {
+const BCSC_VENUE = JSON.parse(
+  /^```json\n([\s\S]*?)\n```$/m.exec(
+    readFileSync(new URL("../../../../../.claude/skills/draft/references/CAN/BC/BCSC/venue.md", import.meta.url), "utf-8").replace(/\r\n/g, "\n")
+  )[1]
+);
+
+/** SQL storing on Writing `id` the layout of a BCSC Writing created while its type still declared
+ * Written Arguments, reduced to what the render reads: that companion and the shipped venue block.
+ * It declares no criteria or inputs, as a row with no stored layout declares none. */
+export function withWrittenArguments(id) {
+  const stored = JSON.stringify({ layout: { renderer: "bespoke", companions: ["written-arguments"] }, venue: BCSC_VENUE, passage_hashes: {} });
+  return `UPDATE filings SET layout_snapshot = '${stored.replace(/'/g, "''")}' WHERE id = ${id};`;
+}
+
+/** `link` false leaves the parties unlinked, and `layout` false stores no layout, for a database
+ * migrated only to a version before case_party_id (v41) or the layout snapshot (v30). */
+export async function seedBcscDefaultJudgment(dbPath, { link = true, layout = true } = {}) {
   writePartiesOfRecord(dirname(dbPath), DEFAULT_JUDGMENT_CASE_DATA);
   await submissionDataExecute(
     dbPath,
@@ -449,6 +463,7 @@ export async function seedBcscDefaultJudgment(dbPath, { link = true } = {}) {
 
     INSERT INTO filings (id, proceeding_id, kind, subkind, round, title)
       VALUES (1, 1, 'requisition_default_judgment', 'default_judgment', NULL, 'Default Judgment Requisition');
+    ${layout ? withWrittenArguments(1) : ""}
 
     INSERT INTO filing_orders (filing_id, order_sought_id, document, ordinal) VALUES (1, 1, 'form', 1), (1, 2, 'form', 2);
     INSERT INTO filing_documents (filing_id, document_id, ordinal, role) VALUES (1, 1, 1, 'order');
@@ -487,6 +502,7 @@ export async function seedBcscConsentOrder(dbPath) {
 
     INSERT INTO filings (id, proceeding_id, kind, subkind, round, title)
       VALUES (1, 1, 'requisition_consent', 'consent', NULL, 'Consent Order Requisition');
+    ${withWrittenArguments(1)}
 
     INSERT INTO filing_orders (filing_id, order_sought_id, document, ordinal) VALUES (1, 1, 'form', 1);
 
@@ -543,6 +559,7 @@ export async function seedApplicationResponse(dbPath) {
 
     INSERT INTO filings (id, proceeding_id, kind, subkind, round, title)
       VALUES (1, 1, 'application_response', NULL, NULL, 'Application Response');
+    ${withWrittenArguments(1)}
 
     INSERT INTO filing_positions (filing_id, opposing_order_id, position, proposed_terms)
       VALUES

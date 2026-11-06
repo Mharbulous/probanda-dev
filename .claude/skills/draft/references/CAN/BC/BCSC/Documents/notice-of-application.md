@@ -5,8 +5,7 @@
   "title": "Notice of Application",
   "exhibit_numbering": "writing",
   "goal_criteria": ["primary-authority", "excerpts", "noting-up", "evidence", "counsel-review", "open-items", "orders-sought", "hearing-date"],
-  "ingest_inputs": ["court_filings", "documents_exchanged"],
-  "companions": ["written-arguments"]
+  "ingest_inputs": ["court_filings", "documents_exchanged"]
 }
 ```
 
@@ -24,9 +23,7 @@ A Writing lives in exactly one pipeline, never both. `publish-bcsc-form`'s matte
 
 ## Deployment
 
-A newly drafted item reaches the Written Argument by default. Whether it also reaches the venue form is an explicit choice asked at the moment the item is elicited. Silence means no. Never offer form-only.
-
-Orders always reach both, silently, since the court is asked only for what Part 1 lists. To hold an order back, deploy it nowhere. Facts and submissions: ask.
+A newly drafted item reaches the venue form. To hold one back, deploy it nowhere. A Writing with Written Arguments follows `/drafting-data`'s `references/filing-checklists.md` §9 instead.
 
 ## Render refusal
 

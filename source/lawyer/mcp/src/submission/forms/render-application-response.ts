@@ -40,7 +40,7 @@ import { fetchFactAdmissionAnnotations } from "./admission-annotations.js";
 import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
 import { recordParagraph, renderSubmissionParagraphs } from "./submission-paragraphs.js";
 import { reviewMarkerFor } from "./review-state.js";
-import type { RenderContext } from "./render-context.js";
+import { hasWrittenArguments, type RenderContext } from "./render-context.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
 import { materialDateSuffix } from "./render-bcca-factum.js";
 import { factsPart, fetchFacts, fetchStatementsOfFact, type StatementOfFactRow } from "./filing-facts.js";
@@ -196,7 +196,8 @@ export function renderApplicationResponse(ctx: RenderContext): string {
   const client = ctx.parties.find((p) => p.is_client === 1);
   const applicant = ctx.parties.find((p) => p.is_applicant === 1);
   const hearing = fetchHearingDetails(ctx.dbPath, ctx.filing.id);
-  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
+  // 🧵: a Writing with no Written Arguments has nothing to reconcile, so null here raises none.
+  const waIds = hasWrittenArguments(ctx.filing) ? fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument") : null;
 
   const positions = fetchFilingPositions(ctx.dbPath, ctx.filing.id);
   const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
@@ -357,7 +358,7 @@ export function renderApplicationResponse(ctx: RenderContext): string {
     // fact's court-record 📌 keys on the fact, 🧵 on this form's own pointer row, and each
     // statement's own tokens are recorded before they join the line's dedupe.
     const courtRecordPin = courtRecordPinpointMarker(f.court_record, f.court_record_pinpoint, f.court_record_execution, f.court_record_exhibit_letters);
-    const looseThread = looseThreadMarker(true, waIds.factIds.has(f.id));
+    const looseThread = looseThreadMarker(true, waIds?.factIds.has(f.id) ?? true);
     recordGlyphs(ctx.inventory, courtRecordPin, ["📌"], { table: "facts", id: f.id, item: f.postulate });
     recordGlyphs(ctx.inventory, looseThread, ["🧵"], { table: "filing_facts", id: f.pointer_id, item: f.postulate });
     recordCriterionGlyphs(ctx.inventory, owedWitness, ["👤"], { table: "facts", id: f.id, item: f.postulate, ...(witnessSuppressed ? { suppressed: true as const } : {}) });
@@ -429,7 +430,7 @@ export function renderApplicationResponse(ctx: RenderContext): string {
     const s = entry.item;
     recordParagraph(ctx, s.id, "form", partNum);
     // Site 15: 🧵 rides the contention line but keys on this form's own pointer row.
-    const looseThread = looseThreadMarker(true, waIds.submissionIds.has(s.id));
+    const looseThread = looseThreadMarker(true, waIds?.submissionIds.has(s.id) ?? true);
     recordGlyphs(ctx.inventory, looseThread, ["🧵"], { table: "filing_submissions", id: s.pointer_id, item: s.contention });
     const result = renderSubmissionParagraphs(
       s.id,

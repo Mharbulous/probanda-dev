@@ -44,6 +44,7 @@ import test from "node:test";
 
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
+const { withWrittenArguments } = await import("./fixtures/forms-render-seeds.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 
@@ -289,6 +290,7 @@ test("BCSC Notice of Application renders clean from checklist-only population", 
 
       INSERT INTO filings (id, proceeding_id, kind, subkind, round, title)
         VALUES (1, 1, 'notice_of_application', NULL, NULL, 'Fenwick Notice of Application');
+      ${withWrittenArguments(1)}
 
       INSERT INTO hearing_details (filing_id, hearing_date, hearing_time, time_estimate_minutes, associate_judge, proposed_hearing)
         VALUES (1, '2026-10-14', '10:00 am', 30, 1, '2026-10-14 at 10:00 am');
@@ -357,6 +359,7 @@ test("BCSC default-judgment requisition and Form 8 render clean from checklist-o
 
       INSERT INTO filings (id, proceeding_id, kind, subkind, round, title)
         VALUES (1, 1, 'requisition_default_judgment', 'default_judgment', NULL, 'Harrow Default Judgment Requisition');
+      ${withWrittenArguments(1)}
 
       INSERT INTO filing_orders (filing_id, order_sought_id, document, ordinal) VALUES (1, 1, 'form', 1), (1, 2, 'form', 2);
       INSERT INTO filing_documents (filing_id, document_id, ordinal, role) VALUES (1, 1, 1, 'order'), (1, 2, 2, 'affidavit');
@@ -423,6 +426,7 @@ test("BCSC consent-order requisition and consent order render clean from checkli
 
       INSERT INTO filings (id, proceeding_id, kind, subkind, round, title)
         VALUES (1, 1, 'requisition_consent', 'consent', NULL, 'Castellan Consent Order Requisition');
+      ${withWrittenArguments(1)}
 
       INSERT INTO filing_orders (filing_id, order_sought_id, document, ordinal) VALUES (1, 1, 'form', 1);
       -- #370's requisition-tracks inversion: deployed via the Written
@@ -481,6 +485,7 @@ test("BCSC Application Response renders clean from checklist-only population (is
 
       INSERT INTO filings (id, proceeding_id, kind, subkind, round, title)
         VALUES (1, 1, 'application_response', NULL, NULL, 'Marchetti Application Response');
+      ${withWrittenArguments(1)}
 
       INSERT INTO filing_positions (filing_id, opposing_order_id, position, proposed_terms)
         VALUES (1, 1, 'opposed', NULL);

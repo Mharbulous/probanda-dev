@@ -3,7 +3,7 @@
 import { GENERAL_DOCUMENT_TYPE, generalDocumentName, sanitizeForPath } from "../writing-folder.js";
 import { requireForum } from "./query.js";
 import { renderWitnessStatements } from "./render-witness-statements.js";
-import type { RenderContext } from "./render-context.js";
+import { hasWrittenArguments, type RenderContext } from "./render-context.js";
 import { composeFiller } from "./filler-registry.js";
 import { scalarValue, type CitedState, type StoredLayout } from "./layout-snapshot.js";
 import { renderGeneral } from "./render-general.js";
@@ -45,15 +45,15 @@ function renderDocument(
   return { documentType, fileName, markdown, label };
 }
 
-/** The venue document(s) and the companions their type declares. A general Writing renders one
- * document from its stored layout (forms/render-general.ts), a bespoke one through the filler its
- * type file composes to (forms/filler-registry.ts), which needs the forum. */
+/** The venue document(s). A general Writing renders one document from its stored layout
+ * (forms/render-general.ts), a bespoke one through the filler its type file composes to
+ * (forms/filler-registry.ts), which needs the forum. */
 function venueDocumentsForFiling(
   ctx: RenderContext,
   timings: PhaseTimings,
   general: StoredLayout | null,
   cited: CitedState[]
-): { docs: DocumentOutput[]; companions: readonly unknown[] } {
+): DocumentOutput[] {
   if (general !== null) {
     // The document's own name (spec 2026-10-22): the Writing's title on a stock type, else its type's title.
     const name = generalDocumentName(String(scalarValue(general.layout.title)), ctx.filing.title);
@@ -75,13 +75,10 @@ function venueDocumentsForFiling(
       },
       { short: name, long: name }
     );
-    return {
-      docs: [{ ...doc, unwritten, currency_withheld: currencyWithheld, prose_format: proseFormat }],
-      companions: (general.layout.companions as unknown[] | undefined) ?? [],
-    };
+    return [{ ...doc, unwritten, currency_withheld: currencyWithheld, prose_format: proseFormat }];
   }
-  const { filler, block } = composeFiller(requireForum(ctx.proceeding, true).forum, ctx.filing.kind);
-  const docs = filler<DocumentOutput>(ctx, {
+  const { filler } = composeFiller(requireForum(ctx.proceeding, true).forum, ctx.filing.kind);
+  return filler<DocumentOutput>(ctx, {
     document: (documentType, fileName, render, label) => renderDocument(ctx, timings, documentType, fileName, render, label),
     witnessStatements: () => {
       // One call renders every witness statement, so their entries share the one documentType.
@@ -96,13 +93,11 @@ function venueDocumentsForFiling(
       }));
     },
   });
-  return { docs, companions: (block.companions as unknown[] | undefined) ?? [] };
 }
 
 /** #370/#380: Written Arguments renders as a true companion (document='written_argument') for
- * every type that declares `written-arguments` among its `companions` (shared/declared-layout.md
- * section 6); a type whose venue document is itself the written argument (VanIAC's submissions
- * package, the BCCA response book and factum) declares none. The reserve inventory is then
+ * every Writing whose stored layout names `written-arguments` among its `companions`
+ * (shared/declared-layout.md section 6). No type declares it by default. The reserve inventory is then
  * recorded for every filing, with no document. The Work Board
  * is no document of the filing's (#1365): the render builds its section from this render's
  * inventory, after these documents, and the filing's own Work Board page carries it. */
@@ -112,10 +107,10 @@ export function documentsForFiling(ctx: RenderContext, timings: PhaseTimings, ge
   // must stay after both, and the venue face must stay first (first-write-wins gives it
   // priority for a submission carried by both documents). Evaluation here is eager and strictly
   // ordered, so this holds -- but nothing else enforces it.
-  const { docs, companions } = venueDocumentsForFiling(ctx, timings, general, cited);
+  const docs = venueDocumentsForFiling(ctx, timings, general, cited);
   // The venue document alone carries the Writing's subject on the Work Board's Writings strip.
   docs[0] = { ...docs[0], label: withSubject(docs[0].label, ctx.filing.title) };
-  if (companions.includes("written-arguments")) {
+  if (hasWrittenArguments(ctx.filing)) {
     docs.push(renderDocument(ctx, timings, "Written_arguments", "Written Arguments.md", () => renderWrittenArguments(ctx, "written_argument")));
   }
   const from = ctx.inventory.length;

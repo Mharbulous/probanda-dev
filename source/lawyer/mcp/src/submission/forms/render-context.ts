@@ -160,6 +160,12 @@ export function layoutFor(filing: FilingRow): StoredLayout | null {
   return filing.layout_snapshot === null ? null : storedLayout(filing);
 }
 
+/** Whether the Writing has a Written Arguments companion: its stored layout names one. */
+export function hasWrittenArguments(filing: FilingRow): boolean {
+  const companions = layoutFor(filing)?.layout.companions;
+  return Array.isArray(companions) && companions.includes("written-arguments");
+}
+
 /** A general Writing's stored layout, or null for a bespoke one. */
 export function generalLayoutFor(filing: FilingRow): StoredLayout | null {
   const stored = layoutFor(filing);

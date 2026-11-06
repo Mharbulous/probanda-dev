@@ -24,7 +24,7 @@ import { fetchOrdersSought } from "./orders-sought.js";
 import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
 import { orderReviewMarkerFor, reviewMarkerFor } from "./review-state.js";
 import { recordParagraph, renderSubmissionParagraphs } from "./submission-paragraphs.js";
-import type { RenderContext } from "./render-context.js";
+import { hasWrittenArguments, type RenderContext } from "./render-context.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
 import { materialDateSuffix } from "./render-bcca-factum.js";
 import { factsPart, fetchFacts, fetchStatementsOfFact, type StatementOfFactRow } from "./filing-facts.js";
@@ -72,11 +72,9 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
   const hearing = fetchHearingDetails(ctx.dbPath, ctx.filing.id);
   const relief = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
   // 🧵 loose thread (schema v10, #380): what the form deploys that the
-  // Written Arguments companion doesn't. Pre-elicitation (the deferred
-  // "document-pointer elicitation" follow-on ticket) the WA's pointer lists
-  // are empty, so this fires on everything -- correct, fail-visible noise,
-  // not a bug (see #384's resolution).
-  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
+  // Written Arguments companion doesn't. A Writing with no Written Arguments
+  // has nothing to reconcile, so null here raises none.
+  const waIds = hasWrittenArguments(ctx.filing) ? fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument") : null;
 
   const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("notice_of_application"));
   const statementsOfFact = fetchStatementsOfFact(
@@ -206,7 +204,7 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
     // records the base, so one key would otherwise carry two items.
     const jurMarker = recordJurisdictionLadder(ctx.inventory, r.id, r.wording, r.requires);
     const petitum = unservedPetitumMarker(r.hasServedBy);
-    const looseThread = looseThreadMarker(true, waIds.orderIds.has(r.id));
+    const looseThread = looseThreadMarker(true, waIds?.orderIds.has(r.id) ?? true);
     recordGlyphs(ctx.inventory, petitum, ["🦵"], { table: "order_sought", id: r.id, item: r.wording });
     recordGlyphs(ctx.inventory, looseThread, ["🧵"], { table: "filing_orders", id: r.pointer_id, item: r.wording });
     const workMarkers = dedupeLineMarkers([jurMarker, petitum, looseThread]);
@@ -242,7 +240,7 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
     // pointer row. 👤 and the spent-admission rungs never generate; 👤 is recorded on the fact for
     // the Evidence criterion (Goal card design §2.7), flagged when counsel suppressed it (v69).
     const courtRecordPin = courtRecordPinpointMarker(f.court_record, f.court_record_pinpoint, f.court_record_execution, f.court_record_exhibit_letters);
-    const looseThread = looseThreadMarker(true, waIds.factIds.has(f.id));
+    const looseThread = looseThreadMarker(true, waIds?.factIds.has(f.id) ?? true);
     recordGlyphs(ctx.inventory, courtRecordPin, ["📌"], { table: "facts", id: f.id, item: f.postulate });
     recordGlyphs(ctx.inventory, looseThread, ["🧵"], { table: "filing_facts", id: f.pointer_id, item: f.postulate });
     recordCriterionGlyphs(ctx.inventory, owedWitness, ["👤"], { table: "facts", id: f.id, item: f.postulate, ...(witnessSuppressed ? { suppressed: true as const } : {}) });
@@ -335,7 +333,7 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
     recordParagraph(ctx, s.id, "form", submissionNum);
     // Site 12: 🧵 rides the contention line but keys on the venue form's own pointer row, so it is
     // recorded here rather than inside renderSubmissionParagraphs, which only sees the submission.
-    const looseThread = looseThreadMarker(true, waIds.submissionIds.has(s.id));
+    const looseThread = looseThreadMarker(true, waIds?.submissionIds.has(s.id) ?? true);
     recordGlyphs(ctx.inventory, looseThread, ["🧵"], { table: "filing_submissions", id: s.pointer_id, item: s.contention });
     const result = renderSubmissionParagraphs(
       s.id,

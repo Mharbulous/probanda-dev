@@ -11,7 +11,7 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
-const { DEFAULT_JUDGMENT_CASE_DATA } = await import("./fixtures/forms-render-seeds.mjs");
+const { DEFAULT_JUDGMENT_CASE_DATA, withWrittenArguments } = await import("./fixtures/forms-render-seeds.mjs");
 const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender, submissionFormsEmitForm32 } = await import("../build/submission/forms.js");
@@ -30,6 +30,7 @@ async function seedNoticeOfApplicationWithWitnessStatementFirst(dbPath) {
 
     INSERT INTO filings (id, proceeding_id, kind, subkind, round, title)
       VALUES (1, 1, 'notice_of_application', NULL, NULL, 'Notice of Application');
+    ${withWrittenArguments(1)}
     INSERT INTO hearing_details (filing_id, hearing_date, hearing_time, time_estimate_minutes, associate_judge)
       VALUES (1, '2026-09-01', '9:45 am', 45, 1);
     INSERT INTO order_sought (id, proceeding_id, wording) VALUES (1, 1, 'damages to be assessed');
