@@ -555,10 +555,11 @@ def main(argv=None):
     by_page = rectangles(words, colours)
     writer = PdfWriter()
     for number in range(first, last + 1):
-        page = reader.pages[number - 1]
+        # Attach the page to the writer before painting: pypdf 7 refuses to merge into a
+        # page no writer owns.
+        page = writer.add_page(reader.pages[number - 1])
         if number in by_page:
             page.merge_page(overlay(page, by_page[number]))
-        writer.add_page(page)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with open(args.out, "wb") as handle:
         writer.write(handle)
