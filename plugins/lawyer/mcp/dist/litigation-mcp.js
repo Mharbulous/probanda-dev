@@ -1,4 +1,4 @@
-// build-stamp: 5c4ce0b9d8d7
+// build-stamp: bfd3fb46d083
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75261,7 +75261,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "5c4ce0b9d8d7";
+var BUILD_STAMP = false ? null : "bfd3fb46d083";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -79244,7 +79244,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("assign_job"),
-      description: "Assign a job (a tickets row) to this session in one call: the guarded assigning write followed by its confirm-read. By default the write matches only a job that is queued, unlocked and not shelved (rejected_at NULL), or a wip job whose lock has lapsed (no activity for 60 minutes, so every board reads it as released): taking a lapsed lock records the lapse in the job's history and needs no take-over. takeover: true admits a wip job held by another session, on the practitioner's yes to the take-over form or their instruction to take it over. takeover: true needs expected_holder and expected_last_activity, the `holder:` tag and the `last activity:` minute off the job's card (drafting_forms__board_card with jobs), and the write lands only while the row still shows both. A shelved, completed or superseded job is never assigned. A session that created any job (tickets.created_by, schema v72) is assigned only a job it created, by take-over or otherwise. A job is not assigned before its bring-forward date (tickets.bf_on, schema v74), a start date and never a deadline; a take-over does not read it. Every claim (an assign, a take-over, a re-take after a release or a lapse, even by the same session) raises the job's claim number in the same transaction, returned as claim_no on assigned (null on every other outcome, and on a job held since before claims were numbered); every holder-guarded job tool then takes it. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. The outcome is read off the confirm-read: assigned (the row carries this session's token; changes is 0 when it already did), lost_race (another session's token is on the row: re-render and say the job was just taken), holder_changed (a take-over found another holder than expected_holder: nothing was written; re-render and ask afresh; also when the holder is unchanged but the last activity moved), not_created_here (this session created jobs and this is not one of them: nothing was written; say so in one line), before_bf (the job is held until its bring-forward date, the returned bf_on: nothing was written; say so in one line, and never propose changing or clearing the date, which only the practitioner does), no_match (no token: the guards matched nothing, and the returned status and rejected_at show why). Never retry to win. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, invalid_expected_holder, invalid_expected_last_activity, not_found. Returns ticket_id, outcome, changes, locked_by, locked_at, status, rejected_at, bf_on, claim_no and a note.",
+      description: "Assign a job (a tickets row) to this session in one call: the guarded assigning write followed by its confirm-read. By default the write matches only a job that is queued, unlocked and not shelved (rejected_at NULL), or a wip job whose lock has lapsed (no activity for 60 minutes, so every board reads it as released): taking a lapsed lock records the lapse in the job's history and needs no take-over. takeover: true admits a wip job held by another session, on the practitioner's yes to the take-over form or their instruction to take it over. takeover: true needs expected_holder and expected_last_activity, the `holder:` tag and the `last activity:` minute off the job's card (drafting_forms__board_card with jobs), and the write lands only while the row still shows both. A shelved or superseded job is never assigned, and a completed one only with reopen: true, on the practitioner's bare yes to reopening it (a hook refuses it otherwise), never with takeover: it returns to wip under this session with its plan and done steps kept, and its history records the completion it lifts. A session that created any job (tickets.created_by, schema v72) is assigned only a job it created, by take-over or otherwise. A job is not assigned before its bring-forward date (tickets.bf_on, schema v74), a start date and never a deadline; a take-over does not read it. Every claim (an assign, a take-over, a re-take after a release or a lapse, even by the same session) raises the job's claim number in the same transaction, returned as claim_no on assigned (null on every other outcome, and on a job held since before claims were numbered); every holder-guarded job tool then takes it. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. The outcome is read off the confirm-read: assigned (the row carries this session's token; changes is 0 when it already did), lost_race (another session's token is on the row: re-render and say the job was just taken), holder_changed (a take-over found another holder than expected_holder: nothing was written; re-render and ask afresh; also when the holder is unchanged but the last activity moved), not_created_here (this session created jobs and this is not one of them: nothing was written; say so in one line), before_bf (the job is held until its bring-forward date, the returned bf_on: nothing was written; say so in one line, and never propose changing or clearing the date, which only the practitioner does), no_match (no token: the guards matched nothing, and the returned status and rejected_at show why). Never retry to win. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, invalid_expected_holder, invalid_expected_last_activity, invalid_reopen, not_found. Returns ticket_id, outcome, changes, locked_by, locked_at, status, rejected_at, bf_on, claim_no and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -79253,7 +79253,8 @@ function submissionDataToolDefinitions() {
           session_token: { type: "string" },
           takeover: { type: "boolean" },
           expected_holder: { type: "string" },
-          expected_last_activity: { type: "string" }
+          expected_last_activity: { type: "string" },
+          reopen: { type: "boolean" }
         },
         required: ["db_path", "ticket_id", "session_token"],
         additionalProperties: false
@@ -93567,8 +93568,16 @@ JOB_MOVES = (
 JOB_KEYS = (
     ("db_meta", "key", "key LIKE 'job_active:%'", "drafting_data__touch_job"),
     ("kv_store", "namespace, key", "namespace IN ('last_activity', 'lock_lapsed')", "drafting_data__touch_job or drafting_data__assign_job"),
-    ("kv_store", "namespace, key", "namespace = 'claim_no'", "drafting_data__assign_job"),
+    ("kv_store", "namespace, key", "namespace IN ('claim_no', 'reopened')", "drafting_data__assign_job"),
 )
+
+
+# A completed job goes back to queued or wip only through drafting_data__assign_job with reopen, on the
+# practitioner's yes (jobs-closeout.md §10e), so a script that does it is refused. Supersession stays allowed.
+def job_ids(con, statuses):
+    if not con.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'tickets'").fetchone():
+        return set()
+    return {row[0] for row in con.execute(f"SELECT id FROM tickets WHERE status IN ({statuses})")}
 
 
 def job_state(con):
@@ -93634,6 +93643,7 @@ def do_execute(req):
     def mutate(con):
         before = recorded(con)
         jobs = job_state(con) if guarded else None
+        done = job_ids(con, "'completed'") if guarded else set()
         seeds = seed_rows(con) if guarded else None
         research = research_rows(con) if guarded else None
         try:
@@ -93651,6 +93661,10 @@ def do_execute(req):
         refused = jobs is not None and job_move(jobs, job_state(con))
         if refused:
             raise SystemExit(refused)
+        reopened = done & job_ids(con, "'queued', 'wip'")
+        if reopened:
+            raise SystemExit(f"job_write_refused: use drafting_data__assign_job with reopen. tickets {min(reopened)}: "
+                             "a completed job is reopened only by that tool. Nothing was written.")
         refused = research is not None and research_write(research, research_rows(con))
         if refused:
             raise SystemExit(refused)
@@ -98953,11 +98967,13 @@ function lawStatementCitationLine(row2) {
   const tags = `${quotingTag(row2)}${row2.authority_killed_on !== null ? ` (killed ${row2.authority_killed_on})` : ""}${scrutinyFailedTag([row2])}${settledTag(row2)}${noteUpTag(row2)}`;
   if (row2.authority_title === null) return row2.pinpoint ? `> ${row2.pinpoint}${tags}` : null;
   const citation = row2.authority_citation ?? CITATION_MISSING;
-  let pin = row2.pinpoint;
-  if (pin && row2.authority_citation && pin.startsWith(row2.authority_citation)) {
-    pin = pin.slice(row2.authority_citation.length).replace(/^[\s,;]+/, "") || null;
-  }
+  const pin = printedPinpoint(row2.authority_citation, row2.pinpoint);
   return `> *${row2.authority_title}*, ${citation}${pin ? `, ${pin}` : ""}${tags}`;
+}
+function printedPinpoint(citation, pinpoint) {
+  if (!pinpoint || !citation) return pinpoint;
+  if (citation.trimEnd().endsWith(`, ${pinpoint.trim()}`)) return null;
+  return pinpoint.startsWith(citation) ? pinpoint.slice(citation.length).replace(/^[\s,;]+/, "") || null : pinpoint;
 }
 function lawStatementMarkers(row2, deployed = true) {
   if (row2.authority_killed_on !== null) return "";
@@ -98979,6 +98995,55 @@ function lawStatementMarkers(row2, deployed = true) {
     noteUpMarker(row2.authority_kind, row2.treatment, row2.currency_status, row2.currency_checked_on),
     doubt
   ]);
+}
+
+// src/submission/forms/statement-lines.ts
+function factStatementCitationLine(exhibitMap, labelMap, s3, prefix = "> ") {
+  const parts = [];
+  if (s3.instrument_id !== null) {
+    const instrumentLabel = labelMap.get(s3.instrument_id);
+    if (instrumentLabel !== void 0) parts.push(instrumentLabel);
+    if (s3.pinpoint) parts.push(s3.pinpoint);
+  } else if (s3.pinpoint) {
+    parts.push(s3.pinpoint);
+  }
+  if (s3.exhibit_id !== null) {
+    const num = exhibitMap.get(s3.exhibit_id);
+    const exhibitLabel = num !== void 0 ? `Ex. ${num}` : labelMap.get(s3.exhibit_id);
+    if (exhibitLabel !== void 0) parts.push(exhibitLabel);
+    if (s3.exhibit_pinpoint) parts.push(s3.exhibit_pinpoint);
+  }
+  return parts.length === 0 ? null : `${prefix}${parts.join(", ")}`;
+}
+function factStatementMarkers(s3, courtRecordLinked, admitted, copyMarker) {
+  if (isAdmittedGuard(courtRecordLinked, admitted)) return dedupeLineMarkers([doubtMarker(s3.doubt), copyMarker]);
+  return dedupeLineMarkers([
+    factExcerptMarker(s3),
+    exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint),
+    testimonyPinpointMarker(s3.instrument_id, s3.pinpoint),
+    statementOfFactMarkers({
+      interviewed: s3.interviewed,
+      instrument_id: s3.instrument_id,
+      instrument_kind: s3.instrument_kind,
+      instrument_execution: s3.instrument_execution,
+      fact_court_record_linked: courtRecordLinked,
+      fact_admitted_by_all_opposing: admitted
+    }),
+    doubtMarker(s3.doubt),
+    copyMarker
+  ]);
+}
+function statementBlock(excerpt, citationLine, markers, tag, id, indent2) {
+  const out = [];
+  if (excerpt) {
+    const fence = "`".repeat(Math.max(3, ...[...excerpt.matchAll(/`+/g)].map((m3) => m3[0].length + 1)));
+    out.push(`${indent2}${fence}`, ...excerpt.split("\n").map((l3) => l3 ? `${indent2}${l3}` : ""), `${indent2}${fence}`, "");
+  }
+  out.push(`${indent2}${[citationLine, markers, `<!-- ${tag} ${id} -->`].filter(Boolean).join(" ")}`);
+  return out;
+}
+function pushStatementLines(lines2, excerpt, citationLine, markers, tag, id) {
+  lines2.push("", ...statementBlock(excerpt, citationLine, markers, tag, id, "   "));
 }
 
 // src/submission/forms/proposal-inventory.ts
@@ -99602,54 +99667,6 @@ var countsAsSupport = (s3) => s3.verification === "verified" || s3.verification 
 var notFailed = (s3) => s3.verification !== "failed";
 var passesBriefOnlyCap = (s3) => countsAsSupport(s3) && authorityNotKilled(s3) && authorityNotOverruled(s3);
 var BRIEF_ONLY_CAP_SQL = "(a.killed_on IS NULL AND a.treatment IS NOT 'overruled' AND sl.verification IN ('verified', 'settled'))";
-
-// src/submission/forms/statement-lines.ts
-function factStatementCitationLine(exhibitMap, labelMap, s3, prefix = "> ") {
-  const parts = [];
-  if (s3.instrument_id !== null) {
-    const instrumentLabel = labelMap.get(s3.instrument_id);
-    if (instrumentLabel !== void 0) parts.push(instrumentLabel);
-    if (s3.pinpoint) parts.push(s3.pinpoint);
-  } else if (s3.pinpoint) {
-    parts.push(s3.pinpoint);
-  }
-  if (s3.exhibit_id !== null) {
-    const num = exhibitMap.get(s3.exhibit_id);
-    const exhibitLabel = num !== void 0 ? `Ex. ${num}` : labelMap.get(s3.exhibit_id);
-    if (exhibitLabel !== void 0) parts.push(exhibitLabel);
-    if (s3.exhibit_pinpoint) parts.push(s3.exhibit_pinpoint);
-  }
-  return parts.length === 0 ? null : `${prefix}${parts.join(", ")}`;
-}
-function factStatementMarkers(s3, courtRecordLinked, admitted, copyMarker) {
-  if (isAdmittedGuard(courtRecordLinked, admitted)) return dedupeLineMarkers([doubtMarker(s3.doubt), copyMarker]);
-  return dedupeLineMarkers([
-    factExcerptMarker(s3),
-    exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint),
-    testimonyPinpointMarker(s3.instrument_id, s3.pinpoint),
-    statementOfFactMarkers({
-      interviewed: s3.interviewed,
-      instrument_id: s3.instrument_id,
-      instrument_kind: s3.instrument_kind,
-      instrument_execution: s3.instrument_execution,
-      fact_court_record_linked: courtRecordLinked,
-      fact_admitted_by_all_opposing: admitted
-    }),
-    doubtMarker(s3.doubt),
-    copyMarker
-  ]);
-}
-function pushStatementLines(lines2, excerpt, citationLine, markers, tag, id) {
-  lines2.push("");
-  if (excerpt) {
-    lines2.push("   ```");
-    for (const l3 of excerpt.split("\n")) lines2.push(l3 ? `   ${l3}` : "");
-    lines2.push("   ```");
-  }
-  if (citationLine) lines2.push(`   ${citationLine}`);
-  const idComment = `<!-- ${tag} ${id} -->`;
-  lines2.push(`   ${[markers, idComment].filter(Boolean).join(" ")}`);
-}
 
 // src/submission/forms/submission-paragraphs.ts
 function renderSubmissionParagraphs(submissionId, contention, startPara, facts, lawAssertions, exhibitMap, labelMap, copyMarkers, extraFirstParagraphMarker = "", renderedLawAssertions = /* @__PURE__ */ new Map(), opts = {}) {
@@ -100307,15 +100324,25 @@ function itemLines(ctx, state, id, law) {
     const missing = [(row2.excerpt ?? "").trim() === "" && "passage", (row2.pinpoint ?? "").trim() === "" && "pinpoint"].filter(Boolean);
     if (missing.length > 0) return gap(ctx, state, `statement_of_law ${id} has no ${missing.join(" and no ")}`);
   }
-  const quote = (row2.excerpt ?? "").trim() === "" ? [] : [...row2.excerpt.trim().split(/\r?\n/).map((l3) => `> ${l3}`.trimEnd()), ">"];
-  const cite = [lawStatementCitationLine(row2) ?? `> ${CITATION_MISSING}`, lawStatementMarkers(row2), `<!-- statement_of_law_id ${id} -->`].filter(Boolean).join(" ");
-  return [...quote, cite].join("\n");
+  const excerpt = (row2.excerpt ?? "").trim() === "" ? null : row2.excerpt;
+  return statementBlock(excerpt, lawStatementCitationLine(row2) ?? `> ${CITATION_MISSING}`, lawStatementMarkers(row2), "statement_of_law_id", id, "").join("\n");
+}
+function memoHeader(text8) {
+  const value2 = (key) => new RegExp(`^${key}:[ \\t]*(.*?)[ \\t]*$`, "m").exec(text8)?.[1];
+  const job = /^(?:Document:.*?MEMORANDUM OF LAW (?:for Job #)?|Job:[ \t]*#?|To:[ \t]*Job #?)(\d+)[ \t]*$/m.exec(text8)?.[1];
+  const confidence = value2("Confidence");
+  return [
+    "---",
+    ...[["Date", value2("Date")], ["Document", `MEMORANDUM OF LAW${job ? ` ${job}` : ""}`], ["Status", value2("Status")], ["Re", value2("Re")]].filter(([, v3]) => v3 !== void 0).map(([k3, v3]) => `${k3}: ${v3}`),
+    ...confidence?.replace(/^"/, "").startsWith("INCOMPLETE") ? [`Confidence: ${confidence}`] : [],
+    "---"
+  ].join("\n");
 }
 function slot(ctx, name, part, state) {
   const row2 = state.prose.get(name);
   if (row2 === void 0 || row2.text.trim() === "") return [notWritten(ctx, name, state)];
   let law = null;
-  const paragraphs = row2.text.trim().split(/\r?\n[ \t]*\r?\n/).map((p3) => p3.trim()).filter((p3) => p3 !== "").map((p3, i3) => {
+  const paragraphs = (name === "memo-header" ? memoHeader(row2.text) : row2.text).trim().split(/\r?\n[ \t]*\r?\n/).map((p3) => p3.trim()).filter((p3) => p3 !== "").map((p3, i3) => {
     const ref = STATEMENT_REF.exec(p3);
     const own = ref ? p3.slice(0, ref.index) : p3;
     const text8 = checkFormat(ctx, name, row2.id, own.split(/\r?\n/), state).join("\n");
@@ -104253,6 +104280,10 @@ function lapsedClause(dbPath) {
 function recordLapseSql(guard2) {
   return `INSERT INTO kv_store (namespace, key, value, updated_at) SELECT 'lock_lapsed', 'tickets:' || id, '{"at":"' || ${nowMinuteSql()} || '","from":"' || substr(locked_by, -8) || '"}', strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM tickets WHERE id = ? AND status = 'wip' AND ${guard2} ON CONFLICT (namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`;
 }
+function recordReopenSql(guard2) {
+  const entry3 = `json_object('completed_at', completed_at, 'plan_approved_at', plan_approved_at, 'reopened_at', ${nowMinuteSql()})`;
+  return `INSERT INTO kv_store (namespace, key, value, updated_at) SELECT 'reopened', 'tickets:' || id, json_array(${entry3}), strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM tickets WHERE id = ? AND ${guard2} ON CONFLICT (namespace, key) DO UPDATE SET value = json_insert(kv_store.value, '$[#]', json(json_extract(excluded.value, '$[0]'))), updated_at = excluded.updated_at`;
+}
 function jobIdentity(tool, args) {
   const named2 = [args.db_path, args.ticket_id, args.session_token].filter((v3) => v3 !== void 0).length;
   if (named2 === 0 && args.claim_no === void 0) return null;
@@ -105696,43 +105727,45 @@ async function submissionDataAssignJob(args, env = process.env) {
   if (args.takeover === true ? typeof args.expected_last_activity !== "string" || args.expected_last_activity.trim() === "" : args.expected_last_activity !== void 0) {
     throw new ValidationError(`${TOOL9}.expected_last_activity is the last activity: minute off the job's card, passed with takeover: true and only then`, "invalid_expected_last_activity");
   }
+  if (args.reopen === true && args.takeover === true) throw new ValidationError(`${TOOL9}.reopen and takeover are never passed together`, "invalid_reopen");
   const takeover = args.takeover === true;
+  const reopen = args.reopen === true;
   const live = liveTicketClause(args.db_path);
   const creatorHeld = createdByHeld(args.db_path);
   const creator = creatorHeld ? " AND (created_by = ? OR NOT EXISTS (SELECT 1 FROM tickets c WHERE c.created_by = ?))" : "";
   const bfHeld = bfOnHeld(args.db_path);
   const arrived = `(bf_on IS NULL OR bf_on <= ${todaySql()})`;
-  const notBefore = bfHeld && !takeover ? ` AND ${arrived}` : "";
+  const notBefore = bfHeld && !takeover && !reopen ? ` AND ${arrived}` : "";
   const lapsed = lapsedClause(args.db_path);
   const last = lastActivitySql(args.db_path);
-  const guard2 = (takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ? AND ${last} = ?` : `(status = 'queued' AND locked_by IS NULL OR ${lapsed}) AND rejected_at IS NULL${live}${notBefore}`) + creator;
+  const guard2 = (reopen ? `status = 'completed' AND rejected_at IS NULL${live}` : takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ? AND ${last} = ?` : `(status = 'queued' AND locked_by IS NULL OR ${lapsed}) AND rejected_at IS NULL${live}${notBefore}`) + creator;
   const guardParams = [...takeover ? [args.expected_holder.trim(), args.expected_last_activity.trim()] : [], ...creatorHeld ? [args.session_token, args.session_token] : []];
   const kv = hasTable(args.db_path, "kv_store");
-  const record2 = !takeover && kv ? [{ sql: recordLapseSql(guard2), params: [args.ticket_id, ...guardParams] }] : [];
+  const record2 = kv && (reopen || !takeover) ? [{ sql: reopen ? recordReopenSql(guard2) : recordLapseSql(guard2), params: [args.ticket_id, ...guardParams] }] : [];
   const claim = kv ? [{ sql: nextClaimSql(guard2), params: [args.ticket_id, ...guardParams] }] : [];
   const written = await submissionDataWriteAll(
     args.db_path,
     [
       ...record2,
       ...claim,
-      { sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${nowMinuteSql()} WHERE id = ? AND ${guard2}`, params: [args.session_token, args.ticket_id, ...guardParams] },
+      { sql: `UPDATE tickets SET status = 'wip',${reopen ? " completed_at = NULL," : ""} locked_by = ?, locked_at = ${nowMinuteSql()} WHERE id = ? AND ${guard2}`, params: [args.session_token, args.ticket_id, ...guardParams] },
       ...touchStatements(args.db_path, args.ticket_id, { sql: "locked_by = ?", params: [args.session_token] })
     ],
     env
   );
   const changes = written.ok ? written.results[record2.length + claim.length].changes : written.changes;
-  const tookLapsed = written.ok && record2.length === 1 && written.results[0].changes === 1;
+  const tookLapsed = !reopen && written.ok && record2.length === 1 && written.results[0].changes === 1;
   const columns = `locked_by, locked_at, status, rejected_at, ${lapsed} AS lapsed, ${last} AS last_activity${kv ? `, ${claimSql()} AS claim_no` : ""}${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${arrived} AS before_bf` : ""}`;
   const [read3] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM tickets WHERE id = ?`, [args.ticket_id]).rows;
   if (read3 === void 0) throw new NotFoundError(`${TOOL9}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
   let outcome;
   let note;
-  const beforeBf = !takeover && read3.before_bf === 1;
-  const otherwiseEligible = read3.rejected_at === null && !read3.deleted_at && !beforeBf && (takeover ? (read3.status === "queued" || read3.status === "wip") && read3.locked_by !== null && read3.locked_by.slice(-8) === args.expected_holder.trim() && read3.last_activity === args.expected_last_activity.trim() : read3.status === "queued" && read3.locked_by === null || read3.lapsed === 1);
+  const beforeBf = !takeover && !reopen && read3.before_bf === 1;
+  const otherwiseEligible = read3.rejected_at === null && !read3.deleted_at && !beforeBf && (reopen ? read3.status === "completed" : takeover ? (read3.status === "queued" || read3.status === "wip") && read3.locked_by !== null && read3.locked_by.slice(-8) === args.expected_holder.trim() && read3.last_activity === args.expected_last_activity.trim() : read3.status === "queued" && read3.locked_by === null || read3.lapsed === 1);
   if (read3.locked_by === args.session_token) {
     outcome = "assigned";
-    note = changes !== 1 ? `Job ${id} already carried this session's token; nothing was written.` : tookLapsed ? `Job ${id} is assigned to this session. Its lock had lapsed (no activity for ${LAPSE_AFTER_MINUTES} minutes), so it was taken as a released job, with its plan and done steps kept; the lapse is recorded in its history.` : `Job ${id} is assigned to this session.`;
+    note = changes !== 1 ? `Job ${id} already carried this session's token; nothing was written.` : reopen ? `Job ${id} is reopened and assigned to this session, with its plan and done steps kept; the completion it lifts is recorded in its history.` : tookLapsed ? `Job ${id} is assigned to this session. Its lock had lapsed (no activity for ${LAPSE_AFTER_MINUTES} minutes), so it was taken as a released job, with its plan and done steps kept; the lapse is recorded in its history.` : `Job ${id} is assigned to this session.`;
   } else if (changes === 0 && creatorHeld && otherwiseEligible && read3.created_by !== args.session_token && createdAny(args.db_path, args.session_token)) {
     outcome = "not_created_here";
     note = `Job ${id} was not assigned: this session created jobs, and may be assigned only one of those. Nothing was written; never re-run to win.`;
@@ -111770,18 +111803,26 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
   });
 }
 
+// src/submission/forms/fence.ts
+function fenceStep(open, line) {
+  const run2 = /^\s*(`{3,}|~{3,})/.exec(line)?.[1];
+  if (run2 === void 0) return { open, fence: false };
+  if (open === "") return { open: run2, fence: true };
+  const closes = run2[0] === open[0] && run2.length >= open.length && line.trim() === run2;
+  return closes ? { open: "", fence: true } : { open, fence: false };
+}
+
 // src/submission/forms/legend.ts
 var LEGEND_HEADING = "## Legend";
 var GLYPH_ALTERNATIVES = SYMBOLS.map((s3) => s3.glyph).sort((a3, b3) => b3.length - a3.length).map((g3) => g3.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
 var RUN_RE = new RegExp(`(?:${GLYPH_ALTERNATIVES.join("|")})+`, "g");
 function scannedText(markdown) {
-  let inFence = false;
+  let open = "";
   const kept = markdown.split("\n").filter((line) => {
-    if (line.trim().startsWith("```")) {
-      inFence = !inFence;
-      return false;
-    }
-    return !inFence;
+    const inFence = open !== "";
+    const step2 = fenceStep(open, line);
+    open = step2.open;
+    return !step2.fence && !inFence;
   });
   return kept.join("\n").replace(/<!--[\s\S]*?-->/g, " ");
 }
@@ -111972,17 +112013,14 @@ function stripGlyphs(markdown) {
   }
   return out;
 }
-function isFenceLine(line) {
-  return line.trim().startsWith("```");
-}
 function tidy(markdown) {
-  let inFence = false;
+  let open = "";
   const lines2 = markdown.split("\n").map((line) => {
-    if (isFenceLine(line)) {
-      inFence = !inFence;
-      return line;
-    }
-    if (inFence || line.trim() === "") return inFence ? line : "";
+    const step2 = fenceStep(open, line);
+    const inFence = open !== "";
+    open = step2.open;
+    if (step2.fence || inFence) return line;
+    if (line.trim() === "") return "";
     const match = line.match(/^(\s*)(.*)$/s);
     const [, lead, rest] = match ?? ["", "", line];
     const collapsedRest = rest.replace(/[ \t]{2,}/g, " ").replace(/\( /g, "(").replace(/ \)/g, ")").replace(/[ \t]+$/, "");
@@ -112038,13 +112076,12 @@ function lineHits(line) {
 }
 function textHits(filedFace) {
   const hits = [];
-  let fenced = false;
+  let open = "";
   for (const line of filedFace.split("\n")) {
-    if (/^\s*(```|~~~)/.test(line)) {
-      fenced = !fenced;
-      continue;
-    }
-    if (fenced || /^\s*>/.test(line)) continue;
+    const fenced = open !== "";
+    const step2 = fenceStep(open, line);
+    open = step2.open;
+    if (step2.fence || fenced || /^\s*>/.test(line)) continue;
     hits.push(...lineHits(line));
   }
   return hits;
@@ -112151,19 +112188,7 @@ function withholdHearing(doc) {
 
 // src/submission/forms/filed-gates.ts
 function findMissingLawCitations(markdown) {
-  const ids = [];
-  const lines2 = markdown.split("\n");
-  lines2.forEach((line, i3) => {
-    if (!line.includes(CITATION_MISSING)) return;
-    for (let j3 = i3; j3 <= i3 + 1 && j3 < lines2.length; j3++) {
-      const m3 = lines2[j3].match(/<!-- statement_of_law_id (\d+) -->/);
-      if (m3) {
-        ids.push(Number(m3[1]));
-        break;
-      }
-    }
-  });
-  return ids;
+  return markdown.split("\n").filter((line) => line.includes(CITATION_MISSING)).flatMap((line) => line.match(/<!-- statement_of_law_id (\d+) -->/)?.[1] ?? []).map(Number);
 }
 function findUnrenderableOrders(markdown) {
   const ids = [];
@@ -112947,10 +112972,7 @@ function fetchHearingDetails3(dbPath, filingId) {
 function lawStatementCitationLine2(row2) {
   if (row2.authority_title === null) return row2.pinpoint ? `>> ${row2.pinpoint}` : null;
   const citation = row2.authority_citation ?? CITATION_MISSING;
-  let pin = row2.pinpoint;
-  if (pin && row2.authority_citation && pin.startsWith(row2.authority_citation)) {
-    pin = pin.slice(row2.authority_citation.length).replace(/^[\s,;]+/, "") || null;
-  }
+  const pin = printedPinpoint(row2.authority_citation, row2.pinpoint);
   return `>> *${row2.authority_title}*, ${citation}${pin ? `, ${pin}` : ""}`;
 }
 function evidenceReference(document2, pinpoint) {
@@ -113215,10 +113237,7 @@ var NO_FACTUAL_BASIS2 = "[factual basis: no facts recorded]";
 function lawStatementCitationLine3(row2) {
   if (row2.authority_title === null) return row2.pinpoint ? `> ${row2.pinpoint}` : null;
   const citation = row2.authority_citation ?? CITATION_MISSING;
-  let pin = row2.pinpoint;
-  if (pin && row2.authority_citation && pin.startsWith(row2.authority_citation)) {
-    pin = pin.slice(row2.authority_citation.length).replace(/^[\s,;]+/, "") || null;
-  }
+  const pin = printedPinpoint(row2.authority_citation, row2.pinpoint);
   return `> *${row2.authority_title}*, ${citation}${pin ? `, ${pin}` : ""}`;
 }
 function struckSubmissionIds(dbPath, submissionIds) {
@@ -113844,28 +113863,8 @@ function pushExcerpt(lines2, excerpt, cite) {
   }
   if (cite) lines2.push(`cite: ${cite}`);
 }
-function factCite(exhibitMap, labelMap, s3) {
-  const parts = [];
-  if (s3.instrument_id !== null) {
-    const instrumentLabel = labelMap.get(s3.instrument_id);
-    if (instrumentLabel !== void 0) parts.push(instrumentLabel);
-    if (s3.pinpoint) parts.push(s3.pinpoint);
-  } else if (s3.pinpoint) {
-    parts.push(s3.pinpoint);
-  }
-  if (s3.exhibit_id !== null) {
-    const num = exhibitMap.get(s3.exhibit_id);
-    const exhibitLabel = num !== void 0 ? `Ex. ${num}` : labelMap.get(s3.exhibit_id);
-    if (exhibitLabel !== void 0) parts.push(exhibitLabel);
-    if (s3.exhibit_pinpoint) parts.push(s3.exhibit_pinpoint);
-  }
-  return parts.length === 0 ? null : parts.join(", ");
-}
 function lawCite(row2) {
-  let pin = row2.pinpoint;
-  if (pin && row2.authority_citation && pin.startsWith(row2.authority_citation)) {
-    pin = pin.slice(row2.authority_citation.length).replace(/^[\s,;]+/, "") || null;
-  }
+  const pin = printedPinpoint(row2.authority_citation, row2.pinpoint);
   return `${row2.authority_title}, ${row2.authority_citation}${pin ? `, ${pin}` : ""}`;
 }
 function renderBccaFactumFiledFace(ctx, datedOn) {
@@ -113956,7 +113955,7 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
       const cite = courtRecordCitation(f3.courtRecord, f3.courtRecordPinpoint);
       body.push(`${++n3}. ${oneLine2(f3.postulate)}${cite ? ` ${cite}` : ""}`);
       for (const st3 of f3.statements) {
-        if (st3.purpose !== "impeachment") pushExcerpt(body, st3.exhibit_id !== null ? st3.exhibit_excerpt : st3.excerpt, factCite(exhibitMap, labelMap, st3));
+        if (st3.purpose !== "impeachment") pushExcerpt(body, st3.exhibit_id !== null ? st3.exhibit_excerpt : st3.excerpt, factStatementCitationLine(exhibitMap, labelMap, st3, ""));
       }
     }
     for (const la2 of lawBySubmission.get(s3.id) ?? []) {
@@ -116002,7 +116001,7 @@ function jobRefusal(row2, role, token) {
 var NOTES = {
   held_elsewhere: (job) => `Job ${job} is in progress in another session, so nothing was merged and nothing was written. Name it in one line; never re-run.`,
   held_here: (job) => `Job ${job} is this session's own job, so it cannot be absorbed and nothing was written. Make it the survivor instead.`,
-  completed: (job) => `Job ${job} is completed, and a completed job is never merged, so nothing was written.`,
+  completed: (job) => `Job ${job} is completed, and a completed job is merged only once reopened (jobs-closeout.md \xA710e), so nothing was written.`,
   superseded: (job) => `Job ${job} is already superseded, so nothing was merged and nothing was written.`,
   shelved: (job) => `Job ${job} is shelved, so nothing was merged and nothing was written.`,
   deleted: (job) => `Job ${job} is deleted, so nothing was merged and nothing was written.`,
@@ -126505,9 +126504,12 @@ function caseBriefCopy(mockup, source) {
   const gaps = [...mockup.matchAll(GAP_LINE_RE)].map((m3) => m3[1]);
   if (gaps.length > 0) throw new DataServerError(`this brief is not complete, so it was not saved: ${gaps.join("; ")}: ${source}`, "brief_incomplete");
   const verbatim = [];
-  const held2 = mockup.split("\n").map((line, i3, lines2) => {
-    if (!line.startsWith(">")) return line.replace(/ \(/g, "\uE002").replace(/ \[/g, "\uE003");
-    if (!lines2[i3 + 1]?.startsWith(">")) return line;
+  let open = "";
+  const held2 = mockup.split("\n").map((line) => {
+    const fenced = open !== "";
+    const step2 = fenceStep(open, line);
+    open = step2.open;
+    if (!step2.fence && !fenced) return line.startsWith(">") ? line : line.replace(/ \(/g, "\uE002").replace(/ \[/g, "\uE003");
     verbatim.push(line);
     return `\uE000${verbatim.length - 1}\uE001`;
   });
