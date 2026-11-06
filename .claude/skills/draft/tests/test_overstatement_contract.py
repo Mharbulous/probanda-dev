@@ -103,7 +103,7 @@ class OverstatementReviewContractTests(unittest.TestCase):
 
     def test_findings_go_to_the_board_not_a_report(self):
         self.assertIn("It writes no report", self.reference)
-        self.assertIn("`/drafting-data` §3g", self.reference)
+        self.assertIn("`drafting-data/references/jobs-stock.md` §3g", self.reference)
         for token in RETIRED_REPORT:
             with self.subTest(token=token):
                 self.assertNotIn(token, self.reference)

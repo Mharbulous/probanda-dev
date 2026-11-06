@@ -54,7 +54,7 @@ class OneQuestionScopeTest(unittest.TestCase):
         rule = rule[rule.index("**A research question holds one question.**"):rule.index("**A new question is")]
         self.assertIn("A question that fails is never split or researched as it stands", rule)
         self.assertIn("propose one rewording narrowed to a single question", rule)
-        self.assertIn('(`/drafting-data` §3m, "Rewording a held job")', rule)
+        self.assertIn('(`drafting-data/references/jobs-stock.md` §3m, "Rewording a held job")', rule)
         self.assertIn('a part that depends on the one before it ("If so, ...") stays with it', rule)
         self.assertIn("An unattended run reports and stops.", rule)
 
@@ -64,7 +64,7 @@ class OneQuestionScopeTest(unittest.TestCase):
         rule = text[text.index("**A new question is a new job or a new scope.**"):]
         rule = rule[:rule.index("**Before spawning")]
         self.assertIn("ask exactly one question: " + TWO_OPTIONS, rule)
-        self.assertIn("write it as a research job by `/drafting-data` §3l", rule)
+        self.assertIn("write it as a research job by `drafting-data/references/jobs-stock.md` §3l", rule)
         self.assertIn("Offer no third path.", rule)
 
     def test_the_end_invites_nothing(self):

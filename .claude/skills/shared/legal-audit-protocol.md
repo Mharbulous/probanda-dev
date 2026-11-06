@@ -331,7 +331,7 @@ Write ` kind: note-up` just before the ` live_issue:` tag on every offer whose w
 noting up an authority the memo does not rely on, reading the cases that cite it, or a
 citator or KeyCite check on it. You set the tag when you write the offer, so
 no caller ever reads the offer's wording to decide it. A `kind: note-up` offer carries no
-`job:` or `steps:` line: no research offer becomes a note-up job (`/drafting-data` §3i).
+`job:` or `steps:` line: no research offer becomes a note-up job (`drafting-data/references/jobs-stock.md` §3i).
 
 ```
 Would you like me to note up the example case and read the two cases that cite it? kind: note-up live_issue: yes
@@ -339,7 +339,7 @@ Would you like me to note up the example case and read the two cases that cite i
 
 Under each other offer line, write two more lines, indented two spaces, so the tag stays at the
 end of the offer's own line. They are the job the offer becomes if the practitioner adds it
-(`/drafting-data` §3i), which copies them character for character:
+(`drafting-data/references/jobs-stock.md` §3i), which copies them character for character:
 
 ```
 Would you like me to read the four other example files and check each for the example point? live_issue: yes

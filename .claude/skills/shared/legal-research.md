@@ -55,7 +55,7 @@ one question, the only sentence ending in `?`. A plainly labelled hunch is no re
 needs no job.
 
 - **No job held.** Propose the issue in the form, quoting the question, and on the
-  practitioner's approval write it by `/drafting-data` §3l, plan it (`shared/job-planning.md`
+  practitioner's approval write it by `drafting-data/references/jobs-stock.md` §3l, plan it (`shared/job-planning.md`
   section 2) and assign it to this session. Without `/drafting-data` installed, write it with
   `drafting_data__create_job`: guard `research_title`, `filing_id` null, `kind` `work`, `priority`
   `bottom`, `billing_anchor` `<matter>|<its forum and file number>`, and the plan marker as its step. With no
@@ -71,14 +71,14 @@ the working matter (`shared/research-memo-template.md` rules A to D,
 a list of questions is not, and a part that depends on the one before it ("If so, ...") stays
 with it. A question that fails is never split or researched as it stands: in one proposal,
 quoting it, propose one rewording narrowed to a single question. On a yes, reword a held job
-to it (`/drafting-data` §3m, "Rewording a held job") and research that. On a no, research
+to it (`drafting-data/references/jobs-stock.md` §3m, "Rewording a held job") and research that. On a no, research
 nothing. Each other question it held is one the practitioner raised (below). An unattended
 run reports and stops.
 
 **A new question is a new job or a new scope.** When the practitioner raises a question this
 research does not hold, ask exactly one question: "Do you want this investigated as an
 additional issue (a new research job), or are you changing the scope of this job?" On the
-first, write it as a research job by `/drafting-data` §3l, on their approval of its issue. On the second, reword the question (a held job by §3m) and
+first, write it as a research job by `drafting-data/references/jobs-stock.md` §3l, on their approval of its issue. On the second, reword the question (a held job by §3m) and
 research that. Offer no third path.
 
 **Before spawning, run what the agent cannot.** `shared/research-priority.md` is
@@ -506,7 +506,7 @@ handles them by its own rule instead (`/draft` `references/job-session.md`,
 **With a board, the return's open items are sorted against it.** This step runs after the
 persistence steps above, for a return they persisted, wherever a board resolves. In a
 `/draft` session the board is the open one, whatever the spawn prompt's `Origin:` says. In
-any other session it is the one `/drafting-data` §8a step 2 resolves from the origin: a
+any other session it is the one `drafting-data/references/jobs-run.md` §8a step 2 resolves from the origin: a
 Writing's own filing, or, for a plain draft file, the proceeding it serves.
 
 Capture these as loose threads in the same turn the return arrives, each verbatim from the
@@ -523,7 +523,7 @@ SKILL.md, "Captured ideas").
 
 **The duplicate test.** Before capturing any item of the return, an `origin-correction:`
 line, a `matter-data:` flag or an offer, read the open loose threads that match it, by
-`loose_threads__read` with `mode: "duplicates"` and the item as `text` (`/drafting-data` §8). An item that restates the held job's own
+`loose_threads__read` with `mode: "duplicates"` and the item as `text` (`drafting-data/references/jobs-run.md` §8). An item that restates the held job's own
 title or intent, or the idea of an open loose thread, is not captured.
 Say so in one line instead: `already on the board: Loose thread #N`, or `the held job's own
 subject: Job #N`. The test reads what an item is about, never whether it is right, and states
@@ -541,7 +541,7 @@ job's title and intent count too. Put each offer in one class:
 | Class | Test | What happens |
 |---|---|---|
 | Off the application | The offer is about a different order, claim, party, proceeding or stage than any the board names | Not captured |
-| On or near the application | Everything else: an offer serving the board's words, a new angle on the board's own subject, and any doubt | Captured as a loose thread at once, by the duplicate test above (`/drafting-data` §8 with a job held, §8a without) |
+| On or near the application | Everything else: an offer serving the board's words, a new angle on the board's own subject, and any doubt | Captured as a loose thread at once, by the duplicate test above (`drafting-data/references/jobs-run.md` §8 with a job held, §8a without) |
 
 An offer tagged `kind: note-up` is not sorted: it is always captured as a loose thread, by
 the duplicate test above. It is never dropped and never becomes a job by §3i.

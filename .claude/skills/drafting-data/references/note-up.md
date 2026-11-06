@@ -50,7 +50,7 @@ UPDATE authorities SET treatment = 'good_law', treatment_note = 'CanLII: noted u
   WHERE id = 3 AND proceeding_id = 1 AND EXISTS (SELECT 1 FROM tickets WHERE id = 30 AND locked_by = 'sess-a1');
 ```
 
-`changes` 0 means a guard matched nothing: read the cause off §2's scope read, and never re-run against a guess. The note-up job then completes by `/drafting-data` §9 (`drafting_data__complete_job`). ⛔ overruled reopens the basis slot, and `/draft` sends the replacement research question.
+`changes` 0 means a guard matched nothing: read the cause off §2's scope read, and never re-run against a guess. The note-up job then completes by `references/jobs-run.md` §9 (`drafting_data__complete_job`). ⛔ overruled reopens the basis slot, and `/draft` sends the replacement research question.
 
 ## Re-noting
 

@@ -26,7 +26,7 @@ class ResearchQuestionJobsTest(unittest.TestCase):
     def test_doctrine_writes_the_job_by_3l(self):
         rule = " ".join(paragraph(read("shared", "legal-research.md"),
                                   "**A new question is a new job or a new scope.**").split())
-        self.assertIn("write it as a research job by `/drafting-data` §3l", rule)
+        self.assertIn("write it as a research job by `drafting-data/references/jobs-stock.md` §3l", rule)
 
     def test_stock_section_writes_the_marker(self):
         stock = read("drafting-data", "references", "jobs-stock.md")

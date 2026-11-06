@@ -36,7 +36,7 @@ class JobQuestionMemoTest(unittest.TestCase):
         gate = flat(read("shared", "legal-research.md"))
         rule = gate[gate.index("**A research question holds one question.**"):gate.index("**A new question is")]
         self.assertIn("rules A to D", rule)
-        self.assertIn("(`/drafting-data` §3m, \"Rewording a held job\")", rule)
+        self.assertIn("(`drafting-data/references/jobs-stock.md` §3m, \"Rewording a held job\")", rule)
         self.assertNotIn("## `mode: plan`", read("shared", "legal-audit-scoped.md"))
         self.assertIn("A return with a rewording proposal and no memo saves nothing: put that proposal to "
                       "the practitioner as \"A research question holds one question\" says.", gate)

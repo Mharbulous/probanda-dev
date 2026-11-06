@@ -83,7 +83,7 @@ When session entry reported no draft folder, when a render refuses with `draft_d
 **Render freely, never ask first.** Rendering is deterministic, cheap and read-only. A fresh render always beats a confirmation prompt.
 
 <!-- atom id=draft.render.note-up ops=render when=unattended:false -->
-**The note-up job.** When a render's result carries `note_up_due`, write those Proposals into the Writing's `Note up all cited authorities` job in the same turn, by `/drafting-data` §3k, which writes the job, adds them to it, or leaves them waiting while it is in progress or shelved. Ask nothing first: the job's text is fixed and comes from the record. Say in one line what was written, and nothing when nothing was. A single authority's `Note up: <item>` job is written only when the practitioner picks that one Proposal (`/drafting-data` §3, the fast path).
+**The note-up job.** When a render's result carries `note_up_due`, write those Proposals into the Writing's `Note up all cited authorities` job in the same turn, by `drafting-data/references/jobs-create.md` §3k, which writes the job, adds them to it, or leaves them waiting while it is in progress or shelved. Ask nothing first: the job's text is fixed and comes from the record. Say in one line what was written, and nothing when nothing was. A single authority's `Note up: <item>` job is written only when the practitioner picks that one Proposal (`drafting-data/references/jobs-create.md` §3, the fast path).
 
 <!-- atom id=draft.s12 ops=substance,revise_on_the_fly -->
 ## 12. Revise

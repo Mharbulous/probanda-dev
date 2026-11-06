@@ -123,7 +123,7 @@ class AfterTheAnswerTests(unittest.TestCase):
             "In a `/draft` session the board is the open one, whatever the spawn prompt's `Origin:` says.",
             self.step,
         )
-        self.assertIn("the one `/drafting-data` §8a step 2 resolves from the origin", self.step)
+        self.assertIn("the one `drafting-data/references/jobs-run.md` §8a step 2 resolves from the origin", self.step)
 
     def test_captures_through_the_gatekeeper(self):
         self.assertIn("through `/drafting-data`'s capture with no job held", self.step)

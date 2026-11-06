@@ -59,6 +59,6 @@ source: L8212 Cowork session, 2026-09-14, Claimant Opening Submissions package (
 - **The gate is a job, not a state.** It claims, locks, records steps and completes like any other job, so the record of what was checked and what was waived survives the session on the Work Board. The seven lifecycle states are untouched (ADR 0016).
 - **The gate reports; a job fixes.** No session edits a package document to clear a finding — a placeholder in a signed statement is cured by a corrected statement, not by touching the signed file.
 - **Show the mismatch, never describe it.** A failed check is presented per `/show-me`: the offending document itself as a highlighted page extract, captioned with its document and page, and the offending paragraph in full in a code block, before any interpretation.
-- **A waiver is the practitioner's sentence, verbatim.** One line, no options, no recommendation, recorded on the step — the same shape as a loose thread (`/drafting-data` §8).
+- **A waiver is the practitioner's sentence, verbatim.** One line, no options, no recommendation, recorded on the step — the same shape as a loose thread (`drafting-data/references/jobs-run.md` §8).
 - **Ready to file is refused, not softened, while a step is open.** The refusal names the open step; it does not offer to lower the bar.
 - **One decision at a time.** Each failed check is its own ceremony, even when several fail.
