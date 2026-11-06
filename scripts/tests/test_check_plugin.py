@@ -153,7 +153,7 @@ class Fixture:
         self.roster = {"alpha": ["templates"], "drafting-data": []}
         self.write(src + "plugin.json", json.dumps({"name": "litigator", "version": VERSION, "hooks": HOOKS}) + "\n")
         self.write(src + "VISION.md", "# vision\n")
-        for name in ("localize-helper", "legislation-fetcher"):
+        for name in ("localize-helper", "law-getter"):
             self.write(f"{src}agents/{name}.md", agent([PLAIN + "sources__fetch", BRIDGED + "sources__fetch"]))
         for name in ("verify-claim", "verify-edges", "extract-caselaw", "verify-caselaw"):
             self.write(f"{src}agents/{name}.md",

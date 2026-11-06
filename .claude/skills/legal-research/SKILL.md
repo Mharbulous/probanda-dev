@@ -39,7 +39,7 @@ paragraphs 4 and 5"), follow `shared/legal-research.md`, "Proposition-level note
 **Main session only.** The gate spawns agents. If the Agent tool is not in your tool
 list (you are a subagent), stop before any other step and return this line to your
 caller: "/legal-research runs only from the main session. It spawns
-legislation-fetcher, research-paralegal and the audit agent, and a subagent cannot
+law-getter and the audit agent, and a subagent cannot
 spawn agents. Nothing was dispatched." Never answer the question yourself in its place.
 The `westlaw-query-optimizer` subskill above spawns nothing and is exempt.
 
@@ -80,9 +80,9 @@ permitted to make statements of law.
    text in tiers 1–3 answers (a handoff's say-so is no check) and that is not only a
    point-in-time legislation question (the doctrine's duty 3 skips those), run the
    `westlaw-query-optimizer` subskill (on a supplied or earlier-session query too),
-   then `researcher:research-paralegal` in deep-research mode and, split into batches of at
+   then `researcher:law-getter` in `mode: deep-research` and, split into batches of at
    most its citation playbook's per-invocation cap and dispatched one batch after
-   another (the doctrine's duty 3), in citation mode
+   another (the doctrine's duty 3), in `mode: citation`
    `source: westlaw-first` for every citation already known. If it returns
    any `status: blocked (...)`, such as `status: blocked (chrome-not-connected)`,
    `status: blocked (westlaw-not-signed-in)`, `status: blocked (chrome-permission-not-granted)`
@@ -93,18 +93,18 @@ permitted to make statements of law.
    Either way, ask them to tell you to continue. On "continue", re-dispatch
    the same run. On a held job, after launching the query set its step ⏳ for 5 minutes, as the
    doctrine's duty 3 says ("On a held job, the Westlaw wait is a ⏳ step"). When the time has passed, check whether
-   the run has finished and can be downloaded: the paralegal has returned and its memo is
+   the run has finished and can be downloaded: law-getter has returned and its memo is
    filed in the `6. LAW` folder. If not, set the step ⏳ for 5 minutes again. Never
-   dispatch a second `research-paralegal` while one is out. A `blocked (...)` return sets
-   the step ↻, never done. Then run the doctrine's duty 4: dispatch `researcher:legislation-fetcher` once per
+   dispatch a second Chrome-mode `law-getter` while one is out. A `blocked (...)` return sets
+   the step ↻, never done. Then run the doctrine's duty 4: dispatch `researcher:law-getter` with `mode: legislation` once per
    statute, regulation or bylaw in issue, and on a `host_not_allowed` refusal ask the
    practitioner once and, on a yes, re-dispatch with `allow_host`. For an instrument it
    files nothing for, ask `/matter-data` for a held copy before marking it unread. A
    statutory-text question, one naming an instrument and asking what it provides,
    requires, permits or lacks, runs duty 4 first and Westlaw after it, as the doctrine
    orders. Then run duty 5: dispatch `researcher:citation-checker`, in duty 3's batches, for each court decision the
-   question asks to have noted up, never while `research-paralegal` is out. Its
-   Westlaw stops are the same stop as the paralegal's.
+   question asks to have noted up, never while a Chrome-mode `law-getter` is out. Its
+   Westlaw stops are the same stop as law-getter's.
 4. Spawn `researcher:research-agent`. Fill the doctrine's spawn-prompt template: the question, the
    factual context, the held job's number, the matter root, the matter's file number, who asked, today's date,
    the file stem, ICRA unless the practitioner named IRAC or CREAC, any pooled-layer results your own pre-spawn
@@ -116,7 +116,7 @@ permitted to make statements of law.
    the statement came from, not what the law is (`shared/legal-research.md`).
 5. A return carrying `needs_download` or a hand-off packet on an issue of the question,
    whatever its other gaps, is a pipeline step, not an answer: download or run it (unless declined) through
-   `research-paralegal` (`westlaw-first`), have `citation-checker` note up any
+   `law-getter` (`mode: citation`, `westlaw-first`), have `citation-checker` note up any
    `needs_note_up` citations, and re-invoke the agent once, without
    stopping, with the template's `Re-invocation: yes` field naming that dispatch's
    status line and every citation it did not retrieve. Then have `researcher:memo-reviewer`

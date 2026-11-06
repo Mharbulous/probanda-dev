@@ -1,6 +1,6 @@
 // Host-side filing of downloaded case law (planning/research-paralegal-tool-narrowing.md).
 //
-// Chrome writes to the OS Downloads folder; research-paralegal must get each file into an
+// Chrome writes to the OS Downloads folder; law-getter must get each file into an
 // existing `6. LAW\<issue>\` folder of a matter. Four of these tools do that on the host, so the
 // agent needs no shell and no Downloads folder grant. Names and metadata only -- nothing here
 // reads a downloaded file's content, and `fileDownload` is structurally not a generic mover:

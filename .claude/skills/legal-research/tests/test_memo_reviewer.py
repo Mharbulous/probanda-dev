@@ -238,7 +238,7 @@ class GateLoopTest(unittest.TestCase):
 
     def test_re_invocation_is_yes_on_every_re_invocation(self):
         self.assertIn("`Re-invocation` is `no` on the first spawn and `yes` on every re-invocation below: `yes: review`\n"
-                      "when no paralegal ran for it.", self.text)
+                      "when no Chrome-mode law-getter ran for it.", self.text)
         self.assertIn("/ yes: review\nReview: <memo-reviewer's last JSON, verbatim> / none\n", self.text)
 
     def test_a_question_holds_one_question_and_is_reworded_first(self):

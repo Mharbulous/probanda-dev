@@ -2,7 +2,7 @@
 
 CanLII returns `repealed: "NO"` and `endDate: ""` for an instrument in force. The
 playbook's step 5 once read both as repeal, so an in-force regulation came back
-`repealed`. The rule is prose that research-paralegal applies, so this test reads
+`repealed`. The rule is prose that the canlii legislation_currency tool applies, so this test reads
 the rule's parts out of the playbook, builds the predicate they state, and runs
 CanLII's values through it. Rewording the rule fails here until the test is
 re-pinned to the new wording.
@@ -12,7 +12,7 @@ import unittest
 from pathlib import Path
 
 
-PLAYBOOK = Path(__file__).resolve().parents[2] / "shared" / "research-paralegal" / "legislation-currency.md"
+PLAYBOOK = Path(__file__).resolve().parents[2] / "shared" / "legislation-currency.md"
 RULE = re.compile(
     r'the metadata\'s `repealed` field is present, non-empty and not "(?P<token>[^"]+)" '
     r"\((?P<ci>case-insensitive)\), or its `endDate` is present(?P<end_non_empty> and non-empty)?\."

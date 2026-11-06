@@ -13,7 +13,7 @@
 // practitioner confirmed it as plan Phase 2's named HITL confirmation (#989),
 // because the VanIAC sources are checked from the shipped tree.
 // `laws-lois.justice.gc.ca` (Justice Laws, the federal publisher) serves
-// legislation-fetcher's federal statutes and regulations.
+// law-getter's federal statutes and regulations.
 
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";

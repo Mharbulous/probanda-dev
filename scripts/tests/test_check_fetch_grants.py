@@ -23,7 +23,7 @@ BRIDGED = "mcp__remote-devices__plugin_lawyer_data__sources__fetch"
 OTHER = "mcp__plugin_lawyer_data__skill_source__read"
 OTHER_BRIDGED = "mcp__remote-devices__plugin_lawyer_data__skill_source__read"
 LOCALIZE = "localize-helper.md"
-FETCHER = "legislation-fetcher.md"
+FETCHER = "law-getter.md"
 
 
 def agent(tools):

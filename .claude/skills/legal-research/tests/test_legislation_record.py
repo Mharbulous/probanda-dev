@@ -44,7 +44,7 @@ class GateTests(unittest.TestCase):
         self.assertLess(dispatch, self.duty.index("Record every instrument in the spawn prompt's `Legislation:` field"))
 
     def test_currency_dispatch_covers_every_instrument(self):
-        self.assertIn("every instrument in issue, whatever the fetcher returned for it", self.duty)
+        self.assertIn("every instrument in issue, whatever law-getter returned for it", self.duty)
 
     def test_duty_four_holds_the_record_from_the_manifest(self):
         self.assertIn(RECORD, self.duty)
@@ -103,7 +103,7 @@ class OneCheckPerActTests(unittest.TestCase):
         self.assertIn("reused, not checked again", rule)
 
     def test_the_tool_rules_define_the_same_key(self):
-        rules = flat(read(SKILLS_ROOT / "shared" / "research-paralegal" / "legislation-currency.md"))
+        rules = flat(read(SKILLS_ROOT / "shared" / "legislation-currency.md"))
         self.assertIn("`key` is the jurisdiction, lower-cased, then `|`, then the citation with periods "
                       "removed, lower-cased and whitespace runs collapsed", rules)
 

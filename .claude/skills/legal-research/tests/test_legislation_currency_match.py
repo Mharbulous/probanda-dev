@@ -3,7 +3,7 @@
 CanLII lists the Supreme Court Civil Rules as "BC Reg 168/2009" while callers
 store "B.C. Reg. 168/2009". The playbook's step 3 once compared citations so
 that the two did not match, and an in-force regulation came back `not-found`.
-The rule is prose that research-paralegal applies, so this test reads what the
+The rule is prose that the canlii legislation_currency tool applies, so this test reads what the
 match ignores out of the playbook, builds the predicate it states, and runs
 citations through it. Rewording the rule fails here until the test is re-pinned
 to the new wording.
@@ -13,7 +13,7 @@ import unittest
 from pathlib import Path
 
 
-PLAYBOOK = Path(__file__).resolve().parents[2] / "shared" / "research-paralegal" / "legislation-currency.md"
+PLAYBOOK = Path(__file__).resolve().parents[2] / "shared" / "legislation-currency.md"
 RULE = re.compile(
     r"An item \*\*matches\*\* when its `citation` equals the caller's `citation`, "
     r"ignoring only (?P<ignored>[^,]+), with runs of whitespace collapsed\."

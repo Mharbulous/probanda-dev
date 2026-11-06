@@ -1,6 +1,6 @@
-# legislation-fetcher playbook
+# law-getter legislation playbook
 
-Read by the `legislation-fetcher` agent over `skill_source__read`, path `legal-research/references/legislation-fetcher-playbook.md`. The knowledge-tree grammar, the overlay and `_hosts.json` are `shared/knowledge-tree.md`. This file is the tool sequence for one instrument and how to handle each result.
+Read by the `law-getter` agent at legislation-mode entry over `skill_source__read`, path `legal-research/references/law-getter-legislation-playbook.md`. The knowledge-tree grammar, the overlay and `_hosts.json` are `shared/knowledge-tree.md`. This file is the tool sequence for one instrument and how to handle each result.
 
 Every tool below is named without its prefix. Call it under whichever of `mcp__plugin_lawyer_data__<name>` and `mcp__remote-devices__plugin_lawyer_data__<name>` this host grants.
 
@@ -18,6 +18,7 @@ Every tool below is named without its prefix. Call it under whichever of `mcp__p
 
 The dispatch is one JSON object:
 
+- `mode`: `legislation`.
 - `citation` (optional): the instrument's citation as the caller has it, such as `SBC 2012, c 13`, `RSC 1985, c F-7` or `SOR/98-106`.
 - `title`: the instrument's title, such as `Limitation Act`.
 - `kind`: `statute`, `regulation`, `bylaw`, or `secondary` (section 11).

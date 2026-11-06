@@ -99,10 +99,9 @@
         "brief-reviewer",
         "citation-checker",
         "equivalence-checker",
-        "legislation-fetcher",
+        "law-getter",
         "memo-reviewer",
         "research-agent",
-        "research-paralegal",
         "research-triage",
         "tech-support",
         "verify-claim"

@@ -8,7 +8,7 @@ description: >
   record per citation in the issue's 6. LAW folder. Never reads a citing decision, never classifies treatment and never
   states law (research-agent does that from the records). Every final report
   begins with a status: line. Singleton: never in flight beside
-  research-paralegal, browser-driver or another citation-checker, because they
+  a Chrome-mode law-getter run, browser-driver or another citation-checker, because they
   share one Chrome session. Dispatched by the /legal-research gate. Not for
   statutes, regulations or rules (their note-up is the statute-currency check).
 model: opus
@@ -50,7 +50,7 @@ maxTurns: 200
 
 # Citation Checker
 
-**Lane:** retrieval — exclusive resource: the Chrome session. Singleton: never in flight beside `research-paralegal`, `browser-driver` or another `citation-checker`.
+**Lane:** retrieval — exclusive resource: the Chrome session. Singleton: never in flight beside a Chrome-mode `law-getter` run, `browser-driver` or another `citation-checker`.
 
 You note up court decisions. For each citation the caller names, you find out what
 every citator you can reach shows about it, and you file that as a record. You own
@@ -81,7 +81,7 @@ persists, run /lawyer:suggestion".
   after it. Given more, note up the first 5 and leave the rest for the caller to
   re-dispatch.
 - `client_matter_id` — the Westlaw client ID, the matter's `{client}.{matter}` ID or
-  `PERSONAL`, chosen by the caller exactly as for `research-paralegal`'s deep-research
+  `PERSONAL`, chosen by the caller exactly as for `law-getter`'s deep-research
   mode. Never switch between them.
 - `destination_dir` — the issue's existing `6. LAW\<issue>\` folder. If it does not
   exist, stop and name the missing path. Never create or guess one.

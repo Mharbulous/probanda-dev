@@ -49,16 +49,16 @@ class MainSessionCanliiGuardTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_other_plugin_agent_citator_call_is_blocked(self):
-        for agent_type in ("researcher:research-agent", "researcher:research-paralegal"):
+        for agent_type in ("researcher:research-agent", "researcher:law-getter"):
             with self.subTest(agent_type=agent_type):
                 result = call(LOCAL + "get_case_citator", agent_id="a1b2", agent_type=agent_type)
                 self.assertEqual(result.returncode, 2, result.stderr)
                 self.assertIn("citation-checker", result.stderr)
 
     def test_raw_legislation_tools_are_blocked_in_every_agent(self):
-        # The paralegal's legislation-currency mode retired into legislation_currency
+        # The legislation-currency mode of law-getter's predecessor retired into legislation_currency
         # (2026-10-06), so no agent keeps the raw legislation tools.
-        for agent_type in ("researcher:research-paralegal", "researcher:research-agent"):
+        for agent_type in ("researcher:law-getter", "researcher:research-agent"):
             for tool in ("get_legislation_databases", "browse_legislation",
                          "get_legislation_regulation_metadata"):
                 with self.subTest(agent_type=agent_type, tool=tool):
@@ -80,7 +80,7 @@ class MainSessionCanliiGuardTests(unittest.TestCase):
 
     def test_non_plugin_subagent_research_call_is_blocked(self):
         # An agent of another plugin, or of the retired single plugin, is not a research agent.
-        for agent_type in ("general-purpose", "Explore", "research-paralegal", None,
+        for agent_type in ("general-purpose", "Explore", "law-getter", None,
                            "lawyer:docket-clerk", "probanda" + ":research-agent"):
             with self.subTest(agent_type=agent_type):
                 self.assertBlocked(call(LOCAL + "search", agent_id="a1b2", agent_type=agent_type))

@@ -50,7 +50,7 @@ DESCRIPTION_CLAUSES = [
     "criteria), which states no law, and `mode: case_brief` (one decision's brief, "
     "from that decision alone, for /case-brief) and `mode: citing_read` (one citing "
     "decision at the pages that cite an authority).",
-    "Never browses: external research goes to /legal-research and research-paralegal.",
+    "Never browses: external research goes to /legal-research and law-getter.",
     "Not for procedural mechanics, deadline arithmetic, or restating a party's own "
     "pleaded positions.",
 ]

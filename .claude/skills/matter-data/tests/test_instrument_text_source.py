@@ -1,5 +1,5 @@
 """@query_30_instrument_text_source: the held copy of a statute's or regulation's
-full text, which /legal-research uses when legislation-fetcher filed nothing.
+full text, which /legal-research uses when law-getter filed nothing.
 Synthetic rows only."""
 
 import importlib.util

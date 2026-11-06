@@ -1,7 +1,7 @@
 """Regression locks for the statute-first route (spec 2026-10-06, statute-first research route).
 
 A statutory-text question runs duty 4 (legislation) before duty 3 (Westlaw), without
-renumbering the duties. An instrument the fetcher files nothing for falls back to a
+renumbering the duties. An instrument law-getter files nothing for falls back to a
 matter-data copy. The audit protocol answers a negative statutory proposition only with a
 whole-instrument search on record, and the audit agent holds the search tool.
 """

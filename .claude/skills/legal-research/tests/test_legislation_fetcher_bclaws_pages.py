@@ -1,6 +1,6 @@
-"""Regression locks for the BC Laws pages legislation-fetcher files beside a consolidation.
+"""Regression locks for the BC Laws pages law-getter files beside a consolidation.
 
-Beside a BC Laws consolidation, `legislation-fetcher` also files the Point in Time
+Beside a BC Laws consolidation, `law-getter` in legislation mode also files the Point in Time
 page the consolidation links and, for a B.C. Reg. citation, the current year's
 Cumulative B.C. Regulations Bulletin, with the same two tools it files the
 instrument with. It counts the bulletin lines naming the regulation by an exact
@@ -11,7 +11,7 @@ exact address dispatches the amending instrument on its own (section 12), and it
 is filed as made, with no currency marker. A regulation BC Laws publishes in parts,
 such as the Supreme Court Civil Rules, is fetched part by part from the ids the
 map lists. Each test pins one piece of that. BC Laws pages have one fetch route,
-so no research-paralegal capture mode exists.
+so no Chrome-mode BC Laws capture exists.
 """
 import re
 import unittest
@@ -23,8 +23,8 @@ SKILLS_ROOT = SKILL_ROOT.parent
 REPO_ROOT = SKILLS_ROOT.parents[1]
 SHARED = SKILLS_ROOT / "shared"
 AGENTS = REPO_ROOT / "source" / "researcher" / "agents"
-FETCHER = AGENTS / "legislation-fetcher.md"
-PLAYBOOK = SKILL_ROOT / "references" / "legislation-fetcher-playbook.md"
+FETCHER = AGENTS / "law-getter.md"
+PLAYBOOK = SKILL_ROOT / "references" / "law-getter-legislation-playbook.md"
 
 PIT_URL = "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/<id>_pit"
 BULLETIN_URL = "https://www.bclaws.gov.bc.ca/civix/document/id/regulationbulletin/regulationbulletin/<YYYY>cumulati"
@@ -135,8 +135,8 @@ class LimitsTests(unittest.TestCase):
         self.assertIn("Never guess a part id", text)
 
     def test_one_bc_laws_route(self):
-        self.assertFalse((SHARED / "research-paralegal" / "bclaws-capture.md").exists())
-        self.assertNotIn("BC Laws capture", read(AGENTS / "research-paralegal.md"))
+        self.assertFalse((SHARED / "law-getter" / "bclaws-capture.md").exists())
+        self.assertNotIn("BC Laws capture", read(FETCHER))
 
 
 class ReaderTests(unittest.TestCase):
@@ -251,8 +251,8 @@ class AmendingInstrumentTests(unittest.TestCase):
                         text.index("**A `needs_download` or hand-off-packet return")]
         self.assertIn("filed <path>, as made, not current law, no currency marker, made on <made_on>", template)
 
-    def test_agent_description_names_the_exception(self):
-        self.assertIn("except an amending instrument at the exact publisher URL the caller supplies", flat(read(FETCHER)))
+    def test_playbook_names_the_exception(self):
+        self.assertIn("## 12. An amending instrument at the caller's URL", read(PLAYBOOK))
 
 
 if __name__ == "__main__":

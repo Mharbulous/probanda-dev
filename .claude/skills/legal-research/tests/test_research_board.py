@@ -33,8 +33,8 @@ class ResearchBoardTest(unittest.TestCase):
 
     def test_retrieval_limits_and_no_waves(self):
         board = read("legal-research", "references", "research-board.md")
-        self.assertIn("One `research-paralegal` at a time across every job.", board)
-        self.assertIn("`citation-checker` never runs beside the paralegal", board)
+        self.assertIn("One Chrome-mode `law-getter` run (deep-research or citation) at a time across every job.", board)
+        self.assertIn("`citation-checker` never runs beside a Chrome-mode `law-getter` run", board)
         self.assertIn("Nothing waits for a column to finish.", board)
 
     def test_memos_passed_forward_verbatim(self):

@@ -12,7 +12,7 @@ from check_plugin_skill_md import read_frontmatter_lines  # noqa: E402
 
 FETCH_TOOL = "sources__fetch"
 # The only agent files that may grant sources__fetch.
-FETCH_GRANT_AGENTS = ("localize-helper.md", "legislation-fetcher.md")
+FETCH_GRANT_AGENTS = ("localize-helper.md", "law-getter.md")
 
 # A Cowork Project session reaches plugin MCP servers through the desktop bridge,
 # which renames every tool `mcp__remote-devices__<name>`, and a subagent grant that

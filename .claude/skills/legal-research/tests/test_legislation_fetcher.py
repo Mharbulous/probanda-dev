@@ -1,7 +1,7 @@
-"""Regression locks for the legislation-fetcher wiring.
+"""Regression locks for the law-getter legislation-mode wiring.
 
 `/legal-research` downloads statute, regulation and bylaw text through the
-`legislation-fetcher` agent, which fetches from the official publisher with
+`law-getter` agent in legislation mode, which fetches from the official publisher with
 `sources__fetch` and files the fetched bytes with `research_filing__file_fetched`.
 Each test pins one piece of that wiring: the agent's grant and lane, the gate's
 spawn field and duty, the coverage segment, and the agent roster in the plugin notes.
@@ -16,8 +16,8 @@ REPO_ROOT = SKILLS_ROOT.parents[1]
 SHARED = SKILLS_ROOT / "shared"
 AGENTS = REPO_ROOT / "source" / "researcher" / "agents"
 PRACTICE_AGENTS = REPO_ROOT / "source" / "lawyer" / "agents"
-FETCHER = AGENTS / "legislation-fetcher.md"
-PLAYBOOK = SKILL_ROOT / "references" / "legislation-fetcher-playbook.md"
+FETCHER = AGENTS / "law-getter.md"
+PLAYBOOK = SKILL_ROOT / "references" / "law-getter-legislation-playbook.md"
 
 LOCAL = "mcp__plugin_lawyer_data__"
 BRIDGED = "mcp__remote-devices__plugin_lawyer_data__"
@@ -30,7 +30,8 @@ GRANTED = (
     "research_filing__list_law_folder",
     "research_filing__file_fetched",
 )
-NOT_GRANTED = ("save_answer", "file_download", "append_manifest", "canlii")
+NOT_GRANTED = ("save_answer", "canlii")
+LEGISLATION_FORBIDDEN = ("mcp__claude-in-chrome__", "file_download", "append_manifest")
 SPAWN_FIELD = (
     "Legislation: <citation>: filed <path>, current to <marker>, currency <value> / "
     "already on disk <path>, currency <value> / not retrieved: <reason>, currency <value>"
@@ -47,7 +48,6 @@ TOUCHED = (
     SHARED / "legal-audit-scoped.md",
     SHARED / "statute-currency.md",
     SHARED / "knowledge-tree.md",
-    AGENTS / "research-paralegal.md",
     PRACTICE_AGENTS / "localize-helper.md",
 )
 
@@ -83,10 +83,12 @@ def granted_tools(path):
 
 
 class AgentTests(unittest.TestCase):
-    def test_grants_the_seven_tools_under_both_names_and_nothing_else(self):
+    def test_grants_the_seven_legislation_tools_under_both_names(self):
         tools = granted_tools(FETCHER)
-        expected = {prefix + name for name in GRANTED for prefix in (LOCAL, BRIDGED)}
-        self.assertEqual(tools, expected)
+        for name in GRANTED:
+            for prefix in (LOCAL, BRIDGED):
+                with self.subTest(tool=prefix + name):
+                    self.assertIn(prefix + name, tools)
         self.assertNotIn("Read", tools)
         for tool in tools:
             for name in NOT_GRANTED:
@@ -96,15 +98,23 @@ class AgentTests(unittest.TestCase):
     def test_lane_line_follows_the_h1(self):
         _, body = split_frontmatter(FETCHER)
         lines = [line for line in body if line.strip()]
-        self.assertTrue(lines[0].startswith("# "), lines[0])
-        self.assertTrue(lines[1].startswith("**Lane:**"), lines[1])
+        h1 = next(i for i, line in enumerate(lines) if line.startswith("# "))
+        self.assertTrue(lines[h1 + 1].startswith("**Lane:**"), lines[h1 + 1])
 
     def test_agent_loads_its_playbook(self):
         self.assertTrue(PLAYBOOK.is_file())
-        self.assertIn("legal-research/references/legislation-fetcher-playbook.md", read(FETCHER))
+        self.assertIn("legal-research/references/law-getter-legislation-playbook.md", read(FETCHER))
+
+    def test_legislation_mode_never_calls_a_chrome_or_downloads_tool(self):
+        self.assertIn("In legislation mode never call a Chrome tool, `file_download` or `append_manifest`",
+                      read(FETCHER))
+        playbook = read(PLAYBOOK)
+        for name in LEGISLATION_FORBIDDEN:
+            with self.subTest(name=name):
+                self.assertNotIn(name, playbook)
 
     def test_both_allowlisted_agents_grant_sources_fetch_under_both_names(self):
-        for folder, name in ((PRACTICE_AGENTS, "localize-helper.md"), (AGENTS, "legislation-fetcher.md")):
+        for folder, name in ((PRACTICE_AGENTS, "localize-helper.md"), (AGENTS, "law-getter.md")):
             tools = granted_tools(folder / name)
             for prefix in (LOCAL, BRIDGED):
                 with self.subTest(agent=name, prefix=prefix):
@@ -126,7 +136,7 @@ class GateTests(unittest.TestCase):
 
     def test_front_door_names_the_agent_and_the_allow_host_ask(self):
         text = read(SKILL_ROOT / "SKILL.md")
-        self.assertIn("legislation-fetcher", text)
+        self.assertIn("`researcher:law-getter` with `mode: legislation`", text)
         self.assertIn("allow_host", text)
 
     def test_after_the_answer_ingests_filed_legislation(self):
@@ -134,7 +144,7 @@ class GateTests(unittest.TestCase):
         rule = flat(text[text.index("**After the answer, the caller persists it.**"):
                          text.index("**Statute currency.**")])
         step_three = rule[rule.index("3. Run `/ingest`"):]
-        self.assertIn("each legislation file `legislation-fetcher` filed in this run", step_three)
+        self.assertIn("each legislation file `law-getter` filed in legislation mode in this run", step_three)
 
 
 class AcceptanceFollowUpTests(unittest.TestCase):

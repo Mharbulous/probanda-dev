@@ -35,7 +35,7 @@ The session fills each portal page and stops. The practitioner reviews it and cl
 - Files are moved natively, never copied then deleted. Filing downloaded receipts goes through `/file-manager:housekeeping`, which only the practitioner can start.
 - Internals stay confidential (`shared/internals-confidentiality.md`): the practitioner sees portal words and outcomes, never tool, agent or file-layout mechanics.
 - No client or matter content is written anywhere outside the matter's own folders.
-- The Chrome session is one lane. Never drive the portal while another browser agent, such as `research-paralegal`, is running.
+- The Chrome session is one lane. Never drive the portal while another browser agent, such as a Chrome-mode `law-getter` run, is running.
 
 ## 2. Venue index
 

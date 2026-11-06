@@ -23,12 +23,12 @@ SOURCE = REPO_ROOT / "source"
 PLUGIN_SOURCES = sorted(p.parent for p in SOURCE.glob("*/roster.json"))
 LITIGATION = SOURCE / "researcher"
 RESEARCH_LAWYER = LITIGATION / "agents" / "research-agent.md"
-PARALEGAL_COPIES = (
-    LITIGATION / "agents" / "research-paralegal.md",
+LAW_GETTER_COPIES = (
+    LITIGATION / "agents" / "law-getter.md",
 )
 CITATION_CHECKER = LITIGATION / "agents" / "citation-checker.md"
 # Every agent that drives the shared Chrome session to reach Westlaw.
-CHROME_AGENTS = PARALEGAL_COPIES + (CITATION_CHECKER,)
+CHROME_AGENTS = LAW_GETTER_COPIES + (CITATION_CHECKER,)
 NOTE_UP_PLAYBOOK = SHARED / "citation-checker" / "note-up.md"
 HOOK = SKILL_ROOT / "hooks" / "block-main-session-canlii.py"
 CANLII_SRC = LITIGATION / "canlii-mcp" / "src" / "tools.ts"
@@ -64,8 +64,8 @@ REINVOCATION_EXCEPTION = "return needs_download, unless Re-invocation is yes"
 SECOND_PASS_RULE = (
     "When the spawn prompt's `Re-invocation:` field reads `yes`, never return `needs_download`."
 )
-REINVOCATION_STATUS = "; paralegal: <its status line"
-STATUSLESS_YES_RULE = "A `yes` with no paralegal status reads as `no`."
+REINVOCATION_STATUS = "; law-getter: <its status line"
+STATUSLESS_YES_RULE = "A `yes` with no law-getter status reads as `no`."
 FRONT_DOOR_STATUS = "that dispatch's status line and every citation it did not retrieve"
 SKIP_PINPOINT_LINE = (
     "not run: tiers 1–3 held pinpointable text: <file> para <n>[; <file> para <n>]"
@@ -126,7 +126,7 @@ def plugin_files():
         for path in root.rglob("*"):
             if path.is_file() and not SKIPPED_DIRS.intersection(path.relative_to(root).parts):
                 yield path
-    yield from PARALEGAL_COPIES
+    yield from LAW_GETTER_COPIES
 
 
 class AuditAgentGrantAndShimTests(unittest.TestCase):
@@ -143,11 +143,11 @@ class AuditAgentGrantAndShimTests(unittest.TestCase):
             self.assertIn(LOCAL + name, tools)
             self.assertIn(BRIDGED + name, tools)
 
-    def test_research_paralegal_has_no_canlii_grant(self):
+    def test_law_getter_has_no_canlii_grant(self):
         # Its legislation-currency mode (#1163) retired into the canlii
         # legislation_currency tool (2026-10-06); its canlii-only citation mode
         # works through Chrome, never the API.
-        for path in PARALEGAL_COPIES:
+        for path in LAW_GETTER_COPIES:
             tools = granted_tools(path)
             canlii = [tool for tool in tools if CANLII_TOOL_RE.match(tool)]
             self.assertEqual(canlii, [], path.name)
@@ -206,7 +206,7 @@ class DoctrineTests(unittest.TestCase):
         self.assertIn("`Re-invocation: yes`", front_door)
         self.assertIn(SECOND_PASS_RULE, flat(read(SHARED / "legal-audit-protocol.md")))
 
-    def test_re_invocation_yes_carries_the_paralegal_status(self):
+    def test_re_invocation_yes_carries_the_law_getter_status(self):
         # #1598: a free-text `yes` let a caller skip the westlaw-first dispatch.
         self.assertIn(REINVOCATION_FIELD + REINVOCATION_STATUS, read(SHARED / "legal-research.md"))
         self.assertIn(STATUSLESS_YES_RULE, flat(read(SHARED / "legal-audit-protocol.md")))
@@ -278,17 +278,17 @@ class DoctrineTests(unittest.TestCase):
                       flat(read(SKILL_ROOT / "SKILL.md")))
 
     def test_westlaw_unreachable_is_a_stop_never_a_canlii_fallback(self):
-        download = read(SHARED / "research-paralegal" / "citation-download.md")
+        download = read(SHARED / "law-getter" / "citation-download.md")
         for gone in ("all remaining citations go to CanLII",
                      "all citations retrieved via CanLII",
                      "proceed via CanLII per the source selection policy"):
             self.assertNotIn(gone, download)
-        deep = read(SHARED / "research-paralegal" / "westlaw-deep-research.md")
+        deep = read(SHARED / "law-getter" / "westlaw-deep-research.md")
         self.assertNotIn("not-logged-in", deep)
         gate = flat(read(SHARED / "legal-research.md"))
         self.assertIn("stop the whole question", gate)
-        for path in (SHARED / "research-paralegal" / "citation-download.md",
-                     SHARED / "research-paralegal" / "westlaw-deep-research.md",
+        for path in (SHARED / "law-getter" / "citation-download.md",
+                     SHARED / "law-getter" / "westlaw-deep-research.md",
                      SHARED / "legal-research.md", *CHROME_AGENTS):
             text = read(path)
             for status in ("blocked (chrome-not-connected)", "blocked (westlaw-not-signed-in)"):
@@ -305,7 +305,7 @@ class DoctrineTests(unittest.TestCase):
         # 2026-10-10 chrome-permission hard-stop spec: a blocked status the gate
         # did not name (chrome-permission-not-granted) let the run carry on.
         gate = flat(read(SHARED / "legal-research.md"))
-        self.assertIn("Any `status: blocked (...)` that research-paralegal or "
+        self.assertIn("Any `status: blocked (...)` that law-getter or "
                       "citation-checker returns is a hard stop", gate)
         self.assertIn("Any blocked status not named here", gate)
         step = flat(read(SKILL_ROOT / "SKILL.md"))
@@ -317,10 +317,10 @@ class DoctrineTests(unittest.TestCase):
                     self.assertIn(status, text)
 
     def test_chrome_not_connected_only_after_the_chrome_reach_ladder(self):
-        # 2026-10-06 chrome-retry spec: the paralegal returned chrome-not-connected
+        # 2026-10-06 chrome-retry spec: the Chrome agent returned chrome-not-connected
         # with Chrome connected, never having tried to reach it.
         for name in ("citation-download.md", "westlaw-deep-research.md"):
-            text = flat(read(SHARED / "research-paralegal" / name))
+            text = flat(read(SHARED / "law-getter" / name))
             with self.subTest(playbook=name):
                 self.assertNotIn("Chrome is not connected, return", text)
                 self.assertIn("Chrome reach ladder", text)
@@ -347,7 +347,7 @@ class NoteUpRoutingTests(unittest.TestCase):
 
     def test_note_ups_and_downloads_share_one_batch_cap(self):
         self.assertIn("Up to **5 citations** per invocation",
-                      flat(read(SHARED / "research-paralegal" / "citation-download.md")))
+                      flat(read(SHARED / "law-getter" / "citation-download.md")))
         agent = flat(read(CITATION_CHECKER))
         self.assertIn("at most 5 court decisions", agent)
         self.assertIn("not reached: batch cap", agent[agent.index("## Output"):])
@@ -412,22 +412,22 @@ class InAgentHookTests(unittest.TestCase):
                 result = run_hook(LOCAL + tool, agent_id="a1",
                                   agent_type="researcher:citation-checker")
                 self.assertEqual(result.returncode, 0, result.stderr)
-        for agent_type in ("researcher:research-agent", "researcher:research-paralegal"):
+        for agent_type in ("researcher:research-agent", "researcher:law-getter"):
             for tool in ("get_case_citator", "get_case_citator_tease"):
                 with self.subTest(agent_type=agent_type, tool=tool):
                     result = run_hook(LOCAL + tool, agent_id="a1", agent_type=agent_type)
                     self.assertEqual(result.returncode, 2, result.stderr)
 
-    def test_research_paralegal_no_longer_keeps_the_legislation_tools(self):
+    def test_law_getter_no_longer_keeps_the_legislation_tools(self):
         # Its legislation-currency mode retired into legislation_currency (2026-10-06).
         for tool in LEGISLATION_TOOLS:
             with self.subTest(tool=tool):
                 result = run_hook(LOCAL + tool, agent_id="a1",
-                                  agent_type="researcher:research-paralegal")
+                                  agent_type="researcher:law-getter")
                 self.assertEqual(result.returncode, 2, result.stderr)
 
     def test_every_agent_may_run_legislation_currency(self):
-        for agent_type in self.AUDIT_AGENTS + ("researcher:research-paralegal",):
+        for agent_type in self.AUDIT_AGENTS + ("researcher:law-getter",):
             with self.subTest(agent_type=agent_type):
                 result = run_hook(LOCAL + "legislation_currency", agent_id="a1", agent_type=agent_type)
                 self.assertEqual(result.returncode, 0, result.stderr)

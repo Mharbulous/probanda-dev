@@ -6,7 +6,7 @@
 //
 // Each probe reuses the path the real step takes, so the report cannot drift from it: the extractor
 // through extractDocuments (the same call research_filing__law_folder_text makes), the knowledge
-// tree through knowledgeList (the same call legislation-fetcher's publisher-map lookup makes).
+// tree through knowledgeList (the same call law-getter's publisher-map lookup makes).
 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -29,7 +29,7 @@ export interface PreflightIssue {
 export interface PreflightResult {
   extractor: { pdf: "ok" | "missing"; docx: "ok" | "missing" };
   knowledge_tree: "ok" | "error";
-  /** Westlaw reachability is research-paralegal's own hard stop, never probed here. */
+  /** Westlaw reachability is law-getter's own hard stop, never probed here. */
   chrome: "not_checked";
   issues: PreflightIssue[];
 }
@@ -46,7 +46,7 @@ const PROBE_STEM = join(tmpdir(), "coclerk-research-preflight-probe-absent");
 const CAPS: Record<PreflightRow, string> = {
   "extractor.pdf": "every PDF in 6. LAW comes back UNREAD, so the audit cannot read it",
   "extractor.docx": "every .docx in 6. LAW comes back UNREAD, so the audit cannot read it",
-  knowledge_tree: "legislation-fetcher cannot read its publisher map, so no statute text is retrieved",
+  knowledge_tree: "law-getter cannot read its publisher map, so no statute text is retrieved",
 };
 
 function errorText(err: unknown): string {

@@ -11,7 +11,7 @@ from pathlib import Path
 
 SKILLS_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = SKILLS_ROOT.parents[1]
-PLAYBOOK = Path("shared") / "research-paralegal" / "westlaw-deep-research.md"
+PLAYBOOK = Path("shared") / "law-getter" / "westlaw-deep-research.md"
 PLAYBOOK_COPIES = (
     SKILLS_ROOT / PLAYBOOK,
 )

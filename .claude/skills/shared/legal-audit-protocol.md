@@ -180,7 +180,7 @@ re-invocation: each needed decision still not on disk goes to Step 5 as an offer
 text was not read, saying Westlaw did not return it when the field lists it, except a
 later decision in a cited case's proceeding, which leaves its history check incomplete (Step 4), each
 decision still without a record is NOT NOTED UP, and you carry on through Steps 3 to 5
-for every issue. A `yes` with no paralegal status reads as `no`.
+for every issue. A `yes` with no law-getter status reads as `no`.
 
 For every authority you intend to rely on:
 
@@ -453,13 +453,13 @@ write no notes file. Their shape is unchanged.
    `8575.L8443`, not the bare matter number), an existing target
    `6. LAW\<issue>\` subfolder, jurisdiction, report type. You choose that
    client ID from the matter's data; the practitioner does not choose it at
-   dispatch and `research-paralegal` never changes it. Research serving a
+   dispatch and `law-getter` never changes it. Research serving a
    client matter uses that matter's `{client}.{matter}` ID, taking the client
    number from `/matter-data` when the folder name lacks it; `PERSONAL` is only
    for research stated to be testing or authorized unbilled firm work, and its
    subfolder may sit outside any matter under a `6. LAW` folder. The caller runs
    `/legal-research` with `westlaw-query-optimizer`, then spawns
-   `research-paralegal` in deep-research mode, without stopping to ask, and
+   `law-getter` in `mode: deep-research`, without stopping to ask, and
    re-invokes you once. On that re-invocation, re-run this protocol over the new
    memo and downloaded decisions.
 5. All layers empty → count = 0. State no law. Offer research only.

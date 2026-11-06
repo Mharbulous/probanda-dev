@@ -108,7 +108,7 @@ class JobPlanningTest(unittest.TestCase):
 
 class StepStatusTextTest(unittest.TestCase):
     """Pins for the step statuses (schema v78): a blocked step is ↻, never stamped done; a held
-    job's Westlaw step waits as ⏳ in 5-minute checks with one paralegal out; and the wake-up minute
+    job's Westlaw step waits as ⏳ in 5-minute checks with one Chrome-mode law-getter out; and the wake-up minute
     is never a deadline."""
 
     def test_a_blocked_step_is_retry_never_done(self):
@@ -118,15 +118,15 @@ class StepStatusTextTest(unittest.TestCase):
     def test_the_westlaw_wait_is_a_five_minute_check(self):
         tier_four = between(flat(read("shared", "legal-research.md")), "**On a held job, the Westlaw wait is a ⏳ step.**", "Where tiers 1–3")
         self.assertIn("set that step ⏳ for 5 minutes", tier_four)
-        self.assertIn("When the time has passed, check whether the paralegal has returned and its memo is filed", tier_four)
+        self.assertIn("When the time has passed, check whether law-getter has returned and its memo is filed", tier_four)
         self.assertIn("If not, set the step ⏳ for 5 minutes again.", tier_four)
-        self.assertIn("Never dispatch a second `research-paralegal` while one is out.", tier_four)
+        self.assertIn("Never dispatch a second Chrome-mode `law-getter` while one is out.", tier_four)
         self.assertIn("A `status: blocked (...)` return sets the step ↻ (`status: retry`), never done.", tier_four)
         step_three = between(flat(read("legal-research", "SKILL.md")), "3. Run Westlaw before the audit", "Then run the doctrine's duty 4")
         self.assertIn("after launching the query set its step ⏳ for 5 minutes", step_three)
         self.assertIn("check whether the run has finished and can be downloaded", step_three)
         self.assertIn("If not, set the step ⏳ for 5 minutes again.", step_three)
-        self.assertIn("Never dispatch a second `research-paralegal` while one is out.", step_three)
+        self.assertIn("Never dispatch a second Chrome-mode `law-getter` while one is out.", step_three)
 
     def test_the_wait_is_never_a_deadline(self):
         isolation = flat(read("shared", "deadline-isolation.md"))
