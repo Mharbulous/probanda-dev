@@ -2,6 +2,7 @@
 
 import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 
@@ -47,6 +48,26 @@ export function matterFixture(files = {}, { dirs = MATTER_DIRS } = {}) {
     env: { ...process.env, COCLERK_HOUSEKEEPING_TEMPLATE_ROOT: template },
     cleanup: () => rmSync(base, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 }),
   };
+}
+
+/**
+ * A scratch probanda.json for the page listener: a free file-manager page port, and the link
+ * records and secret beside it, so a test never binds the live port or writes the live folder.
+ * Returns the COCLERK_CONFIG_PATH to set.
+ */
+export async function pageDeviceConfig() {
+  const port = await new Promise((resolve, reject) => {
+    const probe = createServer();
+    probe.once("error", reject);
+    probe.listen(0, "127.0.0.1", () => {
+      const { port } = probe.address();
+      probe.close(() => resolve(port));
+    });
+  });
+  const dir = realpathSync.native(mkdtempSync(join(tmpdir(), "coclerk-hk-device-")));
+  const path = join(dir, "probanda.json");
+  writeFileSync(path, JSON.stringify({ page_ports: { "file-manager": port } }));
+  return path;
 }
 
 /** An offered row for the file at `rel` (backslash or slash separators), overridable field by field. */

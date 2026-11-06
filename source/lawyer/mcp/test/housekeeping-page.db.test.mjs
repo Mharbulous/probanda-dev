@@ -4,10 +4,14 @@ import { connect } from "node:net";
 import { join } from "node:path";
 import test from "node:test";
 
-import { matterFixture, proposalFor, row, runDir } from "./helpers/housekeeping-fixture.mjs";
+import { matterFixture, pageDeviceConfig, proposalFor, row, runDir } from "./helpers/housekeeping-fixture.mjs";
+
+// The page listener's port, link records and secret come from a scratch probanda.json.
+process.env.COCLERK_CONFIG_PATH = await pageDeviceConfig();
 
 const { writeRunFile } = await import("../build/housekeeping/run-files.js");
-const { closePageServer, servePage } = await import("../build/housekeeping/server.js");
+const server = await import("../build/housekeeping/server.js");
+const { closePageServer, servePage } = server;
 const { waitApproval } = await import("../build/housekeeping/wait.js");
 
 const LETTER = "2026-01-05 LF Smith re Settlement.pdf";
@@ -39,6 +43,23 @@ async function post(url, body) {
 }
 
 test.after(() => closePageServer());
+
+test("an open page's Approve still lands after its listener closes and a new process's listener starts", async () => {
+  const m = fixture();
+  try {
+    const runId = withRun(m, "20260924-100000-aaaa");
+    const served = await servePage(m.root, runId);
+    // A tool-server reconnect: this listener goes away, and the new process binds at boot.
+    await closePageServer();
+    await server.startHousekeepingPages(process.env);
+    const ok = await post(served.url, { run: runId, rows: [{ row_id: "r1", approve: true }] });
+    assert.equal(ok.status, 200);
+    const onDisk = JSON.parse(readFileSync(join(runDir(m, runId), "approval.json"), "utf-8"));
+    assert.deepEqual(onDisk.rows, [{ row_id: "r1", approve: true }]);
+  } finally {
+    m.cleanup();
+  }
+});
 
 test("the page is served on 127.0.0.1 with a per-run token, self-contained, from proposal.json", async () => {
   const m = fixture();
