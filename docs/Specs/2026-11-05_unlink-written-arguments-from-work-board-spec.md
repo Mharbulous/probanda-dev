@@ -67,3 +67,14 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 
 Check every path, tool behaviour and quotation in §2 against HEAD, mark each confirmed or not, and correct this spec before building on anything that moved.
+
+## 11. Verification against HEAD (2026-11-05, at caee95e6)
+
+| §2 item | Status | Where, and correction |
+|---|---|---|
+| `create_writing` stores `layout_snapshot`; "the one door for a new Writing, because only this tool writes its stored layout" | Confirmed | `source/lawyer/mcp/src/schema/submission-data.ts` line 106 |
+| `resnapshot_writing` "resolves the stored kind again from /draft's knowledge tree, reads the type file", runs only on explicit instruction and only while drafting | Confirmed | `schema/submission-data.ts` lines 921-931, `src/submission/writing-snapshot.ts` (`notDrafting`, v32 trigger `guard_filings_layout_frozen`). It rewrites the whole layout from the type file, so it cannot remove one companion while keeping the stored layout's other fields |
+| `execute` refuses to create or re-snapshot a Writing; no tool removes one companion | Partly confirmed | `execute`'s description routes both to their tools, but no code guard was found refusing either a `filings` INSERT or an `UPDATE filings SET layout_snapshot` through `execute` while drafting. No tool removes one companion: confirmed |
+| Render lists the notice, `Written_arguments`, `Work_board`; phase "archive dropped files" archives a document that leaves the layout | Confirmed, with a correction | `forms/render.ts` line 385, tested by `test/mockup-dropped-files.db.test.mjs`. The Work Board is no document of the filing (#1365). **Correction:** a bespoke Writing (all four BCSC types) takes its companions from the live type file (`render-documents.ts` line 99, `composeFiller(...).block.companions`), not from its stored layout. Only a general Writing reads them from the stored layout. So editing the stored layout alone would not stop a bespoke Writing rendering Written Arguments: the bespoke branch must read the stored layout's `companions` |
+| `shared/declared-layout.md` row `companions`: "The companion documents rendered with this type." | Confirmed | line 69 |
+| `/work` and `/draft` have no operation for removing a document from a board | Confirmed | no match in `work/`, `draft/` or `drafting-data/`. The bookkeeping skill is `/work` (`work/SKILL.md` §1, "applies the board's bookkeeping"); its reply routes are `work/references/opening-routes.md` |
