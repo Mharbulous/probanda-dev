@@ -46,14 +46,15 @@ pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap 
 <main>
   <figure class="diagram" id="issue-lifecycle"
           data-based-on-commit="74a518fb63327079bba2cbb95fe9893c9dced486"
-          data-updated="2026-11-06T10:09:00-07:00">
+          data-updated="2026-11-06T10:36:00-07:00">
     <figcaption>
       <h1>The life of a probanda-dev issue</h1>
-      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/74a518fb63327079bba2cbb95fe9893c9dced486"><code>74a518fb</code></a> on main · Last updated 2026-11-06 10:09 -07:00</p>
+      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/74a518fb63327079bba2cbb95fe9893c9dced486"><code>74a518fb</code></a> on main · Last updated 2026-11-06 10:36 -07:00</p>
     </figcaption>
     <p>Every issue passes through triage, which labels its state and where the work can run. A label then decides who works on it next.</p>
     <p>The queue stops only when no issues are left, when only issues needing a person are left, when only <code>local</code> issues are left while the PC is unavailable, or for a mix of the last two.</p>
     <p>The life is drawn in five stages. A dashed rounded box links to another stage: click it to jump there.</p>
+    <p>The one database in the process, the Suggestion Box, is drawn in each stage that reads or writes it, with teal dotted arrows. GitHub, which holds the issues, labels, briefs, claims and locks, is where every step works, so it has no box of its own.</p>
     <div class="legend" aria-label="Colour key">
       <span><i style="background:#eef1f5;border-color:#5b6675"></i>How an issue begins</span>
       <span><i style="background:#e3eefb;border-color:#2563a8"></i>Runs in the cloud, unattended</span>
@@ -62,6 +63,7 @@ pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap 
       <span><i style="background:#e2f3e6;border-color:#2f7d46"></i>Finished</span>
       <span><i style="background:#eceff2;border-color:#8a94a0"></i>Parked or left alone</span>
       <span><i style="background:#fff;border-color:#55616f;border-style:dashed;border-radius:8px"></i>Link to another stage</span>
+      <span><i style="background:#e0f2f1;border-color:#00796b;border-radius:7px/4px"></i>Database</span>
     </div>
 
     <h2 id="triage">1. Triage</h2>
@@ -82,6 +84,7 @@ flowchart TD
     O1H(["to 2. ready-for-human"])
     O1C(["to 3. ready-for-agent + cloud"])
     O1L(["to 3. ready-for-agent + local"])
+    SB1[("Suggestion Box<br/>Supabase database")]
 
     A1 --> T0
     A2 -->|"filed with no labels"| T0
@@ -96,7 +99,12 @@ flowchart TD
     T3 -->|"always for a suggestion,<br/>else a reason on the closed list"| O1H
     T3 -->|"agent can finish, cloud"| O1C
     T3 -->|"agent can finish, local"| O1L
+    A3 <-.->|"the save writes the suggestion<br/>intake reads it and records the issue number"| SB1
+    T2 <-.->|"suggestions: reads the record,<br/>sets it under review"| SB1
+    linkStyle 13,14 stroke:#00796b,stroke-width:2px
 
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    class SB1 store
     classDef source fill:#eef1f5,stroke:#5b6675,color:#1d2733
     classDef cloud fill:#e3eefb,stroke:#2563a8,color:#1d2733
     classDef done fill:#e2f3e6,stroke:#2f7d46,color:#1d2733
@@ -128,6 +136,7 @@ flowchart TD
     O2C(["to 3. ready-for-agent + cloud"])
     O2L(["to 3. ready-for-agent + local"])
     O2P(["to 4. Push to main"])
+    SB2[("Suggestion Box<br/>Supabase database")]
 
     IN2T --> H0
     IN2B --> H0
@@ -139,7 +148,11 @@ flowchart TD
     H2 -->|"label trigger, and /hitl-triage<br/>starts the PC task"| O2L
     H2 -->|"the developer chooses"| HN
     HN --> O2P
+    H1 <-.->|"suggestions: reads the record,<br/>writes each item's decision"| SB2
+    linkStyle 10 stroke:#00796b,stroke-width:2px
 
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    class SB2 store
     classDef human fill:#fdf0d5,stroke:#b7791f,color:#1d2733
     classDef done fill:#e2f3e6,stroke:#2f7d46,color:#1d2733
     classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
@@ -207,6 +220,7 @@ flowchart TD
     E4["Fixed and closed"]
     O4QL(["to 3. ready-for-agent + local"])
     O4P(["to 3. Pick"])
+    SB4[("Suggestion Box<br/>Supabase database")]
 
     IN4G --> G
     G -->|"yes"| B
@@ -220,7 +234,11 @@ flowchart TD
     SW --> O4QL
     L --> E4
     L -.-> O4P
+    SB4 -.->|"suggestions: reads which<br/>items are approved"| B
+    linkStyle 12 stroke:#00796b,stroke-width:2px
 
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    class SB4 store
     classDef cloud fill:#e3eefb,stroke:#2563a8,color:#1d2733
     classDef done fill:#e2f3e6,stroke:#2f7d46,color:#1d2733
     classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
@@ -265,7 +283,7 @@ flowchart TD
       <ul>
         <li>Each lane's gate is the full list in <code>implement-queue.md</code>.</li>
         <li>In a cloud run, every outcome returns to Pick, not only the dashed one. A local run exits after one issue, whatever the outcome.</li>
-        <li>A sender can withdraw a suggestion before the push, which discards the unpushed build. Intake then closes the issue.</li>
+        <li>A sender can withdraw a suggestion before the push, which discards the unpushed build. Intake reads the withdrawal from the Suggestion Box and closes the issue.</li>
         <li>Suggestions merged by fingerprint take the decision of the issue they merge into.</li>
         <li>Locks: triage #61, intake #190. Claims: 5 hours per issue, 1 hour for <code>/hitl-triage</code>.</li>
         <li>Local work that writes under <code>.claude/</code> goes to <code>ready-for-human</code>, for an attended session.</li>
