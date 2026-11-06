@@ -34,6 +34,9 @@ is, goes through the gate below.
 research jobs together, read `references/research-board.md` and follow it. It runs the gate
 below once per job.
 
+**No arguments.** List the matter's unfinished research jobs by `references/research-board.md`,
+"Unfinished jobs", then stop. Ask no question and start no research.
+
 **Noting up a memo's paragraphs.** When the practitioner asks to note up the propositions or
 findings in numbered paragraphs of a saved research memo ("note up the propositions in
 paragraphs 4 and 5"), follow `shared/legal-research.md`, "Proposition-level note-up".
@@ -95,12 +98,10 @@ permitted to make statements of law.
    doctrine's hard-stop paragraph says for that status. For a status it does not
    name, quote the `status:` and `detail:` lines verbatim and ask them to resolve it.
    Either way, ask them to tell you to continue. On "continue", re-dispatch
-   the same run. On a held job, after launching the query set its step ⏳ for 5 minutes, as the
-   doctrine's duty 3 says ("On a held job, the Westlaw wait is a ⏳ step"). When the time has passed, check whether
-   the run has finished and can be downloaded: law-getter has returned and its memo is
-   filed in the `6. LAW` folder. If not, set the step ⏳ for 5 minutes again. Never
-   dispatch a second Chrome-mode `law-getter` while one is out. A `blocked (...)` return sets
-   the step ↻, never done. Then run the doctrine's duty 4: dispatch `researcher:law-getter` with `mode: legislation` once per
+   the same run. On a held job, run the Westlaw wait as the doctrine's duty 3 says ("On a held job,
+   the Westlaw wait is a ⏳ step"): tell the practitioner how long a run takes, and stamp
+   the step from law-getter's return. Never dispatch a second Chrome-mode `law-getter`
+   while one is out. Then run the doctrine's duty 4: dispatch `researcher:law-getter` with `mode: legislation` once per
    statute, regulation or bylaw in issue, and on a `host_not_allowed` refusal ask the
    practitioner once and, on a yes, re-dispatch with `allow_host`. For an instrument it
    files nothing for, ask `/matter-data` for a held copy before marking it unread. A
