@@ -18,22 +18,13 @@ import { type PhaseTimings, withTotal } from "./timings.js";
 /** Ticket 2026-08-31, decision 5: a filed-face document may never contain CITATION_MISSING. Scans
  * the pre-strip mockup markdown (toFiledFace runs after this, and would strip the very
  * <!-- statement_of_law_id N --> trace comment this needs to name the offending statement).
- * pushStatementLines (statement-lines.ts) always emits the citation line immediately
- * before the markers+id-comment line, so the trace is on the same line or the next. */
+ * statementBlock (statement-lines.ts) ends the citation line with the trace. */
 function findMissingLawCitations(markdown: string): number[] {
-  const ids: number[] = [];
-  const lines = markdown.split("\n");
-  lines.forEach((line, i) => {
-    if (!line.includes(CITATION_MISSING)) return;
-    for (let j = i; j <= i + 1 && j < lines.length; j++) {
-      const m = lines[j].match(/<!-- statement_of_law_id (\d+) -->/);
-      if (m) {
-        ids.push(Number(m[1]));
-        break;
-      }
-    }
-  });
-  return ids;
+  return markdown
+    .split("\n")
+    .filter((line) => line.includes(CITATION_MISSING))
+    .flatMap((line) => line.match(/<!-- statement_of_law_id (\d+) -->/)?.[1] ?? [])
+    .map(Number);
 }
 
 /** #825: a deployed Form 8 order whose template_key is null or outside renderTemplate's closed

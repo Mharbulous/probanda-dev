@@ -72,6 +72,7 @@ def parse(text: str, name: str) -> list[tuple]:
     blocks: list[tuple] = []
     para: list[str] | None = None
     fence: list[str] | None = None
+    opener = ''  # the fence's own run: only a bare run at least this long closes it
     table: list[list[str]] | None = None
 
     def close():
@@ -88,7 +89,7 @@ def parse(text: str, name: str) -> list[tuple]:
         line = raw.rstrip()
         stripped = line.strip()
         if fence is not None:
-            if stripped.startswith('```'):
+            if re.fullmatch('`{%d,}' % len(opener), stripped):
                 blocks.append(('quote', fence))
                 fence = None
             else:
@@ -106,7 +107,7 @@ def parse(text: str, name: str) -> list[tuple]:
             close()
         if stripped.startswith('```'):
             close()
-            fence = []
+            fence, opener = [], re.match(r'`+', stripped).group()
         elif stripped.startswith('> '):
             close()
             blocks.append(('cite', stripped[2:]))

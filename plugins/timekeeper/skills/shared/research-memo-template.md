@@ -11,15 +11,13 @@ The memo opens with this YAML header, from its first `---` line to its second:
 ```
 ---
 Date: <the spawn prompt's Date>
-Document: MEMORANDUM OF LAW
-Job: <the spawn prompt's Job, a bare number. Leave this line out when it reads none>
+Document: MEMORANDUM OF LAW <the spawn prompt's Job, a bare number. Nothing after LAW when it reads none>
 Status: DRAFT / FINAL
-From: <the exact model ID your own system prompt states. If it states none, write "model ID not stated". Never a marketing name, never a guess>
 Re: "<the question, one line>"
 ---
 ```
 
-A double quote inside a quoted value is written `\"`. The header holds these keys and no other.
+A double quote inside a quoted value is written `\"`. The header holds these keys and no other. Every render prints it in this form, so a memo saved in an older form re-renders in this one.
 
 A memo is INCOMPLETE when it holds the open-issues paragraph (`shared/legal-audit-protocol.md` Step 4). A memo saved before 2026-11-03 is also INCOMPLETE when a header value starts `INCOMPLETE`.
 

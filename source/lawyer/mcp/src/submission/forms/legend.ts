@@ -4,6 +4,7 @@
 // forum: the heading is in filed-face.ts's MOCKUP_ONLY_HEADINGS. A row's model note never goes into
 // the legend or any file; forms.ts returns the notes in the render response as symbol_notes.
 
+import { fenceStep } from "./fence.js";
 import { COMBINATIONS, PLACEMENTS, SYMBOLS, splitGlyphs } from "./symbol-table.js";
 
 export const LEGEND_HEADING = "## Legend";
@@ -17,13 +18,12 @@ const RUN_RE = new RegExp(`(?:${GLYPH_ALTERNATIVES.join("|")})+`, "g");
 /** The text the scan reads: fenced excerpt blocks dropped, and each HTML comment blanked to a
  * space so the glyphs either side of one never read as one set. */
 function scannedText(markdown: string): string {
-  let inFence = false;
+  let open = "";
   const kept = markdown.split("\n").filter((line) => {
-    if (line.trim().startsWith("```")) {
-      inFence = !inFence;
-      return false;
-    }
-    return !inFence;
+    const inFence = open !== "";
+    const step = fenceStep(open, line);
+    open = step.open;
+    return !step.fence && !inFence;
   });
   return kept.join("\n").replace(/<!--[\s\S]*?-->/g, " ");
 }

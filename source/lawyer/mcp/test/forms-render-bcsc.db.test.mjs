@@ -296,8 +296,8 @@ test("renders BCSC Form 32 notice of application", async () => {
     assert.doesNotMatch(part3Section, /Corbin Vasey has not filed a response to civil claim\./, "expected the rested-on postulate, already PART 2 paragraph 1, not to render again under the submission");
     assert.match(
       part3Section,
-      /```\n   default judgment may be entered once the response period has expired without a filed response\n   ```\n   > \*Miazga v\. Kvello Estate\*, 2009 SCC 51, para 15/,
-      "expected the required proposition's statement of law as a fenced quote, citation as its own blockquote line after the fence (ticket 2026-08-31)"
+      /```\n   default judgment may be entered once the response period has expired without a filed response\n   ```\n\n   > \*Miazga v\. Kvello Estate\*, 2009 SCC 51, para 15 .*<!-- statement_of_law_id \d+ -->$/m,
+      "expected the required proposition's statement of law as a fenced quote, then its citation, markers and id as its own blockquote line"
     );
 
     // Issue #398: exhibit-side 👤 parity on Part 4, gated to role='evidence'/'other'.

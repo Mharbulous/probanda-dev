@@ -122,7 +122,7 @@ test("renders the VanIAC submissions package (written argument, witness statemen
     assert.ok(stmt7Line, "expected the exhibit-backed statement to render under fact 13");
     assert.match(stmt7Line, /📌/, "expected the exhibit pin on an exhibit-backed statement with no exhibit_pinpoint");
     assert.doesNotMatch(stmt7Line, /🧷|📑|💬/, "no instrument means no 🧷; the exhibit passage is captured, so no excerpt marker");
-    assert.match(submissionBlock(writtenArgument, 2), /Week 12: crew on site until 21:00 each day\n   ```\n   > Ex\. 3\n/, "expected the fence to quote the exhibit and the citation to name Ex. 3");
+    assert.match(submissionBlock(writtenArgument, 2), /Week 12: crew on site until 21:00 each day\n   ```\n\n   > Ex\. 3 .*<!-- statement_of_fact_id 7 -->\n/, "expected the fence to quote the exhibit and the citation line to name Ex. 3");
     const fact12Line = writtenArgument.split("\n").find((l) => l.includes("<!-- fact_id 12 -->"));
     // Issue #361: the fact-side twin of the Ex.4 assertion below -- the denied
     // admission's event glyph prefixes 👤 instead of silently disappearing.

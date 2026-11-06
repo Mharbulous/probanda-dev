@@ -663,8 +663,9 @@ def template_settings(fmt):
 
 def filed_blocks(markdown, name):
     """The filed face as blocks: ("title" | "heading" | "cite", text), ("quote", [lines]) for a
-    fenced excerpt, and ("para", [lines]) for lines up to a blank line."""
-    blocks, lines, fence = [], [], None
+    fenced excerpt, and ("para", [lines]) for lines up to a blank line. A fence closes only on a
+    bare run of at least its own length, so an excerpt line starting ``` stays quoted."""
+    blocks, lines, fence, opener = [], [], None, ""
 
     def close():
         if lines:
@@ -674,7 +675,7 @@ def filed_blocks(markdown, name):
     for raw in markdown.splitlines():
         line = raw.rstrip()
         if fence is not None:
-            if line.strip().startswith("```"):
+            if re.fullmatch("`{%d,}" % len(opener), line.strip()):
                 blocks.append(("quote", fence))
                 fence = None
             else:
@@ -683,16 +684,16 @@ def filed_blocks(markdown, name):
             close()
         elif line.strip().startswith("```"):
             close()
-            fence = []
+            fence, opener = [], re.match(r"`+", line.strip()).group()
         elif line.startswith("# "):
             close()
             blocks.append(("title", line[2:].strip()))
         elif re.match(r"#{2,6} ", line):
             close()
             blocks.append(("heading", line.lstrip("#").strip()))
-        elif line.startswith("> "):
+        elif line.lstrip().startswith("> "):
             close()
-            blocks.append(("cite", line[2:]))
+            blocks.append(("cite", line.lstrip()[2:]))
         else:
             lines.append(line)
     if fence is not None:

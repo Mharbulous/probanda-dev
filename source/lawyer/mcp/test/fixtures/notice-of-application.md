@@ -60,8 +60,8 @@ This matter is within the jurisdiction of an associate judge.
    ```
    default judgment may be entered once the response period has expired without a filed response
    ```
-   > *Miazga v. Kvello Estate*, 2009 SCC 51, para 15
-   🏅 <!-- statement_of_law_id 1 -->
+
+   > *Miazga v. Kvello Estate*, 2009 SCC 51, para 15 🏅 <!-- statement_of_law_id 1 -->
 
 ## PART 4: MATERIAL TO BE RELIED ON
 

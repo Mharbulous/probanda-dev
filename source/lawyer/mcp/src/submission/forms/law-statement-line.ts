@@ -100,13 +100,17 @@ export function lawStatementCitationLine(row: LawStatementLine): string | null {
   const tags = `${quotingTag(row)}${row.authority_killed_on !== null ? ` (killed ${row.authority_killed_on})` : ""}${scrutinyFailedTag([row])}${settledTag(row)}${noteUpTag(row)}`;
   if (row.authority_title === null) return row.pinpoint ? `> ${row.pinpoint}${tags}` : null;
   const citation = row.authority_citation ?? CITATION_MISSING;
-  // Stored pinpoints sometimes repeat the citation ("2023 BCCA 182, para. 34"); strip that
-  // prefix so the line never prints the citation twice.
-  let pin = row.pinpoint;
-  if (pin && row.authority_citation && pin.startsWith(row.authority_citation)) {
-    pin = pin.slice(row.authority_citation.length).replace(/^[\s,;]+/, "") || null;
-  }
+  const pin = printedPinpoint(row.authority_citation, row.pinpoint);
   return `> *${row.authority_title}*, ${citation}${pin ? `, ${pin}` : ""}${tags}`;
+}
+
+/** The pinpoint a citation line prints after the citation, so neither prints twice: a stored pinpoint
+ * can repeat the citation ("2023 BCCA 182, para. 34"), and a stored citation can end with the pinpoint
+ * ("B.C. Reg. 168/2009, r. 22-8(1)" with "r. 22-8(1)"). */
+export function printedPinpoint(citation: string | null, pinpoint: string | null): string | null {
+  if (!pinpoint || !citation) return pinpoint;
+  if (citation.trimEnd().endsWith(`, ${pinpoint.trim()}`)) return null;
+  return pinpoint.startsWith(citation) ? pinpoint.slice(citation.length).replace(/^[\s,;]+/, "") || null : pinpoint;
 }
 
 /** `deployed` is false for a statement nothing on a live Writing relies on (spec R6, schema v47):

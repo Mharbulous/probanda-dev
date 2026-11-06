@@ -107,7 +107,7 @@ test("a case brief's saved file is the brief alone: no party, marker, trace comm
 test("a saved brief keeps each passage character for character, though the filed face would change it", async (t) => {
   const m = await matter(t);
   const { saved } = saveFromRender(m, await writeBrief(m), `${STEM}.md`);
-  assert.match(readFileSync(saved.path, "utf-8"), new RegExp(`^> ${QUOTE.replace(/[()]/g, "\\$&")}\n> and a second line\\.\n>\n> \\*Alpha`, "m"));
+  assert.match(readFileSync(saved.path, "utf-8"), new RegExp(`^\`\`\`\n${QUOTE.replace(/[()]/g, "\\$&")}\nand a second line\\.\n\`\`\`\n\n> \\*Alpha`, "m"));
 });
 
 test("a saved brief's passage keeps even the characters the save borrows as placeholders", async (t) => {
@@ -116,7 +116,7 @@ test("a saved brief's passage keeps even the characters the save borrows as plac
   const passage = "Odd \uE002characters \uE003kept (here)";
   await submissionDataExecute(m.dbPath, `UPDATE statements_of_law SET excerpt = '${passage}\nand a second line.' WHERE id = 5;`);
   const text = readFileSync(saveFromRender(m, id, `${STEM}.md`).saved.path, "utf-8");
-  assert.ok(text.includes(`\n> ${passage}\n> and a second line.\n`), text);
+  assert.ok(text.includes(`\n\`\`\`\n${passage}\nand a second line.\n\`\`\`\n`), text);
 });
 
 test("None. is numbered with the items and has no passage, citation or stored statement", async (t) => {

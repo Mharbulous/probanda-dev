@@ -34,16 +34,16 @@ Rendered: <TIMESTAMP>
    ```
    The obligation is not confined to documents the party intends to rely on.
    ```
-   > *Tekk Enterprises v. Acme Co.*, 2024 BCCA 118, para 31
-   ⚠️🧐 <!-- statement_of_law_id 1 -->
+
+   > *Tekk Enterprises v. Acme Co.*, 2024 BCCA 118, para 31 ⚠️🧐 <!-- statement_of_law_id 1 -->
 
 3. second point of law 🥈 <!-- law_assertion_id 2 -->
 
    ```
    The comparator case is questioned on this point.
    ```
-   > *Second Authority v. Comparator*, 2019 BCCA 5, para 12
-   🚨🧐 <!-- statement_of_law_id 2 -->
+
+   > *Second Authority v. Comparator*, 2019 BCCA 5, para 12 🚨🧐 <!-- statement_of_law_id 2 -->
 
 
 4. No authority has yet been located for the second submission. 🧐 <!-- submission_id 2 -->
@@ -53,8 +53,8 @@ Rendered: <TIMESTAMP>
    ```
    the Purchaser shall pay the Balance in full on the Closing Date
    ```
-   > Witness Statement of A. Renwick, para 1, Ex. 1, s. 2.3
-   🖋️🏆 <!-- statement_of_fact_id 1 -->
+
+   > Witness Statement of A. Renwick, para 1, Ex. 1, s. 2.3 🖋️🏆 <!-- statement_of_fact_id 1 -->
 
 6. The delivery schedule required completion by the final week. 🧐 <!-- fact_id 11 -->
 
@@ -67,8 +67,8 @@ Rendered: <TIMESTAMP>
    ```
    Week 12: crew on site until 21:00 each day
    ```
-   > Ex. 3
-   📌✍️ <!-- statement_of_fact_id 7 -->
+
+   > Ex. 3 📌✍️ <!-- statement_of_fact_id 7 -->
 
 9. point of law not yet researched 🔬🥈 <!-- law_assertion_id 3 -->
 

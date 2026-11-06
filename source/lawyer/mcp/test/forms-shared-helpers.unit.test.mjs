@@ -5,7 +5,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 const { formatTimeEstimate, pushExcerptBlockquote } = await import("../build/submission/forms/components.js");
-const { factStatementCitationLine } = await import("../build/submission/forms/statement-lines.js");
+const { factStatementCitationLine, statementBlock } = await import("../build/submission/forms/statement-lines.js");
+const { printedPinpoint } = await import("../build/submission/forms/law-statement-line.js");
+const { fenceStep } = await import("../build/submission/forms/fence.js");
 const { factsPart } = await import("../build/submission/forms/filing-facts.js");
 
 test("formatTimeEstimate prints hours and minutes as asm32 parses them", () => {
@@ -37,6 +39,29 @@ test("factStatementCitationLine prints `> ` by default and the prefix it is give
   assert.equal(factStatementCitationLine(exhibits, labels, stmt), "> Affidavit #2 of A. Witness, para 4, Ex. 3, p. 2");
   assert.equal(factStatementCitationLine(exhibits, labels, stmt, ">> "), ">> Affidavit #2 of A. Witness, para 4, Ex. 3, p. 2");
   assert.equal(factStatementCitationLine(exhibits, labels, { instrument_id: null, pinpoint: null, exhibit_id: null, exhibit_pinpoint: null }, ">> "), null);
+});
+
+test("printedPinpoint prints a pinpoint once, whether the pinpoint repeats the citation or the citation ends with it", () => {
+  assert.equal(printedPinpoint("B.C. Reg. 168/2009, r. 22-8(1)", "r. 22-8(1)"), null);
+  assert.equal(printedPinpoint("2023 BCCA 182", "2023 BCCA 182, para. 34"), "para. 34");
+  assert.equal(printedPinpoint("2023 BCCA 182", "2"), "2", "a short pinpoint matching the citation's tail is still printed");
+  assert.equal(printedPinpoint(null, "para. 5"), "para. 5");
+});
+
+test("statementBlock fences the excerpt byte for byte, longer than any backtick run in it, then the citation, markers and id on one line", () => {
+  const excerpt = "  ``` opens a line\n\nand a ```` run";
+  const block = statementBlock(excerpt, "> *A v B*, 2020 BCCA 1, para. 5", "🔬 📇", "statement_of_law_id", 7, "");
+  assert.deepEqual(block, ["`````", "  ``` opens a line", "", "and a ```` run", "`````", "", "> *A v B*, 2020 BCCA 1, para. 5 🔬 📇 <!-- statement_of_law_id 7 -->"]);
+  assert.equal(block.slice(1, -3).join("\n"), excerpt);
+  assert.deepEqual(statementBlock(null, null, "", "rhetorical_paragraph_record_id", 2, "   "), ["   <!-- rhetorical_paragraph_record_id 2 -->"]);
+  // A reader keeps the excerpt's own ``` line inside the fence.
+  let open = "";
+  const inside = block.map((line) => {
+    const was = open;
+    open = fenceStep(open, line).open;
+    return was !== "" && open !== "";
+  });
+  assert.deepEqual(inside, [false, true, true, true, false, false, false]);
 });
 
 test("each filing kind's facts Part comes from one table", () => {

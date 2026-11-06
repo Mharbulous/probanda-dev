@@ -21,7 +21,7 @@ import {
   hearingDateSentence,
   resolveRespondedToDocument,
 } from "./render-application-response.js";
-import { CITATION_MISSING } from "./law-statement-line.js";
+import { CITATION_MISSING, printedPinpoint } from "./law-statement-line.js";
 import { exhibitNumbersFromOrderedIds, fetchDocumentLabels, fetchFilingDocuments } from "./exhibit-documents.js";
 import { fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions, type LawAssertionRow } from "./submission-reads.js";
 import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
@@ -42,12 +42,7 @@ const NO_FACTUAL_BASIS = "[factual basis: no facts recorded]";
 function lawStatementCitationLine(row: LawAssertionRow): string | null {
   if (row.authority_title === null) return row.pinpoint ? `> ${row.pinpoint}` : null;
   const citation = row.authority_citation ?? CITATION_MISSING;
-  // Stored pinpoints sometimes repeat the citation ("2023 BCCA 182, para. 34"); strip that
-  // prefix so the line never prints the citation twice.
-  let pin = row.pinpoint;
-  if (pin && row.authority_citation && pin.startsWith(row.authority_citation)) {
-    pin = pin.slice(row.authority_citation.length).replace(/^[\s,;]+/, "") || null;
-  }
+  const pin = printedPinpoint(row.authority_citation, row.pinpoint);
   return `> *${row.authority_title}*, ${citation}${pin ? `, ${pin}` : ""}`;
 }
 

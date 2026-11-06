@@ -649,33 +649,40 @@ test("a research memo's item paragraphs print summary, excerpt, citation and mar
 INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, kind) VALUES (60, 4, 'Alpha v Beta', '2020 BCCA 1', 'case');
 INSERT INTO statements_of_law (id, proceeding_id, authority_id, pinpoint, excerpt, source, verification) VALUES
   (70, 4, 60, 'para. 5', 'The first passage.', 'primary', 'lead'),
-  (71, 4, 60, 'para. 9', 'The second passage.\nIts second line.', 'primary', 'lead');
-INSERT INTO filing_law (filing_id, statement_id) VALUES (${id}, 70), (${id}, 71);
+  (71, 4, 60, 'para. 9', 'The second passage.\nIts second line.\n\n  [...] A second paragraph.', 'primary', 'lead'),
+  (72, 4, 60, 'para. 12', '\`\`\`\nA quoted fence and a \`\`\`\` run.', 'primary', 'lead');
+INSERT INTO filing_law (filing_id, statement_id) VALUES (${id}, 70), (${id}, 71), (${id}, 72);
 `);
-  await g.prose(id, "memo-header", "---\nDocument: MEMORANDUM OF LAW\nFormat: ICRA\n---");
+  // A header saved in an older form: the render prints the current four keys, the job number on Document.
+  await g.prose(id, "memo-header", '---\nDate: 2026-11-04\nDocument: MEMORANDUM OF LAW\nStatus: DRAFT\nFrom: claude-opus-5-5\nTo: Job #7\nRe: "Is the \\"test\\" met?"\nFormat: ICRA\n---');
   await g.prose(id, "issue", "**A tenant holds over. Is the test met?**");
   await g.prose(id, "conclusion", "Yes (Alpha v Beta, 2020 BCCA 1, at para. 5).");
-  await g.prose(id, "rule", "The first rule. <!-- statement_of_law_id 70 -->\n\nThe second rule. <!-- statement_of_law_id 71 -->");
+  await g.prose(id, "rule", "The first rule. <!-- statement_of_law_id 70 -->\n\nThe second rule. <!-- statement_of_law_id 71 -->\n\nThe third rule. <!-- statement_of_law_id 72 -->");
   await g.prose(id, "application", "The court applied it. <!-- statement_of_law_id 70 -->\n\nAn unlinked item. <!-- statement_of_law_id 99 -->");
   await g.prose(id, "sources", "### Case authority\n\n- Alpha v Beta, 2020 BCCA 1, paras. 5, 9");
 
   const md = docOf(render(g, id), "General_writing").markdown;
+  assert.match(md, /^---\nDate: 2026-11-04\nDocument: MEMORANDUM OF LAW 7\nStatus: DRAFT\nRe: "Is the \\"test\\" met\?"\n---/m);
+  assert.doesNotMatch(md, /^(?:From|To|Job|Format):/m, "the header holds only Date, Document, Status and Re");
   const body = [
     "## Rule",
     "",
     "1. The first rule.",
     "",
-    "> The first passage.",
-    ">",
+    "```",
+    "The first passage.",
+    "```",
+    "",
   ].join("\n");
   assert.ok(md.includes(body), md);
   for (const line of [
     /^> \*Alpha v Beta\*, 2020 BCCA 1, para\. 5 .*📇.* <!-- statement_of_law_id 70 -->$/m,
     /^2\. The second rule\.$/m,
-    /^> The second passage\.\n> Its second line\.\n>\n> \*Alpha v Beta\*, 2020 BCCA 1, para\. 9 .*<!-- statement_of_law_id 71 -->/m,
+    /^```\nThe second passage\.\nIts second line\.\n\n  \[\.\.\.\] A second paragraph\.\n```\n\n> \*Alpha v Beta\*, 2020 BCCA 1, para\. 9 .*<!-- statement_of_law_id 71 -->/m,
+    /^`````\n```\nA quoted fence and a ```` run\.\n`````\n\n> \*Alpha v Beta\*, 2020 BCCA 1, para\. 12 .*<!-- statement_of_law_id 72 -->/m,
     /^## Application$/m,
-    /^3\. The court applied it\.$/m,
-    /^4\. An unlinked item\.$/m,
+    /^4\. The court applied it\.$/m,
+    /^5\. An unlinked item\.$/m,
     /^🧩 ________ <!-- statement_of_law 99 is not cited by this Writing -->/m,
     /^## Issue\n\n\*\*A tenant holds over\. Is the test met\?\*\*/m,
     /^## Sources\n\n### Case authority$/m,
@@ -683,6 +690,21 @@ INSERT INTO filing_law (filing_id, statement_id) VALUES (${id}, 70), (${id}, 71)
     assert.match(md, line);
   }
   assert.doesNotMatch(md, /^\d+\. Yes/m, "the Conclusion is prose, never numbered");
+  assert.doesNotMatch(md, /^>$/m, "no bare > line between an excerpt and its citation");
+
+  const header = async (text) => {
+    await g.execute(`UPDATE filing_prose SET text = '${text}' WHERE filing_id = ${id} AND slot = 'memo-header';`);
+    return docOf(render(g, id), "General_writing").markdown;
+  };
+  assert.match(await header("---\nDate: 2026-11-05\nDocument: MEMORANDUM OF LAW\nStatus: FINAL\nRe: \"Q\"\n---"), /^---\nDate: 2026-11-05\nDocument: MEMORANDUM OF LAW\nStatus: FINAL\nRe: "Q"\n---/m, "no job: the plain Document line");
+  for (const old of ["Document: MEMORANDUM OF LAW for Job #33", "Document: MEMORANDUM OF LAW\nJob: 33", "Document: MEMORANDUM OF LAW 33"]) {
+    assert.match(await header(`---\nDate: 2026-11-05\n${old}\nStatus: DRAFT\nRe: "Q"\n---`), /^Document: MEMORANDUM OF LAW 33\nStatus: DRAFT\nRe: "Q"\n---/m, old);
+  }
+  assert.match(
+    await header("---\nDate: 2026-10-30\nDocument: MEMORANDUM OF LAW\nConfidence: \"INCOMPLETE: two issues open\"\nRe: \"Q\"\n---"),
+    /^Re: "Q"\nConfidence: "INCOMPLETE: two issues open"\n---/m,
+    "an old memo's INCOMPLETE confidence survives a re-render, for complete_job"
+  );
 });
 
 test("a caption part under BCSC prints the BC Supreme Court caption from the stored venue block, with no title row", async (t) => {

@@ -12,6 +12,7 @@
 // VanIAC-only transform would silently leak reserved material on the BCSC
 // side the day someone reaches for render_mode there.
 
+import { fenceStep } from "./fence.js";
 import { ALL_MARKER_GLYPHS, MOCKUP_ONLY_TAG } from "./markers.js";
 
 // Frontmatter is always exactly the components.ts frontmatterHeader() block:
@@ -183,18 +184,14 @@ function stripGlyphs(markdown: string): string {
 // Fenced verbatim-excerpt blocks are exact quotes -- never touched by the
 // whitespace cleanup below, which exists only to tidy up the gaps a glyph
 // or comment strip leaves in ordinary prose/table lines.
-function isFenceLine(line: string): boolean {
-  return line.trim().startsWith("```");
-}
-
 function tidy(markdown: string): string {
-  let inFence = false;
+  let open = "";
   const lines = markdown.split("\n").map((line) => {
-    if (isFenceLine(line)) {
-      inFence = !inFence;
-      return line;
-    }
-    if (inFence || line.trim() === "") return inFence ? line : "";
+    const step = fenceStep(open, line);
+    const inFence = open !== "";
+    open = step.open;
+    if (step.fence || inFence) return line;
+    if (line.trim() === "") return "";
     // Collapse the whitespace runs a stripped glyph or tag leaves behind
     // (e.g. "(admission   )" -> "(admission)") without touching leading
     // indentation -- the renderer's numbered-list continuation lines carry

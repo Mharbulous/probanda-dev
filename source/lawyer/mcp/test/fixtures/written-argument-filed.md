@@ -20,6 +20,7 @@
    ```
    The obligation is not confined to documents the party intends to rely on.
    ```
+
    > *Tekk Enterprises v. Acme Co.*, 2024 BCCA 118, para 31
 
 3. second point of law
@@ -27,6 +28,7 @@
    ```
    The comparator case is questioned on this point.
    ```
+
    > *Second Authority v. Comparator*, 2019 BCCA 5, para 12
 
 4. No authority has yet been located for the second submission.
@@ -36,6 +38,7 @@
    ```
    the Purchaser shall pay the Balance in full on the Closing Date
    ```
+
    > Witness Statement of A. Renwick, para 1, Ex. 1, s. 2.3
 
 6. The delivery schedule required completion by the final week.
@@ -47,6 +50,7 @@
    ```
    Week 12: crew on site until 21:00 each day
    ```
+
    > Ex. 3
 
 9. point of law not yet researched

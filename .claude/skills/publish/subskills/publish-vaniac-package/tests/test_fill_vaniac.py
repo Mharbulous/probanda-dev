@@ -180,5 +180,11 @@ def test_bad_round_is_refused(tmp_path):
     assert err.value.code == 'bad_round'
 
 
+def test_a_fence_closes_only_on_a_run_at_least_its_own_length():
+    from fill_vaniac import parse
+    text = '1. The point.\n\n   ````\n   ``` opens a line\n   ````\n\n   > Ex. 3\n'
+    assert parse(text, 't') == [('para', ['1. The point.']), ('quote', ['``` opens a line']), ('cite', 'Ex. 3')]
+
+
 if __name__ == '__main__':
     raise SystemExit(pytest.main([__file__, '-q']))

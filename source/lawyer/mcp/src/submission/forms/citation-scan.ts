@@ -8,6 +8,7 @@
 // only matches text to rows.
 
 import { submissionDataQuery } from "../backend.js";
+import { fenceStep } from "./fence.js";
 import { toFiledFace } from "./filed-face.js";
 import { mockupMessage } from "./markers.js";
 import type { MarkerInventory } from "./proposal-inventory.js";
@@ -74,13 +75,12 @@ function lineHits(line: string): Hit[] {
  * excerpt's own words, whose citations the Writing does not make, so they are not read. */
 function textHits(filedFace: string): Hit[] {
   const hits: Hit[] = [];
-  let fenced = false;
+  let open = "";
   for (const line of filedFace.split("\n")) {
-    if (/^\s*(```|~~~)/.test(line)) {
-      fenced = !fenced;
-      continue;
-    }
-    if (fenced || /^\s*>/.test(line)) continue;
+    const fenced = open !== "";
+    const step = fenceStep(open, line);
+    open = step.open;
+    if (step.fence || fenced || /^\s*>/.test(line)) continue;
     hits.push(...lineHits(line));
   }
   return hits;

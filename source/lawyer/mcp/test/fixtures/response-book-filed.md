@@ -90,6 +90,7 @@ THIS IS A RESPONSE TO the stay application of the Appellants, Tidewater Outfitte
    ```
    The arbitration was commenced on 12 May 2026.
    ```
+
    > Affidavit #1 of Adrian Renwick, para 4
 
 6. A stay requires a serious question, irreparable harm, and a favourable balance of convenience.
@@ -97,6 +98,7 @@ THIS IS A RESPONSE TO the stay application of the Appellants, Tidewater Outfitte
    ```
    the tripartite test
    ```
+
    > *RJR-MacDonald Inc. v. Canada (Attorney General)*, [1994] 1 SCR 311, at 334
 
 ### Part 4: Order(s) Sought

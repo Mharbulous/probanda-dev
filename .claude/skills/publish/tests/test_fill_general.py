@@ -559,5 +559,19 @@ class TestLetterheadCcAndEnclosures(Base):
                 self.deliverable.unlink()
 
 
+class StatementBlockTest(unittest.TestCase):
+    """A statement's filed shape (statement-lines.ts statementBlock): its fenced excerpt is one quote,
+    even with a ``` line inside a longer fence, and its citation line is a cite, indented or not."""
+
+    def test_the_fence_is_a_quote_and_the_citation_a_cite(self):
+        import fill_general
+        face = ("1. The rule.\n\n   ````\n   ``` opens a line\n   ````\n\n   > *A v B*, 2020 BCCA 1, para 5\n\n"
+                "2. The next.\n\n```\nplain\n```\n\n> *C v D*, 2021 BCCA 2, para 3\n")
+        self.assertEqual(fill_general.filed_blocks(face, "t"), [
+            ("para", ["1. The rule."]), ("quote", ["   ``` opens a line"]), ("cite", "*A v B*, 2020 BCCA 1, para 5"),
+            ("para", ["2. The next."]), ("quote", ["plain"]), ("cite", "*C v D*, 2021 BCCA 2, para 3"),
+        ])
+
+
 if __name__ == "__main__":
     unittest.main()

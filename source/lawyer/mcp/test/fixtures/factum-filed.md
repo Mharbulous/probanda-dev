@@ -72,6 +72,7 @@ The chambers judge made no error.
    ```
    the standard of review for questions of law is correctness
    ```
+
    > *Housen v Nikolaisen*, 2002 SCC 33, para 8
 
 8. The order was within the judge's discretion.
@@ -81,11 +82,13 @@ The chambers judge made no error.
    ```
    7 (1) If a party to an arbitration agreement commences legal proceedings, the court must stay them.
    ```
+
    > *Arbitration Act*, SBC 2020, c 2, s 7
 
    ```
    A respondent must file a factum.
    ```
+
    > *Court of Appeal Rules*, BC Reg 120/2022, R 25
 
 ## PART 4 - NATURE OF ORDER SOUGHT

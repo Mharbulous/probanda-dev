@@ -7,7 +7,9 @@ scratchpad through `research_filing__write_scratch`, never into the saved memo. 
 a fuller header and a CRAC body (IRAC or CREAC only when asked), and the agent returns
 `Audit:` (was `Confidence:`), `Notes scratch:` and `Memo scratch:` lines instead of the memo's text. On
 2026-11-03 the header shrank to Date, Document (with the job number), Status, From and Re. On
-2026-11-05 the job number moved to its own `Job:` key, because `#` starts a YAML comment.
+2026-11-05 the job number moved to its own `Job:` key, because `#` starts a YAML comment. On
+2026-11-06 the header became Date, Document (`MEMORANDUM OF LAW <job>`), Status and Re, printed
+in that form by every render.
 Inventory and note-up dispatches keep their own shapes.
 """
 import json
@@ -29,7 +31,7 @@ ITEM = """```
    Pinpoint: <the pinpoint>
    > <the verbatim passage at that pinpoint>
 ```"""
-HEADER = ["---", "Date:", "Document: MEMORANDUM OF LAW", "Job:", "Status: DRAFT", "From:", "Re:", "---"]
+HEADER = ["---", "Date:", "Document: MEMORANDUM OF LAW", "Status: DRAFT", "Re:", "---"]
 ICRA = "```\n## Issue\n## Conclusion\n## Rule\n## Application\n```"
 IRAC = "```\n## Issue\n## Rule\n## Application\n## Conclusion\n```"
 CREAC = "```\n## Issue\n## Conclusion\n## Rule\n## Explanation\n## Application\n## Conclusion\n```"
@@ -68,17 +70,16 @@ class ProtocolStepSixTests(unittest.TestCase):
         self.assertEqual(len(found), len(HEADER))
         for expected, line in zip(HEADER, found):
             self.assertTrue(line.startswith(expected), f"{line!r} should start with {expected!r}")
-        self.assertEqual(found[2], "Document: MEMORANDUM OF LAW")
-        self.assertIn("Leave this line out when it reads none", found[3])
+        self.assertIn("the spawn prompt's Job, a bare number. Nothing after LAW when it reads none", found[2])
         self.assertNotIn("#", "".join(found))
 
     def test_a_filled_header_keeps_its_job_number_as_yaml(self):
-        for job in ([], ["Job: 33"]):
-            text = NL.join(["Date: 2026-11-05", "Document: MEMORANDUM OF LAW"] + job
-                           + ["Status: DRAFT", "From: model", 'Re: "Is a \\"term\\" implied?"'])
+        for job in ("", " 33"):
+            text = NL.join(["Date: 2026-11-05", "Document: MEMORANDUM OF LAW" + job,
+                            "Status: DRAFT", 'Re: "Is a \\"term\\" implied?"'])
             header = yaml.safe_load(text)
-            self.assertEqual(header["Document"], "MEMORANDUM OF LAW")
-            self.assertEqual(header.get("Job"), 33 if job else None)
+            self.assertEqual(header["Document"], "MEMORANDUM OF LAW" + job)
+            self.assertEqual(list(header), ["Date", "Document", "Status", "Re"])
             self.assertEqual(header["Re"], 'Is a "term" implied?')
         self.assertEqual(yaml.safe_load("Document: MEMORANDUM OF LAW for Job #33")["Document"],
                          "MEMORANDUM OF LAW for Job", "the old form loses the number")
@@ -86,7 +87,7 @@ class ProtocolStepSixTests(unittest.TestCase):
     def test_header_names_no_matter_practitioner_or_privilege(self):
         template = read("research-memo-template.md")
         header = template[template.index("Date: <"):template.index("\n---", template.index("Re: "))]
-        for key in ("Matter:", "To:", "Privilege:", "Format:", "Confidence:"):
+        for key in ("Matter:", "To:", "From:", "Job:", "Privilege:", "Format:", "Confidence:"):
             self.assertNotIn("\n" + key, "\n" + header)
 
     def test_body_is_icra_in_order(self):

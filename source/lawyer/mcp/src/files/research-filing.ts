@@ -35,6 +35,7 @@ import { DataServerError } from "../errors.js";
 import { checkCoverageLine } from "./coverage-line.js";
 import { downloadsDir, IN_PROGRESS_EXTENSIONS } from "./downloads.js";
 import { htmlBlocks, sourcesFetcher, type SourceFetcher } from "../sources/fetch.js";
+import { fenceStep } from "../submission/forms/fence.js";
 import { GAP_LINE_RE, MOCKUP_ONLY_LINE_RE, toFiledFace } from "../submission/forms/filed-face.js";
 import { withLegend } from "../submission/forms/legend.js";
 import { MOCKUP_ONLY_TAG } from "../submission/forms/markers.js";
@@ -248,8 +249,8 @@ const CASE_BRIEF_HEADER = /^\uFEFF?---\r?\n(?:(?!---\r?\n)[^\n]*\n)*?Document Ty
 /**
  * A case brief's copy for the practitioner: the mockup's filed face (filed-face.ts), less its title. Each
  * verbatim line stays as written, because the face's whitespace tidy and tag strips would change a quote:
- * in an item's block quote (projections.ts itemLines), every line but the last, its citation line. The
- * tag strips reach only that citation line: a tag is only ever printed there, and text of its shape in
+ * an item's fenced excerpt (statement-lines.ts statementBlock), fences included. The tag strips reach
+ * only the `>` citation line after it: a tag is only ever printed there, and text of its shape in
  * the brief's own sentences is wording the reviewer approved, so its opening " (" or " [" is held.
  * Refused when the mockup holds a gap line: the face deletes those, and the file would hide a slot not
  * written or an item of law short of its passage or pinpoint (projections.ts). The verbatim lines go back
@@ -259,9 +260,12 @@ function caseBriefCopy(mockup: string, source: string): string {
   const gaps = [...mockup.matchAll(GAP_LINE_RE)].map((m) => m[1]);
   if (gaps.length > 0) throw new DataServerError(`this brief is not complete, so it was not saved: ${gaps.join("; ")}: ${source}`, "brief_incomplete");
   const verbatim: string[] = [];
-  const held = mockup.split("\n").map((line, i, lines) => {
-    if (!line.startsWith(">")) return line.replace(/ \(/g, "\uE002").replace(/ \[/g, "\uE003");
-    if (!lines[i + 1]?.startsWith(">")) return line;
+  let open = "";
+  const held = mockup.split("\n").map((line) => {
+    const fenced = open !== "";
+    const step = fenceStep(open, line);
+    open = step.open;
+    if (!step.fence && !fenced) return line.startsWith(">") ? line : line.replace(/ \(/g, "\uE002").replace(/ \[/g, "\uE003");
     verbatim.push(line);
     return `\uE000${verbatim.length - 1}\uE001`;
   });

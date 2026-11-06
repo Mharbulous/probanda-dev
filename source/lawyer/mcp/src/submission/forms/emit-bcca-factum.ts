@@ -21,7 +21,9 @@ import {
 } from "./render-bcca-factum.js";
 import { factsPart, fetchFacts } from "./filing-facts.js";
 import { exhibitNumbersFromOrderedIds, fetchDocumentLabels, fetchFilingDocuments } from "./exhibit-documents.js";
-import { fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions, type FactStatementRow, type LawAssertionRow } from "./submission-reads.js";
+import { fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions, type LawAssertionRow } from "./submission-reads.js";
+import { printedPinpoint } from "./law-statement-line.js";
+import { factStatementCitationLine } from "./statement-lines.js";
 import { fetchOrdersSought } from "./orders-sought.js";
 import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
 import type { RenderContext } from "./render-context.js";
@@ -38,29 +40,8 @@ function pushExcerpt(lines: string[], excerpt: string | null, cite: string | nul
   if (cite) lines.push(`cite: ${cite}`);
 }
 
-function factCite(exhibitMap: Map<number, number>, labelMap: Map<number, string>, s: FactStatementRow): string | null {
-  const parts: string[] = [];
-  if (s.instrument_id !== null) {
-    const instrumentLabel = labelMap.get(s.instrument_id);
-    if (instrumentLabel !== undefined) parts.push(instrumentLabel);
-    if (s.pinpoint) parts.push(s.pinpoint);
-  } else if (s.pinpoint) {
-    parts.push(s.pinpoint);
-  }
-  if (s.exhibit_id !== null) {
-    const num = exhibitMap.get(s.exhibit_id);
-    const exhibitLabel = num !== undefined ? `Ex. ${num}` : labelMap.get(s.exhibit_id);
-    if (exhibitLabel !== undefined) parts.push(exhibitLabel);
-    if (s.exhibit_pinpoint) parts.push(s.exhibit_pinpoint);
-  }
-  return parts.length === 0 ? null : parts.join(", ");
-}
-
 function lawCite(row: LawAssertionRow): string {
-  let pin = row.pinpoint;
-  if (pin && row.authority_citation && pin.startsWith(row.authority_citation)) {
-    pin = pin.slice(row.authority_citation.length).replace(/^[\s,;]+/, "") || null;
-  }
+  const pin = printedPinpoint(row.authority_citation, row.pinpoint);
   return `${row.authority_title}, ${row.authority_citation}${pin ? `, ${pin}` : ""}`;
 }
 
@@ -166,7 +147,7 @@ export function renderBccaFactumFiledFace(ctx: RenderContext, datedOn: string): 
       const cite = courtRecordCitation(f.courtRecord, f.courtRecordPinpoint);
       body.push(`${++n}. ${oneLine(f.postulate)}${cite ? ` ${cite}` : ""}`);
       for (const st of f.statements) {
-        if (st.purpose !== "impeachment") pushExcerpt(body, st.exhibit_id !== null ? st.exhibit_excerpt : st.excerpt, factCite(exhibitMap, labelMap, st));
+        if (st.purpose !== "impeachment") pushExcerpt(body, st.exhibit_id !== null ? st.exhibit_excerpt : st.excerpt, factStatementCitationLine(exhibitMap, labelMap, st, ""));
       }
     }
     for (const la of lawBySubmission.get(s.id) ?? []) {

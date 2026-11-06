@@ -16,6 +16,7 @@ import { DataServerError } from "../../errors.js";
 import { readFirmProfile } from "../../tools/practice/firm-profile.js";
 import { submissionDataQuery } from "../backend.js";
 import { CITATION_MISSING, lawStatementCitationLine, lawStatementMarkers, scrutinyFailedTag } from "./law-statement-line.js";
+import { statementBlock } from "./statement-lines.js";
 import { clauseMarkers, dedupeLineMarkers, gapMarker, printMarkerSets, unservedPetitumMarker, type ClauseRow } from "./markers.js";
 import { lawItem, recordCriterionGlyphs, recordGlyphs, recordJurisdictionLadder } from "./proposal-inventory.js";
 import { exhibitNumbersForFiling, fetchDocumentLabels, fetchFilingDocuments, fetchNotBestCopyMarkers } from "./exhibit-documents.js";
@@ -159,9 +160,8 @@ const STATEMENT_REF = /\s*<!-- statement_of_law_id (\d+) -->\s*$/;
  * (shared/case-brief-template.md). */
 const BRIEF_LAW_SLOTS: ReadonlySet<string> = new Set(["holding", "ratio", "obiter"]);
 
-/** An item paragraph's lines after its summary: the statement's verbatim excerpt as a block quote,
- * then its citation line with the statement-line markers and the id comment, so a paragraph number
- * names one stored row. The markers are not recorded here: the header's "Authorities cited" line
+/** An item paragraph's lines after its summary: the statement's block (statementBlock), so a
+ * paragraph number names one stored row. The markers are not recorded here: the header's "Authorities cited" line
  * records each linked statement once (render-general.ts). A statement the Writing does not cite
  * prints a gap line instead, as does a case brief's statement short of its passage or pinpoint, which
  * a brief's item cannot go without. */
@@ -172,16 +172,33 @@ function itemLines(ctx: RenderContext, state: ProjectionState, id: number, law: 
     const missing = [(row.excerpt ?? "").trim() === "" && "passage", (row.pinpoint ?? "").trim() === "" && "pinpoint"].filter(Boolean);
     if (missing.length > 0) return gap(ctx, state, `statement_of_law ${id} has no ${missing.join(" and no ")}`);
   }
-  const quote = (row.excerpt ?? "").trim() === "" ? [] : [...row.excerpt!.trim().split(/\r?\n/).map((l) => `> ${l}`.trimEnd()), ">"];
-  const cite = [lawStatementCitationLine(row) ?? `> ${CITATION_MISSING}`, lawStatementMarkers(row), `<!-- statement_of_law_id ${id} -->`].filter(Boolean).join(" ");
-  return [...quote, cite].join("\n");
+  const excerpt = (row.excerpt ?? "").trim() === "" ? null : row.excerpt;
+  return statementBlock(excerpt, lawStatementCitationLine(row) ?? `> ${CITATION_MISSING}`, lawStatementMarkers(row), "statement_of_law_id", id, "").join("\n");
+}
+
+/** A research memo's stored header (shared/research-memo-template.md) in the current form, whatever form
+ * it was saved in: Date, Document with the job number, Status, Re. The number is read from any form a
+ * header ever held it in, and a pre-2026-11-03 `Confidence: INCOMPLETE` line is kept, because
+ * complete_job still reads it in the saved memo. */
+function memoHeader(text: string): string {
+  const value = (key: string) => new RegExp(`^${key}:[ \\t]*(.*?)[ \\t]*$`, "m").exec(text)?.[1];
+  const job = /^(?:Document:.*?MEMORANDUM OF LAW (?:for Job #)?|Job:[ \t]*#?|To:[ \t]*Job #?)(\d+)[ \t]*$/m.exec(text)?.[1];
+  const confidence = value("Confidence");
+  return [
+    "---",
+    ...[["Date", value("Date")], ["Document", `MEMORANDUM OF LAW${job ? ` ${job}` : ""}`], ["Status", value("Status")], ["Re", value("Re")]]
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => `${k}: ${v}`),
+    ...(confidence?.replace(/^"/, "").startsWith("INCOMPLETE") ? [`Confidence: ${confidence}`] : []),
+    "---",
+  ].join("\n");
 }
 
 function slot(ctx: RenderContext, name: string, part: LayoutPart, state: ProjectionState): string[] {
   const row = state.prose.get(name);
   if (row === undefined || row.text.trim() === "") return [notWritten(ctx, name, state)];
   let law: Map<number, FilingLawRow> | null = null;
-  const paragraphs = row.text
+  const paragraphs = (name === "memo-header" ? memoHeader(row.text) : row.text)
     .trim()
     .split(/\r?\n[ \t]*\r?\n/)
     .map((p) => p.trim())

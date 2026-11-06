@@ -58,17 +58,21 @@ export function factStatementMarkers(s: FactStatementRow, courtRecordLinked: boo
   ]);
 }
 
-/** Pushes one statement's rendered lines: a blank line (nothing glues to what came before), then a fenced ``` verbatim quote when excerpt text exists -- 💬 already signals "excerpt needed", so an empty fence would just be noise -- then the citation on its own blockquote line (ticket 2026-08-31: a legal citation is not part of the verbatim quote, on either side of the domain now), then markers + id comment on the line right after (no blank between the two: they're one object). */
-export function pushStatementLines(lines: string[], excerpt: string | null, citationLine: string | null, markers: string, tag: string, id: number): void {
-  lines.push("");
+/** Every rendered document's one shape for a quoted statement, under the proposition it supports: the
+ * excerpt verbatim in a code fence longer than any backtick run inside it, when there is one (💬 already
+ * signals "excerpt needed"), a blank line, then the citation as a blockquote line of its own ending with
+ * the markers and the id comment. With no citation the markers and comment stand alone. */
+export function statementBlock(excerpt: string | null, citationLine: string | null, markers: string, tag: string, id: number, indent: string): string[] {
+  const out: string[] = [];
   if (excerpt) {
-    // No surrounding quotation marks -- the fence already marks the text as verbatim, and a
-    // statute excerpt keeps the Act's own indentation line by line.
-    lines.push("   ```");
-    for (const l of excerpt.split("\n")) lines.push(l ? `   ${l}` : "");
-    lines.push("   ```");
+    const fence = "`".repeat(Math.max(3, ...[...excerpt.matchAll(/`+/g)].map((m) => m[0].length + 1)));
+    out.push(`${indent}${fence}`, ...excerpt.split("\n").map((l) => (l ? `${indent}${l}` : "")), `${indent}${fence}`, "");
   }
-  if (citationLine) lines.push(`   ${citationLine}`);
-  const idComment = `<!-- ${tag} ${id} -->`;
-  lines.push(`   ${[markers, idComment].filter(Boolean).join(" ")}`);
+  out.push(`${indent}${[citationLine, markers, `<!-- ${tag} ${id} -->`].filter(Boolean).join(" ")}`);
+  return out;
+}
+
+/** Pushes one statement's block (statementBlock) inside a numbered paragraph, after a blank line. */
+export function pushStatementLines(lines: string[], excerpt: string | null, citationLine: string | null, markers: string, tag: string, id: number): void {
+  lines.push("", ...statementBlock(excerpt, citationLine, markers, tag, id, "   "));
 }
