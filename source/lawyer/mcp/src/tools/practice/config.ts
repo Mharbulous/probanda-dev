@@ -17,6 +17,7 @@ import { CONFIG_FILE, CONFIG_FOLDER, configPath, configWritePaths, LEGACY_CONFIG
 import { DataServerError, ValidationError } from "../../errors.js";
 import { caseDataRootFromMatterRoot } from "../../files/matter-root.js";
 import { resolvePracticeDbPath } from "../../practice/backend.js";
+import { renderQuirksNote } from "../../quirks/tools.js";
 import { PracticeStore } from "../../practice/store.js";
 
 // The top-level keys practice-data/operations/configuration.md documents.
@@ -89,7 +90,7 @@ export interface ConfigStatus {
   case_data_root: string | null;
   root_exists: boolean;
   practice_db_exists: boolean;
-  /** This practitioner's environment notes, verbatim; null when the file is absent or sets none. */
+  /** This practice's quirks as plain text, one `RULE [area] title: body` or `KNOWLEDGE ...` line per active entry (rules first); else the old single note, verbatim; null when there is neither. */
   practice_quirks: string | null;
   candidates: { root: string; source: "matter_root" | "scan"; practice_db_exists: boolean }[];
   candidate_error?: string;
@@ -179,6 +180,8 @@ export async function config_status(
       if (typeof config.practice_quirks === "string" && config.practice_quirks !== "") {
         status.practice_quirks = config.practice_quirks;
       }
+      // Once the practice has quirk entries they are the notes; the old single note is the fallback.
+      status.practice_quirks = renderQuirksNote(env) ?? status.practice_quirks;
       if (typeof config.case_data_root === "string" && config.case_data_root !== "") {
         status.case_data_root = config.case_data_root;
         status.root_exists = isDir(config.case_data_root);

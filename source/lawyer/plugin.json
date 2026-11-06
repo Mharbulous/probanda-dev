@@ -97,6 +97,20 @@
         ]
       },
       {
+        "matcher": "mcp__(.+__)?plugin_lawyer_data__quirks__write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/quirk-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Practice quirk gate"
+          }
+        ]
+      },
+      {
         "matcher": "mcp__.+(practice_data__(delete_anchor|merge_contact|issue_invoice)|mail__dedupe_apply)$",
         "hooks": [
           {

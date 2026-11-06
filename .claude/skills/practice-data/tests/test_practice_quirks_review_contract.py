@@ -1,4 +1,4 @@
-"""The Practice quirks review of memory lines the practitioner brings."""
+"""The Practice quirks procedure: entries, the paste step for rules, and the review of memory lines the practitioner brings."""
 import re
 import unittest
 from pathlib import Path
@@ -23,7 +23,20 @@ def bullet(title):
 class PracticeQuirksReviewTests(unittest.TestCase):
     def test_bullets_in_order(self):
         titles = re.findall(r"^- \*\*(.+?)\.\*\*", section(), re.M)
-        self.assertEqual(titles, ["Read", "Write", "Review of memory lines", "Content", "Mail routing", "Cap"])
+        self.assertEqual(titles, ["Entries", "Read", "Write", "Review of memory lines", "Content", "Mail routing",
+                                  "Limits", "Old note"])
+
+    def test_entries_draw_the_line_between_a_quirk_and_a_preference(self):
+        entries = bullet("Entries")
+        self.assertIn("A rule names no skill", entries)
+        self.assertIn("is a preference", entries)
+
+    def test_a_rule_is_saved_only_after_the_practitioner_pastes_it(self):
+        write = bullet("Write")
+        self.assertIn("A rule is saved only in the practitioner's own words", write)
+        self.assertIn("Paste this whole block back into chat to save it.", write)
+        self.assertIn('"Yes" or "Approved" never saves a rule', write)
+        self.assertIn("A subagent never writes a quirk", write)
 
     def test_write_names_the_review_as_a_trigger(self):
         self.assertIn("sort lines they bring from the assistant's memory", bullet("Write"))
@@ -42,12 +55,12 @@ class PracticeQuirksReviewTests(unittest.TestCase):
     def test_write_goes_through_the_existing_route(self):
         review = bullet("Review of memory lines")
         self.assertIn('"Write" above', review)
-        self.assertIn("explicit yes", review)
-        self.assertIn("`practice_quirks`", review)
+        self.assertIn("knowledge entry", review)
+        self.assertIn("rule entry", review)
 
-    def test_standing_instruction_is_never_a_note(self):
+    def test_a_skills_standing_instruction_is_never_a_quirk(self):
         review = bullet("Review of memory lines")
-        self.assertIn("A standing instruction is never saved as a note", review)
+        self.assertIn("A standing instruction for a named skill is never saved as a quirk", review)
         self.assertIn("`shared/paralegal-posture.md` section 9", review)
         self.assertIn("Never save a Rule from a memory line", review)
 
@@ -55,6 +68,11 @@ class PracticeQuirksReviewTests(unittest.TestCase):
         review = bullet("Review of memory lines")
         self.assertIn("the practitioner can remove it from memory themselves", review)
         self.assertIn("Probanda does not read or edit memory", review)
+
+    def test_the_old_note_is_migrated_and_then_cleared(self):
+        old = bullet("Old note")
+        self.assertIn("a non-empty write to the old note is refused", old)
+        self.assertIn("`practice_quirks`, `\"\"`", old)
 
 
 if __name__ == "__main__":

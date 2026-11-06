@@ -12,6 +12,7 @@ import { configPath, configWritePaths } from "../../config-path.js";
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { writeTextAtomic } from "../../file-lock.js";
 import { resolveCaseDataRoot } from "../../practice/backend.js";
+import { hasQuirkEntries, renderQuirksNote } from "../../quirks/tools.js";
 import { asString } from "./shared.js";
 
 type RosterEntry = Record<string, unknown>;
@@ -127,7 +128,7 @@ export function readFirmProfile(env: NodeJS.ProcessEnv = process.env, fallback?:
     letterhead: existsSync(paths.letterhead) ? paths.letterhead : null,
     invoice_template: existsSync(paths.invoiceTemplate) ? paths.invoiceTemplate : null,
     person,
-    practice_quirks: typeof quirks === "string" && quirks !== "" ? quirks : null,
+    practice_quirks: renderQuirksNote(env) ?? (typeof quirks === "string" && quirks !== "" ? quirks : null),
     ...(isKeyList(firm.cc_on_counsel_email) && firm.cc_on_counsel_email.length > 0 ? { cc_on_counsel_email: firm.cc_on_counsel_email } : {}),
     ...(isObject(firm.billing_settings) ? { billing_settings: firm.billing_settings } : {}),
     ...(isObject(firm.style) ? { style: firm.style } : {}),
@@ -346,6 +347,12 @@ export async function upsert_firm_profile(
       throw new ValidationError(
         `practice_quirks is ${quirks.length} characters; the cap is ${PRACTICE_QUIRKS_MAX}. Nothing was written. ` +
         `Propose a compacted note to the practitioner for approval and set that instead.`
+      );
+    }
+    if (quirks !== "" && hasQuirkEntries(env)) {
+      throw new ValidationError(
+        "Nothing was written. This practice keeps its quirks as entries now: which entry should this text become?",
+        "use_quirks"
       );
     }
     if (quirks === "") delete config.practice_quirks;

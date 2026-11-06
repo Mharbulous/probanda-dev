@@ -104,6 +104,7 @@ import { checkSources } from "./sources/check.js";
 import { sourcesFetch } from "./sources/fetch.js";
 import { knowledgeList, knowledgeRead, knowledgeRetire, knowledgeWrite } from "./knowledge/tools.js";
 import { preferencesRead, preferencesWrite } from "./preferences/tools.js";
+import { quirksList, quirksRead, quirksWrite } from "./quirks/tools.js";
 import { suggestionTools } from "./suggestions/tools.js";
 import { repoDocsRead, repoDocsWrite } from "./files/repo-docs.js";
 import { pagesPreview, pagesTemplate, type PreviewArgs } from "./pages/preview.js";
@@ -378,6 +379,9 @@ export const dataTools: Tool<DispatchContext>[] = [
   defineTool("knowledge__retire", (args: ToolInput) => knowledgeRetire(args)),
   defineTool("preferences__read", (args: ToolInput) => preferencesRead(args)),
   defineTool("preferences__write", (args: ToolInput) => preferencesWrite(args)),
+  defineTool("quirks__list", (args: ToolInput) => quirksList(args)),
+  defineTool("quirks__read", (args: ToolInput) => quirksRead(args)),
+  defineTool("quirks__write", (args: ToolInput) => quirksWrite(args)),
 
   ...suggestionTools,
 

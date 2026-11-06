@@ -69,6 +69,7 @@
         "one-way-gate": "source/lawyer/hooks/one-way-gate.py",
         "pending-approvals-note": "source/lawyer/hooks/pending-approvals-note.py",
         "plugin-cache-guard": "source/lawyer/hooks/plugin-cache-guard.py",
+        "quirk-gate": "source/lawyer/hooks/quirk-gate.py",
         "redirect-delete-to-trash": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py",
         "rule-gate": "source/lawyer/hooks/rule-gate.py",
         "session-lane-guard": ".claude/skills/shared/docket-clerk/hooks/session-lane-guard.py",
