@@ -1,5 +1,7 @@
 # Local page servers: audit and consolidation plan
 
+**Follow-up, 2026-11-06:** the consolidation is built. Every page server now runs on `source/lawyer/mcp/src/local-page/` (commits 0f6d6eea to 1a957a42). Housekeeping is served on the file-manager fixed port (47616) from on-disk link records, so an open approval page survives a server restart. The credential pages stay in memory on ephemeral ports, and an older process holding the port is reported as `warning: "older_holder"`, both by Brahm's decision. The tables below describe the code before that change.
+
 Date: 2026-11-06. Read-only audit, no code changed. Source audited: `source/` in this repository. CoClerk (`C:\Users\Brahm\Git\Coclerk`) is being deprecated (its CLAUDE.md), so it was read only to compare its older copy of the housekeeping server.
 
 ## Why this audit
