@@ -32,9 +32,11 @@ Lawyers have professional and regulatory obligations around client data. The Law
 
 The storage rule is split by data domain:
 
-- **Case data is local.** Parties, proceedings, facts, evidence, and authorities reside in SQLite databases on the practitioner's own machine. The earlier cloud store (Supabase Postgres, client-side encrypted) was retired at the three-layer teardown (B5/B6, 2026-07-14) and the data migrated back to local storage; matter-data operations no longer require internet connectivity.
-- **Practice data remains local.** Matter status, retainer balances, time entries, and deadlines reside in a SQLite database on the practitioner's own machine and are never uploaded to any cloud environment.
-- **Only matter-free legal principles are pooled.** The one remaining cloud surface holds generalized, matter-free statements of law — no client identity, no matter facts. Every write to it is deliberate and permission-gated. It ships only in the `legal-commons` plugin, so a `litigation`-only install has no cloud storage at all.
+- **Case data is local.** Parties, proceedings, facts, evidence, and authorities reside in SQLite databases on the practitioner's own machine. The earlier cloud store (Supabase Postgres, client-side encrypted) was retired at the three-layer teardown (B5/B6, 2026-07-14) and the data migrated back to local storage. Matter-data operations no longer require internet connectivity.
+- **Practice data remains local.** Matter status, retainer balances, time entries, and deadlines reside in a SQLite database on the practitioner's own machine. Probanda's Cloud never receives them.
+- **Only matter-free legal principles are pooled.** Probanda's Cloud holds generalized, matter-free statements of law, with no client identity and no matter facts. Every write to it is deliberate and permission-gated.
+
+Commandment 3 sets where client information goes. It reaches the inference provider only through the practitioner's own session: what Claude reads in a session goes to Anthropic, under the practitioner's own plan terms. It reaches Probanda's Cloud only as vocabulary values and keyed hashes. The local databases and case files sync to the firm's own storage, such as SharePoint, where the firm syncs them.
 
 No client data is embedded in plugin files in either domain.
 

@@ -1,4 +1,4 @@
-// The Practice Board: Practice Board.html, one self-contained file beside practice.db, showing the open work
+// The Practice Board: Practice Board.html, one self-contained file in <case_data_root>\_board, showing the open work
 // of every matter in the practice (billable or not) in four panels: Overdue, Due today, Coming up,
 // then Other open work. Written only by practice_data__render_practice_board, which joins the deadline
 // lane, so no drafting session ever writes or presents it. Its internal name is practice_board, never

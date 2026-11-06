@@ -37,7 +37,7 @@ Non-goals: what an Application paragraph may say (sibling spec, Application find
 - Every statement of law comes only from research-agent, with a pinpoint and a verbatim passage. Recital-rule support (`shared/authority-claim-verification.md` §3) is unchanged.
 - One memo answers one Issue. A job's memo uses the Job question verbatim as its Issue.
 - memo-reviewer's loop still runs before the save, and `complete_job` still refuses an `INCOMPLETE` memo.
-- The Commandments: no new table, column or file per tag type or link role (Commandment 5). No client content leaves the machine. No new DDL file is committed (CLAUDE.md, Never commit), so a schema change goes through the existing migration path.
+- The Commandments: no new table, column or file per tag type or link role (Commandment 5). No client content reaches Probanda's Cloud (Commandment 3). No new DDL file is committed (CLAUDE.md, Never commit), so a schema change goes through the existing migration path.
 - The legal-commons pool stays read-only from research-agent.
 
 ## 6. Options considered (streamline and deburr first, additions last)

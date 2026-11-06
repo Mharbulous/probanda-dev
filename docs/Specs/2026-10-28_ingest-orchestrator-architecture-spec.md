@@ -299,7 +299,7 @@ Today the main thread applies these while composing SQL. The converters implemen
   - the `report` says the file list was re-read.
   - The build session records this as a new design-decisions entry that cites #26.
 - It holds no per-type table or column (Commandment 5). `type` is a generic string, and `segments[]` is generic, not affidavit-specific.
-- It stays on the User's Machine (Commandment 3).
+- It is stored on the User's Machine and never sent to Probanda's Cloud (Commandment 3).
 - **Commandments.** `triage.json` and the run journal (§2.4) are derived caches that can be rebuilt from the files. They are not databases and are not added to the Exception's list of legacy stores, so they do not widen the development plugin's reliance on the Exception. The type features (§4.2), the routing table (§5) and the converters are plugin content shipped to every user. They are Shared Information under Commandment 2: they are needed for the plugin to work and reveal no Trade Secret beyond what the current skill text already ships.
 - An entry is reused while its hash matches and is recomputed otherwise.
 - The type is advisory. It never decides privilege and never causes a document to be skipped. Privilege stays with Path B and #2, and `never_ingest` stays with the folder map.
@@ -366,7 +366,7 @@ Each type maps to a glossary id in `.claude/skills/shared/document-types.md` "Ty
 - **This changes** what ingest does with the `disbursements` category (`extraction-protocol.md` L205). The mapping stays. Contract R writes one `main.sources` row with category `disbursements`, `ingestion_status = 'complete'` and no facts, so the file is recorded as seen and is not offered again. No amount, payee or other content is read into case data.
 - The amounts belong in a practice-data store that the financial-and-disbursement spec (§12) defines. None exists today: `.claude/skills/practice-data` has no disbursement store.
   - Practice-data writes are checked by Probanda's Cloud (`.claude/skills/practice-data/SKILL.md`).
-  - So that spec must keep the amounts and payees on the User's Machine (Commandment 3) and add no store per tag type (Commandment 5).
+  - So that spec must keep the amounts and payees out of Probanda's Cloud (Commandment 3) and add no store per tag type (Commandment 5).
 - **Exception:** a disbursement record that is an affidavit exhibit, or that supports a special-damages claim, is a `record_document` and is extracted as evidence.
 
 ---

@@ -49,7 +49,7 @@ You find out whether one letter went out and whether it arrived, from evidence, 
 |---|---|
 | `matter_root` | The matter folder. Every path you read is under it, except under `sent_mail_only` |
 | `letter_path`, `file_name`, `file_size` | The letter file, its basename and its size in bytes |
-| `sent_mail_only` | Optional. True when the session cannot let you see the matter folder (a bridged Cowork session). `letter_path`, and each image and `pdf` in the letter's page manifest, is then a staged copy of the letter outside `matter_root`, and those are the only files you read. You read the letter and search the mail, and check nothing in the matter folder (section 5, "Sent mail only") |
+| `sent_mail_only` | Optional. True when the session cannot let you see the matter folder (a bridged Cowork session). `letter_path`, and each image and `pdf` in the letter's page manifest, is then a staged copy of the letter outside `matter_root`, and those are the only files you read. Staging copied them into the session (Commandment 3), where they stay until the session is deleted. You read the letter and search the mail, and check nothing in the matter folder (section 5, "Sent mail only") |
 | `environment_notes` | The practitioner's environment notes, copied by the caller. May be absent |
 | `methods` | Optional. Check only these methods. Absent means every method the letter states |
 | `draft` | Optional. A Work Board draft that may be this letter: `writing_id`, `mockup_path`, `addressee`, `subject`, `date`, and `last_changed` when the board shows one |

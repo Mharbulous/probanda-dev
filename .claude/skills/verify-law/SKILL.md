@@ -136,7 +136,9 @@ not a stylistic preference.
    `{pages: "a-b", pdf}` for each run of born-digital pages, with no PDF path for a wholly
    scanned one (`/matter-data`'s design decision #71). Name each PNG individually rather than the
    render directory. In a bridged session, stage each file by `/matter-data`'s verify-law
-   operation §2 and dispatch the staged path. If the tool refuses or is not listed, dispatch
+   operation §2 and dispatch the staged path. Staging copies the file into the session
+   (Commandment 3). Stage only what the step needs. A staged copy stays with the session until
+   the session is deleted. If the tool refuses or is not listed, dispatch
    nothing: report the claim as source-unresolvable under step 4, with the refusal's reason.
 
    **A verifier that is unavailable — never substitute another agent — that fails, or that returns

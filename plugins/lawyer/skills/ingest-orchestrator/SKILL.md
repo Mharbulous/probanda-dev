@@ -35,7 +35,7 @@ Follow `references/routing.md` "The interim gate" for every file, in the order g
 
 Each `next` returns `dispatch` lines `{dispatch_id, agent, model, effort, ref, contract, stage?}`. For each line, start the named agent with that `model` and `effort`, as a background agent when the Agent tool offers one, and with the one-line prompt `DISPATCH <dispatch_id>` and nothing else. Where agents run only in the foreground, start the whole list in one message. Each agent is fresh, never resumed and never forked.
 
-In a bridged session (the data tools are listed under `mcp__remote-devices__`), call `next` with `bridged: true`. Each dispatch line then carries `stage`, a list of host paths: stage them with `device_stage_files`, then call `ingest_run` `staged` with the `dispatch_id` and the returned session paths in the same order, before starting the agent. Where staging is impossible, start nothing for that line and pass `failed <ref> unreadable` as its reply.
+In a bridged session (the data tools are listed under `mcp__remote-devices__`), call `next` with `bridged: true`. Each dispatch line then carries `stage`, a list of host paths: stage them with `device_stage_files` (staging copies the file into the session, Commandment 3: stage only what the line names, and a staged copy stays with the session until the session is deleted), then call `ingest_run` `staged` with the `dispatch_id` and the returned session paths in the same order, before starting the agent. Where staging is impossible, start nothing for that line and pass `failed <ref> unreadable` as its reply.
 
 ## Step 4. Each reply
 

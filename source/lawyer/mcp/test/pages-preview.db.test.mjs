@@ -70,7 +70,8 @@ async function seedOneFiling(dbPath) {
 async function practiceContext(t) {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-pages-preview-practice-"));
   t.after(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
-  const practicePath = join(dir, `practice-${randomUUID()}.db`);
+  mkdirSync(join(dir, "_practice"));
+  const practicePath = join(dir, "_practice", `practice-${randomUUID()}.db`);
   const context = await createDispatchContext({ ...process.env, ...(await startFakeCloud(t)).env, COCLERK_DB_PATH: practicePath });
   await writes.upsert_client_matter(context.practiceDb, { client_num: "C-9999", name: "Lookup Client Ltd.", matt_num: "L9999", file_number: "F-9999" });
   return { context, practicePath };
@@ -118,13 +119,13 @@ test("a real-data preview of a matter page is the page as the write builds it, o
   await assert.rejects(preview({ page: "Arguments", filing_id: 9 }), /no Arguments page for Work Board 9/);
 });
 
-test("a real-data Practice Board preview is written beside practice.db", async (t) => {
+test("a real-data Practice Board preview is written in _board, beside practice.db's own folder", async (t) => {
   const { context, practicePath } = await practiceContext(t);
   const saved = process.env.COCLERK_DB_PATH;
   process.env.COCLERK_DB_PATH = practicePath;
   t.after(() => (saved === undefined ? delete process.env.COCLERK_DB_PATH : (process.env.COCLERK_DB_PATH = saved)));
   const { path } = await callTool(context, "pages__preview", { page: "Practice Board", data: "real", overrides: cssOverride("Practice Board") });
-  assert.equal(path, join(dirname(practicePath), "Practice Board preview 1.html"));
+  assert.equal(path, join(dirname(dirname(practicePath)), "_board", "Practice Board preview 1.html"));
   assert.ok(readFileSync(path, "utf-8").includes(MARK));
   assert.ok(dataLine(readFileSync(path, "utf-8"), "PRACTICE_BOARD").panels);
   await assert.rejects(callTool(context, "pages__preview", { page: "Practice Board", data: "real", filing_id: 1 }), /whole practice/);

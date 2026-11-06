@@ -64,7 +64,7 @@ For each supported source the user selected, run its setup sub-procedure. These 
 1. Call `mail__configure_status`. If it reports `configured: true`: *"Your mail is already connected."*
 2. If `configured: false`, ask for the server details in one message, and never for the password: *"To read your sent mail I need your mail server's IMAP host and port, and your username. For iCloud the host is `imap.mail.me.com` and the port is 993. Don't send me your password: you'll type it on a page on this computer in the next step."*
 3. Call `mail__configure_credential` with the answers. Send the practitioner its `url`: *"Open this link and enter your app-specific password there. For iCloud, create one at account.apple.com. The page signs in and tells you whether it worked. Tell me when it's done."* When they say it's done, call `mail__configure_status` and report the result.
-4. If the practitioner types a password into the chat anyway, don't use it, and don't repeat it. Tell them it has been exposed and that they should revoke it and create a new app-specific password, then enter the new one on the page.
+4. If the practitioner types a password into the chat anyway, don't use it, and don't repeat it. Tell them it has reached Anthropic and is in the session's history, unlike text typed on the local page, and that they should revoke it and create a new app-specific password, then enter the new one on the page.
 
 ### 2c: Telus Business Connect Setup
 
@@ -85,7 +85,7 @@ The general privacy briefing (local storage, training opt-out) is handled during
 
 Briefly inform the practitioner:
 
-> "When I fetch your activity data from [list configured API sources, e.g. "TimeCamp and Google Calendar"], the request goes through an encrypted connection straight to your local machine. I never store it anywhere except your local database, and I never write anything back to these services — all access is strictly read-only."
+> "When I fetch your activity data from [list configured API sources, e.g. "TimeCamp and Google Calendar"], the request goes through an encrypted connection straight to your local machine. Probanda stores it in your local database. What I read of it in a session goes to Anthropic, under your Claude plan's terms. I never write anything back to these services — all access is strictly read-only."
 
 No user action required — this is informational only.
 

@@ -27,8 +27,8 @@ So this gate refuses:
 - every other device_* tool with any string input naming a page (for
   device_request_folder_access, its path only, never its reason), except
   device_stage_files given exactly `Litigation Strategy.html` (or the legacy
-  `To Do List.html`), `Practice Board.html` (the practice-wide page beside
-  practice.db), `Work Board.html`, `Work Board <id>.html`,
+  `To Do List.html`), `Practice Board.html` (the practice-wide page in
+  `_board`), `Work Board.html`, `Work Board <id>.html`,
   `Work Board - proceeding <id>.html` or a listed view page's `<page name>.html` or
   `<page name> - Work Board <id>.html`, case aside, or the same pages under their
   names before 2026-10-09 (`Work Board - filing <id>.html`,
@@ -106,7 +106,7 @@ STAGE_TOOL = re.compile(r"mcp__(.+__)?device_stage_files")
 # A folder grant reads no page, so only its path is judged: a reason naming a page passes.
 FOLDER_TOOL = re.compile(r"mcp__(.+__)?device_request_folder_access")
 # Fullmatched on the lowercased basename: the Litigation Strategy page (and its legacy name), the
-# practice-wide Practice Board beside practice.db, a Writing's Work Board page, the
+# practice-wide Practice Board in _board, a Writing's Work Board page, the
 # id-named Work Board pages (and a Writing's before 2026-10-09, "Work Board - filing <id>"), the
 # listed view pages, and a preview of each current page (#139).
 STAGEABLE = re.compile(r"litigation strategy\.html|to do list\.html|practice board\.html|work board\.html|work board \d+\.html|work board - (?:filing|proceeding) \d+\.html|"

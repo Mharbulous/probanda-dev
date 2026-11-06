@@ -10,7 +10,7 @@ A file card is a file shown this way. ToolSearch the tool if it is deferred. Whe
 
 This is the fallback route. It applies only when `mcp__cowork__present_files` is not in the session's tool list (the remote-device-only host). Where that tool is present, call it with the file's path instead. On that host, this applies to every skill that presents a file saved on the PC as a card: a deliverable, a found document, a draft. On a cloud session linked to the PC through `mcp__remote-devices__*`, `mcp__cowork__present_files` is absent and `SendUserFile` takes only container paths. The practitioner needs a card that opens the saved file itself.
 
-**The route.** Before the session's first staging, check the folder grant as above. Stage the file with one `device_stage_files(paths: [<PC path>])` call, then call `SendUserFile` on the `stagedPath` it returns (`/mnt/user-data/uploads/...`). That card's ⌄ menu offers "Open in Word" and "Show in Explorer", and its folder button reveals the file. Staging alone presents nothing.
+**The route.** Before the session's first staging, check the folder grant as above. Stage the file with one `device_stage_files(paths: [<PC path>])` call, then call `SendUserFile` on the `stagedPath` it returns (`/mnt/user-data/uploads/...`). That card's ⌄ menu offers "Open in Word" and "Show in Explorer", and its folder button reveals the file. Staging alone presents nothing. Staging copies the file into the session (Commandment 3). Stage only what the step needs. A staged copy stays with the session until the session is deleted.
 
 A PC path is never passed to `SendUserFile`: only the staged path `device_stage_files` returns is.
 

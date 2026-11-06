@@ -30,9 +30,10 @@ are the runtime's business — callers pass ids and text and receive resolved re
 
 ## The permission-prompt invariant (PP-1) — do not defeat it
 
-The pool is the one place case work reaches the cloud. Every `legal_commons__*`
-call fires a Supabase permission prompt, and that is the design, not friction:
-routine case work never touches the cloud, so a prompt only ever appears during a
+The pool is the one place case content reaches Probanda's Cloud unhashed. Every
+`legal_commons__*` call fires a Supabase permission prompt, and that is the design,
+not friction: routine case work never sends case content to Probanda's Cloud
+unhashed, so a prompt only ever appears during a
 deliberate lookup or push. **Never add `legal_commons__*` to any allowlist**
 (`settings.json`, `settings.local.json`, or plugin pre-auth), and never "fix" the
 prompt. A WARN pause inside a push is a content confirmation, a separate thing.

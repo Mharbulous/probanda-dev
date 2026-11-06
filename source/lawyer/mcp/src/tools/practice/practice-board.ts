@@ -1,11 +1,11 @@
-// practice_data__render_practice_board: writes the Practice Board (practice-board-shell.ts) beside
-// practice.db from the all-matters sweeps of active_deadlines and open_tasks, and returns its path and
+// practice_data__render_practice_board: writes the Practice Board (practice-board-shell.ts) to the
+// _board folder beside practice.db's own folder (<case_data_root>\_board) from the all-matters sweeps of active_deadlines and open_tasks, and returns its path and
 // panel counts, never a date. Each item is placed by its stored date against today's local date; no
 // deadline is derived. The sweeps' defaults already leave out met and dismissed deadlines, occurred
 // anchors and a not_applicable deadline whose one-shot post-expiry notice has fired. A matter whose
 // status is exactly `test` is left out; every other matter, billable or not, is drawn.
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { DataServerError, ValidationError } from "../../errors.js";
 import { resolvePracticeDbPath } from "../../practice/backend.js";
@@ -128,11 +128,23 @@ export async function buildPracticeBoardData(store: PracticeStore, now: Date): P
   };
 }
 
+/**
+ * The Practice Board's folder, <case_data_root>\_board: the sibling of the folder holding practice.db,
+ * created when absent. The board stays out of _practice so that connecting its folder to a remote-device
+ * session never exposes practice.db, whose meta table holds the hash key. An old board left in
+ * _practice is not touched.
+ */
+export function practiceBoardDir(env: NodeJS.ProcessEnv): string {
+  const dir = join(dirname(dirname(resolvePracticeDbPath(env))), "_board");
+  mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
 export async function render_practice_board(store: PracticeStore): Promise<Record<string, unknown>> {
   const data = await buildPracticeBoardData(store, new Date());
   const { panels } = data;
 
-  const file = join(dirname(resolvePracticeDbPath(store.env)), PRACTICE_BOARD_FILE);
+  const file = join(practiceBoardDir(store.env), PRACTICE_BOARD_FILE);
   if (existsSync(file) && !readFileSync(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
     throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the Practice Board's marker, so this renderer did not write it`);
   }

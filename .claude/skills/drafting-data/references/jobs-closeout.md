@@ -316,7 +316,7 @@ SELECT id, filing_id, status FROM tickets WHERE filing_id IN (7, 8) AND deleted_
 
 ## 13. Clearing the retired Work Board keys
 
-The hosted Work Board artifact is retired (`docs/design/2026-09-14 work-board-local-only-design.md`, ADR 0015): the board is a local file only, and nothing in this file is mirrored anywhere. A matter that published one under the retired design still holds two `db_meta` keys, and `drafting_forms__bootstrap` reports the first as `legacy_workboard_artifact_url`. Two scripts, run only from `/draft` step 2, at most one of them ever per matter. Like every script in this file except §9a's retirement script, they touch only exempt tables, so §8's revision bump never fires for them.
+The hosted Work Board artifact is retired (`docs/design/2026-09-14 work-board-local-only-design.md`, ADR 0015): the board is a local file, and a copy reaches the session only when it is shown as a card. Nothing in this file is mirrored anywhere. A matter that published one under the retired design still holds two `db_meta` keys, and `drafting_forms__bootstrap` reports the first as `legacy_workboard_artifact_url`. Two scripts, run only from `/draft` step 2, at most one of them ever per matter. Like every script in this file except §9a's retirement script, they touch only exempt tables, so §8's revision bump never fires for them.
 
 **Clear**, only after the Artifact tool's `delete` of that URL has succeeded or found none. Clearing the keys first would leave a hosted artifact no later session can find, which is also why no migration clears them:
 

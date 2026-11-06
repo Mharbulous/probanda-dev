@@ -6,6 +6,8 @@ Read when: a mail tool returns `mail_not_configured`, a practice write fails for
 
 The `mail__*` tools hold one IMAP credential per machine: host, port, username and password. It is set once through `mail__configure_credential`. The tool takes the host, port and username, never the password, and returns a link to a page on this computer. The practitioner types the password on that page. The page signs in before saving and stores the credential encrypted on the host, where it survives restarts. The password never passes through the chat: never ask for it there, and never use one typed there. It is never written to `probanda.json`. It cannot arrive as an environment variable in Cowork.
 
+If the practitioner pastes a password or key into chat anyway, don't use it and don't repeat it. Tell them it has reached Anthropic and is in the session's history, unlike text typed on the local page. Recommend they change or revoke it with their provider, then enter the new one on the page.
+
 On a `mail_not_configured` error, call `mail__configure_status` first. It reports whether this machine holds a credential and for which host and username, never the password. If none is configured, ask the practitioner for the host, port and username rather than guessing. For iCloud Mail (`imap.mail.me.com`) the username is the Apple ID, an @icloud.com, @me.com or @mac.com address, even when the mailbox uses a custom-domain address: ask for the Apple ID, and put the custom-domain address in `from_address`. Then send the link and, once they say it's done, call `mail__configure_status` again.
 
 ## Probanda's key

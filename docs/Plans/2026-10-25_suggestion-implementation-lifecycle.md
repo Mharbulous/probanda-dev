@@ -95,7 +95,7 @@ Phases 1 to 12 are built. The last column is what Brahm did by hand.
 
 ## Constraints
 
-- **Commandment 3:** client information stays on the practitioner's machine. The card, the scrub, the cross-check, the local record and `technical-writer` all run there. What leaves is only what the card shows, plus the environment facts, the specification and the backstop result.
+- **Commandment 3:** the card, the scrub, the cross-check and the local record run on the practitioner's machine. The inference for the session and for `technical-writer` runs at the provider, through the practitioner's own session. What reaches Probanda's Cloud is only what the card shows, plus the environment facts, the specification and the backstop result.
 - **Commandment 2:** decision 15 adds Account Information to the cloud. The table comment "nothing here names who sent it" in `suggestions.sql` changes with it.
 - **Commandment 4:** `technical-writer` and its backstop read only the plugins' shipped files, never probanda-dev. `fix-planner` and `fix-maker` run in Probanda's Cloud or on the maintainer's machine.
 - **Commandment 5:** the local store has no table or column per kind (decision 14), and it is not one of the legacy stores.

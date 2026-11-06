@@ -50,8 +50,16 @@ Call `practice_data__firm_profile`.
 ## Step 5 — Privacy briefing
 
 Cover the first two points conversationally, and say the third once, in these words:
-1. **Local storage.** The practice database stays on this computer. Claude reads it only in answer to the practitioner's requests in a session.
-2. **Training opt-out.** Recommend turning off model training on their conversations: *Settings > Privacy > "Improve Claude"*.
+1. **Where client information goes.**
+   - Their files, their folders and Probanda's databases stay on this computer, and in the firm's SharePoint where they sync them.
+   - Claude runs on Anthropic's servers. Whatever Claude reads, such as a file, a record or a tool result, goes to Anthropic and is kept in their Claude account's history under their plan's terms. After they delete a session, Anthropic removes it within 30 days. Anthropic keeps it longer if training is on or they give feedback (5 years), and keeps flagged content up to 2 years.
+   - Claude can open only the folders they connect, plus what Probanda's tools on this computer read for it, such as the practice database, mail and calendar. It can do so only while Claude Desktop is open. A file shown as a card is copied into the session. The Practice Board is one such file, and it lists every client and matter.
+   - Probanda's own servers never receive client information, except as keyed hashes.
+   - Anthropic stores data in the US. Inference may run in the US, Europe, Asia or Australia. US-only inference is available on usage-based Enterprise plans. As of 2026-11-05, Anthropic offers no Canadian location.
+2. **Recommendations.**
+   - Turn off "Help improve our AI models" (*Settings > Privacy*), and do not rate client sessions with thumbs up or down.
+   - Use a Team or Enterprise plan for client work. Its terms bar training on their content, treat it as confidential and include a data processing agreement. The Law Society of BC asks for a written agreement with a storage provider (Rule 10-3(4)). Whether that applies here is the lawyer's call.
+   - Consider telling clients in the retainer that their information may be processed by AI services outside Canada. The Law Society of BC calls client notice a best practice.
 3. **Suggestions.** "When you send the Probanda team a suggestion, Probanda writes a technical write-up of it for them, and that uses your Claude plan."
 
 Whether to store client names is asked by retainer-tracking's First Import, and the accounting system by invoice-tracking's and retainer-tracking's First Import, each when first needed. Setup asks neither.
@@ -62,7 +70,7 @@ Follow `references/folder-layout.md`. It proposes, from one of the practitioner'
 
 ## Step 7 — Connect the suggestions folder
 
-Only on a remote-device host (its tool list holds `get_device_info`), where a file card is shown only from a connected folder. Call `suggestion_box__past_suggestions` with no arguments: it creates the suggestions folder, and the folder holding its `past_suggestions_path` is that folder. Never present or read the page here. Connect that folder, not the one above it, which holds this device's settings and secret. If `get_device_info`'s `connectedFolders` does not cover it, call `device_request_folder_access` once for it, with a one-line reason (Probanda shows suggestions from there) that names no file. On a decline or refusal, say in one line that the practitioner can connect it later with "Add folder" in the Claude desktop app, and carry on.
+Only on a remote-device host (its tool list holds `get_device_info`), where a file card is shown only from a connected folder. Call `suggestion_box__past_suggestions` with no arguments: it creates the suggestions folder, and the folder holding its `past_suggestions_path` is that folder. Never present or read the page here. Connect that folder, not the one above it, which holds this device's settings and secret. Never connect the case data root or its `_practice` folder, which hold `practice.db` and its key. The Practice Board lives in `<case_data_root>\_board\`. If `get_device_info`'s `connectedFolders` does not cover the suggestions folder, call `device_request_folder_access` once for it, with a one-line reason (Probanda shows suggestions from there) that names no file. On a decline or refusal, say in one line that the practitioner can connect it later with "Add folder" in the Claude desktop app, and carry on.
 
 ## Step 8 — Verify and hand back
 

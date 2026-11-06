@@ -6,7 +6,7 @@
 //
 // A fixture preview goes in the fixture preview folder (preview-file.ts), named as the fixture's own
 // page (its Writing is id 1). A real-data preview goes beside the page it previews: the Practice Board's
-// beside practice.db, a matter page's in the matter's draft folder, where the page write's sweep
+// in <case_data_root>\_board, a matter page's in the matter's draft folder, where the page write's sweep
 // leaves it (matter-page-files.ts PREVIEW_FILE). The real data is built exactly as the page write builds
 // it, and nothing is written but the preview. A real Loose Threads preview's buttons carry port 0 and
 // no token, so the page's "Buttons need the Claude desktop app running" line shows and no click can
@@ -21,9 +21,8 @@ import type { TemplateSet } from "../compose-template.js";
 import { ValidationError } from "../errors.js";
 import { findDraftDir, resolveDbPath, validateMatterRoot } from "../files/matter-root.js";
 import { APPROVAL_TEMPLATE } from "../housekeeping/page.js";
-import { resolvePracticeDbPath } from "../practice/backend.js";
 import type { PracticeStore } from "../practice/store.js";
-import { buildPracticeBoardData } from "../tools/practice/practice-board.js";
+import { buildPracticeBoardData, practiceBoardDir } from "../tools/practice/practice-board.js";
 import { MILESTONE_FIXTURE } from "../board-fixtures/milestone.js";
 import { LITIGATION_STRATEGY_FIXTURE } from "../board-fixtures/litigation-strategy.js";
 import { PRACTICE_BOARD_FIXTURE } from "../board-fixtures/practice-board.js";
@@ -115,7 +114,7 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
       throw new ValidationError("the Practice Board covers the whole practice: it takes no matter_root, filing_id or proceeding_id");
     }
     const html = renderPracticeBoardHtml(await buildPracticeBoardData(store, new Date()), composed);
-    return { path: writePreview(dirname(resolvePracticeDbPath(store.env)), stem(PRACTICE_BOARD_FILE), html, false) };
+    return { path: writePreview(practiceBoardDir(store.env), stem(PRACTICE_BOARD_FILE), html, false) };
   }
 
   if (args.matter_root === undefined) throw new ValidationError(`real data for the ${page} page needs matter_root`);

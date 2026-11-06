@@ -568,7 +568,7 @@ A fact-domain assertion in the lawyer's own words — what we say happened. Its 
 _Avoid_: claim (used loosely for either domain); contention (a submission's assertion — law applied to fact — never a bare postulate); allegation (a postulate anchored in a pleading, advanced formally, proof not yet marshalled); fact (the stored row, not the wording).
 
 **Practice Board**:
-The practice-wide page (`Practice Board.html` beside practice.db) showing the open work of every matter, billable or not, in four panels: Overdue, Due today, Coming up and Other open work. Its cards are deadlines, events and to-dos, each naming its matter and client. Written only by `practice_data__render_practice_board` (`shared/html-pages.md`, The Practice Board). Its internal name is `practice_board`.
+The practice-wide page (`Practice Board.html` in `<case_data_root>\_board`, beside the `_practice` folder that holds practice.db) showing the open work of every matter, billable or not, in four panels: Overdue, Due today, Coming up and Other open work. Its cards are deadlines, events and to-dos, each naming its matter and client. Written only by `practice_data__render_practice_board` (`shared/html-pages.md`, The Practice Board). Its internal name is `practice_board`.
 _Avoid_: Work Board (its name before 2026-11-01, now one board's page); `Work_board` (the Work Board's internal document type); Litigation Strategy (one matter's page).
 
 **Pre-filing proceeding**:

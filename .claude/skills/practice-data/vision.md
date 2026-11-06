@@ -21,7 +21,7 @@ The direct audience is every other CoClerk skill that reads or writes practice d
 - **Schema fragmentation.** Without a single owner, each skill needing persistent state would define its own tables and diverge. One runtime owns the DDL; the gatekeeper skill exposes only named operations.
 - **Uncoordinated connections.** Each skill opening its own `sqlite3.connect()` and constructing its own path produces a system where one file move, rename, or sync event breaks different skills differently. All access funnels through the MCP tools.
 - **Backend churn leaking to consumers.** Practice storage has moved (local → cloud → local) without a single consumer changing: the tool signatures are the stable contract, and the backend behind them is invisible. A future backend change must preserve that invisibility.
-- **Data-sovereignty fragility.** Client practice data must stay on the practitioner's machine (LSBC requirements). Keeping it in local SQLite, with only IDs, vocabulary values and keyed hashes sent to Probanda's Cloud, enforces this structurally, not by policy.
+- **Data-sovereignty fragility.** Client practice data must reach Probanda's Cloud only as IDs, vocabulary values and keyed hashes (Commandment 3). Keeping it in local SQLite enforces this structurally, not by policy.
 
 ### Value proposition
 
@@ -42,8 +42,8 @@ No matter item means retainer status is *unknown*; `regular_trust = 0` means *co
 **Why:** treating absence as zero makes a funded file look depleted, so it is deprioritized and work falls behind. `regular_trust` is never positive (UNITY reports credits as negative; the stored value is the raw negative or zero).
 
 **4. Data sovereignty is a hard architectural constraint, not a preference.**
-Practice data resides only in the local `practice.db`. No client practice data is uploaded, embedded in plugin files, or written to cloud storage. Even public reference data (the court calendar) is local — a cloud calendar would be read on every routine deadline calculation and would puncture the permission-prompt boundary that keeps cloud touches deliberate.
-**Why:** LSBC requires the lawyer to control client information; a design that lets it leave the machine, even as a cache, is a compliance violation regardless of reason.
+Practice data resides in the local `practice.db`. Under Commandment 3 it reaches the inference provider only through the practitioner's own session, reaches Probanda's Cloud only as vocabulary values and keyed hashes, and syncs to the firm's own storage where the firm syncs it. None of it is embedded in plugin files. Even public reference data (the court calendar) is local — a cloud calendar would be read on every routine deadline calculation and would puncture the permission-prompt boundary that keeps cloud touches deliberate.
+**Why:** Commandment 3 bars Probanda's Cloud from holding any of it, even as a cache. Law Society Rule 10-3(4)(a) also lets a lawyer keep records with a storage provider only if the lawyer "retains custody and control of the records".
 
 **5. Storage discipline: never leave a live SQLite handle on synced storage.**
 `0. CASE DATA` sits inside the SharePoint-synced library, so the protection is *discipline, not folder choice*: the runtime opens the DB per call under `PRAGMA journal_mode = DELETE` and closes it before returning, leaving no `-wal`/`-shm` sidecars on synced storage.
@@ -66,7 +66,7 @@ If a read returns nothing or errors, surface it. Do not fall back to parsing a U
 - **Reporting or summarization** — human-readable output belongs to downstream skills.
 - **Accounting-system integration** — data enters through the import workflow of dedicated skills (retainer-tracking, invoice-tracking); practice-data does not read UNITY CSVs or call LEAP's API.
 - **Trust-accounting compliance** — the schema tracks retainer balances and time entries for practice management; LSBC trust reconciliation and compliance reporting are out of scope.
-- **Multi-database or cloud practice data** — exactly one local practice database per practitioner; no practice data in the cloud, and no databases outside the two-tier structure (practice.db + per-matter case databases).
+- **Multi-database or cloud practice data** — exactly one local practice database per practitioner; no practice data in Probanda's Cloud, and no databases outside the two-tier structure (practice.db + per-matter case databases).
 
 ## 5. North Star
 

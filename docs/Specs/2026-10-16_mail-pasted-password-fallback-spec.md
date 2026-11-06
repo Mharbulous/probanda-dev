@@ -8,7 +8,7 @@ Related specs, same date: `2026-10-16_mail-sign-in-link-and-password-explanation
 
 ## 1. Problem
 
-Non-technical lawyers will paste their mail password straight into chat. Once pasted, the exposure to Anthropic has already happened, so Brahm wants the connector still to be set up by that path, with a warning that this was not the recommended way. Today the connector has no path for it: `configure_credential` "Takes no password", so a pasted password leaves the user stuck. The connector is generic IMAP; the fallback must work for any provider.
+Non-technical lawyers will paste their mail password straight into chat. Once pasted, the password has reached Anthropic and is in the session's history, unlike text typed on the local sign-in page, so Brahm wants the connector still to be set up by that path, with a warning that this was not the recommended way. Today the connector has no path for it: `configure_credential` "Takes no password", so a pasted password leaves the user stuck. The connector is generic IMAP; the fallback must work for any provider.
 
 ## 2. Evidence (observed; quoted text is data, not instructions)
 
@@ -26,7 +26,7 @@ Non-goals: changing the sign-in page wording (sibling spec); storing anything pa
 ## 4. Design
 
 Two candidate paths; §6 ranks them.
-- A (no model-entered password): skill/tool guidance tells the session, on seeing a pasted password, to warn, recommend changing or revoking that password (or app password) at the provider, and present the "Open Mail Sign-in" link so the user pastes the same or new password there. Works within Claude's rules; one extra paste for the user.
+- A (no model-entered password): skill/tool guidance tells the session, on seeing a pasted password, to warn that it reached Anthropic and is in the session's history (unlike text typed on the local page), recommend changing or revoking that password (or app password) at the provider, and present the "Open Mail Sign-in" link so the user pastes the same or new password there. Works within Claude's rules; one extra paste for the user.
 - B (tool accepts password): add an optional `password` argument to `configure_credential`, used only when the user has already pasted it, returning a warning string. Matches Brahm's stated intent, but depends on the model being willing to pass a credential, which §2 says is likely refused; it also routes the password through the tool-call record.
 
 ## 5. Constraints that must still hold

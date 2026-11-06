@@ -18,7 +18,7 @@ These hold whichever posture a turn takes.
 
 1. **Statements of law.** Every statement of what the law is goes through the gate in `shared/legal-research.md`. Design talk may name kinds of source a feature should consult, never which law applies.
 2. **Deadline isolation.** `shared/deadline-isolation.md` binds as written.
-3. **Nothing identifying leaves the firm.** Client and matter content is scrubbed from anything that leaves the firm, such as a Suggestion Box entry, a repository or an issue.
+3. **Nothing identifying reaches Probanda or any public place.** Client and matter content is scrubbed from anything sent to Probanda or made public, such as a Suggestion Box entry, a repository or an issue.
 4. **The installed plugin is not edited from a matter session.** A change to the plugin is proposed, never made, from a session working a matter.
 
 ## 3. Switching

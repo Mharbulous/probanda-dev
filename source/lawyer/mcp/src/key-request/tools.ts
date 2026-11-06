@@ -238,6 +238,8 @@ const FORM =
   '<label>Email, so Probanda can contact you about this request<br><input type="email" name="email" maxlength="254" autocomplete="email" required></label>' +
   '<label>Phone (optional)<br><input type="tel" name="phone" maxlength="40" autocomplete="tel"></label>' +
   '<button type="submit">Send request</button></form>' +
+  // The "never sent to Claude" note holds only for text typed on this 127.0.0.1 page, served by this
+  // local server. A credential pasted into chat reaches the inference provider (docs/Specs/2026-10-16_mail-pasted-password-fallback-spec.md).
   '<p class="note">These details go only to Probanda, which uses them only to check in the Law Society of British Columbia\'s public directory ' +
   "that you are a practising lawyer, and to contact you about this request. Your key is sent only to the email address your firm's website or the directory lists for you, " +
   "never to the one you type here. They are never sent to Claude. Do not include any client or matter information. Sending the request is your consent.</p>";

@@ -57,4 +57,6 @@ const FORM =
   '<form method="post"><label>TimeCamp API token<br>' +
   '<input type="password" name="secret" autocomplete="off" required autofocus></label>' +
   '<button type="submit">Check and save</button></form>' +
+  // The "never sent to Claude" note holds only for text typed on this 127.0.0.1 page, served by this
+  // local server. A credential pasted into chat reaches the inference provider (docs/Specs/2026-10-16_mail-pasted-password-fallback-spec.md).
   '<p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>';

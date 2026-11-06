@@ -63,6 +63,8 @@ export function needsAppleIdHint(fields: Pick<CredentialFields, "host" | "userna
 const FLOW =
   "<h2>What happens when you click Sign in and save</h2><ol>" +
   "<li>Probanda signs in to your mail server with the password to check that it works, then to any calendar and contacts " +
+  // The "never sent to Claude" note holds only for text typed on this 127.0.0.1 page, served by this
+  // local server. A credential pasted into chat reaches the inference provider (docs/Specs/2026-10-16_mail-pasted-password-fallback-spec.md).
   "servers listed above, and to any server they move the account to while signing in. The password is not sent to Claude or Anthropic.</li>" +
   "<li>If the mail sign-in fails, nothing is saved and any earlier password stays in place. You can correct it and try again here. " +
   "If only the calendar or contacts sign-in fails, mail is still saved, and calendar or contacts are marked as not set up.</li>" +
@@ -140,6 +142,8 @@ function form(fields: CredentialFields): string {
     "<p>" + SENT_TO + escape(recipients(fields)) + "</p>" +
     '<form method="post"><label>' + SECRET_HINT + "<br>" + SECRET_INPUT + "</label>" +
     "<button type=\"submit\">Sign in and save</button></form>" +
+    // The "never sent to Claude" note holds only for text typed on this 127.0.0.1 page, served by this
+    // local server. A credential pasted into chat reaches the inference provider (docs/Specs/2026-10-16_mail-pasted-password-fallback-spec.md).
     "<p class=\"note\">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>" +
     FLOW +
     DISCLAIMER
