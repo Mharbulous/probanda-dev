@@ -1,14 +1,15 @@
 // The TimeCamp token page: where the practitioner pastes the API token, so it
 // is never a tool argument and never passes through the chat or the model. The
-// shape of src/mail/page.ts: node:http on 127.0.0.1, port 0, started lazily and
-// unref'd, one random path token per link, only the newest link works, and a
+// shape of src/mail/page.ts: the shared local-page listener on an ephemeral port,
+// started lazily, one random path token per link, only the newest link works, and a
 // successful save spends it. The API token is never logged, echoed into a page
 // or put in an error.
 
 import { randomBytes } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
-import { escape, listen, page, readBody } from "../key-request/page.js";
+import { MAX_FORM, credentialListener, escape, sendPage as page } from "../key-request/page.js";
+import { readBody } from "../local-page/reply.js";
 
 /** Checks the typed token against TimeCamp and saves it; throws with a message safe to show. */
 export type SaveToken = (token: string) => Promise<{ user: string; persisted: boolean; warning?: string }>;
@@ -16,26 +17,24 @@ export type SaveToken = (token: string) => Promise<{ user: string; persisted: bo
 const TITLE = "Probanda TimeCamp connector";
 
 let pending: { link: string; save: SaveToken } | undefined;
-let listening: Promise<number> | undefined;
+const port = credentialListener({ bundle: "timecamp", prefix: "timecamp", handle });
 
 /** Starts the listener if needed, replaces any earlier link, and returns the new one. */
 export async function serveTokenPage(save: SaveToken): Promise<string> {
   const link = randomBytes(24).toString("hex");
   pending = { link, save };
-  listening ??= listen(handle, () => { listening = undefined; });
-  return `http://127.0.0.1:${await listening}/timecamp/${link}`;
+  return `http://127.0.0.1:${await port()}/timecamp/${link}`;
 }
 
-async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const m = /^\/timecamp\/([0-9a-f]{48})$/.exec(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
+async function handle(req: IncomingMessage, res: ServerResponse, link: string): Promise<void> {
   const current = pending;
-  if (!m || !current || m[1] !== current.link) {
+  if (!current || link !== current.link) {
     return page(res, 404, "This link has expired", "<p>Return to Claude and ask for a new link.</p>");
   }
   if (req.method === "GET") return page(res, 200, TITLE, FORM);
   if (req.method !== "POST") return page(res, 405, "Not allowed", "");
 
-  const typed = (new URLSearchParams(await readBody(req)).get("secret") ?? "").trim();
+  const typed = (new URLSearchParams(await readBody(req, MAX_FORM)).get("secret") ?? "").trim();
   let outcome: Awaited<ReturnType<SaveToken>>;
   try {
     outcome = await current.save(typed);

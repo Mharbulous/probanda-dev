@@ -7,7 +7,8 @@ import { timedFetch } from "../../../../mcp-shared/timed-fetch.js";
 import { loadCloudKey } from "../cloud-key.js";
 import { ValidationError } from "../errors.js";
 import { defineTool, type Tool } from "../tool-list.js";
-import { escape, listen, page, readBody } from "./page.js";
+import { readBody } from "../local-page/reply.js";
+import { MAX_FORM, credentialListener, escape, sendPage as page } from "./page.js";
 import { configureCloudKey } from "./save-key.js";
 
 // Runtime logic for the key_request namespace: a practitioner with no key asks
@@ -24,8 +25,8 @@ import { configureCloudKey } from "./save-key.js";
 // The request is identified by a random token only this computer holds; the
 // cloud stores its SHA-256. key_request__status sends the token to
 // key-request-status and reports pending, issued or declined.
-// The page follows page.ts: node:http on 127.0.0.1, port 0, started lazily
-// and unref'd, one random path token per link, only the newest link works, and
+// The page follows page.ts: the shared local-page listener on an ephemeral port,
+// started lazily, one random path token per link, only the newest link works, and
 // a successful send spends it. Tool definitions live in schema-gen.ts.
 // It sends to the project loadCloudKey names, the one the key works against.
 
@@ -44,7 +45,7 @@ interface SavedRequest {
 }
 
 let pending: { link: string; projectUrl: string; env: NodeJS.ProcessEnv } | undefined;
-let listening: Promise<number> | undefined;
+const port = credentialListener({ bundle: "lawyer", prefix: "key-request", handle });
 // The last request this process sent, so a failed save to disk still leaves
 // this session able to check it.
 let sent: SavedRequest | undefined;
@@ -77,10 +78,9 @@ async function submit(env: NodeJS.ProcessEnv): Promise<unknown> {
   }
   const link = randomBytes(24).toString("hex");
   pending = { link, projectUrl: key.supabaseUrl, env };
-  listening ??= listen(handle, () => { listening = undefined; });
   return {
     status: "awaiting_details",
-    url: `http://127.0.0.1:${await listening}/key-request/${link}`,
+    url: `http://127.0.0.1:${await port()}/key-request/${link}`,
     next:
       "Send the practitioner this link and ask them to type their details on that page, never in chat. " +
       "When they say it is sent, call key_request__status. The link works only on this computer, until a new link is made or the server restarts.",
@@ -189,10 +189,9 @@ export function requestBody(form: URLSearchParams, tokenHash: string, thisYear =
   };
 }
 
-async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const m = /^\/key-request\/([0-9a-f]{48})$/.exec(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
+async function handle(req: IncomingMessage, res: ServerResponse, link: string): Promise<void> {
   const current = pending;
-  if (!m || !current || m[1] !== current.link) {
+  if (!current || link !== current.link) {
     return page(res, 404, "This link has expired", "<p>Return to Claude and ask for a new link.</p>");
   }
   if (req.method === "GET") return page(res, 200, TITLE, FORM);
@@ -201,7 +200,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   const token = randomBytes(24).toString("hex");
   let reply: Record<string, unknown>;
   try {
-    const body = requestBody(new URLSearchParams(await readBody(req)), createHash("sha256").update(token).digest("hex"));
+    const body = requestBody(new URLSearchParams(await readBody(req, MAX_FORM)), createHash("sha256").update(token).digest("hex"));
     reply = await post(current.projectUrl, "functions/v1/key-request-submit", body, "save the request");
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

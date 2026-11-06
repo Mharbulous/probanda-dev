@@ -4,8 +4,8 @@
 // and hands the session the link; the page posts the password straight to this process, which
 // signs in and saves through the caller's `save`.
 //
-// node:http on 127.0.0.1, port 0, started lazily by the first serve and unref'd, so it lives only
-// as long as this data server process (the shape of src/housekeeping/server.ts). Each serve mints a
+// The shared local-page listener on an ephemeral 127.0.0.1 port (../key-request/page.ts), started
+// lazily by the first serve, so the link lives only as long as this data server process. Each serve mints a
 // random token carried in the URL and drops the previous one, so only the newest link works. A
 // successful save spends the token; a refused sign-in keeps it, so the practitioner can retry on
 // the page. The password is never logged, echoed into a page or put in an error.
@@ -13,7 +13,8 @@
 import { randomBytes } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
-import { escape, listen, page as sharedPage, readBody } from "../key-request/page.js";
+import { MAX_FORM, credentialListener, escape, sendPage } from "../key-request/page.js";
+import { readBody } from "../local-page/reply.js";
 import type { MailCredential } from "./config.js";
 
 export type CredentialFields = Omit<MailCredential, "password">;
@@ -89,26 +90,23 @@ function recipients(fields: CredentialFields): string {
 }
 
 let pending: Pending | undefined;
-let listening: Promise<number> | undefined;
 
 /** Starts the listener if needed, replaces any earlier link, and returns the new one. */
 export async function servePasswordPage(fields: CredentialFields, save: SaveSecret): Promise<string> {
   const token = randomBytes(24).toString("hex");
   pending = { token, fields, save };
-  listening ??= listen(handle, () => { listening = undefined; }, "<p>Return to Claude and ask for a new sign-in link.</p>", STYLE);
-  return `http://127.0.0.1:${await listening}/mail/${token}`;
+  return `http://127.0.0.1:${await port()}/mail/${token}`;
 }
 
-async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const m = /^\/mail\/([0-9a-f]{48})$/.exec(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
+async function handle(req: IncomingMessage, res: ServerResponse, link: string): Promise<void> {
   const current = pending;
-  if (!m || !current || m[1] !== current.token) {
+  if (!current || link !== current.token) {
     return page(res, 404, "This link has expired", "<p>Return to Claude and ask for a new sign-in link.</p>");
   }
   if (req.method === "GET") return page(res, 200, TITLE, form(current.fields));
   if (req.method !== "POST") return page(res, 405, "Not allowed", "");
 
-  const secret = (new URLSearchParams(await readBody(req)).get("secret") ?? "").trim();
+  const secret = (new URLSearchParams(await readBody(req, MAX_FORM)).get("secret") ?? "").trim();
   let outcome: SaveOutcome;
   try {
     outcome = await current.save(secret);
@@ -150,7 +148,7 @@ function form(fields: CredentialFields): string {
   );
 }
 
-const page = (res: ServerResponse, status: number, title: string, body: string): void => sharedPage(res, status, title, body, STYLE);
+const page = (res: ServerResponse, status: number, title: string, body: string): void => sendPage(res, status, title, body, STYLE);
 
 const STYLE =
   "body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#fafafa;color:#222}" +
@@ -160,3 +158,5 @@ const STYLE =
   "h2{font-size:1.1rem;margin-top:2rem}li{margin-bottom:.5rem}" +
   ".disclaimer{font-style:italic;margin-top:4rem;color:#555;font-size:.85rem}" +
   "@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note,.disclaimer{color:#aaa}}";
+
+const port = credentialListener({ bundle: "mail", prefix: "mail", handle, failure: "<p>Return to Claude and ask for a new sign-in link.</p>", style: STYLE });

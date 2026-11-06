@@ -10,7 +10,7 @@
 // closes. The server never closes an idle keep-alive socket: with Node's 5 s default, a client
 // could send on it in the instant the server closed it, and the request failed (#153).
 //
-// Routes match by method and a regex on the path; a path that matches some route under another
+// Routes match by method (or any method, "*") and a regex on the path; a path that matches some route under another
 // method gets 405, and no match gets 404. A route that throws gets one JSON 500. GET /health is
 // built in: { bundle, pid, build_stamp, plugin_version, kinds }.
 
@@ -21,7 +21,8 @@ import { type PageBundle, pagePort } from "./ports.js";
 import { json, text } from "./reply.js";
 
 export interface PageRoute {
-  method: "GET" | "POST";
+  /** "*" takes every method, for a page that answers each one itself. */
+  method: "GET" | "POST" | "*";
   path: RegExp;
   /** What the route serves, as /health reports it. */
   kind: string;
@@ -125,7 +126,7 @@ async function route(req: IncomingMessage, res: ServerResponse, options: PageLis
     const match = r.path.exec(url.pathname);
     if (!match) continue;
     pathMatched = true;
-    if (req.method === r.method) return r.handle(req, res, match, url);
+    if (r.method === "*" || req.method === r.method) return r.handle(req, res, match, url);
   }
   if (pathMatched) return text(res, 405, "Method not allowed");
   text(res, 404, "Not found");
