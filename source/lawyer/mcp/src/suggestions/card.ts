@@ -39,6 +39,7 @@ import { join } from "node:path";
 
 import { NotFoundError, ValidationError } from "../errors.js";
 import { writeTextAtomic } from "../file-lock.js";
+import { waitFor } from "../local-page/wait.js";
 import { pageApiCardToken, pageApiPort } from "../page-api/token.js";
 import { PracticeStore } from "../practice/store.js";
 import { type CardPart, type CardText, type CrossCheckResult, type Hit, type HitKind, loadStopWords, runCrossCheck } from "./crosscheck.js";
@@ -918,8 +919,6 @@ export type WaitEvent =
   | { event: "dismissed"; card_id: string }
   | { event: "pending"; card_id: string };
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 /** Blocks until the practitioner submits, dismisses or asks for a mockup, or until `timeoutMs` passes
  * (then pending: call again). While it waits, the card's mockup link is live. */
 export async function waitForCard(
@@ -929,10 +928,11 @@ export async function waitForCard(
   const timeoutMs = deps.timeoutMs ?? 45_000;
   const pollMs = deps.pollMs ?? 500;
   const heartbeatMs = deps.heartbeatMs ?? 10_000;
-  const started = Date.now();
   let beat = -Infinity;
   findCard(await loadStore(deps.env), cardId);
-  for (;;) {
+  // The heartbeat and the mockup claim run inside the check, so a waiting session keeps the
+  // card's waiter_until fresh on every poll that writes the store.
+  const outcome = await waitFor<WaitEvent>(async () => {
     const now = nowOf(deps);
     const store = await loadStore(deps.env);
     const card = findCard(store, cardId);
@@ -967,9 +967,9 @@ export async function waitForCard(
       beat = Date.now();
       if (event) return event;
     }
-    if (Date.now() - started >= timeoutMs) return { event: "pending", card_id: cardId };
-    await sleep(pollMs);
-  }
+    return undefined;
+  }, { budgetMs: timeoutMs, pollMs });
+  return "value" in outcome ? outcome.value : { event: "pending", card_id: cardId };
 }
 
 // ------------------------------------------------------------------ list --
