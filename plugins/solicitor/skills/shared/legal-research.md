@@ -294,7 +294,8 @@ Secondary: <title>: filed <path>, dated <marker>, from <publisher_host> / not re
 Note-up: <citation>: record <path> / <citation>: not filed: <citation-checker's status line> / none
 Re-invocation: no / yes: Westlaw did not return <citations, or none>; law-getter: <its status line, or practitioner declined> / yes: review
 Review: <memo-reviewer's last JSON, verbatim> / none
-Final instructed: yes / no
+Last status: <the saved memo's Status value> / none
+Approve: yes / no
 Note up paragraphs: <the saved memo's path>: <n>[, <n>] / none
 Citing reads: <citation>: <the note's path> / <citation>: UNREAD: <reason> / <citation>: not located by citation search / none
 Background memos: <path>[; <path>] / none
@@ -326,8 +327,8 @@ Before any dispatch, check `Job question:` by "A research question holds one que
 put the same words in `Question:`.
 `Re-invocation` is `no` on the first spawn and `yes` on every re-invocation below: `yes: review`
 when no Chrome-mode law-getter ran for it. `Review:` is `none` until memo-reviewer has returned on this question.
-`Final instructed:` is `yes` only when the practitioner has explicitly instructed that this
-memo's status change to FINAL (`shared/research-memo-template.md`, "Status").
+`Last status:` is the Status of the memo last saved for this question, or `none`. `Approve:` is
+`yes` only when the practitioner has explicitly approved this memo (`shared/research-memo-template.md`, "Status").
 `Note up paragraphs:` and `Citing reads:` are `none` except on a proposition-level note-up (below).
 Write one `Westlaw:` line per issue.
 Write one `Legislation:` line per instrument, and `Legislation: none` when no instrument

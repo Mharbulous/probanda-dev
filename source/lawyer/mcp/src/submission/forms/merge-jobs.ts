@@ -101,7 +101,7 @@ function jobRefusal(row: JobRow, role: "survivor" | "absorbed", token: string): 
 const NOTES: Record<Refusal, (job: string) => string> = {
   held_elsewhere: (job) => `Job ${job} is in progress in another session, so nothing was merged and nothing was written. Name it in one line; never re-run.`,
   held_here: (job) => `Job ${job} is this session's own job, so it cannot be absorbed and nothing was written. Make it the survivor instead.`,
-  completed: (job) => `Job ${job} is completed, and a completed job is never merged, so nothing was written.`,
+  completed: (job) => `Job ${job} is completed, and a completed job is merged only once reopened (jobs-closeout.md §10e), so nothing was written.`,
   superseded: (job) => `Job ${job} is already superseded, so nothing was merged and nothing was written.`,
   shelved: (job) => `Job ${job} is shelved, so nothing was merged and nothing was written.`,
   deleted: (job) => `Job ${job} is deleted, so nothing was merged and nothing was written.`,

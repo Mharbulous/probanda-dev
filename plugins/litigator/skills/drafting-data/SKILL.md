@@ -54,7 +54,7 @@ Every tool below except `drafting_forms__open_session` takes an already-resolved
 | Record another Writing as filed | `drafting_data__record_filed` | `expect_revision` is the revision the practitioner saw. `references/filing-checklists.md` §11 |
 | Record a Writing as served | `drafting_data__record_served` | `expect_revision` is the revision the practitioner saw. `references/filing-checklists.md` §11 "Served Writings" |
 | Take a Ready job | `drafting_data__take_job` | `work/references/job-session.md`, Assign |
-| Assign a job | `drafting_data__assign_job` | `takeover: true` only when `work/references/take-over.md` says. Never retry to win. `references/jobs-run.md` §4 |
+| Assign a job | `drafting_data__assign_job` | `takeover: true` only when `work/references/take-over.md` says. `reopen: true` only on the practitioner's bare yes, which a hook checks (`references/jobs-closeout.md` §10e). Never retry to win. `references/jobs-run.md` §4 |
 | Complete the held job | `drafting_data__complete_job` | `references/jobs-run.md` §9 |
 | Return a `wip` job to Ready | `drafting_data__release_job` | `expected_holder` only on the practitioner's choice of "Return it to Ready". Never retry to win. `references/jobs-run.md` §10 |
 | Tick a step done, or set its status | `drafting_data__set_step` | `done` only once the step's work has run. `cancelled` and `deferred` need the practitioner's own words as `practitioner_words`. `references/jobs-run.md` §6, §6b |
@@ -110,6 +110,7 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Bring forward or clear | A hold date named; never offered | `references/jobs-closeout.md` §10b |
 | Move to another board | Asked; never offered | `references/jobs-closeout.md` §10c |
 | Merge two boards (`drafting_data__merge_milestones`) | Asked; never offered | `references/jobs-closeout.md` §10d |
+| Reopen a completed job (`drafting_data__assign_job` with `reopen`) | Asked; never offered | `references/jobs-closeout.md` §10e |
 | Clear retired Work Board keys | A non-null `legacy_workboard_artifact_url` | `references/jobs-closeout.md` §13 |
 | Gate job check | §9 reads `completed`, or the gate runs | `references/jobs-gate.md` §14 |
 | Pre-send gate job | `record_sent` refuses `held` | `references/jobs-gate.md` §14a |

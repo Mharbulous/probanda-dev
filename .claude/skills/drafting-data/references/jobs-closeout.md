@@ -1,4 +1,4 @@
-Read when: the practitioner retires a Writing, closes a job as superseded, merges a duplicate job into another, shelves or restores a Proposal or a job, or deletes a mistaken job or restores a deleted job, or moves jobs to another board; the render reports lapsed shelvings; or `drafting_forms__bootstrap` returns a non-null `legacy_workboard_artifact_url`.
+Read when: the practitioner retires a Writing, closes a job as superseded, merges a duplicate job into another, shelves or restores a Proposal or a job, or deletes a mistaken job or restores a deleted job, or moves jobs to another board, or reopens a completed job; the render reports lapsed shelvings; or `drafting_forms__bootstrap` returns a non-null `legacy_workboard_artifact_url`.
 Any §N not in this file: find it in SKILL.md, "Job and scrutiny operations".
 
 ## 9a. Supersession on retirement
@@ -68,7 +68,7 @@ SELECT status, superseded_marker_gone_at, locked_by, rejected_at FROM tickets WH
 
 Two jobs on one board can name the same work in different words. `/draft`'s duplicate check (`work/references/job-session.md`, "The duplicate check") proposes a merge, and it runs only on the practitioner's bare yes, which the practitioner-words hook checks. It is never run on a session's own initiative and never in an unattended run. The merge is one call, `drafting_data__merge_jobs` `{db_path, survivor_id, absorbed_id, session_token}`. Never hand-write it through `execute`.
 
-**What it may merge.** The survivor is Ready (`queued`, no lock) or held by this session. The absorbed job is Ready. Both are unshelved and not deleted, in one proceeding and on one Writing, or both General Jobs. The absorbed job has no either/or partner, and neither job waits on a job outside the pair that is not completed. A completed job is never merged (`work/references/job-session.md`, "A form is one job"). The tool reads both rows first and refuses anything else, writing nothing and naming the job that refused (`refused_job`).
+**What it may merge.** The survivor is Ready (`queued`, no lock) or held by this session. The absorbed job is Ready. Both are unshelved and not deleted, in one proceeding and on one Writing, or both General Jobs. The absorbed job has no either/or partner, and neither job waits on a job outside the pair that is not completed. A completed job is merged only once reopened (§10e). The tool reads both rows first and refuses anything else, writing nothing and naming the job that refused (`refused_job`).
 
 **What it writes,** every statement under one guard in one transaction, so either all of them land or none does:
 
@@ -313,6 +313,14 @@ SELECT id, filing_id, status FROM tickets WHERE filing_id IN (7, 8) AND deleted_
 **The write.** `drafting_data__merge_milestones` `{db_path, boards: [{filing_id | proceeding_id}, {filing_id | proceeding_id}], confirmed: true, session_token, goal_statement?}`. `goal_statement` is the fenced block character for character after a bare yes, or the practitioner's own sentence; omit it when they gave no goal. It picks the survivor (a Writing's board over a Work Board with no Writing over a pre-filing board, then the lower id) and writes the goal as the board's one statement, confirmed. Every earlier statement of both boards is kept under the survivor's `merged` as history only, never drawn once the board holds one goal. Without `goal_statement` the board's goal status is `needs_consolidation`, and `/draft`'s next attended Opening asks once for one combined goal (`work/references/dispatch.md`, "Statement of goals"). Relay a framing warning in the note once. A board already merged into another refuses `board_merged`: name its survivor. `drafting_forms__board_card` reads the merged board by the survivor's id and refuses the absorbed board's with `board_merged` too. Then re-render under `draft_dir`: the absorbed board's pages move to `TRASH`.
 
 **Splitting** a merged board is specified in the ADR and not yet built: say so and stop.
+
+## 10e. Reopen a completed job
+
+**When.** The practitioner asks to reopen a completed job, such as `reopen job #N`. Received, never offered. It is never done on a session's own initiative and never in an unattended run. A reopen lifts the job's completion so more work can go into it, without splitting that work into a new job.
+
+**Ask first.** Name the job and the date it was completed, then ask whether to reopen it. The call runs only on the practitioner's bare yes, which the practitioner-words hook checks.
+
+**The write.** `drafting_data__assign_job` `{db_path, ticket_id, session_token, reopen: true}`. The job returns to In Progress under this session with a fresh `claim_no`. Its plan and done steps stay, and its history records the completion it lifts. Add new steps with `drafting_data__rewrite_job` (`held: true, append: true`). §9 completes it again. Reopening restores nothing completion did: partners it superseded stay superseded, and jobs it unblocked keep running. Never hand-write it through `execute`, which refuses it.
 
 ## 13. Clearing the retired Work Board keys
 

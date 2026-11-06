@@ -133,6 +133,19 @@ export function recordLapseSql(guard: string): string {
   );
 }
 
+/** The statement that records a reopen in the job's history, the kv_store value `reopened` /
+ * `tickets:<id>`: a JSON array gaining one entry per reopen, holding the completion and plan approval
+ * the reopen lifts and the minute it was reopened. Its guard is the reopening write's, and it runs
+ * before that write, while completed_at still holds the stamp it records. */
+export function recordReopenSql(guard: string): string {
+  const entry = `json_object('completed_at', completed_at, 'plan_approved_at', plan_approved_at, 'reopened_at', ${nowMinuteSql()})`;
+  return (
+    "INSERT INTO kv_store (namespace, key, value, updated_at) " +
+    `SELECT 'reopened', 'tickets:' || id, json_array(${entry}), strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM tickets WHERE id = ? AND ${guard} ` +
+    "ON CONFLICT (namespace, key) DO UPDATE SET value = json_insert(kv_store.value, '$[#]', json(json_extract(excluded.value, '$[0]'))), updated_at = excluded.updated_at"
+  );
+}
+
 export interface JobIdentity {
   db_path?: string;
   ticket_id?: number;

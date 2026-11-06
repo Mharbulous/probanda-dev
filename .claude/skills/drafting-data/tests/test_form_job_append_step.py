@@ -3,7 +3,7 @@
 The documented script is run as written against a migrated database, the way drafting_data__execute
 runs it. On a queued, approved job it appends the step after the highest ordinal, keeps the done
 step's stamp and clears the plan approval. On a completed, superseded, shelved or in-progress job it
-writes nothing, so a completed job is never extended.
+writes nothing, so a completed job takes a step only once reopened (jobs-closeout.md §10e).
 
 Run: python -m pytest .claude/skills/drafting-data/tests/test_form_job_append_step.py -q
 """

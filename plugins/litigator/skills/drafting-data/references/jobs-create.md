@@ -190,7 +190,7 @@ UPDATE tickets SET plan_approved_at = NULL
   WHERE id = 42 AND status = 'queued' AND rejected_at IS NULL AND deleted_at IS NULL;
 ```
 
-A completed, superseded, shelved or in-progress job matches no row, so nothing lands and the job stays as it was. A completed job is never extended: the part goes into one new job (§3).
+A completed, superseded, shelved or in-progress job matches no row, so nothing lands and the job stays as it was. A completed job takes the part only once reopened (`jobs-closeout.md` §10e); otherwise the part goes into one new job (§3).
 
 **Edges may be added or deleted, on either side** — unlike §3, which only ever creates them:
 
@@ -498,4 +498,4 @@ INSERT INTO ticket_scope (ticket_id, entity, entity_id)
 
 **A research memo's paragraphs.** When the practitioner asks to note up the propositions or findings in named paragraphs of a research memo Writing (`shared/legal-research.md`, "Proposition-level note-up"), write one job on it by Calls 1 to 3, with these changes. `title` and `intent` are `Note up the propositions in paragraphs <n>, <m>`, in paragraph order, and the guard and Call 2 match that title. One step per paragraph, `Note up at proposition level: paragraph <n>, <citation>`. No `ticket_proposals` row. One scope row per paragraph, `('statements_of_law', <the id its line ends with>)`. Each step is worked by that gate section, and the job completes by §9 when every step is done.
 
-**Working and closing it.** It carries keys, so `/draft`'s pickup review and restating check skip it, and its steps are its plan, never re-divided, as a grouped intake job's are (`/draft`'s `job-session.md`). A key whose marker no longer fires drops that key's steps on the premise check. Each case's return is recorded by `references/note-up.md`, and each provision's currency result by `filing-checklists.md`, "Recording a statute-currency result". It completes by §9 when every step is done. §9's still-firing check reads its keys, so it completes only once 📇 has cleared on every one, or on the practitioner's yes. A completed job is never reopened: a 📇 that fires afterwards is reported again as `note_up_due` and goes into a new job.
+**Working and closing it.** It carries keys, so `/draft`'s pickup review and restating check skip it, and its steps are its plan, never re-divided, as a grouped intake job's are (`/draft`'s `job-session.md`). A key whose marker no longer fires drops that key's steps on the premise check. Each case's return is recorded by `references/note-up.md`, and each provision's currency result by `filing-checklists.md`, "Recording a statute-currency result". It completes by §9 when every step is done. §9's still-firing check reads its keys, so it completes only once 📇 has cleared on every one, or on the practitioner's yes. A 📇 that fires after completion is reported again as `note_up_due` and goes into a new job.

@@ -12,7 +12,7 @@ The memo opens with this YAML header, from its first `---` line to its second:
 ---
 Date: <the spawn prompt's Date>
 Document: MEMORANDUM OF LAW <the spawn prompt's Job, a bare number. Nothing after LAW when it reads none>
-Status: DRAFT / FINAL
+Status: <one value under "Status" below>
 Re: "<the question, one line>"
 ---
 ```
@@ -23,16 +23,19 @@ A memo is INCOMPLETE when it holds the open-issues paragraph (`shared/legal-audi
 
 ### Status
 
-A memo is `Status: DRAFT` until one route below is met, and then `Status: FINAL`. Nothing else
-ends DRAFT. DRAFT is not INCOMPLETE: a DRAFT memo answers the Issue, and an `INCOMPLETE:` one does
-not.
+D is the spawn prompt's Date. A memo whose `Last status:` is `none` or a DRAFT is
+`DRAFT (last updated D)` until approved, then `FINAL (approved D)`. Any other is
+`REVISING (last revised D)` until approved, then `UPDATED (updates approved D)`. The memo is approved
+only when the spawn prompt's `Approve:` reads `yes` and one route below is met; otherwise the return
+says which route is unmet. Nothing else ends DRAFT or REVISING. DRAFT is not INCOMPLETE: a DRAFT memo
+answers the Issue, and an `INCOMPLETE:` one does not. A FINAL or UPDATED memo is saved again only
+under its reopened job, and its saved copy stays as the approved version.
 
-1. **Automatic.** Every proposition of law the memo cites, and every case cited in Application
+1. Every proposition of law the memo cites, and every case cited in Application
    for a finding of fact or of law, has a proposition-level note-up.
-2. **On instruction.** Each of them has a case-level note-up, every citing decision its record lists that treats
+2. Each of them has a case-level note-up, and every citing decision its record lists that treats
    the case negatively or that no citator classifies has been read at its pinpoint against the
-   proposition or finding the case is cited for, and the spawn prompt's `Final instructed:` reads
-   `yes`.
+   proposition or finding the case is cited for.
 
 While any relied-on case with citing cases has only a case-level note-up, the return's `Audit:`
 line (`shared/legal-audit-protocol.md` Step 6) ends with this sentence, word for word:

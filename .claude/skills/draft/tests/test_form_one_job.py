@@ -34,7 +34,7 @@ class FormIsOneJobTest(unittest.TestCase):
 
     def test_after_a_completed_job_one_new_job_takes_every_remaining_part(self):
         self.assertIn("write one new job whose steps are every remaining part the practitioner asks for, never one job per part", self.rule)
-        self.assertIn("A completed job is never reopened, deleted or merged for this", self.rule)
+        self.assertIn("A completed job stays on the board as it was, unless the practitioner asks to reopen it", self.rule)
 
     def test_jobs_create_points_to_the_rule(self):
         self.assertIn("filling one form is one job with a step per part", self.create)

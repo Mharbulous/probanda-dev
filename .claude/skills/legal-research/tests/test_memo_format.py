@@ -31,7 +31,7 @@ ITEM = """```
    Pinpoint: <the pinpoint>
    > <the verbatim passage at that pinpoint>
 ```"""
-HEADER = ["---", "Date:", "Document: MEMORANDUM OF LAW", "Status: DRAFT", "Re:", "---"]
+HEADER = ["---", "Date:", "Document: MEMORANDUM OF LAW", "Status:", "Re:", "---"]
 ICRA = "```\n## Issue\n## Conclusion\n## Rule\n## Application\n```"
 IRAC = "```\n## Issue\n## Rule\n## Application\n## Conclusion\n```"
 CREAC = "```\n## Issue\n## Conclusion\n## Rule\n## Explanation\n## Application\n## Conclusion\n```"
@@ -76,8 +76,9 @@ class ProtocolStepSixTests(unittest.TestCase):
     def test_a_filled_header_keeps_its_job_number_as_yaml(self):
         for job in ("", " 33"):
             text = NL.join(["Date: 2026-11-05", "Document: MEMORANDUM OF LAW" + job,
-                            "Status: DRAFT", 'Re: "Is a \\"term\\" implied?"'])
+                            "Status: UPDATED (updates approved 2026-11-06)", 'Re: "Is a \\"term\\" implied?"'])
             header = yaml.safe_load(text)
+            self.assertEqual(header["Status"], "UPDATED (updates approved 2026-11-06)")
             self.assertEqual(header["Document"], "MEMORANDUM OF LAW" + job)
             self.assertEqual(list(header), ["Date", "Document", "Status", "Re"])
             self.assertEqual(header["Re"], 'Is a "term" implied?')
@@ -201,16 +202,20 @@ class ProtocolStepSixTests(unittest.TestCase):
     def test_memo_carries_no_confidence_table(self):
         self.assertIn("No coverage line, confidence table or confidence text anywhere in the memo", flat(step_six()))
 
-    def test_status_leaves_draft_only_by_its_two_routes(self):
+    def test_status_has_four_dated_values_and_leaves_draft_only_on_approval_after_a_route(self):
         template = flat(read("research-memo-template.md"))
         status = between(template, "### Status", "### Check labels")
-        self.assertIn("Nothing else ends DRAFT. DRAFT is not INCOMPLETE", status)
+        for value in ("`DRAFT (last updated D)`", "`FINAL (approved D)`", "`REVISING (last revised D)`",
+                      "`UPDATED (updates approved D)`"):
+            self.assertIn(value, status)
+        self.assertIn("Nothing else ends DRAFT or REVISING. DRAFT is not INCOMPLETE", status)
         self.assertIn("has a proposition-level note-up", status)
-        self.assertIn("the spawn prompt's `Final instructed:` reads `yes`", status)
+        self.assertIn("the spawn prompt's `Approve:` reads `yes` and one route below is met", status)
+        self.assertIn("saved again only under its reopened job", status)
         self.assertIn("> The memo relies on cases that have received judicial treatment, and the treating cases "
                       "have not been downloaded or reviewed to tell whether that treatment is positive, negative "
                       "or irrelevant.", status)
-        self.assertIn("Final instructed: yes / no", read("legal-research.md"))
+        self.assertIn("Last status: <the saved memo's Status value> / none\nApprove: yes / no", read("legal-research.md"))
 
     def test_history_and_note_up_labels_are_stated_once_in_the_template(self):
         labels = between(flat(read("research-memo-template.md")), "### Check labels", "## Body")

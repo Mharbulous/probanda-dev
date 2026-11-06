@@ -152,7 +152,7 @@ A job outlined from a Proposal, on any of those three paths, carries the convers
 - **More than one such job:** ask which one the part joins.
 - **No live job fills that form, and the only one that did is completed (or there is none):** write one new job whose steps are every remaining part the practitioner asks for, never one job per part. A later request for another part of that form extends that job by the rules above.
 
-A completed job is never reopened, deleted or merged for this: it stays on the board as it was.
+A completed job stays on the board as it was, unless the practitioner asks to reopen it (`drafting-data/references/jobs-closeout.md` §10e).
 
 <!-- atom id=work.blocked-job ops=new_work -->
 **A Blocked job whose blocker is superseded or shelved** is raised beside loose threads. State from the record what it was waiting on and what happened to that — a blocker superseded by a retirement has no superseding job, so what happened is the Writing's retirement. Then ask open, "How do you want to handle it?", never suggesting a new figure and never proposing what the fresh outline should say. Leaving it writes nothing. Read back the job's existing steps, off its card (`board_card(jobs: [N])`), to confirm or change rather than re-planning them, and give the same key report Branch A's premise check gives, read-only: marker state is the same kind of record fact as what the job was waiting on. Only the report carries over, never Branch A's failed path — a fresh outline is not an assigned job's Change, it leaves the conversion record alone, and what the practitioner does about a moved key is one more thing they say in the interview.

@@ -270,7 +270,7 @@ INSERT INTO ticket_blocks (blocker_id, blocked_id) VALUES (9, 10);
 
 Both jobs are drafting work: they count among the open jobs the `gate` completion criterion reads and in §14's nothing-open test (§14), with no title exclusion.
 
-**Re-review.** A completed review job is never reopened. When content changes after approval, 🧐 fires again on it, and a fresh pair comes from this same guarded create. The completed pair stays as it is.
+**Re-review.** When content changes after approval, 🧐 fires again on it, and a fresh pair comes from this same guarded create. The completed pair stays as it is.
 
 ## 3d. Scrutiny review jobs
 

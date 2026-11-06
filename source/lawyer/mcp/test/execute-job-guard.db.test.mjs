@@ -19,6 +19,7 @@ const SEED = `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, '
   INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created) VALUES (1, 1, 'Ready', 'Do it.', 'queued', 'work', 'L8470|x', '2026-10-01T09:00');
   INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created, locked_by, locked_at, plan_approved_at) VALUES (2, 1, 'Held', 'Do it.', 'wip', 'work', 'L8470|x', '2026-10-01T09:00', 'sess-other', '2026-10-01T09:05', '2026-10-01T09:06');
   INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created, deleted_at) VALUES (3, 1, 'Deleted', 'Do it.', 'queued', 'work', 'L8470|x', '2026-10-01T09:00', '2026-10-02T10:00');
+  INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created, completed_at) VALUES (4, 1, 'Done', 'Do it.', 'completed', 'work', 'L8470|x', '2026-10-01T09:00', '2026-10-02T11:00');
   INSERT INTO ticket_steps (ticket_id, ordinal, text, done_at) VALUES (1, 1, 'Read the file.', NULL), (2, 1, 'Read the file.', '2026-10-01T09:07'), (2, 2, 'Draft it.', NULL);
   INSERT INTO db_meta (key, value) VALUES ('job_active:2', '2026-10-01T09:07');
   INSERT INTO kv_store (namespace, key, value, updated_at) VALUES ('claim_no', 'tickets:2', '1', '2026-10-01T09:05:00Z'), ('last_activity', 'tickets:2', '"2026-10-01T09:07"', '2026-10-01T09:07:00Z');`;
@@ -52,6 +53,8 @@ for (const [label, script, tool] of [
   ["writing the active stamp", "INSERT OR REPLACE INTO db_meta (key, value) VALUES ('job_active:2', '2026-10-03T09:00');", "drafting_data__touch_job"],
   ["deleting the active stamp", "DELETE FROM db_meta WHERE key = 'job_active:2';", "drafting_data__touch_job"],
   ["moving the last activity", "UPDATE kv_store SET value = '\"2026-10-03T09:00\"' WHERE namespace = 'last_activity';", "drafting_data__touch_job or drafting_data__assign_job"],
+  ["reopening a completed job", "UPDATE tickets SET status = 'queued', completed_at = NULL WHERE id = 4;", "drafting_data__assign_job with reopen"],
+  ["forging a reopen history", "INSERT INTO kv_store (namespace, key, value, updated_at) VALUES ('reopened', 'tickets:4', '[]', '2026-10-03T09:00:00Z');", "drafting_data__assign_job"],
   ["resetting the claim number", "DELETE FROM kv_store WHERE namespace = 'claim_no';", "drafting_data__assign_job"],
   ["a guarded move after an allowed write", "UPDATE tickets SET bf_on = '2026-11-02' WHERE id = 1; UPDATE ticket_steps SET done_at = '2026-10-03T09:00' WHERE ticket_id = 1;", "drafting_data__set_step"],
   ["committing before a guarded move", "UPDATE tickets SET bf_on = '2026-11-02' WHERE id = 1; COMMIT; BEGIN; UPDATE tickets SET plan_approved_at = '2026-10-03T09:00' WHERE id = 1;", "drafting_data__approve_plan or drafting_data__rewrite_job"],
@@ -74,6 +77,7 @@ for (const [label, script, check] of [
     "UPDATE tickets SET status = 'queued', locked_by = NULL, locked_at = NULL, rejected_at = '2026-10-03T09:00' WHERE id = 2;",
     "SELECT status = 'queued' AND locked_by IS NULL AND rejected_at IS NOT NULL AS ok FROM tickets WHERE id = 2",
   ],
+  ["superseding a completed job", "UPDATE tickets SET status = 'superseded', completed_at = NULL WHERE id = 4;", "SELECT status = 'superseded' AS ok FROM tickets WHERE id = 4"],
   ["superseding a queued job", "UPDATE tickets SET status = 'superseded' WHERE id = 1;", "SELECT status = 'superseded' AS ok FROM tickets WHERE id = 1"],
   ["restoring a deleted job", "UPDATE tickets SET deleted_at = NULL WHERE id = 3;", "SELECT deleted_at IS NULL AS ok FROM tickets WHERE id = 3"],
   [

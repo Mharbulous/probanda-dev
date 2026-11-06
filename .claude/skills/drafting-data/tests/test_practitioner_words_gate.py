@@ -620,6 +620,39 @@ class MergeJobsGateTest(unittest.TestCase):
                 self.assertIn("their last turn is not a bare yes", stderr)
 
 
+class ReopenGateTest(unittest.TestCase):
+    """jobs-closeout.md §10e: a reopen passes only on the practitioner's bare yes; any other assign is not gated."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.transcript = Path(self.tmp.name) / "session.jsonl"
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def run_assign(self, *lines, reopen=True):
+        self.transcript.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+        args = {"db_path": "C:/matter/submission.sqlite", "ticket_id": 7, "session_token": "tok"}
+        payload = {"hook_event_name": "PreToolUse", "session_id": "s-1",
+                   "tool_name": "mcp__plugin_lawyer_data__drafting_data__assign_job",
+                   "tool_input": {**args, "reopen": True} if reopen else args,
+                   "transcript_path": str(self.transcript)}
+        return run_hook(SCRIPT, payload, timeout=None)
+
+    def test_passes_after_a_bare_yes(self):
+        result = self.run_assign(turn_line("reopen job 7"), reply_line("Job 7 was completed on 2026-11-05. Reopen it?"), turn_line("yes"))
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_refuses_without_a_bare_yes(self):
+        result = self.run_assign(turn_line("job 7 needs more research"))
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("reopening completed Job 7", result.stderr.decode("utf-8"))
+
+    def test_an_ordinary_assign_is_not_gated(self):
+        result = self.run_assign(turn_line("take job 7"), reopen=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+
 # A quick edit (paragraph-revision.md section 8): one preview_edit result, then apply_edit by its token.
 PREVIEW_TOKEN = "0123456789abcdef01234567"
 DIFF = "Notice of Application\nPart 2 ¶3 → Part 2 ¶1\n    The landlord served a notice."
@@ -705,7 +738,7 @@ class PluginRegistrationTests(unittest.TestCase):
         self.assertEqual(len(entries), 1)
         matcher = re.compile(entries[0]["matcher"])
         for prefix in ("mcp__plugin_lawyer_data__", "mcp__remote-devices__plugin_lawyer_data__"):
-            for tool in ("execute", "set_board_goal", "merge_milestones", "merge_jobs"):
+            for tool in ("execute", "set_board_goal", "merge_milestones", "merge_jobs", "assign_job"):
                 self.assertTrue(matcher.fullmatch(prefix + "drafting_data__" + tool), prefix + tool)
             self.assertTrue(matcher.fullmatch(prefix + "drafting_forms__apply_edit"), prefix + "apply_edit")
         self.assertFalse(matcher.fullmatch("mcp__plugin_lawyer_data__drafting_forms__preview_edit"))

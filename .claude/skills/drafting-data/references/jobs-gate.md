@@ -51,7 +51,7 @@ The Work Board then shows the old job as "Superseded by: Job #12", the same poin
 
 **Completion.** §9 as usual, only once every step carries `done_at` — every check passed, was `n/a`, or was waived. Only then may `/draft` present the Writing as ready to file, or a notice of application or application response as ready to serve, and, on the practitioner's instruction, record its filing date through `drafting_data__record_filed` or its service date through `drafting_data__record_served` (`filing-checklists.md` §11).
 
-**Re-running a stale gate: supersede, then create afresh** (the 2026-09-21 design §2.5). A completed gate job is never re-opened. When its checks ran before the latest changes and the practitioner says yes to re-running them, supersede it. Never do this on a session's own initiative:
+**Re-running a stale gate: supersede, then create afresh** (the 2026-09-21 design §2.5). When its checks ran before the latest changes and the practitioner says yes to re-running them, supersede it. Never do this on a session's own initiative:
 
 ```sql
 UPDATE tickets SET status = 'superseded', completed_at = NULL

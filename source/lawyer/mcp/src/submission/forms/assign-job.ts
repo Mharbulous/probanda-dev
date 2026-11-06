@@ -13,12 +13,16 @@
 // Every claim raises the job's claim number (job-activity.ts claimSql) in the same transaction, and the
 // call returns it: each holder-guarded write on the job then needs it (heldBy), so work begun under an
 // earlier claim, even this session's own before a lapse, writes nothing.
+// A reopen (reopen: true, jobs-closeout.md §10e) claims a completed job the same way, on the
+// practitioner's yes, which the practitioner-words hook checks: the job goes back to wip under this
+// session with its plan and done steps kept, its completion cleared, and the completion it lifts
+// recorded in its history first (job-activity.ts recordReopenSql).
 // One write, one read, never a retry. The job tables carry no revision triggers, so the revision does
 // not move.
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
-import { LAPSE_AFTER_MINUTES, claimSql, lapsedClause, lastActivitySql, nextClaimSql, recordLapseSql, touchStatements } from "./job-activity.js";
+import { LAPSE_AFTER_MINUTES, claimSql, lapsedClause, lastActivitySql, nextClaimSql, recordLapseSql, recordReopenSql, touchStatements } from "./job-activity.js";
 import { hasTable } from "../schema-capabilities.js";
 import { bfOnHeld, createdByHeld, deletedAtHeld, liveTicketClause } from "./query.js";
 import { nowMinuteSql, todaySql } from "./timings.js";
@@ -36,6 +40,8 @@ export interface AssignJobArgs {
   expected_holder?: string;
   /** The `last activity:` minute off the same card. Required with takeover. */
   expected_last_activity?: string;
+  /** Reopen a completed job, only on the practitioner's yes to reopening it (jobs-closeout.md §10e). Not with takeover. */
+  reopen?: boolean;
 }
 
 export interface AssignJobResult {
@@ -90,7 +96,9 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   if (args.takeover === true ? typeof args.expected_last_activity !== "string" || args.expected_last_activity.trim() === "" : args.expected_last_activity !== undefined) {
     throw new ValidationError(`${TOOL}.expected_last_activity is the last activity: minute off the job's card, passed with takeover: true and only then`, "invalid_expected_last_activity");
   }
+  if (args.reopen === true && args.takeover === true) throw new ValidationError(`${TOOL}.reopen and takeover are never passed together`, "invalid_reopen");
   const takeover = args.takeover === true;
+  const reopen = args.reopen === true;
   // A deleted job (jobs-closeout.md §10a) is never assigned, by take-over or otherwise.
   const live = liveTicketClause(args.db_path);
   // A session that created any job is assigned only a job it created (jobs-run.md §4).
@@ -100,28 +108,28 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   const bfHeld = bfOnHeld(args.db_path);
   // True of a job with no bring-forward date, or one whose date is the local date or earlier.
   const arrived = `(bf_on IS NULL OR bf_on <= ${todaySql()})`;
-  const notBefore = bfHeld && !takeover ? ` AND ${arrived}` : "";
+  const notBefore = bfHeld && !takeover && !reopen ? ` AND ${arrived}` : "";
   // A lapsed lock reads as released (ADR 0015).
   const lapsed = lapsedClause(args.db_path);
   // A take-over lands only while the card it was decided on is still current.
   const last = lastActivitySql(args.db_path);
-  const guard = (takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ? AND ${last} = ?` : `(status = 'queued' AND locked_by IS NULL OR ${lapsed}) AND rejected_at IS NULL${live}${notBefore}`) + creator;
+  const guard = (reopen ? `status = 'completed' AND rejected_at IS NULL${live}` : takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ? AND ${last} = ?` : `(status = 'queued' AND locked_by IS NULL OR ${lapsed}) AND rejected_at IS NULL${live}${notBefore}`) + creator;
   const guardParams = [...(takeover ? [(args.expected_holder as string).trim(), (args.expected_last_activity as string).trim()] : []), ...(creatorHeld ? [args.session_token, args.session_token] : [])];
   const kv = hasTable(args.db_path, "kv_store");
-  const record = !takeover && kv ? [{ sql: recordLapseSql(guard), params: [args.ticket_id, ...guardParams] }] : [];
+  const record = kv && (reopen || !takeover) ? [{ sql: reopen ? recordReopenSql(guard) : recordLapseSql(guard), params: [args.ticket_id, ...guardParams] }] : [];
   const claim = kv ? [{ sql: nextClaimSql(guard), params: [args.ticket_id, ...guardParams] }] : [];
   const written = await submissionDataWriteAll(
     args.db_path,
     [
       ...record,
       ...claim,
-      { sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${nowMinuteSql()} WHERE id = ? AND ${guard}`, params: [args.session_token, args.ticket_id, ...guardParams] },
+      { sql: `UPDATE tickets SET status = 'wip',${reopen ? " completed_at = NULL," : ""} locked_by = ?, locked_at = ${nowMinuteSql()} WHERE id = ? AND ${guard}`, params: [args.session_token, args.ticket_id, ...guardParams] },
       ...touchStatements(args.db_path, args.ticket_id, { sql: "locked_by = ?", params: [args.session_token] }),
     ],
     env
   );
   const changes = written.ok ? written.results[record.length + claim.length].changes : written.changes;
-  const tookLapsed = written.ok && record.length === 1 && written.results[0].changes === 1;
+  const tookLapsed = !reopen && written.ok && record.length === 1 && written.results[0].changes === 1;
   const columns = `locked_by, locked_at, status, rejected_at, ${lapsed} AS lapsed, ${last} AS last_activity${kv ? `, ${claimSql()} AS claim_no` : ""}${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${arrived} AS before_bf` : ""}`;
   const [read] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM tickets WHERE id = ?`, [args.ticket_id]).rows as unknown as ConfirmRow[];
   if (read === undefined) throw new NotFoundError(`${TOOL}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
@@ -129,16 +137,18 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   let outcome: AssignJobResult["outcome"];
   let note: string;
   // The date guard refused it, whatever the creator guard would have said.
-  const beforeBf = !takeover && read.before_bf === 1;
+  const beforeBf = !takeover && !reopen && read.before_bf === 1;
   // The creator guard alone refused it: every other guard would have matched the row.
   const otherwiseEligible = read.rejected_at === null && !read.deleted_at && !beforeBf
-    && (takeover ? (read.status === "queued" || read.status === "wip") && read.locked_by !== null && read.locked_by.slice(-8) === (args.expected_holder as string).trim() && read.last_activity === (args.expected_last_activity as string).trim() : (read.status === "queued" && read.locked_by === null) || read.lapsed === 1);
+    && (reopen ? read.status === "completed" : takeover ? (read.status === "queued" || read.status === "wip") && read.locked_by !== null && read.locked_by.slice(-8) === (args.expected_holder as string).trim() && read.last_activity === (args.expected_last_activity as string).trim() : (read.status === "queued" && read.locked_by === null) || read.lapsed === 1);
   if (read.locked_by === args.session_token) {
     outcome = "assigned";
     note =
       changes !== 1
         ? `Job ${id} already carried this session's token; nothing was written.`
-        : tookLapsed
+        : reopen
+          ? `Job ${id} is reopened and assigned to this session, with its plan and done steps kept; the completion it lifts is recorded in its history.`
+          : tookLapsed
           ? `Job ${id} is assigned to this session. Its lock had lapsed (no activity for ${LAPSE_AFTER_MINUTES} minutes), so it was taken as a released job, with its plan and done steps kept; the lapse is recorded in its history.`
           : `Job ${id} is assigned to this session.`;
   } else if (changes === 0 && creatorHeld && otherwiseEligible && read.created_by !== args.session_token && createdAny(args.db_path, args.session_token)) {

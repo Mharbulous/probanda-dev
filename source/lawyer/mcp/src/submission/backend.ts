@@ -109,8 +109,16 @@ JOB_MOVES = (
 JOB_KEYS = (
     ("db_meta", "key", "key LIKE 'job_active:%'", "drafting_data__touch_job"),
     ("kv_store", "namespace, key", "namespace IN ('last_activity', 'lock_lapsed')", "drafting_data__touch_job or drafting_data__assign_job"),
-    ("kv_store", "namespace, key", "namespace = 'claim_no'", "drafting_data__assign_job"),
+    ("kv_store", "namespace, key", "namespace IN ('claim_no', 'reopened')", "drafting_data__assign_job"),
 )
+
+
+# A completed job goes back to queued or wip only through drafting_data__assign_job with reopen, on the
+# practitioner's yes (jobs-closeout.md §10e), so a script that does it is refused. Supersession stays allowed.
+def job_ids(con, statuses):
+    if not con.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'tickets'").fetchone():
+        return set()
+    return {row[0] for row in con.execute(f"SELECT id FROM tickets WHERE status IN ({statuses})")}
 
 
 def job_state(con):
@@ -176,6 +184,7 @@ def do_execute(req):
     def mutate(con):
         before = recorded(con)
         jobs = job_state(con) if guarded else None
+        done = job_ids(con, "'completed'") if guarded else set()
         seeds = seed_rows(con) if guarded else None
         research = research_rows(con) if guarded else None
         try:
@@ -193,6 +202,10 @@ def do_execute(req):
         refused = jobs is not None and job_move(jobs, job_state(con))
         if refused:
             raise SystemExit(refused)
+        reopened = done & job_ids(con, "'queued', 'wip'")
+        if reopened:
+            raise SystemExit(f"job_write_refused: use drafting_data__assign_job with reopen. tickets {min(reopened)}: "
+                             "a completed job is reopened only by that tool. Nothing was written.")
         refused = research is not None and research_write(research, research_rows(con))
         if refused:
             raise SystemExit(refused)

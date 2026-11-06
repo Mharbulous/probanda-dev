@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Refuse a paragraph revision, a confirmed statement of goals, or a merge of Work Boards or of jobs the practitioner did not approve (#784).
+"""Refuse a paragraph revision, a confirmed statement of goals, a merge of Work Boards or of jobs, or a reopen of a completed job the practitioner did not approve (#784).
 
 Hook event: PreToolUse on drafting_data__execute, drafting_data__set_board_goal,
-drafting_data__merge_milestones, drafting_data__merge_jobs (a merge passes only when the last
-practitioner turn is a bare yes) and drafting_forms__apply_edit.
+drafting_data__merge_milestones, drafting_data__merge_jobs, drafting_data__assign_job with reopen
+(a merge or a reopen passes only when the last practitioner turn is a bare yes) and drafting_forms__apply_edit.
 A job's title, intent and steps, and a marker suppression's note, are not read: their wording
 needs no practitioner approval (docs/Specs/2026-10-20_approved-research-issues-pass-job-words-gate-spec.md).
 
@@ -130,6 +130,7 @@ REVISION_CLOSING = ("An on-the-fly revision writes one paragraph the practitione
 GOAL_TOOL = "drafting_data__set_board_goal"  # a Work Board's statement of goals
 MERGE_TOOL = "drafting_data__merge_milestones"  # two Work Boards joined on the practitioner's yes
 MERGE_JOBS_TOOL = "drafting_data__merge_jobs"  # a duplicate job merged into another on the practitioner's yes
+ASSIGN_TOOL = "drafting_data__assign_job"  # with reopen: a completed job reopened on the practitioner's yes
 GOAL_FIELD = "the statement of goals"
 MERGE_GOAL_FIELD = "the merged board's statement of goals"
 PREVIEW_TOOL = "drafting_forms__preview_edit"
@@ -619,6 +620,12 @@ def main():
         return merge_boards(payload)
     if (payload.get("tool_name") or "").endswith(MERGE_JOBS_TOOL):
         return merge_jobs(payload)
+    if (payload.get("tool_name") or "").endswith(ASSIGN_TOOL):
+        args = payload.get("tool_input") or {}
+        if args.get("reopen") is not True:
+            return 0
+        return bare_yes(payload, f"reopening completed Job {args.get('ticket_id')} needs the practitioner's confirmation",
+                        "Name the job and the date it was completed, ask whether to reopen it")
     if (payload.get("tool_name") or "").endswith(APPLY_TOOL):
         return apply_gate(payload)
     script = (payload.get("tool_input") or {}).get("sql_script") or ""

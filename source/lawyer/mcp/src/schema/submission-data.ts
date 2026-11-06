@@ -428,8 +428,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "records the lapse in the job's history and needs no take-over. takeover: true " +
         "admits a wip job held by another session, on the practitioner's yes to the take-over form or their instruction to take it over. takeover: true needs " +
         "expected_holder and expected_last_activity, the `holder:` tag and the `last activity:` minute off the job's card " +
-        "(drafting_forms__board_card with jobs), and the write lands only while the row still shows both. A shelved, completed or superseded job is " +
-        "never assigned. A session that created any job (tickets.created_by, schema v72) is assigned only a job it " +
+        "(drafting_forms__board_card with jobs), and the write lands only while the row still shows both. A shelved or superseded job is never assigned, and a " +
+        "completed one only with reopen: true, on the practitioner's bare yes to reopening it (a hook refuses it otherwise), never with takeover: " +
+        "it returns to wip under this session with its plan and done steps kept, and its history records the completion it lifts. A session that created any job (tickets.created_by, schema v72) is assigned only a job it " +
         "created, by take-over or otherwise. A job is not assigned before its bring-forward date (tickets.bf_on, schema " +
         "v74), a start date and never a deadline; a take-over does not read it. Every claim (an assign, a take-over, a re-take " +
         "after a release or a lapse, even by the same session) raises the job's claim number in the same transaction, " +
@@ -443,7 +444,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "say so in one line, and never propose changing or clearing the date, which only the practitioner does), " +
         "no_match (no token: the guards matched nothing, and the returned status and rejected_at show why). " +
         "Never retry to win. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, " +
-        "invalid_expected_holder, invalid_expected_last_activity, not_found. Returns ticket_id, outcome, changes, locked_by, locked_at, status, rejected_at, " +
+        "invalid_expected_holder, invalid_expected_last_activity, invalid_reopen, not_found. Returns ticket_id, outcome, changes, locked_by, locked_at, status, rejected_at, " +
         "bf_on, claim_no and a note.",
       inputSchema: {
         type: "object",
@@ -454,6 +455,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           takeover: { type: "boolean" },
           expected_holder: { type: "string" },
           expected_last_activity: { type: "string" },
+          reopen: { type: "boolean" },
         },
         required: ["db_path", "ticket_id", "session_token"],
         additionalProperties: false,
