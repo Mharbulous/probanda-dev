@@ -99,5 +99,30 @@ class EveryRouteMigratesTest(unittest.TestCase):
         self.assertIn("nothing is written without it", migration)
 
 
+class BareRunListsUnfinishedJobsTest(unittest.TestCase):
+    def test_the_gate_lists_instead_of_asking_and_stops(self):
+        gate = read("legal-research", "SKILL.md")
+        self.assertIn("**No arguments.** List the matter's unfinished research jobs by `references/research-board.md`, "
+                      '"Unfinished jobs", then stop. Ask no question and start no research.', gate)
+
+    def test_the_list_is_in_the_specified_order_and_shelved_is_a_count(self):
+        board = read("legal-research", "references", "research-board.md")
+        section = board[board.index("## Unfinished jobs"):board.index("## The rewording review")]
+        first, second, third = (section.index(text) for text in (
+            "1. Ready, Bring Forward and Blocked jobs, which no session holds.",
+            "2. In Progress jobs, which other sessions hold",
+            "3. The count of shelved research jobs"))
+        self.assertLess(first, second)
+        self.assertLess(second, third)
+        self.assertIn("List none of them.", section)
+        self.assertIn("newest first by the later of a job's `last activity` and the time its `answers:` line shows", section)
+
+    def test_the_listing_reads_the_existing_board_card_and_writes_nothing(self):
+        board = read("legal-research", "references", "research-board.md")
+        section = board[board.index("## Unfinished jobs"):board.index("## The rewording review")]
+        self.assertIn("`drafting_forms__board_card`", section)
+        self.assertIn("runs no sweep, assigns no job and writes nothing", section)
+
+
 if __name__ == "__main__":
     unittest.main()

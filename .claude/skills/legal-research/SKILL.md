@@ -30,6 +30,9 @@ is, goes through the gate below.
 research jobs together, read `references/research-board.md` and follow it. It runs the gate
 below once per job.
 
+**No arguments.** List the matter's unfinished research jobs by `references/research-board.md`,
+"Unfinished jobs", then stop. Ask no question and start no research.
+
 **Noting up a memo's paragraphs.** When the practitioner asks to note up the propositions or
 findings in numbered paragraphs of a saved research memo ("note up the propositions in
 paragraphs 4 and 5"), follow `shared/legal-research.md`, "Proposition-level note-up".

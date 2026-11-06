@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<!--
+  This diagram's tag gives the commit it was checked against and when it was last updated.
+  To update it: re-read the sources at the new commit, correct the chart if needed,
+  then change both data- attributes and the visible stamp.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How a research job becomes a legal memo</title>
+<style>
+/* Single light theme by choice: the diagram's colours carry meaning and stay fixed. */
+:root {
+  color-scheme: light;
+  --ink: #1d2733;
+  --muted: #55616f;
+  --paper: #f8f9fb;
+  --rule: #d5dbe3;
+  --body: "Segoe UI", system-ui, sans-serif;
+  --mono: Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--body); }
+main { max-width: 1100px; margin: 0 auto; padding: 28px 20px 48px; display: grid; gap: 20px; }
+h1 { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 600; text-wrap: balance; }
+p { margin: 0; }
+code { font: 500 0.92em var(--mono); }
+figure { margin: 0; display: grid; gap: 12px; }
+figcaption { display: grid; gap: 4px; }
+.stamp { font-size: 14px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 15px; height: 15px; border: 2px solid; border-radius: 3px; display: inline-block; }
+.legend b { width: 26px; height: 0; border-top: 2px solid var(--muted); display: inline-block; }
+.legend b.dashed { border-top-style: dashed; }
+.chart { overflow-x: auto; background: #fff; border: 1px solid var(--rule); border-radius: 6px; padding: 16px; }
+pre.mermaid { margin: 0; font-family: var(--body); }
+pre.mermaid svg { display: block; margin: 0 auto; }
+</style>
+</head>
+<body>
+<main>
+  <figure class="diagram" id="research-job"
+          data-based-on-commit="f7c757db401a2592d03e66698024a152bd0d6fea"
+          data-updated="2026-11-06T02:24:00-07:00">
+    <figcaption>
+      <h1>How a research job becomes a legal memo</h1>
+      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/f7c757db401a2592d03e66698024a152bd0d6fea"><code>f7c757db</code></a> on main · Last updated 2026-11-06 02:24 -07:00</p>
+    </figcaption>
+    <div class="legend" aria-label="Colour key">
+      <span><i style="background:#eef1f5;border-color:#5b6675"></i>How a question arrives</span>
+      <span><i style="background:#e3eefb;border-color:#2563a8"></i>researcher plugin</span>
+      <span><i style="background:#efe8fb;border-color:#6b46b0"></i>litigator plugin</span>
+      <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer plugin</span>
+      <span><i style="background:#e2f3e6;border-color:#2f7d46"></i>The deliverable</span>
+      <span><b></b>step, in order</span>
+      <span><b class="dashed"></b>loop back, or optional</span>
+    </div>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    Q(["The practitioner asks<br/>what the law is"])
+    WORK["/work"]
+    DRAFT["/draft"]
+    ATF["/apply-to-facts"]
+    VL["/verify-law"]
+
+    subgraph GATE["/legal-research: the gate runs every step"]
+        DD["/drafting-data<br/>job, plan, memo"]
+        WQO["westlaw-query-optimizer"]
+        LG["law-getter"]
+        CC["citation-checker"]
+        RA["research-agent<br/>the only one that states law"]
+        MR["memo-reviewer"]
+    end
+
+    JP["/job-planning"]
+    RT["research-triage"]
+    MD["/matter-data"]
+    ING["/ingest"]
+    MEMO[("Legal memo<br/>in the issue's 6. LAW folder")]
+
+    Q --> GATE
+    WORK -->|"research job"| GATE
+    DRAFT -->|"question of law"| GATE
+    ATF -->|"proposition"| GATE
+    VL -->|"claim fails"| GATE
+
+    DD -->|"2 query"| WQO
+    WQO -->|"3 retrieve"| LG
+    LG -->|"4 note up"| CC
+    CC -->|"5 write"| RA
+    RA -->|"6 review"| MR
+    MR -->|"7 save"| DD
+    DD --> MEMO
+    MEMO -->|"8 fetch missing"| LG
+    MEMO -->|"9 add to case data"| ING
+    ING --> MD
+    DRAFT -->|"10 complete job"| DD
+
+    JP -.->|"plan job"| DD
+    GATE -.->|"board mode"| RT
+    LG -.->|"held copy?"| MD
+    RA -.->|"needs more research"| WQO
+    MR -.->|"send back"| RA
+
+    classDef source fill:#eef1f5,stroke:#5b6675,color:#1d2733
+    classDef researcher fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef litigator fill:#efe8fb,stroke:#6b46b0,color:#1d2733
+    classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
+    classDef done fill:#e2f3e6,stroke:#2f7d46,color:#1d2733
+    class Q source
+    class VL,WQO,RT,LG,CC,RA,MR researcher
+    class WORK,DRAFT,ATF,DD,JP litigator
+    class ING,MD lawyer
+    class MEMO done
+    style GATE fill:#f6f9fd,stroke:#2563a8,stroke-dasharray:5 4
+</pre>
+    </div>
+  </figure>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: "neutral",
+    flowchart: { nodeSpacing: 40, rankSpacing: 50, useMaxWidth: true, htmlLabels: true }, themeVariables: { fontFamily: "Segoe UI, system-ui, sans-serif", fontSize: "14px" } });
+  mermaid.run({ querySelector: "pre.mermaid" });
+</script>
+</body>
+</html>
