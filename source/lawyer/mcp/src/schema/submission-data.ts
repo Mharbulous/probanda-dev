@@ -1,4 +1,4 @@
-import { COMPANIONS } from "../knowledge/declared-layout.js";
+import { COMPANIONS } from "../knowledge/companions.js";
 import { AUDIENCES } from "../knowledge/venues-kinds.js";
 import { type ToolDefinition, SQL_PARAMS } from "./shared.js";
 

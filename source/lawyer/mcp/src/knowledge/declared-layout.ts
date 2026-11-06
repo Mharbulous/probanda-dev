@@ -8,6 +8,7 @@
 // replaces that item's value, and the block is validated again after substitution.
 
 import { DataServerError } from "../errors.js";
+import { COMPANIONS } from "./companions.js";
 import { documentTypes } from "../tools/practice/folder-map.js";
 
 type Json = Record<string, unknown>;
@@ -64,7 +65,7 @@ export const GOAL_CRITERIA: readonly string[] = [
   "orders-sought", "orders-positioned", "primary-authority", "excerpts", "noting-up",
   "evidence", "open-items", "opposing-points", "counsel-review", "terms-traced", "recipients", "hearing-date",
 ];
-export const COMPANIONS: readonly string[] = ["written-arguments"];
+export { COMPANIONS };
 const HEADING_NUMBERING = ["none", "part-roman", "part-arabic", "letter"];
 const PARAGRAPH_NUMBERING = ["none", "restart", "continue"];
 const PART_KEYS = ["heading", "heading_numbering", "paragraph_numbering", "source", "text", "rule_ref"];
