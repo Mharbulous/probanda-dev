@@ -794,10 +794,13 @@ class MatterFolderTests(HookTestCase):
         (case_data / "_practice").mkdir(parents=True)
         (cls.repo / "L1 Test").mkdir()
         (cls.repo / "L1 Test" / "x.md").write_text("x", encoding="utf-8")
+        (cls.repo / "L2 Absolute").mkdir()
+        (cls.repo / "L2 Absolute" / "x.md").write_text("x", encoding="utf-8")
         con = sqlite3.connect(case_data / "_practice" / "practice.db")
         con.executescript(kv_schema())
-        item = {"kind": "matter", "data": {"folder": "L1 Test"}, "tags": {}, "state": None, "links": {}}
-        con.execute("INSERT INTO kv_store VALUES ('item', 'm1', ?, '')", (json.dumps(item),))
+        for key, folder in (("m1", "L1 Test"), ("m2", str(cls.repo / "L2 Absolute"))):
+            item = {"kind": "matter", "data": {"folder": folder}, "tags": {}, "state": None, "links": {}}
+            con.execute("INSERT INTO kv_store VALUES ('item', ?, ?, '')", (key, json.dumps(item)))
         con.commit()
         con.close()
         settings = cls.base / "device-settings.json"
@@ -811,8 +814,11 @@ class MatterFolderTests(HookTestCase):
                 self.assertDenied(self.call("Bash", command, cwd=self.repo))
 
     def test_practice_record_alone_protects_inside_a_worktree(self):
-        command = 'rm "' + (self.repo / "L1 Test" / "x.md").as_posix() + '"'
-        self.assertDenied(self.call("Bash", command, cwd=self.repo))
+        # A relative record, and an absolute one as for a folder outside the library.
+        for folder in ("L1 Test", "L2 Absolute"):
+            with self.subTest(folder=folder):
+                command = 'rm "' + (self.repo / folder / "x.md").as_posix() + '"'
+                self.assertDenied(self.call("Bash", command, cwd=self.repo))
 
     def test_the_rest_of_the_worktree_stays_exempt(self):
         self.assertAllowedSilently(self.call("Bash", "rm x.md", cwd=self.repo))

@@ -506,7 +506,8 @@ def in_temp_dir(path):
 #   2. practice data's local record of matter folders names an ancestor: the
 #      `folder` data field on `matter` items in practice.db
 #      (<case_data_root>/_practice/practice.db, opened read-only), a path
-#      relative to the litigation library (the parent of case_data_root). The
+#      relative to the litigation library (the parent of case_data_root), or
+#      absolute for a folder outside it. The
 #      Roaming device settings file names case_data_root; COCLERK_CONFIG_PATH
 #      names another settings file to read in its place.
 # Any read error keeps the hook's existing behaviour: the failing check reads
@@ -561,7 +562,7 @@ def recorded_matter_folders():
             continue
         data = item.get("data")
         folder = data.get("folder") if isinstance(data, dict) else None
-        if isinstance(folder, str) and folder and not os.path.isabs(folder):
+        if isinstance(folder, str) and folder:
             folders.append(os.path.join(library, folder))
     return folders
 

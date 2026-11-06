@@ -2,7 +2,7 @@
 // calls Probanda's Cloud, so every read works offline. What each returns by default (L2), the
 // billing cutoff (L1) and matter references (L4) stay here, on the user's machine.
 
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 
 import type { Item, Row } from "../../practice/items.js";
 import { rowsOf } from "../../practice/items.js";
@@ -68,11 +68,10 @@ export async function matter_lookup(
   return { rows: withMatterRoots(matched.map((matter) => withClient(matter, clients)), store.env) };
 }
 
-// Each row with a `folder` gains `matter_root`, the folder's absolute path on this device, computed
-// here and never stored. When the library cannot be resolved, matter_root is null and says why.
+// Each row with a `folder` gains `matter_root`, the folder's absolute path on this device: the
+// stored path itself when absolute, else computed from the library and never stored. When the library cannot be resolved, matter_root is null and says why.
 function withMatterRoots(rows: Row[], env: NodeJS.ProcessEnv): Row[] {
-  if (!rows.some((row) => typeof row.folder === "string")) return rows;
-  let library: string | null = null;
+  if (!rows.some((row) => typeof row.folder === "string")) return rows;  let library: string | null = null;
   let error = "";
   try {
     library = litigationLibrary(env);
@@ -81,6 +80,7 @@ function withMatterRoots(rows: Row[], env: NodeJS.ProcessEnv): Row[] {
   }
   return rows.map((row) => {
     if (typeof row.folder !== "string") return row;
+    if (isAbsolute(row.folder)) return { ...row, matter_root: row.folder };
     return library !== null ? { ...row, matter_root: join(library, row.folder) } : { ...row, matter_root: null, matter_root_error: error };
   });
 }

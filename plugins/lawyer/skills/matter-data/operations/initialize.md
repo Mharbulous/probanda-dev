@@ -84,10 +84,10 @@ path only, proven before writing.
    (migrate-on-write, §2.1/§2.3 of `../shared/conventions.md`).
 5. Record the matter's folder: call `practice_data__upsert_client_matter` with the
    matter's `client_num` and `matt_num` (or `file_number`) and `folder` set to the
-   matter folder's path relative to the litigation library (the parent of
-   `case_data_root`) — never an absolute path. The delete hook reads this record
-   as its second way of recognising a matter folder, so an upgraded or moved
-   matter folder's record is repaired here.
+   live `matter_root`; a folder outside the litigation library is recorded only on
+   the practitioner's yes. The delete hook reads this record as its second way of
+   recognising a matter folder, so an upgraded or moved matter folder's record is
+   repaired here.
 6. Verify with one `matter_data__query` call (e.g. a trivial `SELECT 1`) against
    the new pointer — this is the actual proof the upgrade succeeded, not the
    write in step 4 alone.
@@ -169,9 +169,7 @@ path only, proven before writing.
    `matter_root` back out of the pointer you just wrote.
 5. Record the matter's folder: call `practice_data__upsert_client_matter` with the
    matter's `client_num` and `matt_num` (or `file_number`) and `folder` set to the
-   matter folder's path relative to the litigation library (the parent of
-   `case_data_root`) — never an absolute path. The delete hook reads this record
-   as its second way of recognising a matter folder.
+   live `matter_root`, as in pointer-upgrade step 5.
 
 ---
 

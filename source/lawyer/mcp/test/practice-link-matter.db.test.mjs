@@ -1,5 +1,5 @@
 // link_matter and matter_lookup's project_id: where a matter's folder is, relative to the
-// litigation library, and which claude.ai Projects belong to the matter, so a session in a
+// litigation library when inside it, and which claude.ai Projects belong to the matter, so a session in a
 // Project finds the matter root.
 
 import assert from "node:assert/strict";
@@ -40,13 +40,19 @@ test("a matter root is stored relative to the library and read back absolute", a
   assert.equal(found.matter_root, matterRoot);
 });
 
-test("a matter root outside the library, or not absolute, is refused and nothing is saved", async (t) => {
-  const { store, dir } = await setup(t);
-  await assert.rejects(writes.link_matter(store, { matt_num: "L101", matter_root: join(dir, "elsewhere") }), /not a folder inside the litigation library/);
+test("a matter root outside the library is stored absolute, and a moved matter re-records either way", async (t) => {
+  const { store, library, dir } = await setup(t);
+  const outside = join(dir, "second library", "L101 Example");
+  const inside = join(library, "L101 Example");
+  const lookup = async () => (await reads.matter_lookup(store, { matt_num: "L101" })).rows[0];
+  await writes.link_matter(store, { matt_num: "L101", matter_root: inside });
+  assert.equal((await writes.link_matter(store, { matt_num: "L101", matter_root: outside })).folder, outside);
+  assert.equal((await lookup()).matter_root, outside);
+  await writes.upsert_client_matter(store, { client_num: "C-1", matt_num: "L101", folder: inside });
+  assert.deepEqual([(await lookup()).folder, (await lookup()).matter_root], ["L101 Example", inside]);
+  await writes.upsert_client_matter(store, { client_num: "C-1", matt_num: "L101", folder: outside });
+  assert.equal((await lookup()).matter_root, outside);
   await assert.rejects(writes.link_matter(store, { matt_num: "L101", matter_root: "L101 Example" }), /absolute path/);
-  const [found] = (await reads.matter_lookup(store, { matt_num: "L101" })).rows;
-  assert.equal(found.folder, null);
-  assert.equal(found.matter_root, undefined, "no folder, so no matter_root");
 });
 
 test("a Project resolves to its matter and root; a matter holds several Projects, a Project one matter", async (t) => {

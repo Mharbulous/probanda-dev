@@ -36,19 +36,10 @@ export async function upsert_client_matter(
   // prefix (`.L8443`); the matter number is what follows it.
   const mattNum = args.matt_num ? normalizeMattNum(args.matt_num) : args.matt_num;
 
-  // The matter's folder, relative to the litigation library (the parent of
-  // case_data_root), so a synced practice.db reads right on every device. The
-  // delete hook reads it as its second way of recognising a matter folder
-  // (spec 2026-10-16). Recorded by whoever creates the matter's pointer file
-  // and by the matter-opening step; the cloud sees only its HMAC.
-  if (args.folder !== undefined && args.folder !== null) {
-    const folder = asString(args.folder, "folder");
-    if (/^([A-Za-z]:|[\\/])/.test(folder)) {
-      throw new ValidationError(
-        "folder must be the matter folder's path relative to the litigation library, not an absolute path"
-      );
-    }
-  }
+  // The matter's folder (see storedFolder). The delete hook reads it as its second way of
+  // recognising a matter folder (spec 2026-10-16). Recorded by whoever creates the matter's
+  // pointer file and by the matter-opening step; the cloud sees only its HMAC.
+  const folder = args.folder == null ? args.folder : storedFolder(asString(args.folder, "folder"), store.env);
 
   const clientOp = newId();
   const matterOp = newId();
@@ -80,7 +71,7 @@ export async function upsert_client_matter(
         regular_trust: args.regular_trust,
         term_trust: args.term_trust,
         last_trust_date: args.last_trust_date,
-        folder: args.folder,
+        folder,
       },
     },
     ...roleSpecs,
@@ -98,15 +89,16 @@ export async function upsert_client_matter(
 }
 
 // Records where a matter's folder is and which claude.ai Projects belong to it, so a session in a
-// Project can find the matter root. `matter_root` is stored as `folder`, relative to the
-// litigation library, never absolute. A Project belongs to one matter: the cloud sees only the
+// Project can find the matter root. `matter_root` is stored as `folder` (see storedFolder). A Project belongs to one matter: the cloud sees only the
 // hash of the whole `projects` list, so that check runs here.
 export async function link_matter(store: PracticeStore, args: Record<string, unknown>): Promise<Row> {
   const items = store.items();
   const { id, row } = requireMatter(items, args);
   const data: Record<string, unknown> = {};
   if (args.matter_root !== undefined && args.matter_root !== null) {
-    data.folder = libraryRelative(asString(args.matter_root, "matter_root"), store.env);
+    const root = asString(args.matter_root, "matter_root");
+    if (!isAbsolute(root)) throw new ValidationError("matter_root must be the matter folder's absolute path");
+    data.folder = storedFolder(root, store.env);
   }
   if (args.project_id !== undefined && args.project_id !== null) {
     const project = asString(args.project_id, "project_id");
@@ -129,17 +121,12 @@ export async function link_matter(store: PracticeStore, args: Record<string, unk
   return rowOf(after, id);
 }
 
-function libraryRelative(matterRoot: string, env: NodeJS.ProcessEnv): string {
-  if (!isAbsolute(matterRoot)) throw new ValidationError("matter_root must be the matter folder's absolute path");
-  const library = litigationLibrary(env);
-  const folder = relative(library, matterRoot);
-  if (folder === "" || folder.startsWith("..") || isAbsolute(folder)) {
-    throw new ValidationError(
-      `Refused: ${matterRoot} is not a folder inside the litigation library ${library} (the folder holding ` +
-        `"0. CASE DATA"). Nothing was saved.`
-    );
-  }
-  return folder;
+// A matter folder is stored relative to the litigation library when inside it, so a synced
+// practice.db reads right on every device, and absolute otherwise.
+function storedFolder(path: string, env: NodeJS.ProcessEnv): string {
+  if (!isAbsolute(path)) return path;
+  const folder = relative(litigationLibrary(env), path);
+  return folder === "" || folder.startsWith("..") || isAbsolute(folder) ? path : folder;
 }
 
 // client_contacts (firm-wide contacts spec 4.3): each new contact, then one client role per
