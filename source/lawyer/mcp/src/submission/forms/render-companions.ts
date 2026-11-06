@@ -26,7 +26,7 @@ import { fetchOpposingPoints } from "./opposing-points.js";
 import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
 import { orderReviewMarkerFor } from "./review-state.js";
 import { recordParagraph, renderSubmissionParagraphs } from "./submission-paragraphs.js";
-import type { RenderContext } from "./render-context.js";
+import { hasWrittenArguments, type RenderContext } from "./render-context.js";
 import { recordCriterionGlyphs, recordGlyphs, recordJurisdictionLadder } from "./proposal-inventory.js";
 import { fetchPlacedAlternativeIds } from "./render-requisition.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
@@ -408,7 +408,11 @@ function fetchStruckSubmissionIds(dbPath: string, proceedingId: number): Set<num
  */
 export function recordReserveInventory(ctx: RenderContext): void {
   const formIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "form");
-  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
+  // A Writing without Written Arguments prints nothing its pointer rows name, so they deploy nothing
+  // (a removed companion leaves them behind). A seeded row with no stored layout keeps reading them.
+  const waIds = ctx.filing.layout_snapshot === null || hasWrittenArguments(ctx.filing)
+    ? fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument")
+    : { orderIds: new Set<number>(), submissionIds: new Set<number>() };
   // #960: a Form 8 alternative has no pointer row -- its primary's placement deploys it.
   const deployedOrders = new Set([...formIds.orderIds, ...waIds.orderIds, ...fetchPlacedAlternativeIds(ctx.dbPath, ctx.filing)]);
   const deployedSubmissions = new Set([...formIds.submissionIds, ...waIds.submissionIds]);

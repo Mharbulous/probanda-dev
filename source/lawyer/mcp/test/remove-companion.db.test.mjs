@@ -4,7 +4,7 @@
 // another Writing on the same board keeps its own; a sent or retired Writing refuses, writing nothing.
 
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import test from "node:test";
 
@@ -55,7 +55,7 @@ async function board(t, { filed_on = null, retired_on = null } = {}) {
   );
   // execute refuses a sent date: record_filed owns that act.
   if (filed_on) seedSql(f.dbPath, `${partiesSnapshotSql(f.dbPath, 1)} UPDATE filings SET filed_on = '${filed_on}' WHERE id = 1;`);
-  return f.dbPath;
+  return f;
 }
 
 const snapshotOf = (dbPath, id) => submissionDataQuery(dbPath, "SELECT layout_snapshot FROM filings WHERE id = ?", [id]).rows[0].layout_snapshot;
@@ -69,7 +69,7 @@ const code = (expected, message) => (err) => {
 };
 
 test("removing Written Arguments from a drafting Writing keeps the rest of its layout, archives the file, and leaves the other Writing alone", async (t) => {
-  const dbPath = await board(t);
+  const { dbPath } = await board(t);
   const first = render(dbPath, 1);
   assert.ok(fileNames(first).includes(WA));
   const dir = dirname(first.documents[0].path);
@@ -93,12 +93,30 @@ test("removing Written Arguments from a drafting Writing keeps the rest of its l
   await assert.rejects(callTool({}, TOOL, { db_path: dbPath, filing_id: 1, remove_companion: "written-arguments" }), code("companion_absent", /has no written-arguments to remove/));
 });
 
+test("an order only the removed Written Arguments deployed is held in reserve, not lost", async (t) => {
+  const f = await board(t);
+  await submissionDataExecute(
+    f.dbPath,
+    "INSERT INTO order_sought (id, proceeding_id, wording) VALUES (2, 1, 'costs of this requisition');" +
+      "INSERT INTO filing_orders (filing_id, order_sought_id, document, ordinal) VALUES (1, 2, 'written_argument', 1);"
+  );
+  const reservesOrder2 = () => {
+    render(f.dbPath, 1);
+    const manifest = JSON.parse(readFileSync(join(f.draft, "Drafting records", "render-manifest-1.json"), "utf-8"));
+    // RESERVE_INVENTORY_DOC: the tag on the reserve inventory's entries, which no document prints.
+    return manifest.inventory.some((e) => e.doc === "Counsel_brief" && e.table === "order_sought" && e.id === 2);
+  };
+  assert.equal(reservesOrder2(), false, "deployed by the Written Arguments while it has them");
+  await callTool({}, TOOL, { db_path: f.dbPath, filing_id: 1, remove_companion: "written-arguments" });
+  assert.equal(reservesOrder2(), true, "held in reserve once they are removed");
+});
+
 for (const [state, dates, said] of [
   ["sent", { filed_on: "2026-11-01" }, /was sent on 2026-11-01/],
   ["retired", { retired_on: "2026-11-02" }, /was retired on 2026-11-02/],
 ]) {
   test(`a ${state} Writing refuses, and its stored layout and the revision are untouched`, async (t) => {
-    const dbPath = await board(t, dates);
+    const { dbPath } = await board(t, dates);
     const before = snapshotOf(dbPath, 1);
     const rev = revision(dbPath);
     await assert.rejects(callTool({}, TOOL, { db_path: dbPath, filing_id: 1, remove_companion: "written-arguments" }), code("writing_not_drafting", said));
