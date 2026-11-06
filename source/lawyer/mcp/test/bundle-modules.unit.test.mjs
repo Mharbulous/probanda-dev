@@ -18,11 +18,15 @@ const DATA_SERVER_INTERNALS = [
   /^src\/dispatch\.ts$/,
 ];
 
+// Each fixed-port page listener answers its own bundle's routes only (src/local-page/ports.ts).
+const HOUSEKEEPING_PAGES = /^src\/housekeeping\/server\.ts$/;
+const LAWYER_PAGES = [/^src\/page-api\/server\.ts$/, /^src\/suggestions\//];
+
 const DENIED = {
-  index: [/^src\/file_ops\/move/],
-  "file-manager-index": [...DATA_SERVER_INTERNALS, /^src\/schema\/(?!(?:file-ops|housekeeping|shared)\.ts$)/],
-  "timecamp-index": DATA_SERVER_INTERNALS,
-  "contacts-calendars-email-index": DATA_SERVER_INTERNALS,
+  index: [/^src\/file_ops\/move/, HOUSEKEEPING_PAGES],
+  "file-manager-index": [...DATA_SERVER_INTERNALS, /^src\/schema\/(?!(?:file-ops|housekeeping|shared)\.ts$)/, ...LAWYER_PAGES],
+  "timecamp-index": [...DATA_SERVER_INTERNALS, HOUSEKEEPING_PAGES, ...LAWYER_PAGES],
+  "contacts-calendars-email-index": [...DATA_SERVER_INTERNALS, HOUSEKEEPING_PAGES, ...LAWYER_PAGES],
 };
 
 /** The source modules with bytes in the entry's bundle. The metafile's top-level `inputs` also lists
@@ -46,4 +50,6 @@ for (const [entry, denied] of Object.entries(DENIED)) {
 
 test("the metafile names modules the way the deny-lists expect", () => {
   assert.ok(modulesIn("index").includes("src/case/backend.ts"));
+  assert.ok(modulesIn("index").includes("src/page-api/server.ts"));
+  assert.ok(modulesIn("file-manager-index").includes("src/housekeeping/server.ts"));
 });
