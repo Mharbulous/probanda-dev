@@ -19,7 +19,7 @@ import {
 import type { WorkBoardEdge, WorkBoardTicket } from "./work-board-ticket.js";
 import { fetchOpenSeeds, type WorkBoardSeed } from "./work-board-seeds.js";
 import { fetchJobActivity } from "./job-activity.js";
-import { activeAt, classify, holdsMaterial, lockLapsed, reachesItself, scopesShare, supersededReason } from "./ticket-category.js";
+import { activeAt, classify, holdsMaterial, lapsesAt, lockLapsed, reachesItself, scopesShare, supersededReason } from "./ticket-category.js";
 import { nowStamp } from "./timings.js";
 import { UNATTENDED_TOKEN_PREFIX } from "./unattended-eligibility.js";
 
@@ -100,10 +100,10 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, rende
   // A job locked before its database held the stamp has none yet: its lock is its last activity.
   const lastActivity = (t: (typeof heldTickets)[number]) => activityById.get(t.id) ?? t.locked_at;
   // A lapsed lock reads as released everywhere below: Ready, Blocked or Bring Forward, holding no
-  // material and no either/or partner, until assign_job takes it (ADR 0015).
-  const proceedingTickets = heldTickets.map((t) =>
-    lockLapsed({ ...t, last_activity_at: lastActivity(t), steps: stepsByTicket.get(t.id) ?? [] }, rendered) ? { ...t, status: "queued" as const, locked_by: null, locked_at: null } : t
-  );
+  // material and no either/or partner, until a page write or assign_job releases it (ADR 0015).
+  const released = <T extends (typeof heldTickets)[number]>(t: T) => ({ ...t, status: "queued" as const, locked_by: null, locked_at: null });
+  const timed = (t: (typeof heldTickets)[number]) => ({ ...t, last_activity_at: lastActivity(t), steps: stepsByTicket.get(t.id) ?? [] });
+  const proceedingTickets = heldTickets.map((t) => (lockLapsed(timed(t), rendered) ? released(t) : t));
   const ticketById = new Map(proceedingTickets.map((t) => [t.id, t]));
   const activeById = new Map(
     rows<{ key: string; value: string }>(dbPath, "SELECT key, value FROM db_meta WHERE key LIKE 'job_active:%'").map((r) => [Number(r.key.slice("job_active:".length)), r.value]),
@@ -131,7 +131,11 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, rende
     const blockedBy = (blockersOf.get(t.id) ?? []).map(edge);
     const conflictPartners = (conflictsOf.get(t.id) ?? []).map(edge);
     const category = classify(t, blockedBy, conflictPartners, today);
+    // A held job's lapse minute and the category it falls to then, for the page to switch to by its own
+    // clock. Only this job switches: a job it holds back catches up at the next page write.
+    const lapses = lapsesAt(timed(t), rendered);
     const ticket: WorkBoardTicket = {
+      ...(lapses === null ? {} : { lapses_at: lapses, category_after_lapse: classify(released(t), blockedBy, conflictPartners, today) }),
       id: t.id,
       title: t.title,
       intent: t.intent,

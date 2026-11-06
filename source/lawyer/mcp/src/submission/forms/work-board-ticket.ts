@@ -94,6 +94,10 @@ export interface WorkBoardTicket {
    * Null unless the job is In progress and the stamp is no earlier than its lock, so an earlier
    * holder's stamp never shows. */
   active_at: string | null;
+  /** On a held job whose lock has not lapsed: the local minute it lapses (ticket-category.ts lapsesAt)
+   * and the category it falls to then, which the page draws once its browser clock passes that minute. */
+  lapses_at?: string;
+  category_after_lapse?: Category;
   /** A merged board only (combined-board.ts): the Writing the job serves, its filing's title, or
    * `Proceeding <id>` for a job with no filing. Absent on a board holding one section. */
   writing?: string;

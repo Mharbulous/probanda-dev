@@ -18,6 +18,25 @@
     var m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(value);
     return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 60000 : null;
   }
+  // This browser's local minute, in the server's stamp form.
+  function localMinute() {
+    var d = new Date();
+    function two(n) { return (n < 10 ? "0" : "") + n; }
+    return d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) + "T" + two(d.getHours()) + ":" + two(d.getMinutes());
+  }
+
+  // A held job whose lapse minute has passed, by this browser's clock, is drawn in the category the
+  // server gave it for after the lapse (ticket-category.ts lapsesAt); the page reloads at the next one.
+  var now = localMinute();
+  var nextLapse = null;
+  data.sections.forEach(function (section) {
+    section.tickets.forEach(function (t) {
+      if (!t.lapses_at) return;
+      if (t.lapses_at <= now) t.category = t.category_after_lapse;
+      else if (nextLapse === null || t.lapses_at < nextLapse) nextLapse = t.lapses_at;
+    });
+  });
+  if (nextLapse !== null) setTimeout(function () { location.reload(); }, (minutesOf(nextLapse) - minutesOf(now)) * 60000);
   // How long before the page's Rendered minute a stamp is, then the stamp itself.
   function ago(value) {
     var now = minutesOf(data.meta.rendered);
@@ -165,11 +184,6 @@
 
     // A step's state (step-state.ts, schema v78): done always wins; a waiting step whose minute has
     // come, by this browser's clock, reads as open again.
-    function localMinute() {
-      var d = new Date();
-      function two(n) { return (n < 10 ? "0" : "") + n; }
-      return d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) + "T" + two(d.getHours()) + ":" + two(d.getMinutes());
-    }
     function stepState(s) {
       if (s.done_at !== null) return "done";
       if (s.status === "waiting") return s.wait_until && s.wait_until.replace(" ", "T").slice(0, 16) > localMinute() ? "waiting" : "open";

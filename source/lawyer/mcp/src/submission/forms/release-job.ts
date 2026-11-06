@@ -9,7 +9,7 @@
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
-import { checkClaim, heldBy } from "./job-activity.js";
+import { RELEASE_SET, checkClaim, heldBy } from "./job-activity.js";
 
 const TOOL = "drafting_data__release_job";
 
@@ -59,7 +59,7 @@ export async function submissionDataReleaseJob(args: ReleaseJobArgs, env: NodeJS
   const guard = holder === null ? heldBy(args.db_path, args.session_token, checkClaim(TOOL, args.db_path, args.ticket_id, args.session_token, args.claim_no)) : { sql: "substr(locked_by, -8) = ? AND rejected_at IS NULL", params: [holder] };
   const written = await submissionDataWriteAll(
     args.db_path,
-    [{ sql: `UPDATE tickets SET status = 'queued', locked_by = NULL, locked_at = NULL WHERE id = ? AND status = 'wip' AND ${guard.sql}`, params: [args.ticket_id, ...guard.params] }],
+    [{ sql: `UPDATE tickets SET ${RELEASE_SET} WHERE id = ? AND status = 'wip' AND ${guard.sql}`, params: [args.ticket_id, ...guard.params] }],
     env
   );
   const changes = written.ok ? written.results[0].changes : written.changes;

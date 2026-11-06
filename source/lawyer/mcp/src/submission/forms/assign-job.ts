@@ -116,7 +116,7 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   const guard = (reopen ? `status = 'completed' AND rejected_at IS NULL${live}` : takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ? AND ${last} = ?` : `(status = 'queued' AND locked_by IS NULL OR ${lapsed}) AND rejected_at IS NULL${live}${notBefore}`) + creator;
   const guardParams = [...(takeover ? [(args.expected_holder as string).trim(), (args.expected_last_activity as string).trim()] : []), ...(creatorHeld ? [args.session_token, args.session_token] : [])];
   const kv = hasTable(args.db_path, "kv_store");
-  const record = kv && (reopen || !takeover) ? [{ sql: reopen ? recordReopenSql(guard) : recordLapseSql(guard), params: [args.ticket_id, ...guardParams] }] : [];
+  const record = kv && (reopen || !takeover) ? [{ sql: reopen ? recordReopenSql(guard) : recordLapseSql(`id = ? AND status = 'wip' AND ${guard}`), params: [args.ticket_id, ...guardParams] }] : [];
   const claim = kv ? [{ sql: nextClaimSql(guard), params: [args.ticket_id, ...guardParams] }] : [];
   const written = await submissionDataWriteAll(
     args.db_path,

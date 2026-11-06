@@ -47,7 +47,7 @@ import { submissionDataApprovePlan, type ApprovePlanArgs } from "./submission/fo
 import { submissionDataTrackSource, type TrackSourceArgs } from "./submission/forms/track-source.js";
 import { submissionDataSetStep, type SetStepArgs } from "./submission/forms/set-step.js";
 import { submissionDataRewriteJob, type RewriteJobArgs } from "./submission/forms/rewrite-job.js";
-import { submissionDataTouchJob, withJobActivity, type JobIdentity, type TouchJobArgs } from "./submission/forms/job-activity.js";
+import { releaseLapsedLocks, submissionDataTouchJob, withJobActivity, type JobIdentity, type TouchJobArgs } from "./submission/forms/job-activity.js";
 import { submissionDataCompleteJob, type CompleteJobArgs } from "./submission/forms/complete-job.js";
 import { submissionDataAttachToBoard, type AttachToBoardArgs } from "./submission/forms/attach-to-board.js";
 import { submissionDataReleaseJob, type ReleaseJobArgs } from "./submission/forms/release-job.js";
@@ -513,10 +513,12 @@ async function renderFiling(args: RenderArgs, context: DispatchContext): Promise
  * identity is the call's client, so the page's header and its to-dos name the same matter. */
 async function pageContext(
   context: DispatchContext,
-  args: PageArgs,
+  args: PageArgs & { db_path?: string; session_token?: string },
   writesPage: boolean
 ): Promise<{ client: ClientContext; todos?: { todos: MatterTodos; ms: number }; dates?: MatterDates }> {
   const client = clientContext(args);
+  // ADR 0015, 2026-11-06 note: a page write first writes the release of every lapsed lock but this session's.
+  if (writesPage && args.db_path !== undefined) await releaseLapsedLocks(args.db_path, args.session_token);
   // ADR 0013, second 2026-10-04 amendment: a filing's linked deadlines are Goal criteria, so every
   // call that builds its section reads them, by the matter_no it was given, and board_summary and
   // board_card agree with the page.

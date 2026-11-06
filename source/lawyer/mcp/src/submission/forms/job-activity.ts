@@ -121,16 +121,33 @@ export function lapsedClause(dbPath: string): string {
   return `(tickets.status = 'wip' AND tickets.locked_by IS NOT NULL AND tickets.rejected_at IS NULL AND ${idleClause(dbPath, LAPSE_AFTER_MINUTES)})`;
 }
 
-/** The statement that records a lapse in the job's history, the kv_store value `lock_lapsed` /
- * `tickets:<id>`: the minute it was taken and the holder tag it was taken from. Its guard is the
- * assigning write's, so it lands exactly when that write takes a lapsed lock. */
-export function recordLapseSql(guard: string): string {
+/** The statement that records a lapse in each matching job's history, the kv_store value `lock_lapsed` /
+ * `tickets:<id>`: the minute it was released and the holder tag it was released from. `where` is the
+ * releasing write's own, so it lands exactly when that write clears a lapsed lock. */
+export function recordLapseSql(where: string): string {
   return (
     "INSERT INTO kv_store (namespace, key, value, updated_at) " +
     `SELECT 'lock_lapsed', 'tickets:' || id, '{"at":"' || ${nowMinuteSql()} || '","from":"' || substr(locked_by, -8) || '"}', strftime('%Y-%m-%dT%H:%M:%fZ', 'now') ` +
-    `FROM tickets WHERE id = ? AND status = 'wip' AND ${guard} ` +
+    `FROM tickets WHERE ${where} ` +
     "ON CONFLICT (namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at"
   );
+}
+
+/** What a release sets on a job's row: back to Ready, unlocked. Plan, steps, scope, proposals, answers
+ * and sources are not touched, and claim_no is raised only by the next assign_job. */
+export const RELEASE_SET = "status = 'queued', locked_by = NULL, locked_at = NULL";
+
+/** Writes the release of every lapsed lock (lapsedClause) but `ownToken`'s, each with its lapse
+ * recorded in its history, before a board page is written (ADR 0015, 2026-11-06 note). Reads first
+ * and writes nothing when no lock has lapsed, so a repeat call writes nothing new. Returns the count released. */
+export async function releaseLapsedLocks(dbPath: string, ownToken: string | undefined, env: NodeJS.ProcessEnv = process.env): Promise<number> {
+  const where = `${lapsedClause(dbPath)} AND locked_by IS NOT ?`;
+  const params = [ownToken ?? null];
+  const [{ n }] = submissionDataQuery(dbPath, `SELECT count(*) AS n FROM tickets WHERE ${where}`, params).rows as unknown as { n: number }[];
+  if (n === 0) return 0;
+  const record = hasTable(dbPath, "kv_store") ? [{ sql: recordLapseSql(where), params }] : [];
+  const written = await submissionDataWriteAll(dbPath, [...record, { sql: `UPDATE tickets SET ${RELEASE_SET} WHERE ${where}`, params }], env);
+  return written.ok ? written.results[record.length].changes : 0;
 }
 
 /** The statement that records a reopen in the job's history, the kv_store value `reopened` /

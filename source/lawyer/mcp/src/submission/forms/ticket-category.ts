@@ -1,6 +1,7 @@
 // Each ticket's board category, and the fields derived per ticket beside it.
 //
-// The category rules live here and only here. The board page draws the category it is given and never
+// The category rules live here and only here. The board page draws the category it is given, or, once
+// its clock passes a held job's given lapse minute, the after-lapse category it is also given. It never
 // derives one, so a session and the practitioner always see the same sort.
 
 import { LAPSE_AFTER_MINUTES } from "./job-activity.js";
@@ -101,4 +102,15 @@ export function lockLapsed(t: Pick<WorkBoardTicket, "status" | "locked_by" | "re
   if (t.status !== "wip" || t.locked_by === null || t.rejected_at !== null) return false;
   const idle = idleMinutes(t, rendered);
   return idle !== null && idle >= LAPSE_AFTER_MINUTES;
+}
+
+/** The local minute (`YYYY-MM-DDTHH:MM`) a held, unshelved job's lock will lapse, when it has not
+ * lapsed at `rendered`; null otherwise. The page draws the job's after-lapse category from then. */
+export function lapsesAt(t: Pick<WorkBoardTicket, "status" | "locked_by" | "rejected_at" | "last_activity_at" | "steps">, rendered: string): string | null {
+  if (t.status !== "wip" || t.locked_by === null || t.rejected_at !== null || lockLapsed(t, rendered)) return null;
+  const since = idleSince(t);
+  if (since === null) return null;
+  const d = new Date((since + LAPSE_AFTER_MINUTES) * 60_000);
+  const two = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}T${two(d.getHours())}:${two(d.getMinutes())}`;
 }
