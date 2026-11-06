@@ -226,16 +226,7 @@ export function readJournal(runDir: string): Map<string, JournalLine> {
   return lines;
 }
 
-/** Writes `text` whole, then flushes it to disk before returning. Fails if the file exists. */
-export function writeNewDurably(path: string, text: string): void {
-  const fd = openSync(path, "wx");
-  try {
-    writeSync(fd, text);
-    fsyncSync(fd);
-  } finally {
-    closeSync(fd);
-  }
-}
+export { writeNewDurably } from "../local-page/durable.js";
 
 /** Appends one line and flushes it to disk. A torn previous line is closed off first. */
 export function appendLineDurably(path: string, line: string): void {

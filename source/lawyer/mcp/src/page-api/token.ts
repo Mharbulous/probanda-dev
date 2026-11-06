@@ -1,100 +1,60 @@
-// The page API's port and its per-page token, shared by the listener (server.ts) and the renders
-// that write the Loose Threads page and the Past suggestions page (suggestions/page.ts).
+// The page API's port and its per-page tokens, shared by the listener (server.ts) and the renders
+// that write the Loose Threads page, the Past suggestions page and the suggestion cards. Thin
+// wrappers over ../local-page/token.ts and ../local-page/ports.ts, which hold the scheme; every
+// token keeps the bytes it had before the move (test/local-page-token.unit.test.mjs).
 //
-// The port is `page_api_port` in the per-device probanda.json (config-path.ts), 47615 when unset.
-// The render embeds the same port it reads here.
-//
-// A page's token is HMAC-SHA256(secret, db_path + "\n" + proceeding_id), hex. The secret is 32
-// random bytes in `page-api.secret` beside probanda.json, created on first need with an exclusive
-// create, so every data server process on the device, and every restart, computes the same token
-// and accepts only a db_path and proceeding a render wrote. Nothing is kept in memory.
+// The port is the lawyer bundle's page port (probanda.json `page_ports.lawyer`, else
+// `page_api_port`, else 47615). The render embeds the same port it reads here.
 
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { existsSync, linkSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-
-import { configPath } from "../config-path.js";
 import { ValidationError } from "../errors.js";
+import { DEFAULT_PAGE_PORTS, PagePortError, pagePort } from "../local-page/ports.js";
+import { secretPath, signTarget, verifyTarget } from "../local-page/token.js";
 
-export const DEFAULT_PAGE_API_PORT = 47615;
-const SECRET_FILE = "page-api.secret";
-const SECRET_BYTES = 32;
+export const DEFAULT_PAGE_API_PORT = DEFAULT_PAGE_PORTS.lawyer;
 
-/** The listener's port: probanda.json's `page_api_port`, else 47615. A value that is not a port is refused. */
+/** The listener's port. A value that is not a port is refused. */
 export function pageApiPort(env: NodeJS.ProcessEnv = process.env): number {
-  const path = configPath(env);
-  if (!existsSync(path)) return DEFAULT_PAGE_API_PORT;
-  const value = (JSON.parse(readFileSync(path, "utf-8")) as Record<string, unknown> | null)?.page_api_port;
-  if (value === undefined || value === null) return DEFAULT_PAGE_API_PORT;
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > 65535) {
-    throw new ValidationError(`${path}: page_api_port must be a whole number from 1 to 65535, got ${JSON.stringify(value)}`, "invalid_page_api_port");
+  try {
+    return pagePort("lawyer", env);
+  } catch (err) {
+    if (err instanceof PagePortError) throw new ValidationError(err.message, err.code);
+    throw err;
   }
-  return value;
 }
 
 /** The secret's path: beside probanda.json. */
 export function pageApiSecretPath(env: NodeJS.ProcessEnv = process.env): string {
-  return join(dirname(configPath(env)), SECRET_FILE);
+  return secretPath(env);
 }
 
-/** The per-device secret, created on first need. The bytes are written to a temp file first and
- * linked into place, which fails if the file exists, so a reader never sees a part-written secret
- * and two processes creating it at once agree on one. */
-function pageApiSecret(env: NodeJS.ProcessEnv): Buffer {
-  const path = pageApiSecretPath(env);
-  if (!existsSync(path)) {
-    mkdirSync(dirname(path), { recursive: true });
-    const temp = `${path}.${process.pid}.${randomBytes(6).toString("hex")}.tmp`;
-    writeFileSync(temp, randomBytes(SECRET_BYTES), { flag: "wx" });
-    try {
-      linkSync(temp, path);
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
-    } finally {
-      unlinkSync(temp);
-    }
-  }
-  const secret = readFileSync(path);
-  if (secret.length !== SECRET_BYTES) throw new Error(`${path} holds ${secret.length} bytes, not ${SECRET_BYTES}; delete it and re-render the page`);
-  return secret;
-}
-
-/** The token a page for this database and proceeding carries. */
+/** The token a page for this database and proceeding carries: HMAC of db_path + "\n" + proceeding_id. */
 export function pageApiToken(dbPath: string, proceedingId: number, env: NodeJS.ProcessEnv = process.env): string {
-  return createHmac("sha256", pageApiSecret(env)).update(`${dbPath}\n${proceedingId}`).digest("hex");
+  return signTarget("proceeding", `${dbPath}\n${proceedingId}`, env);
 }
 
 /** Whether `token` is the one pageApiToken gives, compared in constant time. */
 export function pageApiTokenValid(token: string, dbPath: string, proceedingId: number, env: NodeJS.ProcessEnv = process.env): boolean {
-  const expected = Buffer.from(pageApiToken(dbPath, proceedingId, env), "utf-8");
-  const given = Buffer.from(token, "utf-8");
-  return given.length === expected.length && timingSafeEqual(given, expected);
+  return verifyTarget("proceeding", `${dbPath}\n${proceedingId}`, token, env);
 }
 
-/** The token the Past suggestions page carries for one suggestion's Withdraw button:
- * HMAC-SHA256(secret, "suggestion\n" + record id), hex. A db_path is absolute, so it never collides. */
+/** The token the Past suggestions page carries for one suggestion's Withdraw button. */
 export function pageApiSuggestionToken(recordId: string, env: NodeJS.ProcessEnv = process.env): string {
-  return createHmac("sha256", pageApiSecret(env)).update(`suggestion\n${recordId}`).digest("hex");
+  return signTarget("suggestion", recordId, env);
 }
 
 /** Whether `token` is the one pageApiSuggestionToken gives, compared in constant time. */
 export function pageApiSuggestionTokenValid(token: string, recordId: string, env: NodeJS.ProcessEnv = process.env): boolean {
-  const expected = Buffer.from(pageApiSuggestionToken(recordId, env), "utf-8");
-  const given = Buffer.from(token, "utf-8");
-  return given.length === expected.length && timingSafeEqual(given, expected);
+  return verifyTarget("suggestion", recordId, token, env);
 }
 
-/** The token a page's link carries for opening one file: HMAC-SHA256(secret, "file\n" + path), hex. A link
- * opens only the file a render named, and its prefix keeps it apart from every other token. */
+/** The token a page's link carries for opening one file. A link opens only the file a render named. */
 export function pageApiFileToken(path: string, env: NodeJS.ProcessEnv = process.env): string {
-  return createHmac("sha256", pageApiSecret(env)).update(`file\n${path}`).digest("hex");
+  return signTarget("file", path, env);
 }
 
 /** Whether `token` is the one pageApiFileToken gives, compared in constant time. */
 export function pageApiFileTokenValid(token: string, path: string, env: NodeJS.ProcessEnv = process.env): boolean {
-  const expected = Buffer.from(pageApiFileToken(path, env), "utf-8");
-  const given = Buffer.from(token, "utf-8");
-  return given.length === expected.length && timingSafeEqual(given, expected);
+  return verifyTarget("file", path, token, env);
 }
 
 /** The link that opens one file through the listener. A `file:///` link does nothing on a page shown from a
@@ -103,15 +63,12 @@ export function pageApiFileUrl(path: string, env: NodeJS.ProcessEnv = process.en
   return `http://127.0.0.1:${pageApiPort(env)}/files/open?path=${encodeURIComponent(path)}&token=${pageApiFileToken(path, env)}`;
 }
 
-/** The token a suggestion card (suggestions/card.ts) and its mockup page carry for that card's buttons:
- * HMAC-SHA256(secret, "card\n" + card id), hex. Its prefix keeps it apart from a withdraw token. */
+/** The token a suggestion card (suggestions/card.ts) and its mockup page carry for that card's buttons. */
 export function pageApiCardToken(cardId: string, env: NodeJS.ProcessEnv = process.env): string {
-  return createHmac("sha256", pageApiSecret(env)).update(`card\n${cardId}`).digest("hex");
+  return signTarget("card", cardId, env);
 }
 
 /** Whether `token` is the one pageApiCardToken gives, compared in constant time. */
 export function pageApiCardTokenValid(token: string, cardId: string, env: NodeJS.ProcessEnv = process.env): boolean {
-  const expected = Buffer.from(pageApiCardToken(cardId, env), "utf-8");
-  const given = Buffer.from(token, "utf-8");
-  return given.length === expected.length && timingSafeEqual(given, expected);
+  return verifyTarget("card", cardId, token, env);
 }
