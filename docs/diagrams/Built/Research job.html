@@ -65,42 +65,39 @@ flowchart TD
     DRAFT["/draft"]
     ATF["/apply-to-facts"]
     VL["/verify-law"]
-
-    subgraph GATE["/legal-research: the gate runs every step"]
-        DD["/drafting-data<br/>job, plan, memo"]
-        WQO["westlaw-query-optimizer"]
-        LG["law-getter"]
-        CC["citation-checker"]
-        RA["research-agent<br/>the only one that states law"]
-        MR["memo-reviewer"]
-    end
-
     JP["/job-planning"]
+
+    LR["/legal-research<br/>the gate: runs every step"]
+    DD["/drafting-data<br/>job, plan, memo"]
+    WQO["westlaw-query-optimizer"]
+    LG["law-getter"]
+    CC["citation-checker"]
+    RA["research-agent<br/>the only one that states law"]
+    MR["memo-reviewer"]
     RT["research-triage"]
     MD["/matter-data"]
     ING["/ingest"]
     MEMO[("Legal memo<br/>in the issue's 6. LAW folder")]
 
-    Q --> GATE
-    WORK -->|"research job"| GATE
-    DRAFT -->|"question of law"| GATE
-    ATF -->|"proposition"| GATE
-    VL -->|"claim fails"| GATE
+    Q --> LR
+    WORK -->|"research job"| LR
+    DRAFT -->|"question of law"| LR
+    ATF -->|"proposition"| LR
+    VL -->|"claim fails"| LR
 
-    DD -->|"2 query"| WQO
+    LR -->|"1 write the job"| DD
+    DD -->|"2 draft the query"| WQO
     WQO -->|"3 retrieve"| LG
     LG -->|"4 note up"| CC
-    CC -->|"5 write"| RA
+    CC -->|"5 write the memo"| RA
     RA -->|"6 review"| MR
-    MR -->|"7 save"| DD
-    DD --> MEMO
-    MEMO -->|"8 fetch missing"| LG
-    MEMO -->|"9 add to case data"| ING
+    MR -->|"7 save, via /drafting-data"| MEMO
+    MEMO -->|"8 fetch missing decisions<br/>9 add to case data"| ING
     ING --> MD
-    DRAFT -->|"10 complete job"| DD
+    DRAFT -->|"10 complete the job"| DD
 
     JP -.->|"plan job"| DD
-    GATE -.->|"board mode"| RT
+    LR -.->|"board mode"| RT
     LG -.->|"held copy?"| MD
     RA -.->|"needs more research"| WQO
     MR -.->|"send back"| RA
@@ -111,11 +108,10 @@ flowchart TD
     classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
     classDef done fill:#e2f3e6,stroke:#2f7d46,color:#1d2733
     class Q source
-    class VL,WQO,RT,LG,CC,RA,MR researcher
+    class LR,VL,WQO,RT,LG,CC,RA,MR researcher
     class WORK,DRAFT,ATF,DD,JP litigator
     class ING,MD lawyer
     class MEMO done
-    style GATE fill:#f6f9fd,stroke:#2563a8,stroke-dasharray:5 4
 </pre>
     </div>
   </figure>
