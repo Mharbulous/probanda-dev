@@ -68,3 +68,19 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 - Confirm the template quote above at HEAD.
 - Read `agents/memo-reviewer.md`, `agents/research-agent.md` and protocol Steps 2, 4 and 6 for any existing pairing rule, and report whether one existed and failed or none existed.
+
+## 11. Verification against HEAD (2026-11-06, at 5e5f5847)
+
+| Claim | Result | Evidence at HEAD |
+|---|---|---|
+| Template's Application rule quote | Confirmed verbatim | `.claude/skills/shared/research-memo-template.md` lines 147-149 |
+| Template's "Each item supports a sentence of a Conclusion" | Confirmed | same file, lines 124-125 |
+| memo-reviewer's keys are `verdict`, `required`, `out_of_scope`, `identifiers`, `findings` | Confirmed | `source/researcher/agents/memo-reviewer.md` Output; `.claude/skills/shared/legal-research.md` line 413 |
+| `findings` covers only an item that is not one finding | Confirmed | `memo-reviewer.md` Review step 4 |
+| Gate's `findings` send-back bullet | Confirmed: "to rewrite each as one finding, or cut the item." | `legal-research.md` line 420 |
+| Pairing rule in `memo-reviewer.md` | None existed | no mention of pairing or of a case's tag combination |
+| Pairing rule in `research-agent.md` | None existed | the agent names no `fact:` or `law-applied:` tag |
+| Pairing rule in protocol Steps 2, 4 and 6 | None existed | `legal-audit-protocol.md`: Step 2 holds the recital rule (lines 217-223), Step 4 line 289 tells the agent to rewrite each `findings` item as one finding or cut it; no step names a case's tag combination |
+| Spec's paths | Differ: the reviewer and research agent are under `source/researcher/agents/`, the template, gate and protocol under `.claude/skills/shared/`, the tests under `.claude/skills/legal-research/tests/` | |
+
+Result: no pairing rule existed anywhere, so none failed. The design stands. One addition to §7: the protocol's Step 4 `Review:` sentence (line 289) mirrors the gate's send-back bullet and is widened with it.
