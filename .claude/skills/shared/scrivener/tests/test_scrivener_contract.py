@@ -83,6 +83,18 @@ class AgentTests(unittest.TestCase):
         self.assertIn("a PC path in the matter folder", agent)
         self.assertNotIn("device_stage_files", agent)
 
+    def test_one_scrivener_per_writing(self):
+        agent = AGENT.read_text(encoding="utf-8")
+        self.assertIn("change of form", agent)
+        self.assertIn("unrelated_writing", agent)
+        refs = SKILLS / "draft" / "references"
+        letters = (refs / "letters.md").read_text(encoding="utf-8")
+        self.assertIn("`SendMessage`", letters)
+        self.assertIn("returns `status: unrelated_writing`, never retrying that agent", letters)
+        for path in (refs / "letters.md", refs / "source-trace.md"):
+            with self.subTest(file=path.name):
+                self.assertNotRegex(path.read_text(encoding="utf-8"), r"spawn it (again|with)")
+
     def test_without_prejudice_is_a_mode_not_a_capacity(self):
         agent = AGENT.read_text(encoding="utf-8")
         self.assertIn("- `mode`: `without-prejudice`", agent)
