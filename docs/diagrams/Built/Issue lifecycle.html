@@ -24,6 +24,7 @@
 body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--body); }
 main { max-width: 1500px; margin: 0 auto; padding: 28px 20px 48px; display: grid; gap: 20px; }
 h1 { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 600; text-wrap: balance; }
+h2 { margin: 12px 0 0; font-size: 20px; line-height: 1.3; font-weight: 600; }
 p { margin: 0; max-width: 70ch; }
 code { font: 500 0.92em var(--mono); }
 figure { margin: 0; display: grid; gap: 12px; }
@@ -35,6 +36,8 @@ figcaption { display: grid; gap: 4px; }
 .chart { overflow-x: auto; background: #fff; border: 1px solid var(--rule); border-radius: 6px; padding: 16px; }
 pre.mermaid { margin: 0; font-family: var(--body); }
 pre.mermaid svg { display: block; margin: 0 auto; }
+/* Mermaid caps each label at 200 px and wraps inside words; labels here break only at <br/>. */
+pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap !important; }
 .note { font-size: 14px; color: var(--muted); max-width: 90ch; }
 .note ul { margin: 4px 0; padding-left: 20px; }
 </style>
@@ -42,14 +45,15 @@ pre.mermaid svg { display: block; margin: 0 auto; }
 <body>
 <main>
   <figure class="diagram" id="issue-lifecycle"
-          data-based-on-commit="d06e50fa26ec0e534acabab63cc1943a61fe0e3c"
-          data-updated="2026-11-05T01:34:00-07:00">
+          data-based-on-commit="74a518fb63327079bba2cbb95fe9893c9dced486"
+          data-updated="2026-11-06T10:09:00-07:00">
     <figcaption>
       <h1>The life of a probanda-dev issue</h1>
-      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/d06e50fa26ec0e534acabab63cc1943a61fe0e3c"><code>d06e50fa</code></a> on main · Last updated 2026-11-05 01:34 -07:00</p>
+      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/74a518fb63327079bba2cbb95fe9893c9dced486"><code>74a518fb</code></a> on main · Last updated 2026-11-06 10:09 -07:00</p>
     </figcaption>
     <p>Every issue passes through triage, which labels its state and where the work can run. A label then decides who works on it next.</p>
     <p>The queue stops only when no issues are left, when only issues needing a person are left, when only <code>local</code> issues are left while the PC is unavailable, or for a mix of the last two.</p>
+    <p>The life is drawn in five stages. A dashed rounded box links to another stage: click it to jump there.</p>
     <div class="legend" aria-label="Colour key">
       <span><i style="background:#eef1f5;border-color:#5b6675"></i>How an issue begins</span>
       <span><i style="background:#e3eefb;border-color:#2563a8"></i>Runs in the cloud, unattended</span>
@@ -57,95 +61,207 @@ pre.mermaid svg { display: block; margin: 0 auto; }
       <span><i style="background:#fdf0d5;border-color:#b7791f"></i>Needs the developer</span>
       <span><i style="background:#e2f3e6;border-color:#2f7d46"></i>Finished</span>
       <span><i style="background:#eceff2;border-color:#8a94a0"></i>Parked or left alone</span>
+      <span><i style="background:#fff;border-color:#55616f;border-style:dashed;border-radius:8px"></i>Link to another stage</span>
     </div>
+
+    <h2 id="triage">1. Triage</h2>
     <div class="chart">
 <pre class="mermaid">
 flowchart TD
     A1["The developer or a session opens an issue"]
     A2["A scheduled test run fails<br/>data-mcp-tests: one issue per failing file<br/>skills-python-tests: one per failing folder<br/>already open: a comment instead"]
     A3["A suggestion is saved<br/>/intake-suggestions files it<br/>labels: suggestion, needs-triage, lane"]
+    IN1(["from 5. needs-triage"])
     T0["Triage starts<br/>event: issue opened<br/>backstop: nightly sweep"]
     T1{"Is it triage's to take?"}
     T2["Run red tests against main<br/>suggestions: repeat check and fix-planner first<br/>Write the Agent Brief"]
     T3{"Which state and location?"}
+    E0["Left alone<br/>closed, PR, withdrawn, wayfinder<br/>sweep: already labelled or briefed"]
+    E1["Closed as wontfix"]
+    W1["needs-info<br/>waits for the reporter<br/>nothing picks it up automatically"]
+    O1H(["to 2. ready-for-human"])
+    O1C(["to 3. ready-for-agent + cloud"])
+    O1L(["to 3. ready-for-agent + local"])
+
+    A1 --> T0
+    A2 -->|"filed with no labels"| T0
+    A3 -->|"opening it starts triage"| T0
+    IN1 --> T0
+    T0 --> T1
+    T1 -->|"no"| E0
+    T1 -->|"yes"| T2
+    T2 --> T3
+    T3 -->|"not a suggestion:<br/>already works, or no problem"| E1
+    T3 -->|"reporter's facts missing"| W1
+    T3 -->|"always for a suggestion,<br/>else a reason on the closed list"| O1H
+    T3 -->|"agent can finish, cloud"| O1C
+    T3 -->|"agent can finish, local"| O1L
+
+    classDef source fill:#eef1f5,stroke:#5b6675,color:#1d2733
+    classDef cloud fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef done fill:#e2f3e6,stroke:#2f7d46,color:#1d2733
+    classDef parked fill:#eceff2,stroke:#8a94a0,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class A1,A2,A3 source
+    class T0,T1,T2,T3 cloud
+    class E1 done
+    class E0,W1 parked
+    class IN1,O1H,O1C,O1L link
+    click IN1 href "#handback"
+    click O1H href "#decision"
+    click O1C href "#pick"
+    click O1L href "#pick"
+</pre>
+    </div>
+
+    <h2 id="decision">2. The developer's decision</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    IN2T(["from 1. Triage"])
+    IN2B(["from 5. Hand back"])
     H0["ready-for-human<br/>one open decision each"]
     H1["The developer runs /hitl-triage<br/>and answers each decision"]
     H2["New brief posted<br/>relabelled ready-for-agent on the developer's yes"]
     HN["Implement it now<br/>suggestions only, built in this session"]
+    E2["Closed as not planned"]
+    O2C(["to 3. ready-for-agent + cloud"])
+    O2L(["to 3. ready-for-agent + local"])
+    O2P(["to 4. Push to main"])
+
+    IN2T --> H0
+    IN2B --> H0
+    H0 --> H1
+    H1 -->|"no, or all items declined"| E2
+    H1 -->|"some unanswered, or leave it"| H0
+    H1 -->|"go ahead"| H2
+    H2 -->|"label trigger"| O2C
+    H2 -->|"label trigger, and /hitl-triage<br/>starts the PC task"| O2L
+    H2 -->|"the developer chooses"| HN
+    HN --> O2P
+
+    classDef human fill:#fdf0d5,stroke:#b7791f,color:#1d2733
+    classDef done fill:#e2f3e6,stroke:#2f7d46,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class H0,H1,H2,HN human
+    class E2 done
+    class IN2T,IN2B,O2C,O2L,O2P link
+    click IN2T href "#triage"
+    click IN2B href "#handback"
+    click O2C href "#pick"
+    click O2L href "#pick"
+    click O2P href "#gate"
+</pre>
+    </div>
+
+    <h2 id="pick">3. Queue and pick</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    IN3C(["from 1. Triage or 2. Decision"])
+    IN3L(["from 1. Triage, 2. Decision<br/>or 4. Swap to local"])
+    IN3P(["from 4. Push to main"])
     QC["ready-for-agent + cloud"]
     QL["ready-for-agent + local"]
     IC["Cloud implementer<br/>cloud lock on #189"]
     IL["Local implementer<br/>own clone, local lock on #189<br/>started as in Local implementer start"]
     P["Pick and claim the next issue<br/>maintainer, then user, then AI<br/>lowest number first<br/>claim refused or blocked: pick again"]
     QE["None takeable<br/>release the lock<br/>cloud run: list once more<br/>nothing left: stop"]
-    G{"Can this lane's gate pass it?"}
-    B["Build to the brief<br/>suggestions: approved items only<br/>run the checks, then release"]
-    SW["Swap the cloud label for local"]
-    HB["Hand back<br/>choose_issue.py handback"]
-    NT["needs-triage<br/>the same run rewrites the brief<br/>backstop: nightly sweep"]
-    L["Push to main<br/>comment the SHA and results<br/>close the issue"]
-    E0["Left alone<br/>closed, PR, withdrawn, wayfinder<br/>sweep: already labelled or briefed"]
-    E1["Closed as wontfix"]
-    E2["Closed as not planned"]
-    E4["Fixed and closed"]
-    W1["needs-info<br/>waits for the reporter<br/>nothing picks it up automatically"]
+    O3G(["to 4. Gate"])
 
-    A1 --> T0
-    A2 -->|"filed with no labels"| T0
-    A3 -->|"opening it starts triage"| T0
-    T0 --> T1
-    T1 -->|"no"| E0
-    T1 -->|"yes"| T2
-    T2 --> T3
-    T3 -->|"not a suggestion: already works, or no problem"| E1
-    T3 -->|"reporter's facts missing"| W1
-    T3 -->|"always for a suggestion, else a reason on the closed list"| H0
-    T3 -->|"agent can finish, cloud"| QC
-    T3 -->|"agent can finish, local"| QL
-    H0 --> H1
-    H1 -->|"no, or all items declined"| E2
-    H1 -->|"some unanswered, or leave it"| H0
-    H1 -->|"go ahead"| H2
-    H2 -->|"label trigger"| QC
-    H2 -->|"label trigger, and /hitl-triage starts the PC task"| QL
-    H2 -->|"the developer chooses"| HN
-    HN --> L
+    IN3C --> QC
+    IN3L --> QL
     QC -->|"at once after triage or a label<br/>backstop: daily routine"| IC
     QL -->|"see Local implementer start"| IL
     IC --> P
     IL --> P
-    P -->|"an issue"| G
+    IN3P -.->|"cloud run: next issue<br/>local run: exits, the local start<br/>starts the next session"| P
+    P -->|"an issue"| O3G
     P -->|"none"| QE
-    G -->|"yes"| B
-    G -->|"cloud gate: Windows, a browser,<br/>practitioner data or a secret"| SW
-    G -->|"either gate: a person, public/, a minor version<br/>with no go-ahead, a migration, COMMANDMENTS.md<br/>local gate also: a browser, a write under .claude/"| HB
-    SW --> QL
-    B -->|"cloud run: failed check, stopped build or merge conflict"| SW
-    B -->|"local run: same failures<br/>either lane: minor with no go-ahead"| HB
-    B -->|"every red test already passes"| E1
-    B -->|"checks pass"| L
-    L --> E4
-    L -.->|"cloud run: next issue<br/>local run: exits, the local start starts the next session"| P
-    HB -->|"closed-list reason, suggestion,<br/>or second hand-back"| H0
-    HB -->|"first hand-back, any other reason"| NT
-    NT --> T0
 
-    classDef source fill:#eef1f5,stroke:#5b6675,color:#1d2733
     classDef cloud fill:#e3eefb,stroke:#2563a8,color:#1d2733
     classDef pc fill:#efe8fb,stroke:#6b46b0,color:#1d2733
-    classDef human fill:#fdf0d5,stroke:#b7791f,color:#1d2733
-    classDef done fill:#e2f3e6,stroke:#2f7d46,color:#1d2733
-    classDef parked fill:#eceff2,stroke:#8a94a0,color:#1d2733
-    class A1,A2,A3 source
-    class T0,T1,T2,T3,QC,IC,P,QE,G,B,SW,HB,NT,L cloud
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class QC,IC,P,QE cloud
     class QL,IL pc
-    class H0,H1,H2,HN human
-    class E1,E2,E4 done
-    class E0,W1 parked
+    class IN3C,IN3L,IN3P,O3G link
+    click IN3C href "#triage"
+    click IN3L href "#gate"
+    click IN3P href "#gate"
+    click O3G href "#gate"
 </pre>
     </div>
+
+    <h2 id="gate">4. Gate, build and land</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    IN4G(["from 3. Pick: an issue"])
+    IN4L(["from 2. Implement it now"])
+    G{"Can this lane's gate pass it?"}
+    B["Build to the brief<br/>suggestions: approved items only<br/>run the checks, then release"]
+    SW["Swap the cloud label for local"]
+    O4HB(["to 5. Hand back"])
+    L["Push to main<br/>comment the SHA and results<br/>close the issue"]
+    E1B["Closed as wontfix"]
+    E4["Fixed and closed"]
+    O4QL(["to 3. ready-for-agent + local"])
+    O4P(["to 3. Pick"])
+
+    IN4G --> G
+    G -->|"yes"| B
+    G -->|"cloud gate: Windows, a browser,<br/>practitioner data or a secret"| SW
+    G -->|"either gate: a person, public/,<br/>a minor version with no go-ahead,<br/>a migration, COMMANDMENTS.md<br/>local gate also: a browser,<br/>a write under .claude/"| O4HB
+    B -->|"cloud run: failed check,<br/>stopped build or merge conflict"| SW
+    B -->|"local run: same failures<br/>either lane: minor with no go-ahead"| O4HB
+    B -->|"every red test<br/>already passes"| E1B
+    B -->|"checks pass"| L
+    IN4L --> L
+    SW --> O4QL
+    L --> E4
+    L -.-> O4P
+
+    classDef cloud fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef done fill:#e2f3e6,stroke:#2f7d46,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class G,B,SW,L cloud
+    class E1B,E4 done
+    class IN4G,IN4L,O4QL,O4P,O4HB link
+    click IN4G href "#pick"
+    click IN4L href "#decision"
+    click O4QL href "#pick"
+    click O4P href "#pick"
+    click O4HB href "#handback"
+</pre>
+    </div>
+
+    <h2 id="handback">5. Hand back</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    IN5(["from 4. the gate or the build"])
+    HB["Hand back<br/>choose_issue.py handback"]
+    NT["needs-triage<br/>the same run rewrites the brief<br/>backstop: nightly sweep"]
+    O5H(["to 2. ready-for-human"])
+    O5T(["to 1. Triage starts"])
+
+    IN5 --> HB
+    HB -->|"closed-list reason, suggestion,<br/>or second hand-back"| O5H
+    HB -->|"first hand-back,<br/>any other reason"| NT
+    NT --> O5T
+
+    classDef cloud fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class HB,NT cloud
+    class IN5,O5H,O5T link
+    click IN5 href "#gate"
+    click O5H href "#decision"
+    click O5T href "#triage"
+</pre>
+    </div>
+
     <div class="note">
-      <p>Pick to push is one procedure shared by both implementers, so it is drawn once, in blue, wherever a given run happens. What starts the local implementer is drawn in <a href="Local implementer start.html">Local implementer start</a>. Not drawn:</p>
+      <p>Pick to push is one procedure shared by both implementers, so it is drawn once, in blue, in stages 3 to 5, wherever a given run happens. What starts the local implementer is drawn in <a href="Local implementer start.html">Local implementer start</a>. Not drawn:</p>
       <ul>
         <li>Each lane's gate is the full list in <code>implement-queue.md</code>.</li>
         <li>In a cloud run, every outcome returns to Pick, not only the dashed one. A local run exits after one issue, whatever the outcome.</li>
@@ -163,7 +279,7 @@ flowchart TD
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
 <script>
   mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: "neutral",
-    flowchart: { nodeSpacing: 30, rankSpacing: 45, useMaxWidth: true, htmlLabels: true }, themeVariables: { fontFamily: "Segoe UI, system-ui, sans-serif", fontSize: "14px" } });
+    flowchart: { nodeSpacing: 40, rankSpacing: 55, useMaxWidth: false, htmlLabels: true }, themeVariables: { fontFamily: "Segoe UI, system-ui, sans-serif", fontSize: "16px" } });
   mermaid.run({ querySelector: "pre.mermaid" });
 </script>
 </body>
