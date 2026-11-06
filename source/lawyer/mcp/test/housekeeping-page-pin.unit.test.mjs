@@ -47,10 +47,11 @@ const proposal = {
 };
 const approval = { run_id: proposal.run_id, approved_at: "2026-09-24T21:00:00.000Z", rows: [{ row_id: "file", approve: true }] };
 
+// Re-pinned 2026-11-06: the page's script retries Submit once on a network error (local-page move).
 test("the approval page renders byte-identically to the inline page.ts it replaced", () => {
-  assertSha256Pin(renderApprovalPage(proposal, null), "954784495e70b3ec565547586e4a4e821fa992e9b4862e2f40d909fa94c252c4", "renderApprovalPage(open)");
-  assertSha256Pin(renderApprovalPage(proposal, approval), "975cc5a6e5cfe07b9c0efc8e44f2e1164c07fb19d42ce6db3758dba40669f519", "renderApprovalPage(approved)");
-  assertSha256Pin(renderApprovalPage({ ...proposal, matter_root: "/" }, null), "a0dea13499dc60d4ea5775d815e40c2acb413a871093d95722904589e89c0196", "renderApprovalPage(root matter)");
+  assertSha256Pin(renderApprovalPage(proposal, null), "046b4cf5d4faeb2e8d610d6549cb60583f3fda58e1d1df03f6d3770cdf265d13", "renderApprovalPage(open)");
+  assertSha256Pin(renderApprovalPage(proposal, approval), "682ea3097b07f2e2a891b37b0a208b9fd3c7e613dcfb660c0756773e719986fa", "renderApprovalPage(approved)");
+  assertSha256Pin(renderApprovalPage({ ...proposal, matter_root: "/" }, null), "08f61d900f53350308acace453322d1c21c6b6b82b5eea242aff2925ee9525d8", "renderApprovalPage(root matter)");
 });
 
 test("the simple pages render byte-identically to the inline page.ts they replaced", () => {

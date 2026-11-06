@@ -3,6 +3,7 @@
   var data = JSON.parse(document.getElementById("hk-data").textContent);
   var P = data.proposal, A = data.approval, GROUPS = data.groups, INFO = data.info;
   var APPROVED = "Approved. You can go back to Claude.";
+  var UNREACHABLE = "The approval could not be sent, so nothing was approved. Go back to Claude and ask it to show this page again.";
   var base = location.pathname.replace(/\/+$/, "");
   var approved = !!A;
   var state = {}, views = [], app = document.getElementById("app");
@@ -173,11 +174,20 @@
     nLeave.textContent = String(decidable.length - n);
     if (approved) { button.style.display = "none"; message.className = "msg done"; message.textContent = APPROVED; }
   }
+  // A network error is retried once after 3 s: the gap while another Claude session's process
+  // takes the page's port over. A reply from the server, even a refusal, is never retried.
+  function postApproval(body, retried) {
+    return fetch(base + "/approve", { method: "POST", headers: { "Content-Type": "application/json" }, body: body })
+      .catch(function () {
+        if (retried) throw new Error(UNREACHABLE);
+        return new Promise(function (resolve) { setTimeout(resolve, 3000); }).then(function () { return postApproval(body, true); });
+      });
+  }
   // Always enabled: submitting with nothing approved posts rows: [], a valid approval (spec §B8.3).
   button.addEventListener("click", function () {
     var rows = decidable.filter(function (r) { return state[r.row_id]; }).map(function (r) { return { row_id: r.row_id, approve: true }; });
     button.disabled = true; message.className = "msg"; message.textContent = "Saving\u2026";
-    fetch(base + "/approve", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ run: P.run_id, rows: rows }) })
+    postApproval(JSON.stringify({ run: P.run_id, rows: rows }), false)
       .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
       .then(function (out) {
         if (!out.ok) throw new Error(out.body && out.body.error || "The approval was not saved.");
