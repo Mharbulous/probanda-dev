@@ -1,4 +1,4 @@
-// build-stamp: c5483d8a7096
+// build-stamp: 4818593f8ca7
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15856,7 +15856,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "c5483d8a7096";
+var BUILD_STAMP = false ? null : "4818593f8ca7";
 
 // src/local-page/listener.ts
 import { createServer, get } from "node:http";
@@ -15963,6 +15963,7 @@ async function startPageListener(options) {
   let held = false;
   let stopped = false;
   let warnedBusy = false;
+  let failure = null;
   let retry;
   const server = createServer((req, res) => {
     route(req, res, options).catch((err) => {
@@ -15995,11 +15996,13 @@ async function startPageListener(options) {
       retry.unref();
       return;
     }
+    failure = err;
     log(`${tag} listener off: ${err.message}`);
   }
   return {
     port: fixed ? wanted : server.address().port,
     holding: () => held && server.listening,
+    failure: () => failure,
     close: () => {
       stopped = true;
       if (retry) clearTimeout(retry);

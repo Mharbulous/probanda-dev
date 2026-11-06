@@ -1,4 +1,4 @@
-// build-stamp: c8c40a4193fe
+// build-stamp: 0d1bb6e9304b
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15627,7 +15627,7 @@ function housekeepingToolDefinitions() {
     },
     {
       name: "housekeeping__serve_page",
-      description: "Serve a run's approval page on 127.0.0.1 and return its `url` for the practitioner (Ctrl+click opens it). The run must be the matter's newest run with a valid proposal.json (else `stale_run` or `invalid_proposal`). Serving invalidates every earlier page link for the matter in this session, so an old tab cannot approve. The link stops working when a newer run is served or the session ends. The page's Submit writes approval.json. Returns {url, run_id, rows, approved, warning?}: `warning: \"older_holder\"` when another session's server on another build holds the page port and so answers the link. Fails `page_port_taken` when the page port is held by something that is not Probanda's page server. Then call housekeeping__wait_approval.",
+      description: "Serve a run's approval page on 127.0.0.1 and return its `url` for the practitioner (Ctrl+click opens it). The run must be the matter's newest run with a valid proposal.json (else `stale_run` or `invalid_proposal`). Serving invalidates every earlier page link for the matter, from any session, so an old tab cannot approve. The link stops working when a newer run is served for the matter (from any session), or after 30 days. The page's Submit writes approval.json. Returns {url, run_id, rows, approved, warning?}: `warning: \"older_holder\"` when another session's server on a different version of Probanda holds the page port and so answers the link. Fails `page_port_taken` when the page port is held by something that is not Probanda's page server, or cannot be listened on (the message names the error). Then call housekeeping__wait_approval.",
       inputSchema: {
         type: "object",
         properties: matterRun,
@@ -16331,7 +16331,7 @@ import { readFileSync as readFileSync3 } from "node:fs";
 
 // src/housekeeping/run-dir.ts
 import { randomBytes as randomBytes2 } from "node:crypto";
-import { closeSync as closeSync2, existsSync as existsSync3, fsyncSync as fsyncSync2, mkdirSync, openSync as openSync2, readdirSync as readdirSync3, readFileSync as readFileSync2, realpathSync as realpathSync3, statSync as statSync2, writeSync as writeSync2 } from "node:fs";
+import { closeSync, existsSync as existsSync3, fsyncSync, mkdirSync, openSync, readdirSync as readdirSync3, readFileSync as readFileSync2, realpathSync as realpathSync3, statSync as statSync2, writeSync } from "node:fs";
 import { win32 as pathWin324 } from "node:path";
 
 // src/status-file.ts
@@ -16644,18 +16644,6 @@ var Checker = class {
   }
 };
 
-// src/local-page/durable.ts
-import { closeSync, fsyncSync, openSync, writeSync } from "node:fs";
-function writeNewDurably(path, text2) {
-  const fd = openSync(path, "wx");
-  try {
-    writeSync(fd, text2);
-    fsyncSync(fd);
-  } finally {
-    closeSync(fd);
-  }
-}
-
 // src/housekeeping/run-dir.ts
 var RUN_ID_RE = /^\d{8}-\d{6}(?:\d{3})?-[0-9a-f]{4}$/;
 var PROPOSAL = "proposal.json";
@@ -16802,12 +16790,12 @@ function appendLineDurably(path, line) {
     const text2 = readFileSync2(path, "utf-8");
     if (text2.length && !text2.endsWith("\n")) prefix = "\n";
   }
-  const fd = openSync2(path, "a");
+  const fd = openSync(path, "a");
   try {
-    writeSync2(fd, prefix + line + "\n");
-    fsyncSync2(fd);
+    writeSync(fd, prefix + line + "\n");
+    fsyncSync(fd);
   } finally {
-    closeSync2(fd);
+    closeSync(fd);
   }
 }
 function writeReplacing(path, text2) {
@@ -16937,7 +16925,7 @@ function stamp(d) {
 }
 
 // src/file_ops/move.ts
-import { closeSync as closeSync3, lstatSync as lstatSync2, mkdirSync as mkdirSync4, openSync as openSync3, readdirSync as readdirSync8, realpathSync as realpathSync6, renameSync as renameSync3, statSync as statSync6, unlinkSync as unlinkSync3 } from "node:fs";
+import { closeSync as closeSync2, lstatSync as lstatSync2, mkdirSync as mkdirSync4, openSync as openSync2, readdirSync as readdirSync8, realpathSync as realpathSync6, renameSync as renameSync3, statSync as statSync6, unlinkSync as unlinkSync3 } from "node:fs";
 import { win32 as pathWin329 } from "node:path";
 
 // src/housekeeping/resolve.ts
@@ -17680,7 +17668,7 @@ function fileOpsMove(matterRoot, source, destination, createFolders = [], draftU
   const claim = !sameFile(src, dest);
   if (claim) {
     try {
-      closeSync3(openSync3(dest, "wx"));
+      closeSync2(openSync2(dest, "wx"));
     } catch (err) {
       if (err.code === "EEXIST") {
         throw new DataServerError(`destination already exists; nothing is overwritten: ${dest}`, "dest_exists");
@@ -17748,7 +17736,7 @@ function present2(path) {
 }
 
 // src/file_ops/move-from-downloads.ts
-import { closeSync as closeSync4, lstatSync as lstatSync3, mkdirSync as mkdirSync5, openSync as openSync4, realpathSync as realpathSync7, renameSync as renameSync4, statSync as statSync8, unlinkSync as unlinkSync4 } from "node:fs";
+import { closeSync as closeSync3, lstatSync as lstatSync3, mkdirSync as mkdirSync5, openSync as openSync3, realpathSync as realpathSync7, renameSync as renameSync4, statSync as statSync8, unlinkSync as unlinkSync4 } from "node:fs";
 import { win32 as pathWin3211 } from "node:path";
 
 // src/files/downloads.ts
@@ -17828,7 +17816,7 @@ function fileOpsMoveFromDownloads(matterRoot, sourceFilename, destination, env =
   for (let attempt = 0; attempt < MAX_ATTEMPTS && dest === void 0; attempt++) {
     const candidate = pathWin3211.join(destDir, nextVersionName(destDir, stem, ext));
     try {
-      closeSync4(openSync4(candidate, "wx"));
+      closeSync3(openSync3(candidate, "wx"));
       dest = candidate;
     } catch (err) {
       if (err.code !== "EEXIST") throw err;
@@ -24577,7 +24565,7 @@ function renderApprovalPage(proposal2, approval2, page2 = PAGE) {
 function stalePage() {
   return simplePage(
     "This page is out of date",
-    "A newer housekeeping run has started for this matter, or the Claude session that made this page has ended. Nothing was approved from it. Go back to Claude."
+    "A newer housekeeping run has been served for this matter, or this page's link is more than 30 days old. Nothing was approved from it. Go back to Claude."
   );
 }
 function simplePage(title, body) {
@@ -24613,7 +24601,19 @@ import { existsSync as existsSync15, realpathSync as realpathSync10, statSync as
 import { win32 as pathWin3217 } from "node:path";
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "c8c40a4193fe";
+var BUILD_STAMP = false ? null : "0d1bb6e9304b";
+
+// src/local-page/durable.ts
+import { closeSync as closeSync4, fsyncSync as fsyncSync2, openSync as openSync4, writeSync as writeSync2 } from "node:fs";
+function writeNewDurably(path, text2) {
+  const fd = openSync4(path, "wx");
+  try {
+    writeSync2(fd, text2);
+    fsyncSync2(fd);
+  } finally {
+    closeSync4(fd);
+  }
+}
 
 // src/local-page/links.ts
 import { mkdirSync as mkdirSync9, readdirSync as readdirSync12, readFileSync as readFileSync9, renameSync as renameSync6, statSync as statSync10, unlinkSync as unlinkSync7, writeFileSync as writeFileSync7 } from "node:fs";
@@ -24842,6 +24842,7 @@ async function startPageListener(options) {
   let held = false;
   let stopped = false;
   let warnedBusy = false;
+  let failure = null;
   let retry;
   const server2 = createServer((req, res) => {
     route(req, res, options).catch((err) => {
@@ -24874,11 +24875,13 @@ async function startPageListener(options) {
       retry.unref();
       return;
     }
+    failure = err;
     log(`${tag} listener off: ${err.message}`);
   }
   return {
     port: fixed ? wanted : server2.address().port,
     holding: () => held && server2.listening,
+    failure: () => failure,
     close: () => {
       stopped = true;
       if (retry) clearTimeout(retry);
@@ -24987,6 +24990,13 @@ async function servePage(matterRoot, runId, env = process.env) {
   }
   const pages = await startHousekeepingPages(env);
   const { port } = pages;
+  const failure = pages.holding() ? null : pages.failure();
+  if (failure) {
+    throw new DataServerError(
+      `the page listener cannot listen on port ${port} (${failure.message}); set another port for "file-manager" under page_ports in probanda.json`,
+      "page_port_taken"
+    );
+  }
   const warning = pages.holding() ? null : await holderWarning(port);
   const key = matter.root.toLowerCase();
   dropLinks(KIND, (target2) => parseTarget(target2)?.matter_root.toLowerCase() === key, env);
@@ -25041,7 +25051,7 @@ function withGrant(id, env, res, route2, then) {
   const grant = grantFor(id, env);
   if (grant) return then(grant);
   if (route2 === "approve") {
-    return json(res, 410, { error: "This page is out of date: a newer run has started for this matter, or the Claude session has ended. Nothing was approved." }, REPLY);
+    return json(res, 410, { error: "This page is out of date: a newer run has been served for this matter, or the link is more than 30 days old. Nothing was approved." }, REPLY);
   }
   html(res, 410, stalePage(), REPLY);
 }

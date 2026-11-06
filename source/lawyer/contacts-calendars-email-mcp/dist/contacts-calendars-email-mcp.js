@@ -1,4 +1,4 @@
-// build-stamp: dc33eb64b174
+// build-stamp: 874b734a3fae
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -119579,7 +119579,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "dc33eb64b174";
+var BUILD_STAMP = false ? null : "874b734a3fae";
 
 // src/local-page/listener.ts
 import { createServer, get } from "node:http";
@@ -119686,6 +119686,7 @@ async function startPageListener(options) {
   let held = false;
   let stopped = false;
   let warnedBusy = false;
+  let failure = null;
   let retry;
   const server2 = createServer((req, res) => {
     route(req, res, options).catch((err) => {
@@ -119718,11 +119719,13 @@ async function startPageListener(options) {
       retry.unref();
       return;
     }
+    failure = err;
     log(`${tag2} listener off: ${err.message}`);
   }
   return {
     port: fixed ? wanted : server2.address().port,
     holding: () => held && server2.listening,
+    failure: () => failure,
     close: () => {
       stopped = true;
       if (retry) clearTimeout(retry);

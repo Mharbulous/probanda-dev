@@ -1,4 +1,4 @@
-// build-stamp: e666702a85e0
+// build-stamp: d74226e3e3f2
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75261,7 +75261,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "e666702a85e0";
+var BUILD_STAMP = false ? null : "d74226e3e3f2";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -80190,7 +80190,7 @@ function housekeepingToolDefinitions() {
     },
     {
       name: "housekeeping__serve_page",
-      description: "Serve a run's approval page on 127.0.0.1 and return its `url` for the practitioner (Ctrl+click opens it). The run must be the matter's newest run with a valid proposal.json (else `stale_run` or `invalid_proposal`). Serving invalidates every earlier page link for the matter in this session, so an old tab cannot approve. The link stops working when a newer run is served or the session ends. The page's Submit writes approval.json. Returns {url, run_id, rows, approved, warning?}: `warning: \"older_holder\"` when another session's server on another build holds the page port and so answers the link. Fails `page_port_taken` when the page port is held by something that is not Probanda's page server. Then call housekeeping__wait_approval.",
+      description: "Serve a run's approval page on 127.0.0.1 and return its `url` for the practitioner (Ctrl+click opens it). The run must be the matter's newest run with a valid proposal.json (else `stale_run` or `invalid_proposal`). Serving invalidates every earlier page link for the matter, from any session, so an old tab cannot approve. The link stops working when a newer run is served for the matter (from any session), or after 30 days. The page's Submit writes approval.json. Returns {url, run_id, rows, approved, warning?}: `warning: \"older_holder\"` when another session's server on a different version of Probanda holds the page port and so answers the link. Fails `page_port_taken` when the page port is held by something that is not Probanda's page server, or cannot be listened on (the message names the error). Then call housekeeping__wait_approval.",
       inputSchema: {
         type: "object",
         properties: matterRun,
@@ -122999,6 +122999,7 @@ async function startPageListener(options) {
   let held2 = false;
   let stopped = false;
   let warnedBusy = false;
+  let failure2 = null;
   let retry;
   const server = createServer((req, res) => {
     route2(req, res, options).catch((err) => {
@@ -123031,11 +123032,13 @@ async function startPageListener(options) {
       retry.unref();
       return;
     }
+    failure2 = err;
     log(`${tag} listener off: ${err.message}`);
   }
   return {
     port: fixed ? wanted2 : server.address().port,
     holding: () => held2 && server.listening,
+    failure: () => failure2,
     close: () => {
       stopped = true;
       if (retry) clearTimeout(retry);
