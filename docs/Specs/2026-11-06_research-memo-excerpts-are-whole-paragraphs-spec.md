@@ -63,8 +63,25 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 9. Open questions
 
 - The filing rule allows "[...]" for omitted parts. Brahm said an excerpt is "never just a sub-paragraph or part of a paragraph". Is "[...]" still allowed within a memo excerpt (for example to skip between two cited paragraphs, as two items in the saved memo did), or must each cited paragraph be quoted in full? Ask Brahm before step 2.
+- **Answered by Brahm, 2026-11-06:** "[...]" is allowed only between two whole paragraphs, never inside one. Each cited paragraph is quoted in full. The one shared statement of the rule says this and serves both filings and memos, which tightens the filing rule the same way.
 
 ## 10. Verify against HEAD before building
 
 - Confirm both quotes above at HEAD.
 - Read `agents/research-agent.md`, `agents/memo-reviewer.md`, `agents/verify-claim.md`, protocol Steps 2 and 6 and `shared/authority-claim-verification.md` for any existing excerpt-length rule, and report whether one existed and failed or none existed.
+
+### Verification against HEAD (2026-11-06, at 1aacafca)
+
+| Claim | Result at HEAD |
+|---|---|
+| Filing rule quote | Confirmed word for word at `.claude/skills/drafting-data/references/filing-checklists.md` line 47. |
+| Template item shape `> <the verbatim passage at that pinpoint>` | Confirmed at `.claude/skills/shared/research-memo-template.md` line 121, with no length rule. Commit adc0ab6e changed the rendered excerpt to a code fence; the template's item shape is unchanged. |
+| Memo excerpts stored as `statements_of_law.excerpt` by persist step 1 | Confirmed: `.claude/skills/shared/legal-research.md`, "Persist in this order", step 1 (`INSERT INTO statements_of_law (... pinpoint, excerpt, ...)`). |
+| `source/researcher/agents/research-agent.md` | No excerpt-length rule. Its "Show, don't tell" form asks for "the verbatim passage at its pinpoint" and defers to the protocol. |
+| `source/researcher/agents/memo-reviewer.md` | No excerpt check. Review step 4 checks one finding per Application item and, since 1aacafca, fact and law-applied pairing. |
+| `source/researcher/agents/verify-claim.md` | No excerpt-length rule. It carries the recital rule only. |
+| `shared/legal-audit-protocol.md` Steps 2 and 6 | No excerpt-length rule. The non-negotiable rule and Step 4 say "the verbatim passage at its pinpoint"; Step 2 asks for a pinpoint (para/page). |
+| `shared/authority-claim-verification.md` | No excerpt-length rule. It holds the recital rule (§3). |
+| Other mentions | `shared/knowledge-tree.md` says a knowledge tree's `Sources\` holds "excerpts cut at sub-paragraph pinpoint". That is venue knowledge, not a memo or filing excerpt, so it is out of scope. `shared/case-brief-template.md` has the same item line as the memo template; case briefs are out of this spec's scope. |
+
+Finding: no memo excerpt-length rule existed. The only rule was the filing checklist's, which no research file reads, so nothing caught the sub-paragraph excerpt.
