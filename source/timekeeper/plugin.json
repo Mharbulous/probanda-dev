@@ -20,20 +20,6 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "mcp__.+time_pipeline__(delete|bulk_apply)$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PLUGIN_ROOT}/hooks/one-way-gate.py"
-            ],
-            "timeout": 10,
-            "statusMessage": "One-way approval gate"
-          }
-        ]
-      },
-      {
         "matcher": "^AskUserQuestion$",
         "hooks": [
           {

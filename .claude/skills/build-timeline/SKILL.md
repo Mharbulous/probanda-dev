@@ -274,8 +274,7 @@ For each raw record returned by a source:
 ### Step 4: Replace-by-source within range
 
 A date's replacement is **one `/time-pipeline-data` bulk apply**, covering every
-source fetched for that date, so a re-fetch asks for one pasted approval per
-date, never one per row. Never delete rows one at a time. For a range, do this
+source fetched for that date. Never delete rows one at a time. For a range, do this
 once per date. For each source fetched:
 
 1. Load `index:activity:by-source:{source}` and `index:event:by-source:{source}`.
@@ -289,8 +288,7 @@ once per date. For each source fetched:
    line with `drop_prefix` `{source}:` and `add` the ids that index should hold
    from this source.
 
-Then apply the file once. It asks for approval unless it only adds new keys, so
-a fetch that changes an index already stored asks too.
+Then apply the file once.
 
 The practical effect: re-fetching Telus for 2026-04-15 wipes only Telus rows
 in that date; TimeCamp and GCal rows for the same day are untouched.

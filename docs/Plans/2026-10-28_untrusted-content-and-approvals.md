@@ -68,7 +68,6 @@ Gated, by plugin:
 |---|---|
 | litigator | `drafting_data__record_sent`, `record_filed`, `record_served` |
 | lawyer | `practice_data__delete_anchor`, `practice_data__merge_contact` |
-| timekeeper | `time_pipeline__delete`, `time_pipeline__bulk_apply` (only when it carries `delete` or `delete_prefix`), `timecamp__update_entry` |
 | file-manager | `file_ops__comment_pdf` |
 
 `record_sent`, `record_filed` and `record_served` gain a required `expect_revision` (see step 0), which makes the lawyer change minor.

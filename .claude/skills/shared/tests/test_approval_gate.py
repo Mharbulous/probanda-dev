@@ -13,7 +13,7 @@ from hook_runner import run_hook  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[4]
 HOOKS = {plugin: REPO / "source" / plugin / "hooks" / "one-way-gate.py"
-         for plugin in ("lawyer", "litigator", "timekeeper", "file-manager", "researcher")}
+         for plugin in ("lawyer", "litigator", "file-manager", "researcher")}
 TOOL = "mcp__plugin_lawyer_data__practice_data__delete_anchor"
 ARGS = {"anchor_id": 7}
 FIRST_LINE = ("By cutting and pasting this message I approve this step: delete anchor 7 and its sources and "
@@ -124,12 +124,6 @@ SAMPLES = {
                                                               "merge contact c2 into contact c1"),
     "mcp__plugin_lawyer_data__practice_data__issue_invoice": ("lawyer", {"invoice_number": "101", "amount": 50},
                                                               "record invoice 101 for 50 as issued"),
-    "mcp__plugin_lawyer_data__time_pipeline__delete": ("timekeeper", {"namespace": "timeline", "key": "k1"},
-                                                       "delete the item k1 from the activity history on this computer"),
-    "mcp__plugin_lawyer_data__time_pipeline__bulk_apply": ("timekeeper", {
-        "namespace": "timeline", "path": "/x/gone.jsonl",
-        "expect": {"added": 2, "replaced": 1, "removed": 3, "file_sha256": "ab"}},
-        "adding 2 new item(s), replacing 1 existing item(s), removing 3 item(s), in the activity history on this computer"),
     "mcp__plugin_file-manager_files__file_ops__comment_pdf": ("file-manager", {
         "matter_root": "/m", "path": "/m/a.pdf", "comments": [{"page": 3, "text": "x"}, {"page": 1, "text": "y"}]},
         "write 2 comment(s) on page(s) 1, 3 into the PDF a.pdf"),
@@ -278,73 +272,6 @@ def test_a_file_an_argument_names_is_part_of_the_act(tmp_path):
     assert s.gate(name=name, tool_input=call, plugin="file-manager")
 
 
-BULK = "mcp__plugin_lawyer_data__time_pipeline__bulk_apply"
-# The hook never reads this file: in Cowork it runs where the practitioner's files cannot be seen.
-BULK_CALL = {"namespace": "evidence", "path": "/not/visible/from/the/hook.jsonl"}
-
-
-def bulk_gate(s, **args):
-    return s.gate(name=BULK, tool_input={**BULK_CALL, **args}, plugin="timekeeper")
-
-
-def expecting(added=0, replaced=0, removed=0):
-    return {"added": added, "replaced": replaced, "removed": removed, "file_sha256": "ab"}
-
-
-def test_a_bulk_preview_writes_nothing_so_it_passes(tmp_path):
-    s = Session(tmp_path)
-    s.say("Apply the file.")
-    assert bulk_gate(s, preview=True) is None
-
-
-def test_a_bulk_write_of_only_new_items_passes(tmp_path):
-    s = Session(tmp_path)
-    s.say("Apply the file.")
-    assert bulk_gate(s, expect=expecting(added=96)) is None
-
-
-def test_a_bulk_write_that_replaces_stops_and_says_nothing_of_deletes(tmp_path):
-    s = Session(tmp_path)
-    s.say("Apply the file.")
-    block = block_of(bulk_gate(s, expect=expecting(added=90, replaced=6)))
-    assert ("update billing evidence so it can be checked when you bill, adding 90 new item(s), replacing 6 existing "
-            "item(s), in the billing evidence on this computer. The old values are not kept.") in block
-    for word in ("delet", "remov"):
-        assert word not in block.lower()
-
-
-def test_a_bulk_write_that_removes_stops_and_says_so(tmp_path):
-    s = Session(tmp_path)
-    s.say("Apply the file.")
-    block = block_of(bulk_gate(s, expect=expecting(removed=2)))
-    assert "removing 2 item(s)" in block
-    for word in ("adding", "replacing"):
-        assert word not in block
-
-
-def test_a_bulk_call_with_no_preview_and_no_counts_is_sent_to_preview_first(tmp_path):
-    s = Session(tmp_path)
-    s.say("Apply the file.")
-    reason = bulk_gate(s)
-    assert "preview" in reason and not MARKER.search(reason)
-
-
-def test_a_bulk_count_that_is_not_a_whole_number_is_sent_to_preview_first(tmp_path):
-    for bad in ("0", None, True, -1, 1.5):
-        s = Session(tmp_path)
-        s.say("Apply the file.")
-        reason = bulk_gate(s, expect=expecting(added=1) | {"removed": bad})
-        assert "preview" in reason and not MARKER.search(reason), bad
-
-
-def test_a_bulk_block_pasted_back_approves_only_those_counts(tmp_path):
-    s = Session(tmp_path)
-    s.say("Apply the file.")
-    s.say(block_of(bulk_gate(s, expect=expecting(replaced=6))))
-    assert bulk_gate(s, expect=expecting(replaced=7))
-    assert bulk_gate(s, expect=expecting(replaced=6)) is None
-
-
 def test_a_troubleshooting_entry_goes_to_the_store_only_on_the_pasted_block(tmp_path):
     s = Session(tmp_path)
     name = "mcp__plugin_researcher_commons__troubleshoot__record"
@@ -414,7 +341,6 @@ GATED = {
                   "mcp__plugin_lawyer_data__drafting_data__record_served"],
     "lawyer": ["mcp__plugin_lawyer_data__practice_data__delete_anchor", "mcp__plugin_lawyer_data__practice_data__merge_contact",
                DEDUPE, "mcp__remote-devices__plugin_lawyer_contacts-calendars-email__mail__dedupe_apply"],
-    "timekeeper": ["mcp__plugin_lawyer_data__time_pipeline__delete", "mcp__plugin_lawyer_data__time_pipeline__bulk_apply"],
     "file-manager": ["mcp__plugin_file-manager_files__file_ops__comment_pdf"],
     "researcher": ["mcp__plugin_researcher_commons__troubleshoot__record",
                    "mcp__remote-devices__plugin_researcher_commons__troubleshoot__record"],
@@ -428,6 +354,7 @@ UNGATED = [
     "mcp__plugin_lawyer_data__knowledge__retire", "mcp__plugin_lawyer_data__knowledge__write",
     "mcp__plugin_lawyer_data__matter_data__migrate", "mcp__plugin_lawyer_data__drafting_data__merge_jobs",
     "mcp__plugin_lawyer_data__time_pipeline__set", "mcp__plugin_lawyer_data__time_pipeline__get",
+    "mcp__plugin_lawyer_data__time_pipeline__delete", "mcp__plugin_lawyer_data__time_pipeline__bulk_apply",
     "mcp__plugin_lawyer_data__practice_data__upsert_anchor", "mcp__plugin_researcher_commons__troubleshoot__confirm_fix",
     "mcp__plugin_file-manager_files__file_ops__move", "mcp__plugin_lawyer_data__drafting_data__execute",
     "mcp__plugin_lawyer_contacts-calendars-email__mail__dedupe_apply_continue",
@@ -441,6 +368,8 @@ UNGATED = [
 
 
 def test_each_plugin_matcher_matches_every_gated_name_and_no_ungated_one():
+    assert {p.parent.name for p in (REPO / "source").glob("*/plugin.json")
+            if "one-way-gate.py" in p.read_text(encoding="utf-8")} == set(GATED)
     for plugin, names in GATED.items():
         manifest = json.loads((REPO / "source" / plugin / "plugin.json").read_text(encoding="utf-8"))
         matchers = [entry["matcher"] for entry in manifest["hooks"]["PreToolUse"]

@@ -205,7 +205,6 @@
       ],
       "agents": [],
       "hooks": {
-        "one-way-gate": "source/timekeeper/hooks/one-way-gate.py",
         "ceremony-gate": "source/timekeeper/hooks/ceremony-gate.py"
       },
       "servers": [
