@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<!--
+  This diagram's tag gives the commit it was checked against and when it was last updated.
+  To update it: re-read the sources at the new commit, correct the chart if needed,
+  then change both data- attributes and the visible stamp.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Probanda drafts a letter</title>
+<style>
+/* Single light theme by choice: the diagram's colours carry meaning and stay fixed. */
+:root {
+  color-scheme: light;
+  --ink: #1d2733;
+  --muted: #55616f;
+  --paper: #f8f9fb;
+  --rule: #d5dbe3;
+  --body: "Segoe UI", system-ui, sans-serif;
+  --mono: Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--body); }
+main { max-width: 1500px; margin: 0 auto; padding: 28px 20px 48px; display: grid; gap: 20px; }
+h1 { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 600; text-wrap: balance; }
+h2 { margin: 12px 0 0; font-size: 20px; line-height: 1.3; font-weight: 600; }
+p { margin: 0; max-width: 75ch; }
+code { font: 500 0.92em var(--mono); }
+figure { margin: 0; display: grid; gap: 12px; }
+figcaption { display: grid; gap: 4px; }
+.stamp { font-size: 14px; color: var(--muted); margin: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 15px; height: 15px; border: 2px solid; border-radius: 3px; display: inline-block; }
+.legend b { width: 26px; height: 0; border-top: 2px solid var(--muted); display: inline-block; }
+.legend b.dashed { border-top-style: dashed; }
+.chart { overflow-x: auto; background: #fff; border: 1px solid var(--rule); border-radius: 6px; padding: 16px; }
+pre.mermaid { margin: 0; font-family: var(--body); }
+pre.mermaid svg { display: block; margin: 0 auto; }
+/* Mermaid caps each label at 200 px and wraps inside words; labels here break only at <br/>. */
+pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap !important; }
+.sources { font-size: 13px; color: var(--muted); margin: 0; max-width: none; }
+</style>
+</head>
+<body>
+<main>
+  <figure class="diagram" id="letter-drafting"
+          data-based-on-commit="495bec07566e3e6a9bdb9ab87744650e4e1aba78"
+          data-updated="2026-11-06T17:00:00-08:00">
+    <figcaption>
+      <h1>How Probanda drafts a letter, from your request to the letter as sent</h1>
+      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/495bec07566e3e6a9bdb9ab87744650e4e1aba78"><code>495bec07</code></a> on main · Last updated 2026-11-06 17:00 -08:00</p>
+    </figcaption>
+    <p>Worked example: the November 6, 2026 letter to the Richmond RCMP asking it to enforce a consent order. The 📌 notes show where that letter sits in each stage. They rest on the files in its draft workspace and the matter's law folder. No transcript of the sessions that drafted it was found on this computer, so the notes say what the files show, not which calls were made.</p>
+    <div class="legend" aria-label="Colour key">
+      <span><i style="background:#efe8fb;border-color:#6b46b0"></i>litigator plugin skill</span>
+      <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer plugin skill</span>
+      <span><i style="background:#e3eefb;border-color:#2563a8"></i>researcher plugin skill</span>
+      <span><i style="background:#eef1f5;border-color:#5b6675;border-style:double;border-width:3px"></i>Custom agent</span>
+      <span><i style="background:#fbe4ec;border-color:#b03060;border-radius:8px"></i>👤 You act here</span>
+      <span><i style="background:#fff8c5;border-color:#8a6d00"></i>Hard check: stops the letter until it passes</span>
+      <span><i style="background:#ffffff;border-color:#8a94a0"></i>Step or question</span>
+      <span><i style="background:#e0f2f1;border-color:#00796b;border-radius:7px/4px"></i>Saved record or file</span>
+      <span><i style="background:#e2f3e6;border-color:#2f7d46"></i>Finished result</span>
+      <span><i style="background:#fff3e0;border-color:#c05621;border-style:dashed"></i>📌 The RCMP letter</span>
+      <span><i style="background:#fff;border-color:#55616f;border-style:dashed;border-radius:8px"></i>Click to jump to another stage</span>
+      <span><b></b>next step</span>
+      <span><b class="dashed"></b>loops back, optional, or looks something up</span>
+    </div>
+
+    <h2 id="overview">The five stages</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart LR
+    S1(["1. Start the letter"])
+    S2(["2. Write the body"])
+    S3(["3. Check every fact"])
+    S4(["4. Review the mockup"])
+    S5(["5. Word copy, send, record"])
+    S1 --> S2 --> S3 --> S4 --> S5
+    S4 -.->|"each change you ask for<br/>goes back through 2 and 3"| S2
+
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class S1,S2,S3,S4,S5 link
+    click S1 href "#start"
+    click S2 href "#body"
+    click S3 href "#check"
+    click S4 href "#mockup"
+    click S5 href "#send"
+</pre>
+    </div>
+
+    <h2 id="start">1. Start the letter</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    GO(["👤 You type /draft and say<br/>who the letter is to and why"])
+    DR["/draft<br/>runs every drafting step in order"]
+    RM["Rules map<br/>tracks which step /draft is on<br/>and loads only that step's rules"]
+    RO[["rules-reorienter<br/>double-checks a jump of more<br/>than one step, in the background"]]
+    RI[["rules-improviser<br/>writes stop-gap rules when<br/>no mapped step fits"]]
+    PUR{"Recipient and<br/>purpose stated?"}
+    ASK(["👤 You answer one question:<br/>who is it to, and what is it for?"])
+    LOOK["Look up the recipient, counsel<br/>and addresses: never asks you"]
+    RCV{"An unfinished draft<br/>of this letter exists?"}
+    HR(["👤 You choose: recover it<br/>or start new"])
+    DD["/drafting-data<br/>creates the letter's record<br/>and its Deliver job"]
+    DB[("Drafting database<br/>the letter's text, recipients and jobs")]
+    REF{"Replying to or revising<br/>earlier correspondence?"}
+    RD["Read those letters in full<br/>from 3. CORRESPONDENCE"]
+    HM(["👤 You supply a missing letter<br/>or say go on without it"])
+    N1["📌 RCMP letter: a letter to a public body,<br/>with its own workspace under 0. DRAFT"]
+    O2(["to 2. Write the body"])
+
+    GO --> DR
+    DR -.-> RM
+    RM -.->|"big jump"| RO
+    RM -.->|"no step fits"| RI
+    DR --> PUR
+    PUR -->|"no"| ASK
+    ASK --> PUR
+    PUR -->|"yes"| LOOK
+    LOOK --> RCV
+    RCV -->|"yes"| HR
+    HR --> DD
+    RCV -->|"no"| DD
+    DD --> DB
+    DD --> REF
+    REF -->|"yes"| RD
+    RD -.->|"a referenced letter<br/>is missing"| HM
+    RD --> O2
+    REF -->|"no"| O2
+    N1 -.- DD
+
+    classDef litigator fill:#efe8fb,stroke:#6b46b0,color:#1d2733
+    classDef agent fill:#eef1f5,stroke:#5b6675,stroke-width:3px,color:#1d2733
+    classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef note fill:#fff3e0,stroke:#c05621,stroke-dasharray:4 3,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class DR,DD litigator
+    class RO,RI agent
+    class GO,ASK,HR,HM human
+    class RM,PUR,LOOK,RCV,REF,RD step
+    class DB store
+    class N1 note
+    class O2 link
+    click O2 href "#body"
+</pre>
+    </div>
+
+    <h2 id="body">2. Write the body</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    I2(["from 1. Start the letter"])
+    MD["/matter-data<br/>the matter's facts,<br/>each with its source"]
+    SCR[["scrivener<br/>the only one allowed to write<br/>the letter's words"]]
+    SELF["Scrivener re-reads its own text:<br/>consistent with our past positions?<br/>open to being used against us?<br/>right voice for this reader?"]
+    OI{"Anything the scrivener<br/>cannot settle itself?"}
+    HJ(["👤 You approve a research job"])
+    LR["/legal-research<br/>see the Research job diagram"]
+    MEMO[("Research memo in 6. LAW,<br/>its decisions filed<br/>and added to case data")]
+    DC[["docket-clerk<br/>the only one that<br/>works out a date"]]
+    HP(["👤 You decide our position,<br/>or it waits as a Work Board job"])
+    HA(["👤 You answer the<br/>other questions"])
+    TEXT[("Draft text, with a source<br/>listed for every fact")]
+    N2["📌 RCMP letter: two memos, on police-enforcement<br/>terms in court orders (Nov 5) and the police duty<br/>to enforce injunctions (Nov 6). Funk, Teal Cedar,<br/>Canada Post v. CUPW and others filed under<br/>6. LAW / Remedies for breach of an interim injunction"]
+    O3(["to 3. Check every fact"])
+
+    I2 --> SCR
+    MD -->|"facts and sources"| SCR
+    SCR --> SELF
+    SELF --> OI
+    OI -->|"needs a statement of law"| HJ
+    HJ --> LR
+    LR --> MEMO
+    OI -->|"needs a date"| DC
+    OI -->|"contradicts our<br/>earlier letters"| HP
+    OI -->|"other open item"| HA
+    MEMO -.->|"answer goes back<br/>to the same scrivener"| SCR
+    DC -.-> SCR
+    HP -.-> SCR
+    HA -.-> SCR
+    OI -->|"nothing open"| TEXT
+    TEXT --> O3
+    N2 -.- MEMO
+
+    classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
+    classDef researcher fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef agent fill:#eef1f5,stroke:#5b6675,stroke-width:3px,color:#1d2733
+    classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef note fill:#fff3e0,stroke:#c05621,stroke-dasharray:4 3,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class MD lawyer
+    class LR researcher
+    class SCR,DC agent
+    class HJ,HP,HA human
+    class SELF,OI step
+    class MEMO,TEXT store
+    class N2 note
+    class I2,O3 link
+    click I2 href "#start"
+    click O3 href "#check"
+</pre>
+    </div>
+
+    <h2 id="check">3. Check every fact</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    I3(["from 2. Write the body"])
+    REL["Reliance check: for each fact taken<br/>from case data, cut the exact<br/>passage out of its source"]
+    STR[["source-tracer, reliance mode<br/>one per fact: is the stored fact true<br/>to its source? does the letter use it fairly?"]]
+    MDW["/matter-data<br/>corrects a stored fact"]
+    P1["Fact check: dates, amounts,<br/>names, quotations, citations"]
+    P5["Overstatement check: does any<br/>sentence say more than its source?"]
+    HO(["👤 You keep each finding,<br/>or have it rewritten at<br/>the source's strength"])
+    JOB[("Work Board job<br/>for a finding left undecided")]
+    ST[["source-tracer<br/>kept apart from the drafter: checks every<br/>assertion in the exact text against its<br/>primary source and the mailbox"]]
+    V{{"Hard check: anything to attribute,<br/>cut or trace? any characterization<br/>left unanswered?"}}
+    FIX["attribute or cut:<br/>scrivener revises as proposed"]
+    HT(["👤 For each untraced fact you point<br/>to a source, attribute it, cut it,<br/>or accept it as your own knowledge"])
+    HU(["👤 You decide whether the letter<br/>should answer a characterization"])
+    DL["Until it passes, the RE: line<br/>carries DRAFT"]
+    N3["📌 RCMP letter: what the client told us is<br/>attributed to him ('Mr. … reports …'),<br/>which is what an attribute verdict produces"]
+    O4(["to 4. Review the mockup"])
+
+    I3 --> REL
+    REL --> STR
+    STR -.->|"stored fact is wrong"| MDW
+    STR -.->|"letter misuses it:<br/>scrivener revises"| REL
+    REL --> P1
+    P1 --> P5
+    P5 --> HO
+    HO -.-> JOB
+    HO --> ST
+    ST --> V
+    V -->|"attribute or cut"| FIX
+    V -->|"trace needed"| HT
+    V -->|"unanswered"| HU
+    FIX -.->|"check again"| ST
+    HT -.->|"check again"| ST
+    HU -.->|"check again"| ST
+    V -.- DL
+    V -->|"passes"| O4
+    N3 -.- FIX
+
+    classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
+    classDef agent fill:#eef1f5,stroke:#5b6675,stroke-width:3px,color:#1d2733
+    classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
+    classDef gate fill:#fff8c5,stroke:#8a6d00,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef note fill:#fff3e0,stroke:#c05621,stroke-dasharray:4 3,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class MDW lawyer
+    class STR,ST agent
+    class HO,HT,HU human
+    class V gate
+    class REL,P1,P5,FIX,DL step
+    class JOB store
+    class N3 note
+    class I3,O4 link
+    click I3 href "#body"
+    click O4 href "#mockup"
+</pre>
+    </div>
+
+    <h2 id="mockup">4. Review the mockup</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    I4(["from 3. Check every fact"])
+    RND["Render the mockup<br/>without asking first"]
+    MOCK[("Mockup in the letter's workspace<br/>old copy archived on each render")]
+    HV(["👤 You read the mockup, the only<br/>place to review it, and ask for<br/>changes in plain words"])
+    REV[["scrivener revises<br/>from the prior draft<br/>and your instruction"]]
+    RE["Re-run the overstatement, date,<br/>reliance and source-trace checks"]
+    ING{"First showing of a letter<br/>drafted with no job?"}
+    HI(["👤 Add documents not yet<br/>in case data? yes or no"])
+    N4["📌 RCMP letter: revisions 440 to 451 on Nov 6,<br/>1:38 to 2:55 a.m.; an annotated-for-counsel copy<br/>at 2:35 a.m.; last render at 10:59 a.m."]
+    O5(["to 5. Word copy, send, record"])
+
+    I4 --> RND
+    RND --> MOCK
+    MOCK --> HV
+    MOCK --> ING
+    ING -->|"yes"| HI
+    HV -->|"change it"| REV
+    REV --> RE
+    RE --> RND
+    HV -->|"it is right"| O5
+    N4 -.- MOCK
+
+    classDef agent fill:#eef1f5,stroke:#5b6675,stroke-width:3px,color:#1d2733
+    classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef note fill:#fff3e0,stroke:#c05621,stroke-dasharray:4 3,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class REV agent
+    class HV,HI human
+    class RND,RE,ING step
+    class MOCK store
+    class N4 note
+    class I4,O5 link
+    click I4 href "#check"
+    click O5 href "#send"
+</pre>
+    </div>
+
+    <h2 id="send">5. Word copy, send, record</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    I5(["from 4. Review the mockup"])
+    GOAL{{"Ready for Word? authority, excerpts,<br/>noting-up, recipients, open items,<br/>counsel review all met"}}
+    HOV(["👤 You can ask for it anyway:<br/>it then carries a NOT FINAL cover"])
+    PUB["/publish<br/>puts the text on the firm letterhead"]
+    LH{{"Letterhead found?<br/>never rebuilt by hand"}}
+    DOCX[(".docx at the top of 0. DRAFT<br/>never overwritten")]
+    ASM["/assemble<br/>binds an UNSIGNED.pdf with<br/>its enclosures, only if you ask"]
+    SIGN(["👤 You sign"])
+    EML["Covering email: scrivener writes it,<br/>source-tracer checks it,<br/>saved as an unsent .eml"]
+    SEND(["👤 You send it.<br/>Probanda never sends"])
+    RS{{"Record as sent: held if a<br/>pre-send criterion is unmet"}}
+    HS(["👤 You meet each criterion,<br/>or say send anyway"])
+    DONE[("Recorded as sent, Deliver job closed,<br/>procedural history updated")]
+    BF(["👤 You give a follow-up date<br/>when the letter asks for a reply"])
+    TP["/task-prioritization<br/>adds the follow-up"]
+    DLC[["delivery-checker<br/>was it sent and delivered? does the<br/>sent copy match the draft?"]]
+    N5["📌 RCMP letter: .docx last saved in Word<br/>Nov 6, 4:24 p.m.; RE: line still says DRAFT;<br/>not yet sent. It asks for written confirmation,<br/>so a follow-up date will be offered"]
+
+    I5 --> GOAL
+    GOAL -.->|"not met"| HOV
+    HOV --> PUB
+    GOAL -->|"met"| PUB
+    PUB --> LH
+    LH --> DOCX
+    DOCX -.-> ASM
+    DOCX --> SIGN
+    SIGN --> EML
+    EML --> SEND
+    SEND --> RS
+    RS -->|"held"| HS
+    HS --> RS
+    RS -->|"recorded"| DONE
+    DONE --> BF
+    BF --> TP
+    SEND -.->|"before anyone asks<br/>whether it went out"| DLC
+    N5 -.- DOCX
+
+    classDef litigator fill:#efe8fb,stroke:#6b46b0,color:#1d2733
+    classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
+    classDef agent fill:#eef1f5,stroke:#5b6675,stroke-width:3px,color:#1d2733
+    classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
+    classDef gate fill:#fff8c5,stroke:#8a6d00,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef done fill:#e2f3e6,stroke:#2f7d46,color:#1d2733
+    classDef note fill:#fff3e0,stroke:#c05621,stroke-dasharray:4 3,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class PUB,ASM litigator
+    class TP lawyer
+    class DLC agent
+    class HOV,SIGN,SEND,HS,BF human
+    class GOAL,LH,RS gate
+    class EML step
+    class DOCX store
+    class DONE done
+    class N5 note
+    class I5 link
+    click I5 href "#mockup"
+</pre>
+    </div>
+
+    <p class="sources">Sources: the <code>draft</code> skill (<code>SKILL.md</code>; <code>references/letters.md</code>, <code>procedure.md</code>, <code>reliance-check.md</code>, <code>overstatement.md</code>, <code>source-trace.md</code>, <code>assemble-then-gate.md</code>, <code>delivery-check.md</code>), <code>shared/correspondence-isolation.md</code>, <code>shared/email.md</code>, and the <code>scrivener</code>, <code>source-tracer</code>, <code>delivery-checker</code>, <code>rules-reorienter</code> and <code>rules-improviser</code> agents. 📌 notes: file dates in the RCMP letter's draft workspace and archive, the matter's 6. LAW folder, and the Word file's own properties. No transcript of the drafting sessions was found on this computer.</p>
+  </figure>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: "neutral",
+    flowchart: { nodeSpacing: 40, rankSpacing: 55, useMaxWidth: false, htmlLabels: true }, themeVariables: { fontFamily: "Segoe UI, system-ui, sans-serif", fontSize: "16px" } });
+  mermaid.run({ querySelector: "pre.mermaid" });
+</script>
+</body>
+</html>
