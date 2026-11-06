@@ -1,7 +1,7 @@
 # CanLII download mechanics
 
 Canonical, verified mechanics for downloading a CanLII decision by neutral
-citation via a Claude-in-Chrome session and filing it. The `research-paralegal`
+citation via a Claude-in-Chrome session and filing it. The `law-getter`
 agent fetches this file before its first CanLII download —
 `skill_source__read` (under whichever of `mcp__plugin_lawyer_data__skill_source__read` and `mcp__remote-devices__plugin_lawyer_data__skill_source__read` this host grants), path
 `shared/canlii-download-mechanics.md` — and follows it exactly. Never proceed

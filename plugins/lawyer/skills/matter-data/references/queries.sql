@@ -1195,7 +1195,7 @@ ORDER BY b.execution_status, b.source_id, e.source_id;
 -- -----------------------------------------------------------------
 -- @query_30_instrument_text_source
 -- v8.9: which held authority carries a statute's or regulation's full text,
--- for /legal-research when legislation-fetcher filed nothing for it
+-- for /legal-research when law-getter filed nothing for it
 -- (Engineering/1. Design/2026-10-06_statute-first-research-route-spec.md §4.2).
 -- Matches the citation ignoring periods, spaces and case (`R.S.B.C. 1996,
 -- c. 238` = `RSBC 1996, c 238`), or a title fragment. A bundled entry's

@@ -23,7 +23,7 @@ A Writing lives in exactly one pipeline, never both. `publish-bcsc-form`'s matte
 
 ## Deployment
 
-A newly drafted item reaches the venue form. To hold one back, deploy it nowhere. A Writing with Written Arguments follows `/drafting-data`'s `references/filing-checklists.md` §9 instead.
+A newly drafted item reaches the venue form. To hold one back, deploy it nowhere. A Writing with Written Arguments follows `.claude/skills/drafting-data/references/filing-checklists.md` §9 instead.
 
 ## Render refusal
 

@@ -29,7 +29,7 @@ turn a recommendation into advice.
 A separately-spawned agent that brings its own evidence to the specific point:
 an independent reviewer spawned on the most capable available model (Fable,
 where available); the `research-agent` agent, or whichever law-audit agent the
-legal research gate dispatches; `research-paralegal` returning retrieved
+legal research gate dispatches; `law-getter` returning retrieved
 authorities; or an Explore or Plan agent given this one point to investigate. An
 agent that only re-reads what the caller already read does not count. The test
 is independent evidence on the point, not a second pair of eyes.

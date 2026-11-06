@@ -1,4 +1,4 @@
-// build-stamp: 9e4425cc528f
+// build-stamp: 3e1689d4f656
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -2991,7 +2991,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve.call(this, root, ref);
+      let _sch = resolve2.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a4 = root.localRefs) === null || _a4 === void 0 ? void 0 : _a4[ref];
         const { schemaId } = this.opts;
@@ -3018,7 +3018,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s22) {
       return s1.schema === s22.schema && s1.root === s22.root && s1.baseId === s22.baseId;
     }
-    function resolve(root, ref) {
+    function resolve2(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3649,7 +3649,7 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve(baseURI, relativeURI, options) {
+    function resolve2(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse4(baseURI, schemelessOptions), parse4(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
@@ -3907,7 +3907,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve,
+      resolve: resolve2,
       resolveComponent,
       equal,
       serialize,
@@ -86468,9 +86468,9 @@ var require_src = __commonJS({
        * @return {Array.<number>|string} The conveted data
        */
       toHankakuCase: function(data) {
-        var asString = false;
+        var asString2 = false;
         if (util.isString(data)) {
-          asString = true;
+          asString2 = true;
           data = util.stringToBuffer(data);
         }
         var results = [];
@@ -86484,7 +86484,7 @@ var require_src = __commonJS({
           }
           results[results.length] = c3;
         }
-        return asString ? util.codeToString_fast(results) : results;
+        return asString2 ? util.codeToString_fast(results) : results;
       },
       /**
        * 半角英数記号文字を全角英数記号文字に変換
@@ -86500,9 +86500,9 @@ var require_src = __commonJS({
        * @return {Array.<number>|string} The conveted data
        */
       toZenkakuCase: function(data) {
-        var asString = false;
+        var asString2 = false;
         if (util.isString(data)) {
-          asString = true;
+          asString2 = true;
           data = util.stringToBuffer(data);
         }
         var results = [];
@@ -86516,7 +86516,7 @@ var require_src = __commonJS({
           }
           results[results.length] = c3;
         }
-        return asString ? util.codeToString_fast(results) : results;
+        return asString2 ? util.codeToString_fast(results) : results;
       },
       /**
        * 全角カタカナを全角ひらがなに変換
@@ -86531,9 +86531,9 @@ var require_src = __commonJS({
        * @return {Array.<number>|string} The conveted data
        */
       toHiraganaCase: function(data) {
-        var asString = false;
+        var asString2 = false;
         if (util.isString(data)) {
-          asString = true;
+          asString2 = true;
           data = util.stringToBuffer(data);
         }
         var results = [];
@@ -86559,7 +86559,7 @@ var require_src = __commonJS({
           }
           results[results.length] = c3;
         }
-        return asString ? util.codeToString_fast(results) : results;
+        return asString2 ? util.codeToString_fast(results) : results;
       },
       /**
        * 全角ひらがなを全角カタカナに変換
@@ -86574,9 +86574,9 @@ var require_src = __commonJS({
        * @return {Array.<number>|string} The conveted data
        */
       toKatakanaCase: function(data) {
-        var asString = false;
+        var asString2 = false;
         if (util.isString(data)) {
-          asString = true;
+          asString2 = true;
           data = util.stringToBuffer(data);
         }
         var results = [];
@@ -86599,7 +86599,7 @@ var require_src = __commonJS({
           }
           results[results.length] = c3;
         }
-        return asString ? util.codeToString_fast(results) : results;
+        return asString2 ? util.codeToString_fast(results) : results;
       },
       /**
        * 全角カタカナを半角ｶﾀｶﾅに変換
@@ -86614,9 +86614,9 @@ var require_src = __commonJS({
        * @return {Array.<number>|string} The conveted data
        */
       toHankanaCase: function(data) {
-        var asString = false;
+        var asString2 = false;
         if (util.isString(data)) {
-          asString = true;
+          asString2 = true;
           data = util.stringToBuffer(data);
         }
         var results = [];
@@ -86646,7 +86646,7 @@ var require_src = __commonJS({
             results[results.length] = c3;
           }
         }
-        return asString ? util.codeToString_fast(results) : results;
+        return asString2 ? util.codeToString_fast(results) : results;
       },
       /**
        * 半角ｶﾀｶﾅを全角カタカナに変換 (濁音含む)
@@ -86661,9 +86661,9 @@ var require_src = __commonJS({
        * @return {Array.<number>|string} The conveted data
        */
       toZenkanaCase: function(data) {
-        var asString = false;
+        var asString2 = false;
         if (util.isString(data)) {
-          asString = true;
+          asString2 = true;
           data = util.stringToBuffer(data);
         }
         var results = [];
@@ -86697,7 +86697,7 @@ var require_src = __commonJS({
           }
           results[results.length] = c3;
         }
-        return asString ? util.codeToString_fast(results) : results;
+        return asString2 ? util.codeToString_fast(results) : results;
       },
       /**
        * 全角スペースを半角スペースに変換
@@ -95323,11 +95323,11 @@ var require_socksclient = __commonJS({
     "use strict";
     var __awaiter = exports && exports.__awaiter || function(thisArg, _arguments, P3, generator) {
       function adopt(value) {
-        return value instanceof P3 ? value : new P3(function(resolve) {
-          resolve(value);
+        return value instanceof P3 ? value : new P3(function(resolve2) {
+          resolve2(value);
         });
       }
-      return new (P3 || (P3 = Promise))(function(resolve, reject) {
+      return new (P3 || (P3 = Promise))(function(resolve2, reject) {
         function fulfilled(value) {
           try {
             step(generator.next(value));
@@ -95343,7 +95343,7 @@ var require_socksclient = __commonJS({
           }
         }
         function step(result) {
-          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+          result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
         }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
       });
@@ -95377,13 +95377,13 @@ var require_socksclient = __commonJS({
        * @returns { Promise }
        */
       static createConnection(options, callback) {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           try {
             (0, helpers_1.validateSocksClientOptions)(options, ["connect"]);
           } catch (err) {
             if (typeof callback === "function") {
               callback(err);
-              return resolve(err);
+              return resolve2(err);
             } else {
               return reject(err);
             }
@@ -95394,16 +95394,16 @@ var require_socksclient = __commonJS({
             client.removeAllListeners();
             if (typeof callback === "function") {
               callback(null, info3);
-              resolve(info3);
+              resolve2(info3);
             } else {
-              resolve(info3);
+              resolve2(info3);
             }
           });
           client.once("error", (err) => {
             client.removeAllListeners();
             if (typeof callback === "function") {
               callback(err);
-              resolve(err);
+              resolve2(err);
             } else {
               reject(err);
             }
@@ -95420,13 +95420,13 @@ var require_socksclient = __commonJS({
        * @returns { Promise }
        */
       static createConnectionChain(options, callback) {
-        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+        return new Promise((resolve2, reject) => __awaiter(this, void 0, void 0, function* () {
           try {
             (0, helpers_1.validateSocksClientChainOptions)(options);
           } catch (err) {
             if (typeof callback === "function") {
               callback(err);
-              return resolve(err);
+              return resolve2(err);
             } else {
               return reject(err);
             }
@@ -95452,14 +95452,14 @@ var require_socksclient = __commonJS({
             }
             if (typeof callback === "function") {
               callback(null, { socket: sock });
-              resolve({ socket: sock });
+              resolve2({ socket: sock });
             } else {
-              resolve({ socket: sock });
+              resolve2({ socket: sock });
             }
           } catch (err) {
             if (typeof callback === "function") {
               callback(err);
-              resolve(err);
+              resolve2(err);
             } else {
               reject(err);
             }
@@ -106393,7 +106393,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve) => setTimeout(resolve, pollInterval));
+        await new Promise((resolve2) => setTimeout(resolve2, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error2) {
@@ -106410,7 +106410,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve2, reject) => {
       const earlyReject = (error2) => {
         reject(error2);
       };
@@ -106488,7 +106488,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve(parseResult.data);
+            resolve2(parseResult.data);
           }
         } catch (error2) {
           reject(error2);
@@ -106749,12 +106749,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve2, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve, interval);
+      const timeoutId = setTimeout(resolve2, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -107624,12 +107624,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve) => {
+    return new Promise((resolve2) => {
       const json = serializeMessage(message);
       if (this._stdout.write(json)) {
-        resolve();
+        resolve2();
       } else {
-        this._stdout.once("drain", resolve);
+        this._stdout.once("drain", resolve2);
       }
     });
   }
@@ -107654,6 +107654,276 @@ var ValidationError = class extends DataServerError {
 var STAMP_KEYS = ["plugin_version", "shipped_from"];
 var VENUE_ROW_KEYS = ["code", "name", "aliases", "source", "ref", "recorded", ...STAMP_KEYS];
 var KIND_ROW_KEYS = ["file", "name", "aliases", "recipient", ...STAMP_KEYS];
+
+// src/repo-root.ts
+import { basename, dirname, join, resolve, win32 as pathWin32 } from "node:path";
+import { fileURLToPath } from "node:url";
+var SKILLS_MARKER = join(".claude", "skills");
+var CHECKOUT_MARKERS = [join("source", "lawyer", "mcp"), join(".claude", "skills", "plugin-packager")];
+var SELF_DIR = dirname(fileURLToPath(import.meta.url));
+var INSTALL_ROOT = resolve(SELF_DIR, "..", "..");
+
+// src/kv/backend.ts
+var PY_HELPER = String.raw`
+import datetime, hashlib, io, json, os, sqlite3, sys
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS kv_store (
+  namespace TEXT NOT NULL,
+  key TEXT NOT NULL,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (namespace, key)
+);
+CREATE INDEX IF NOT EXISTS idx_kv_prefix ON kv_store(namespace, key);
+""".strip()
+
+
+def now_iso():
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+
+
+def escape_like(s):
+    return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def connect(db_path):
+    d = os.path.dirname(os.path.abspath(db_path))
+    if d:
+        os.makedirs(d, exist_ok=True)
+    con = sqlite3.connect(db_path)
+    con.execute("PRAGMA journal_mode = DELETE")
+    con.executescript(SCHEMA)
+    return con
+
+
+def other_tables(db_path):
+    """True when the file holds any table but kv_store. Opens nothing that is absent."""
+    if not os.path.exists(db_path):
+        return False
+    con = sqlite3.connect(db_path)
+    try:
+        row = con.execute(
+            "SELECT count(*) FROM sqlite_master WHERE type = 'table' "
+            "AND name <> 'kv_store' AND substr(name, 1, 7) <> 'sqlite_'"
+        ).fetchone()
+        return row[0] > 0
+    finally:
+        con.close()
+
+
+UPSERT = (
+    "INSERT INTO kv_store (namespace, key, value, updated_at) VALUES (?, ?, ?, ?) "
+    "ON CONFLICT(namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at"
+)
+
+
+def merge_ids(con, namespace, key, add, drop_prefix, line_no):
+    """Treat one value as a JSON array of strings: drop every element starting
+    with drop_prefix, append the new ones not already present, keep order.
+    An array that ends up empty deletes the key -- an absent index and an empty
+    index mean the same thing to every reader."""
+    row = con.execute(
+        "SELECT value FROM kv_store WHERE namespace = ? AND key = ?", (namespace, key)
+    ).fetchone()
+    current = []
+    if row is not None:
+        try:
+            current = json.loads(row[0])
+        except ValueError:
+            raise SystemExit("line %d: merge target %r does not hold JSON" % (line_no, key))
+        if not isinstance(current, list) or any(not isinstance(x, str) for x in current):
+            raise SystemExit(
+                "line %d: merge target %r is not a JSON array of strings" % (line_no, key)
+            )
+    kept = [x for x in current if not (drop_prefix and x.startswith(drop_prefix))]
+    seen = set(kept)
+    for item in add:
+        if item not in seen:
+            kept.append(item)
+            seen.add(item)
+    if kept:
+        con.execute(
+            UPSERT,
+            (namespace, key, json.dumps(kept, ensure_ascii=False, separators=(",", ":")), now_iso()),
+        )
+    else:
+        con.execute("DELETE FROM kv_store WHERE namespace = ? AND key = ?", (namespace, key))
+
+
+def namespace_rows(con, namespace):
+    return dict(con.execute("SELECT key, value FROM kv_store WHERE namespace = ?", (namespace,)))
+
+
+def bulk_apply(con, namespace, path, expect):
+    """Apply a whole JSONL file of writes to one namespace in ONE transaction.
+    Reading the file here rather than through tool arguments is what makes a
+    58k-row import possible; one transaction is what makes it one process
+    instead of 58k. Any bad line raises before the commit, so the caller either
+    gets the whole file or none of it.
+    With no expect it previews: the same work, rolled back, reporting the net
+    effect on the namespace and the fingerprint of the bytes it read. With
+    expect it commits only if those match, which is what makes the counts a
+    hook shows the practitioner true."""
+    if not os.path.isfile(path):
+        raise SystemExit("file not found: %s" % path)
+    with open(path, "rb") as fh:
+        data = fh.read()
+    con.execute("BEGIN IMMEDIATE")
+    before = namespace_rows(con, namespace)
+    counts = {"lines": 0, "sets": 0, "deletes": 0, "merges": 0, "deleted_by_prefix": 0}
+    with io.TextIOWrapper(io.BytesIO(data), encoding="utf-8") as fh:
+        for line_no, raw in enumerate(fh, 1):
+            raw = raw.strip()
+            if not raw:
+                continue
+            try:
+                entry = json.loads(raw)
+            except ValueError as exc:
+                raise SystemExit("line %d is not valid JSON: %s" % (line_no, exc))
+            counts["lines"] += 1
+            op = entry.get("op")
+            if op == "set":
+                con.execute(UPSERT, (namespace, entry["key"], entry["value"], now_iso()))
+                counts["sets"] += 1
+            elif op == "delete":
+                con.execute(
+                    "DELETE FROM kv_store WHERE namespace = ? AND key = ?",
+                    (namespace, entry["key"]),
+                )
+                counts["deletes"] += 1
+            elif op == "delete_prefix":
+                cur = con.execute(
+                    "DELETE FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\'",
+                    (namespace, escape_like(entry["prefix"]) + "%"),
+                )
+                counts["deleted_by_prefix"] += cur.rowcount
+            elif op == "merge":
+                merge_ids(
+                    con,
+                    namespace,
+                    entry["key"],
+                    entry.get("add") or [],
+                    entry.get("drop_prefix") or "",
+                    line_no,
+                )
+                counts["merges"] += 1
+            else:
+                raise SystemExit("line %d has unknown op %r" % (line_no, op))
+    after = namespace_rows(con, namespace)
+    effect = {
+        "added": sum(key not in before for key in after),
+        "replaced": sum(key in before and before[key] != value for key, value in after.items()),
+        "removed": sum(key not in after for key in before),
+        "file_sha256": hashlib.sha256(data).hexdigest(),
+    }
+    if expect is None:
+        con.rollback()
+    elif any(expect.get(name) != value for name, value in effect.items()):
+        raise SystemExit("nothing was written: the file would now do %s, not what was approved; preview it again" % json.dumps(effect))
+    else:
+        con.commit()
+    return {**counts, **effect, "applied": expect is not None}
+
+
+def export(con, namespace, prefix, path):
+    """The read twin of bulk_apply: write every key under prefix to a JSONL
+    file of bulk_apply "set" lines, sorted by key, so an export re-applies as
+    it stands. The rows go to a file the caller named, never back through tool
+    output."""
+    parent = os.path.dirname(os.path.abspath(path))
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    rows = con.execute(
+        "SELECT key, value FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\' ORDER BY key",
+        (namespace, escape_like(prefix) + "%"),
+    )
+    items = 0
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        for key, value in rows:
+            line = {"op": "set", "key": key, "value": value}
+            fh.write(json.dumps(line, ensure_ascii=False, separators=(",", ":")) + "\n")
+            items += 1
+    return {"items": items, "path": path}
+
+
+def dump(con, namespaces):
+    out = {}
+    for namespace in namespaces:
+        rows = con.execute(
+            "SELECT key, value FROM kv_store WHERE namespace = ? ORDER BY key", (namespace,)
+        ).fetchall()
+        out[namespace] = [{"key": k, "value": v} for k, v in rows]
+    return {"namespaces": out}
+
+
+def apply(con, writes):
+    """Sets and deletes across namespaces in ONE transaction: all land or none."""
+    counts = {"sets": 0, "deletes": 0}
+    for entry in writes:
+        if entry["op"] == "set":
+            con.execute(UPSERT, (entry["namespace"], entry["key"], entry["value"], now_iso()))
+            counts["sets"] += 1
+        elif entry["op"] == "delete":
+            con.execute(
+                "DELETE FROM kv_store WHERE namespace = ? AND key = ?", (entry["namespace"], entry["key"])
+            )
+            counts["deletes"] += 1
+        else:
+            raise SystemExit("unknown write op: %r" % entry["op"])
+    con.commit()
+    return counts
+
+
+def main():
+    req = json.load(sys.stdin)
+    # exclusive: the caller keeps nothing but kv_store in this file, so a file
+    # holding any other table is refused before it is touched.
+    if req.get("exclusive") and other_tables(req["db_path"]):
+        return {"other_tables": True}
+    con = connect(req["db_path"])
+    try:
+        op = req["op"]
+        if op == "dump":
+            return dump(con, req["namespaces"])
+        if op == "apply":
+            return apply(con, req["writes"])
+        namespace = req["namespace"]
+        if op == "get":
+            row = con.execute(
+                "SELECT value FROM kv_store WHERE namespace = ? AND key = ?",
+                (namespace, req["key"]),
+            ).fetchone()
+            return {"value": row[0] if row else None}
+        if op == "set":
+            con.execute(UPSERT, (namespace, req["key"], req["value"], now_iso()))
+            con.commit()
+            return {"ok": True}
+        if op == "list":
+            prefix = req.get("prefix") or ""
+            rows = con.execute(
+                "SELECT key, value FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\' ORDER BY key",
+                (namespace, escape_like(prefix) + "%"),
+            ).fetchall()
+            return {"items": [{"key": k, "value": v} for k, v in rows]}
+        if op == "delete":
+            cur = con.execute(
+                "DELETE FROM kv_store WHERE namespace = ? AND key = ?",
+                (namespace, req["key"]),
+            )
+            con.commit()
+            return {"ok": True, "deleted": cur.rowcount > 0}
+        if op == "bulk_apply":
+            return bulk_apply(con, namespace, req["path"], req.get("expect"))
+        if op == "export":
+            return export(con, namespace, req.get("prefix") or "", req["path"])
+        raise SystemExit("unknown op: %s" % op)
+    finally:
+        con.close()
+
+
+print(json.dumps(main()))
+`.trim();
 
 // src/schema/mail.ts
 function mailToolDefinitions() {
@@ -108273,16 +108543,16 @@ function jsonText(name2, result) {
 // src/mail/tools.ts
 import { createHash as createHash4 } from "node:crypto";
 import { mkdirSync as mkdirSync2, readdirSync as readdirSync2, readFileSync as readFileSync3, rmSync as rmSync2, statSync as statSync2, writeFileSync as writeFileSync2 } from "node:fs";
-import { basename, extname, join as join4, win32 as pathWin32 } from "node:path";
+import { basename as basename2, extname, join as join5, win32 as pathWin322 } from "node:path";
 
 // ../../mcp-shared/dpapi-store.js
 import { spawn } from "node:child_process";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname as dirname2, join as join2 } from "node:path";
 function defaultStateDir(env = process.env, name2 = "legal-commons") {
   const root = env.LOCALAPPDATA || env.APPDATA || homedir();
-  return join(root, "Coclerk", name2);
+  return join2(root, "Coclerk", name2);
 }
 async function readProtectedJson(path, fallback, protect = process.platform === "win32") {
   try {
@@ -108295,7 +108565,7 @@ async function readProtectedJson(path, fallback, protect = process.platform === 
   }
 }
 async function writeProtectedJson(path, value, protect = process.platform === "win32") {
-  await mkdir(dirname(path), { recursive: true });
+  await mkdir(dirname2(path), { recursive: true });
   const data = Buffer.from(JSON.stringify(value), "utf8");
   const stored = protect ? await protectLocalSecret(data) : data;
   const tmp = `${path}.${process.pid}.${Date.now()}.tmp`;
@@ -108328,10 +108598,10 @@ async function runPowerShell(label, script, stdin = "") {
   const stderr = [];
   child.stdout.on("data", (chunk) => stdout.push(chunk));
   child.stderr.on("data", (chunk) => stderr.push(chunk));
-  const done = new Promise((resolve, reject) => {
+  const done = new Promise((resolve2, reject) => {
     child.on("error", reject);
     child.on("exit", (code) => {
-      if (code === 0) resolve();
+      if (code === 0) resolve2();
       else reject(new Error(`${label} failed: ${Buffer.concat(stderr).toString("utf8").trim()}`));
     });
   });
@@ -108798,7 +109068,7 @@ function attachmentList(structure) {
 }
 
 // src/mail/config.ts
-import { join as join2 } from "node:path";
+import { join as join3 } from "node:path";
 
 // src/dav/tz.ts
 var formatters = /* @__PURE__ */ new Map();
@@ -108953,7 +109223,7 @@ function buildVTimezone(tz, year = (/* @__PURE__ */ new Date()).getUTCFullYear()
 // src/mail/config.ts
 var DAV_FIELDS = ["davUsername", "caldavUrl", "carddavUrl", "timezone"];
 function credentialPath(env = process.env) {
-  return join2(defaultStateDir(env, "mail"), "mail.json.dpapi");
+  return join3(defaultStateDir(env, "mail"), "mail.json.dpapi");
 }
 var ENV_TRIO = ["PROBANDA_MAIL_HOST", "PROBANDA_MAIL_USERNAME", "PROBANDA_MAIL_PASSWORD"];
 function envCredential(env) {
@@ -109021,7 +109291,7 @@ async function persistMailCredential(credential, env = process.env) {
 // src/mail/dedupe.ts
 import { createHash as createHash3, randomUUID } from "node:crypto";
 import { mkdirSync, readdirSync, readFileSync as readFileSync2, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { join as join3 } from "node:path";
+import { join as join4 } from "node:path";
 
 // node_modules/imapflow/dist/esm/imap-flow.js
 var import_libmime2 = __toESM(require_libmime(), 1);
@@ -109347,9 +109617,9 @@ var ImapStream = class extends Transform3 {
               }
               if (payload.length) {
                 let trailingAfterLine = lineStart < chunk.length || this.inputQueue.length > 0;
-                await new Promise((resolve) => {
-                  this.pendingPush = resolve;
-                  const item = { payload, literals, next: resolve, trailingAfterLine };
+                await new Promise((resolve2) => {
+                  this.pendingPush = resolve2;
+                  const item = { payload, literals, next: resolve2, trailingAfterLine };
                   this.push(item);
                 });
                 this.pendingPush = null;
@@ -109403,7 +109673,7 @@ var ImapStream = class extends Transform3 {
       this.releaseInput(data);
       processedCount++;
       if (processedCount % 10 === 0) {
-        await new Promise((resolve) => setImmediate(resolve));
+        await new Promise((resolve2) => setImmediate(resolve2));
       }
     }
   }
@@ -109466,9 +109736,9 @@ var ImapStream = class extends Transform3 {
     this.literals = [];
     this.responseBytes = 0;
     if (typeof this.pendingPush === "function") {
-      const resolve = this.pendingPush;
+      const resolve2 = this.pendingPush;
       this.pendingPush = null;
-      resolve();
+      resolve2();
     }
     this.releaseInput(this.activeInput);
     this.activeInput = null;
@@ -111862,7 +112132,7 @@ var httpConnect = async ({ logger: logger3, proxyUrl, secureProxy, proxyHost, pr
     throw deadline.error();
   }
   let socket = null;
-  return await new Promise((resolve, reject) => {
+  return await new Promise((resolve2, reject) => {
     let settled = false;
     let timer = null;
     let headers = "";
@@ -111914,7 +112184,7 @@ var httpConnect = async ({ logger: logger3, proxyUrl, secureProxy, proxyHost, pr
     function succeed() {
       settled = true;
       cleanup();
-      resolve(socket);
+      resolve2(socket);
     }
     function onEarlyClose() {
       fail(proxyError("Proxy closed the connection before the tunnel was established", "EPROXY"));
@@ -113902,12 +114172,12 @@ async function fetch2(connection, range, query, options) {
             messages.count++;
             let formatted = await formatMessageResponse(untagged, mailbox);
             if (typeof options.onUntaggedFetch === "function") {
-              await new Promise((resolve, reject) => {
+              await new Promise((resolve2, reject) => {
                 options.onUntaggedFetch(formatted, (err) => {
                   if (err) {
                     reject(err);
                   } else {
-                    resolve();
+                    resolve2();
                   }
                 });
               });
@@ -115169,14 +115439,14 @@ async function runIdle(connection) {
           connection.preCheck = false;
         }
         while (preCheckWaitQueue.length) {
-          let { resolve } = preCheckWaitQueue.shift();
-          resolve();
+          let { resolve: resolve2 } = preCheckWaitQueue.shift();
+          resolve2();
         }
       }
     };
     let connectionPreCheck = () => {
-      let handler = guardedPromise((resolve, reject) => {
-        preCheckWaitQueue.push({ resolve, reject });
+      let handler = guardedPromise((resolve2, reject) => {
+        preCheckWaitQueue.push({ resolve: resolve2, reject });
       });
       connection.log.trace({
         msg: "Requesting IDLE break",
@@ -115234,8 +115504,8 @@ async function runIdle(connection) {
       connection.preCheck = false;
     }
     while (preCheckWaitQueue.length) {
-      let { resolve } = preCheckWaitQueue.shift();
-      resolve();
+      let { resolve: resolve2 } = preCheckWaitQueue.shift();
+      resolve2();
     }
   }
 }
@@ -115283,7 +115553,7 @@ async function runPollingFallback(connection, maxIdleTime) {
   let interval = maxIdleTime ? Math.min(NOOP_INTERVAL, maxIdleTime) : NOOP_INTERVAL;
   let releaseIdling = claimIdling(connection);
   try {
-    await new Promise((resolve) => {
+    await new Promise((resolve2) => {
       const cancel = () => {
         if (session2.cancelled) {
           return;
@@ -115291,7 +115561,7 @@ async function runPollingFallback(connection, maxIdleTime) {
         session2.cancelled = true;
         clearTimer(session2.timer);
         session2.timer = null;
-        resolve();
+        resolve2();
       };
       session2.preCheck = async () => {
         connection.log.debug({ msg: `Breaking NOOP loop`, cid: connection.id });
@@ -115875,8 +116145,8 @@ var ImapFlow = class extends EventEmitter {
     }
     let tag2 = (++this.tagCounter).toString(16).toUpperCase();
     let execOptions = options || {};
-    return guardedPromise((resolve, reject) => {
-      this.requestTagMap.set(tag2, { command: command2, attributes, options: execOptions, resolve, reject });
+    return guardedPromise((resolve2, reject) => {
+      this.requestTagMap.set(tag2, { command: command2, attributes, options: execOptions, resolve: resolve2, reject });
       this.requestQueue.push({ tag: tag2, command: command2, attributes, options: execOptions });
       this.trySend().catch((err) => logConnectionError(this, "Failed to dispatch command", err));
     });
@@ -115993,11 +116263,11 @@ var ImapFlow = class extends EventEmitter {
    */
   async throttleWait(delay) {
     delay = Math.min(Math.max(Number(delay) || 0, 0), MAX_THROTTLE_DELAY);
-    return await new Promise((resolve) => {
-      let entry = { resolve };
+    return await new Promise((resolve2) => {
+      let entry = { resolve: resolve2 };
       entry.timer = setTimeout(() => {
         this._throttleWaits.delete(entry);
-        resolve(false);
+        resolve2(false);
       }, delay);
       unrefTimer(entry.timer);
       this._throttleWaits.add(entry);
@@ -116027,7 +116297,7 @@ var ImapFlow = class extends EventEmitter {
       }
       processedCount++;
       if (processedCount % 10 === 0) {
-        await new Promise((resolve) => setImmediate(resolve));
+        await new Promise((resolve2) => setImmediate(resolve2));
       }
     }
   }
@@ -116195,7 +116465,7 @@ var ImapFlow = class extends EventEmitter {
     switch ((parsed.command || "").toUpperCase()) {
       case "OK":
       case "BYE":
-        await new Promise((resolve) => request.resolve({ response: parsed, next: resolve, hasTrailingData }));
+        await new Promise((resolve2) => request.resolve({ response: parsed, next: resolve2, hasTrailingData }));
         break;
       case "NO":
       case "BAD": {
@@ -116213,7 +116483,7 @@ var ImapFlow = class extends EventEmitter {
           err.responseText = txt;
           if (err.responseStatus === "NO" && txt.includes("Some of the requested messages no longer exist")) {
             this.log.warn({ msg: "Partial FETCH response", cid: this.id, err });
-            await new Promise((resolve) => request.resolve({ response: parsed, next: resolve }));
+            await new Promise((resolve2) => request.resolve({ response: parsed, next: resolve2 }));
             break;
           }
           let throttleDelay = false;
@@ -116454,7 +116724,7 @@ var ImapFlow = class extends EventEmitter {
           }
           processedChunks++;
           if (processedChunks % 100 === 0) {
-            await new Promise((resolve) => setImmediate(resolve));
+            await new Promise((resolve2) => setImmediate(resolve2));
             if (!this.writeSocket) {
               break;
             }
@@ -116533,7 +116803,7 @@ var ImapFlow = class extends EventEmitter {
     if (injectedTail && injectedTail.length) {
       throw failSTARTTLSInjection();
     }
-    let upgraded = await new Promise((resolve, reject) => {
+    let upgraded = await new Promise((resolve2, reject) => {
       let opts = Object.assign({
         socket: socketPlain,
         // host is required even though the socket is already connected: without
@@ -116566,7 +116836,7 @@ var ImapFlow = class extends EventEmitter {
           this.closeAfter();
           return reject(err);
         }
-        resolve(result);
+        resolve2(result);
       };
       this._upgradeReject = settle;
       socketPlain.once("error", settle);
@@ -116688,10 +116958,10 @@ var ImapFlow = class extends EventEmitter {
     }
     this.startSession().then(() => {
       if (typeof this.initialResolve === "function") {
-        let resolve = this.initialResolve;
+        let resolve2 = this.initialResolve;
         this.initialResolve = false;
         this.initialReject = false;
-        return resolve();
+        return resolve2();
       }
     }).catch((err) => {
       this.log.error({ err, cid: this.id });
@@ -117001,7 +117271,7 @@ var ImapFlow = class extends EventEmitter {
         throw error2;
       }
     }
-    let connectPromise = guardedPromise((resolve, reject) => {
+    let connectPromise = guardedPromise((resolve2, reject) => {
       this.connectTimeout = setTimeout(() => {
         let err = deadline.error();
         this.log.error({ err, cid: this.id });
@@ -117052,7 +117322,7 @@ var ImapFlow = class extends EventEmitter {
           this.setSocketHandlers();
           this.setEventHandlers();
           connected.pipe(this.streamer);
-          this.initialResolve = resolve;
+          this.initialResolve = resolve2;
           this.initialReject = reject;
         } catch (ex) {
           reject(ex);
@@ -117731,17 +118001,17 @@ var ImapFlow = class extends EventEmitter {
     let aborted2 = false;
     let push = false;
     let rowQueue = [];
-    let getNext = () => new Promise((resolve, reject) => {
+    let getNext = () => new Promise((resolve2, reject) => {
       let check = () => {
         if (rowQueue.length) {
           let entry = rowQueue.shift();
           if (entry.err) {
             return reject(entry.err);
           }
-          return resolve(entry.value);
+          return resolve2(entry.value);
         }
         if (finished) {
-          return resolve(null);
+          return resolve2(null);
         }
         push = () => {
           push = false;
@@ -118092,7 +118362,7 @@ var ImapFlow = class extends EventEmitter {
         }
         if (writeChunk(chunk2) === false) {
           try {
-            await new Promise((resolve, reject) => {
+            await new Promise((resolve2, reject) => {
               const finish = (err) => {
                 for (let event of ["drain", "error", "close"]) {
                   stream.removeListener(event, finish);
@@ -118100,7 +118370,7 @@ var ImapFlow = class extends EventEmitter {
                 if (err) {
                   reject(err);
                 } else {
-                  resolve();
+                  resolve2();
                 }
               };
               stream.once("drain", finish);
@@ -118357,10 +118627,10 @@ var ImapFlow = class extends EventEmitter {
         }
         processedCount++;
         if (processedCount % 5 === 0) {
-          await new Promise((resolve2) => setImmediate(resolve2));
+          await new Promise((resolve3) => setImmediate(resolve3));
         }
         const lock = this.locks.shift();
-        const { resolve, reject, path, options, lockId } = lock;
+        const { resolve: resolve2, reject, path, options, lockId } = lock;
         if (lock.acquireTimer) {
           clearTimer(lock.acquireTimer);
           lock.acquireTimer = null;
@@ -118421,7 +118691,7 @@ var ImapFlow = class extends EventEmitter {
           this.currentLock = lock;
           armHeldTimer();
           this.autoidle();
-          resolve({ path, release });
+          resolve2({ path, release });
         };
         if (this.mailbox && this.mailbox.path === path && !!this.mailbox.readOnly === !!options.readOnly) {
           this.log.trace({
@@ -118511,8 +118781,8 @@ var ImapFlow = class extends EventEmitter {
       } : null
     });
     const lockOptions = options;
-    let lockPromise = guardedPromise((resolve, reject) => {
-      let lockEntry = { resolve, reject, path: lockPath, options: lockOptions, lockId };
+    let lockPromise = guardedPromise((resolve2, reject) => {
+      let lockEntry = { resolve: resolve2, reject, path: lockPath, options: lockOptions, lockId };
       this.locks.push(lockEntry);
       if (Number(lockOptions.acquireTimeout) > 0) {
         lockEntry.acquireTimer = setTimeout(() => {
@@ -118649,8 +118919,8 @@ async function runImap(credential, factory, what, fn2, timeoutMs = DEFAULT_TIMEO
   })();
   let timer;
   const timedOut = /* @__PURE__ */ Symbol("timeout");
-  const timeout = new Promise((resolve) => {
-    timer = setTimeout(() => resolve(timedOut), timeoutMs);
+  const timeout = new Promise((resolve2) => {
+    timer = setTimeout(() => resolve2(timedOut), timeoutMs);
   });
   try {
     const outcome = await Promise.race([work, timeout]);
@@ -118727,15 +118997,15 @@ var BASES = ["comparison", "single_copy", "identical"];
 var STATE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1e3;
 var RULES_VERSION = 1;
 var mailStateDir = () => defaultStateDir(process.env, "mail");
-var dedupeDir = () => join3(mailStateDir(), "dedupe");
-var scanDir = (state) => state.own_folder ? join3(dedupeDir(), state.scan_id) : dedupeDir();
+var dedupeDir = () => join4(mailStateDir(), "dedupe");
+var scanDir = (state) => state.own_folder ? join4(dedupeDir(), state.scan_id) : dedupeDir();
 function writeState(dir, name2, text2) {
   mkdirSync(dir, { recursive: true });
-  writeFileSync(join3(dir, name2), text2);
+  writeFileSync(join4(dir, name2), text2);
 }
 function readState(dir, name2) {
   try {
-    return readFileSync2(join3(dir, name2), "utf-8");
+    return readFileSync2(join4(dir, name2), "utf-8");
   } catch (error2) {
     if (error2.code === "ENOENT") return void 0;
     throw error2;
@@ -118749,7 +119019,7 @@ function loadJson(dir, name2) {
 }
 function loadScan(scanId) {
   if (typeof scanId !== "string") return void 0;
-  const own = SCAN_ID.test(scanId) ? loadJson(join3(dedupeDir(), scanId), "scan.json") : void 0;
+  const own = SCAN_ID.test(scanId) ? loadJson(join4(dedupeDir(), scanId), "scan.json") : void 0;
   if (own) return own;
   const older = loadJson(dedupeDir(), "scan.json");
   return older?.scan_id === scanId ? older : void 0;
@@ -118762,7 +119032,7 @@ function writePlan(plan, dir) {
 }
 function scanFolders() {
   try {
-    return readdirSync(dedupeDir(), { withFileTypes: true }).filter((e3) => e3.isDirectory()).map((e3) => join3(dedupeDir(), e3.name));
+    return readdirSync(dedupeDir(), { withFileTypes: true }).filter((e3) => e3.isDirectory()).map((e3) => join4(dedupeDir(), e3.name));
   } catch (error2) {
     if (error2.code === "ENOENT") return [];
     throw error2;
@@ -118780,12 +119050,12 @@ function readPlan(planId) {
 function lastWritten(path) {
   const stat = statSync(path);
   if (!stat.isDirectory()) return stat.mtimeMs;
-  return Math.max(stat.mtimeMs, ...readdirSync(path).map((name2) => statSync(join3(path, name2)).mtimeMs));
+  return Math.max(stat.mtimeMs, ...readdirSync(path).map((name2) => statSync(join4(path, name2)).mtimeMs));
 }
 function pruneOld(dir, ownName) {
   for (const name2 of readdirSync(dir)) {
     if (!ownName.test(name2)) continue;
-    const path = join3(dir, name2);
+    const path = join4(dir, name2);
     try {
       if (Date.now() - lastWritten(path) > STATE_MAX_AGE_MS) rmSync(path, { recursive: true, force: true });
     } catch {
@@ -118793,7 +119063,7 @@ function pruneOld(dir, ownName) {
     }
   }
 }
-var ledgerPath = () => join3(mailStateDir(), "verdicts.json");
+var ledgerPath = () => join4(mailStateDir(), "verdicts.json");
 var isLive = (v3) => v3.rules_version >= RULES_VERSION && Date.now() - Date.parse(v3.recorded_at) <= VERDICT_MAX_AGE_MS;
 function loadLedger() {
   let parsed;
@@ -119191,7 +119461,7 @@ function summary(context, state) {
       plan_id: state.tier1.plan_id,
       expected_count: state.tier1.copies,
       samples: state.rows.slice(0, SAMPLE_COUNT).map(({ folder, date: date3, subject }) => ({ folder, date: date3, subject })),
-      list_path: join3(scanDir(state), "tier1-copies.txt")
+      list_path: join4(scanDir(state), "tier1-copies.txt")
     },
     tier2: {
       groups: state.groupCount - state.unreadableGroups,
@@ -119515,14 +119785,14 @@ function listen(handle2, onError, failure = "<p>Return to Claude and ask for a n
     });
   });
   server2.on("connection", (socket) => socket.unref());
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve2, reject) => {
     server2.once("error", (err) => {
       onError();
       reject(err);
     });
     server2.listen(0, "127.0.0.1", () => {
       server2.unref();
-      resolve(server2.address().port);
+      resolve2(server2.address().port);
     });
   });
 }
@@ -119543,7 +119813,7 @@ function escape2(text2) {
   return text2.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
 }
 function readBody(req) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve2, reject) => {
     const chunks = [];
     let size = 0;
     req.on("data", (chunk) => {
@@ -119555,7 +119825,7 @@ function readBody(req) {
       }
       chunks.push(chunk);
     });
-    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
+    req.on("end", () => resolve2(Buffer.concat(chunks).toString("utf-8")));
     req.on("error", reject);
   });
 }
@@ -122024,7 +122294,7 @@ function writeFree(dir, name2, bytes) {
   const ext = extname(name2);
   const stem = name2.slice(0, name2.length - ext.length);
   for (let i3 = 0; ; i3 += 1) {
-    const candidate = join4(dir, i3 === 0 ? name2 : `${stem} (${i3})${ext}`);
+    const candidate = join5(dir, i3 === 0 ? name2 : `${stem} (${i3})${ext}`);
     try {
       writeFileSync2(candidate, bytes, { flag: "wx" });
       return candidate;
@@ -122037,7 +122307,7 @@ function saveDirArg(tool, args) {
   const saveDir = args.save_dir;
   let isDir = false;
   try {
-    isDir = pathWin32.isAbsolute(saveDir) && statSync2(saveDir).isDirectory();
+    isDir = pathWin322.isAbsolute(saveDir) && statSync2(saveDir).isDirectory();
   } catch {
     isDir = false;
   }
@@ -122088,12 +122358,12 @@ function stagingDir() {
   for (const name2 of readdirSync2(root)) {
     const m3 = /^(\d{4})(\d{2})(\d{2})$/.exec(name2);
     if (m3 && Date.now() - new Date(+m3[1], +m3[2] - 1, +m3[3]).getTime() > STAGING_MAX_AGE_MS) {
-      rmSync2(join4(root, name2), { recursive: true, force: true });
+      rmSync2(join5(root, name2), { recursive: true, force: true });
     }
   }
   const now = /* @__PURE__ */ new Date();
   const today = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
-  const dir = join4(root, today);
+  const dir = join5(root, today);
   mkdirSync2(dir, { recursive: true });
   return dir;
 }
@@ -122114,7 +122384,7 @@ async function saveMessage(run, args) {
   return {
     saved: true,
     path,
-    filename: basename(path),
+    filename: basename2(path),
     size: source.length,
     sha256: createHash4("sha256").update(source).digest("hex"),
     messageId
@@ -122156,7 +122426,7 @@ function listHeaders(context, args) {
     const credential = context.mail.credential;
     const stateDir = defaultStateDir(process.env, "mail");
     const key = `${sha2562(JSON.stringify([credential.username, credential.host, folder])).slice(0, 32)}-${uidValidity}`;
-    const cachePath = join4(stateDir, "hash-cache", `${key}.json`);
+    const cachePath = join5(stateDir, "hash-cache", `${key}.json`);
     const cache = readCache(cachePath);
     const clock = sliceClock(context);
     const messages = [];
@@ -122188,14 +122458,14 @@ function listHeaders(context, args) {
         });
       }
     } finally {
-      mkdirSync2(join4(stateDir, "hash-cache"), { recursive: true });
+      mkdirSync2(join5(stateDir, "hash-cache"), { recursive: true });
       writeFileSync2(cachePath, JSON.stringify(cache));
     }
     const done = read >= uids.length;
-    const pageDir = join4(stateDir, "headers");
+    const pageDir = join5(stateDir, "headers");
     mkdirSync2(pageDir, { recursive: true });
     pruneOld(pageDir, HEADER_PAGE);
-    const listPath = join4(pageDir, `${key}-${uidFrom}-${uids[read - 1] ?? uidFrom}.json`);
+    const listPath = join5(pageDir, `${key}-${uidFrom}-${uids[read - 1] ?? uidFrom}.json`);
     writeFileSync2(listPath, JSON.stringify({ folder, uidValidity, uidNext: box.uidNext, messages }));
     return { list_path: listPath, count: messages.length, next_uid: done ? null : uids[read], done };
   });
@@ -122249,7 +122519,7 @@ function findThreadMessages(run, args) {
 }
 async function saveDraft(run, args) {
   const emlPath = args.eml_path;
-  if (!pathWin32.isAbsolute(emlPath)) throw new ValidationError("mail__save_draft.eml_path must be an absolute path");
+  if (!pathWin322.isAbsolute(emlPath)) throw new ValidationError("mail__save_draft.eml_path must be an absolute path");
   let size;
   try {
     const stat = statSync2(emlPath);

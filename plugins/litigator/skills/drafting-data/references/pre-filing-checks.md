@@ -69,4 +69,4 @@ C3, C4 and C5 ([#624](https://github.com/Mharbulous/CoClerk/issues/624)) compare
 
 ## Presenting a failed check
 
-One check per ceremony, per `/show-me`: present the offending line's document as a highlighted page extract, the finding in orange, its `document` and page in the caption, and the finding's `quote` in full in a code block with the `conflict` value stated after it where there is one, then one labelled sentence of interpretation, then one plain-text decision: fix it (the practitioner outlines a job, Branch B) or waive it with a one-line reason (`/drafting-data` §14). Describing a finding is not presenting it.
+One check per ceremony, per `/show-me`: present the offending line's document as a highlighted page extract, the finding in orange, its `document` and page in the caption, and the finding's `quote` in full in a code block with the `conflict` value stated after it where there is one, then one labelled sentence of interpretation, then one plain-text decision: fix it (the practitioner outlines a job, Branch B) or waive it with a one-line reason (`references/jobs-gate.md` §14). Describing a finding is not presenting it.

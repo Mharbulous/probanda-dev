@@ -21,7 +21,7 @@ Each skill has its own tree. There is no shared tree.
 | `/draft` | `draft\references\` | `_practice\knowledge\draft\` | `venue.md`, per-kind type files with their layout block, `Sources\` excerpts | `/draft`, and the runtime at Writing creation |
 | `/publish` | `publish\references\` | `_practice\knowledge\publish\` | a venue physical-format file, per-kind form-identity files | `publish-general` (physical format), the bespoke subskills' source check (form identity) |
 | `/assemble` | `assemble\references\` | `_practice\knowledge\assemble\` | a per-venue binding-practice file, per-kind binding deltas | none yet |
-| `/legal-research` | `legal-research\references\` | `_practice\knowledge\legal-research\` | `sources.json` per jurisdiction and per venue, `Sources\` publisher maps, and a `Documents\` folder only under `_NoVenue`, for the research memo's type files | `legislation-fetcher`, and the runtime at a research memo's Writing creation |
+| `/legal-research` | `legal-research\references\` | `_practice\knowledge\legal-research\` | `sources.json` per jurisdiction and per venue, `Sources\` publisher maps, and a `Documents\` folder only under `_NoVenue`, for the research memo's type files | `law-getter` in legislation mode, and the runtime at a research memo's Writing creation |
 | `docket-clerk` (agent) | `shared\docket-clerk\references\` (its existing references) | `_practice\knowledge\docket-clerk\` | period files | none yet |
 
 - Overlay roots sit under `<case_data_root>\_practice\knowledge\`.
@@ -29,7 +29,7 @@ Each skill has its own tree. There is no shared tree.
 - `/publish`'s tree holds no layout contract, output-folder code or file name, period, fee, binding or filing practice, per-form caption rule, or template binary. A per-venue `.dotx` template exists only beside a bespoke filler.
 - `/assemble`'s script contracts stay beside their subskill, outside the tree.
 - `/legal-research`'s tree records where law is published and is never a statement of law. A paid subscription is recorded in the overlay only.
-- `/localize` writes no `/assemble` file until that tree has a reader, and no `/legal-research` file. `legislation-fetcher` writes that tree's publisher maps.
+- `/localize` writes no `/assemble` file until that tree has a reader, and no `/legal-research` file. `law-getter` writes that tree's publisher maps in legislation mode.
 - A skill may **read** another skill's tree. `assemble-bcca-book` reads the BCCA page cap from `/draft`'s tree. No tree is ever written on another skill's call.
 
 ## 3. Folder grammar

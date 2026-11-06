@@ -2,9 +2,9 @@
 
 # Westlaw Deep Research pipeline
 
-The full Westlaw AI Deep Research pipeline. `research-paralegal` fetches this
+The full Westlaw AI Deep Research pipeline. `law-getter` fetches this
 file at deep-research mode entry — `skill_source__read` (under whichever of `mcp__plugin_lawyer_data__skill_source__read` and `mcp__remote-devices__plugin_lawyer_data__skill_source__read` this host grants),
-path `shared/research-paralegal/westlaw-deep-research.md` — and follows it
+path `shared/law-getter/westlaw-deep-research.md` — and follows it
 exactly, never proceeding from a remembered procedure.
 
 ## Input contract
@@ -206,7 +206,7 @@ the 3-in-flight throttle.
 After follow-ups (if any) resolve, use the report's top-right **Download**
 control to export the memo as Word (.docx) — the format the practice's memo
 tooling expects. Fall back to PDF only if the Word export fails. Fetch
-`shared/research-paralegal/citation-download.md` and feed the memo
+`shared/law-getter/citation-download.md` and feed the memo
 file-identification through it (source policy: westlaw-first), then file it
 per Stage 10.
 
@@ -244,7 +244,7 @@ apply the same filters.
 
 ### Stage 9 — download the decisions
 
-Fetch `shared/research-paralegal/citation-download.md` and feed the
+Fetch `shared/law-getter/citation-download.md` and feed the
 deduplicated citation list through it (source policy: westlaw-first). Process
 sequentially; the manifest is appended per citation, so a turn-budget cutoff
 still leaves a usable record. The 5-citation cap applies to citation-mode

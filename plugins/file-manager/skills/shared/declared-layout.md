@@ -109,7 +109,7 @@ On a `general` type, `open-items` also counts each 🧩 gap line the renderer pr
 
 The card prints the declared criteria in their declared order, which is the order the practitioner works in. Counsel's review waits on the criteria declared above `counsel-review`.
 
-**`companions` members.** One: `written-arguments`. A type whose venue document is itself the written argument does not declare it. Evidence indexes, witness statements and the documents of a bespoke multi-document package stay outside this vocabulary.
+**`companions` members.** One: `written-arguments`. No shipped type declares it. Evidence indexes, witness statements and the documents of a bespoke multi-document package stay outside this vocabulary.
 
 ## 7. `rule_ref` on layout items
 

@@ -2,7 +2,7 @@
 """Claude Code PreToolUse hook (matcher: Skill).
 
 The /legal-research gate runs only in the main session. It spawns
-legislation-fetcher, research-paralegal and the audit agent, and a subagent
+law-getter and the audit agent, and a subagent
 cannot spawn agents, so a gate invoked inside one fails partway through and
 every currency result comes back validation_unavailable. This refuses that
 invocation on the first call, before anything is dispatched.
@@ -28,7 +28,7 @@ import hook_io  # noqa: E402
 GATE_SKILL = "legal-research"
 QUERY_SUBSKILL = "westlaw-query-optimizer"
 
-BLOCK_MESSAGE = """Blocked: /legal-research runs only from the main session. It spawns legislation-fetcher, research-paralegal and the audit agent, and a subagent cannot spawn agents. Nothing was dispatched.
+BLOCK_MESSAGE = """Blocked: /legal-research runs only from the main session. It spawns law-getter and the audit agent, and a subagent cannot spawn agents. Nothing was dispatched.
 Stop and return this item to the main session, which runs /legal-research itself. Never answer the question yourself in its place."""
 
 

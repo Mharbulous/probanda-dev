@@ -14,7 +14,7 @@ A residual point the research lawyer raises that narrows fit or ratio makes the 
 
 ## Record a failed return
 
-Failed, for any other substantive return, a partial pass included, the finding naming what held and what failed: `UPDATE statements_of_law SET verification = 'failed', doubt = COALESCE(doubt || ' ', '') || 'Scrutiny failed <YYYY-MM-DD>: <finding>' WHERE id = N`, followed in the same session by the statement's scrutiny review job (`/drafting-data` §3d) when the statement is linked to a live Writing. `<finding>` ends with `Answer: 6. LAW\….md`, the matter-relative path of the saved research lawyer's answer, which is how `scripts/statement_for_review.py` finds that file.
+Failed, for any other substantive return, a partial pass included, the finding naming what held and what failed: `UPDATE statements_of_law SET verification = 'failed', doubt = COALESCE(doubt || ' ', '') || 'Scrutiny failed <YYYY-MM-DD>: <finding>' WHERE id = N`, followed in the same session by the statement's scrutiny review job (`references/jobs-stock.md` §3d) when the statement is linked to a live Writing. `<finding>` ends with `Answer: 6. LAW\….md`, the matter-relative path of the saved research lawyer's answer, which is how `scripts/statement_for_review.py` finds that file.
 
 ## Read for review
 
@@ -69,7 +69,7 @@ The confirmation write closes that review (schema v47), only on the practitioner
 
 ## Close a review (drop)
 
-A drop writes nothing to the statement: it stays `'failed'` and supports nothing; killing its authority (`killed_on`) is the drop where nothing else relies on that authority. Either way the review job then completes by `/drafting-data` §9. Never delete the row.
+A drop writes nothing to the statement: it stays `'failed'` and supports nothing; killing its authority (`killed_on`) is the drop where nothing else relies on that authority. Either way the review job then completes by `references/jobs-run.md` §9. Never delete the row.
 
 ## Repair a verified statement that kept a finding
 

@@ -20,7 +20,7 @@ Judicial consideration of legislation is answering (`statute-currency.md`).
 | 1 | Matter case data — ingested authorities, concepts, criteria, the legal spine | invoke `/matter-data` (query) | local, free |
 | 2 | **The shared pooled layer** — matter-free principles, their public authorities, criteria and treatment edges | see "Reaching tier 2" below | cloud read, permission-prompted |
 | 3 | The matter's `6. LAW\` folder — memos and downloaded decisions not yet ingested | file reads → `/ingest` on anything load-bearing | local, free |
-| 4 | Westlaw: retrieval of decision text and Deep Research memos | the `/legal-research` caller, before the audit agent starts: `westlaw-query-optimizer` → `research-paralegal` (deep-research mode, and citation mode `westlaw-first`) | subscription, in-plan content only |
+| 4 | Westlaw: retrieval of decision text and Deep Research memos | the `/legal-research` caller, before the audit agent starts: `westlaw-query-optimizer` → `law-getter` (deep-research mode, and citation mode `westlaw-first`) | subscription, in-plan content only |
 
 | Row | Source | Use | Cost |
 |---|---|---|---|
@@ -108,9 +108,9 @@ Cloudflare 521). Applies wherever tier 2 runs.
 4. **One retry per session, maximum. Never silently degrade.** Do not loop, do
    not quietly drop tier 2 out of the coverage report.
 
-## Truncated retrieval returns (research-paralegal dispatches)
+## Truncated retrieval returns (law-getter Chrome-mode dispatches)
 
-Every research-paralegal mode's final report begins with a `status:` line
+Every deep-research or citation-mode law-getter report begins with a `status:` line
 (`complete` or `blocked (…)`). A return that does not begin `status:` is a
 mid-run message: the run was cut off (turn budget) or interrupted, and its
 completion state is unknown (learned 2026-08-06: a 58-minute deep-research run

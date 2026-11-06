@@ -29,7 +29,7 @@ Walk the re-rendered board's Ready lane in its own order. Assign each research j
 
 ## 3. Retrieval
 
-The jobs share the retrieval lanes, which the doctrine sets. One `research-paralegal` at a time across every job. One `legislation-fetcher` at a time, which may run beside the paralegal. `citation-checker` never runs beside the paralegal or another `citation-checker`. Westlaw's three runs in flight are the paralegal's to count. `research-agent` instances may run side by side. While one job waits for retrieval, run the other jobs' work that does not need it. Never hold a ready job back for another job to finish.
+The jobs share the retrieval lanes, which the doctrine sets. One Chrome-mode `law-getter` run (deep-research or citation) at a time across every job. One legislation-mode `law-getter` run at a time, which may run beside it. `citation-checker` never runs beside a Chrome-mode `law-getter` run or another `citation-checker`. Westlaw's three runs in flight are law-getter's to count. `research-agent` instances may run side by side. While one job waits for retrieval, run the other jobs' work that does not need it. Never hold a ready job back for another job to finish.
 
 ## 4. A memo lands
 

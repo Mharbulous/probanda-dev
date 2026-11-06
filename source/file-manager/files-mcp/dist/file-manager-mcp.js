@@ -1,4 +1,4 @@
-// build-stamp: 20086ee54abf
+// build-stamp: 90ee5173eba9
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15470,6 +15470,718 @@ var STAMP_KEYS = ["plugin_version", "shipped_from"];
 var VENUE_ROW_KEYS = ["code", "name", "aliases", "source", "ref", "recorded", ...STAMP_KEYS];
 var KIND_ROW_KEYS = ["file", "name", "aliases", "recipient", ...STAMP_KEYS];
 
+// src/config-path.ts
+import { copyFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+var CONFIG_FILE = "probanda.json";
+var LEGACY_CONFIG_FILE = "coclerk.json";
+var CONFIG_FOLDER = "Probanda";
+var LEGACY_CONFIG_FOLDER = "Coclerk";
+function override(env) {
+  const named = env.COCLERK_CONFIG_PATH;
+  if (!named) return void 0;
+  if (!existsSync(named)) {
+    throw new ValidationError(
+      `COCLERK_CONFIG_PATH names ${named}, which does not exist. Create it, or unset the variable to read the live ${CONFIG_FILE}.`
+    );
+  }
+  return named;
+}
+function roaming(env) {
+  return env.APPDATA || join(homedir(), "AppData", "Roaming");
+}
+function migrate(env) {
+  const folder = join(roaming(env), CONFIG_FOLDER);
+  const target = join(folder, CONFIG_FILE);
+  if (existsSync(target)) return;
+  const legacyFolder = join(roaming(env), LEGACY_CONFIG_FOLDER);
+  const source = [CONFIG_FILE, LEGACY_CONFIG_FILE].map((file2) => join(legacyFolder, file2)).find((path) => existsSync(path));
+  if (!source) return;
+  try {
+    mkdirSync(folder, { recursive: true });
+    for (const entry of readdirSync(legacyFolder, { withFileTypes: true })) {
+      if (!entry.isFile() || entry.name === CONFIG_FILE || entry.name === LEGACY_CONFIG_FILE) continue;
+      const to = join(folder, entry.name);
+      if (!existsSync(to)) copyFileSync(join(legacyFolder, entry.name), to);
+    }
+    copyFileSync(source, target);
+  } catch (err) {
+    throw new ValidationError(
+      `Could not copy the settings in ${legacyFolder} to ${folder}: ${err.message}. Nothing in ${legacyFolder} was changed.`
+    );
+  }
+}
+function configPath(env) {
+  const named = override(env);
+  if (named) return named;
+  migrate(env);
+  return join(roaming(env), CONFIG_FOLDER, CONFIG_FILE);
+}
+
+// src/practice/matter-data-root.ts
+import { existsSync as existsSync2, readFileSync } from "node:fs";
+var CONFIG_STATUS_HINT = "Call practice_data__config_status to see what is missing and the candidate root.";
+function resolveCaseDataRoot(env = process.env, fallback) {
+  const configFile = configPath(env);
+  if (!existsSync2(configFile)) {
+    const derived = fallback?.() ?? null;
+    if (derived !== null) return derived;
+    throw new ValidationError(
+      `Cannot locate the practice database: ${configFile} not found. Probanda has not been set up on this device: run /lawyer:probanda-setup, and never write probanda.json by hand.`
+    );
+  }
+  let root;
+  try {
+    root = JSON.parse(readFileSync(configFile, "utf-8")).case_data_root;
+  } catch (err) {
+    throw new ValidationError(`${configFile} is not valid JSON: ${err.message}`);
+  }
+  if (typeof root !== "string" || root === "") {
+    throw new ValidationError(
+      `${configFile} is missing "case_data_root" (the path to your "0. CASE DATA" folder). Add it, or set the COCLERK_DB_PATH env override. ` + CONFIG_STATUS_HINT
+    );
+  }
+  if (!existsSync2(root)) {
+    throw new ValidationError(
+      `Configured case_data_root does not exist: ${root}. Update ${configFile} after moving the Litigation Documents library, or restore that root. No _practice directory was created.`
+    );
+  }
+  return root;
+}
+
+// src/repo-root.ts
+import { existsSync as existsSync3, readFileSync as readFileSync2, readdirSync as readdirSync2, statSync } from "node:fs";
+import { homedir as homedir2 } from "node:os";
+import { basename, dirname, join as join2, resolve, win32 as pathWin32 } from "node:path";
+import { fileURLToPath } from "node:url";
+var SKILLS_MARKER = join2(".claude", "skills");
+var CHECKOUT_MARKERS = [join2("source", "lawyer", "mcp"), join2(".claude", "skills", "plugin-packager")];
+var SELF_DIR = dirname(fileURLToPath(import.meta.url));
+var INSTALL_ROOT = resolve(SELF_DIR, "..", "..");
+function installSkillsRoot(installRoot) {
+  const dir = join2(installRoot, "skills");
+  return isDirectory(join2(dir, "shared")) ? dir : void 0;
+}
+var AUTODETECT_OFF = /* @__PURE__ */ new Set(["0", "false", "no", "off"]);
+function resolveRepoRoot(env = process.env, request) {
+  if (env.COCLERK_REPO_ROOT) return env.COCLERK_REPO_ROOT;
+  const found = autoDetect(env, request.startDir ?? SELF_DIR);
+  if (found.root) return found.root;
+  throw new DataServerError(missingMessage(request.subject, env, found.tried), request.code);
+}
+var cache = /* @__PURE__ */ new Map();
+function autoDetect(env, startDir) {
+  const tried = [];
+  const flag = env.COCLERK_REPO_ROOT_AUTODETECT;
+  if (typeof flag === "string" && AUTODETECT_OFF.has(flag.trim().toLowerCase())) {
+    tried.push(`auto-detection disabled by COCLERK_REPO_ROOT_AUTODETECT=${flag}`);
+    return { tried };
+  }
+  const cacheKey = `${startDir}\0${env.APPDATA ?? ""}\0${env.USERPROFILE ?? ""}\0${env.HOME ?? ""}\0${env.COCLERK_CONFIG_PATH ?? ""}`;
+  const cached2 = cache.get(cacheKey);
+  if (cached2) return { root: cached2, tried };
+  const walked = walkUp(startDir);
+  if (walked) return remember(cacheKey, walked, tried);
+  tried.push(`walk-up from ${startDir} -- no ancestor holds ${SKILLS_MARKER} with ${CHECKOUT_MARKERS.join(" or ")}`);
+  const cfgPath = configPath(env);
+  const declared = readConfigRepoRoot(cfgPath, tried);
+  if (declared) return remember(cacheKey, declared, tried);
+  const probes = conventionalCandidates(env);
+  for (const probe of probes) {
+    if (isRepoRoot(probe)) return remember(cacheKey, probe, tried);
+  }
+  tried.push(
+    probes.length ? `conventional location${probes.length > 1 ? "s" : ""} (${probes.join(", ")}) -- no match` : "conventional location -- neither USERPROFILE nor HOME is set"
+  );
+  return { tried };
+}
+function remember(cacheKey, root, tried) {
+  cache.set(cacheKey, root);
+  return { root, tried };
+}
+function isRepoRoot(dir) {
+  return isDirectory(join2(dir, SKILLS_MARKER)) && CHECKOUT_MARKERS.some((marker) => isDirectory(join2(dir, marker)));
+}
+function walkUp(startDir) {
+  let cursor = resolve(startDir);
+  for (; ; ) {
+    if (isRepoRoot(cursor)) return cursor;
+    const parent = dirname(cursor);
+    if (parent === cursor) return void 0;
+    cursor = parent;
+  }
+}
+function readConfigRepoRoot(cfgPath, tried) {
+  if (!existsSync3(cfgPath)) {
+    tried.push(`"repo_root" in ${cfgPath} -- file not found`);
+    return void 0;
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(readFileSync2(cfgPath, "utf-8"));
+  } catch (err) {
+    tried.push(`"repo_root" in ${cfgPath} -- not valid JSON (${err.message})`);
+    return void 0;
+  }
+  const value = parsed?.repo_root;
+  if (typeof value === "string" && value !== "") return value;
+  tried.push(`"repo_root" in ${cfgPath} -- key absent or empty`);
+  return void 0;
+}
+function conventionalCandidates(env) {
+  const home = env.USERPROFILE || env.HOME || homedir2();
+  return home ? [join2(home, "Git", "probanda-dev")] : [];
+}
+function bundledSkillFolders(installRoot = INSTALL_ROOT) {
+  const dir = installSkillsRoot(installRoot);
+  if (!dir) return [];
+  return readdirSync2(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+}
+function pluginManifest(installRoot) {
+  try {
+    const manifest = JSON.parse(readFileSync2(join2(installRoot, ".claude-plugin", "plugin.json"), "utf-8"));
+    return {
+      name: typeof manifest?.name === "string" ? manifest.name : null,
+      version: typeof manifest?.version === "string" ? manifest.version : null
+    };
+  } catch {
+    return { name: null, version: null };
+  }
+}
+var SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper"];
+function siblingInstalls(installRoot = INSTALL_ROOT, names = SIBLING_PLUGINS) {
+  if (installSkillsRoot(installRoot) === void 0) return [];
+  const own = resolve(installRoot);
+  const parent = dirname(own);
+  const candidates2 = new Set(childDirs(parent));
+  if (basename(own) === pluginManifest(own).version) {
+    for (const branch of childDirs(dirname(parent))) {
+      for (const dir of childDirs(branch)) candidates2.add(dir);
+    }
+  }
+  candidates2.delete(own);
+  const winners = /* @__PURE__ */ new Map();
+  for (const dir of candidates2) {
+    const manifest = pluginManifest(dir);
+    if (manifest.name === null || !names.includes(manifest.name)) continue;
+    const skills = installSkillsRoot(dir);
+    if (skills === void 0) continue;
+    const rank = [
+      (manifest.version ?? "").split(".").map((part) => Number.parseInt(part, 10) || 0),
+      [Number(/~g(\d+)$/.exec(basename(dir))?.[1] ?? 0)],
+      [modifiedMs(dir)]
+    ];
+    const held = winners.get(manifest.name);
+    if (!held || compareRank(rank, held.rank) > 0) {
+      winners.set(manifest.name, { sibling: { name: manifest.name, version: manifest.version, installRoot: dir, skills }, rank });
+    }
+  }
+  return names.flatMap((name) => {
+    const held = winners.get(name);
+    return held ? [held.sibling] : [];
+  });
+}
+function childDirs(dir) {
+  try {
+    return readdirSync2(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory() && !entry.name.startsWith(".")).map((entry) => join2(dir, entry.name));
+  } catch {
+    return [];
+  }
+}
+function modifiedMs(dir) {
+  try {
+    return statSync(dir).mtimeMs;
+  } catch {
+    return 0;
+  }
+}
+function compareRank(a, b) {
+  for (let key = 0; key < a.length; key++) {
+    for (let i = 0; i < Math.max(a[key].length, b[key].length); i++) {
+      const diff = (a[key][i] ?? 0) - (b[key][i] ?? 0);
+      if (diff !== 0) return diff;
+    }
+  }
+  return 0;
+}
+function installedPluginLabel(shipped) {
+  if (shipped.plugin === null) return "this installed plugin";
+  return `the installed plugin "${shipped.plugin}"${shipped.plugin_version ? ` ${shipped.plugin_version}` : ""}`;
+}
+function resolveShippedRoot(relPath, env = process.env, request = {}) {
+  const installRoot = request.installRoot ?? INSTALL_ROOT;
+  const bundle = installSkillsRoot(installRoot);
+  const segment = relPath.split(/[\\/]/)[0];
+  if (bundle !== void 0 && segment !== "" && segment !== "." && segment !== ".." && !segment.includes(":")) {
+    if (isDirectory(join2(bundle, segment))) {
+      const own = pluginManifest(installRoot);
+      return { root: bundle, shipped_from: "install", plugin: own.name, plugin_version: own.version };
+    }
+    for (const sibling of siblingInstalls(installRoot)) {
+      if (isDirectory(join2(sibling.skills, segment))) {
+        return { root: sibling.skills, shipped_from: "install", plugin: sibling.name, plugin_version: sibling.version };
+      }
+    }
+  }
+  const code = request.code ?? "skills_root_missing";
+  try {
+    const repoRoot = resolveRepoRoot(env, { code, subject: request.subject ?? "the skills tree" });
+    return { root: join2(repoRoot, ".claude", "skills"), shipped_from: "checkout", plugin: null, plugin_version: null };
+  } catch (err) {
+    if (!(err instanceof DataServerError) || err.code !== code) throw err;
+    throw new DataServerError(`${err.message}
+
+${rosterLine(installRoot, segment, request.plugin)}`, code);
+  }
+}
+function isDirectory(dir) {
+  try {
+    return statSync(dir).isDirectory();
+  } catch {
+    return false;
+  }
+}
+function rosterLine(installRoot, segment, plugin) {
+  const bundled = bundledSkillFolders(installRoot);
+  if (bundled.length === 0) {
+    return `This plugin bundles no skill source (${join2(installRoot, "skills", "shared")} not found), so this install is incomplete. Check for updates in the desktop app, then fully restart it.`;
+  }
+  const siblings = siblingInstalls(installRoot).map((sibling) => `${sibling.name} ${sibling.version ?? "(no version)"}`);
+  const folder = segment ? `"${segment}"` : "this path's folder";
+  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") + (plugin ? `The "${plugin}" plugin ships ${folder}. Install it, or update it, in the desktop app, then fully restart.` : `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`);
+}
+function caseDataMigrateScriptsDir(env, installRoot) {
+  return migrateScriptsDir("matter-data", env, installRoot);
+}
+var MIGRATE_SKILL_PLUGIN = {
+  "matter-data": "lawyer",
+  "timecamping-data": "timekeeper",
+  "drafting-data": "litigator"
+};
+function migrateScriptsDir(skill, env, installRoot) {
+  const shipped = resolveShippedRoot(`${skill}/references/scripts/migrate_engine.py`, env ?? process.env, {
+    code: "repo_root_missing",
+    subject: `the ${skill} maintenance scripts`,
+    plugin: MIGRATE_SKILL_PLUGIN[skill],
+    installRoot
+  });
+  const dir = pathWin32.join(shipped.root, skill, "references", "scripts");
+  if (!existsSync3(pathWin32.join(dir, "migrate_engine.py"))) {
+    throw new DataServerError(
+      `migrate_engine.py not found under ${dir} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
+      "repo_root_missing"
+    );
+  }
+  return dir;
+}
+function missingMessage(subject, env, tried) {
+  const cfg = configPath(env);
+  return [
+    `cannot locate ${subject}: no installed Probanda plugin holds it, and no development checkout was found.`,
+    "",
+    "Tried, in order:",
+    `  1. COCLERK_REPO_ROOT environment variable -- ${env.COCLERK_REPO_ROOT === "" ? "set but empty" : "not set"}`,
+    ...tried.map((t, i) => `  ${i + 2}. ${t}`),
+    "",
+    "Practitioner: check for updates to the Probanda plugins in the desktop app, then fully restart the app.",
+    "If this error comes back, run /lawyer:suggestion naming it.",
+    'Maintainer only: set COCLERK_REPO_ROOT to a development checkout, or add a "repo_root" key to',
+    `  ${cfg}, set to its path (create the file if it does not exist; it may already hold "case_data_root"),`,
+    "  then fully restart the app."
+  ].join("\n");
+}
+
+// src/status-file.ts
+import { renameSync, unlinkSync, writeFileSync } from "node:fs";
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+function writeStatusFile(target, text, { attempts = 10, delayMs = 50 } = {}) {
+  const temp = `${target}.${process.pid}.tmp`;
+  try {
+    writeFileSync(temp, text, "utf-8");
+  } catch (err) {
+    return err.code ?? "UNKNOWN";
+  }
+  let code = "UNKNOWN";
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      renameSync(temp, target);
+      return null;
+    } catch (err) {
+      code = err.code ?? "UNKNOWN";
+      if (!["EPERM", "EBUSY", "EACCES"].includes(code)) break;
+      if (attempt < attempts - 1) sleepSync(delayMs);
+    }
+  }
+  try {
+    unlinkSync(temp);
+  } catch {
+  }
+  return code;
+}
+
+// src/python-driver.ts
+import { createHash } from "node:crypto";
+import { existsSync as existsSync4, linkSync, unlinkSync as unlinkSync2, writeFileSync as writeFileSync2 } from "node:fs";
+import { tmpdir } from "node:os";
+import { join as join3 } from "node:path";
+function pythonDriverFile(name, source) {
+  const hash = createHash("sha256").update(source).digest("hex").slice(0, 16);
+  const p = join3(tmpdir(), `coclerk-${name}-${hash}.py`);
+  if (existsSync4(p)) return p;
+  const temp = `${p}.${process.pid}.tmp`;
+  writeFileSync2(temp, source, "utf-8");
+  try {
+    linkSync(temp, p);
+  } catch (err) {
+    if (err.code !== "EEXIST") throw err;
+  } finally {
+    unlinkSync2(temp);
+  }
+  return p;
+}
+
+// src/python-spawn.ts
+import { spawnSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
+import { readdirSync as readdirSync3, rmSync } from "node:fs";
+import { tmpdir as tmpdir2 } from "node:os";
+import { join as join4 } from "node:path";
+var pythonStarts = { count: 0 };
+function runPythonDriver(opts) {
+  const { label, driver, payload, env, timeoutMs, extraEnv, timeoutAdvice, stagingDescription } = opts;
+  const candidates2 = [env.COCLERK_PYTHON, "python", "python3"].filter(Boolean);
+  let lastErr = "";
+  const tag = randomBytes(8).toString("hex");
+  for (const py of candidates2) {
+    pythonStarts.count++;
+    const res = spawnSync(py, [driver], {
+      input: payload,
+      encoding: "utf-8",
+      // spawnSync's 1 MB default is too small: one time-pipeline value is ~1.6 MB after the
+      // Chrometa import. Overflow still fails loudly, just at a realistic threshold.
+      maxBuffer: 64 * 1024 * 1024,
+      // PYTHONIOENCODING: host Python's stdout otherwise defaults to the Windows locale encoding,
+      // which mangles a non-ASCII exception message on the error path. TMPDIR pins Python's temp
+      // dir (it reads TMPDIR first) to Node's, so removeKilledStaging looks where the helper staged.
+      env: { ...env, PYTHONIOENCODING: "utf-8", TMPDIR: tmpdir2(), ...extraEnv, COCLERK_STAGING_TAG: tag },
+      timeout: timeoutMs
+    });
+    if (res.error) {
+      lastErr = res.error.message;
+      const code = res.error.code;
+      if (code === "ENOENT") continue;
+      if (code === "ETIMEDOUT") {
+        throw new PythonTimeoutError(
+          `${label} (${py}) did not finish within ${timeoutMs}ms and was killed.` + (timeoutAdvice ? ` ${timeoutAdvice}` : "") + removeKilledStaging(tag, stagingDescription)
+        );
+      }
+      throw new DataServerError(`${label} failed (${py}): ${res.error.message}`);
+    }
+    if (res.status !== 0) {
+      throw new DataServerError(`${label} (${py}) exited ${res.status}: ${(res.stderr || "").trim()}`);
+    }
+    try {
+      return JSON.parse(res.stdout);
+    } catch (err) {
+      throw new DataServerError(
+        `${label} (${py}) produced unparseable output: ${err.message}. Output began: ${JSON.stringify(res.stdout.slice(0, 200))}`
+      );
+    }
+  }
+  throw new DataServerError(
+    `No Python interpreter found for the ${label} (tried ${candidates2.join(", ")}). Install Python 3 or set COCLERK_PYTHON. Last error: ${lastErr}`
+  );
+}
+function removeKilledStaging(tag, description = "staging copy of the database") {
+  const pattern = new RegExp(`^coclerk_[a-z_]+_${tag}_`);
+  const failed = [];
+  for (const name of readdirSync3(tmpdir2())) {
+    if (!pattern.test(name)) continue;
+    const p = join4(tmpdir2(), name);
+    try {
+      rmSync(p, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+    } catch (err) {
+      failed.push(`${p} (${err.message})`);
+    }
+  }
+  return failed.length ? ` Its ${description} could not be removed; delete it by hand: ${failed.join("; ")}.` : "";
+}
+
+// src/kv/backend.ts
+var PY_HELPER = String.raw`
+import datetime, hashlib, io, json, os, sqlite3, sys
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS kv_store (
+  namespace TEXT NOT NULL,
+  key TEXT NOT NULL,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (namespace, key)
+);
+CREATE INDEX IF NOT EXISTS idx_kv_prefix ON kv_store(namespace, key);
+""".strip()
+
+
+def now_iso():
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+
+
+def escape_like(s):
+    return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def connect(db_path):
+    d = os.path.dirname(os.path.abspath(db_path))
+    if d:
+        os.makedirs(d, exist_ok=True)
+    con = sqlite3.connect(db_path)
+    con.execute("PRAGMA journal_mode = DELETE")
+    con.executescript(SCHEMA)
+    return con
+
+
+def other_tables(db_path):
+    """True when the file holds any table but kv_store. Opens nothing that is absent."""
+    if not os.path.exists(db_path):
+        return False
+    con = sqlite3.connect(db_path)
+    try:
+        row = con.execute(
+            "SELECT count(*) FROM sqlite_master WHERE type = 'table' "
+            "AND name <> 'kv_store' AND substr(name, 1, 7) <> 'sqlite_'"
+        ).fetchone()
+        return row[0] > 0
+    finally:
+        con.close()
+
+
+UPSERT = (
+    "INSERT INTO kv_store (namespace, key, value, updated_at) VALUES (?, ?, ?, ?) "
+    "ON CONFLICT(namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at"
+)
+
+
+def merge_ids(con, namespace, key, add, drop_prefix, line_no):
+    """Treat one value as a JSON array of strings: drop every element starting
+    with drop_prefix, append the new ones not already present, keep order.
+    An array that ends up empty deletes the key -- an absent index and an empty
+    index mean the same thing to every reader."""
+    row = con.execute(
+        "SELECT value FROM kv_store WHERE namespace = ? AND key = ?", (namespace, key)
+    ).fetchone()
+    current = []
+    if row is not None:
+        try:
+            current = json.loads(row[0])
+        except ValueError:
+            raise SystemExit("line %d: merge target %r does not hold JSON" % (line_no, key))
+        if not isinstance(current, list) or any(not isinstance(x, str) for x in current):
+            raise SystemExit(
+                "line %d: merge target %r is not a JSON array of strings" % (line_no, key)
+            )
+    kept = [x for x in current if not (drop_prefix and x.startswith(drop_prefix))]
+    seen = set(kept)
+    for item in add:
+        if item not in seen:
+            kept.append(item)
+            seen.add(item)
+    if kept:
+        con.execute(
+            UPSERT,
+            (namespace, key, json.dumps(kept, ensure_ascii=False, separators=(",", ":")), now_iso()),
+        )
+    else:
+        con.execute("DELETE FROM kv_store WHERE namespace = ? AND key = ?", (namespace, key))
+
+
+def namespace_rows(con, namespace):
+    return dict(con.execute("SELECT key, value FROM kv_store WHERE namespace = ?", (namespace,)))
+
+
+def bulk_apply(con, namespace, path, expect):
+    """Apply a whole JSONL file of writes to one namespace in ONE transaction.
+    Reading the file here rather than through tool arguments is what makes a
+    58k-row import possible; one transaction is what makes it one process
+    instead of 58k. Any bad line raises before the commit, so the caller either
+    gets the whole file or none of it.
+    With no expect it previews: the same work, rolled back, reporting the net
+    effect on the namespace and the fingerprint of the bytes it read. With
+    expect it commits only if those match, which is what makes the counts a
+    hook shows the practitioner true."""
+    if not os.path.isfile(path):
+        raise SystemExit("file not found: %s" % path)
+    with open(path, "rb") as fh:
+        data = fh.read()
+    con.execute("BEGIN IMMEDIATE")
+    before = namespace_rows(con, namespace)
+    counts = {"lines": 0, "sets": 0, "deletes": 0, "merges": 0, "deleted_by_prefix": 0}
+    with io.TextIOWrapper(io.BytesIO(data), encoding="utf-8") as fh:
+        for line_no, raw in enumerate(fh, 1):
+            raw = raw.strip()
+            if not raw:
+                continue
+            try:
+                entry = json.loads(raw)
+            except ValueError as exc:
+                raise SystemExit("line %d is not valid JSON: %s" % (line_no, exc))
+            counts["lines"] += 1
+            op = entry.get("op")
+            if op == "set":
+                con.execute(UPSERT, (namespace, entry["key"], entry["value"], now_iso()))
+                counts["sets"] += 1
+            elif op == "delete":
+                con.execute(
+                    "DELETE FROM kv_store WHERE namespace = ? AND key = ?",
+                    (namespace, entry["key"]),
+                )
+                counts["deletes"] += 1
+            elif op == "delete_prefix":
+                cur = con.execute(
+                    "DELETE FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\'",
+                    (namespace, escape_like(entry["prefix"]) + "%"),
+                )
+                counts["deleted_by_prefix"] += cur.rowcount
+            elif op == "merge":
+                merge_ids(
+                    con,
+                    namespace,
+                    entry["key"],
+                    entry.get("add") or [],
+                    entry.get("drop_prefix") or "",
+                    line_no,
+                )
+                counts["merges"] += 1
+            else:
+                raise SystemExit("line %d has unknown op %r" % (line_no, op))
+    after = namespace_rows(con, namespace)
+    effect = {
+        "added": sum(key not in before for key in after),
+        "replaced": sum(key in before and before[key] != value for key, value in after.items()),
+        "removed": sum(key not in after for key in before),
+        "file_sha256": hashlib.sha256(data).hexdigest(),
+    }
+    if expect is None:
+        con.rollback()
+    elif any(expect.get(name) != value for name, value in effect.items()):
+        raise SystemExit("nothing was written: the file would now do %s, not what was approved; preview it again" % json.dumps(effect))
+    else:
+        con.commit()
+    return {**counts, **effect, "applied": expect is not None}
+
+
+def export(con, namespace, prefix, path):
+    """The read twin of bulk_apply: write every key under prefix to a JSONL
+    file of bulk_apply "set" lines, sorted by key, so an export re-applies as
+    it stands. The rows go to a file the caller named, never back through tool
+    output."""
+    parent = os.path.dirname(os.path.abspath(path))
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    rows = con.execute(
+        "SELECT key, value FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\' ORDER BY key",
+        (namespace, escape_like(prefix) + "%"),
+    )
+    items = 0
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        for key, value in rows:
+            line = {"op": "set", "key": key, "value": value}
+            fh.write(json.dumps(line, ensure_ascii=False, separators=(",", ":")) + "\n")
+            items += 1
+    return {"items": items, "path": path}
+
+
+def dump(con, namespaces):
+    out = {}
+    for namespace in namespaces:
+        rows = con.execute(
+            "SELECT key, value FROM kv_store WHERE namespace = ? ORDER BY key", (namespace,)
+        ).fetchall()
+        out[namespace] = [{"key": k, "value": v} for k, v in rows]
+    return {"namespaces": out}
+
+
+def apply(con, writes):
+    """Sets and deletes across namespaces in ONE transaction: all land or none."""
+    counts = {"sets": 0, "deletes": 0}
+    for entry in writes:
+        if entry["op"] == "set":
+            con.execute(UPSERT, (entry["namespace"], entry["key"], entry["value"], now_iso()))
+            counts["sets"] += 1
+        elif entry["op"] == "delete":
+            con.execute(
+                "DELETE FROM kv_store WHERE namespace = ? AND key = ?", (entry["namespace"], entry["key"])
+            )
+            counts["deletes"] += 1
+        else:
+            raise SystemExit("unknown write op: %r" % entry["op"])
+    con.commit()
+    return counts
+
+
+def main():
+    req = json.load(sys.stdin)
+    # exclusive: the caller keeps nothing but kv_store in this file, so a file
+    # holding any other table is refused before it is touched.
+    if req.get("exclusive") and other_tables(req["db_path"]):
+        return {"other_tables": True}
+    con = connect(req["db_path"])
+    try:
+        op = req["op"]
+        if op == "dump":
+            return dump(con, req["namespaces"])
+        if op == "apply":
+            return apply(con, req["writes"])
+        namespace = req["namespace"]
+        if op == "get":
+            row = con.execute(
+                "SELECT value FROM kv_store WHERE namespace = ? AND key = ?",
+                (namespace, req["key"]),
+            ).fetchone()
+            return {"value": row[0] if row else None}
+        if op == "set":
+            con.execute(UPSERT, (namespace, req["key"], req["value"], now_iso()))
+            con.commit()
+            return {"ok": True}
+        if op == "list":
+            prefix = req.get("prefix") or ""
+            rows = con.execute(
+                "SELECT key, value FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\' ORDER BY key",
+                (namespace, escape_like(prefix) + "%"),
+            ).fetchall()
+            return {"items": [{"key": k, "value": v} for k, v in rows]}
+        if op == "delete":
+            cur = con.execute(
+                "DELETE FROM kv_store WHERE namespace = ? AND key = ?",
+                (namespace, req["key"]),
+            )
+            con.commit()
+            return {"ok": True, "deleted": cur.rowcount > 0}
+        if op == "bulk_apply":
+            return bulk_apply(con, namespace, req["path"], req.get("expect"))
+        if op == "export":
+            return export(con, namespace, req.get("prefix") or "", req["path"])
+        raise SystemExit("unknown op: %s" % op)
+    finally:
+        con.close()
+
+
+print(json.dumps(main()))
+`.trim();
+
+// src/python-timeout.ts
+var READ_TIMEOUT_MS = 2e4;
+function pythonTimeoutMs(env, defaultMs, variable) {
+  const override2 = env[variable];
+  if (override2 === void 0) return defaultMs;
+  const ms = Number(override2);
+  if (!(ms > 0)) throw new ValidationError(`${variable} must be a positive number of milliseconds: ${override2}`);
+  return ms;
+}
+
 // src/schema/file-ops.ts
 function fileOpsToolDefinitions() {
   return [
@@ -15891,117 +16603,19 @@ function jsonText(name, result) {
 // src/file_ops/trash.ts
 import {
   appendFileSync,
-  existsSync as existsSync4,
+  existsSync as existsSync7,
   lstatSync,
-  mkdirSync as mkdirSync2,
-  readdirSync as readdirSync4,
+  mkdirSync as mkdirSync3,
+  readdirSync as readdirSync6,
   realpathSync as realpathSync4,
   renameSync as renameSync2,
-  statSync as statSync3
+  statSync as statSync4
 } from "node:fs";
-import { win32 as pathWin325 } from "node:path";
+import { win32 as pathWin326 } from "node:path";
 
 // src/files/matter-root.ts
-import { existsSync as existsSync2, readdirSync as readdirSync2, readFileSync, statSync } from "node:fs";
-import { basename, dirname, isAbsolute, join as join3, normalize, resolve, win32 as pathWin32 } from "node:path";
-
-// src/python-driver.ts
-import { createHash } from "node:crypto";
-import { existsSync, linkSync, unlinkSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-function pythonDriverFile(name, source) {
-  const hash = createHash("sha256").update(source).digest("hex").slice(0, 16);
-  const p = join(tmpdir(), `coclerk-${name}-${hash}.py`);
-  if (existsSync(p)) return p;
-  const temp = `${p}.${process.pid}.tmp`;
-  writeFileSync(temp, source, "utf-8");
-  try {
-    linkSync(temp, p);
-  } catch (err) {
-    if (err.code !== "EEXIST") throw err;
-  } finally {
-    unlinkSync(temp);
-  }
-  return p;
-}
-
-// src/python-spawn.ts
-import { spawnSync } from "node:child_process";
-import { randomBytes } from "node:crypto";
-import { readdirSync, rmSync } from "node:fs";
-import { tmpdir as tmpdir2 } from "node:os";
-import { join as join2 } from "node:path";
-var pythonStarts = { count: 0 };
-function runPythonDriver(opts) {
-  const { label, driver, payload, env, timeoutMs, extraEnv, timeoutAdvice, stagingDescription } = opts;
-  const candidates2 = [env.COCLERK_PYTHON, "python", "python3"].filter(Boolean);
-  let lastErr = "";
-  const tag = randomBytes(8).toString("hex");
-  for (const py of candidates2) {
-    pythonStarts.count++;
-    const res = spawnSync(py, [driver], {
-      input: payload,
-      encoding: "utf-8",
-      // spawnSync's 1 MB default is too small: one time-pipeline value is ~1.6 MB after the
-      // Chrometa import. Overflow still fails loudly, just at a realistic threshold.
-      maxBuffer: 64 * 1024 * 1024,
-      // PYTHONIOENCODING: host Python's stdout otherwise defaults to the Windows locale encoding,
-      // which mangles a non-ASCII exception message on the error path. TMPDIR pins Python's temp
-      // dir (it reads TMPDIR first) to Node's, so removeKilledStaging looks where the helper staged.
-      env: { ...env, PYTHONIOENCODING: "utf-8", TMPDIR: tmpdir2(), ...extraEnv, COCLERK_STAGING_TAG: tag },
-      timeout: timeoutMs
-    });
-    if (res.error) {
-      lastErr = res.error.message;
-      const code = res.error.code;
-      if (code === "ENOENT") continue;
-      if (code === "ETIMEDOUT") {
-        throw new PythonTimeoutError(
-          `${label} (${py}) did not finish within ${timeoutMs}ms and was killed.` + (timeoutAdvice ? ` ${timeoutAdvice}` : "") + removeKilledStaging(tag, stagingDescription)
-        );
-      }
-      throw new DataServerError(`${label} failed (${py}): ${res.error.message}`);
-    }
-    if (res.status !== 0) {
-      throw new DataServerError(`${label} (${py}) exited ${res.status}: ${(res.stderr || "").trim()}`);
-    }
-    try {
-      return JSON.parse(res.stdout);
-    } catch (err) {
-      throw new DataServerError(
-        `${label} (${py}) produced unparseable output: ${err.message}. Output began: ${JSON.stringify(res.stdout.slice(0, 200))}`
-      );
-    }
-  }
-  throw new DataServerError(
-    `No Python interpreter found for the ${label} (tried ${candidates2.join(", ")}). Install Python 3 or set COCLERK_PYTHON. Last error: ${lastErr}`
-  );
-}
-function removeKilledStaging(tag, description = "staging copy of the database") {
-  const pattern = new RegExp(`^coclerk_[a-z_]+_${tag}_`);
-  const failed = [];
-  for (const name of readdirSync(tmpdir2())) {
-    if (!pattern.test(name)) continue;
-    const p = join2(tmpdir2(), name);
-    try {
-      rmSync(p, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
-    } catch (err) {
-      failed.push(`${p} (${err.message})`);
-    }
-  }
-  return failed.length ? ` Its ${description} could not be removed; delete it by hand: ${failed.join("; ")}.` : "";
-}
-
-// src/python-timeout.ts
-var READ_TIMEOUT_MS = 2e4;
-function pythonTimeoutMs(env, defaultMs, variable) {
-  const override2 = env[variable];
-  if (override2 === void 0) return defaultMs;
-  const ms = Number(override2);
-  if (!(ms > 0)) throw new ValidationError(`${variable} must be a positive number of milliseconds: ${override2}`);
-  return ms;
-}
+import { existsSync as existsSync5, readdirSync as readdirSync4, readFileSync as readFileSync3, statSync as statSync2 } from "node:fs";
+import { basename as basename2, dirname as dirname2, isAbsolute, join as join5, normalize, resolve as resolve2, win32 as pathWin322 } from "node:path";
 
 // src/case/case-data-resolver.py.ts
 var case_data_resolver_py_default = `"""case_data_resolver.py \u2014 where a matter's case data lives (MODULE).
@@ -16257,17 +16871,17 @@ function canonicalRoot(root, missingMessage2, code = "skills_root_missing") {
 // src/files/matter-root.ts
 var POINTER_FILES = ["probanda.json", "coclerk.json"];
 function findPointer(root) {
-  return POINTER_FILES.map((name) => join3(root, name)).find((path) => existsSync2(path));
+  return POINTER_FILES.map((name) => join5(root, name)).find((path) => existsSync5(path));
 }
 function validateMatterRoot(matterRoot) {
   if (typeof matterRoot !== "string" || matterRoot.length === 0) {
     throw new DataServerError("matter_root is required", "invalid_root");
   }
-  if (!pathWin32.isAbsolute(matterRoot)) {
+  if (!pathWin322.isAbsolute(matterRoot)) {
     throw new DataServerError(`matter_root must be an absolute path: ${matterRoot}`, "invalid_root");
   }
   const canon = canonicalRoot(matterRoot, `matter_root not found: ${matterRoot}`, "invalid_root");
-  if (!statSync(canon).isDirectory()) {
+  if (!statSync2(canon).isDirectory()) {
     throw new DataServerError(`matter_root is not a directory: ${matterRoot}`, "invalid_root");
   }
   if (findPointer(canon) === void 0) {
@@ -16282,12 +16896,12 @@ function existingCaseDataFolder(root, env = process.env) {
   const dir = caseDataFolder(root, env);
   const missing = `the matter's matter-data folder does not exist: ${dir}. Run /matter-data initialize on this matter first.`;
   const canon = canonicalRoot(dir, missing, "case_data_missing");
-  if (!statSync(canon).isDirectory()) throw new DataServerError(missing, "case_data_missing");
+  if (!statSync2(canon).isDirectory()) throw new DataServerError(missing, "case_data_missing");
   return canon;
 }
 
 // src/files/zones.ts
-import { win32 as pathWin322 } from "node:path";
+import { win32 as pathWin323 } from "node:path";
 var FIREWALL = /^(privileged|disclosed)$/i;
 var TRASH = /^trash$/i;
 var CASE_DATA = /^0\. case data$/i;
@@ -16308,7 +16922,7 @@ function zoneProblem(purpose, path, root, draftUnchanged = false) {
   const zone = ZONES[purpose];
   const segments = path.split(/[\\/]+/);
   if (segments.some((s) => FIREWALL.test(s))) return `a privileged or disclosed folder is ${zone.phrase}`;
-  const below = root === void 0 ? [] : pathWin322.relative(root, path).split(pathWin322.sep).filter(Boolean);
+  const below = root === void 0 ? [] : pathWin323.relative(root, path).split(pathWin323.sep).filter(Boolean);
   if (purpose === "move-to" && draftUnchanged) {
     return below.length === 1 && DRAFT_FOLDER.test(below[0]) ? null : "Move to 0. DRAFT unchanged moves only into the matter's 0. DRAFT folder";
   }
@@ -16327,46 +16941,16 @@ function supersededDestinationProblem(segments, draftFolder) {
 
 // src/file_ops/approved-row.ts
 import { createHash as createHash2 } from "node:crypto";
-import { readFileSync as readFileSync3 } from "node:fs";
+import { readFileSync as readFileSync5 } from "node:fs";
 
 // src/housekeeping/run-dir.ts
 import { randomBytes as randomBytes2 } from "node:crypto";
-import { closeSync, existsSync as existsSync3, fsyncSync, mkdirSync, openSync, readdirSync as readdirSync3, readFileSync as readFileSync2, realpathSync as realpathSync3, statSync as statSync2, writeSync } from "node:fs";
-import { win32 as pathWin324 } from "node:path";
-
-// src/status-file.ts
-import { renameSync, unlinkSync as unlinkSync2, writeFileSync as writeFileSync2 } from "node:fs";
-function sleepSync(ms) {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-}
-function writeStatusFile(target, text, { attempts = 10, delayMs = 50 } = {}) {
-  const temp = `${target}.${process.pid}.tmp`;
-  try {
-    writeFileSync2(temp, text, "utf-8");
-  } catch (err) {
-    return err.code ?? "UNKNOWN";
-  }
-  let code = "UNKNOWN";
-  for (let attempt = 0; attempt < attempts; attempt++) {
-    try {
-      renameSync(temp, target);
-      return null;
-    } catch (err) {
-      code = err.code ?? "UNKNOWN";
-      if (!["EPERM", "EBUSY", "EACCES"].includes(code)) break;
-      if (attempt < attempts - 1) sleepSync(delayMs);
-    }
-  }
-  try {
-    unlinkSync2(temp);
-  } catch {
-  }
-  return code;
-}
+import { closeSync, existsSync as existsSync6, fsyncSync, mkdirSync as mkdirSync2, openSync, readdirSync as readdirSync5, readFileSync as readFileSync4, realpathSync as realpathSync3, statSync as statSync3, writeSync } from "node:fs";
+import { win32 as pathWin325 } from "node:path";
 
 // src/housekeeping/proposal.ts
 import { realpathSync as realpathSync2 } from "node:fs";
-import { win32 as pathWin323 } from "node:path";
+import { win32 as pathWin324 } from "node:path";
 var SECTIONS = ["offered", "ingested_only", "deferred"];
 var ACTION_GROUPS = {
   file: "Rename and move",
@@ -16579,7 +17163,7 @@ function canonical(path) {
   try {
     return realpathSync2.native(path);
   } catch {
-    return pathWin323.resolve(path);
+    return pathWin324.resolve(path);
   }
 }
 var MAX_PROBLEMS = 20;
@@ -16652,7 +17236,7 @@ var JOURNAL = "applied.jsonl";
 function openMatter(matterRoot) {
   const root = validateMatterRoot(matterRoot);
   const caseData = existingCaseDataFolder(root);
-  return { root, caseData, housekeeping: pathWin324.join(caseData, "housekeeping") };
+  return { root, caseData, housekeeping: pathWin325.join(caseData, "housekeeping") };
 }
 function mintRunId(now = /* @__PURE__ */ new Date()) {
   const p = (n, width = 2) => String(n).padStart(width, "0");
@@ -16665,27 +17249,27 @@ function assertRunId(runId) {
   }
 }
 function createRun(matter, now = /* @__PURE__ */ new Date()) {
-  for (let dir = matter.housekeeping; dir.length > matter.caseData.length; dir = pathWin324.dirname(dir)) {
-    if (existsSync3(dir) && realpathSync3.native(dir).toLowerCase() !== dir.toLowerCase()) {
+  for (let dir = matter.housekeeping; dir.length > matter.caseData.length; dir = pathWin325.dirname(dir)) {
+    if (existsSync6(dir) && realpathSync3.native(dir).toLowerCase() !== dir.toLowerCase()) {
       throw new DataServerError(`${dir} resolves elsewhere (${realpathSync3.native(dir)})`, "path_out_of_scope");
     }
   }
   for (; ; ) {
     const runId = mintRunId(now);
-    const dir = pathWin324.join(matter.housekeeping, runId);
-    if (existsSync3(dir)) continue;
-    mkdirSync(dir, { recursive: true });
+    const dir = pathWin325.join(matter.housekeeping, runId);
+    if (existsSync6(dir)) continue;
+    mkdirSync2(dir, { recursive: true });
     return { runId, dir: confineRunDir(matter, runId) };
   }
 }
 function existingRunDir(matter, runId) {
   assertRunId(runId);
-  const dir = pathWin324.join(matter.housekeeping, runId);
-  if (!isDirectory(dir)) throw new DataServerError(`no run directory ${runId} under ${matter.housekeeping}`, "run_not_found");
+  const dir = pathWin325.join(matter.housekeeping, runId);
+  if (!isDirectory2(dir)) throw new DataServerError(`no run directory ${runId} under ${matter.housekeeping}`, "run_not_found");
   return confineRunDir(matter, runId);
 }
 function confineRunDir(matter, runId) {
-  const expected = pathWin324.join(matter.housekeeping, runId);
+  const expected = pathWin325.join(matter.housekeeping, runId);
   const real = realpathSync3.native(expected);
   if (real.toLowerCase() !== expected.toLowerCase() || zoneProblem("run-files", real)) {
     throw new DataServerError(`run directory resolves outside the matter-data folder's housekeeping folder (${expected} -> ${real})`, "path_out_of_scope");
@@ -16693,15 +17277,15 @@ function confineRunDir(matter, runId) {
   return real;
 }
 function runFilePath(runDir, fileName) {
-  const path = pathWin324.join(runDir, fileName);
-  if (existsSync3(path) && realpathSync3.native(path).toLowerCase() !== path.toLowerCase()) {
+  const path = pathWin325.join(runDir, fileName);
+  if (existsSync6(path) && realpathSync3.native(path).toLowerCase() !== path.toLowerCase()) {
     throw new DataServerError(`${fileName} in the run directory resolves elsewhere: ${path}`, "path_out_of_scope");
   }
   return path;
 }
 function listRuns(matter) {
-  if (!isDirectory(matter.housekeeping)) return [];
-  return readdirSync3(matter.housekeeping, { withFileTypes: true }).filter((e) => e.isDirectory() && RUN_ID_RE.test(e.name)).map((e) => e.name).sort();
+  if (!isDirectory2(matter.housekeeping)) return [];
+  return readdirSync5(matter.housekeeping, { withFileTypes: true }).filter((e) => e.isDirectory() && RUN_ID_RE.test(e.name)).map((e) => e.name).sort();
 }
 function newerRun(matter, runId) {
   const runs = listRuns(matter);
@@ -16711,14 +17295,14 @@ function newerRun(matter, runId) {
 function newestProposalRun(matter) {
   const runs = listRuns(matter);
   for (let i = runs.length - 1; i >= 0; i--) {
-    if (readProposal(pathWin324.join(matter.housekeeping, runs[i]), runs[i], matter.root).proposal) return runs[i];
+    if (readProposal(pathWin325.join(matter.housekeeping, runs[i]), runs[i], matter.root).proposal) return runs[i];
   }
   return null;
 }
 function readProposal(runDir, runId, root) {
   let text;
   try {
-    text = readFileSync2(pathWin324.join(runDir, PROPOSAL), "utf-8");
+    text = readFileSync4(pathWin325.join(runDir, PROPOSAL), "utf-8");
   } catch {
     return { proposal: null, problem: "no proposal.json" };
   }
@@ -16740,7 +17324,7 @@ function requireProposal(runDir, runId, root) {
 function readApproval(runDir, runId) {
   let text;
   try {
-    text = readFileSync2(pathWin324.join(runDir, APPROVAL), "utf-8");
+    text = readFileSync4(pathWin325.join(runDir, APPROVAL), "utf-8");
   } catch (err) {
     const code = err.code;
     return code === "ENOENT" ? { approval: null } : { approval: null, problem: `approval.json cannot be read (${code})` };
@@ -16760,7 +17344,7 @@ function requireApproval(runDir, runId) {
   if (approval2) return approval2;
   if (problem) {
     throw new DataServerError(
-      `run ${runId}: the saved approval ${pathWin324.join(runDir, APPROVAL)} is unreadable, so nothing is applied from it: ${problem}`,
+      `run ${runId}: the saved approval ${pathWin325.join(runDir, APPROVAL)} is unreadable, so nothing is applied from it: ${problem}`,
       "approval_corrupt"
     );
   }
@@ -16770,7 +17354,7 @@ function readJournal(runDir) {
   const lines = /* @__PURE__ */ new Map();
   let text;
   try {
-    text = readFileSync2(pathWin324.join(runDir, JOURNAL), "utf-8");
+    text = readFileSync4(pathWin325.join(runDir, JOURNAL), "utf-8");
   } catch {
     return lines;
   }
@@ -16795,8 +17379,8 @@ function writeNewDurably(path, text) {
 }
 function appendLineDurably(path, line) {
   let prefix = "";
-  if (existsSync3(path)) {
-    const text = readFileSync2(path, "utf-8");
+  if (existsSync6(path)) {
+    const text = readFileSync4(path, "utf-8");
     if (text.length && !text.endsWith("\n")) prefix = "\n";
   }
   const fd = openSync(path, "a");
@@ -16811,9 +17395,9 @@ function writeReplacing(path, text) {
   const code = writeStatusFile(path, text);
   if (code) throw new DataServerError(`could not write ${path}: ${code}`, "write_failed");
 }
-function isDirectory(path) {
+function isDirectory2(path) {
   try {
-    return statSync2(path).isDirectory();
+    return statSync3(path).isDirectory();
   } catch {
     return false;
   }
@@ -16834,7 +17418,7 @@ function requireApprovedRow(matterRoot, row3, source) {
   }
   let hash;
   try {
-    hash = createHash2("sha256").update(readFileSync3(source)).digest("hex");
+    hash = createHash2("sha256").update(readFileSync5(source)).digest("hex");
   } catch (err) {
     throw new DataServerError(`the approved file of row ${row3.row_id} cannot be read (${err.message}); nothing was moved: ${source}`, "changed_since_approval");
   }
@@ -16850,35 +17434,35 @@ function requireApprovedRow(matterRoot, row3, source) {
 var TRASH2 = "TRASH";
 var TRASH_LOG = ".trash-log.jsonl";
 function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), row3 = {}) {
-  if (typeof path !== "string" || !pathWin325.isAbsolute(path)) {
+  if (typeof path !== "string" || !pathWin326.isAbsolute(path)) {
     throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
   }
   let target;
   try {
-    target = pathWin325.join(realpathSync4.native(pathWin325.dirname(path)), pathWin325.basename(path));
+    target = pathWin326.join(realpathSync4.native(pathWin326.dirname(path)), pathWin326.basename(path));
     lstatSync(target);
   } catch {
     throw new DataServerError(`path does not exist: ${path}`, "not_found");
   }
   const stat = lstatSync(target);
   const ancestors = [target];
-  for (let dir = pathWin325.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin325.dirname(dir)) {
+  for (let dir = pathWin326.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin326.dirname(dir)) {
     ancestors.push(dir);
   }
-  if (ancestors.some((dir) => existsSync4(pathWin325.join(dir, ".git")))) {
+  if (ancestors.some((dir) => existsSync7(pathWin326.join(dir, ".git")))) {
     throw new DataServerError(
       `path is inside a Git worktree; ordinary repository rules apply there: ${target}`,
       "git_worktree"
     );
   }
-  const root = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile(pathWin325.join(dir, marker))));
+  const root = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile(pathWin326.join(dir, marker))));
   if (root === void 0) {
     throw new DataServerError(
       `no ${POINTER_FILES.join(" or ")} at or above the path; not a client-matter file: ${target}`,
       "not_a_matter_file"
     );
   }
-  const rel = pathWin325.relative(root, target);
+  const rel = pathWin326.relative(root, target);
   if (zoneProblem("move-from", target, root)) {
     throw new DataServerError(
       `path is protected (the workspace root, the matter pointer, ${TRASH2}, the matter-data folder, or a privileged/disclosed tree): ${target}`,
@@ -16886,18 +17470,18 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), ro
     );
   }
   requireApprovedRow(root, row3, target);
-  let dest = pathWin325.join(root, TRASH2, rel);
+  let dest = pathWin326.join(root, TRASH2, rel);
   if (present(dest)) {
     const suffix = ` (trashed ${stamp(now)})`;
-    const ext = stat.isDirectory() ? "" : pathWin325.extname(dest);
+    const ext = stat.isDirectory() ? "" : pathWin326.extname(dest);
     dest = dest.slice(0, dest.length - ext.length) + suffix + ext;
     if (present(dest)) {
       throw new DataServerError(`destination already exists: ${dest}`, "dest_exists");
     }
   }
   if (dryRun) return { would_move_from: target, would_move_to: dest };
-  const result = stat.isDirectory() ? { moved_from: target, moved_to: dest, kind: "dir", entries: readdirSync4(target, { recursive: true }).length } : { moved_from: target, moved_to: dest, kind: "file", bytes: stat.size };
-  mkdirSync2(pathWin325.dirname(dest), { recursive: true });
+  const result = stat.isDirectory() ? { moved_from: target, moved_to: dest, kind: "dir", entries: readdirSync6(target, { recursive: true }).length } : { moved_from: target, moved_to: dest, kind: "file", bytes: stat.size };
+  mkdirSync3(pathWin326.dirname(dest), { recursive: true });
   try {
     renameSync2(target, dest);
   } catch (err) {
@@ -16911,14 +17495,14 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), ro
   }
   try {
     const line = JSON.stringify({ when: now.toISOString(), from: target, to: dest });
-    appendFileSync(pathWin325.join(root, TRASH2, TRASH_LOG), line + "\n", "utf-8");
+    appendFileSync(pathWin326.join(root, TRASH2, TRASH_LOG), line + "\n", "utf-8");
   } catch (err) {
     result.log_error = err instanceof Error ? err.message : String(err);
   }
   return result;
 }
 function isFile(path) {
-  return existsSync4(path) && statSync3(path).isFile();
+  return existsSync7(path) && statSync4(path).isFile();
 }
 function present(path) {
   try {
@@ -16941,335 +17525,9 @@ import { win32 as pathWin329 } from "node:path";
 import { readdirSync as readdirSync7, realpathSync as realpathSync5, statSync as statSync5 } from "node:fs";
 import { win32 as pathWin328 } from "node:path";
 
-// src/practice/matter-data-root.ts
-import { existsSync as existsSync6, readFileSync as readFileSync4 } from "node:fs";
-
-// src/config-path.ts
-import { copyFileSync, existsSync as existsSync5, mkdirSync as mkdirSync3, readdirSync as readdirSync5 } from "node:fs";
-import { homedir } from "node:os";
-import { join as join4 } from "node:path";
-var CONFIG_FILE = "probanda.json";
-var LEGACY_CONFIG_FILE = "coclerk.json";
-var CONFIG_FOLDER = "Probanda";
-var LEGACY_CONFIG_FOLDER = "Coclerk";
-function override(env) {
-  const named = env.COCLERK_CONFIG_PATH;
-  if (!named) return void 0;
-  if (!existsSync5(named)) {
-    throw new ValidationError(
-      `COCLERK_CONFIG_PATH names ${named}, which does not exist. Create it, or unset the variable to read the live ${CONFIG_FILE}.`
-    );
-  }
-  return named;
-}
-function roaming(env) {
-  return env.APPDATA || join4(homedir(), "AppData", "Roaming");
-}
-function migrate(env) {
-  const folder = join4(roaming(env), CONFIG_FOLDER);
-  const target = join4(folder, CONFIG_FILE);
-  if (existsSync5(target)) return;
-  const legacyFolder = join4(roaming(env), LEGACY_CONFIG_FOLDER);
-  const source = [CONFIG_FILE, LEGACY_CONFIG_FILE].map((file2) => join4(legacyFolder, file2)).find((path) => existsSync5(path));
-  if (!source) return;
-  try {
-    mkdirSync3(folder, { recursive: true });
-    for (const entry of readdirSync5(legacyFolder, { withFileTypes: true })) {
-      if (!entry.isFile() || entry.name === CONFIG_FILE || entry.name === LEGACY_CONFIG_FILE) continue;
-      const to = join4(folder, entry.name);
-      if (!existsSync5(to)) copyFileSync(join4(legacyFolder, entry.name), to);
-    }
-    copyFileSync(source, target);
-  } catch (err) {
-    throw new ValidationError(
-      `Could not copy the settings in ${legacyFolder} to ${folder}: ${err.message}. Nothing in ${legacyFolder} was changed.`
-    );
-  }
-}
-function configPath(env) {
-  const named = override(env);
-  if (named) return named;
-  migrate(env);
-  return join4(roaming(env), CONFIG_FOLDER, CONFIG_FILE);
-}
-
-// src/practice/matter-data-root.ts
-var CONFIG_STATUS_HINT = "Call practice_data__config_status to see what is missing and the candidate root.";
-function resolveCaseDataRoot(env = process.env, fallback) {
-  const configFile = configPath(env);
-  if (!existsSync6(configFile)) {
-    const derived = fallback?.() ?? null;
-    if (derived !== null) return derived;
-    throw new ValidationError(
-      `Cannot locate the practice database: ${configFile} not found. Probanda has not been set up on this device: run /lawyer:probanda-setup, and never write probanda.json by hand.`
-    );
-  }
-  let root;
-  try {
-    root = JSON.parse(readFileSync4(configFile, "utf-8")).case_data_root;
-  } catch (err) {
-    throw new ValidationError(`${configFile} is not valid JSON: ${err.message}`);
-  }
-  if (typeof root !== "string" || root === "") {
-    throw new ValidationError(
-      `${configFile} is missing "case_data_root" (the path to your "0. CASE DATA" folder). Add it, or set the COCLERK_DB_PATH env override. ` + CONFIG_STATUS_HINT
-    );
-  }
-  if (!existsSync6(root)) {
-    throw new ValidationError(
-      `Configured case_data_root does not exist: ${root}. Update ${configFile} after moving the Litigation Documents library, or restore that root. No _practice directory was created.`
-    );
-  }
-  return root;
-}
-
 // src/housekeeping/name-gate.ts
 import { existsSync as existsSync8 } from "node:fs";
 import { win32 as pathWin327 } from "node:path";
-
-// src/repo-root.ts
-import { existsSync as existsSync7, readFileSync as readFileSync5, readdirSync as readdirSync6, statSync as statSync4 } from "node:fs";
-import { homedir as homedir2 } from "node:os";
-import { basename as basename2, dirname as dirname2, join as join5, resolve as resolve2, win32 as pathWin326 } from "node:path";
-import { fileURLToPath } from "node:url";
-var SKILLS_MARKER = join5(".claude", "skills");
-var CHECKOUT_MARKERS = [join5("source", "lawyer", "mcp"), join5(".claude", "skills", "plugin-packager")];
-var SELF_DIR = dirname2(fileURLToPath(import.meta.url));
-var INSTALL_ROOT = resolve2(SELF_DIR, "..", "..");
-function installSkillsRoot(installRoot) {
-  const dir = join5(installRoot, "skills");
-  return isDirectory2(join5(dir, "shared")) ? dir : void 0;
-}
-var AUTODETECT_OFF = /* @__PURE__ */ new Set(["0", "false", "no", "off"]);
-function resolveRepoRoot(env = process.env, request) {
-  if (env.COCLERK_REPO_ROOT) return env.COCLERK_REPO_ROOT;
-  const found = autoDetect(env, request.startDir ?? SELF_DIR);
-  if (found.root) return found.root;
-  throw new DataServerError(missingMessage(request.subject, env, found.tried), request.code);
-}
-var cache = /* @__PURE__ */ new Map();
-function autoDetect(env, startDir) {
-  const tried = [];
-  const flag = env.COCLERK_REPO_ROOT_AUTODETECT;
-  if (typeof flag === "string" && AUTODETECT_OFF.has(flag.trim().toLowerCase())) {
-    tried.push(`auto-detection disabled by COCLERK_REPO_ROOT_AUTODETECT=${flag}`);
-    return { tried };
-  }
-  const cacheKey = `${startDir}\0${env.APPDATA ?? ""}\0${env.USERPROFILE ?? ""}\0${env.HOME ?? ""}\0${env.COCLERK_CONFIG_PATH ?? ""}`;
-  const cached2 = cache.get(cacheKey);
-  if (cached2) return { root: cached2, tried };
-  const walked = walkUp(startDir);
-  if (walked) return remember(cacheKey, walked, tried);
-  tried.push(`walk-up from ${startDir} -- no ancestor holds ${SKILLS_MARKER} with ${CHECKOUT_MARKERS.join(" or ")}`);
-  const cfgPath = configPath(env);
-  const declared = readConfigRepoRoot(cfgPath, tried);
-  if (declared) return remember(cacheKey, declared, tried);
-  const probes = conventionalCandidates(env);
-  for (const probe of probes) {
-    if (isRepoRoot(probe)) return remember(cacheKey, probe, tried);
-  }
-  tried.push(
-    probes.length ? `conventional location${probes.length > 1 ? "s" : ""} (${probes.join(", ")}) -- no match` : "conventional location -- neither USERPROFILE nor HOME is set"
-  );
-  return { tried };
-}
-function remember(cacheKey, root, tried) {
-  cache.set(cacheKey, root);
-  return { root, tried };
-}
-function isRepoRoot(dir) {
-  return isDirectory2(join5(dir, SKILLS_MARKER)) && CHECKOUT_MARKERS.some((marker) => isDirectory2(join5(dir, marker)));
-}
-function walkUp(startDir) {
-  let cursor = resolve2(startDir);
-  for (; ; ) {
-    if (isRepoRoot(cursor)) return cursor;
-    const parent = dirname2(cursor);
-    if (parent === cursor) return void 0;
-    cursor = parent;
-  }
-}
-function readConfigRepoRoot(cfgPath, tried) {
-  if (!existsSync7(cfgPath)) {
-    tried.push(`"repo_root" in ${cfgPath} -- file not found`);
-    return void 0;
-  }
-  let parsed;
-  try {
-    parsed = JSON.parse(readFileSync5(cfgPath, "utf-8"));
-  } catch (err) {
-    tried.push(`"repo_root" in ${cfgPath} -- not valid JSON (${err.message})`);
-    return void 0;
-  }
-  const value = parsed?.repo_root;
-  if (typeof value === "string" && value !== "") return value;
-  tried.push(`"repo_root" in ${cfgPath} -- key absent or empty`);
-  return void 0;
-}
-function conventionalCandidates(env) {
-  const home = env.USERPROFILE || env.HOME || homedir2();
-  return home ? [join5(home, "Git", "probanda-dev")] : [];
-}
-function bundledSkillFolders(installRoot = INSTALL_ROOT) {
-  const dir = installSkillsRoot(installRoot);
-  if (!dir) return [];
-  return readdirSync6(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
-}
-function pluginManifest(installRoot) {
-  try {
-    const manifest = JSON.parse(readFileSync5(join5(installRoot, ".claude-plugin", "plugin.json"), "utf-8"));
-    return {
-      name: typeof manifest?.name === "string" ? manifest.name : null,
-      version: typeof manifest?.version === "string" ? manifest.version : null
-    };
-  } catch {
-    return { name: null, version: null };
-  }
-}
-var SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper"];
-function siblingInstalls(installRoot = INSTALL_ROOT, names = SIBLING_PLUGINS) {
-  if (installSkillsRoot(installRoot) === void 0) return [];
-  const own = resolve2(installRoot);
-  const parent = dirname2(own);
-  const candidates2 = new Set(childDirs(parent));
-  if (basename2(own) === pluginManifest(own).version) {
-    for (const branch of childDirs(dirname2(parent))) {
-      for (const dir of childDirs(branch)) candidates2.add(dir);
-    }
-  }
-  candidates2.delete(own);
-  const winners = /* @__PURE__ */ new Map();
-  for (const dir of candidates2) {
-    const manifest = pluginManifest(dir);
-    if (manifest.name === null || !names.includes(manifest.name)) continue;
-    const skills = installSkillsRoot(dir);
-    if (skills === void 0) continue;
-    const rank = [
-      (manifest.version ?? "").split(".").map((part) => Number.parseInt(part, 10) || 0),
-      [Number(/~g(\d+)$/.exec(basename2(dir))?.[1] ?? 0)],
-      [modifiedMs(dir)]
-    ];
-    const held = winners.get(manifest.name);
-    if (!held || compareRank(rank, held.rank) > 0) {
-      winners.set(manifest.name, { sibling: { name: manifest.name, version: manifest.version, installRoot: dir, skills }, rank });
-    }
-  }
-  return names.flatMap((name) => {
-    const held = winners.get(name);
-    return held ? [held.sibling] : [];
-  });
-}
-function childDirs(dir) {
-  try {
-    return readdirSync6(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory() && !entry.name.startsWith(".")).map((entry) => join5(dir, entry.name));
-  } catch {
-    return [];
-  }
-}
-function modifiedMs(dir) {
-  try {
-    return statSync4(dir).mtimeMs;
-  } catch {
-    return 0;
-  }
-}
-function compareRank(a, b) {
-  for (let key = 0; key < a.length; key++) {
-    for (let i = 0; i < Math.max(a[key].length, b[key].length); i++) {
-      const diff = (a[key][i] ?? 0) - (b[key][i] ?? 0);
-      if (diff !== 0) return diff;
-    }
-  }
-  return 0;
-}
-function installedPluginLabel(shipped) {
-  if (shipped.plugin === null) return "this installed plugin";
-  return `the installed plugin "${shipped.plugin}"${shipped.plugin_version ? ` ${shipped.plugin_version}` : ""}`;
-}
-function resolveShippedRoot(relPath, env = process.env, request = {}) {
-  const installRoot = request.installRoot ?? INSTALL_ROOT;
-  const bundle = installSkillsRoot(installRoot);
-  const segment = relPath.split(/[\\/]/)[0];
-  if (bundle !== void 0 && segment !== "" && segment !== "." && segment !== ".." && !segment.includes(":")) {
-    if (isDirectory2(join5(bundle, segment))) {
-      const own = pluginManifest(installRoot);
-      return { root: bundle, shipped_from: "install", plugin: own.name, plugin_version: own.version };
-    }
-    for (const sibling of siblingInstalls(installRoot)) {
-      if (isDirectory2(join5(sibling.skills, segment))) {
-        return { root: sibling.skills, shipped_from: "install", plugin: sibling.name, plugin_version: sibling.version };
-      }
-    }
-  }
-  const code = request.code ?? "skills_root_missing";
-  try {
-    const repoRoot = resolveRepoRoot(env, { code, subject: request.subject ?? "the skills tree" });
-    return { root: join5(repoRoot, ".claude", "skills"), shipped_from: "checkout", plugin: null, plugin_version: null };
-  } catch (err) {
-    if (!(err instanceof DataServerError) || err.code !== code) throw err;
-    throw new DataServerError(`${err.message}
-
-${rosterLine(installRoot, segment, request.plugin)}`, code);
-  }
-}
-function isDirectory2(dir) {
-  try {
-    return statSync4(dir).isDirectory();
-  } catch {
-    return false;
-  }
-}
-function rosterLine(installRoot, segment, plugin) {
-  const bundled = bundledSkillFolders(installRoot);
-  if (bundled.length === 0) {
-    return `This plugin bundles no skill source (${join5(installRoot, "skills", "shared")} not found), so this install is incomplete. Check for updates in the desktop app, then fully restart it.`;
-  }
-  const siblings = siblingInstalls(installRoot).map((sibling) => `${sibling.name} ${sibling.version ?? "(no version)"}`);
-  const folder = segment ? `"${segment}"` : "this path's folder";
-  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") + (plugin ? `The "${plugin}" plugin ships ${folder}. Install it, or update it, in the desktop app, then fully restart.` : `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`);
-}
-function caseDataMigrateScriptsDir(env, installRoot) {
-  return migrateScriptsDir("matter-data", env, installRoot);
-}
-var MIGRATE_SKILL_PLUGIN = {
-  "matter-data": "lawyer",
-  "timecamping-data": "timekeeper",
-  "drafting-data": "litigator"
-};
-function migrateScriptsDir(skill, env, installRoot) {
-  const shipped = resolveShippedRoot(`${skill}/references/scripts/migrate_engine.py`, env ?? process.env, {
-    code: "repo_root_missing",
-    subject: `the ${skill} maintenance scripts`,
-    plugin: MIGRATE_SKILL_PLUGIN[skill],
-    installRoot
-  });
-  const dir = pathWin326.join(shipped.root, skill, "references", "scripts");
-  if (!existsSync7(pathWin326.join(dir, "migrate_engine.py"))) {
-    throw new DataServerError(
-      `migrate_engine.py not found under ${dir} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
-      "repo_root_missing"
-    );
-  }
-  return dir;
-}
-function missingMessage(subject, env, tried) {
-  const cfg = configPath(env);
-  return [
-    `cannot locate ${subject}: no installed Probanda plugin holds it, and no development checkout was found.`,
-    "",
-    "Tried, in order:",
-    `  1. COCLERK_REPO_ROOT environment variable -- ${env.COCLERK_REPO_ROOT === "" ? "set but empty" : "not set"}`,
-    ...tried.map((t, i) => `  ${i + 2}. ${t}`),
-    "",
-    "Practitioner: check for updates to the Probanda plugins in the desktop app, then fully restart the app.",
-    "If this error comes back, run /lawyer:suggestion naming it.",
-    'Maintainer only: set COCLERK_REPO_ROOT to a development checkout, or add a "repo_root" key to',
-    `  ${cfg}, set to its path (create the file if it does not exist; it may already hold "case_data_root"),`,
-    "  then fully restart the app."
-  ].join("\n");
-}
-
-// src/housekeeping/name-gate.ts
 var DRIVER = `import contextlib, io, json, sys
 import name_gate
 payload = json.load(sys.stdin)
@@ -17469,7 +17727,7 @@ function mapFolder(root, rel) {
   const missing = [];
   let ambiguous;
   for (const segment of rel.split(/[\\/]+/)) {
-    if (missing.length === 0 && isDirectory(abs)) {
+    if (missing.length === 0 && isDirectory2(abs)) {
       const found = matchName(childDirs2(abs), segment);
       if (found.ambiguous) ambiguous ??= `${segment} matches ${found.ambiguous.join(" and ")} in ${pathWin328.relative(root, abs) || "the matter root"}`;
       if (found.name) {
@@ -17535,7 +17793,7 @@ var TemplateTree = class {
     return this.located;
   }
   list(dir) {
-    if (!this.listings.has(dir)) this.listings.set(dir, isDirectory(dir) ? childDirs2(dir) : null);
+    if (!this.listings.has(dir)) this.listings.set(dir, isDirectory2(dir) ? childDirs2(dir) : null);
     return this.listings.get(dir);
   }
 };
@@ -24218,11 +24476,11 @@ function journalAppend(matterRoot, runId, rowId, outcome, reason) {
 import { readdirSync as readdirSync11 } from "node:fs";
 import { win32 as pathWin3216 } from "node:path";
 function preflight(matterRoot, includeTemplate = false, env = process.env) {
-  const pointerless = typeof matterRoot === "string" && pathWin3216.isAbsolute(matterRoot) && isDirectory(matterRoot) && findPointer(matterRoot) === void 0;
+  const pointerless = typeof matterRoot === "string" && pathWin3216.isAbsolute(matterRoot) && isDirectory2(matterRoot) && findPointer(matterRoot) === void 0;
   const out = pointerless ? { half_commit: [], case_data_found: false } : halfCommits(matterRoot, env);
   if (includeTemplate) {
     const root = templateRoot(env);
-    if (!isDirectory(root)) throw new DataServerError(`the template matter was not found at ${root}`, "template_missing");
+    if (!isDirectory2(root)) throw new DataServerError(`the template matter was not found at ${root}`, "template_missing");
     out.template_folders = folderTree(root, "");
   }
   return out;
@@ -24230,7 +24488,7 @@ function preflight(matterRoot, includeTemplate = false, env = process.env) {
 function halfCommits(matterRoot, env) {
   validateMatterRoot(matterRoot);
   const dir = caseDataFolder(matterRoot, env);
-  const found = isDirectory(dir);
+  const found = isDirectory2(dir);
   return {
     half_commit: found ? readdirSync11(dir).filter((name) => name.startsWith(HALF_COMMIT_PREFIX)).sort().map((name) => pathWin3216.join(dir, name)) : [],
     case_data_found: found

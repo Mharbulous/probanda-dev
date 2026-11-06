@@ -57,14 +57,14 @@ are checked in different places; no implementer may mistake one for the whole:
    source on file.)
 3. **Source-on-file currency** — established at fetch time by the official
    publisher's **"current to" date** on the face of the document. The
-   `legislation-fetcher` agent, dispatched by `/legal-research`, reads it when it
+   `law-getter` agent in legislation mode, dispatched by `/legal-research`, reads it when it
    fetches the instrument and records it as the filed file's `currency_marker`, in
    the file's header and its manifest line, and files nothing without one. Beside a
    BC Laws consolidation it also files the Point in Time page the consolidation
    links and, for a B.C. Reg. citation, the current year's Cumulative B.C.
    Regulations Bulletin. It files an amending regulation only as made, at the exact
    address a caller supplies, with no currency marker (section 12), and files no
-   "Amendments Not in Force" page and no order-in-council (`legal-research/references/legislation-fetcher-playbook.md`
+   "Amendments Not in Force" page and no order-in-council (`legal-research/references/law-getter-legislation-playbook.md`
    section 10). A stamp
    newer than the source on file leaves a quote unconfirmed until its amendment
    attribution is checked or the source is refreshed. A quoted text that is
@@ -119,7 +119,7 @@ lookup — tool absent, unconfigured, or erroring after a retry — is
 ## Consumers
 
 - **The canlii `legislation_currency` tool** — the implementation of leg 1. It
-  applies the rules in `shared/research-paralegal/legislation-currency.md` to
+  applies the rules in `shared/legislation-currency.md` to
   CanLII's legislation metadata in code and reports a `currency` value per
   instrument. The `/legal-research` gate calls it; only `current` reads as
   confirmed for leg 1. A bare `current` never shows that the filed text is in
@@ -129,8 +129,8 @@ lookup — tool absent, unconfigured, or erroring after a retry — is
   quoted from its text, or `unknown` with the reason. A listed amendment naming
   a relied-on provision leaves that provision's leg 3 unchecked until it is
   read. `unknown` means the tool made no such check, and leg 3 is checked from
-  the filed Point in Time page and bulletin as before. (It replaced `research-paralegal`'s legislation-currency
-  mode on 2026-10-06.)
+  the filed Point in Time page and bulletin as before. (It replaced the legislation-currency mode of
+  law-getter's predecessor on 2026-10-06.)
 - **The general renderer's filed-render gate** (`currency_gate_failed`,
   `source/lawyer/mcp/src/submission/forms/filed-gates.ts`) — reads the currency result
   stored through `/drafting-data` on the relied-on authority and refuses an unsent Writing's filed face while

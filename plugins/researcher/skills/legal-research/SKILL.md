@@ -6,8 +6,8 @@ description: >
   answering or searching the web, unless the answer is framed explicitly as a hunch. Applying law to facts -> /apply-to-facts.
 ---
 
-<!-- researcher v0.16.2 -->
-> **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. Before each fresh read (a file not already in context), list only `${CLAUDE_SKILL_DIR}/../../..` (the folder holding this plugin's folder). If it holds this plugin's folder name, with any `~g<N>` suffix removed, plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if `${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session: take the highest `~g<N>` copy and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
+<!-- researcher v0.16.3 -->
+> **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). `${CLAUDE_SKILL_DIR}` is the directory holding this SKILL.md, even where it shows unsubstituted: never search for it or guess. Read references and shared files from there with the Read tool, a whole file or an offset and limit, never with a shell command, the litigation data server's skill-source tool or a folder-access request; scripts and templates the text declares are executed and read from there too. Before each fresh read (a file not already in context), list only `${CLAUDE_SKILL_DIR}/../../..` (the folder holding this plugin's folder). If it holds this plugin's folder name, with any `~g<N>` suffix removed, plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if `${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session: take the highest `~g<N>` copy and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, authors or requests a screenshot of one, but may present one to a human user to view, staging it first where presenting needs that, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
@@ -43,7 +43,7 @@ paragraphs 4 and 5"), follow `shared/legal-research.md`, "Proposition-level note
 **Main session only.** The gate spawns agents. If the Agent tool is not in your tool
 list (you are a subagent), stop before any other step and return this line to your
 caller: "/legal-research runs only from the main session. It spawns
-legislation-fetcher, research-paralegal and the audit agent, and a subagent cannot
+law-getter and the audit agent, and a subagent cannot
 spawn agents. Nothing was dispatched." Never answer the question yourself in its place.
 The `westlaw-query-optimizer` subskill above spawns nothing and is exempt.
 
@@ -84,9 +84,9 @@ permitted to make statements of law.
    text in tiers 1–3 answers (a handoff's say-so is no check) and that is not only a
    point-in-time legislation question (the doctrine's duty 3 skips those), run the
    `westlaw-query-optimizer` subskill (on a supplied or earlier-session query too),
-   then `researcher:research-paralegal` in deep-research mode and, split into batches of at
+   then `researcher:law-getter` in `mode: deep-research` and, split into batches of at
    most its citation playbook's per-invocation cap and dispatched one batch after
-   another (the doctrine's duty 3), in citation mode
+   another (the doctrine's duty 3), in `mode: citation`
    `source: westlaw-first` for every citation already known. If it returns
    any `status: blocked (...)`, such as `status: blocked (chrome-not-connected)`,
    `status: blocked (westlaw-not-signed-in)`, `status: blocked (chrome-permission-not-granted)`
@@ -97,18 +97,18 @@ permitted to make statements of law.
    Either way, ask them to tell you to continue. On "continue", re-dispatch
    the same run. On a held job, after launching the query set its step ⏳ for 5 minutes, as the
    doctrine's duty 3 says ("On a held job, the Westlaw wait is a ⏳ step"). When the time has passed, check whether
-   the run has finished and can be downloaded: the paralegal has returned and its memo is
+   the run has finished and can be downloaded: law-getter has returned and its memo is
    filed in the `6. LAW` folder. If not, set the step ⏳ for 5 minutes again. Never
-   dispatch a second `research-paralegal` while one is out. A `blocked (...)` return sets
-   the step ↻, never done. Then run the doctrine's duty 4: dispatch `researcher:legislation-fetcher` once per
+   dispatch a second Chrome-mode `law-getter` while one is out. A `blocked (...)` return sets
+   the step ↻, never done. Then run the doctrine's duty 4: dispatch `researcher:law-getter` with `mode: legislation` once per
    statute, regulation or bylaw in issue, and on a `host_not_allowed` refusal ask the
    practitioner once and, on a yes, re-dispatch with `allow_host`. For an instrument it
    files nothing for, ask `/matter-data` for a held copy before marking it unread. A
    statutory-text question, one naming an instrument and asking what it provides,
    requires, permits or lacks, runs duty 4 first and Westlaw after it, as the doctrine
    orders. Then run duty 5: dispatch `researcher:citation-checker`, in duty 3's batches, for each court decision the
-   question asks to have noted up, never while `research-paralegal` is out. Its
-   Westlaw stops are the same stop as the paralegal's.
+   question asks to have noted up, never while a Chrome-mode `law-getter` is out. Its
+   Westlaw stops are the same stop as law-getter's.
 4. Spawn `researcher:research-agent`. Fill the doctrine's spawn-prompt template: the question, the
    factual context, the held job's number, the matter root, the matter's file number, who asked, today's date,
    the file stem, ICRA unless the practitioner named IRAC or CREAC, any pooled-layer results your own pre-spawn
@@ -120,7 +120,7 @@ permitted to make statements of law.
    the statement came from, not what the law is (`shared/legal-research.md`).
 5. A return carrying `needs_download` or a hand-off packet on an issue of the question,
    whatever its other gaps, is a pipeline step, not an answer: download or run it (unless declined) through
-   `research-paralegal` (`westlaw-first`), have `citation-checker` note up any
+   `law-getter` (`mode: citation`, `westlaw-first`), have `citation-checker` note up any
    `needs_note_up` citations, and re-invoke the agent once, without
    stopping, with the template's `Re-invocation: yes` field naming that dispatch's
    status line and every citation it did not retrieve. Then have `researcher:memo-reviewer`

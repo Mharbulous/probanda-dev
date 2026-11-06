@@ -29,7 +29,7 @@ Capture the served application's sought orders before responding to them. Prefer
 
 ## Deployment
 
-A newly drafted fact or submission reaches the venue form. To hold one back, deploy it nowhere. It has no orders of its own. A Writing with Written Arguments follows `/drafting-data`'s `references/filing-checklists.md` §9 instead.
+A newly drafted fact or submission reaches the venue form. To hold one back, deploy it nowhere. It has no orders of its own. A Writing with Written Arguments follows `.claude/skills/drafting-data/references/filing-checklists.md` §9 instead.
 
 ## Court-ready assembly
 

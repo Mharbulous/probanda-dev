@@ -3,10 +3,10 @@
 # Citation download machinery
 
 The unified download-and-file machinery for court decisions by citation,
-Westlaw-first or CanLII-only. `research-paralegal` fetches this file at
+Westlaw-first or CanLII-only. `law-getter` fetches this file at
 citation mode entry, and the deep-research playbook fetches it too (Stages 7
 and 9), via `skill_source__read` (under whichever of `mcp__plugin_lawyer_data__skill_source__read` and `mcp__remote-devices__plugin_lawyer_data__skill_source__read` this host grants), path
-`shared/research-paralegal/citation-download.md` — follow it exactly, never
+`shared/law-getter/citation-download.md` — follow it exactly, never
 proceeding from a remembered procedure. The filing tools, collision handling,
 and the unified manifest live in the core agent; this file carries the
 source-specific retrieval and identification.

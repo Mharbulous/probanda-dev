@@ -5,7 +5,6 @@
   "title": "Requisition for default judgment",
   "exhibit_numbering": "writing",
   "goal_criteria": ["noting-up", "open-items", "counsel-review"],
-  "companions": ["written-arguments"],
   "ingest_inputs": ["court_filings", "documents_exchanged"]
 }
 ```
@@ -20,6 +19,4 @@ Forum: BC Supreme Court. Assembly route: none in v1.
 
 ## Deployment
 
-A newly drafted item reaches the Written Argument by default. Whether it also reaches the venue form is an explicit choice asked at the moment the item is elicited. Silence means no. Never offer form-only.
-
-Never ask about facts or submissions (no such section on the form). Ask about orders.
+A newly drafted order reaches the venue form. To hold one back, deploy it nowhere. Facts and submissions reach no document, since the form has no section for them. A Writing with Written Arguments follows `.claude/skills/drafting-data/references/filing-checklists.md` §9 instead.

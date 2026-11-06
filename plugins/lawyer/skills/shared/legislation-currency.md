@@ -5,7 +5,7 @@ rule of court exists in CanLII's legislation databases and is unrepealed.
 This file is the rule set. The canlii server's `legislation_currency` tool
 applies it in code (`plugins/litigation/canlii-mcp/src/legislation-currency.ts`),
 so a caller makes one tool call and runs no procedure itself; a change to a rule
-here is a change to that module and its tests. (Until 2026-10-06 `research-paralegal`
+here is a change to that module and its tests. (Until 2026-10-06 law-getter's predecessor
 ran this as its legislation-currency mode; that mode is retired.) The tool
 reads the CanLII API and, for the amendment check below, BC Laws pages over
 HTTP: no browser, no downloads, no filing, no manifest. It needs

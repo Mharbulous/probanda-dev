@@ -17,7 +17,7 @@ One job per turn, under `/show-me`. Show, in this order:
 3. The proposed title and intent in the form, in full, in code blocks (`shared/research-memo-template.md`, rules A to D).
 4. One plain question: approve it, change it, or say this is not a research job.
 
-Never offer to keep the original: a research job cannot stay out of the form. Their approval goes in the same turn's write (`/drafting-data` §3m, "Migrating a research job"), and nothing is written without it. "This is not a research job" writes nothing, and the job is left alone.
+Never offer to keep the original: a research job cannot stay out of the form. Their approval goes in the same turn's write (`drafting-data/references/jobs-stock.md` §3m, "Migrating a research job"), and nothing is written without it. "This is not a research job" writes nothing, and the job is left alone.
 
 ## After the write
 

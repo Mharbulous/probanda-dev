@@ -5,8 +5,7 @@
   "title": "Application Response",
   "exhibit_numbering": "writing",
   "goal_criteria": ["orders-positioned", "primary-authority", "excerpts", "noting-up", "evidence", "open-items", "opposing-points", "counsel-review"],
-  "ingest_inputs": ["court_filings", "documents_exchanged"],
-  "companions": ["written-arguments"]
+  "ingest_inputs": ["court_filings", "documents_exchanged"]
 }
 ```
 
@@ -30,9 +29,7 @@ Capture the served application's sought orders before responding to them. Prefer
 
 ## Deployment
 
-A newly drafted item reaches the Written Argument by default. Whether it also reaches the venue form is an explicit choice asked at the moment the item is elicited. Silence means no. Never offer form-only.
-
-Facts and submissions ask. No orders of its own; its stance on the applicant's orders is not part of this question.
+A newly drafted fact or submission reaches the venue form. To hold one back, deploy it nowhere. It has no orders of its own. A Writing with Written Arguments follows `.claude/skills/drafting-data/references/filing-checklists.md` §9 instead.
 
 ## Court-ready assembly
 

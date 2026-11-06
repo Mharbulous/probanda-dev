@@ -30,7 +30,7 @@ Rank 1 is the best to follow up. A thread that settles or unblocks others ranks 
 **Step 4. Outline or discard only on the practitioner's word.** They say which threads to outline as jobs of their own and which to discard, by rank or by idea. Never infer a discard from a low rank.
 
 - **Correct a description.** When they name a thread and give the description it should carry, write their words by `/drafting-data`'s correction write ("Correcting a job description") and re-render.
-- **Pursue.** Outline it under Branch B (`references/job-session.md`), on the Work Board the practitioner names. Outlining consumes it. The job's title, intent and steps are worded by `/drafting-data` §3's rule, with no adoption ceremony.
+- **Pursue.** Outline it under Branch B (`references/job-session.md`), on the Work Board the practitioner names. Outlining consumes it. The job's title, intent and steps are worded by `drafting-data/references/jobs-create.md` §3's rule, with no adoption ceremony.
 - **Discard.** Applied only on their yes, by `/drafting-data`'s drop write, naming each thread id. The call's `updated` names the ids discarded. Then re-render.
 - **Leave.** Nothing is written. A thread they do not name stays as it is.
 
@@ -43,6 +43,6 @@ Rank 1 is the best to follow up. A thread that settles or unblocks others ranks 
 
 **Tooling threads are reported to Probanda.** Once the practitioner has said what to pursue and what to discard, and before Step 5, run `references/suggestion-box.md` over every open `tooling` thread that is not deferred. What a thread noticed about a Probanda tool goes to the lawyer plugin as an observation holding only Probanda's own output, never the thread's words. No thread is posted as a suggestion, and none is discarded without the practitioner's answer. A plugin-related thread seen in another group is named to the practitioner in one line and stays where it is.
 
-**Step 5. Record the effort as a Ready job**, worded by `/drafting-data` §3's rule. A queued job counts as open work against the Writing's `gate` criterion until it is completed or shelved, unless it waits, directly or through other open jobs, on the Writing's `File and serve`, `Serve the application` or `Serve the response` job, which puts it after the gate and outside it.
+**Step 5. Record the effort as a Ready job**, worded by `drafting-data/references/jobs-create.md` §3's rule. A queued job counts as open work against the Writing's `gate` criterion until it is completed or shelved, unless it waits, directly or through other open jobs, on the Writing's `File and serve`, `Serve the application` or `Serve the response` job, which puts it after the gate and outside it.
 
 Deadline isolation and the HTML pages rule bind here as everywhere: no page is read, grepped, parsed or written by the session, ranks and job descriptions are read through Step 1's read only, and nothing about time remaining enters a rank, its reason or its job description.

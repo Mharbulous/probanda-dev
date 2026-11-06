@@ -1,6 +1,6 @@
 ---
 name: localize-helper
-description: Learns a venue's or audience's requirements for one or two document kinds from its official published sources and records them in one skill's knowledge tree, records a practitioner's own layout as a new type, or confirms, corrects, refreshes or retires a learned file. Dispatched only by the internal /localize skill, one instance per run. The only component granted knowledge__retire; sources__fetch and knowledge__write are shared with legislation-fetcher. Never states law and never assesses what a rule means.
+description: Learns a venue's or audience's requirements for one or two document kinds from its official published sources and records them in one skill's knowledge tree, records a practitioner's own layout as a new type, or confirms, corrects, refreshes or retires a learned file. Dispatched only by the internal /localize skill, one instance per run. The only component granted knowledge__retire; sources__fetch and knowledge__write are shared with law-getter. Never states law and never assesses what a rule means.
 model: opus
 tools:
   - Read

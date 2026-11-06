@@ -10,8 +10,8 @@ description: >
   the docket-clerk agent.
 ---
 
-<!-- litigator v0.20.4 -->
-> **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. Before each fresh read (a file not already in context), list only `${CLAUDE_SKILL_DIR}/../../..` (the folder holding this plugin's folder). If it holds this plugin's folder name, with any `~g<N>` suffix removed, plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if `${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session: take the highest `~g<N>` copy and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
+<!-- litigator v0.20.5 -->
+> **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). `${CLAUDE_SKILL_DIR}` is the directory holding this SKILL.md, even where it shows unsubstituted: never search for it or guess. Read references and shared files from there with the Read tool, a whole file or an offset and limit, never with a shell command, the litigation data server's skill-source tool or a folder-access request; scripts and templates the text declares are executed and read from there too. Before each fresh read (a file not already in context), list only `${CLAUDE_SKILL_DIR}/../../..` (the folder holding this plugin's folder). If it holds this plugin's folder name, with any `~g<N>` suffix removed, plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if `${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session: take the highest `~g<N>` copy and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, authors or requests a screenshot of one, but may present one to a human user to view, staging it first where presenting needs that, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
 ## Contents
@@ -41,24 +41,24 @@ Built for the BCSC **Notice of Application** and **Application Response** only. 
 - Date work, including recording a past event, goes only through `lawyer:docket-clerk` (`shared/deadline-isolation.md`, "Calling docket-clerk").
 - Spawns no sessions and no chips, and hands nothing off inside the session.
 - Is not the triage seat. Whether and when to start or file stays with `task-prioritization`, `/executive-assistant` and the practitioner, before the session opens.
-- Never touches the database except through `/drafting-data`. This skill names no table, column or query. Every write follows `.claude/skills/drafting-data/SKILL.md` "Job and scrutiny operations", cited by section below, and the gatekeeper's own references for the forum and the Writing.
+- Never touches the database except through `/drafting-data`. This skill names no table, column or query. Every write follows `drafting-data/SKILL.md` "Job and scrutiny operations", cited by section below, and the gatekeeper's own references for the forum and the Writing.
 
 ## 2. Enter the matter
 
-Enter exactly as `/draft` enters (`.claude/skills/draft/SKILL.md` §6): the same single session-entry call, the same refusals and response handling, and the same values kept for the whole session, including the session identity token. Then find the lead Writing:
+Enter exactly as `/draft` enters (`work/references/procedure.md` §6): the same single session-entry call, the same refusals and response handling, and the same values kept for the whole session, including the session identity token. Then find the lead Writing:
 
-- **No proceeding exists, or a proceeding has no Writing:** start the proceeding or Writing as `/draft` §7 allows ("section 8 also runs when the practitioner asks to start a proceeding or Writing") and run `/draft` §8's proceeding-identification step as written (ADR 0018). Nothing is restated here.
-- **The lead Writing already exists:** open it by name, as `/draft` §7 does, and render its Work Board (`/draft` §11). Where the Writing session entry opens first is not the lead Writing, use the named-Writing path or the Writing picker of `/draft` §7 to reach it.
+- **No proceeding exists, or a proceeding has no Writing:** start the proceeding or Writing by `draft/references/new-matter-setup.md`, its "Proceeding" step as written (ADR 0018). Nothing is restated here.
+- **The lead Writing already exists:** open it by name, as `work/references/procedure.md` §7 does, and render its Work Board (`draft/references/procedure.md` §11). Where the Writing session entry opens first is not the lead Writing, use the named-Writing path or the Writing picker (`draft/references/filing-picker.md`) to reach it.
 - **No Notice of Application or Application Response is in view, and the practitioner is not starting one:** stop, as the introduction says.
-- **The practitioner asks for a Work Board with no Writing** (work that is not a document, on a proceeding that has a Writing): `/prepare` opens none. Say in one line that `/draft` opens it (`/draft` §8), and stop.
+- **The practitioner asks for a Work Board with no Writing** (work that is not a document, on a proceeding that has a Writing): `/prepare` opens none. Say in one line that `/draft` opens it, and stop.
 
 ## 3. What it writes, in this order
 
 Structure only, each written through `/drafting-data`:
 
-1. **The forum, when the proceeding has none.** A type that needs forum parts needs a forum, and both Writing kinds `/prepare` handles need forum parts, so neither can be created until the forum is chosen. It is set by updating the same proceeding, per `/draft` §8 "Before the forum is chosen".
-2. **The lead Writing,** with `/draft` §8's recovery check first. On recover, no Writing is created: continue at stage 1 on the recovered Writing, from its rendered Work Board. `/draft` §8's response seam captures substance, so `/prepare` does not run it. Where the practitioner wants it done, it is work to outline as a job. §8's kind-specific specifics apply to no kind `/prepare` handles.
-3. **The jobs,** through `/drafting-data` §3's create idiom, only after the closing read-back.
+1. **The forum, when the proceeding has none.** A type that needs forum parts needs a forum, and both Writing kinds `/prepare` handles need forum parts, so neither can be created until the forum is chosen. It is set by updating the same proceeding, per `draft/references/new-matter-setup.md`, "Before the forum is chosen".
+2. **The lead Writing,** with the recovery check of `draft/references/new-matter-setup.md` first. On recover, no Writing is created: continue at stage 1 on the recovered Writing, from its rendered Work Board. That file's response seam captures substance, so `/prepare` does not run it. Where the practitioner wants it done, it is work to outline as a job. Its kind-specific specifics apply to no kind `/prepare` handles.
+3. **The jobs,** through `drafting-data/references/jobs-create.md` §3's create idiom, only after the closing read-back.
 
 Anything else the practitioner raises is a job to outline, or an idea to capture, never a write.
 
@@ -80,22 +80,22 @@ Read the stage off `drafting_forms__board_card`, with `lanes: ["live"]` for the 
 
 ## 5. The outlining interview
 
-Run `/draft`'s outlining branch (`.claude/skills/work/references/job-session.md` Branch B) at bundle level: the application as a whole, what is sought and against whom, what evidence is in hand, what must be in place before it is heard, and each captured idea. Its rules hold here unchanged: one question at a time, answers recorded in the practitioner's words, nothing proposed, a Proposal picked handled as Branch B says, legal views recorded as the practitioner's propositions, and the closing read-back as the only confirmation. Where Branch B's text and the one-session-one-role rule differ, take the stricter rule.
+Run `/draft`'s outlining branch (`work/references/job-session.md` Branch B) at bundle level: the application as a whole, what is sought and against whom, what evidence is in hand, what must be in place before it is heard, and each captured idea. Its rules hold here unchanged: one question at a time, answers recorded in the practitioner's words, nothing proposed, a Proposal picked handled as Branch B says, legal views recorded as the practitioner's propositions, and the closing read-back as the only confirmation. Where Branch B's text and the one-session-one-role rule differ, take the stricter rule.
 
-- **Past events** are read from the matter's `ProceduralHistory.md` and are content. Run its currency check as Branch B does (`.claude/skills/shared/procedural-history.md`), and never ask the practitioner to recount what happened.
+- **Past events** are read from the matter's `ProceduralHistory.md` and are content. Run its currency check as Branch B does (`shared/procedural-history.md`), and never ask the practitioner to recount what happened.
 - **What waits on what** is the session's call, recorded as waits-on links, as in Branch B. A link to a job is written only once that job exists.
-- **Order** is never asked, as Branch B never asks it. Jobs that depend on each other take their order from the dependency, the rest are worked in parallel, and each job's place in the Ready order is set by `/drafting-data` §3's rule against what is already queued on the lead Writing, never computed from time remaining. An order the practitioner volunteers is recorded.
-- **Billing anchor:** each job carries the live issue it serves, by the live-issue test, asked once only when it cannot be inferred from the Writing in hand (`/drafting-data` §3).
+- **Order** is never asked, as Branch B never asks it. Jobs that depend on each other take their order from the dependency, the rest are worked in parallel, and each job's place in the Ready order is set by `drafting-data/references/jobs-create.md` §3's rule against what is already queued on the lead Writing, never computed from time remaining. An order the practitioner volunteers is recorded.
+- **Billing anchor:** each job carries the live issue it serves, by the live-issue test, asked once only when it cannot be inferred from the Writing in hand (`drafting-data/references/jobs-create.md` §3).
 
 **Scope: every bundle-level job is scoped to the lead Writing** (the Notice of Application or the Application Response), never proceeding-wide. The lead Writing's Work Board and its completion criteria are the completeness tracker. There is no stored bundle record. A proceeding-wide bundle job would show on every later Writing's board and survive this Writing's retirement. A second Writing in the bundle, such as a requisition, has its own Work Board, and a waits-on link ties the two where they move in step.
 
 ## 6. Stock bundle jobs
 
-Fixed-text jobs, offered per Writing kind and per stage (section 4 and `/drafting-data` §3b's table).
+Fixed-text jobs, offered per Writing kind and per stage (section 4 and `drafting-data/references/jobs-stock.md` §3b's table).
 
-- **Their text is `/drafting-data` §3b's**, the whole record of each job's title, intent and steps. Take it from there at the moment of writing, character for character. Never reword, shorten or restate it, and never compose steps of your own for one. A practitioner who wants different words is outlining an ordinary job in their own words, which is not a stock job.
+- **Their text is `drafting-data/references/jobs-stock.md` §3b's**, the whole record of each job's title, intent and steps. Take it from there at the moment of writing, character for character. Never reword, shorten or restate it, and never compose steps of your own for one. A practitioner who wants different words is outlining an ordinary job in their own words, which is not a stock job.
 - **Offered at the closing read-back** as cards beside the practitioner's own jobs, each carrying its fixed title. The practitioner picks or declines each. The pick is the approval, as on the fast path. A declined stock job is not written. No card starts picked.
-- **Written through `/drafting-data` §3b**, which fixes their scope to the lead Writing and how each is written.
+- **Written through `drafting-data/references/jobs-stock.md` §3b**, which fixes their scope to the lead Writing and how each is written.
 - **A contempt application** takes `Serve the application` with §3b's contempt step, which adds personal service on the alleged contemnor.
 - **The availability letter** is drafted by a `/draft` session that takes the job from the board. Sending it is the practitioner's step. `/prepare` never proposes hearing dates.
 - **The filing steps** of `Set down for hearing`, `File the served response`, `Reply affidavits` and `Reset for hearing` are e-filed with `/e-file` in the session working the job.
@@ -108,11 +108,11 @@ If the practitioner states a deadline anyway, acknowledge it once in one sentenc
 
 ## 8. Close
 
-Write the chosen jobs in dependency order, blocker before blocked, per Branch B's closing read-back. Then render the lead Writing (`/draft` §11); the lead Writing's own Work Board page updates. Close with one line, never a chat summary.
+Write the chosen jobs in dependency order, blocker before blocked, per Branch B's closing read-back. Then render the lead Writing (`draft/references/procedure.md` §11); the lead Writing's own Work Board page updates. Close with one line, never a chat summary.
 
 ## 9. Doctrine bindings
 
-The same shared doctrines `/draft` binds (`.claude/skills/draft/SKILL.md` §3), read at the point of use and not restated:
+The same shared doctrines `/draft` binds (`draft/SKILL.md` §3), read at the point of use and not restated:
 
 | Doctrine | Path | Binds where |
 |---|---|---|
@@ -121,8 +121,8 @@ The same shared doctrines `/draft` binds (`.claude/skills/draft/SKILL.md` §3), 
 | Deadline isolation | `shared/deadline-isolation.md` | Every turn. `/prepare` is in the drafting lane. |
 | Statements of law | `shared/legal-research.md` | Any assertion about what the law requires goes to `/legal-research`. A legal view the practitioner states is recorded as their proposition. |
 | The live-issue test | `shared/live-issue-test.md` | Each job's billing anchor. |
-| Job planning | `shared/job-planning.md` | The steps of each job written at the closing read-back. A stock bundle job keeps `/drafting-data` §3b's fixed text. |
+| Job planning | `shared/job-planning.md` | The steps of each job written at the closing read-back. A stock bundle job keeps `drafting-data/references/jobs-stock.md` §3b's fixed text. |
 | HTML pages | `shared/html-pages.md` | Every turn. The lead Writing's board is read from `board_summary` and `drafting_forms__board_card`, never from a page, and no page is presented, staged or asked for as a screenshot. |
 | Internals confidentiality | `shared/internals-confidentiality.md` | Every turn and everything the practitioner sees: chat, questions, file and folder names, pages and document text. Work Board, Writing and Loose Threads are product words and stay. No tool, table, field, stock type, folder code, filing id, rule or map name reaches the practitioner, and no explanation of how Probanda works inside. Hides mechanism, never an outcome or an error. |
 
-**No-blocking-checkpoint rule,** as `/draft` §3 states it: writing and rendering never pause for approval. The closing read-back is itself the confirmation, with no separate approve step after it.
+**No-blocking-checkpoint rule,** as `draft/SKILL.md` §3 states it: writing and rendering never pause for approval. The closing read-back is itself the confirmation, with no separate approve step after it.

@@ -55,7 +55,7 @@ one question, the only sentence ending in `?`. A plainly labelled hunch is no re
 needs no job.
 
 - **No job held.** Propose the issue in the form, quoting the question, and on the
-  practitioner's approval write it by `/drafting-data` §3l, plan it (`shared/job-planning.md`
+  practitioner's approval write it by `drafting-data/references/jobs-stock.md` §3l, plan it (`shared/job-planning.md`
   section 2) and assign it to this session. Without `/drafting-data` installed, write it with
   `drafting_data__create_job`: guard `research_title`, `filing_id` null, `kind` `work`, `priority`
   `bottom`, `billing_anchor` `<matter>|<its forum and file number>`, and the plan marker as its step. With no
@@ -71,14 +71,14 @@ the working matter (`shared/research-memo-template.md` rules A to D,
 a list of questions is not, and a part that depends on the one before it ("If so, ...") stays
 with it. A question that fails is never split or researched as it stands: in one proposal,
 quoting it, propose one rewording narrowed to a single question. On a yes, reword a held job
-to it (`/drafting-data` §3m, "Rewording a held job") and research that. On a no, research
+to it (`drafting-data/references/jobs-stock.md` §3m, "Rewording a held job") and research that. On a no, research
 nothing. Each other question it held is one the practitioner raised (below). An unattended
 run reports and stops.
 
 **A new question is a new job or a new scope.** When the practitioner raises a question this
 research does not hold, ask exactly one question: "Do you want this investigated as an
 additional issue (a new research job), or are you changing the scope of this job?" On the
-first, write it as a research job by `/drafting-data` §3l, on their approval of its issue. On the second, reword the question (a held job by §3m) and
+first, write it as a research job by `drafting-data/references/jobs-stock.md` §3l, on their approval of its issue. On the second, reword the question (a held job by §3m) and
 research that. Offer no third path.
 
 **Before spawning, run what the agent cannot.** `shared/research-priority.md` is
@@ -91,7 +91,7 @@ instrument provides, requires, permits or lacks. For it, run duty 4 first, so th
 instrument's full text is on disk before Westlaw runs. Then run duty 3, telling
 `westlaw-query-optimizer` that the instrument's text is on file, so the query seeks
 judicial consideration and commentary rather than the text. Then dispatch
-`researcher:legislation-fetcher` for each `legislation_skipped` title not yet on disk, with one
+`researcher:law-getter` with `mode: legislation` for each `legislation_skipped` title not yet on disk, with one
 more legislation-currency dispatch covering only those titles. Put only the instruments
 the question, the matter or a memo names through duty 4: an instrument the question
 reaches only by its subject is the audit agent's to offer, never yours to infer. Every
@@ -133,10 +133,10 @@ other question runs the duties in their numbered order.
 3. **Tier 4, Westlaw — before the audit, never after it.** After tiers 1–3, for
    each issue no pinpointable text on disk answers, run Westlaw without asking unless the practitioner declined it this run:
    1. run the `westlaw-query-optimizer` subskill on the question;
-   2. dispatch `researcher:research-paralegal` in **deep-research** mode with the optimized
+   2. dispatch `researcher:law-getter` in `mode: deep-research` with the optimized
       query, the verified client-matter ID, the jurisdiction and the issue's
       existing `6. LAW\<issue>\` folder;
-   3. dispatch `researcher:research-paralegal` in **citation** mode, `source: westlaw-first`,
+   3. dispatch `researcher:law-getter` in `mode: citation`, `source: westlaw-first`,
       for every citation already known on the issue (from the matter, a prior memo,
       or a prior research-agent answer), into the same folder. Split the citations
       into batches of at most 5, the per-invocation cap of this mode and of
@@ -145,14 +145,14 @@ other question runs the duties in their numbered order.
    4. only then, once duties 4 and 5 have run, spawn the audit agent, naming the memo
       and decision files retrieved.
 
-   One research-paralegal dispatch at a time.
+   One Chrome-mode law-getter dispatch at a time.
 
    **On a held job, the Westlaw wait is a ⏳ step.** After dispatching
-   `research-paralegal` in the background for a held job's Westlaw step, set that step
+   `law-getter` in the background for a held job's Westlaw step, set that step
    ⏳ for 5 minutes (`drafting_data__set_step`, `status: waiting`, `/drafting-data`
-   `references/jobs-run.md` §6b). When the time has passed, check whether the paralegal
+   `references/jobs-run.md` §6b). When the time has passed, check whether law-getter
    has returned and its memo is filed in the issue's `6. LAW` folder. If not, set the step
-   ⏳ for 5 minutes again. Never dispatch a second `research-paralegal` while one is out.
+   ⏳ for 5 minutes again. Never dispatch a second Chrome-mode `law-getter` while one is out.
    Once the memo is filed, stamp the step done. A `status: blocked (...)` return sets the
    step ↻ (`status: retry`), never done. The ⏳ minute is a time to check the run, never a
    deadline (`shared/deadline-isolation.md`).
@@ -175,18 +175,18 @@ other question runs the duties in their numbered order.
    it. The skip sends nothing to CanLII.
 4. **Legislation text, before the audit.** After the Westlaw duty (before it, for a
    statutory-text question), so that its
-   `legislation_skipped` titles are known, dispatch the `researcher:legislation-fetcher` agent
+   `legislation_skipped` titles are known, dispatch the `researcher:law-getter` agent with `mode: legislation`
    once for each statute, regulation or bylaw cited in the question, known on the
    issue, or listed in `legislation_skipped`. Dispatch it too, with `kind: secondary` and
    its `url`, for each published document that is not legislation, such as a news release
    or consultation paper, that the question, the matter, a memo or an audit return names
    by URL: it gets a `Secondary:` line, never a currency call. Skip an instrument whose `downloaded`
    record is already in the issue folder's `case-download-manifest.json`. The dispatch
-   is `{citation?, title, kind, country, jurisdiction, locality?, destination_dir,
+   is `{mode: legislation, citation?, title, kind, country, jurisdiction, locality?, destination_dir,
    matter, allow_host?, amending_instrument?, url?}`: `destination_dir` is the issue's existing `6. LAW\<issue>\`
    folder and `matter` the live matter's file number, such as `1234.L####`, never its style of cause or a party's name: the runtime stamps it into an overlay map every matter reads. Pass the citation wherever the question, the
-   matter or a memo gives one: a title alone may come back `not_located`. One fetcher
-   at a time. It may run beside `research-paralegal`, because it uses no Chrome, no
+   matter or a memo gives one: a title alone may come back `not_located`. One legislation-mode run
+   at a time. It may run beside a Chrome-mode `law-getter` run, because it uses no Chrome, no
    Downloads folder and no Westlaw.
    - **An amending instrument.** When an issue turns on what an amending instrument
      did, such as whether an amending regulation changed a rule, and you hold the exact
@@ -195,7 +195,7 @@ other question runs the duties in their numbered order.
      `amending_instrument: true` and `url` that address, `kind` its own kind. Never
      build or guess the address, and never set the field without one. Dispatch the
      consolidation it amends as usual: the consolidation stays the currency source.
-     The fetcher files the page as made, `currency_marker` `none`, and returns
+     Law-getter files the page as made, `currency_marker` `none`, and returns
      `made_on`. Leave it out of the `legislation_currency` call
      (`shared/statute-currency.md` sends no amending regulation to it): its record's
      `currency` is `not checked: as made`.
@@ -214,15 +214,15 @@ other question runs the duties in their numbered order.
 
    Then, still before the audit, call the canlii `legislation_currency` tool once,
    with the `currency_marker` (as `YYYY-MM-DD`) of each instrument filed with one,
-   and the citation, title and jurisdiction of every instrument in issue, whatever the
-   fetcher returned for it, but an amending instrument dispatched as one: CanLII's metadata can show a repeal where no
+   and the citation, title and jurisdiction of every instrument in issue, whatever
+   law-getter returned for it, but an amending instrument dispatched as one: CanLII's metadata can show a repeal where no
    text was filed. It is a tool call, not an agent, so it waits for no Westlaw run.
    Then hold one legislation record per instrument,
    `{citation, title, path, sha256, currency_marker, currency, official}`. `title`,
    `path`, `sha256`, `currency_marker` and `official` come from the instrument's
    `downloaded` record in the issue folder's `case-download-manifest.json`, or from the
    matter-data copy used in its place, and are `none` for an instrument with neither.
-   An instrument the fetcher filed in parts (its return lists `parts`) has one
+   An instrument law-getter filed in parts (its return lists `parts`) has one
    `downloaded` record per part under the same citation and `kind`, and still gets one
    legislation record: its `path`, `sha256` and `currency_marker` each list the parts'
    values in the return's part order, separated by `; `.
@@ -237,7 +237,7 @@ other question runs the duties in their numbered order.
    dispatches have returned: `{citations: [{citation, since?}], client_matter_id,
    destination_dir}`, with duty 3's verified client-matter ID and the issue's existing
    `6. LAW\<issue>\` folder. A caller working a `/draft` job adds its `db_path`,
-   `ticket_id`, `session_token` and `claim_no`. Never dispatch it while `research-paralegal` or
+   `ticket_id`, `session_token` and `claim_no`. Never dispatch it while a Chrome-mode `law-getter` or
    another `citation-checker` is out: they share one Chrome session. A citation it
    returns as `not reached: batch cap` goes in the next batch. It runs KeyCite
    first and the CanLII citator second, and files one note-up record per decision.
@@ -246,7 +246,7 @@ other question runs the duties in their numbered order.
    audit relies on with no record comes back as `needs_note_up` (below).
 
 **Westlaw unreachable is a hard stop.** Any `status: blocked (...)` that
-research-paralegal or citation-checker returns is a hard stop, whether or not its
+law-getter or citation-checker returns is a hard stop, whether or not its
 status is named here: stop the whole question, with no audit-agent spawn, no CanLII step, and no
 `canlii-only` download or CanLII sweep in Westlaw's place. Tell the practitioner in
 plain words:
@@ -292,7 +292,7 @@ Legislation: <citation>: filed <path>, current to <marker>, currency <value> / a
 Secondary: <title>: filed <path>, dated <marker>, from <publisher_host> / not retrieved: <reason> / none
 6. LAW listing and extracted text: <the listing, and the text or text path of each file extracted>
 Note-up: <citation>: record <path> / <citation>: not filed: <citation-checker's status line> / none
-Re-invocation: no / yes: Westlaw did not return <citations, or none>; paralegal: <its status line, or practitioner declined> / yes: review
+Re-invocation: no / yes: Westlaw did not return <citations, or none>; law-getter: <its status line, or practitioner declined> / yes: review
 Review: <memo-reviewer's last JSON, verbatim> / none
 Final instructed: yes / no
 Note up paragraphs: <the saved memo's path>: <n>[, <n>] / none
@@ -316,7 +316,7 @@ that is not ok with its state (`commons: missing_credential`, `canlii: no_key`,
 `Matter root:` is the matter folder's host path, the folder holding `probanda.json`,
 in the same host form `research_filing__save_answer` takes, because the agent passes
 it to `research_filing__write_scratch`. `Matter:` is the same file number duty 4 passes
-the fetcher. `Asked by:` is the practitioner who asked:
+law-getter. `Asked by:` is the practitioner who asked:
 if you do not know the name, ask once.
 `Origin:` names the draft the question came from, a plain draft file's path or a Writing's
 id, and quotes the draft's words the question is about, verbatim. A caller that took the
@@ -325,7 +325,7 @@ carries `Origin: none`.
 Before any dispatch, check `Job question:` by "A research question holds one question", and
 put the same words in `Question:`.
 `Re-invocation` is `no` on the first spawn and `yes` on every re-invocation below: `yes: review`
-when no paralegal ran for it. `Review:` is `none` until memo-reviewer has returned on this question.
+when no Chrome-mode law-getter ran for it. `Review:` is `none` until memo-reviewer has returned on this question.
 `Final instructed:` is `yes` only when the practitioner has explicitly instructed that this
 memo's status change to FINAL (`shared/research-memo-template.md`, "Status").
 `Note up paragraphs:` and `Citing reads:` are `none` except on a proposition-level note-up (below).
@@ -343,7 +343,7 @@ out the line after it.
 **Sources to get, on a held job.** A caller working a `/draft` job records each
 decision, instrument and file on the job before the dispatch or ingest that gets
 it, and closes it once it has landed. That covers the Westlaw duty's citation
-dispatch, the legislation duty's fetcher dispatch, the `needs_download` dispatch
+dispatch, the legislation duty's law-getter dispatch, the `needs_download` dispatch
 below, and the cited-decision dispatch and the ingest under "After the answer".
 The rule is `/drafting-data`'s (`jobs-common.md` §2, "Sources to get"): dispatch only
 what its call lists under `dispatch`. A deep-research run is not
@@ -353,8 +353,8 @@ a source: its record is the answer saved under the job.
 answer.** When the agent returns a `needs_download` list, a `needs_note_up` list or a
 hand-off packet on an issue of the question, execute it without asking, whatever its
 other gaps (a declined issue dispatches nothing):
-dispatch `researcher:research-paralegal` in
-citation mode, `source: westlaw-first`, for the `needs_download` citations, run
+dispatch `researcher:law-getter` in
+`mode: citation`, `source: westlaw-first`, for the `needs_download` citations, run
 a hand-off packet through `westlaw-query-optimizer` and a deep-research dispatch, and
 once those have returned, dispatch `researcher:citation-checker` for the `needs_note_up`
 citations by duty 5.
@@ -396,7 +396,7 @@ most once per issue: the tier is its kind and object as a `gap:` line names it (
 Westlaw query's subject, and the issue is the memo's one Issue. A
 step is stamped done only once its work has run, never while a return still names its tier
 not run. A tier that stops by the rules above (a Westlaw stop, a refusal the practitioner
-keeps, a fetcher stop) stops as they say, and its step stays open: set it ↻
+keeps, a legislation-mode stop) stops as they say, and its step stays open: set it ↻
 (`drafting_data__set_step`, `status: retry`) while a missing credential or an unreachable
 source blocks it, never stamped done. A Westlaw step waits as ⏳ while its run is out
 (duty 3). The job stays open on each step not yet done (`/draft` `references/job-session.md`,
@@ -477,13 +477,13 @@ complete before the session ends: never leave a session with a cited decision un
 2. For every court decision the answer cites (in support, distinguished, or
    rejected) that case data does not already hold and that is not already on disk
    under the matter's `6. LAW\` (the pre-spawn Westlaw retrieval usually filed it),
-   dispatch `researcher:research-paralegal` in
-   citation mode, `source: canlii-only`, with that same research folder as the
+   dispatch `researcher:law-getter` in
+   `mode: citation`, `source: canlii-only`, with that same research folder as the
    destination, whichever issue the decision is cited on. Step 1's save means the
    folder exists before dispatch. Batch the citations by duty 3's rule.
 3. Run `/ingest` on each cited decision file case data does not hold, whether it
    was downloaded now or before the audit, and on each legislation file
-   `legislation-fetcher` filed in this run. A case brief file names the decision's citation
+   `law-getter` filed in legislation mode in this run. A case brief file names the decision's citation
    and is never the decision: never ingest one. A Point in Time page or bulletin it
    filed beside a consolidation is a currency record, not an authority: never ingest it.
 
@@ -506,7 +506,7 @@ handles them by its own rule instead (`/draft` `references/job-session.md`,
 **With a board, the return's open items are sorted against it.** This step runs after the
 persistence steps above, for a return they persisted, wherever a board resolves. In a
 `/draft` session the board is the open one, whatever the spawn prompt's `Origin:` says. In
-any other session it is the one `/drafting-data` §8a step 2 resolves from the origin: a
+any other session it is the one `drafting-data/references/jobs-run.md` §8a step 2 resolves from the origin: a
 Writing's own filing, or, for a plain draft file, the proceeding it serves.
 
 Capture these as loose threads in the same turn the return arrives, each verbatim from the
@@ -523,7 +523,7 @@ SKILL.md, "Captured ideas").
 
 **The duplicate test.** Before capturing any item of the return, an `origin-correction:`
 line, a `matter-data:` flag or an offer, read the open loose threads that match it, by
-`loose_threads__read` with `mode: "duplicates"` and the item as `text` (`/drafting-data` §8). An item that restates the held job's own
+`loose_threads__read` with `mode: "duplicates"` and the item as `text` (`drafting-data/references/jobs-run.md` §8). An item that restates the held job's own
 title or intent, or the idea of an open loose thread, is not captured.
 Say so in one line instead: `already on the board: Loose thread #N`, or `the held job's own
 subject: Job #N`. The test reads what an item is about, never whether it is right, and states
@@ -541,7 +541,7 @@ job's title and intent count too. Put each offer in one class:
 | Class | Test | What happens |
 |---|---|---|
 | Off the application | The offer is about a different order, claim, party, proceeding or stage than any the board names | Not captured |
-| On or near the application | Everything else: an offer serving the board's words, a new angle on the board's own subject, and any doubt | Captured as a loose thread at once, by the duplicate test above (`/drafting-data` §8 with a job held, §8a without) |
+| On or near the application | Everything else: an offer serving the board's words, a new angle on the board's own subject, and any doubt | Captured as a loose thread at once, by the duplicate test above (`drafting-data/references/jobs-run.md` §8 with a job held, §8a without) |
 
 An offer tagged `kind: note-up` is not sorted: it is always captured as a loose thread, by
 the duplicate test above. It is never dropped and never becomes a job by §3i.
@@ -573,7 +573,7 @@ written. A step runs the gate on the memo's question with `Note up paragraphs:` 
 and its paragraph: `citation-checker` notes up any authority without a record. Then, for each
 authority, choose at most 5 citing decisions: the one the record's KeyCite banner names
 `Most Recent`, then its KeyCite rows, then its CanLII rows, each decision once and the rest
-unread. `research-paralegal` downloads those not on disk, in one citation-mode dispatch. Spawn
+unread. `law-getter` downloads those not on disk, in one citation-mode dispatch. Spawn
 one `researcher:research-agent` with `mode: citing_read` (`shared/legal-audit-scoped.md`) per
 decision, no more than 3 at once per authority, with that mode's fields, and another from the
 page a return's `More:` line names.

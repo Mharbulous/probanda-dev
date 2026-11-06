@@ -17,7 +17,7 @@ recorded word for word.
 
 ## 1. Client ID
 
-Run the client-matter gate of `shared/research-paralegal/westlaw-deep-research.md`,
+Run the client-matter gate of `shared/law-getter/westlaw-deep-research.md`,
 Stage 2: its matching rule, the start-session page steps, the session-already-started
 steps, and the "target not listed" rule, with the same stops and the same limit of 3
 attempts. Fetch that file with the same tool. The start-session page may appear before
