@@ -32,6 +32,20 @@
             "statusMessage": "One-way approval gate"
           }
         ]
+      },
+      {
+        "matcher": "^AskUserQuestion$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/ceremony-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Time-block question gate"
+          }
+        ]
       }
     ]
   }

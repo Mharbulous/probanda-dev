@@ -183,9 +183,7 @@ where the image matters most, because it is the only content evidence.
 "Encrypted" is not "unavailable": a capture is unavailable only when
 `evidence show` itself fails, and that failure is disclosed in the ceremony.
 Record the viewed capture ids in the proposal's evidence record. A proposal
-resting on a covered stretch without them is not ready to commit. Batching a
-day's ceremony into one list and one approval does not waive this: the list
-carries the images.
+resting on a covered stretch without them is not ready to commit.
 
 Before grouping, read `reference/inference.md`: the presumptions P1–P10,
 the evidence doctrine, uncovered time and the re-run rules.
@@ -212,18 +210,11 @@ against this grid:
 | No data from any source for the block | **One light elicitation** ("do you remember what you were doing?"); failing recall, write off as unidentifiable — no standing queue. |
 
 Silent commits are never hidden — they're still listed in the run summary,
-just without a blocking question. Every ceremony invokes `Skill
-(show-me)` and honours its rules in full: **one decision per
-ceremony** (a presumption offer is always its own separate ceremony, never
-folded into the categorization question); **render actual evidence** — the
-screenshot itself, never OCR text alone or a description of what it shows
-(the gap disclosed when the image is unavailable); **show the
-surrounding blocks**, not just this one in isolation (the boundary and
-orphan fixtures exist because a block's own narrow window is sometimes
-unreadable alone); **disclose any gap explicitly, freshly verified this
-session** against the real source data — never inherit a stale "no call
-logged" claim from another source's label; **ask exactly one sharp,
-concrete question**.
+just without a blocking question. Each ceremony, a presumption offer
+included, is one decision that `Skill (show-me)` presents, with the block's
+screenshots and the blocks around it. A block with no screen captures shows
+Step 4's lines for it and the blocks around it, verbatim in a code block, and
+discloses the missing captures as a gap.
 
 ### Step 7: Write-back — dry-run by default
 
