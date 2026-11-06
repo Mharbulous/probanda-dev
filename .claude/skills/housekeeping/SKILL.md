@@ -119,7 +119,7 @@ Write `proposal.json` into this run (Step 6's `run_id`) with `housekeeping__writ
 
 When any row's action carries an `answer`, also write `questions.json`: per row id, the `stop_reason` and the options as `{value, label}`. The action's `answer` is the label this session picked; apply maps it back to its value.
 
-Then call `housekeeping__serve_page`. Serving invalidates every earlier page for this matter. Give the practitioner the `url` ("Ctrl+click to open it in Chrome"), and the three counts: to decide (not counting `stuck` and `misfiled` rows), ingested with nothing to approve, left for the next run.
+Then call `housekeeping__serve_page`. Serving invalidates every earlier page for this matter. Give the practitioner the `url` ("Ctrl+click to open it in Chrome"), and the three counts: to decide (not counting `stuck` and `misfiled` rows), ingested with nothing to approve, left for the next run. On `warning: "older_holder"`, also tell the practitioner that another Claude session is running an older Probanda, so they should close the other Claude sessions and then ask for the page again.
 
 ## Step 14 — Wait for Approve
 

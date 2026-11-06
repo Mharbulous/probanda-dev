@@ -13,12 +13,13 @@
 // Routes match by method (or any method, "*") and a regex on the path; a path that matches some route under another
 // method gets 405, and no match gets 404. A route that throws gets one JSON 500. GET /health is
 // built in: { bundle, pid, build_stamp, plugin_version, kinds }, or the `health` body when given.
+// probeHolder reads another process's /health, for a caller whose fixed port is held.
 //
 // A `cors` listener serves pages opened from file:// (the page API): OPTIONS on any path gets the
 // 204 preflight, and every reply the listener itself makes (/health, 404, 405, 500) is JSON
 // carrying the CORS and Private Network Access headers (reply.ts corsHeaders).
 
-import { type IncomingMessage, type Server, type ServerResponse, createServer } from "node:http";
+import { type IncomingMessage, type Server, type ServerResponse, createServer, get } from "node:http";
 import type { AddressInfo } from "node:net";
 
 import { type PageBundle, pagePort } from "./ports.js";
@@ -122,6 +123,44 @@ export async function startPageListener(options: PageListenerOptions): Promise<P
       return new Promise<void>((resolve) => server.close(() => resolve()));
     },
   };
+}
+
+/** What answers GET /health on a port this process does not hold: nothing; another process's
+ * listener for `bundle`, with its build; or something else, with why it is not one. */
+export type PortHolder =
+  | { kind: "none" }
+  | { kind: "probanda"; build_stamp: string | null; plugin_version: string | null }
+  | { kind: "other"; reason: string };
+
+/** Reads the holder's /health, giving up after `timeoutMs` so a hung holder cannot stall the caller. */
+export function probeHolder(port: number, bundle: string, timeoutMs = 1_000): Promise<PortHolder> {
+  return new Promise((resolve) => {
+    // A fresh socket each time: a pooled one may belong to a holder that has since exited.
+    const req = get({ host: "127.0.0.1", port, path: "/health", timeout: timeoutMs, agent: false }, (res) => {
+      let body = "";
+      res.setEncoding("utf-8");
+      res.on("data", (chunk: string) => (body += chunk));
+      res.on("end", () => resolve(holderFrom(res.statusCode, body, bundle)));
+      res.on("error", (err) => resolve({ kind: "other", reason: err.message }));
+    });
+    req.on("timeout", () => req.destroy(new Error(`no answer within ${timeoutMs} ms`)));
+    req.on("error", (err: NodeJS.ErrnoException) => resolve(err.code === "ECONNREFUSED" ? { kind: "none" } : { kind: "other", reason: err.message }));
+  });
+}
+
+function holderFrom(status: number | undefined, body: string, bundle: string): PortHolder {
+  if (status !== 200) return { kind: "other", reason: `/health answered ${status}` };
+  let h: Record<string, unknown> | null;
+  try {
+    h = JSON.parse(body) as Record<string, unknown> | null;
+  } catch {
+    return { kind: "other", reason: "/health is not JSON" };
+  }
+  const stringOrNull = (v: unknown) => v === null || typeof v === "string";
+  if (h?.bundle !== bundle || !stringOrNull(h.build_stamp) || !stringOrNull(h.plugin_version)) {
+    return { kind: "other", reason: `/health does not describe a ${bundle} page listener` };
+  }
+  return { kind: "probanda", build_stamp: h.build_stamp as string | null, plugin_version: h.plugin_version as string | null };
 }
 
 async function route(req: IncomingMessage, res: ServerResponse, options: PageListenerOptions): Promise<void> {

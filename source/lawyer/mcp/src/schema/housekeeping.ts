@@ -81,7 +81,7 @@ export function housekeepingToolDefinitions(): ToolDefinition[] {
     {
       name: "housekeeping__serve_page",
       description:
-        "Serve a run's approval page on 127.0.0.1 and return its `url` for the practitioner (Ctrl+click opens it). The run must be the matter's newest run with a valid proposal.json (else `stale_run` or `invalid_proposal`). Serving invalidates every earlier page link for the matter in this session, so an old tab cannot approve. The link stops working when a newer run is served or the session ends. The page's Submit writes approval.json. Returns {url, run_id, rows, approved}. Then call housekeeping__wait_approval.",
+        "Serve a run's approval page on 127.0.0.1 and return its `url` for the practitioner (Ctrl+click opens it). The run must be the matter's newest run with a valid proposal.json (else `stale_run` or `invalid_proposal`). Serving invalidates every earlier page link for the matter in this session, so an old tab cannot approve. The link stops working when a newer run is served or the session ends. The page's Submit writes approval.json. Returns {url, run_id, rows, approved, warning?}: `warning: \"older_holder\"` when another session's server on another build holds the page port and so answers the link. Fails `page_port_taken` when the page port is held by something that is not Probanda's page server. Then call housekeeping__wait_approval.",
       inputSchema: {
         type: "object",
         properties: matterRun,

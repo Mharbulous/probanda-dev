@@ -10,6 +10,10 @@
 // newer run proposed differently, and a link whose record is gone, or whose matter or run
 // directory no longer opens, is out of date.
 //
+// When another process holds the port, a serve reads its /health (detect and warn, no takeover):
+// a file-manager listener on another build adds `warning: "older_holder"` to the result, and
+// anything that does not answer as one fails `page_port_taken`, naming probanda.json `page_ports`.
+//
 // Approve is checked in this order: the link record; a re-list of the run directories, which
 // must show no run directory newer than this run, proposal or not (spec A4); a readable
 // proposal.json; the posted rows, one `approve: true` entry per approved row id, each of which must
@@ -28,7 +32,7 @@ import { DataServerError } from "../errors.js";
 import { zoneProblem } from "../files/zones.js";
 import { writeNewDurably } from "../local-page/durable.js";
 import { deviceLink, dropLinks, resolveLink, sweepLinks } from "../local-page/links.js";
-import { type PageListener, type PageRoute, startPageListener } from "../local-page/listener.js";
+import { type PageListener, type PageRoute, probeHolder, startPageListener } from "../local-page/listener.js";
 import { STRICT_CSP, file as sendFile, html, json, readBody, text } from "../local-page/reply.js";
 import { pluginVersion } from "../repo-root.js";
 import { renderApprovalPage, simplePage, stalePage } from "./page.js";
@@ -81,6 +85,8 @@ export interface ServeResult {
   rows: number;
   /** The run is already approved: the page shows the approved state. */
   approved: boolean;
+  /** Another process on another build holds the port, so it, not this one, answers the link. */
+  warning?: "older_holder";
 }
 
 export interface HousekeepingPagesOptions {
@@ -121,12 +127,30 @@ export async function servePage(matterRoot: string, runId: string, env: NodeJS.P
   if (newest !== runId) {
     throw new DataServerError(`run ${runId} is not the matter's newest run with a proposal (${newest}); serve that one`, "stale_run");
   }
-  const { port } = await startHousekeepingPages(env);
+  const pages = await startHousekeepingPages(env);
+  const { port } = pages;
+  const warning = pages.holding() ? null : await holderWarning(port);
   const key = matter.root.toLowerCase();
   dropLinks(KIND, (target) => parseTarget(target)?.matter_root.toLowerCase() === key, env);
   const target: Target = { matter_root: matter.root, run_id: runId, serve: randomBytes(9).toString("base64url") };
   const id = deviceLink(KIND, JSON.stringify(target), env);
-  return { url: `http://127.0.0.1:${port}/h/${id}/`, run_id: runId, rows: proposal.rows.length, approved: readApproval(runDir, runId).approval !== null };
+  const served: ServeResult = { url: `http://127.0.0.1:${port}/h/${id}/`, run_id: runId, rows: proposal.rows.length, approved: readApproval(runDir, runId).approval !== null };
+  return warning ? { ...served, warning } : served;
+}
+
+/** Another process holds the port: "older_holder" when it is this bundle's listener on another
+ * build, null on this build or when it has just let go. Anything else answering there fails. */
+async function holderWarning(port: number): Promise<"older_holder" | null> {
+  const holder = await probeHolder(port, "file-manager");
+  if (holder.kind === "none") return null;
+  if (holder.kind === "other") {
+    throw new DataServerError(
+      `port ${port} is held by a program that is not a Probanda file-manager page listener (${holder.reason}); ` +
+        `set another port for "file-manager" under page_ports in probanda.json`,
+      "page_port_taken",
+    );
+  }
+  return holder.build_stamp === BUILD_STAMP ? null : "older_holder";
 }
 
 /** Test seam: stops this process's listener. Link records stay on disk. */
