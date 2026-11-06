@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<!--
+  This diagram's tag gives the commit it was checked against and when it was last updated.
+  To update it: re-read the sources at the new commit, correct the chart if needed,
+  then change both data- attributes and the visible stamp.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Probanda bills a client</title>
+<style>
+/* Single light theme by choice: the diagram's colours carry meaning and stay fixed. */
+:root {
+  color-scheme: light;
+  --ink: #1d2733;
+  --muted: #55616f;
+  --paper: #f8f9fb;
+  --rule: #d5dbe3;
+  --body: "Segoe UI", system-ui, sans-serif;
+  --mono: Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--body); }
+main { max-width: 1500px; margin: 0 auto; padding: 28px 20px 48px; display: grid; gap: 20px; }
+h1 { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 600; text-wrap: balance; }
+h2 { margin: 12px 0 0; font-size: 20px; line-height: 1.3; font-weight: 600; }
+p { margin: 0; max-width: 70ch; }
+code { font: 500 0.92em var(--mono); }
+figure { margin: 0; display: grid; gap: 12px; }
+figcaption { display: grid; gap: 4px; }
+.stamp { font-size: 14px; color: var(--muted); max-width: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 15px; height: 15px; border: 2px solid; border-radius: 3px; display: inline-block; }
+.legend b { width: 26px; height: 0; border-top: 2px solid var(--muted); display: inline-block; }
+.legend b.dashed { border-top-style: dashed; }
+.chart { overflow-x: auto; background: #fff; border: 1px solid var(--rule); border-radius: 6px; padding: 16px; }
+pre.mermaid { margin: 0; font-family: var(--body); }
+pre.mermaid svg { display: block; margin: 0 auto; }
+/* Mermaid caps each label at 200 px and wraps inside words; labels here break only at <br/>. */
+pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap !important; }
+.note { font-size: 14px; color: var(--muted); max-width: 90ch; }
+.note ul { margin: 4px 0; padding-left: 20px; }
+</style>
+</head>
+<body>
+<main>
+  <figure class="diagram" id="client-billing"
+          data-based-on-commit="c9154155c853130c6f8d587c74e106dabce0bbe0"
+          data-updated="2026-11-06T14:30:00-08:00">
+    <figcaption>
+      <h1>How Probanda bills a client, from the last invoice to the signed one</h1>
+      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/c9154155c853130c6f8d587c74e106dabce0bbe0"><code>c9154155</code></a> on main · Last updated 2026-11-06 14:30 -08:00</p>
+    </figcaption>
+    <p>Every day with any sign of work since the last invoice must end up billed, written off with a reason, or listed as unexplained. The yellow hexagons are where a script or query refuses to go on until that holds.</p>
+    <p>The process is drawn in five stages. A dashed rounded box links to another stage: click it to jump there.</p>
+    <div class="legend" aria-label="Colour key">
+      <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer plugin skill</span>
+      <span><i style="background:#e3eefb;border-color:#2563a8"></i>timekeeper plugin skill</span>
+      <span><i style="background:#efe8fb;border-color:#6b46b0"></i>file-manager plugin skill</span>
+      <span><i style="background:#eef1f5;border-color:#5b6675;border-style:double;border-width:3px"></i>Custom agent or helper</span>
+      <span><i style="background:#fbe4ec;border-color:#b03060;border-radius:8px"></i>👤 Human in the loop</span>
+      <span><i style="background:#fff8c5;border-color:#8a6d00"></i>Hard check: refuses to go on</span>
+      <span><i style="background:#ffffff;border-color:#8a94a0"></i>Step or decision</span>
+      <span><i style="background:#e0f2f1;border-color:#00796b;border-radius:7px/4px"></i>Store or file</span>
+      <span><i style="background:#e2f3e6;border-color:#2f7d46"></i>Deliverable</span>
+      <span><i style="background:#fff;border-color:#55616f;border-style:dashed;border-radius:8px"></i>Link to another stage</span>
+      <span><b></b>step, in order</span>
+      <span><b class="dashed"></b>loop back, optional, or reads</span>
+    </div>
+
+    <h2 id="start">1. The starting point: Steps 1 to 5</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    GO(["👤 The practitioner types<br/>/bill-client in the matter folder"])
+    BC["/bill-client<br/>the conductor"]
+    MD["/matter-data<br/>client number, housekeeping log"]
+    REC[("Bill record<br/>state and one row per step")]
+    LIVE{"A bill already<br/>under way?"}
+    RES["Resume: hash the last invoice,<br/>look for a newer signed one"]
+    NAMES{"Badly named files<br/>not yet reviewed?"}
+    HK(["👤 Runs /housekeeping"])
+    HKS["/housekeeping"]
+    HKA[["housekeeping-reader<br/>housekeeping-namer"]]
+    LAST["Pick the latest<br/>INV# ... signed.pdf"]
+    READ["Read the PDF itself<br/>exact last billed date,<br/>each billed date's hours"]
+    PD["/practice-data<br/>invoice history and import"]
+    AGREE{{"Records agree?<br/>else open each PDF:<br/>signature, number inside"}}
+    O1(["to 2. Candidate dates"])
+    O5(["to 5. Render and sign"])
+
+    GO --> BC
+    BC -->|"1 profile"| MD
+    BC -->|"reads"| REC
+    REC --> LIVE
+    LIVE -->|"in progress"| RES
+    LIVE -->|"waiting for signature"| O5
+    RES -->|"unchanged:<br/>Steps 2-5 stand"| O1
+    RES -->|"changed"| NAMES
+    LIVE -->|"no"| NAMES
+    NAMES -->|"yes: the bill stops"| HK
+    HK --> HKS
+    HKS --> HKA
+    HKS -.->|"then /bill-client again"| NAMES
+    NAMES -->|"2 no"| LAST
+    LAST -->|"3"| READ
+    READ -->|"4"| AGREE
+    PD <-.->|"5 compare,<br/>import verified invoices"| AGREE
+    AGREE -->|"creates the bill"| REC
+    AGREE --> O1
+
+    classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
+    classDef fm fill:#efe8fb,stroke:#6b46b0,color:#1d2733
+    classDef agent fill:#eef1f5,stroke:#5b6675,stroke-width:3px,color:#1d2733
+    classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
+    classDef gate fill:#fff8c5,stroke:#8a6d00,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class BC,MD,PD lawyer
+    class HKS fm
+    class HKA agent
+    class GO,HK human
+    class AGREE gate
+    class LIVE,RES,NAMES,LAST,READ step
+    class REC store
+    class O1,O5 link
+    click O1 href "#dates"
+    click O5 href "#render"
+</pre>
+    </div>
+
+    <h2 id="dates">2. Candidate dates: Step 6.1</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart LR
+    I2(["from 1. The starting point"])
+    TBD["/triage-billing-dates"]
+    SL["Service list<br/>parties, counsel, staff, witnesses<br/>with emails and phone numbers"]
+    HPN(["👤 Yes to save a new<br/>phone number to a contact"])
+    DOC["Matter documents<br/>dated by name and metadata,<br/>never by modified date"]
+    SM["Sent mail<br/>each once, by Message-ID"]
+    CALL["Call archive<br/>matched to the service list"]
+    CAL["Calendar and<br/>court filings"]
+    TCE["TimeCamp entries<br/>matter's task, all users"]
+    PH["Phone numbers in TimeCamp<br/>window titles, every run"]
+    KW[["Sonnet helper<br/>keyword scan of<br/>computer activity"]]
+    RECON{"3 Reconcile with<br/>the last bill"}
+    LIST[("Candidate dates list<br/>Strong · Medium · Weak<br/>Lawyer · Staff · Both")]
+    EV[("Evidence store<br/>what put each date there")]
+    O2(["to 3. Review each day"])
+
+    I2 --> TBD
+    TBD -->|"1"| SL
+    SL -.-> HPN
+    TBD -->|"2 fastest first"| DOC
+    TBD --> SM
+    TBD --> CALL
+    TBD --> CAL
+    TBD --> TCE
+    TBD --> PH
+    TBD --> KW
+    DOC --> RECON
+    SM --> RECON
+    CALL --> RECON
+    CAL --> RECON
+    TCE --> RECON
+    PH --> RECON
+    KW --> RECON
+    RECON -->|"already billed: dropped,<br/>unless under-billed<br/>missed by the last bill:<br/>suspicious<br/>bill over 3 months old:<br/>earlier dates written off"| LIST
+    RECON --> EV
+    LIST --> O2
+
+    classDef tk fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef agent fill:#eef1f5,stroke:#5b6675,stroke-width:3px,color:#1d2733
+    classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class TBD tk
+    class KW agent
+    class HPN human
+    class SL,DOC,SM,CALL,CAL,TCE,PH,RECON step
+    class LIST,EV store
+    class I2,O2 link
+    click I2 href "#start"
+    click O2 href "#review"
+</pre>
+    </div>
+
+    <h2 id="review">3. Review each day: Steps 6.2 and 6.3</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    I3(["from 2. Candidate dates"])
+    CW{"Running in Cowork?"}
+    STOPC["Stops: screen captures<br/>are readable only on the PC"]
+    TC["/timecamping<br/>Strong, then Medium,<br/>oldest first"]
+    JD[("Judged dates<br/>one file per matter")]
+    BT["/build-timeline<br/>the day's evidence<br/>from 7 sources"]
+    HP(["👤 Pasted approval<br/>for a replacing write"])
+    TCD["/timecamping-data"]
+    DB[("Time-review database<br/>one per practitioner")]
+    GATE{{"Evidence gate<br/>have all 7 sources<br/>reported for the day?"}}
+    HALT["Halt and name<br/>the missing sources"]
+    WHOLE["Read the whole day,<br/>every client"]
+    PROP["Group into blocks,<br/>view the screenshots,<br/>propose matter and note"]
+    GRID{"Does the evidence<br/>name the matter?"}
+    SIL["Silent commit"]
+    ASK(["👤 Answers each question<br/>one decision, evidence shown"])
+    SHOW["/show-me"]
+    DRY["Dry-run report<br/>of every change"]
+    HC(["👤 Says commit,<br/>then a yes per entry"])
+    WB{{"Write one entry,<br/>re-read it"}}
+    TCAMP[("TimeCamp<br/>one task per entry")]
+    MARK["Mark the date judged"]
+    UNC["Possible unbilled time<br/>work no entry covers"]
+    HU(["👤 Enters it by hand,<br/>or leaves it for an estimate"])
+    WEAK(["👤 Review the<br/>Weak dates too?"])
+    O3(["to 4. Vet and tie out"])
+
+    I3 --> CW
+    CW -->|"yes"| STOPC
+    CW -->|"no"| TC
+    TC <-.->|"skip judged dates<br/>and Staff-only dates"| JD
+    TC -->|"1 each date"| BT
+    BT -.-> HP
+    BT --> TCD
+    TCD --> DB
+    DB --> GATE
+    GATE -->|"no"| HALT
+    GATE -->|"2 yes"| WHOLE
+    WHOLE -->|"3"| PROP
+    PROP --> GRID
+    GRID -->|"yes"| SIL
+    GRID -->|"a leap, indirect<br/>or a conflict"| ASK
+    ASK -.- SHOW
+    SIL -->|"4"| DRY
+    ASK --> DRY
+    DRY --> HC
+    HC --> WB
+    WB --> TCAMP
+    WB -->|"5"| MARK
+    MARK --> JD
+    MARK -.->|"next date"| TC
+    PROP -->|"no entry covers it"| UNC
+    UNC -->|"Step 6.3"| HU
+    MARK -->|"all dates done"| WEAK
+    WEAK --> O3
+    HU --> O3
+
+    classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
+    classDef tk fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
+    classDef gate fill:#fff8c5,stroke:#8a6d00,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class SHOW lawyer
+    class TC,BT,TCD tk
+    class HP,ASK,HC,HU,WEAK human
+    class GATE,WB gate
+    class CW,STOPC,HALT,WHOLE,PROP,GRID,SIL,DRY,MARK,UNC step
+    class JD,DB,TCAMP store
+    class I3,O3 link
+    click I3 href "#dates"
+    click O3 href "#vet"
+</pre>
+    </div>
+
+    <h2 id="vet">4. Vet and tie out: Step 6.4</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    I4(["from 3. Review each day"])
+    VBT["/vet-billable-time"]
+    TCAMP[("TimeCamp")]
+    PULL["Pull the matter's billable<br/>entries since the last billed date"]
+    T1{{"First tie-out<br/>all inside the period · ties to TimeCamp's count<br/>· every Strong and Medium date judged"}}
+    BACK(["back to 3. Review each day"])
+    JOIN["Join each entry to its<br/>review decision<br/>none: no evidence"]
+    DB[("Time-review database")]
+    PDR["/practice-data<br/>rates, initials, firm rules"]
+    HR(["👤 A missing rate, initials,<br/>whether clerical work bills"])
+    HL(["👤 Each line, one at a time:<br/>confirm, correct or write off"])
+    HF(["👤 Late lines, estimates for<br/>uncovered time and off-task calls"])
+    SHOW["/show-me"]
+    T2{{"Final tie-out<br/>one line per entry · evidence or estimate<br/>· every candidate date billed, written off or unexplained<br/>· fees within 80-120% of the evidence"}}
+    OUT[("Billable time summary<br/>and audit file<br/>invoice_lines.json")]
+    O4(["to 5. Render and sign"])
+
+    I4 --> VBT
+    VBT -->|"1"| PULL
+    TCAMP --> PULL
+    PULL --> T1
+    T1 -->|"a date not judged"| BACK
+    T1 -->|"2 passes"| JOIN
+    DB -.-> JOIN
+    JOIN -->|"3"| PDR
+    PDR -.-> HR
+    PDR -->|"4"| HL
+    HL -->|"5"| HF
+    HL -.- SHOW
+    HF -.- SHOW
+    HF -->|"6"| T2
+    T2 -->|"fails: fix the input<br/>with the practitioner"| HL
+    T2 -->|"passes"| OUT
+    OUT -->|"time entries recorded"| PDR
+    OUT --> O4
+
+    classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
+    classDef tk fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
+    classDef gate fill:#fff8c5,stroke:#8a6d00,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class PDR,SHOW lawyer
+    class VBT tk
+    class HR,HL,HF human
+    class T1,T2 gate
+    class PULL,JOIN step
+    class TCAMP,DB,OUT store
+    class I4,O4,BACK link
+    click I4 href "#review"
+    click BACK href "#review"
+    click O4 href "#render"
+</pre>
+    </div>
+
+    <h2 id="render">5. Render, sign and issue: Steps 7 to 9 and /issue-invoice</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    I5(["from 4. Vet and tie out"])
+    I5B(["from 1. waiting for signature"])
+    CH["Chart from invoice_lines.json<br/>if the last invoice had one"]
+    HW(["👤 Word or PDF?"])
+    TPL["Firm template, letterhead<br/>and style from /practice-data"]
+    HT(["👤 Corrects and approves<br/>a new template"])
+    TAX["Tax rates worked out<br/>from the last invoice, shown once"]
+    DISB{{"collect_disbursements.py<br/>each fee once, doubts flagged"}}
+    HD(["👤 Decides each flagged fee<br/>and each tax status"])
+    REN{{"render_invoice.py<br/>recomputes every amount,<br/>refuses what does not tie"}}
+    DRAFT[("Draft invoice<br/>marked DRAFT")]
+    HY(["👤 Ready for signature?<br/>the yes closes the billing period"])
+    CHG(["back to the step<br/>the change touches"])
+    HN(["👤 Bill number<br/>from accounting"])
+    FIN[("Invoice ready for signature<br/>no DRAFT mark")]
+    SIGN(["👤 The lawyer signs"])
+    II["/issue-invoice"]
+    FRZ{{"freeze_invoice.py<br/>signed total must equal<br/>the vetted time"}}
+    HI(["👤 Approves issuing<br/>one-way, locks the records"])
+    DONE[("Issued<br/>later corrections are adjustments")]
+    SCR[["lawyer:scrivener<br/>drafts the trust email"]]
+    HS(["👤 Names the recipient<br/>and sends it"])
+    DC[["lawyer:delivery-checker<br/>was it sent and delivered?"]]
+
+    I5 -->|"Step 7"| CH
+    CH -->|"Step 8"| HW
+    HW --> TPL
+    TPL -.->|"none yet"| HT
+    TPL --> TAX
+    TAX --> DISB
+    DISB --> HD
+    HD --> REN
+    REN --> DRAFT
+    DRAFT -->|"Step 9"| HY
+    I5B --> HY
+    HY -->|"a change"| CHG
+    HY -->|"yes"| HN
+    HN -->|"render again"| FIN
+    FIN --> SIGN
+    SIGN --> II
+    II --> FRZ
+    FRZ --> HI
+    HI --> DONE
+    HI -.->|"trust applied"| SCR
+    SCR --> HS
+    DONE -.->|"when it went out"| DC
+
+    classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
+    classDef agent fill:#eef1f5,stroke:#5b6675,stroke-width:3px,color:#1d2733
+    classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
+    classDef gate fill:#fff8c5,stroke:#8a6d00,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef done fill:#e2f3e6,stroke:#2f7d46,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class II lawyer
+    class SCR,DC agent
+    class HW,HT,HD,HY,HN,SIGN,HI,HS human
+    class DISB,REN,FRZ gate
+    class CH,TPL,TAX step
+    class DRAFT store
+    class FIN,DONE done
+    class I5,I5B,CHG link
+    click I5 href "#vet"
+    click I5B href "#start"
+    click CHG href "#start"
+</pre>
+    </div>
+
+    <div class="note">
+      <p>Not drawn:</p>
+      <ul>
+        <li>Reopening a bill waiting for signature, and starting over. Both need the practitioner's request, and a start-over keeps the evidence, the review decisions and the TimeCamp changes.</li>
+        <li>The bill record gets one row per finished step, so a fresh session on any computer resumes from it. Steps 6 to 9 always run again.</li>
+        <li>Staff-only dates are not reviewed day by day. Their lines are vetted from their notes and the surrounding evidence.</li>
+        <li>The judged-dates file is kept per matter, so a day reviewed in full for one matter counts as unreviewed for the next.</li>
+        <li>A review decision counts only once it is written to TimeCamp, because the bill pulls only the matter's own task.</li>
+        <li>When accounting confirms a trust transfer, the amount paid is imported. A correction after issue is recorded as an adjustment, never an edit.</li>
+      </ul>
+      <p>The full prose is <a href="../Planned/Client billing process.md">Client billing process.md</a>. Sources: <code>plugins/lawyer/skills/bill-client/</code> (with <code>render_invoice.py</code>, <code>collect_disbursements.py</code>, <code>freeze_invoice.py</code>), <code>plugins/lawyer/skills/issue-invoice/SKILL.md</code>, <code>plugins/timekeeper/skills/triage-billing-dates/SKILL.md</code>, <code>plugins/timekeeper/skills/timecamping/</code>, <code>plugins/timekeeper/skills/timecamping-data/SKILL.md</code>, <code>plugins/timekeeper/skills/vet-billable-time/</code> (with <code>tie_out.py</code>), <code>plugins/timekeeper/skills/build-timeline/SKILL.md</code>.</p>
+    </div>
+  </figure>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: "neutral",
+    flowchart: { nodeSpacing: 40, rankSpacing: 55, useMaxWidth: false, htmlLabels: true }, themeVariables: { fontFamily: "Segoe UI, system-ui, sans-serif", fontSize: "16px" } });
+  mermaid.run({ querySelector: "pre.mermaid" });
+</script>
+</body>
+</html>
