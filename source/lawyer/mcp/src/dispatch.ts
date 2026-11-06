@@ -256,8 +256,8 @@ export const dataTools: Tool<DispatchContext>[] = [
   defineTool("drafting_data__merge_jobs", (args: MergeJobsArgs) => submissionDataMergeJobs(args)),
   defineTool(
     "drafting_data__resnapshot_writing",
-    (args: { db_path: string; filing_id: number; jurisdiction?: { country: string; jurisdiction: string } }) =>
-      resnapshotWriting(args.db_path, args.filing_id, { jurisdiction: args.jurisdiction })
+    (args: { db_path: string; filing_id: number; jurisdiction?: { country: string; jurisdiction: string }; remove_companion?: string }) =>
+      resnapshotWriting(args.db_path, args.filing_id, { jurisdiction: args.jurisdiction, removeCompanion: args.remove_companion })
   ),
   defineTool("drafting_data__migrate", (args: { db_path: string }) => submissionDataMigrate(args.db_path)),
   defineTool("drafting_data__complete_job", async (args: CompleteJobArgs & PageArgs, context: DispatchContext) => {

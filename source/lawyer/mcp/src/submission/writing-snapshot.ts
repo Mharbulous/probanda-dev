@@ -12,7 +12,7 @@
 // /draft calls only on the practitioner's explicit instruction.
 
 import { DataServerError, NotFoundError, ValidationError } from "../errors.js";
-import { citedItems, type BlockKind } from "../knowledge/declared-layout.js";
+import { citedItems, COMPANIONS, type BlockKind } from "../knowledge/declared-layout.js";
 import { NO_VENUE, type KindsView } from "../knowledge/venues-kinds.js";
 import type { ItemStatus } from "../knowledge/sidecar.js";
 import { knowledgeRead, type KnowledgeReadResult } from "../knowledge/tools.js";
@@ -20,7 +20,7 @@ import type { KnowledgeSeams } from "../knowledge/tree.js";
 import { submissionDataExecute, submissionDataQuery } from "./backend.js";
 import type { StoredLayout } from "./forms/layout-snapshot.js";
 import { UNBUILT_PROJECTIONS, type LayoutPart } from "./forms/projections.js";
-import { isJobOnlyBoard } from "./forms/query.js";
+import { isJobOnlyBoard, storedLayout, type FilingRow } from "./forms/query.js";
 
 type Json = Record<string, unknown>;
 
@@ -149,45 +149,57 @@ function notDrafting(title: string, row: FilingDates): ValidationError | null {
   return new ValidationError(`"${title}"'s layout can be refreshed only while it is being drafted; it was ${act}`, "writing_not_drafting");
 }
 
+/** The stored layout with one companion taken out, every other field kept as stored. Refuses
+ * companion_absent when the stored layout does not name it. */
+function withoutCompanion(
+  filing: { title: string; layout_snapshot: string | null; needs_forum_parts: 0 | 1 },
+  companion: string
+): { layout_snapshot: string; needs_forum_parts: 0 | 1; type_file: string } {
+  if (!COMPANIONS.includes(companion)) {
+    throw new ValidationError(`"${companion}" is not a companion document; the companions are ${COMPANIONS.join(", ")}`, "invalid_companion");
+  }
+  const stored = storedLayout(filing as FilingRow);
+  const raw = JSON.parse(filing.layout_snapshot!) as { layout: Json };
+  const companions = Array.isArray(stored.layout.companions) ? (stored.layout.companions as unknown[]) : [];
+  if (!companions.includes(companion)) {
+    throw new ValidationError(`"${filing.title}" has no ${companion} to remove`, "companion_absent");
+  }
+  const kept = companions.filter((name) => name !== companion);
+  if (kept.length > 0) raw.layout.companions = kept;
+  else delete raw.layout.companions;
+  return {
+    layout_snapshot: JSON.stringify(raw),
+    needs_forum_parts: filing.needs_forum_parts,
+    type_file: (stored.type_file ?? "").replace(/^.*\/|\.md$/g, ""),
+  };
+}
+
 /** The dedicated re-snapshot write (spec section 5): only while drafting; moves the revision through
- * the filings update; the needs-forum guard and the layout-freeze trigger run on the write. */
+ * the filings update; the needs-forum guard and the layout-freeze trigger run on the write. With
+ * removeCompanion it reads no type file and only takes that companion out of the stored layout
+ * (docs/Specs/2026-11-05_unlink-written-arguments-from-work-board-spec.md); the next mockup render
+ * archives the companion's file. */
 export async function resnapshotWriting(
   dbPath: string,
   filingId: number,
-  opts: { jurisdiction?: { country: string; jurisdiction: string }; seams?: KnowledgeSeams } = {}
+  opts: { jurisdiction?: { country: string; jurisdiction: string }; seams?: KnowledgeSeams; removeCompanion?: string } = {}
 ): Promise<{ filing_id: number; needs_forum_parts: 0 | 1; type_file: string; revision: number }> {
   // filingId is interpolated into the guarded UPDATE below.
   if (!Number.isInteger(filingId)) throw new ValidationError(`filing id ${filingId} is not an integer`, "invalid_filing_id");
   const filing = submissionDataQuery(
     dbPath,
-    "SELECT f.id, f.kind, f.title, f.filed_on, f.retired_on, p.forum FROM filings f JOIN proceedings p ON p.id = f.proceeding_id WHERE f.id = ?",
+    "SELECT f.id, f.kind, f.title, f.filed_on, f.retired_on, f.layout_snapshot, f.needs_forum_parts, p.forum " +
+      "FROM filings f JOIN proceedings p ON p.id = f.proceeding_id WHERE f.id = ?",
     [filingId]
-  ).rows[0] as unknown as (FilingDates & { kind: string; title: string; forum: string | null }) | undefined;
+  ).rows[0] as unknown as
+    | (FilingDates & { kind: string; title: string; forum: string | null; layout_snapshot: string | null; needs_forum_parts: 0 | 1 })
+    | undefined;
   if (!filing) throw new NotFoundError("That Writing is not in this matter's drafting records", "not_found");
   if (isJobOnlyBoard(filing)) throw new ValidationError(`Work Board ${filingId} has no Writing, so it has no layout to refresh`, "milestone_only");
   const refused = notDrafting(filing.title, filing);
   if (refused) throw refused;
 
-  let key: TreeKey;
-  if (filing.forum !== null) {
-    const segments = filing.forum.split("/");
-    if (segments.length !== 3) {
-      throw new ValidationError(`"${filing.title}": its proceeding's court or tribunal, ${filing.forum}, is not one Probanda can name`, "invalid_forum");
-    }
-    const [country, jurisdiction, venue] = segments;
-    key = { country, jurisdiction, venue, kind: filing.kind };
-  } else {
-    // shared/knowledge-tree.md: the _NoVenue jurisdiction is the writer's; the calling skill passes it and never infers it.
-    if (!opts.jurisdiction) {
-      throw new ValidationError(
-        `"${filing.title}" sits on a proceeding with no court or tribunal, so its layout is refreshed under the writer's jurisdiction, which was not given`,
-        "jurisdiction_required"
-      );
-    }
-    key = { country: opts.jurisdiction.country, jurisdiction: opts.jurisdiction.jurisdiction, venue: NO_VENUE, kind: filing.kind };
-  }
-
-  const composed = composeLayoutSnapshot(key, opts.seams);
+  const composed = opts.removeCompanion === undefined ? composeLayoutSnapshot(treeKey(filing, opts.jurisdiction), opts.seams) : withoutCompanion(filing, opts.removeCompanion);
   await submissionDataExecute(
     dbPath,
     `UPDATE filings SET layout_snapshot = '${composed.layout_snapshot.replace(/'/g, "''")}', needs_forum_parts = ${composed.needs_forum_parts} ` +
@@ -206,4 +218,31 @@ export async function resnapshotWriting(
     throw new ValidationError(`"${filing.title}"'s layout was not refreshed: the saved layout differs from the one written`, "writing_not_drafting");
   }
   return { filing_id: filingId, needs_forum_parts: composed.needs_forum_parts, type_file: composed.type_file, revision: Number(after.revision) };
+}
+
+/** The tree key a re-snapshot resolves the stored kind under: the proceeding's forum, or _NoVenue in
+ * the writer's jurisdiction, which the caller passes. */
+function treeKey(
+  filing: { kind: string; title: string; forum: string | null },
+  jurisdiction: { country: string; jurisdiction: string } | undefined
+): TreeKey {
+  let key: TreeKey;
+  if (filing.forum !== null) {
+    const segments = filing.forum.split("/");
+    if (segments.length !== 3) {
+      throw new ValidationError(`"${filing.title}": its proceeding's court or tribunal, ${filing.forum}, is not one Probanda can name`, "invalid_forum");
+    }
+    const [country, jurisdiction, venue] = segments;
+    key = { country, jurisdiction, venue, kind: filing.kind };
+  } else {
+    // shared/knowledge-tree.md: the _NoVenue jurisdiction is the writer's; the calling skill passes it and never infers it.
+    if (!jurisdiction) {
+      throw new ValidationError(
+        `"${filing.title}" sits on a proceeding with no court or tribunal, so its layout is refreshed under the writer's jurisdiction, which was not given`,
+        "jurisdiction_required"
+      );
+    }
+    key = { country: jurisdiction.country, jurisdiction: jurisdiction.jurisdiction, venue: NO_VENUE, kind: filing.kind };
+  }
+  return key;
 }

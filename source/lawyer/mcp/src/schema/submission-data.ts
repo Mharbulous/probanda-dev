@@ -1,3 +1,4 @@
+import { COMPANIONS } from "../knowledge/declared-layout.js";
 import { AUDIENCES } from "../knowledge/venues-kinds.js";
 import { type ToolDefinition, SQL_PARAMS } from "./shared.js";
 
@@ -928,12 +929,15 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "on a proceeding with no forum re-snapshots under _NoVenue in the writer's jurisdiction, which the caller passes as " +
         "`jurisdiction` {country, jurisdiction} and never infers. Refusals write nothing: invalid_filing_id, not_found, " +
         "writing_not_drafting (sent or retired), invalid_forum, jurisdiction_required, kind_unresolved, invalid_layout, " +
-        "projection_not_built. Returns filing_id, needs_forum_parts, type_file and the new revision.",
+        "projection_not_built. With remove_companion it reads no type file: it takes that one companion out of the stored " +
+        "layout, keeping every other field, under the same guards, and the next mockup render archives its file; refuses " +
+        "invalid_companion and companion_absent. Returns filing_id, needs_forum_parts, type_file and the new revision.",
       inputSchema: {
         type: "object",
         properties: {
           db_path: { type: "string" },
           filing_id: { type: "number" },
+          remove_companion: { type: "string", enum: [...COMPANIONS] },
           jurisdiction: {
             type: "object",
             properties: {
