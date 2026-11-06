@@ -13,6 +13,7 @@
 // When another process holds the port, a serve reads its /health (detect and warn, no takeover):
 // a file-manager listener on another build adds `warning: "older_holder"` to the result, and
 // anything that does not answer as one fails `page_port_taken`, naming probanda.json `page_ports`.
+// A bind that failed for any reason but a busy port (EACCES, say) fails `page_port_taken` too.
 //
 // Approve is checked in this order: the link record; a re-list of the run directories, which
 // must show no run directory newer than this run, proposal or not (spec A4); a readable
@@ -129,6 +130,13 @@ export async function servePage(matterRoot: string, runId: string, env: NodeJS.P
   }
   const pages = await startHousekeepingPages(env);
   const { port } = pages;
+  const failure = pages.holding() ? null : pages.failure();
+  if (failure) {
+    throw new DataServerError(
+      `the page listener cannot listen on port ${port} (${failure.message}); set another port for "file-manager" under page_ports in probanda.json`,
+      "page_port_taken",
+    );
+  }
   const warning = pages.holding() ? null : await holderWarning(port);
   const key = matter.root.toLowerCase();
   dropLinks(KIND, (target) => parseTarget(target)?.matter_root.toLowerCase() === key, env);
@@ -206,7 +214,7 @@ function withGrant(id: string, env: NodeJS.ProcessEnv, res: ServerResponse, rout
   const grant = grantFor(id, env);
   if (grant) return then(grant);
   if (route === "approve") {
-    return json(res, 410, { error: "This page is out of date: a newer run has started for this matter, or the Claude session has ended. Nothing was approved." }, REPLY);
+    return json(res, 410, { error: "This page is out of date: a newer run has been served for this matter, or the link is more than 30 days old. Nothing was approved." }, REPLY);
   }
   html(res, 410, stalePage(), REPLY);
 }

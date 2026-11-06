@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import { mkdirSync, readFileSync } from "node:fs";
 import { createServer } from "node:http";
-import { createServer as createTcpServer } from "node:net";
+import { Server as NetServer, createServer as createTcpServer } from "node:net";
 import test from "node:test";
 
 import { matterFixture, pageDeviceConfig, proposalFor, row, runDir } from "./helpers/housekeeping-fixture.mjs";
 
 // When another process holds the file-manager page port, serve_page reads its /health: a
-// Probanda holder on another build gets a warning, anything else fails naming page_ports.
+// Probanda holder on another build gets a warning, anything else fails naming page_ports, and so
+// does a bind that fails for any reason but a busy port.
 process.env.COCLERK_CONFIG_PATH = await pageDeviceConfig();
 const PORT = JSON.parse(readFileSync(process.env.COCLERK_CONFIG_PATH, "utf-8")).page_ports["file-manager"];
 
@@ -95,6 +96,26 @@ test("a holder that never answers fails within about a second", async () => {
     await closePageServer();
     for (const s of sockets) s.destroy();
     await new Promise((resolve) => hung.close(resolve));
+    m.cleanup();
+  }
+});
+
+test("a bind refused for another reason than a busy port fails naming page_ports and the error", async () => {
+  const listen = NetServer.prototype.listen;
+  NetServer.prototype.listen = function () {
+    const err = Object.assign(new Error(`listen EACCES: permission denied 127.0.0.1:${PORT}`), { code: "EACCES" });
+    process.nextTick(() => this.emit("error", err));
+    return this;
+  };
+  const m = servableMatter();
+  try {
+    await assert.rejects(
+      servePage(m.root, RUN),
+      (err) => err.code === "page_port_taken" && /page_ports/.test(err.message) && /EACCES/.test(err.message),
+    );
+  } finally {
+    NetServer.prototype.listen = listen;
+    await closePageServer();
     m.cleanup();
   }
 });

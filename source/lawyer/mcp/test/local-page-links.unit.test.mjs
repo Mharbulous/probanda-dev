@@ -17,14 +17,14 @@ function device() {
   return { dir, records: join(dir, "page-links"), env: { ...process.env, COCLERK_CONFIG_PATH: path }, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
-const TARGET = JSON.stringify({ matter_root: "C:\\Clients\\L166 Smith", run_id: "20260924-100000-aaaa" });
+const TARGET = JSON.stringify({ matter_root: "C:\\Clients\\L000 Example", run_id: "20260924-100000-aaaa" });
 
 test("a link resolves to its target, for its own kind only, and its id names no folder", () => {
   const d = device();
   try {
     const id = deviceLink("housekeeping", TARGET, d.env);
     assert.match(id, /^[A-Za-z0-9_-]{32}$/);
-    assert.equal(id.includes("Smith"), false);
+    assert.equal(id.includes("Example"), false);
     assert.equal(resolveLink("housekeeping", id, d.env), TARGET);
     assert.equal(resolveLink("other", id, d.env), null);
     assert.equal(resolveLink("housekeeping", "not-a-link", d.env), null);
@@ -43,7 +43,7 @@ test("a planted or edited record is refused", () => {
     writeFileSync(join(d.records, `${planted}.json`), JSON.stringify({ kind: "housekeeping", target: TARGET }));
     assert.equal(resolveLink("housekeeping", planted, d.env), null);
     // A genuine record whose target was changed.
-    writeFileSync(join(d.records, `${id}.json`), JSON.stringify({ kind: "housekeeping", target: TARGET.replace("Smith", "Jones") }));
+    writeFileSync(join(d.records, `${id}.json`), JSON.stringify({ kind: "housekeeping", target: TARGET.replace("Example", "Other") }));
     assert.equal(resolveLink("housekeeping", id, d.env), null);
     // Not JSON at all.
     writeFileSync(join(d.records, `${id}.json`), "{");

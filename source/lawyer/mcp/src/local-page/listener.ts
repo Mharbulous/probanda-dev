@@ -57,6 +57,8 @@ export interface PageListener {
   port: number;
   /** Whether this process holds the port now. */
   holding(): boolean;
+  /** The listen error that turned the listener off for good (anything but a busy port), or null. */
+  failure(): Error | null;
   /** Stops listening and stops retrying. */
   close(): Promise<void>;
 }
@@ -74,6 +76,7 @@ export async function startPageListener(options: PageListenerOptions): Promise<P
   let held = false;
   let stopped = false;
   let warnedBusy = false;
+  let failure: Error | null = null;
   let retry: NodeJS.Timeout | undefined;
 
   const server: Server = createServer((req, res) => {
@@ -109,12 +112,14 @@ export async function startPageListener(options: PageListenerOptions): Promise<P
       retry.unref();
       return;
     }
+    failure = err;
     log(`${tag} listener off: ${err.message}`);
   }
 
   return {
     port: fixed ? wanted : (server.address() as AddressInfo).port,
     holding: () => held && server.listening,
+    failure: () => failure,
     close: () => {
       stopped = true;
       if (retry) clearTimeout(retry);

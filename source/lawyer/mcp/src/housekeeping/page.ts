@@ -42,7 +42,7 @@ export function renderApprovalPage(proposal: Proposal, approval: Approval | null
 export function stalePage(): string {
   return simplePage(
     "This page is out of date",
-    "A newer housekeeping run has started for this matter, or the Claude session that made this page has ended. Nothing was approved from it. Go back to Claude."
+    "A newer housekeeping run has been served for this matter, or this page's link is more than 30 days old. Nothing was approved from it. Go back to Claude."
   );
 }
 

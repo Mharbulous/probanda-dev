@@ -128,7 +128,7 @@ test("the Loose Threads Defer posts with its page's token and defers the thread"
   const f = await device(t);
   const dbPath = join(f.dir, "submission.sqlite");
   await freshSubmissionDb(dbPath);
-  await executeThenMove(dbPath, `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L8470 - Larchmont', NULL);
+  await executeThenMove(dbPath, `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L000 - Example', NULL);
     INSERT INTO seeds (id, proceeding_id, created, surfaced_by, idea, charted_into) VALUES (1, 1, '2026-10-01T10:00', 'noticed', 'An open thread.', NULL);`);
   await listening(t, f.env);
   const post = (token) => exchange(f.port, "POST", "/seeds/1/defer", {

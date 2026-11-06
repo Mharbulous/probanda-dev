@@ -226,8 +226,6 @@ export function readJournal(runDir: string): Map<string, JournalLine> {
   return lines;
 }
 
-export { writeNewDurably } from "../local-page/durable.js";
-
 /** Appends one line and flushes it to disk. A torn previous line is closed off first. */
 export function appendLineDurably(path: string, line: string): void {
   let prefix = "";

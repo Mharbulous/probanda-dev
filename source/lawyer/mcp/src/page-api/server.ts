@@ -25,8 +25,8 @@
 // that suggestion (token.ts), so the listener never writes a database, or withdraws a suggestion, that a
 // render did not name. A page opened from
 // file:// sends `Origin: null`; responses echo it, and answer Chrome's Private Network Access
-// preflight. Unlike housekeeping/server.ts, which starts lazily on port 0 and keeps tokens in
-// memory, this listener holds no state of its own.
+// preflight. Like housekeeping/server.ts, which reads its link records from disk, this listener
+// holds no state of its own.
 
 import { existsSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -90,7 +90,8 @@ export interface PageApi {
 }
 
 /** Starts the listener, or its retries while the port is busy, settling once the first try has
- * bound or failed. Rejects only when probanda.json's page_api_port cannot be read; the caller logs that. */
+ * bound or failed. Rejects only when probanda.json's port for it (page_ports "lawyer", else page_api_port)
+ * cannot be read; the caller logs that. */
 export async function startPageApi(env: NodeJS.ProcessEnv = process.env, options: PageApiOptions = {}): Promise<PageApi> {
   const startedAt = new Date().toISOString();
   const route = (path: RegExp, handle: PageRoute["handle"]): PageRoute => ({ method: "*", kind: KIND, path, handle });
