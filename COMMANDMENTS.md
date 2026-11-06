@@ -31,6 +31,8 @@ Probanda handles four kinds of information:
 
 7. Only the file-manager plugin changes, moves or deletes a file on the User's Machine that Probanda did not create. Without it, Probanda treats such files as read-only.
 
+8. Avoid building features shaped like a one-way door. 
+
 ## Exception
 
 A machine Probanda operates for development and testing counts as part of Probanda's Cloud for Commandments 4 and 5. The development plugin is never installed on any other machine, and no repo holding it is ever made public. Each revision should move content from the development plugin into the Public Folder in a form that obeys Commandments 4 and 5, and no revision may make the development plugin rely on this exception more than it already does. For local databases, this exception covers only the legacy stores matter-data, drafting-data and timetracking-data. A store leaves this list once it complies, and no store is ever added. This exception ends when the two plugins are the same.
