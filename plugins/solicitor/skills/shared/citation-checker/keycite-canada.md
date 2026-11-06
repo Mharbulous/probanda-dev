@@ -93,9 +93,4 @@ Record at most 5 rows of each list below, in this order:
 A control that will not apply is recorded as `not recorded: <the control> would not apply`,
 never as `none`, and the steps that do not depend on it still run. Applying a `Treatment Type`
 value was not tried in the live run. Mark a row `Out of Plan` when it carries that badge. Open
-no row: the list is the record, and a row's document is a citing decision you never read.
-
-## 6. Export
-
-**OPEN:** KeyCite's own export or delivery control for the Citing References list,
-and its formats. Until a live run confirms one, record `Export: none`.
+no row: the list is what you return, and a row's document is a citing decision you never read.

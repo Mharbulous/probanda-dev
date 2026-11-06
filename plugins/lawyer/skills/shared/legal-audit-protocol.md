@@ -126,15 +126,15 @@ d. **Tier 4 — Westlaw.** The caller runs it before spawning you (Deep Research
    pinpoint and your finding in the notes below the coverage line. When the line names
    no pinpoint, or none of its pinpoints answers the issue, return a hand-off packet for that issue
    (fallback ladder item 4).
-e. **Note-up — citation-checker's records.** A court decision is noted up by the
-   record `citation-checker` files for it: what each citator it ran (KeyCite Canada
-   first, then the CanLII citator) shows about the decision, word for word, as of the
-   record's `Retrieved:` date. The spawn prompt's `Note-up:` lines name each record.
-   A file named `YYYY-MM-DD note-up <citation>.md` in a `6. LAW` folder is such a
-   record too: read it as a note-up and never flag it for `/ingest`. A record lists
-   leads, never a treatment: a citator's label ("KeyCite: Distinguished") says what
+e. **Note-up — citation-checker's Note-up block.** A court decision is noted up by the
+   lines `citation-checker` returns for it, which the spawn prompt puts under its
+   `Note-up:` line: what each citator it ran (KeyCite Canada first, then the CanLII
+   citator) shows about the decision, word for word, as of the block's `Retrieved:`
+   date. An older file named `YYYY-MM-DD note-up <citation>.md` in a `6. LAW` folder is a
+   past note-up: never flag it for `/ingest`, and never rely on it as a current one. A
+   block lists leads, never a treatment: a citator's label ("KeyCite: Distinguished") says what
    that citator shows, and what a citing decision does to the authority is known only
-   by reading that decision at a pinpoint. A record whose citators were all not run is
+   by reading that decision at a pinpoint. A block whose citators were all not run is
    no note-up. A statute, regulation or rule is noted up by its currency check
    instead, and doctrine never (`statute-currency.md` → Noting up legislation): it is
    NOT NOTED UP until that check returns `current`. Candidate discovery is never done
@@ -179,14 +179,14 @@ folder: <the existing 6. LAW\<issue>\ folder each should be filed in>
 ```
 
 plus the coverage line so far. `needs_note_up` lists every court decision you intend
-to rely on that has no note-up record (step e). Return either list alone when the other
+to rely on that has no Note-up block (step e). Return either list alone when the other
 is empty. The caller downloads the decisions from Westlaw, has `citation-checker` note
 up the others, and re-invokes you once. When the spawn prompt's `Re-invocation:` field
 reads `yes`, never return `needs_download`. Never return `needs_note_up` then either. This is that one
 re-invocation: each needed decision still not on disk goes to Step 5 as an offer whose
 text was not read, saying Westlaw did not return it when the field lists it, except a
 later decision in a cited case's proceeding, which leaves its history check incomplete (Step 4), each
-decision still without a record is NOT NOTED UP, and you carry on through Steps 3 to 5
+decision still without a Note-up block is NOT NOTED UP, and you carry on through Steps 3 to 5
 for every issue. A `yes` with no law-getter status reads as `no`.
 
 For every authority you intend to rely on:
@@ -198,14 +198,14 @@ For every authority you intend to rely on:
    `shared/research-memo-template.md` "Check labels" says.
    - **History**, for every case the memo cites, even in a DRAFT: find each later
      decision in the case's own proceeding that reviews it. Neither citator marks a
-     citing decision as the same proceeding: take KeyCite's History entries, and pick
+     citing decision as the same proceeding: take KeyCite's History entries from the Note-up block, and pick
      from the citing lists each decision with the same style of cause in a reviewing
      court or body; once you read it, confirm it by its docket number and its saying it
      reviews this decision. Each one goes on `needs_download`, and you read it against
      every paragraph citing the case. State in the memo, beside the case, any pending
-     appeal or leave application a record or a read decision shows. Prior history is
+     appeal or leave application a Note-up block or a read decision shows. Prior history is
      optional.
-   - **Note-up**, from a note-up record, commons `treatment_chain`, or an existing
+   - **Note-up**, from a Note-up block, commons `treatment_chain`, or an existing
      verified memo named with its date (for legislation, step e's pointer). A memo not
      named with its date is no note-up. It is case-level unless the citing decisions were
      read against the paragraph's proposition or finding, which you
@@ -213,7 +213,7 @@ For every authority you intend to rely on:
      memo, keep its items and their numbers, read each note on `Citing reads:`, name in your
      notes each decision it lists as unread or not located, and update Validity, the `Audit:` line,
      the CanLII segment and Status. Record
-     negative or distinguishing treatment. An authority with no record is NOT NOTED UP
+     negative or distinguishing treatment. An authority with no note-up is NOT NOTED UP
      and drags reliability down.
 3. **Compare facts**: state the factual circumstances before that court against the
    facts asked about, and flag the risk of being distinguished on the facts.
@@ -243,7 +243,7 @@ Legislation: retrieved n, on disk n / not run: <reason>
 
 The Westlaw reason is mandatory (for example `not run: tiers 1–3 held pinpointable
 text`, or `not run: practitioner declined`). So is the Legislation reason, read from
-the spawn prompt's `Legislation:` lines (for example `not run: no legislation in issue`). The CanLII segment reports the CanLII citator as the note-up records show it: `case-level` when a record shows it run, `proposition-level: ¶n[, ¶n]` naming each paragraph whose citing decisions you read (Step 2), `no key` when the records show it not run for want of a key, and `NOT AUDITED: <reason>` when no record covers a decision relied on. KeyCite's run goes in the notes and the Reliability column. The History segment reads `checked` when every cited case's history check is complete, `not run: no case cited` when the memo cites none, and `NOT AUDITED: <reason>` otherwise. The line ends with the Legislation segment, exactly `Legislation: retrieved n, on disk n` or `Legislation: not run: <reason>`, with nothing after it. Anything more about the instruments, such as their currency, goes in the notes below the line. Any tier you could not examine, the Legislation tier included, reads `NOT AUDITED` or `NOT AUDITED: <reason>` in place of its listed forms. No segment carries a parenthetical: counts and other detail go in the notes below the line. Silence about a tier reads as coverage
+the spawn prompt's `Legislation:` lines (for example `not run: no legislation in issue`). The CanLII segment reports the CanLII citator as the Note-up blocks show it: `case-level` when a block shows it run, `proposition-level: ¶n[, ¶n]` naming each paragraph whose citing decisions you read (Step 2), `no key` when the blocks show it not run for want of a key, and `NOT AUDITED: <reason>` when no block covers a decision relied on. KeyCite's run goes in the notes and the Reliability column. The History segment reads `checked` when every cited case's history check is complete, `not run: no case cited` when the memo cites none, and `NOT AUDITED: <reason>` otherwise. The line ends with the Legislation segment, exactly `Legislation: retrieved n, on disk n` or `Legislation: not run: <reason>`, with nothing after it. Anything more about the instruments, such as their currency, goes in the notes below the line. Any tier you could not examine, the Legislation tier included, reads `NOT AUDITED` or `NOT AUDITED: <reason>` in place of its listed forms. No segment carries a parenthetical: counts and other detail go in the notes below the line. Silence about a tier reads as coverage
 that did not happen. Then render this
 table, one row per issue:
 
@@ -262,9 +262,9 @@ Rubric:
   "unknown". Never a bare "Yes": a citing case nobody read shows nothing about
   treatment.
 - **Reliability** — gives the history check and the note-up apart, in the template's
-  check labels, and names the note-up record: its date, each citator it ran with its
-  flag, the number of citing cases, and how many of them were read ("history: checked;
-  case-level: KeyCite 2026-10-21: KeyCite Red H, 12 citing; CanLII citator 2026-10-21:
+  check labels, and names the note-up: its date, each citator it ran, the number of
+  citing cases, and how many of them were read ("history: checked;
+  case-level: KeyCite 2026-10-21: 12 citing; CanLII citator 2026-10-21:
   9 citing; 3 read"), or NOT NOTED UP. Never a bare "Yes". A note-up is not proof of good law, and an un-noted
   authority may be perfectly valid — you simply cannot say so.
 - **Count** — how many relevant pinpointed authorities are known.
@@ -446,14 +446,14 @@ write no notes file. Their shape is unchanged.
    If you hold pool read tools and one errors or is denied at runtime, degrade
    here — do not stall silently retrying (see the runtime note below). If you do
    not hold pool tools and the spawn prompt carries no pooled results, the same:
-   rely on tiers 1, 3 and 4 and the note-up records, note the gap, and offer the
+   rely on tiers 1, 3 and 4 and the Note-up blocks, note the gap, and offer the
    caller-run lookup.
 2. A tier-3 memo you could not open → UNREAD, not absent. Offer: the caller
    extracts the document text and re-invokes you with it.
-3. A decision you rely on with no note-up record → `needs_note_up` (above). On the
-   re-invocation, a decision still without one, or whose record shows no citator run,
+3. A decision you rely on with no Note-up block → `needs_note_up` (above). On the
+   re-invocation, a decision still without one, or whose block shows no citator run,
    is NOT NOTED UP and caps reliability. Confidence is capped for want of a note-up
-   only when no citator ran: a record with KeyCite run and the CanLII citator not run
+   only when no citator ran: a block with KeyCite run and the CanLII citator not run
    (or the reverse) is a note-up.
 4. Westlaw Deep Research needed for an issue the caller has not run it on → you
    hold no browser tools, so return a **hand-off packet** to the caller: the research

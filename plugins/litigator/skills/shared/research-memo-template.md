@@ -55,7 +55,7 @@ A memo's notes report each case's two checks apart, in these labels and no other
 - `proposition-level: ¶4, ¶5`: at most 5 citing decisions per authority, chosen by
   `shared/legal-research.md`, "Proposition-level note-up", were read at the pages that cite it
   against the named paragraphs' proposition or finding.
-- `NOT NOTED UP`: no note-up record.
+- `NOT NOTED UP`: no note-up.
 
 `noted up` is never a label: a citator list alone shows no treatment.
 

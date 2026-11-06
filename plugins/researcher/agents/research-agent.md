@@ -3,7 +3,7 @@ name: research-agent
 description: >
   Dispatched by /legal-research. Default `mode: opinion`. Audits the legal-commons
   pool, the matter's 6. LAW folders and case
-  database, and citation-checker's note-up records before speaking, and gates
+  database, and citation-checker's note-up returns before speaking, and gates
   disclosure behind a confidence summary. Every statement of law carries a pinpoint
   citation; anything uncited is offered as research, never asserted. Read-only on the
   pool. Also takes `mode: inventory` / `report: brief` (a holdings check over named

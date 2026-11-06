@@ -102,8 +102,8 @@ points here rather than restating it.
   stored result, so 📇 returns until the check runs for the enactment as now named.
 - **Doctrine:** an authority of kind doctrine (a secondary authority) is never noted
   up and never carries 📇.
-- **Case law** is noted up by `citation-checker`'s record (`legal-audit-protocol.md`
-  step e), and the treatment research-agent reads from it is stored as the authority's
+- **Case law** is noted up by `citation-checker`'s Note-up block (`legal-audit-protocol.md`
+  step e), and the treatment research-agent finds by reading the citing decisions is stored as the authority's
   treatment.
 
 ## Professional-conduct frame

@@ -10,7 +10,7 @@ A case brief is a one-page structured summary of one decision in someone else's 
 
 **It names nothing of the working matter.** No party, counsel, practitioner, matter number, date, amount, document or fact of the working matter appears in it, and it says nothing about how the case bears on the matter. Why the case matters belongs in the Writing that relies on it.
 
-**It says what this decision held, never whether it is still good law.** Noting up is separate work. The Case part ends `Not noted up by this brief.`
+**It says what this decision held.** How later courts treated a Ratio item is said only in that item's Treatment block, per principle, and never as "good law" generally. While no Ratio item has a Treatment block, the Case part ends `Not noted up by this brief.`
 
 ## Shape
 
@@ -18,7 +18,7 @@ Eight parts, in this order. Each item is one numbered paragraph, numbered from 1
 
 | Part | Slot | What it holds |
 |---|---|---|
-| Case | `case` | Prose, unnumbered: the style of cause, the neutral citation, the court, the judge or panel, the date of the reasons, then `Not noted up by this brief.` |
+| Case | `case` | Prose, unnumbered: the style of cause, the neutral citation, the court, the judge or panel, the date of the reasons, then `Not noted up by this brief.` while no Ratio item has a Treatment block |
 | Facts | `facts` | Only the facts the holding turns on, an outline and not the narrative. No citation needed |
 | Procedural history | `procedural-history` | How the case reached this court and what relief was sought |
 | Issues | `issues` | Each legal question the court decided, as a question. Never one raised but not reached |
@@ -41,6 +41,24 @@ Every Holding, Ratio decidendi and Obiter dicta item but a `None.` has this form
 
 Each passage is in the court's own voice, by `shared/authority-claim-verification.md` §3. `case-brief/agents/brief.md` gives the reading rules.
 
+### A Treatment block
+
+A Ratio item that has been noted up (`shared/legal-research.md`, "Proposition-level note-up") carries a Treatment block: what Probanda checked itself about how later courts treated that one principle. Its lines sit inside the item's paragraph, after the passage in the scratch copy, and before the item's closing `statement_of_law_id` comment in its `filing_prose` paragraph, with no blank line among them:
+
+```
+   Treatment, noted up <YYYY-MM-DD>: <verdict>
+   Citators: KeyCite <run / not run: reason>; CanLII <run / not run: reason>
+   Read: <citing decision>, <pinpoint>[; <citing decision>, <pinpoint>] / none
+   Not read: <n> other citing decisions the citators listed
+   > <the citing passage, verbatim> (<citing decision>, <pinpoint>)
+```
+
+- **The verdict** is one of `no citing decision engaged it`, `followed or applied`, `distinguished, limited or doubted` or `not followed or overruled`. It rests only on the citing decisions read at their pinpoints, and a decision noted `cited for another point` counts for none of them. Every verdict but the first carries, on its `>` lines, each citing passage it rests on, verbatim, by the statements-of-law rule.
+- **`Not read`** is a count, never a list, so no list of citing references enters a brief. No citator flag, banner, label or citing list enters it either: the `Citators:` line says only whether each ran.
+- **A note-up** replaces the item's block, and changes nothing else in the brief.
+- **A re-brief** keeps the block of an item whose pinpoint and passage are unchanged, and drops every other block.
+- **A principle the Ratio does not list** is re-briefed first, with `Focus:` naming it, and then noted up.
+
 ## The scratch copy
 
 `research-agent` writes the brief to the scratchpad with `research_filing__write_scratch`, as `<File stem>.md`, with the spawn prompt's `Matter root:` as `matter_root`, and returns only:
@@ -60,7 +78,7 @@ Save only after `brief-reviewer` returns `complete`. These are lawyer's own tool
 
 - **Writing.** `drafting_data__create_writing` with the same `tree` and `recipient`, `title` the `File stem:`, and `kind` `case_brief`. A caller holding a job uses its `db_path` and proceeding, as there.
 - **Authority.** Reuse the row the job's scope names. With no job, reuse the proceeding's row with that `citation`, and insert one (`kind` `case`) only when it holds none.
-- **Items.** Read `B` as that step does. One `drafting_data__execute` script: for each Holding, Ratio decidendi and Obiter dicta item `n` but a `None.`, `INSERT INTO statements_of_law (id, proceeding_id, authority_id, pinpoint, excerpt, source, verification)` with id `B + n`, the authority's id, and `'primary'` and `'lead'`, then `INSERT INTO filing_law (filing_id, statement_id)`. The same script writes one `filing_prose` row per slot in the table above: `case` as written, and every other slot as its items' sentences, one per paragraph, each item of law ending ` <!-- statement_of_law_id <B + n> -->` and a `None.` written as it is.
+- **Items.** Read `B` as that step does. One `drafting_data__execute` script: for each Holding, Ratio decidendi and Obiter dicta item `n` but a `None.`, `INSERT INTO statements_of_law (id, proceeding_id, authority_id, pinpoint, excerpt, source, verification)` with id `B + n`, the authority's id, and `'primary'` and `'lead'`, then `INSERT INTO filing_law (filing_id, statement_id)`. The same script writes one `filing_prose` row per slot in the table above: `case` as written, and every other slot as its items' sentences, one per paragraph, each item of law ending, after its Treatment block's lines when it has one, ` <!-- statement_of_law_id <B + n> -->` and a `None.` written as it is.
 - **Copy.** `drafting_forms__render` with `documents: ["General_writing"]`, then `research_filing__save_answer` with that document's `path` as `from_render`, `filename` `<File stem>.md`, and as `destination_dir` the folder in the `6. LAW` tree that holds the decision, or on a re-brief the folder below names. The save leaves out the render's work markers, trace comments and Legend, so the file is the brief alone. A caller holding a job also passes the job's `db_path`, `ticket_id` and `claim_no` and its own `session_token`, so the job's card lists the brief. A result reading `job.recorded: false` means the job is no longer the caller's: the brief is saved, so stop and report.
 - **Page.** Once the file is saved, `drafting_forms__render` again with the same Writing, `documents: ["Work_board"]` and `draft_dir` the matter's 0. DRAFT folder (`drafting_forms__open_session` returns it), which rewrites the matter's pages to list the brief. The Legal Research page is the `view_page_paths` entry of that name. It lists none when the matter holds no Writing but research results.
 - **A refusal.** When a `drafting_*` tool refuses, write nothing more to the Writing: save the `Brief scratch:` path as `from_scratch` and say in your relay, in plain words, what was refused. A save refused `brief_incomplete` is a script that missed a slot, a `filing_law` row, an item of law's closing comment, or its stored passage or pinpoint, and its message names which: write what is missing, render and save again.
