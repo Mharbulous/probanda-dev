@@ -96,12 +96,12 @@ function doc(result, type) {
   return d;
 }
 
-/** The marker line traced `trace`, and the citation line just above it. */
+/** The statement's citation line traced `trace`: since statementBlock, the citation, its markers
+ * and its id comment share one line. */
 function traced(md, trace) {
-  const lines = md.split("\n");
-  const i = lines.findIndex((l) => l.includes(trace));
-  assert.ok(i > 0, `expected a line traced ${trace}`);
-  return { line: lines[i], before: lines[i - 1] };
+  const line = md.split("\n").find((l) => l.includes(trace));
+  assert.ok(line, `expected a line traced ${trace}`);
+  return { line };
 }
 
 test("a case decided before a linked provision carries 🕰️ and its quoting tag on the mockup, and neither on the filed face", async () => {
@@ -112,13 +112,13 @@ test("a case decided before a linked provision carries 🕰️ and its quoting t
 
     const older = traced(md, "<!-- statement_of_law_id 1 -->");
     assert.match(older.line, /🕰️/, older.line);
-    assert.ok(older.before.endsWith(`*Older Case v. Example*, 2011 BCCA 1, para 12${QUOTING}`), older.before);
+    assert.ok(older.line.includes(`*Older Case v. Example*, 2011 BCCA 1, para 12${QUOTING}`), older.line);
 
     // The Act itself and a case decided after it carry neither.
     for (const id of [2, 3]) {
       const s = traced(md, `<!-- statement_of_law_id ${id} -->`);
       assert.doesNotMatch(s.line, /🕰️/, s.line);
-      assert.doesNotMatch(s.before, /quoting/, s.before);
+      assert.doesNotMatch(s.line, /quoting/, s.line);
     }
 
     const filed = submissionFormsRender(f.dbPath, 1, CLIENT, "filed");
