@@ -255,7 +255,7 @@ class ConfidenceTableTests(unittest.TestCase):
     def test_a_citator_record_is_case_level_never_noted_up(self):
         step_three = flat(between(read("legal-audit-protocol.md"), "### Step 3", "### Step 4"))
         self.assertIn("CanLII: case-level / proposition-level: ¶n[, ¶n] / no key | History: checked", step_three)
-        self.assertIn("`case-level` when a record shows it run", step_three)
+        self.assertIn("`case-level` when a block shows it run", step_three)
         self.assertIn('"history: checked; case-level: KeyCite', step_three)
         self.assertNotIn("`noted up`", step_three)
 

@@ -10,11 +10,10 @@ description: "Use before any approval ask or sign-off, including a draft present
 
 | Section | Read when |
 |---|---|
-| Scope | Checking whether an approval, a choice, an authorization or a question about a document falls under this skill, a request to see a Work Board, or reporting what a source said |
+| Scope | Checking whether an approval, a choice, an authorization or a question about a document falls under this skill, a request to see a Work Board or a job, or reporting what a source said |
 | The rules | Composing any approval ask: one decision, source file, full text, absences, the fixed order |
 | Marking conventions | Highlighting a source file or writing its caption legend |
 | Mechanics | Building the page extract and sending the files, text and question in order |
-| Fallback route for a file saved on the PC | Now in `shared/present-files.md`, "Fallback route: a file saved on the PC" |
 | Example | A bad and a good presentation are needed side by side |
 | Related patterns | Finding the neighbouring skills and protocols that follow the same discipline |
 
@@ -34,7 +33,7 @@ It does not decide *whether* a candidate question needs a human at all — that 
 
 A plain report of what a tribunal, court, arbitrator, opposing counsel or witness said or wrote is not an approval ask, and the rules below do not govern it. It follows `shared/report-what-a-source-said.md`: the operative words quoted verbatim first, with author, date and source, no summary in words stronger than the source's own, and the session's reading labelled "My reading:". When such a report leads into an approval ask, the ask follows this skill unchanged.
 
-When the practitioner asks to see a Work Board, or any job on it, render that board and present its page as `shared/html-pages.md` ("Present each page by its path") says. Never write its lanes, jobs, steps, goal or loose threads into chat.
+When the practitioner asks to see a Work Board, present its page as `shared/html-pages.md` ("Present each page by its path") says. Asked to see a job, present its documents as file cards instead, found from `board_card(jobs: [N])`: each memo on its `answers:` line, each attachment its `scope:` names (paths on the `attached` lane), and, for a Writing job, that Writing's mockups and `.eml` as `/draft` presents them (`references/present-files.md`, under ban 20) and its published Word and PDF copies. Present the board's page only when the job has none. Never write the board's lanes, jobs, steps, goal or loose threads into chat.
 
 ## The rules
 
@@ -151,7 +150,7 @@ The file's text goes to the gatekeeper write as read from the file, never retype
    The source is a PDF, or a .doc, .docx or .rtf that the script converts with LibreOffice first, so a by-hand run of a Word source needs LibreOffice installed. `/draft`'s `scrutiny_review` host step converts with Word instead and hands the script a PDF. `--pages` is optional: without it every page is loaded and the pages written run from the first to the last page a spec lands on. `--para N` finds the line-leading paragraph numbers (`[N]`, `N.` or a bare number) that form the longest consecutive run in one column, so indented sub-lists and years are skipped. `--excerpt <file>` paints a stored excerpt, split on `[...]`, yellow where it matches the source and orange where the source differs or was omitted. `--para` and `--span` repeat as often as needed. A span can cross pages. The script prints one line per spec, found or not, with the tokens painted in its colour, and for `--para` and `--excerpt` adds `crossed page break` and `margin band: <words>` for painted words in a page's top or bottom 8 %. It exits 1 and writes nothing when any spec is not found or matches more than once: lengthen the words or correct the pages and run it again, and never send an unmarked file in its place. `--preview` writes one PNG per page. Open one and look at it. When a highlight crosses a page break, check the preview for painted running headers or footers. The optional `--excerpt-out` writes the single span's text to the file for the verbatim check and the gatekeeper write, and refuses a span that crosses a page. A bilingual report (an official S.C.R. PDF, English and French in parallel columns) is detected by itself: the script prints `layout: bilingual, English column`, and every spec finds and paints only that column, never the running header. Add `--lang fr` for the French column; `--columns off` reads each page whole, as before. In Cowork, write the extract to the session's outputs folder or a connected folder, then call `mcp__cowork__present_files` on it.
 3. **Send in this order:**
    - (a) a message with the current drafter-worded text in full in code blocks, and for an excerpt its one-line script result
-   - (b) the file or files, cited first and context second, as file cards. To show a file to the practitioner, use the card tool `shared/present-files.md` names, staging a PC file first on its fallback route. A card is re-sent with every question about the same document; "already presented" is never a reason to omit it here, whatever a calling skill's presentation rules say about mockup copies.
+   - (b) the file or files, cited first and context second, as file cards. To show a file to the practitioner, use the card tool `shared/present-files.md` names, staging a PC file first on its fallback route.
    - (c) the recommendation with the full proposed drafter-worded text, and for a proposed excerpt its one-line script result
    - (d) the question, as the final text of the turn.
 

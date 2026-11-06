@@ -87,5 +87,86 @@ class PropositionNoteUpTests(unittest.TestCase):
         self.assertNotIn("<citation> | <title> | <date>", record)
 
 
+AGENTS = SKILLS.parents[1] / "source" / "researcher" / "agents"
+
+
+def granted_tools(path):
+    front = path.read_text(encoding="utf-8").split("---")[1]
+    return [line.strip()[2:] for line in front.split("tools:")[1].split("skills:")[0].splitlines()
+            if line.strip().startswith("- ")]
+
+
+class CitatorFactsAreReturnedNotFiledTests(unittest.TestCase):
+    """Plan 2026-11-06: citation-checker returns its citator lines, nothing citator-made is saved,
+    and a case brief's Ratio item carries its own per-principle Treatment block."""
+
+    def test_the_playbook_files_nothing(self):
+        playbook = read("shared/citation-checker/note-up.md")
+        self.assertNotIn("save_answer", playbook)
+        self.assertNotIn("# Note-up record", playbook)
+        self.assertNotIn("**Pool record.**", playbook)
+        self.assertNotIn("treatment_chain", playbook)
+        self.assertNotIn("Export:", playbook)
+        self.assertIn("## The return", playbook)
+        self.assertIn('"retrieved": "YYYY-MM-DD"', playbook)
+        self.assertNotIn('"filename"', playbook)
+        self.assertNotIn("## 6. Export", read("shared/citation-checker/keycite-canada.md"))
+
+    def test_the_agent_can_neither_save_nor_read_the_pool(self):
+        tools = granted_tools(AGENTS / "citation-checker.md")
+        self.assertEqual([t for t in tools if "save_answer" in t or "legal_commons__" in t
+                          or "list_law_folder" in t], [])
+        self.assertIn("mcp__plugin_lawyer_data__research_filing__append_manifest", tools)
+        self.assertIn("mcp__remote-devices__plugin_lawyer_data__research_filing__append_manifest", tools)
+        self.assertNotIn("record path", read_agent("citation-checker.md"))
+
+    def test_the_gate_carries_the_lines_not_a_path(self):
+        gate = read("shared/legal-research.md")
+        self.assertIn("Note-up: <citation>: <citation-checker's lines for it>", gate)
+        self.assertNotIn("record <path>", gate)
+        self.assertNotIn("note-up record", gate)
+
+    def test_the_citing_decision_choice_skips_mentions(self):
+        section = between(flat(read("shared/legal-research.md")), "**Proposition-level note-up.**",
+                          "**Statute currency.**")
+        self.assertIn("Treatment label is neither `Mentioned` nor `Referred to`", section)
+        self.assertIn("only when KeyCite did not run", section)
+        self.assertIn("`/case-brief` step 6 with `Note up items:`", section)
+
+    def test_a_citing_read_is_for_the_pinpoint(self):
+        scoped = flat(between(read("shared/legal-audit-scoped.md"), "## `mode: citing_read`", "## Hard boundaries"))
+        self.assertIn("`Pinpoint:` its pinpoint in the authority", scoped)
+        self.assertIn("`cited for another point`", scoped)
+
+    def test_the_template_defines_the_treatment_block(self):
+        template = flat(read("shared/case-brief-template.md"))
+        self.assertIn("### A Treatment block", read("shared/case-brief-template.md"))
+        self.assertIn("Treatment, noted up <YYYY-MM-DD>: <verdict>", template)
+        for verdict in ("`no citing decision engaged it`", "`followed or applied`",
+                        "`distinguished, limited or doubted`", "`not followed or overruled`"):
+            self.assertIn(verdict, template)
+        self.assertIn("**A note-up** replaces the item's block, and changes nothing else", template)
+        self.assertIn('never as "good law" generally', template)
+        self.assertNotIn("never whether it is still good law", template)
+        self.assertIn("**`Not read`** is a count, never a list", template)
+
+    def test_the_brief_agent_and_skill_carry_the_note_up(self):
+        self.assertIn("## Noting up an item", read("case-brief/agents/brief.md"))
+        skill = read("case-brief/SKILL.md")
+        for line in ("Note up items: <", "Brief: <the saved brief's host path", "Citator: <", "Citing reads: <"):
+            self.assertIn(line, skill)
+        self.assertIn("`Citing decisions:`", skill)
+
+    def test_the_reviewer_checks_treatment(self):
+        reviewer = read_agent("brief-reviewer.md")
+        self.assertIn('"treatment": [', reviewer)
+        self.assertIn("6. For each Treatment block", reviewer)
+        self.assertIn("the paths on `Citing decisions:`", reviewer)
+
+
+def read_agent(name):
+    return (AGENTS / name).read_text(encoding="utf-8")
+
+
 if __name__ == "__main__":
     unittest.main()

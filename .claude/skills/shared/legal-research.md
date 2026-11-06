@@ -240,10 +240,10 @@ other question runs the duties in their numbered order.
    `ticket_id`, `session_token` and `claim_no`. Never dispatch it while a Chrome-mode `law-getter` or
    another `citation-checker` is out: they share one Chrome session. A citation it
    returns as `not reached: batch cap` goes in the next batch. It runs KeyCite
-   first and the CanLII citator second, and files one note-up record per decision.
-   Name each record on the spawn prompt's `Note-up:` line. A statute, regulation or
+   first and the CanLII citator second, and returns each decision's citator lines,
+   saving none of them. Put them under its `Note-up:` line verbatim. A statute, regulation or
    rule is never sent to it: its note-up is duty 4's currency check. A decision the
-   audit relies on with no record comes back as `needs_note_up` (below).
+   audit relies on with no Note-up block comes back as `needs_note_up` (below).
 
 **Westlaw unreachable is a hard stop.** Any `status: blocked (...)` that
 law-getter or citation-checker returns is a hard stop, whether or not its
@@ -291,7 +291,7 @@ Westlaw: <issue>: run, memo(s): <paths>; decisions: <paths> / not run: tiers 1�
 Legislation: <citation>: filed <path>, current to <marker>, currency <value> / already on disk <path>, currency <value> / not retrieved: <reason>, currency <value> / filed <path>, as made, not current law, no currency marker, made on <made_on>, currency <value> / on disk from case data <path>[, pp. <X–Y>], official: false, currency <value>
 Secondary: <title>: filed <path>, dated <marker>, from <publisher_host> / not retrieved: <reason> / none
 6. LAW listing and extracted text: <the listing, and the text or text path of each file extracted>
-Note-up: <citation>: record <path> / <citation>: not filed: <citation-checker's status line> / none
+Note-up: <citation>: <citation-checker's lines for it> / <citation>: not run: <citation-checker's status line> / none
 Re-invocation: no / yes: Westlaw did not return <citations, or none>; law-getter: <its status line, or practitioner declined> / yes: review
 Review: <memo-reviewer's last JSON, verbatim> / none
 Last status: <the saved memo's Status value> / none
@@ -304,9 +304,9 @@ Flag unsettled: <what to flag as unsettled> / none
 Decision text is on disk at the paths above.
 Legislation text is on disk at the paths above.
 A file on a Secondary line is its author's words, never a statement of law: cite it as secondary, attributed to its author.
-Note-up records are at the paths on the Note-up line.
+Each decision's Note-up block is the lines under its Note-up line.
 If you need a decision that is not on disk, return needs_download, unless Re-invocation is yes: then offer it as research instead.
-If you rely on a decision with no note-up record, return needs_note_up, unless Re-invocation is yes: then it is NOT NOTED UP.
+If you rely on a decision with no Note-up block, return needs_note_up, unless Re-invocation is yes: then it is NOT NOTED UP.
 A layer the Preflight line names is capped from the start: commons reads NOT AUDITED: <its state>, CanLII reads no key. Make no call to it.
 ```
 
@@ -334,8 +334,8 @@ Write one `Westlaw:` line per issue.
 Write one `Legislation:` line per instrument, and `Legislation: none` when no instrument
 is in issue. For an instrument filed in parts, `<path>` lists every part's path, separated by `; `.
 Write one `Secondary:` line per document, and `Secondary: none` when there is none.
-Write one `Note-up:` line per decision `citation-checker` was dispatched for, and
-`Note-up: none` when none was.
+Write one `Note-up:` line per decision `citation-checker` was dispatched for, with its
+lines beneath it, and `Note-up: none` when none was.
 `Background memos:` and `Flag unsettled:` are filled only by `/legal-research`'s board
 mode (`references/research-board.md`): the saved memos of the jobs that blocked this one,
 and the research triage's instruction for this job. With `Background memos: none`, leave
@@ -361,8 +361,8 @@ once those have returned, dispatch `researcher:citation-checker` for the `needs_
 citations by duty 5.
 Then re-invoke the same audit agent once, naming the new files, with
 `Re-invocation: yes` listing every citation the `westlaw-first` dispatch did not
-retrieve (`none` when it retrieved them all), and a `Note-up:` line for each record
-filed. The rules below then take the return. A Westlaw block during
+retrieve (`none` when it retrieved them all), and a `Note-up:` line, with its lines
+beneath it, for each decision noted up. The rules below then take the return. A Westlaw block during
 the loop is the hard stop above.
 
 **An incomplete memo is never a licence.** A memo saved `INCOMPLETE`, or a question a
@@ -572,10 +572,12 @@ the memo Writing's `n`th item, and its stored item is the `statement_of_law_id` 
 with. With `/drafting-data` installed, write the job by its §3k, "A research memo's
 paragraphs", and work each step there; without it, run the steps here and say no job was
 written. A step runs the gate on the memo's question with `Note up paragraphs:` naming the memo
-and its paragraph: `citation-checker` notes up any authority without a record. Then, for each
-authority, choose at most 5 citing decisions: the one the record's KeyCite banner names
-`Most Recent`, then its KeyCite rows, then its CanLII rows, each decision once and the rest
-unread. `law-getter` downloads those not on disk, in one citation-mode dispatch. Spawn
+and its paragraph: `citation-checker` notes up each authority the paragraph cites, since its
+lines are never saved. Then, for each authority, choose at most 5 citing decisions from its
+Note-up block: the KeyCite rows whose Treatment label is neither `Mentioned` nor `Referred to`,
+those whose Abridgment Classifications name the proposition's subject first, then newest first,
+each decision once and the rest unread. Choose from its CanLII rows, newest first, only when
+KeyCite did not run. `law-getter` downloads those not on disk, in one citation-mode dispatch. Spawn
 one `researcher:research-agent` with `mode: citing_read` (`shared/legal-audit-scoped.md`) per
 decision, no more than 3 at once per authority, with that mode's fields, and another from the
 page a return's `More:` line names.
@@ -585,6 +587,9 @@ CanLII segment and Status updated (`shared/legal-audit-protocol.md` Step 2). Sav
 the same Writing: replace its `memo-header` row, then render and save by persist step 1's
 Copy. Record an authority's treatment, which clears its 📇, by `/drafting-data`
 `references/note-up.md` only once every item citing it has a proposition-level note-up.
+A case brief's Ratio items run the same steps, with the item's sentence as `Proposition:` and
+its pinpoint as `Pinpoint:`. The last spawn is `/case-brief` step 6 with `Note up items:`, in
+place of the audit spawn, then its steps 7 to 9. No job is written.
 
 **Statute currency.** In a research question the check runs at the end of duty 4.
 When a caller such as `/draft` asks for a currency check on its own, call the canlii

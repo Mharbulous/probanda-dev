@@ -142,6 +142,24 @@ test("a saved brief keeps text of a tag's shape in its own sentences, and strips
   assert.doesNotMatch(text, /[\uE000-\uE003]/);
 });
 
+test("a Ratio item's Treatment block saves inside its item, with no new number and no refusal", async (t) => {
+  const m = await matter(t);
+  const id = await writeBrief(m);
+  const block = [
+    "A refusal repudiates.",
+    "   Treatment, noted up 2026-11-06: followed or applied",
+    "   Citators: KeyCite run; CanLII not run: no key",
+    "   Read: Gamma v Delta, 2024 BCCA 12, para. 30",
+    "   Not read: 4 other citing decisions the citators listed",
+    "   > A refusal of that kind repudiates the contract. (Gamma v Delta, 2024 BCCA 12, para. 30)",
+  ].join("\n");
+  await submissionDataExecute(m.dbPath, `UPDATE filing_prose SET text = '${block} <!-- statement_of_law_id 6 -->' WHERE filing_id = ${id} AND slot = 'ratio';`);
+  const text = readFileSync(saveFromRender(m, id, `${STEM}.md`).saved.path, "utf-8");
+  assert.match(text, /^5\. A refusal repudiates\.\n {3}Treatment, noted up 2026-11-06: followed or applied$/m, text);
+  assert.match(text, /^ {3}Not read: 4 other citing decisions the citators listed$/m, text);
+  assert.match(text, /## Obiter dicta\n\n6\. None\./, text);
+});
+
 for (const [what, sql, named] of [
   ["a slot not written", (id) => `DELETE FROM filing_prose WHERE filing_id = ${id} AND slot = 'procedural-history';`, /procedural-history not written/],
   ["an item its Writing does not cite", (id) => `DELETE FROM filing_law WHERE filing_id = ${id} AND statement_id = 5;`, /statement_of_law 5 is not cited/],

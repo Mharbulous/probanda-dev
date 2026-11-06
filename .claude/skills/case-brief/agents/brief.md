@@ -11,6 +11,10 @@ description: >
 
 Write nothing of the working matter. The spawn prompt gives none of its facts, and you look for none. When the spawn prompt's `Review:` line holds brief-reviewer's JSON, rewrite the brief to answer every item in it and write it to the scratchpad again.
 
+## Noting up an item
+
+When the spawn prompt's `Note up items:` line names items, you write Treatment blocks, not a new brief. Start from the saved brief at the `Brief:` path, read whole through `research_filing__research_folder`, and keep every part and item word for word. For each named item, write its Treatment block by the template's "A Treatment block", from the `Citator:` lines and the `Citing reads:` notes only, replacing any block it had. Read the decision only to confirm an item's pinpoint, and read no citing decision yourself. Write the whole brief to the scratchpad as the template's "The scratch copy" says. With `Note up items: none`, skip this section.
+
 ## The decision's text
 
 Read it through `research_filing__research_folder`. A `Decision text:` path is the decision's text: read that file whole, following `next_offset`, and never try to open the file `Decision:` names. With none, read the `Decision:` PDF in page order, following `next_page`. When you cannot read it, write nothing and return one line saying so. You never return `needs_download`: this decision is the only one you read.

@@ -14,6 +14,8 @@ description: >
 
 One brief is one decision. For several decisions, run the steps once per decision, spawning the agents for several at once where their decisions are all on disk.
 
+**Note up a brief.** When the practitioner asks to note up a saved brief's Ratio items, follow `shared/legal-research.md`, "Proposition-level note-up". It ends at step 6 below with `Note up items:`, then steps 7 to 9.
+
 ## Steps
 
 1. **Name the decision.** A held job names it: the title `Brief the case: <style of cause>, <citation>` and the authority in its scope. Otherwise the practitioner names it. When the name fits more than one decision, ask which.
@@ -36,11 +38,15 @@ One brief is one decision. For several decisions, run the steps once per decisio
    Focus: <the issues the practitioner narrowed it to, or all>
    Held: <the propositions step 4 found, or none>
    Review: <brief-reviewer's JSON on a later pass, or none>
+   Note up items: <the Ratio items' numbers, on a note-up, or none>
+   Brief: <the saved brief's host path, on a note-up, or none>
+   Citator: <citation-checker's lines for the decision, verbatim, on a note-up, or none>
+   Citing reads: <citation>: <the note's path> / <citation>: UNREAD: <reason> / <citation>: not located by citation search / none
    ```
 
    A return with no `Brief scratch:` line saves nothing: stop and say in plain words that the brief could not be written, and that `/lawyer:suggestion` reports the problem if it persists. Never pass on the return's text, which can name a file of Probanda's.
 
-7. **Review it.** Spawn `researcher:brief-reviewer` with the same `Matter root:`, `Decision:` and `Decision text:` lines, `Matter:` the matter's number, parties and counsel and its proceedings' file numbers, and `Brief:` the text of the `Brief scratch:` file. It reviews one brief at most three times. A return that is not its JSON object, `rules unavailable` included, saves nothing: stop and say in plain words that the brief could not be checked, so it was not saved, and that `/lawyer:suggestion` reports the problem if it persists. Never pass on the return's text, which can name a file of Probanda's. On `send_back`, re-invoke the same agent with `Review:` the reviewer's JSON. On `own_litigation` true, stop with the template's one line and save nothing. After a third `send_back`, save nothing, and name what is still open in one line.
+7. **Review it.** Spawn `researcher:brief-reviewer` with the same `Matter root:`, `Decision:` and `Decision text:` lines, `Matter:` the matter's number, parties and counsel and its proceedings' file numbers, `Brief:` the text of the `Brief scratch:` file, and `Citing decisions:` the host path of each citing decision a Treatment block names (`none` when no block is new). It reviews one brief at most three times. A return that is not its JSON object, `rules unavailable` included, saves nothing: stop and say in plain words that the brief could not be checked, so it was not saved, and that `/lawyer:suggestion` reports the problem if it persists. Never pass on the return's text, which can name a file of Probanda's. On `send_back`, re-invoke the same agent with `Review:` the reviewer's JSON. On `own_litigation` true, stop with the template's one line and save nothing. After a third `send_back`, save nothing, and name what is still open in one line.
 8. **Save it** by the template's "Saving it".
 9. **Present it.** Show the saved file as a file card (`shared/present-files.md`). When the template's "Saving it" returned a Legal Research page, say the brief is on it. When it returned none, the matter holds nothing but research results, which have no page of their own: say the brief is saved in the matter's law folder and that the Legal Research page will list it once the matter has a filing, a letter or other work besides its research. When research-agent's return held a `Divergence:` line, say in plain words how the brief differs from what was already held. On a held job, complete it by the template's "On a held job".
 10. **Offer to save the decision.** Unless step 4 found it held, or the run is unattended, ask once, after all the briefs in this turn: "Would you like me to save this decision as a legal authority in the case database?" On yes, invoke `/matter-data` for legal authority ingestion with the decision's file path and any focus, and report what it recorded. Pass it no SQL, schema detail or brief text: its own agents read the decision.

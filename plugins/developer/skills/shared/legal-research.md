@@ -149,11 +149,11 @@ other question runs the duties in their numbered order.
 
    **On a held job, the Westlaw wait is a ⏳ step.** After dispatching
    `law-getter` in the background for a held job's Westlaw step, set that step
-   ⏳ for 25 minutes (`drafting_data__set_step`, `status: waiting`, `wait_minutes: 25`,
-   `/drafting-data` `references/jobs-run.md` §6b) and tell the practitioner in one line
-   that a Deep Research run often takes 10 to 25 minutes and that nothing shows until it
-   returns. Its return wakes the session. Never dispatch a second Chrome-mode `law-getter`
-   while one is out. Once its memo is filed in the issue's `6. LAW` folder, stamp the step done. A `status: blocked (...)` return sets the
+   ⏳ for 5 minutes (`drafting_data__set_step`, `status: waiting`, `/drafting-data`
+   `references/jobs-run.md` §6b). When the time has passed, check whether law-getter
+   has returned and its memo is filed in the issue's `6. LAW` folder. If not, set the step
+   ⏳ for 5 minutes again. Never dispatch a second Chrome-mode `law-getter` while one is out.
+   Once the memo is filed, stamp the step done. A `status: blocked (...)` return sets the
    step ↻ (`status: retry`), never done. The ⏳ minute is a time to check the run, never a
    deadline (`shared/deadline-isolation.md`).
 

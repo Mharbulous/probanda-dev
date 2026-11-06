@@ -109,8 +109,8 @@ permitted to make statements of law.
 4. Spawn `researcher:research-agent`. Fill the doctrine's spawn-prompt template: the question, the
    factual context, the held job's number, the matter root, the matter's file number, who asked, today's date,
    the file stem, ICRA unless the practitioner named IRAC or CREAC, any pooled-layer results your own pre-spawn
-   lookup returned, the Westlaw memo and decision files retrieved, the note-up records
-   filed, and any
+   lookup returned, the Westlaw memo and decision files retrieved, the citator lines citation-checker
+   returned, and any
    `6. LAW\` listing and text you extracted for it, and `Re-invocation: no`. Never name CanLII as a place
    to read or check decisions: it serves no decision text. A stored statement of law handed in goes with
    its provenance line, as the caller supplied it (`/draft` composes it). The line says where
