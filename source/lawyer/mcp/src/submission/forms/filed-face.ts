@@ -91,14 +91,16 @@ const MOCKUP_ONLY_HEADINGS = [
 // text on a statement's citation line, after any settled tag, and a note is free
 // text that can hold parentheses, so the match runs greedily to the line's last ")".
 // The quoting tag (schema v61) runs first: it sits right after a statement's
-// pinpoint, before every other tag, so it runs lazily to the first ")" that ends
-// the line or starts the next tag. A verified statement prints on the filed face;
+// pinpoint, before every other tag, so it runs lazily to the first ")" that starts
+// the next tag or is followed only by the line's markers (statementBlock puts the
+// markers on the citation line, and the glyph strip runs later) or by nothing. A
+// verified statement prints on the filed face;
 // whose words its excerpt is, is for the human and never for the forum.
 // Last, a rhetorical paragraph's label and its two advisory tells (schema v71,
 // render-rhetoric.ts), on the same footing as the v48 tag: the paragraph's
 // wording reaches the filed face, its label and tells never do.
 const INLINE_TAG_RES: RegExp[] = [
-  / \(quoting .*?\)(?= \(|\r?$)/gm,
+  / \(quoting .*?\)(?= \(|[^\p{L}\p{N}()\n]*$)/gmu,
   / \[facts [^\]]*\]/g,
   / 🧩 \[GAP -- no fact linked\]/g,
   / \[PRACTITIONER — total exceeds the Rule 24\(j\) cap; Rule 24\(h\) consent position required\]/g,
