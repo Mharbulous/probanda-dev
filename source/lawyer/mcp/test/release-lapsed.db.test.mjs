@@ -3,11 +3,14 @@
 // by its own clock once the lapse minute it was given passes (ticket-category.ts lapsesAt).
 
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runInNewContext } from "node:vm";
 import test, { after } from "node:test";
+
+import { startFakeCloud } from "./helpers/fake-cloud.mjs";
 
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-release-lapsed-locks-"));
 after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
@@ -17,7 +20,8 @@ const { submissionDataExecute, submissionDataQuery } = await import("../build/su
 const { releaseLapsedLocks } = await import("../build/submission/forms/job-activity.js");
 const { buildProceedingBoard } = await import("../build/submission/forms/build-proceeding-board.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
-const { callTool } = await import("../build/dispatch.js");
+const { callTool, createDispatchContext } = await import("../build/index.js");
+const writes = await import("../build/tools/practice/writes.js");
 const { awaitBackgroundJobs } = await import("../build/submission/render-job.js");
 const { readBoardData, ASHBOURNE } = await import("./fixtures/forms-render-seeds.mjs");
 
@@ -98,6 +102,31 @@ test("a second release writes nothing new", async (t) => {
   const first = kv(m.dbPath, "lock_lapsed", 2);
   assert.equal(await releaseLapsedLocks(m.dbPath, undefined), 0);
   assert.deepEqual(kv(m.dbPath, "lock_lapsed", 2), first);
+});
+
+async function practiceContext(t) {
+  const practicePath = join(tmpdir(), `coclerk-release-lapsed-practice-${randomUUID()}.db`);
+  t.after(() => rmSync(practicePath, { recursive: true, force: true }));
+  const context = await createDispatchContext({ ...process.env, ...(await startFakeCloud(t)).env, COCLERK_DB_PATH: practicePath });
+  await writes.upsert_client_matter(context.practiceDb, { client_num: "C-9999", name: "Lookup Client Ltd.", matt_num: "L9999", file_number: "F-9999" });
+  return context;
+}
+
+test("open_session releases every lapsed lock before it draws the board", async (t) => {
+  const m = await fixture(t);
+  const context = await practiceContext(t);
+  const opened = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+  assert.ok(opened.timings.some((p) => p.phase === "lapsed_locks"));
+  assert.equal(row(m.dbPath, 2).status, "queued");
+  assert.equal(row(m.dbPath, 3).status, "queued");
+});
+
+test("a render that writes pages releases another session's lapsed lock and leaves its own", async (t) => {
+  const m = await fixture(t);
+  const context = await practiceContext(t);
+  await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: m.draft, session_token: "sess-own", documents: ["Work_board"] });
+  assert.equal(row(m.dbPath, 2).locked_by, null);
+  assert.equal(row(m.dbPath, 3).locked_by, "sess-own");
 });
 
 test("board_card is read-only: a lapsed job shows in Ready and its row stays held", async (t) => {

@@ -38,7 +38,7 @@ Non-goals: making the activity stamp accurate (sibling spec, a prerequisite); th
 ## 6. Options considered (streamline and deburr first, additions last)
 1. Lapse the lock at 60 minutes in the data server, so the existing Ready-job path handles it with no new prompt; add the 30-60 window as one idle-report state. Deletes the "never offered" carve-out for lapsed jobs. (recommended)
 2. Leave the lock and add a "stale" column the skills act on. More skill text, two sources of truth.
-3. A scheduled sweep that releases stale jobs. Adds a moving part; the render already runs at every opening.
+3. A scheduled sweep that releases stale jobs. Adds a moving part (the reason as decided is in ADR 0015, Considered options).
 
 ## 7. Implementation plan
 1. Verify against HEAD (§10) and append a verification table to this spec.

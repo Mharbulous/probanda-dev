@@ -12,7 +12,7 @@ A job whose session died stayed In Progress until someone noticed. Dispatch neve
 - **D1. One threshold, defined once.** A held job's idle time runs from its last activity (the stamp of spec `2026-10-29_job-last-activity-misses-progress-spec.md`, else its lock), or from a later wake-up minute of a ⏳ step not yet done. The threshold is 60 minutes, `LAPSE_AFTER_MINUTES` in the data server's `job-activity.ts`. It is a lock-lapse time, never shown as a countdown. (It was first 30 and 60; see the last note.)
 - **D2. Under 30 minutes: live.** Removed 2026-11-03, see the last note.
 - **D3. Under 60 minutes: held.** The job stays In Progress and Dispatch still skips it. A take-over runs only on the practitioner's instruction, through the take-over form, and never in an unattended run. No session checks whether the holder is still active and none messages it (the practitioner's ruling, 2026-10-29).
-- **D4. 60 minutes or more: the lock has lapsed.** Every board reads the job as released: Ready, Blocked or Bring Forward by its own blockers and date, holding no material and no either/or partner. Dispatch chooses it like any Ready job, and `assign_job` without `takeover` takes it with no prompt. The board writes nothing. The lock is replaced only by that assigning write, in one transaction with a `kv_store` row (`lock_lapsed` / `tickets:<id>`, the minute and the holder tag it was taken from), which is the job's history of the lapse. Its plan, approvals and done steps are kept, as for a released job.
+- **D4. 60 minutes or more: the lock has lapsed.** Every board reads the job as released: Ready, Blocked or Bring Forward by its own blockers and date, holding no material and no either/or partner. Dispatch chooses it like any Ready job, and `assign_job` without `takeover` takes it with no prompt. Every tool that writes a board page first releases each lapsed lock but the caller's (`releaseLapsedLocks` in `job-activity.ts`), so the row reads Ready too; `board_card` writes nothing. That release, or an `assign_job` that takes a lock lapsed since the last page write, lands in one transaction with a `kv_store` row (`lock_lapsed` / `tickets:<id>`, the minute and the holder tag it was released from), which is the job's history of the lapse. Its plan, approvals and done steps are kept, as for a released job. A page drawn before the lapse is given each held job's lapse minute and its category after the lapse, and switches to that category once the browser's clock passes the minute.
 - **D5. The previous holder.** Once the job is taken, the previous holder's writes are refused by the existing lock guards. Until then its lock is still on the row, so a write it makes moves the job's last activity and the job is live again.
 
 ## Amendments to CoClerk ADR 0037
@@ -23,7 +23,7 @@ A job whose session died stayed In Progress until someone noticed. Dispatch neve
 ## Considered options
 
 - **A stale column the skills act on.** Rejected: more skill text and a second source of truth.
-- **A scheduled sweep that releases stale jobs.** Rejected: a moving part, while the board build already runs at every opening and `assign_job` re-checks the lapse in its own guard.
+- **A scheduled sweep that releases stale jobs.** Rejected: a moving part. With no session open, the page switches a lapsed job by its own clock, and the row is released at the next page write (amended 2026-11-06 after a challenge found the earlier reason, "the board build already runs at every opening", silent on the time no session runs).
 - **Check whether the holding session is still active and message it in the check window.** Rejected for now: Probanda cannot list or message Claude sessions.
 - **Keep `idle_flag_hours` beside the thresholds.** Rejected: past 60 minutes no job is In Progress, so a flag of a whole number of hours could never show.
 
@@ -31,6 +31,7 @@ A job whose session died stayed In Progress until someone noticed. Dispatch neve
 
 - `practice_data__upsert_firm_profile` no longer takes `idle_flag_hours`, and `firm_profile` no longer returns it. A `firm.json` that still holds the key is read as before, with that key ignored.
 - `drafting_data__assign_job` has a guard that, without `takeover`, also matches a lapsed lock.
+- A reader of the `tickets` table sees a lapsed job as `queued` from the first page write after its lapse (practitioner's ruling, 2026-11-06).
 - The rule lives in `work/references/dispatch.md` (the idle report and `work.dispatch.in-progress`) and `work/references/take-over.md`.
 
 ## Note: the take-over form and the idle report (spec `2026-10-29_take-over-form-and-idle-report-honour-staleness-spec.md`)

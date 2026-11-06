@@ -81,7 +81,9 @@ test("completing a held job supersedes its queued partner, leaves its wip partne
     t,
     `${TICKET}) VALUES (2, 1, 1, 'Queued partner', 'Do it.', 'queued', 0, 'work', 'L9999|opening', '2026-09-23 10:00');
      ${TICKET}, locked_by, locked_at) VALUES (3, 1, 1, 'Wip partner', 'Do it.', 'wip', 0, 'work', 'L9999|opening', '2026-09-23 10:00', 'sess-other', '2026-09-23 10:30');
-     INSERT INTO ticket_conflicts (a_id, b_id) VALUES (1, 2), (1, 3);`
+     INSERT INTO ticket_conflicts (a_id, b_id) VALUES (1, 2), (1, 3);
+     -- Active now, so its lock has not lapsed and no page write releases it (ADR 0015).
+     INSERT INTO kv_store (namespace, key, value, updated_at) VALUES ('last_activity', 'tickets:3', '"' || strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') || '"', '2026-10-01T00:00:00Z');`
   );
   // Record the section with job 1 in progress, as the session's own render after assigning does.
   await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token, documents: ["Work_board"] });
