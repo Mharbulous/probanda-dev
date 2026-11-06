@@ -1,4 +1,4 @@
-// The page API: a node:http listener on 127.0.0.1 at a fixed port (token.ts pageApiPort, 47615 by
+// The page API: a local-page listener on 127.0.0.1 at a fixed port (token.ts pageApiPort, 47615 by
 // default) through which a page opened from file:// writes. Three kinds of write: the Loose Threads
 // page's Defer button (POST /seeds/<id>/defer, and /undefer), to the loose-thread store; the Past
 // suggestions page's Withdraw button (POST /suggestions/<record id>/withdraw), which withdraws one
@@ -12,12 +12,14 @@
 // (POST /focus, ./focus.ts).
 //
 // index.ts starts it once the MCP transport is connected, and nothing it does reaches start():
-// every listener error is logged to stderr and the MCP server carries on. The listener and every
-// socket are unref'd, so it never keeps the process alive once stdio closes; it lives exactly as
-// long as the data server process that owns it. Each open session runs its own data server, so the
-// port is usually held already: on EADDRINUSE the listener logs one line and tries again every
-// 15 s, so a surviving session's process takes the port over when the owner exits. Any other
-// listen error is logged and the listener stays off.
+// every listener error is logged to stderr and the MCP server carries on. It runs on the lawyer
+// bundle's shared local-page listener (../local-page/listener.ts) at its fixed port: unref'd, so it
+// lives exactly as long as the data server process that owns it. Each open session runs its own
+// data server, so the port is usually held already: on EADDRINUSE the listener logs one line and
+// tries again every 3 s, so a surviving session's process takes the port over when the owner
+// exits. Any other listen error is logged and the listener stays off. The listener's cors, health
+// and logTag options keep this API's replies as rendered pages already read them: /health is
+// { ok, pid, started_at, plugin_version }, and every reply answers a file:// page.
 //
 // A write is accepted only with the token the render embedded for that db_path and proceeding, or for
 // that suggestion (token.ts), so the listener never writes a database, or withdraws a suggestion, that a
@@ -27,10 +29,13 @@
 // memory, this listener holds no state of its own.
 
 import { existsSync } from "node:fs";
-import { type IncomingMessage, type Server, type ServerResponse, createServer } from "node:http";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { basename, isAbsolute } from "node:path";
 
+import { BUILD_STAMP } from "../build-stamp.js";
 import { ValidationError } from "../errors.js";
+import { type PageRoute, startPageListener } from "../local-page/listener.js";
+import { BodyTooLarge, html, json as sendJson, readBody as readCapped } from "../local-page/reply.js";
 import { pluginVersion } from "../repo-root.js";
 import { setSeedDeferral, type SeedDeferralResult } from "../submission/forms/seed-deferral.js";
 import {
@@ -49,12 +54,12 @@ import { escapeHtml, writePastSuggestionsPage } from "../suggestions/page.js";
 import { type WithdrawOutcome, withdrawSuggestion } from "../suggestions/send.js";
 import { readFocus } from "./focus.js";
 import { openFile } from "./open-file.js";
-import { pageApiCardTokenValid, pageApiFileTokenValid, pageApiPort, pageApiSuggestionTokenValid, pageApiTokenValid } from "./token.js";
+import { pageApiCardTokenValid, pageApiFileTokenValid, pageApiSuggestionTokenValid, pageApiTokenValid } from "./token.js";
 
 const MAX_BODY = 4 * 1024;
 /** A card's click carries the card's edited text. */
 const MAX_CARD_BODY = 256 * 1024;
-const RETRY_MS = 15_000;
+const KIND = "page-api";
 
 const STATUS: Record<SeedDeferralResult["outcome"], number> = {
   deferred: 200,
@@ -87,85 +92,34 @@ export interface PageApi {
 /** Starts the listener, or its retries while the port is busy, settling once the first try has
  * bound or failed. Rejects only when probanda.json's page_api_port cannot be read; the caller logs that. */
 export async function startPageApi(env: NodeJS.ProcessEnv = process.env, options: PageApiOptions = {}): Promise<PageApi> {
-  const port = pageApiPort(env);
-  const retryMs = options.retryMs ?? RETRY_MS;
-  const log = options.log ?? ((line: string) => console.error(line));
   const startedAt = new Date().toISOString();
-  let held = false;
-  let stopped = false;
-  let warnedBusy = false;
-  let retry: NodeJS.Timeout | undefined;
-
-  const server: Server = createServer((req, res) => {
-    handle(req, res, env, startedAt, options).catch((err) => {
-      if (!res.headersSent) json(req, res, 500, { error: err instanceof Error ? err.message : String(err) });
-      else res.destroy();
-    });
+  const route = (path: RegExp, handle: PageRoute["handle"]): PageRoute => ({ method: "*", kind: KIND, path, handle });
+  const listener = await startPageListener({
+    bundle: "lawyer",
+    port: "fixed",
+    env,
+    about: { build_stamp: BUILD_STAMP, plugin_version: pluginVersion() },
+    health: () => ({ ok: true, pid: process.pid, started_at: startedAt, plugin_version: pluginVersion() }),
+    cors: true,
+    logTag: "[page-api]",
+    log: options.log,
+    retryMs: options.retryMs,
+    routes: [
+      route(/^\/focus$/, (req, res) => focus(req, res, env)),
+      route(/^\/files\/open$/, (req, res, _m, url) =>
+        openFileLink(req, res, env, url.searchParams.get("path"), url.searchParams.get("token"), options.openFile ?? openFile)),
+      route(/^\/suggestions\/([0-9a-f-]{36})\/withdraw$/, (req, res, m) => withdraw(req, res, env, m[1])),
+      route(/^\/cards\/([0-9a-f-]{36})$/, (req, res, m, url) => cardPage(req, res, env, m[1], url.searchParams.get("token"))),
+      route(/^\/cards\/([0-9a-f-]{36})\/(state|submit|resolve|dismiss|restore|mockup|reject)$/, (req, res, m) =>
+        cardClick(req, res, { ...options.card, env }, m[1], m[2] as CardRoute)),
+      route(/^\/seeds\/([1-9]\d*)\/(defer|undefer)$/, (req, res, m) => seedDeferral(req, res, env, m)),
+    ],
   });
-  // Neither the listener nor a browser's keep-alive socket may hold the process open.
-  server.on("connection", (socket) => socket.unref());
-  server.on("listening", () => {
-    held = true;
-    server.unref();
-  });
-  server.on("error", (err: NodeJS.ErrnoException) => {
-    if (stopped) return;
-    if (err.code === "EADDRINUSE" && !held) {
-      if (!warnedBusy) log(`[page-api] port ${port} busy, retrying`);
-      warnedBusy = true;
-      retry = setTimeout(() => {
-        if (!stopped) server.listen(port, "127.0.0.1");
-      }, retryMs);
-      retry.unref();
-      return;
-    }
-    log(`[page-api] listener off: ${err.message}`);
-  });
-  // Settles on the first try's outcome, bound or not, so a caller can read listening().
-  await new Promise<void>((resolve) => {
-    server.once("listening", () => resolve());
-    server.once("error", () => resolve());
-    server.listen(port, "127.0.0.1");
-  });
-
-  return {
-    port,
-    listening: () => held && server.listening,
-    close: () => {
-      stopped = true;
-      if (retry) clearTimeout(retry);
-      if (!server.listening) return Promise.resolve();
-      server.closeAllConnections();
-      return new Promise<void>((resolve) => server.close(() => resolve()));
-    },
-  };
+  return { port: listener.port, listening: listener.holding, close: listener.close };
 }
 
-async function handle(req: IncomingMessage, res: ServerResponse, env: NodeJS.ProcessEnv, startedAt: string, options: PageApiOptions): Promise<void> {
-  const url = new URL(req.url ?? "/", "http://127.0.0.1");
-  if (req.method === "OPTIONS") {
-    res.writeHead(204, {
-      ...corsHeaders(req),
-      "Access-Control-Allow-Methods": "GET, POST",
-      "Access-Control-Allow-Headers": "Content-Type",
-    });
-    res.end();
-    return;
-  }
-  if (url.pathname === "/health") {
-    if (req.method !== "GET") return json(req, res, 405, { error: "Method not allowed" });
-    return json(req, res, 200, { ok: true, pid: process.pid, started_at: startedAt, plugin_version: pluginVersion() });
-  }
-  if (url.pathname === "/focus") return focus(req, res, env);
-  if (url.pathname === "/files/open") return openFileLink(req, res, env, url.searchParams.get("path"), url.searchParams.get("token"), options.openFile ?? openFile);
-  const w = /^\/suggestions\/([0-9a-f-]{36})\/withdraw$/.exec(url.pathname);
-  if (w) return withdraw(req, res, env, w[1]);
-  const page = /^\/cards\/([0-9a-f-]{36})$/.exec(url.pathname);
-  if (page) return cardPage(req, res, env, page[1], url.searchParams.get("token"));
-  const c = /^\/cards\/([0-9a-f-]{36})\/(state|submit|resolve|dismiss|restore|mockup|reject)$/.exec(url.pathname);
-  if (c) return cardClick(req, res, { ...options.card, env }, c[1], c[2] as CardRoute);
-  const m = /^\/seeds\/([1-9]\d*)\/(defer|undefer)$/.exec(url.pathname);
-  if (!m) return json(req, res, 404, { error: "Not found" });
+/** The Loose Threads page's Defer and Undefer buttons, with its page's token. */
+async function seedDeferral(req: IncomingMessage, res: ServerResponse, env: NodeJS.ProcessEnv, m: RegExpExecArray): Promise<void> {
   if (req.method !== "POST") return json(req, res, 405, { error: "Method not allowed" });
 
   let body: unknown;
@@ -257,20 +211,14 @@ async function cardPage(req: IncomingMessage, res: ServerResponse, env: NodeJS.P
   if (token === null || !pageApiCardTokenValid(token, cardId, env)) {
     return json(req, res, 403, { error: "This page's token does not match this suggestion. Ask a Claude session to show it again." });
   }
-  let html: string;
+  let page: string;
   try {
-    html = await readCardPage(cardId, env);
+    page = await readCardPage(cardId, env);
   } catch (err) {
     if ((err as { code?: string }).code === "not_found") return json(req, res, 404, { error: "Not found" });
     throw err;
   }
-  res.writeHead(200, {
-    "Content-Type": "text/html; charset=utf-8",
-    "X-Content-Type-Options": "nosniff",
-    "Cache-Control": "no-store",
-    "Referrer-Policy": "no-referrer",
-  });
-  res.end(html);
+  html(res, 200, page);
 }
 
 /** A page's link to a file. It arrives as a new browser tab, so each answer is a short page in plain words.
@@ -291,13 +239,7 @@ async function openFileLink(req: IncomingMessage, res: ServerResponse, env: Node
 }
 
 function filePage(res: ServerResponse, status: number, message: string): void {
-  res.writeHead(status, {
-    "Content-Type": "text/html; charset=utf-8",
-    "X-Content-Type-Options": "nosniff",
-    "Cache-Control": "no-store",
-    "Referrer-Policy": "no-referrer",
-  });
-  res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Probanda</title></head><body><p>${escapeHtml(message)}</p></body></html>`);
+  html(res, status, `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Probanda</title></head><body><p>${escapeHtml(message)}</p></body></html>`);
 }
 
 type CardRoute = "state" | "submit" | "resolve" | "dismiss" | "restore" | "mockup" | "reject";
@@ -342,39 +284,17 @@ async function cardClick(req: IncomingMessage, res: ServerResponse, deps: CardDe
   }
 }
 
-/** `Origin: null` (a page opened from file://) is echoed; every response answers Private Network Access. */
-function corsHeaders(req: IncomingMessage): Record<string, string> {
-  return {
-    ...(req.headers.origin === "null" ? { "Access-Control-Allow-Origin": "null" } : {}),
-    "Access-Control-Allow-Private-Network": "true",
-    Vary: "Origin",
-  };
+/** The request body, refused past `max` with the message pages show today. */
+async function readBody(req: IncomingMessage, max: number = MAX_BODY): Promise<string> {
+  try {
+    return await readCapped(req, max);
+  } catch (err) {
+    if (err instanceof BodyTooLarge) throw new Error(`the request is larger than ${Math.round(max / 1024)} KB`);
+    throw err;
+  }
 }
 
-function readBody(req: IncomingMessage, max: number = MAX_BODY): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    let size = 0;
-    req.on("data", (chunk: Buffer) => {
-      size += chunk.length;
-      if (size > max) {
-        reject(new Error(`the request is larger than ${Math.round(max / 1024)} KB`));
-        req.destroy();
-        return;
-      }
-      chunks.push(chunk);
-    });
-    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
-    req.on("error", reject);
-  });
-}
-
+/** Every JSON reply answers a page opened from file:// (reply.ts corsHeaders). */
 function json(req: IncomingMessage, res: ServerResponse, status: number, body: unknown): void {
-  res.writeHead(status, {
-    ...corsHeaders(req),
-    "Content-Type": "application/json; charset=utf-8",
-    "X-Content-Type-Options": "nosniff",
-    "Cache-Control": "no-store",
-  });
-  res.end(JSON.stringify(body));
+  sendJson(res, status, body, { cors: req });
 }

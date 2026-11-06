@@ -12,13 +12,17 @@
 //
 // Routes match by method (or any method, "*") and a regex on the path; a path that matches some route under another
 // method gets 405, and no match gets 404. A route that throws gets one JSON 500. GET /health is
-// built in: { bundle, pid, build_stamp, plugin_version, kinds }.
+// built in: { bundle, pid, build_stamp, plugin_version, kinds }, or the `health` body when given.
+//
+// A `cors` listener serves pages opened from file:// (the page API): OPTIONS on any path gets the
+// 204 preflight, and every reply the listener itself makes (/health, 404, 405, 500) is JSON
+// carrying the CORS and Private Network Access headers (reply.ts corsHeaders).
 
 import { type IncomingMessage, type Server, type ServerResponse, createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 
 import { type PageBundle, pagePort } from "./ports.js";
-import { json, text } from "./reply.js";
+import { corsHeaders, json, text } from "./reply.js";
 
 export interface PageRoute {
   /** "*" takes every method, for a page that answers each one itself. */
@@ -40,6 +44,12 @@ export interface PageListenerOptions {
   log?: (line: string) => void;
   /** Test seam: the wait between tries while a fixed port is busy. */
   retryMs?: number;
+  /** /health's body in place of the built-in one. */
+  health?: () => Record<string, unknown>;
+  /** Answer pages opened from file:// (see the header). */
+  cors?: true;
+  /** What starts each log line; `[<bundle> pages]` by default. */
+  logTag?: string;
 }
 
 export interface PageListener {
@@ -59,7 +69,7 @@ export async function startPageListener(options: PageListenerOptions): Promise<P
   const wanted = fixed ? pagePort(options.bundle as PageBundle, options.env) : 0;
   const log = options.log ?? ((line: string) => console.error(line));
   const retryMs = options.retryMs ?? RETRY_MS;
-  const tag = `[${options.bundle} pages]`;
+  const tag = options.logTag ?? `[${options.bundle} pages]`;
   let held = false;
   let stopped = false;
   let warnedBusy = false;
@@ -67,7 +77,7 @@ export async function startPageListener(options: PageListenerOptions): Promise<P
 
   const server: Server = createServer((req, res) => {
     route(req, res, options).catch((err) => {
-      if (!res.headersSent) json(res, 500, { error: err instanceof Error ? err.message : String(err) });
+      if (!res.headersSent) json(res, 500, { error: err instanceof Error ? err.message : String(err) }, options.cors ? { cors: req } : {});
       else res.destroy();
     });
   });
@@ -116,10 +126,17 @@ export async function startPageListener(options: PageListenerOptions): Promise<P
 
 async function route(req: IncomingMessage, res: ServerResponse, options: PageListenerOptions): Promise<void> {
   const url = new URL(req.url ?? "/", "http://127.0.0.1");
+  const fail = (status: number, message: string) => (options.cors ? json(res, status, { error: message }, { cors: req }) : text(res, status, message));
+  if (options.cors && req.method === "OPTIONS") {
+    res.writeHead(204, { ...corsHeaders(req), "Access-Control-Allow-Methods": "GET, POST", "Access-Control-Allow-Headers": "Content-Type" });
+    res.end();
+    return;
+  }
   if (url.pathname === "/health") {
-    if (req.method !== "GET") return text(res, 405, "Method not allowed");
+    if (req.method !== "GET") return fail(405, "Method not allowed");
     const kinds = [...new Set(options.routes.map((r) => r.kind))];
-    return json(res, 200, { bundle: options.bundle, pid: process.pid, ...options.about, kinds });
+    const body = options.health ? options.health() : { bundle: options.bundle, pid: process.pid, ...options.about, kinds };
+    return json(res, 200, body, options.cors ? { cors: req } : {});
   }
   let pathMatched = false;
   for (const r of options.routes) {
@@ -128,6 +145,6 @@ async function route(req: IncomingMessage, res: ServerResponse, options: PageLis
     pathMatched = true;
     if (r.method === "*" || req.method === r.method) return r.handle(req, res, match, url);
   }
-  if (pathMatched) return text(res, 405, "Method not allowed");
-  text(res, 404, "Not found");
+  if (pathMatched) return fail(405, "Method not allowed");
+  fail(404, "Not found");
 }
