@@ -121,7 +121,7 @@ of one authority, in exactly this shape:
    > <the verbatim passage at that pinpoint>
 ```
 
-A point two authorities support is two items. Each item supports a sentence of a Conclusion:
+The pinpoint and passage follow `shared/legal-audit-protocol.md`, "Excerpts". A point two authorities support is two items. Each item supports a sentence of a Conclusion:
 an item that supports none is out of scope (`shared/legal-audit-protocol.md` Step 4).
 
 In every format:
@@ -147,3 +147,5 @@ In every format:
 - The Application: one sub-section per case, its items together. Each item is one finding of
   that court, its sentence opening `fact:` or `law-applied:` (the law applied to the facts to
   reach a holding), from the court's own reasons (`shared/legal-audit-protocol.md` Step 2).
+  Each case has at least one `fact:` item and at least one `law-applied:` item, the facts being
+  those that court applied the law to.

@@ -417,7 +417,8 @@ included, saves nothing: stop and relay it verbatim. On the object, re-invoke th
 - `send_back` with `required` items: each is research the Issue cannot be answered without,
   run by the rule above first.
 - `send_back` with `identifiers` or `out_of_scope` items: to rewrite the memo without them.
-- `send_back` with `findings` items: to rewrite each as one finding, or cut the item.
+- `send_back` with `findings` items: to rewrite each as one finding, or cut the item, and to
+  give each case named as missing a tag that finding from that court's reasons, or cut the case.
 - `send_back` whose only items are `required` research this session cannot run: to name it
   in the open-issues paragraph, unless the memo already does.
 
