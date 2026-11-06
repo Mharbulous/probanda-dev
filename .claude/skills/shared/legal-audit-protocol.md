@@ -41,6 +41,13 @@ Both suggest the issue without inviting reliance on an unsupported belief.
 Every statement of law you do make is shown, not told: a summary or paraphrase of one
 sentence at most, followed at once by the verbatim passage at its pinpoint.
 
+**Excerpts**, in memos and filings alike. A case excerpt quotes in full each numbered paragraph
+its pinpoint cites, and the pinpoint names whole paragraphs (`para 40`, never `para 40(c)`). In
+a case excerpt, "[...]" stands only between two whole paragraphs, never inside one. A statute
+excerpt quotes exactly what its pinpoint cites, keeps the Act's own numbering and indentation,
+and marks an omitted part "[...]". An excerpt trailing off in "…" is a capture defect, not a
+style choice: capture the whole paragraph or section.
+
 An authority you located but could not pinpoint (for example, a decision still not
 on disk after `needs_download`) grounds nothing either. Every proposition it might support is
 expressed only as an offer, never summarized, with or without a caveat:
@@ -286,7 +293,8 @@ else in the memo defers to further research, offers research or names a tier not
 prompt's `Review:` line is memo-reviewer's verdict on your last memo: treat each `required` item
 as required, cut each `identifiers` passage from the memo, move each `out_of_scope` passage to
 a Step 5 offer, rewrite a `Conclusion shape:` item's Conclusion as one paragraph, and rewrite
-each `findings` item as one finding or cut the item, giving a case it names as missing a tag
+each `findings` item as one finding or cut the item, quoting a `partial excerpt` item's
+whole paragraphs, giving a case it names as missing a tag
 that finding from the court's own reasons or cutting the case. With any `Review:` but `none`, return no
 `needs_download` or `needs_note_up`. A `Review:` with no `required` item asks only for a
 rewrite: rewrite the memo from the sources already held, without re-running the audit.

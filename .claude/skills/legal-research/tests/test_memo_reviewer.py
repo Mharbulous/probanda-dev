@@ -77,7 +77,8 @@ class ScopeTestTest(unittest.TestCase):
         step_four = flat(between(read("shared", "legal-audit-protocol.md"), "### Step 4", "### Step 5"))
         self.assertIn("cut each `identifiers` passage from the memo, move each `out_of_scope` passage to a Step 5 "
                       "offer, rewrite a `Conclusion shape:` item's Conclusion as one paragraph, and rewrite each "
-                      "`findings` item as one finding or cut the item, giving a case it names as missing a tag "
+                      "`findings` item as one finding or cut the item, quoting a `partial excerpt` item's whole "
+                      "paragraphs, giving a case it names as missing a tag "
                       "that finding from the court's own reasons or cutting the case.", step_four)
         self.assertIn("With any `Review:` but `none`, return no `needs_download` or `needs_note_up`.", step_four)
         self.assertIn("A `Review:` with no `required` item asks only for a rewrite: rewrite the memo from the sources "
@@ -158,6 +159,17 @@ class AgentContractTest(unittest.TestCase):
         body = flat(self.agent)
         self.assertIn("A case in Application with no `fact:` item or no `law-applied:` item: a `findings` item, "
                       "`<the case>: no <the missing tag> item`.", body)
+
+    def test_a_partial_excerpt_is_a_findings_item(self):
+        # An item quoting a sub-paragraph or part of a paragraph is sent back under the existing
+        # findings key, naming the item, and the rewrite quotes the whole paragraphs.
+        body = flat(self.agent)
+        self.assertIn("Any numbered item whose case excerpt or pinpoint is a sub-paragraph or part of a paragraph "
+                      '(`shared/legal-audit-protocol.md`, "Excerpts"): a `findings` item, `¶<n>: partial excerpt`.',
+                      body)
+        self.assertIn("excerpt that breaks the template's rules", flat(self.front))
+        step_four = flat(between(read("shared", "legal-audit-protocol.md"), "### Step 4", "### Step 5"))
+        self.assertIn("quoting a `partial excerpt` item's whole paragraphs", step_four)
 
     def test_a_label_style_issue_is_sent_back(self):
         # A job's Issue copied from a label-style title ("Limitation period for the claim") holds

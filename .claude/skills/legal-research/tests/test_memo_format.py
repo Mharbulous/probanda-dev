@@ -134,6 +134,23 @@ class ProtocolStepSixTests(unittest.TestCase):
         self.assertIn(ITEM, template)
         self.assertIn("Each item holds one proposition or finding, from one excerpt of one authority", flat(template))
 
+    def test_excerpts_are_whole_paragraphs_by_one_rule(self):
+        # 2026-11-06: an item quoted one lettered sub-item of a court's paragraph. The one
+        # statement of an excerpt's shape is the protocol's, and the memo template and the
+        # filing checklist point at it. "[...]" stands only between two whole paragraphs.
+        pointer = '`shared/legal-audit-protocol.md`, "Excerpts"'
+        self.assertIn("The pinpoint and passage follow " + pointer, flat(read("research-memo-template.md")))
+        rule = flat(between(read("legal-audit-protocol.md"), "**Excerpts**", "An authority you located"))
+        for text in ("A case excerpt quotes in full each numbered paragraph its pinpoint cites, and the pinpoint "
+                     "names whole paragraphs (`para 40`, never `para 40(c)`).",
+                     'In a case excerpt, "[...]" stands only between two whole paragraphs, never inside one.',
+                     "A statute excerpt quotes exactly what its pinpoint cites, keeps the Act's own numbering and "
+                     "indentation,"):
+            self.assertIn(text, rule)
+        checklist = (SHARED.parent / "drafting-data" / "references" / "filing-checklists.md").read_text(encoding="utf-8")
+        self.assertIn("An excerpt's shape is " + pointer, checklist)
+        self.assertNotIn("Case excerpts are whole paragraphs", checklist, "one rule, not two")
+
     def test_each_type_file_lays_out_its_format_and_numbers_only_the_item_sections(self):
         template = read("research-memo-template.md")
         for stem, skeleton in (("research-memo", ICRA), ("research-memo-irac", IRAC), ("research-memo-creac", CREAC)):

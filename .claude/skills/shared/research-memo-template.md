@@ -121,7 +121,7 @@ of one authority, in exactly this shape:
    > <the verbatim passage at that pinpoint>
 ```
 
-A point two authorities support is two items. Each item supports a sentence of a Conclusion:
+The pinpoint and passage follow `shared/legal-audit-protocol.md`, "Excerpts". A point two authorities support is two items. Each item supports a sentence of a Conclusion:
 an item that supports none is out of scope (`shared/legal-audit-protocol.md` Step 4).
 
 In every format:
