@@ -122,6 +122,8 @@ class ProtocolStepSixTests(unittest.TestCase):
                       "that court, its sentence opening `fact:` or `law-applied:` (the law applied to the facts to "
                       "reach a holding), from the court's own reasons (`shared/legal-audit-protocol.md` Step 2).",
                       template)
+        self.assertIn("Each case has at least one `fact:` item and at least one `law-applied:` item, the facts being "
+                      "those that court applied the law to.", template)
         self.assertNotIn("how each cited authority applied the rule", template)
         self.assertNotIn("closest to a stated generic pattern", flat(step_six()))
 

@@ -77,7 +77,8 @@ class ScopeTestTest(unittest.TestCase):
         step_four = flat(between(read("shared", "legal-audit-protocol.md"), "### Step 4", "### Step 5"))
         self.assertIn("cut each `identifiers` passage from the memo, move each `out_of_scope` passage to a Step 5 "
                       "offer, rewrite a `Conclusion shape:` item's Conclusion as one paragraph, and rewrite each "
-                      "`findings` item as one finding or cut the item.", step_four)
+                      "`findings` item as one finding or cut the item, giving a case it names as missing a tag "
+                      "that finding from the court's own reasons or cutting the case.", step_four)
         self.assertIn("With any `Review:` but `none`, return no `needs_download` or `needs_note_up`.", step_four)
         self.assertIn("A `Review:` with no `required` item asks only for a rewrite: rewrite the memo from the sources "
                       "already held, without re-running the audit.", step_four)
@@ -151,6 +152,13 @@ class AgentContractTest(unittest.TestCase):
         self.assertIn("Quote each Application item that holds more than one finding, or that is neither a finding of "
                       "fact nor the law applied to the facts by that item's court", body)
 
+    def test_an_unpaired_case_is_a_findings_item(self):
+        # A case cited in Application by a fact: item alone, or a law-applied: item alone, is
+        # sent back under the existing findings key, naming the case and the missing tag.
+        body = flat(self.agent)
+        self.assertIn("A case in Application with no `fact:` item or no `law-applied:` item: a `findings` item, "
+                      "`<the case>: no <the missing tag> item`.", body)
+
     def test_a_label_style_issue_is_sent_back(self):
         # A job's Issue copied from a label-style title ("Limitation period for the claim") holds
         # no question, so it fails rule A. Step 1 tests the Issue, whatever its source, as an
@@ -203,7 +211,9 @@ class GateLoopTest(unittest.TestCase):
         self.assertIn("re-invoke the agent with `Review:` the reviewer's JSON", self.rule)
         self.assertIn("`send_back` with `identifiers` or `out_of_scope` items: to rewrite the memo without them.",
                       self.rule)
-        self.assertIn("`send_back` with `findings` items: to rewrite each as one finding, or cut the item.", self.rule)
+        self.assertIn("`send_back` with `findings` items: to rewrite each as one finding, or cut the item, and to "
+                      "give each case named as missing a tag that finding from that court's reasons, or cut the case.",
+                      self.rule)
         self.assertIn("When the third review accepts nothing, re-invoke the agent once with it to write the memo "
                       "`INCOMPLETE`, naming what that review still asks, and save that return.", self.rule)
         held = flat(between(self.text, "**On a held job, an open tier is not an answer.**",

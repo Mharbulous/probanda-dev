@@ -147,3 +147,5 @@ In every format:
 - The Application: one sub-section per case, its items together. Each item is one finding of
   that court, its sentence opening `fact:` or `law-applied:` (the law applied to the facts to
   reach a holding), from the court's own reasons (`shared/legal-audit-protocol.md` Step 2).
+  Each case has at least one `fact:` item and at least one `law-applied:` item, the facts being
+  those that court applied the law to.

@@ -45,6 +45,7 @@ Before reviewing, read with `skill_source__read` (in a Cowork Project session it
    - Research not required: an `out_of_scope` item, quoting the memo's words, when the memo itself raises it, and nothing when only a `gap:` line or a Step 5 offer raises it.
 3. Quote from the memo each party, counsel, practitioner, matter number, date, amount or document of the working matter it names, and each fact of the working matter it states: an `identifiers` item each. Here too, quote words from a numbered item as `¶<n>: <its words>`, so the gate can name the item.
 4. Quote each Application item that holds more than one finding, or that is neither a finding of fact nor the law applied to the facts by that item's court (`shared/research-memo-template.md`): a `findings` item each, `¶<n>: <its words>`.
+   - A case in Application with no `fact:` item or no `law-applied:` item: a `findings` item, `<the case>: no <the missing tag> item`.
 
 The verdict is `send_back` when `required`, `out_of_scope`, `identifiers` or `findings` holds anything, and `complete` otherwise.
 
