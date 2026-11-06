@@ -15,10 +15,10 @@ When the practitioner says "Call {name}", they want clickable phone links for th
 
 ## Calling setup
 
-Which app a `tel:` link opens, and which fallback line exists, is the practitioner's own setup. It is recorded in their practice quirks note (`practice-data`'s "Practice quirks"), never in this skill. Read the note with `practice_data__config_status` (`practice_quirks`) unless it was added at session start.
+Which app a `tel:` link opens, and which fallback line exists, is the practitioner's own setup. It is recorded in their practice quirks (`practice-data`'s "Practice quirks"), never in this skill. Read the entries for the `tools` area with `quirks__read` (`areas: ["tools"]`), in the same round trip as this skill's first tool call.
 
-- **The note says how calls go out.** Follow it: the app `tel:` links open (for example Phone Link, which calls from an iPhone over Bluetooth), any fallback app and line (for example Webex on a business line), and any line never to use.
-- **The note says nothing about calls.** Give the `tel:` links anyway. Then ask once, in one sentence, which app their `tel:` links open, whether they have a fallback calling app and line, and whether any line is retired. On an answer, propose adding it to the note as "Write" in `practice-data`'s "Practice quirks" says: under `/show-me`, the whole current note and the whole proposed note, written only after an explicit yes.
+- **The entries say how calls go out.** Follow them: the app `tel:` links open (for example Phone Link, which calls from an iPhone over Bluetooth), any fallback app and line (for example Webex on a business line), and any line never to use.
+- **The entries say nothing about calls.** Give the `tel:` links anyway. Then ask once, in one sentence, which app their `tel:` links open, whether they have a fallback calling app and line, and whether any line is retired. On an answer, propose recording it as "Write" in `practice-data`'s "Practice quirks" says: a knowledge entry in the `tools` area (a line never to use is a rule), shown under `/show-me` and saved as that section describes.
 
 ## Steps
 
@@ -52,7 +52,7 @@ The contact card doesn't say which is her cell and which is a landline or work n
 
 ## Webex fallback
 
-Use this only when the practice quirks note names Webex as the fallback and the practitioner asks for it, or says their phone is flat or out of range.
+Use this only when the practice quirks name Webex as the fallback and the practitioner asks for it, or says their phone is flat or out of range.
 
 Webex links do nothing when clicked in chat or in a built-in browser pane. They dial only from a page opened in **Chrome**. So write a small HTML page and give them its path:
 

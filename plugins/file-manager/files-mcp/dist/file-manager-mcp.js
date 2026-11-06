@@ -1,4 +1,4 @@
-// build-stamp: 20086ee54abf
+// build-stamp: e82e3a7b9f9a
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -4311,7 +4311,7 @@ var require_core = __commonJS({
       errorsText(errors = this.errors, { separator = ", ", dataVar = "data" } = {}) {
         if (!errors || errors.length === 0)
           return "No errors";
-        return errors.map((e) => `${dataVar}${e.instancePath} ${e.message}`).reduce((text, msg) => text + separator + msg);
+        return errors.map((e) => `${dataVar}${e.instancePath} ${e.message}`).reduce((text2, msg) => text2 + separator + msg);
       }
       $dataMetaSchema(metaSchema, keywordsJsonPointers) {
         const rules = this.RULES.all;
@@ -16331,7 +16331,7 @@ import { readFileSync as readFileSync3 } from "node:fs";
 
 // src/housekeeping/run-dir.ts
 import { randomBytes as randomBytes2 } from "node:crypto";
-import { closeSync, existsSync as existsSync3, fsyncSync, mkdirSync, openSync, readdirSync as readdirSync3, readFileSync as readFileSync2, realpathSync as realpathSync3, statSync as statSync2, writeSync } from "node:fs";
+import { closeSync as closeSync2, existsSync as existsSync3, fsyncSync as fsyncSync2, mkdirSync, openSync as openSync2, readdirSync as readdirSync3, readFileSync as readFileSync2, realpathSync as realpathSync3, statSync as statSync2, writeSync as writeSync2 } from "node:fs";
 import { win32 as pathWin324 } from "node:path";
 
 // src/status-file.ts
@@ -16339,10 +16339,10 @@ import { renameSync, unlinkSync as unlinkSync2, writeFileSync as writeFileSync2 
 function sleepSync(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
-function writeStatusFile(target, text, { attempts = 10, delayMs = 50 } = {}) {
+function writeStatusFile(target, text2, { attempts = 10, delayMs = 50 } = {}) {
   const temp = `${target}.${process.pid}.tmp`;
   try {
-    writeFileSync2(temp, text, "utf-8");
+    writeFileSync2(temp, text2, "utf-8");
   } catch (err) {
     return err.code ?? "UNKNOWN";
   }
@@ -16644,6 +16644,18 @@ var Checker = class {
   }
 };
 
+// src/local-page/durable.ts
+import { closeSync, fsyncSync, openSync, writeSync } from "node:fs";
+function writeNewDurably(path, text2) {
+  const fd = openSync(path, "wx");
+  try {
+    writeSync(fd, text2);
+    fsyncSync(fd);
+  } finally {
+    closeSync(fd);
+  }
+}
+
 // src/housekeeping/run-dir.ts
 var RUN_ID_RE = /^\d{8}-\d{6}(?:\d{3})?-[0-9a-f]{4}$/;
 var PROPOSAL = "proposal.json";
@@ -16716,15 +16728,15 @@ function newestProposalRun(matter) {
   return null;
 }
 function readProposal(runDir, runId, root) {
-  let text;
+  let text2;
   try {
-    text = readFileSync2(pathWin324.join(runDir, PROPOSAL), "utf-8");
+    text2 = readFileSync2(pathWin324.join(runDir, PROPOSAL), "utf-8");
   } catch {
     return { proposal: null, problem: "no proposal.json" };
   }
   let parsed;
   try {
-    parsed = JSON.parse(text);
+    parsed = JSON.parse(text2);
   } catch (err) {
     return { proposal: null, problem: `proposal.json does not parse: ${err.message}` };
   }
@@ -16738,16 +16750,16 @@ function requireProposal(runDir, runId, root) {
   return proposal2;
 }
 function readApproval(runDir, runId) {
-  let text;
+  let text2;
   try {
-    text = readFileSync2(pathWin324.join(runDir, APPROVAL), "utf-8");
+    text2 = readFileSync2(pathWin324.join(runDir, APPROVAL), "utf-8");
   } catch (err) {
     const code = err.code;
     return code === "ENOENT" ? { approval: null } : { approval: null, problem: `approval.json cannot be read (${code})` };
   }
   let parsed;
   try {
-    parsed = JSON.parse(text);
+    parsed = JSON.parse(text2);
   } catch (err) {
     return { approval: null, problem: `approval.json does not parse: ${err.message}` };
   }
@@ -16768,13 +16780,13 @@ function requireApproval(runDir, runId) {
 }
 function readJournal(runDir) {
   const lines = /* @__PURE__ */ new Map();
-  let text;
+  let text2;
   try {
-    text = readFileSync2(pathWin324.join(runDir, JOURNAL), "utf-8");
+    text2 = readFileSync2(pathWin324.join(runDir, JOURNAL), "utf-8");
   } catch {
     return lines;
   }
-  for (const raw of text.split("\n")) {
+  for (const raw of text2.split("\n")) {
     if (!raw.trim()) continue;
     try {
       const line = JSON.parse(raw);
@@ -16784,31 +16796,22 @@ function readJournal(runDir) {
   }
   return lines;
 }
-function writeNewDurably(path, text) {
-  const fd = openSync(path, "wx");
-  try {
-    writeSync(fd, text);
-    fsyncSync(fd);
-  } finally {
-    closeSync(fd);
-  }
-}
 function appendLineDurably(path, line) {
   let prefix = "";
   if (existsSync3(path)) {
-    const text = readFileSync2(path, "utf-8");
-    if (text.length && !text.endsWith("\n")) prefix = "\n";
+    const text2 = readFileSync2(path, "utf-8");
+    if (text2.length && !text2.endsWith("\n")) prefix = "\n";
   }
-  const fd = openSync(path, "a");
+  const fd = openSync2(path, "a");
   try {
-    writeSync(fd, prefix + line + "\n");
-    fsyncSync(fd);
+    writeSync2(fd, prefix + line + "\n");
+    fsyncSync2(fd);
   } finally {
-    closeSync(fd);
+    closeSync2(fd);
   }
 }
-function writeReplacing(path, text) {
-  const code = writeStatusFile(path, text);
+function writeReplacing(path, text2) {
+  const code = writeStatusFile(path, text2);
   if (code) throw new DataServerError(`could not write ${path}: ${code}`, "write_failed");
 }
 function isDirectory(path) {
@@ -16934,7 +16937,7 @@ function stamp(d) {
 }
 
 // src/file_ops/move.ts
-import { closeSync as closeSync2, lstatSync as lstatSync2, mkdirSync as mkdirSync4, openSync as openSync2, readdirSync as readdirSync8, realpathSync as realpathSync6, renameSync as renameSync3, statSync as statSync6, unlinkSync as unlinkSync3 } from "node:fs";
+import { closeSync as closeSync3, lstatSync as lstatSync2, mkdirSync as mkdirSync4, openSync as openSync3, readdirSync as readdirSync8, realpathSync as realpathSync6, renameSync as renameSync3, statSync as statSync6, unlinkSync as unlinkSync3 } from "node:fs";
 import { win32 as pathWin329 } from "node:path";
 
 // src/housekeeping/resolve.ts
@@ -16970,7 +16973,7 @@ function migrate(env) {
   const target = join4(folder, CONFIG_FILE);
   if (existsSync5(target)) return;
   const legacyFolder = join4(roaming(env), LEGACY_CONFIG_FOLDER);
-  const source = [CONFIG_FILE, LEGACY_CONFIG_FILE].map((file2) => join4(legacyFolder, file2)).find((path) => existsSync5(path));
+  const source = [CONFIG_FILE, LEGACY_CONFIG_FILE].map((file3) => join4(legacyFolder, file3)).find((path) => existsSync5(path));
   if (!source) return;
   try {
     mkdirSync3(folder, { recursive: true });
@@ -17114,6 +17117,9 @@ function bundledSkillFolders(installRoot = INSTALL_ROOT) {
   const dir = installSkillsRoot(installRoot);
   if (!dir) return [];
   return readdirSync6(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+}
+function pluginVersion(installRoot = INSTALL_ROOT) {
+  return pluginManifest(installRoot).version;
 }
 function pluginManifest(installRoot) {
   try {
@@ -17674,7 +17680,7 @@ function fileOpsMove(matterRoot, source, destination, createFolders = [], draftU
   const claim = !sameFile(src, dest);
   if (claim) {
     try {
-      closeSync2(openSync2(dest, "wx"));
+      closeSync3(openSync3(dest, "wx"));
     } catch (err) {
       if (err.code === "EEXIST") {
         throw new DataServerError(`destination already exists; nothing is overwritten: ${dest}`, "dest_exists");
@@ -17742,7 +17748,7 @@ function present2(path) {
 }
 
 // src/file_ops/move-from-downloads.ts
-import { closeSync as closeSync3, lstatSync as lstatSync3, mkdirSync as mkdirSync5, openSync as openSync3, realpathSync as realpathSync7, renameSync as renameSync4, statSync as statSync8, unlinkSync as unlinkSync4 } from "node:fs";
+import { closeSync as closeSync4, lstatSync as lstatSync3, mkdirSync as mkdirSync5, openSync as openSync4, realpathSync as realpathSync7, renameSync as renameSync4, statSync as statSync8, unlinkSync as unlinkSync4 } from "node:fs";
 import { win32 as pathWin3211 } from "node:path";
 
 // src/files/downloads.ts
@@ -17762,7 +17768,7 @@ function downloadsDir(env = process.env) {
 // src/files/version-name.ts
 import { readdirSync as readdirSync9 } from "node:fs";
 function nextVersionName(dir, stem, ext) {
-  const escape2 = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escape2 = (text2) => text2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const version2 = new RegExp(`^${escape2(stem)}(?: v(\\d+))?${escape2(ext)}$`, "i");
   let highest = 0;
   for (const name of readdirSync9(dir)) {
@@ -17822,7 +17828,7 @@ function fileOpsMoveFromDownloads(matterRoot, sourceFilename, destination, env =
   for (let attempt = 0; attempt < MAX_ATTEMPTS && dest === void 0; attempt++) {
     const candidate = pathWin3211.join(destDir, nextVersionName(destDir, stem, ext));
     try {
-      closeSync3(openSync3(candidate, "wx"));
+      closeSync4(openSync4(candidate, "wx"));
       dest = candidate;
     } catch (err) {
       if (err.code !== "EEXIST") throw err;
@@ -17897,11 +17903,11 @@ var createPdfium = (() => {
     var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
     if (ENVIRONMENT_IS_NODE) {
       const { createRequire } = await import("module");
-      let dirname3 = import.meta.url;
-      if (dirname3.startsWith("data:")) {
-        dirname3 = "/";
+      let dirname5 = import.meta.url;
+      if (dirname5.startsWith("data:")) {
+        dirname5 = "/";
       }
-      var require2 = createRequire(dirname3);
+      var require2 = createRequire(dirname5);
     }
     var moduleOverrides = Object.assign({}, Module);
     var thisProgram = "./this.program";
@@ -18041,9 +18047,9 @@ var createPdfium = (() => {
     }
     var wasmMemory;
     var ABORT = false;
-    function assert2(condition, text) {
+    function assert2(condition, text2) {
       if (!condition) {
-        abort("Assertion failed" + (text ? ": " + text : ""));
+        abort("Assertion failed" + (text2 ? ": " + text2 : ""));
       }
     }
     var HEAP8, HEAPU8, HEAP16, HEAPU16, HEAP32, HEAPU32, HEAPF32, HEAPF64;
@@ -18229,12 +18235,12 @@ var createPdfium = (() => {
       return new URL("pdfium.wasm", import.meta.url).href;
     }
     var wasmBinaryFile;
-    function getBinarySync(file2) {
-      if (file2 == wasmBinaryFile && wasmBinary) {
+    function getBinarySync(file3) {
+      if (file3 == wasmBinaryFile && wasmBinary) {
         return new Uint8Array(wasmBinary);
       }
       if (readBinary) {
-        return readBinary(file2);
+        return readBinary(file3);
       }
       throw "both async and sync fetching of the wasm failed";
     }
@@ -18465,12 +18471,12 @@ var createPdfium = (() => {
     }
     var stackRestore = (val) => __emscripten_stack_restore(val);
     var stackSave = () => _emscripten_stack_get_current();
-    var warnOnce = (text) => {
+    var warnOnce = (text2) => {
       warnOnce.shown ||= {};
-      if (!warnOnce.shown[text]) {
-        warnOnce.shown[text] = 1;
-        if (ENVIRONMENT_IS_NODE) text = "warning: " + text;
-        err(text);
+      if (!warnOnce.shown[text2]) {
+        warnOnce.shown[text2] = 1;
+        if (ENVIRONMENT_IS_NODE) text2 = "warning: " + text2;
+        err(text2);
       }
     };
     var UTF8Decoder = typeof TextDecoder != "undefined" ? new TextDecoder() : void 0;
@@ -18592,8 +18598,8 @@ var createPdfium = (() => {
           if (randomFillSync) {
             return (view) => crypto_module["randomFillSync"](view);
           }
-          var randomBytes4 = crypto_module["randomBytes"];
-          return (view) => (view.set(randomBytes4(view.byteLength)), // Return the original view to match modern native implementations.
+          var randomBytes5 = crypto_module["randomBytes"];
+          return (view) => (view.set(randomBytes5(view.byteLength)), // Return the original view to match modern native implementations.
           view);
         } catch (e) {
         }
@@ -23611,36 +23617,36 @@ async function fileOpsCommentPdf(matterRoot, path, expectSha256, comments, wasm 
     }
   }
   if (!existsSync10(path)) throw new DataServerError(`no file at ${path}`, "not_found");
-  const file2 = realpathSync8.native(path);
-  relativeInside(root, file2, "path");
-  if (zoneProblem("move-from", file2, root)) {
-    throw new DataServerError(`path is protected (the matter pointer, TRASH, 0. CASE DATA, or a privileged/disclosed tree): ${file2}`, "protected");
+  const file3 = realpathSync8.native(path);
+  relativeInside(root, file3, "path");
+  if (zoneProblem("move-from", file3, root)) {
+    throw new DataServerError(`path is protected (the matter pointer, TRASH, 0. CASE DATA, or a privileged/disclosed tree): ${file3}`, "protected");
   }
-  const bytes = await withPdf(file2, wasm, async (lib, doc, data) => {
+  const bytes = await withPdf(file3, wasm, async (lib, doc, data) => {
     const oldSha = sha256(data);
     if (oldSha !== expectSha256) {
-      throw new DataServerError(`the file's SHA-256 is ${oldSha}, not ${expectSha256}; nothing was written: ${file2}`, "hash_mismatch");
+      throw new DataServerError(`the file's SHA-256 is ${oldSha}, not ${expectSha256}; nothing was written: ${file3}`, "hash_mismatch");
     }
     const pageCount = lib.FPDF_GetPageCount(doc);
     const late = comments.find((c) => c.page > pageCount);
     if (late) throw new DataServerError(`page ${late.page} is past the file's ${pageCount} pages`, "bad_pages");
     const onPage = /* @__PURE__ */ new Map();
-    for (const { page: n, text } of comments) {
+    for (const { page: n, text: text2 } of comments) {
       const slot = onPage.get(n) ?? 0;
       onPage.set(n, slot + 1);
-      withPage(lib, doc, n, (page2) => addNote(lib, page2, n, slot, text));
+      withPage(lib, doc, n, (page2) => addNote(lib, page2, n, slot, text2));
     }
     return save(lib, doc);
   });
-  const temp = pathWin3212.join(pathWin3212.dirname(file2), `.${pathWin3212.basename(file2)}.comment-tmp`);
+  const temp = pathWin3212.join(pathWin3212.dirname(file3), `.${pathWin3212.basename(file3)}.comment-tmp`);
   writeFileSync4(temp, bytes, { flag: "wx" });
   try {
-    renameSync5(temp, file2);
+    renameSync5(temp, file3);
   } catch (err) {
     unlinkSync5(temp);
     throw err;
   }
-  return { path: file2, old_sha256: expectSha256, new_sha256: sha256(bytes), comments: comments.length };
+  return { path: file3, old_sha256: expectSha256, new_sha256: sha256(bytes), comments: comments.length };
 }
 function sha256(bytes) {
   return createHash3("sha256").update(bytes).digest("hex");
@@ -23648,13 +23654,13 @@ function sha256(bytes) {
 function heapU82(lib) {
   return lib.pdfium.HEAPU8;
 }
-function addNote(lib, page2, n, slot, text) {
+function addNote(lib, page2, n, slot, text2) {
   const m = lib.pdfium;
   const annot = lib.FPDFPage_CreateAnnot(page2, ANNOT_TEXT);
   if (!annot) throw new DataServerError(`PDFium cannot add a comment to page ${n}`, "bad_pages");
   const top = lib.FPDF_GetPageHeightF(page2) - MARGIN - slot * STEP;
   const rect = m.wasmExports.malloc(16);
-  const wide = Buffer.from(`${text}\0`, "utf16le");
+  const wide = Buffer.from(`${text2}\0`, "utf16le");
   const str = m.wasmExports.malloc(wide.length);
   try {
     [MARGIN, top, MARGIN + NOTE, top - NOTE].forEach((v, i) => m.setValue(rect + 4 * i, v, "float"));
@@ -24256,11 +24262,11 @@ var INCLUDE = /@@include\(([^)]*)\)@@/g;
 var DATA = "@@data@@";
 function expand(name, files, chain) {
   if (chain.includes(name)) throw new Error(`template include cycle: ${[...chain, name].join(" -> ")}`);
-  const text = files[name];
-  if (text === void 0) {
+  const text2 = files[name];
+  if (text2 === void 0) {
     throw new Error(`template "${name}" is missing${chain.length ? ` (included by "${chain.at(-1)}")` : ""}`);
   }
-  return text.replace(INCLUDE, (_, inner) => expand(inner, files, [...chain, name]));
+  return text2.replace(INCLUDE, (_, inner) => expand(inner, files, [...chain, name]));
 }
 function composeTemplate(entry, files) {
   const page2 = expand(entry, files, []);
@@ -24286,14 +24292,14 @@ function composeWithOverrides(set, overrides = {}) {
   if (notText.length > 0) throw new ValidationError(`each override is a file's whole text, a string: ${notText.join(", ")} is not`);
   return composeTemplate(set.entry, { ...set.files, ...overrides });
 }
-function writePreview(dir, base, html, fixture) {
+function writePreview(dir, base, html2, fixture) {
   mkdirSync7(dir, { recursive: true });
-  const text = fixture ? `${html}${html.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
-` : html;
+  const text2 = fixture ? `${html2}${html2.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
+` : html2;
   for (let n = 1; ; n++) {
     const path = join7(dir, `${base} preview ${n}.html`);
     try {
-      writeFileSync5(path, text, { flag: "wx" });
+      writeFileSync5(path, text2, { flag: "wx" });
       return path;
     } catch (err) {
       if (err.code !== "EEXIST") throw err;
@@ -24570,8 +24576,8 @@ function simplePage(title, body) {
 <body><main><h1>${escapeHtml(title)}</h1><p>${escapeHtml(body)}</p></main></body></html>
 `;
 }
-function escapeHtml(text) {
-  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+function escapeHtml(text2) {
+  return text2.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 }
 
 // src/housekeeping/preview.ts
@@ -24587,22 +24593,313 @@ function housekeepingPreview(args) {
   if (args.approved !== void 0) throw new ValidationError("real data draws the run's approval as recorded: it takes no approved");
   const matter = openMatter(args.matter_root);
   const runDir = existingRunDir(matter, args.run_id);
-  const html = renderApprovalPage(requireProposal(runDir, args.run_id, matter.root), readApproval(runDir, args.run_id).approval, composed);
-  return { path: writePreview(runDir, BASE, html, false) };
+  const html2 = renderApprovalPage(requireProposal(runDir, args.run_id, matter.root), readApproval(runDir, args.run_id).approval, composed);
+  return { path: writePreview(runDir, BASE, html2, false) };
 }
 
 // src/housekeeping/server.ts
-import { randomBytes as randomBytes3 } from "node:crypto";
-import { createReadStream as createReadStream2, existsSync as existsSync13, realpathSync as realpathSync10, statSync as statSync10 } from "node:fs";
-import { createServer } from "node:http";
+import { randomBytes as randomBytes4 } from "node:crypto";
+import { existsSync as existsSync15, realpathSync as realpathSync10, statSync as statSync11 } from "node:fs";
 import { win32 as pathWin3217 } from "node:path";
-var MAX_BODY = 5 * 1024 * 1024;
-var CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
-var FILE_CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
-var FILE_TYPES = {
-  ".html": "text/html; charset=utf-8",
-  ".js": "text/javascript; charset=utf-8"
+
+// src/build-stamp.ts
+var BUILD_STAMP = false ? null : "e82e3a7b9f9a";
+
+// src/local-page/links.ts
+import { mkdirSync as mkdirSync9, readdirSync as readdirSync12, readFileSync as readFileSync9, renameSync as renameSync6, statSync as statSync10, unlinkSync as unlinkSync7, writeFileSync as writeFileSync7 } from "node:fs";
+import { dirname as dirname4, join as join9 } from "node:path";
+
+// src/local-page/token.ts
+import { createHmac, randomBytes as randomBytes3, timingSafeEqual } from "node:crypto";
+import { existsSync as existsSync13, linkSync as linkSync2, mkdirSync as mkdirSync8, readFileSync as readFileSync8, unlinkSync as unlinkSync6, writeFileSync as writeFileSync6 } from "node:fs";
+import { dirname as dirname3, join as join8 } from "node:path";
+var SECRET_FILE = "page-api.secret";
+var SECRET_BYTES = 32;
+function secretPath(env) {
+  return join8(dirname3(configPath(env)), SECRET_FILE);
+}
+function deviceSecret(env) {
+  const path = secretPath(env);
+  if (!existsSync13(path)) {
+    mkdirSync8(dirname3(path), { recursive: true });
+    const temp = `${path}.${process.pid}.${randomBytes3(6).toString("hex")}.tmp`;
+    writeFileSync6(temp, randomBytes3(SECRET_BYTES), { flag: "wx" });
+    try {
+      linkSync2(temp, path);
+    } catch (err) {
+      if (err.code !== "EEXIST") throw err;
+    } finally {
+      unlinkSync6(temp);
+    }
+  }
+  const secret = readFileSync8(path);
+  if (secret.length !== SECRET_BYTES) throw new Error(`${path} holds ${secret.length} bytes, not ${SECRET_BYTES}; delete it and re-render the page`);
+  return secret;
+}
+function deviceHmac(message, env) {
+  return createHmac("sha256", deviceSecret(env)).update(message).digest();
+}
+function sameText(given, expected) {
+  const a = Buffer.from(given, "utf-8");
+  const b = Buffer.from(expected, "utf-8");
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+// src/local-page/links.ts
+var LINKS_DIR = "page-links";
+var ID_RE = /^[A-Za-z0-9_-]{32}$/;
+var MAX_AGE_MS = 30 * 24 * 3600 * 1e3;
+function linksDir(env) {
+  return join9(dirname4(configPath(env)), LINKS_DIR);
+}
+function linkId(kind, target, env) {
+  return deviceHmac(`link
+${kind}
+${target}`, env).subarray(0, 24).toString("base64url");
+}
+function deviceLink(kind, target, env) {
+  const id = linkId(kind, target, env);
+  const dir = linksDir(env);
+  mkdirSync9(dir, { recursive: true });
+  const record2 = { kind, target, created_at: (/* @__PURE__ */ new Date()).toISOString() };
+  const path = join9(dir, `${id}.json`);
+  const temp = `${path}.${process.pid}.tmp`;
+  writeFileSync7(temp, JSON.stringify(record2));
+  renameSync6(temp, path);
+  return id;
+}
+function readRecord(path) {
+  try {
+    const record2 = JSON.parse(readFileSync9(path, "utf-8"));
+    return typeof record2?.kind === "string" && typeof record2.target === "string" ? record2 : null;
+  } catch {
+    return null;
+  }
+}
+function resolveLink(kind, id, env) {
+  if (!ID_RE.test(id)) return null;
+  const record2 = readRecord(join9(linksDir(env), `${id}.json`));
+  if (!record2 || record2.kind !== kind) return null;
+  return sameText(id, linkId(kind, record2.target, env)) ? record2.target : null;
+}
+function recordPaths(env) {
+  const dir = linksDir(env);
+  try {
+    return readdirSync12(dir).filter((name) => name.endsWith(".json")).map((name) => join9(dir, name));
+  } catch (err) {
+    if (err.code === "ENOENT") return [];
+    throw err;
+  }
+}
+function remove(path) {
+  try {
+    unlinkSync7(path);
+  } catch (err) {
+    if (err.code !== "ENOENT") throw err;
+  }
+}
+function dropLinks(kind, match, env) {
+  for (const path of recordPaths(env)) {
+    const record2 = readRecord(path);
+    if (record2?.kind === kind && match(record2.target)) remove(path);
+  }
+}
+function sweepLinks(env, now = Date.now()) {
+  for (const path of recordPaths(env)) {
+    let written;
+    try {
+      written = statSync10(path).mtimeMs;
+    } catch {
+      continue;
+    }
+    if (now - written > MAX_AGE_MS) remove(path);
+  }
+}
+
+// src/local-page/listener.ts
+import { createServer } from "node:http";
+
+// src/local-page/ports.ts
+import { existsSync as existsSync14, readFileSync as readFileSync10 } from "node:fs";
+var DEFAULT_PAGE_PORTS = { lawyer: 47615, "file-manager": 47616 };
+var PagePortError = class extends Error {
+  constructor(message, code) {
+    super(message);
+    this.code = code;
+  }
+  code;
 };
+var isPort = (value) => typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 65535;
+function pagePort(bundle, env) {
+  const path = configPath(env);
+  if (!existsSync14(path)) return DEFAULT_PAGE_PORTS[bundle];
+  const config2 = JSON.parse(readFileSync10(path, "utf-8"));
+  const ports = config2?.page_ports;
+  if (ports !== void 0 && ports !== null) {
+    if (typeof ports !== "object" || Array.isArray(ports)) {
+      throw new PagePortError(`${path}: page_ports must be an object mapping a plugin to its port, got ${JSON.stringify(ports)}`, "invalid_page_ports");
+    }
+    const value = ports[bundle];
+    if (value !== void 0 && value !== null) {
+      if (!isPort(value)) throw new PagePortError(`${path}: page_ports.${bundle} must be a whole number from 1 to 65535, got ${JSON.stringify(value)}`, "invalid_page_ports");
+      return value;
+    }
+  }
+  if (bundle === "lawyer") {
+    const value = config2?.page_api_port;
+    if (value !== void 0 && value !== null) {
+      if (!isPort(value)) throw new PagePortError(`${path}: page_api_port must be a whole number from 1 to 65535, got ${JSON.stringify(value)}`, "invalid_page_api_port");
+      return value;
+    }
+  }
+  return DEFAULT_PAGE_PORTS[bundle];
+}
+
+// src/local-page/reply.ts
+import { createReadStream as createReadStream2 } from "node:fs";
+var STRICT_CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+var BodyTooLarge = class extends Error {
+  status = 413;
+  constructor() {
+    super("the request is too large");
+  }
+};
+function readBody(req, max) {
+  return new Promise((resolve3, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on("data", (chunk) => {
+      size += chunk.length;
+      if (size > max) {
+        reject(new BodyTooLarge());
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on("end", () => resolve3(Buffer.concat(chunks).toString("utf-8")));
+    req.on("error", reject);
+  });
+}
+function corsHeaders(req) {
+  return {
+    ...req.headers.origin === "null" ? { "Access-Control-Allow-Origin": "null" } : {},
+    "Access-Control-Allow-Private-Network": "true",
+    Vary: "Origin"
+  };
+}
+function headers(type, options) {
+  return {
+    ...options.cors ? corsHeaders(options.cors) : {},
+    "Content-Type": type,
+    ...options.csp ? { "Content-Security-Policy": options.csp } : {},
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "no-store",
+    "Referrer-Policy": "no-referrer"
+  };
+}
+function send(res, status, type, body, options = {}) {
+  res.writeHead(status, headers(type, options));
+  res.end(body);
+}
+function json(res, status, body, options = {}) {
+  send(res, status, "application/json; charset=utf-8", JSON.stringify(body), options);
+}
+function html(res, status, body, options = {}) {
+  send(res, status, "text/html; charset=utf-8", body, options);
+}
+function text(res, status, body, options = {}) {
+  send(res, status, "text/plain; charset=utf-8", body, options);
+}
+function file(res, path, name, type) {
+  res.writeHead(200, {
+    "Content-Type": type ?? "application/octet-stream",
+    "Content-Disposition": `${type ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(name)}`,
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "no-store"
+  });
+  createReadStream2(path).on("error", () => res.destroy()).pipe(res);
+}
+
+// src/local-page/listener.ts
+var RETRY_MS = 3e3;
+async function startPageListener(options) {
+  const fixed = options.port === "fixed";
+  const wanted = fixed ? pagePort(options.bundle, options.env) : 0;
+  const log = options.log ?? ((line) => console.error(line));
+  const retryMs = options.retryMs ?? RETRY_MS;
+  const tag = `[${options.bundle} pages]`;
+  let held = false;
+  let stopped = false;
+  let warnedBusy = false;
+  let retry;
+  const server2 = createServer((req, res) => {
+    route(req, res, options).catch((err) => {
+      if (!res.headersSent) json(res, 500, { error: err instanceof Error ? err.message : String(err) });
+      else res.destroy();
+    });
+  });
+  server2.on("connection", (socket) => socket.unref());
+  server2.keepAliveTimeout = 0;
+  server2.on("listening", () => {
+    held = true;
+    server2.unref();
+  });
+  const first = await new Promise((resolve3) => {
+    server2.once("listening", () => resolve3(null));
+    server2.once("error", (err) => resolve3(err));
+    server2.listen(wanted, "127.0.0.1");
+  });
+  if (first && !fixed) throw first;
+  server2.on("error", (err) => onError(err));
+  if (first) onError(first);
+  function onError(err) {
+    if (stopped) return;
+    if (err.code === "EADDRINUSE" && !held) {
+      if (!warnedBusy) log(`${tag} port ${wanted} busy, retrying`);
+      warnedBusy = true;
+      retry = setTimeout(() => {
+        if (!stopped) server2.listen(wanted, "127.0.0.1");
+      }, retryMs);
+      retry.unref();
+      return;
+    }
+    log(`${tag} listener off: ${err.message}`);
+  }
+  return {
+    port: fixed ? wanted : server2.address().port,
+    holding: () => held && server2.listening,
+    close: () => {
+      stopped = true;
+      if (retry) clearTimeout(retry);
+      if (!server2.listening) return Promise.resolve();
+      server2.closeAllConnections();
+      return new Promise((resolve3) => server2.close(() => resolve3()));
+    }
+  };
+}
+async function route(req, res, options) {
+  const url = new URL(req.url ?? "/", "http://127.0.0.1");
+  if (url.pathname === "/health") {
+    if (req.method !== "GET") return text(res, 405, "Method not allowed");
+    const kinds = [...new Set(options.routes.map((r) => r.kind))];
+    return json(res, 200, { bundle: options.bundle, pid: process.pid, ...options.about, kinds });
+  }
+  let pathMatched = false;
+  for (const r of options.routes) {
+    const match = r.path.exec(url.pathname);
+    if (!match) continue;
+    pathMatched = true;
+    if (req.method === r.method) return r.handle(req, res, match, url);
+  }
+  if (pathMatched) return text(res, 405, "Method not allowed");
+  text(res, 404, "Not found");
+}
+
+// src/housekeeping/server.ts
+var KIND = "housekeeping";
+var MAX_BODY = 5 * 1024 * 1024;
+var REPLY = { csp: STRICT_CSP };
 var INLINE_TYPES = {
   ".pdf": "application/pdf",
   ".png": "image/png",
@@ -24614,10 +24911,29 @@ var INLINE_TYPES = {
   ".csv": "text/plain; charset=utf-8",
   ".eml": "text/plain; charset=utf-8"
 };
-var grants = /* @__PURE__ */ new Map();
-var fileGrants = /* @__PURE__ */ new Map();
-var listening;
-async function servePage(matterRoot, runId) {
+var listener;
+function startHousekeepingPages(env = process.env, options = {}) {
+  if (!listener) {
+    const starting = (async () => {
+      sweepLinks(env);
+      return startPageListener({
+        bundle: "file-manager",
+        port: "fixed",
+        routes: routes(env),
+        env,
+        about: { build_stamp: BUILD_STAMP, plugin_version: pluginVersion() },
+        log: options.log,
+        retryMs: options.retryMs
+      });
+    })();
+    listener = starting;
+    starting.catch(() => {
+      if (listener === starting) listener = void 0;
+    });
+  }
+  return listener;
+}
+async function servePage(matterRoot, runId, env = process.env) {
   const matter = openMatter(matterRoot);
   const runDir = existingRunDir(matter, runId);
   const proposal2 = requireProposal(runDir, runId, matter.root);
@@ -24625,185 +24941,122 @@ async function servePage(matterRoot, runId) {
   if (newest !== runId) {
     throw new DataServerError(`run ${runId} is not the matter's newest run with a proposal (${newest}); serve that one`, "stale_run");
   }
-  const { port } = await ensureListening();
+  const { port } = await startHousekeepingPages(env);
   const key = matter.root.toLowerCase();
-  for (const [token2, grant] of grants) if (grant.matter.root.toLowerCase() === key) grants.delete(token2);
-  const token = randomBytes3(24).toString("base64url");
-  grants.set(token, { matter, runId, runDir });
-  return { url: `http://127.0.0.1:${port}/h/${token}/`, run_id: runId, rows: proposal2.rows.length, approved: readApproval(runDir, runId).approval !== null };
+  dropLinks(KIND, (target2) => parseTarget(target2)?.matter_root.toLowerCase() === key, env);
+  const target = { matter_root: matter.root, run_id: runId, serve: randomBytes4(9).toString("base64url") };
+  const id = deviceLink(KIND, JSON.stringify(target), env);
+  return { url: `http://127.0.0.1:${port}/h/${id}/`, run_id: runId, rows: proposal2.rows.length, approved: readApproval(runDir, runId).approval !== null };
 }
-function ensureListening() {
-  listening ??= new Promise((resolve3, reject) => {
-    const server2 = createServer((req, res) => {
-      handle(req, res).catch((err) => {
-        if (!res.headersSent) send(res, 500, "application/json", JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
-        else res.destroy();
-      });
-    });
-    server2.on("connection", (socket) => socket.unref());
-    server2.keepAliveTimeout = 0;
-    server2.once("error", (err) => {
-      listening = void 0;
-      reject(err);
-    });
-    server2.listen(0, "127.0.0.1", () => {
-      server2.unref();
-      resolve3({ server: server2, port: server2.address().port });
-    });
-  });
-  return listening;
-}
-async function handle(req, res) {
-  const url = new URL(req.url ?? "/", "http://127.0.0.1");
-  const p = /^\/p\/([A-Za-z0-9_-]+)\/([^/]+)$/.exec(url.pathname);
-  if (p) return servedFile(req, p[1], decodeURIComponent(p[2]), res);
-  const m = /^\/h\/([A-Za-z0-9_-]+)(?:\/(approve|file\/([^/]+)))?\/?$/.exec(url.pathname);
-  if (!m) return send(res, 404, "text/plain; charset=utf-8", "Not found");
-  const grant = grants.get(m[1]);
-  const route = m[2] === void 0 ? "page" : m[2] === "approve" ? "approve" : "file";
-  const method = route === "approve" ? "POST" : "GET";
-  if (req.method !== method) return send(res, 405, "text/plain; charset=utf-8", "Method not allowed");
-  if (!grant) {
-    if (route === "approve") {
-      return json(res, 410, { error: "This page is out of date: a newer run has started for this matter, or the Claude session has ended. Nothing was approved." });
+function routes(env) {
+  return [
+    { method: "GET", kind: KIND, path: /^\/h\/([A-Za-z0-9_-]+)\/?$/, handle: (_req, res, m) => withGrant(m[1], env, res, "page", (g) => page(g, res)) },
+    { method: "POST", kind: KIND, path: /^\/h\/([A-Za-z0-9_-]+)\/approve\/?$/, handle: (req, res, m) => withGrant(m[1], env, res, "approve", (g) => approve(g, req, res)) },
+    {
+      method: "GET",
+      kind: KIND,
+      path: /^\/h\/([A-Za-z0-9_-]+)\/file\/([^/]+)\/?$/,
+      handle: (_req, res, m) => withGrant(m[1], env, res, "file", (g) => file2(g, decodeURIComponent(m[2]), res))
     }
-    return send(res, 410, "text/html; charset=utf-8", stalePage());
+  ];
+}
+function parseTarget(text2) {
+  try {
+    const t = JSON.parse(text2);
+    return typeof t?.matter_root === "string" && typeof t.run_id === "string" ? t : null;
+  } catch {
+    return null;
   }
-  if (route === "page") return page(grant, res);
-  if (route === "approve") return approve(grant, req, res);
-  return file(grant, decodeURIComponent(m[3]), res);
+}
+function grantFor(id, env) {
+  const raw = resolveLink(KIND, id, env);
+  const target = raw === null ? null : parseTarget(raw);
+  if (!target) return null;
+  try {
+    const matter = openMatter(target.matter_root);
+    return { matter, runId: target.run_id, runDir: existingRunDir(matter, target.run_id) };
+  } catch {
+    return null;
+  }
+}
+function withGrant(id, env, res, route2, then) {
+  const grant = grantFor(id, env);
+  if (grant) return then(grant);
+  if (route2 === "approve") {
+    return json(res, 410, { error: "This page is out of date: a newer run has started for this matter, or the Claude session has ended. Nothing was approved." }, REPLY);
+  }
+  html(res, 410, stalePage(), REPLY);
 }
 function page(grant, res) {
   const { proposal: proposal2, problem } = readProposal(grant.runDir, grant.runId, grant.matter.root);
   if (!proposal2) {
-    return send(res, 500, "text/html; charset=utf-8", simplePage("The page cannot be shown", `The proposal for this run cannot be read (${problem}). Go back to Claude.`));
+    return html(res, 500, simplePage("The page cannot be shown", `The proposal for this run cannot be read (${problem}). Go back to Claude.`), REPLY);
   }
-  send(res, 200, "text/html; charset=utf-8", renderApprovalPage(proposal2, readApproval(grant.runDir, grant.runId).approval));
+  html(res, 200, renderApprovalPage(proposal2, readApproval(grant.runDir, grant.runId).approval), REPLY);
 }
 async function approve(grant, req, res) {
   let body;
   try {
-    body = JSON.parse(await readBody(req));
+    body = JSON.parse(await readBody(req, MAX_BODY));
   } catch (err) {
-    return json(res, 400, { error: `The approval could not be read: ${err.message}` });
+    return json(res, 400, { error: `The approval could not be read: ${err.message}` }, REPLY);
   }
   const posted = body;
   if (typeof body !== "object" || body === null || posted.run !== grant.runId) {
-    return json(res, 400, { error: "The approval does not name this page's run." });
+    return json(res, 400, { error: "The approval does not name this page's run." }, REPLY);
   }
   if (newerRun(grant.matter, grant.runId) !== null) {
-    return json(res, 409, { error: "This page is out of date: a newer run has started for this matter. Nothing was approved." });
+    return json(res, 409, { error: "This page is out of date: a newer run has started for this matter. Nothing was approved." }, REPLY);
   }
   const { proposal: proposal2, problem } = readProposal(grant.runDir, grant.runId, grant.matter.root);
   if (!proposal2) {
-    return json(res, 500, { error: `The proposal for this run cannot be read (${problem}). Nothing was approved. Go back to Claude.` });
+    return json(res, 500, { error: `The proposal for this run cannot be read (${problem}). Nothing was approved. Go back to Claude.` }, REPLY);
   }
   const v = new Checker();
   validateEntries(v, posted.rows);
-  if (v.problems.length) return json(res, 400, { error: `The approval is malformed: ${v.problems.join("; ")}` });
+  if (v.problems.length) return json(res, 400, { error: `The approval is malformed: ${v.problems.join("; ")}` }, REPLY);
   const known = new Map(proposal2.rows.map((r) => [r.row_id, r]));
   const ids = posted.rows.map((e) => e.row_id);
   const unknown2 = ids.filter((id) => !known.has(id));
-  if (unknown2.length) return json(res, 400, { error: `Unknown rows: ${unknown2.join(", ")}. Nothing was approved.` });
+  if (unknown2.length) return json(res, 400, { error: `Unknown rows: ${unknown2.join(", ")}. Nothing was approved.` }, REPLY);
   const shown = ids.filter((id) => {
     const kind = known.get(id)?.action?.kind;
     return kind !== void 0 && INFORMATION_ONLY.includes(kind);
   });
   if (shown.length) {
-    return json(res, 400, { error: `Rows ${shown.join(", ")} are shown for information only and cannot be approved. Nothing was approved.` });
+    return json(res, 400, { error: `Rows ${shown.join(", ")} are shown for information only and cannot be approved. Nothing was approved.` }, REPLY);
   }
   const path = pathWin3217.join(grant.runDir, APPROVAL);
-  if (existsSync13(path)) return json(res, 409, { error: savedApprovalError(grant) });
+  if (existsSync15(path)) return json(res, 409, { error: savedApprovalError(grant) }, REPLY);
   const approval2 = { run_id: grant.runId, approved_at: (/* @__PURE__ */ new Date()).toISOString(), rows: posted.rows };
   try {
     writeNewDurably(path, JSON.stringify(approval2, null, 2) + "\n");
   } catch (err) {
-    if (err.code === "EEXIST") return json(res, 409, { error: savedApprovalError(grant) });
+    if (err.code === "EEXIST") return json(res, 409, { error: savedApprovalError(grant) }, REPLY);
     throw err;
   }
-  json(res, 200, { ok: true, run_id: grant.runId, rows: posted.rows.length });
+  json(res, 200, { ok: true, run_id: grant.runId, rows: posted.rows.length }, REPLY);
 }
 function savedApprovalError(grant) {
   return readApproval(grant.runDir, grant.runId).approval ? "This run is already approved. Go back to Claude." : "The approval already saved for this run is unreadable, so nothing was changed. Go back to Claude.";
 }
-function file(grant, rowId, res) {
+function file2(grant, rowId, res) {
   const { proposal: proposal2 } = readProposal(grant.runDir, grant.runId, grant.matter.root);
   const row3 = proposal2?.rows.find((r) => r.row_id === rowId);
   const rel = row3?.current_path;
-  if (!rel) return send(res, 404, "text/plain; charset=utf-8", "No such file on this page");
+  if (!rel) return text(res, 404, "No such file on this page", REPLY);
   let real;
   try {
     real = realpathSync10.native(pathWin3217.join(grant.matter.root, rel));
-    if (!statSync10(real).isFile()) throw new Error("not a file");
+    if (!statSync11(real).isFile()) throw new Error("not a file");
   } catch {
-    return send(res, 404, "text/plain; charset=utf-8", "The file is no longer there");
+    return text(res, 404, "The file is no longer there", REPLY);
   }
   const inside = pathWin3217.relative(grant.matter.root, real);
   if (inside.startsWith("..") || pathWin3217.isAbsolute(inside) || zoneProblem("run-files", real)) {
-    return send(res, 403, "text/plain; charset=utf-8", "This file is not opened from the page");
+    return text(res, 403, "This file is not opened from the page", REPLY);
   }
-  const ext = pathWin3217.extname(real).toLowerCase();
-  const type = INLINE_TYPES[ext];
-  const name = encodeURIComponent(pathWin3217.basename(real));
-  res.writeHead(200, {
-    "Content-Type": type ?? "application/octet-stream",
-    "Content-Disposition": `${type ? "inline" : "attachment"}; filename*=UTF-8''${name}`,
-    "X-Content-Type-Options": "nosniff",
-    "Cache-Control": "no-store"
-  });
-  createReadStream2(real).on("error", () => res.destroy()).pipe(res);
-}
-function servedFile(req, token, name, res) {
-  const grant = fileGrants.get(token);
-  if (!grant) {
-    return send(res, 404, "text/html; charset=utf-8", simplePage("This link has expired", "It came from an earlier Claude session. Open the current link from the chat."));
-  }
-  if (req.method !== "GET") return send(res, 405, "text/plain; charset=utf-8", "Method not allowed");
-  if (!Object.hasOwn(grant.files, name)) return send(res, 404, "text/plain; charset=utf-8", "Not found");
-  const path = pathWin3217.join(grant.folder, grant.files[name]);
-  try {
-    if (!statSync10(path).isFile()) throw new Error("not a file");
-  } catch {
-    return send(res, 404, "text/plain; charset=utf-8", "Not found");
-  }
-  res.writeHead(200, {
-    "Content-Type": FILE_TYPES[pathWin3217.extname(path).toLowerCase()] ?? "application/octet-stream",
-    "Content-Security-Policy": FILE_CSP,
-    "X-Content-Type-Options": "nosniff",
-    "Cache-Control": "no-store",
-    "Referrer-Policy": "no-referrer"
-  });
-  createReadStream2(path).on("error", () => res.destroy()).pipe(res);
-}
-function readBody(req) {
-  return new Promise((resolve3, reject) => {
-    const chunks = [];
-    let size = 0;
-    req.on("data", (chunk) => {
-      size += chunk.length;
-      if (size > MAX_BODY) {
-        reject(new Error("the request is too large"));
-        req.destroy();
-        return;
-      }
-      chunks.push(chunk);
-    });
-    req.on("end", () => resolve3(Buffer.concat(chunks).toString("utf-8")));
-    req.on("error", reject);
-  });
-}
-function json(res, status, body) {
-  send(res, status, "application/json; charset=utf-8", JSON.stringify(body));
-}
-function send(res, status, type, body) {
-  res.writeHead(status, {
-    "Content-Type": type,
-    "Content-Security-Policy": CSP,
-    "X-Content-Type-Options": "nosniff",
-    "Cache-Control": "no-store",
-    "Referrer-Policy": "no-referrer"
-  });
-  res.end(body);
+  file(res, real, pathWin3217.basename(real), INLINE_TYPES[pathWin3217.extname(real).toLowerCase()]);
 }
 
 // src/housekeeping/wait.ts
@@ -24901,6 +25154,7 @@ async function start() {
     async (request) => dispatchFileManagerTool(request.params.name, request.params.arguments ?? {})
   );
   await server2.connect(new StdioServerTransport());
+  startHousekeepingPages().catch((err) => console.error(`[file-manager pages] listener off: ${err instanceof Error ? err.message : String(err)}`));
 }
 var isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {

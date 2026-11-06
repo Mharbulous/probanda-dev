@@ -50,10 +50,9 @@ The briefing reads no mail. When the practitioner asks what someone said or sent
 matter's mail folder as part of the record, through the route in `shared/matter-mail.md` and
 never through a browser, and cite each message by its date, sender, subject and folder. This
 skill writes nothing, so skip that file's record step and say the folder was not recorded.
-Before the first mail lookup in the session, unless this practitioner's environment notes were
-added at session start, read them: call `practice_data__config_status` in the same round trip
-as the first mail tool call, and take its `practice_quirks` (`practice-data`'s "Practice
-quirks", "Read").
+Before the first mail lookup in the session, read the practice's quirks for the `email` area:
+call `quirks__read` (`areas: ["email"]`) in the same round trip as the first mail tool call
+(`practice-data`'s "Practice quirks", "Read").
 When the briefing reports what a tribunal, court, counsel or witness said or wrote, quote the
 operative words verbatim first, with author, date and source (`shared/report-what-a-source-said.md`).
 
