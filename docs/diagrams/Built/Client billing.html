@@ -25,11 +25,10 @@ body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 va
 main { max-width: 1500px; margin: 0 auto; padding: 28px 20px 48px; display: grid; gap: 20px; }
 h1 { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 600; text-wrap: balance; }
 h2 { margin: 12px 0 0; font-size: 20px; line-height: 1.3; font-weight: 600; }
-p { margin: 0; max-width: 70ch; }
 code { font: 500 0.92em var(--mono); }
 figure { margin: 0; display: grid; gap: 12px; }
 figcaption { display: grid; gap: 4px; }
-.stamp { font-size: 14px; color: var(--muted); max-width: none; }
+.stamp { font-size: 14px; color: var(--muted); margin: 0; }
 .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 7px; }
 .legend i { width: 15px; height: 15px; border: 2px solid; border-radius: 3px; display: inline-block; }
@@ -40,75 +39,72 @@ pre.mermaid { margin: 0; font-family: var(--body); }
 pre.mermaid svg { display: block; margin: 0 auto; }
 /* Mermaid caps each label at 200 px and wraps inside words; labels here break only at <br/>. */
 pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap !important; }
-.note { font-size: 14px; color: var(--muted); max-width: 90ch; }
-.note ul { margin: 4px 0; padding-left: 20px; }
+.sources { font-size: 13px; color: var(--muted); margin: 0; }
 </style>
 </head>
 <body>
 <main>
   <figure class="diagram" id="client-billing"
           data-based-on-commit="c9154155c853130c6f8d587c74e106dabce0bbe0"
-          data-updated="2026-11-06T14:30:00-08:00">
+          data-updated="2026-11-06T15:30:00-08:00">
     <figcaption>
       <h1>How Probanda bills a client, from the last invoice to the signed one</h1>
-      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/c9154155c853130c6f8d587c74e106dabce0bbe0"><code>c9154155</code></a> on main · Last updated 2026-11-06 14:30 -08:00</p>
+      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/c9154155c853130c6f8d587c74e106dabce0bbe0"><code>c9154155</code></a> on main · Last updated 2026-11-06 15:30 -08:00</p>
     </figcaption>
-    <p>Every day with any sign of work since the last invoice must end up billed, written off with a reason, or listed as unexplained. The yellow hexagons are where a script or query refuses to go on until that holds.</p>
-    <p>The process is drawn in five stages. A dashed rounded box links to another stage: click it to jump there.</p>
     <div class="legend" aria-label="Colour key">
       <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer plugin skill</span>
       <span><i style="background:#e3eefb;border-color:#2563a8"></i>timekeeper plugin skill</span>
       <span><i style="background:#efe8fb;border-color:#6b46b0"></i>file-manager plugin skill</span>
       <span><i style="background:#eef1f5;border-color:#5b6675;border-style:double;border-width:3px"></i>Custom agent or helper</span>
-      <span><i style="background:#fbe4ec;border-color:#b03060;border-radius:8px"></i>👤 Human in the loop</span>
-      <span><i style="background:#fff8c5;border-color:#8a6d00"></i>Hard check: refuses to go on</span>
-      <span><i style="background:#ffffff;border-color:#8a94a0"></i>Step or decision</span>
-      <span><i style="background:#e0f2f1;border-color:#00796b;border-radius:7px/4px"></i>Store or file</span>
-      <span><i style="background:#e2f3e6;border-color:#2f7d46"></i>Deliverable</span>
-      <span><i style="background:#fff;border-color:#55616f;border-style:dashed;border-radius:8px"></i>Link to another stage</span>
-      <span><b></b>step, in order</span>
-      <span><b class="dashed"></b>loop back, optional, or reads</span>
+      <span><i style="background:#fbe4ec;border-color:#b03060;border-radius:8px"></i>👤 You act here</span>
+      <span><i style="background:#fff8c5;border-color:#8a6d00"></i>Hard check: stops the bill until it passes</span>
+      <span><i style="background:#ffffff;border-color:#8a94a0"></i>Step or question</span>
+      <span><i style="background:#e0f2f1;border-color:#00796b;border-radius:7px/4px"></i>Saved record or file</span>
+      <span><i style="background:#e2f3e6;border-color:#2f7d46"></i>Finished result</span>
+      <span><i style="background:#fff;border-color:#55616f;border-style:dashed;border-radius:8px"></i>Click to jump to another stage</span>
+      <span><b></b>next step</span>
+      <span><b class="dashed"></b>loops back, optional, or looks something up</span>
     </div>
 
-    <h2 id="start">1. The starting point: Steps 1 to 5</h2>
+    <h2 id="start">1. Find where the last bill ended</h2>
     <div class="chart">
 <pre class="mermaid">
 flowchart TD
-    GO(["👤 The practitioner types<br/>/bill-client in the matter folder"])
-    BC["/bill-client<br/>the conductor"]
-    MD["/matter-data<br/>client number, housekeeping log"]
-    REC[("Bill record<br/>state and one row per step")]
-    LIVE{"A bill already<br/>under way?"}
-    RES["Resume: hash the last invoice,<br/>look for a newer signed one"]
-    NAMES{"Badly named files<br/>not yet reviewed?"}
-    HK(["👤 Runs /housekeeping"])
-    HKS["/housekeeping"]
-    HKA[["housekeeping-reader<br/>housekeeping-namer"]]
-    LAST["Pick the latest<br/>INV# ... signed.pdf"]
-    READ["Read the PDF itself<br/>exact last billed date,<br/>each billed date's hours"]
-    PD["/practice-data<br/>invoice history and import"]
-    AGREE{{"Records agree?<br/>else open each PDF:<br/>signature, number inside"}}
-    O1(["to 2. Candidate dates"])
-    O5(["to 5. Render and sign"])
+    GO(["👤 You type /bill-client<br/>in the matter's folder"])
+    BC["/bill-client<br/>runs every billing step in order<br/>and remembers how far it got"]
+    MD["/matter-data<br/>looks up this matter's<br/>client number"]
+    REC[("Bill record<br/>this bill's saved progress,<br/>so any session can pick it up")]
+    LIVE{"Is a bill for this matter<br/>already in progress?"}
+    RES["Re-check the last invoice:<br/>is it the same file?<br/>is there a newer one?"]
+    NAMES{"Any badly named files<br/>in the client folder<br/>not yet reviewed?"}
+    HK(["👤 You run /housekeeping<br/>to fix the file names"])
+    HKS["/housekeeping<br/>renames files to<br/>the firm's naming rules"]
+    HKA[["housekeeping-reader reads each file<br/>housekeeping-namer suggests a name"]]
+    LAST["Find the newest signed invoice,<br/>now that file names can be trusted"]
+    READ["Open that invoice and read<br/>the last date it charged time for,<br/>and the hours on each date"]
+    PD["/practice-data<br/>the firm's records<br/>of past invoices"]
+    AGREE{{"Do the firm's records match<br/>the invoices in the folder?<br/>If not, open each one to confirm<br/>its signature and number"}}
+    O1(["to 2. Find the days with work"])
+    O5(["to 5. Make the invoice"])
 
     GO --> BC
-    BC -->|"1 profile"| MD
-    BC -->|"reads"| REC
+    BC -->|"who is the client?"| MD
+    BC -->|"any saved progress?"| REC
     REC --> LIVE
-    LIVE -->|"in progress"| RES
-    LIVE -->|"waiting for signature"| O5
-    RES -->|"unchanged:<br/>Steps 2-5 stand"| O1
-    RES -->|"changed"| NAMES
-    LIVE -->|"no"| NAMES
-    NAMES -->|"yes: the bill stops"| HK
+    LIVE -->|"yes, still being worked on"| RES
+    LIVE -->|"yes, waiting for your signature"| O5
+    RES -->|"nothing changed:<br/>skip ahead"| O1
+    RES -->|"something changed"| NAMES
+    LIVE -->|"no: start a new bill"| NAMES
+    NAMES -->|"yes: the bill waits<br/>until they are fixed"| HK
     HK --> HKS
     HKS --> HKA
-    HKS -.->|"then /bill-client again"| NAMES
-    NAMES -->|"2 no"| LAST
-    LAST -->|"3"| READ
-    READ -->|"4"| AGREE
-    PD <-.->|"5 compare,<br/>import verified invoices"| AGREE
-    AGREE -->|"creates the bill"| REC
+    HKS -.->|"then run /bill-client again"| NAMES
+    NAMES -->|"no"| LAST
+    LAST --> READ
+    READ --> AGREE
+    PD <-.->|"compares, and adds<br/>any missing invoices"| AGREE
+    AGREE -->|"saves the start of this bill"| REC
     AGREE --> O1
 
     classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
@@ -132,30 +128,30 @@ flowchart TD
 </pre>
     </div>
 
-    <h2 id="dates">2. Candidate dates: Step 6.1</h2>
+    <h2 id="dates">2. Find the days with work</h2>
     <div class="chart">
 <pre class="mermaid">
 flowchart LR
-    I2(["from 1. The starting point"])
-    TBD["/triage-billing-dates"]
-    SL["Service list<br/>parties, counsel, staff, witnesses<br/>with emails and phone numbers"]
-    HPN(["👤 Yes to save a new<br/>phone number to a contact"])
-    DOC["Matter documents<br/>dated by name and metadata,<br/>never by modified date"]
-    SM["Sent mail<br/>each once, by Message-ID"]
-    CALL["Call archive<br/>matched to the service list"]
-    CAL["Calendar and<br/>court filings"]
-    TCE["TimeCamp entries<br/>matter's task, all users"]
-    PH["Phone numbers in TimeCamp<br/>window titles, every run"]
-    KW[["Sonnet helper<br/>keyword scan of<br/>computer activity"]]
-    RECON{"3 Reconcile with<br/>the last bill"}
-    LIST[("Candidate dates list<br/>Strong · Medium · Weak<br/>Lawyer · Staff · Both")]
-    EV[("Evidence store<br/>what put each date there")]
+    I2(["from 1. Find where<br/>the last bill ended"])
+    TBD["/triage-billing-dates<br/>finds every day since the<br/>last invoice with signs of work"]
+    SL["List everyone involved:<br/>parties, lawyers, staff, witnesses,<br/>with their emails and phone numbers"]
+    HPN(["👤 You approve saving<br/>a newly found phone number"])
+    DOC["Documents in the matter folder,<br/>dated by their name and contents"]
+    SM["Emails you sent<br/>on this matter"]
+    CALL["Phone calls with<br/>people on the list"]
+    CAL["Calendar events<br/>and court filings"]
+    TCE["Time already logged<br/>in TimeCamp for this matter"]
+    PH["Calls seen on screen:<br/>a listed person's number<br/>in a window title"]
+    KW[["Helper on the Sonnet model<br/>searches your screen activity<br/>for the matter's names"]]
+    RECON{"Compare each day<br/>with the last invoice"}
+    LIST[("List of days to review<br/>each rated Strong,<br/>Medium or Weak")]
+    EV[("Saved evidence<br/>why each day is on the list")]
     O2(["to 3. Review each day"])
 
     I2 --> TBD
-    TBD -->|"1"| SL
+    TBD --> SL
     SL -.-> HPN
-    TBD -->|"2 fastest first"| DOC
+    TBD --> DOC
     TBD --> SM
     TBD --> CALL
     TBD --> CAL
@@ -169,7 +165,7 @@ flowchart LR
     TCE --> RECON
     PH --> RECON
     KW --> RECON
-    RECON -->|"already billed: dropped,<br/>unless under-billed<br/>missed by the last bill:<br/>suspicious<br/>bill over 3 months old:<br/>earlier dates written off"| LIST
+    RECON -->|"drops days already billed<br/>flags days billed too little<br/>flags days the last bill missed"| LIST
     RECON --> EV
     LIST --> O2
 
@@ -190,64 +186,64 @@ flowchart LR
 </pre>
     </div>
 
-    <h2 id="review">3. Review each day: Steps 6.2 and 6.3</h2>
+    <h2 id="review">3. Review each day</h2>
     <div class="chart">
 <pre class="mermaid">
 flowchart TD
-    I3(["from 2. Candidate dates"])
-    CW{"Running in Cowork?"}
-    STOPC["Stops: screen captures<br/>are readable only on the PC"]
-    TC["/timecamping<br/>Strong, then Medium,<br/>oldest first"]
-    JD[("Judged dates<br/>one file per matter")]
-    BT["/build-timeline<br/>the day's evidence<br/>from 7 sources"]
-    HP(["👤 Pasted approval<br/>for a replacing write"])
-    TCD["/timecamping-data"]
-    DB[("Time-review database<br/>one per practitioner")]
-    GATE{{"Evidence gate<br/>have all 7 sources<br/>reported for the day?"}}
-    HALT["Halt and name<br/>the missing sources"]
-    WHOLE["Read the whole day,<br/>every client"]
-    PROP["Group into blocks,<br/>view the screenshots,<br/>propose matter and note"]
-    GRID{"Does the evidence<br/>name the matter?"}
-    SIL["Silent commit"]
-    ASK(["👤 Answers each question<br/>one decision, evidence shown"])
-    SHOW["/show-me"]
-    DRY["Dry-run report<br/>of every change"]
-    HC(["👤 Says commit,<br/>then a yes per entry"])
-    WB{{"Write one entry,<br/>re-read it"}}
-    TCAMP[("TimeCamp<br/>one task per entry")]
-    MARK["Mark the date judged"]
-    UNC["Possible unbilled time<br/>work no entry covers"]
-    HU(["👤 Enters it by hand,<br/>or leaves it for an estimate"])
-    WEAK(["👤 Review the<br/>Weak dates too?"])
-    O3(["to 4. Vet and tie out"])
+    I3(["from 2. Find the days with work"])
+    CW{"Running in Cowork,<br/>the web version?"}
+    STOPC["Stop here: screenshots<br/>can only be read on your PC"]
+    TC["/timecamping<br/>reviews each listed day,<br/>strongest days first"]
+    JD[("Reviewed-days list<br/>kept separately<br/>for each matter")]
+    BT["/build-timeline<br/>gathers the day's evidence<br/>from 7 sources"]
+    HP(["👤 You approve replacing<br/>evidence saved earlier"])
+    TCD["/timecamping-data<br/>stores the evidence"]
+    DB[("Time-review database<br/>all evidence and decisions,<br/>for every matter")]
+    GATE{{"Have all 7 sources<br/>reported in for this day?<br/>Nothing may be read until they have"}}
+    HALT["Stop and say<br/>which sources are missing"]
+    WHOLE["Read the whole day,<br/>for every client,<br/>not just this one"]
+    PROP["Split the day into blocks of work,<br/>look at the screenshots,<br/>suggest the matter for each block"]
+    GRID{"Does the evidence itself<br/>name the matter?"}
+    SIL["Accept the suggestion<br/>without asking you"]
+    ASK(["👤 You answer a question<br/>about each unclear block,<br/>shown with its screenshots"])
+    SHOW["/show-me<br/>rules for how each<br/>question is put to you"]
+    DRY["List every change<br/>to be made in TimeCamp"]
+    HC(["👤 You say go ahead,<br/>then approve each change"])
+    WB{{"Make one change in TimeCamp,<br/>then read it back to confirm it"}}
+    TCAMP[("TimeCamp<br/>each time entry belongs<br/>to exactly one matter")]
+    MARK["Record the day as reviewed"]
+    UNC["Work found with<br/>no TimeCamp entry at all"]
+    HU(["👤 You enter that time in<br/>TimeCamp yourself, or leave it<br/>to be estimated later"])
+    WEAK(["👤 Do you want the<br/>weakest days reviewed too?"])
+    O3(["to 4. Check every line of time"])
 
     I3 --> CW
     CW -->|"yes"| STOPC
     CW -->|"no"| TC
-    TC <-.->|"skip judged dates<br/>and Staff-only dates"| JD
-    TC -->|"1 each date"| BT
+    TC <-.->|"skips days<br/>already reviewed"| JD
+    TC -->|"for each day"| BT
     BT -.-> HP
     BT --> TCD
     TCD --> DB
     DB --> GATE
     GATE -->|"no"| HALT
-    GATE -->|"2 yes"| WHOLE
-    WHOLE -->|"3"| PROP
+    GATE -->|"yes"| WHOLE
+    WHOLE --> PROP
     PROP --> GRID
     GRID -->|"yes"| SIL
-    GRID -->|"a leap, indirect<br/>or a conflict"| ASK
+    GRID -->|"no, or sources disagree"| ASK
     ASK -.- SHOW
-    SIL -->|"4"| DRY
+    SIL --> DRY
     ASK --> DRY
     DRY --> HC
     HC --> WB
     WB --> TCAMP
-    WB -->|"5"| MARK
+    WB --> MARK
     MARK --> JD
-    MARK -.->|"next date"| TC
-    PROP -->|"no entry covers it"| UNC
-    UNC -->|"Step 6.3"| HU
-    MARK -->|"all dates done"| WEAK
+    MARK -.->|"next day"| TC
+    PROP -->|"work nobody logged"| UNC
+    UNC --> HU
+    MARK -->|"all days done"| WEAK
     WEAK --> O3
     HU --> O3
 
@@ -270,44 +266,42 @@ flowchart TD
 </pre>
     </div>
 
-    <h2 id="vet">4. Vet and tie out: Step 6.4</h2>
+    <h2 id="vet">4. Check every line of time</h2>
     <div class="chart">
 <pre class="mermaid">
 flowchart TD
     I4(["from 3. Review each day"])
-    VBT["/vet-billable-time"]
+    VBT["/vet-billable-time<br/>checks every line of time<br/>before it goes on the bill"]
     TCAMP[("TimeCamp")]
-    PULL["Pull the matter's billable<br/>entries since the last billed date"]
-    T1{{"First tie-out<br/>all inside the period · ties to TimeCamp's count<br/>· every Strong and Medium date judged"}}
-    BACK(["back to 3. Review each day"])
-    JOIN["Join each entry to its<br/>review decision<br/>none: no evidence"]
-    DB[("Time-review database")]
-    PDR["/practice-data<br/>rates, initials, firm rules"]
-    HR(["👤 A missing rate, initials,<br/>whether clerical work bills"])
-    HL(["👤 Each line, one at a time:<br/>confirm, correct or write off"])
-    HF(["👤 Late lines, estimates for<br/>uncovered time and off-task calls"])
-    SHOW["/show-me"]
-    T2{{"Final tie-out<br/>one line per entry · evidence or estimate<br/>· every candidate date billed, written off or unexplained<br/>· fees within 80-120% of the evidence"}}
-    OUT[("Billable time summary<br/>and audit file<br/>invoice_lines.json")]
-    O4(["to 5. Render and sign"])
+    PULL["Get this matter's time entries<br/>since the last invoice"]
+    T1{{"First check:<br/>every entry inside the billing period?<br/>totals match TimeCamp's own?<br/>every listed day reviewed?"}}
+    BACK(["back to 3: review<br/>the days that were missed"])
+    JOIN["Attach to each entry<br/>the evidence and decision<br/>from the day review"]
+    PDR["/practice-data<br/>hourly rates, initials,<br/>firm billing rules"]
+    HR(["👤 You supply any<br/>missing rate or rule"])
+    HL(["👤 You confirm, correct<br/>or write off each line of time"])
+    HF(["👤 You decide the extras:<br/>late work, estimates for unlogged work,<br/>calls logged under other matters"])
+    SHOW["/show-me<br/>rules for how each<br/>line is put to you"]
+    T2{{"Final check:<br/>every entry has a line backed by evidence?<br/>every listed day billed, written off or explained?<br/>total close to what the evidence shows?"}}
+    OUT[("Billable time summary,<br/>audit file, and the<br/>lines for the invoice")]
+    O4(["to 5. Make the invoice"])
 
     I4 --> VBT
-    VBT -->|"1"| PULL
+    VBT --> PULL
     TCAMP --> PULL
     PULL --> T1
-    T1 -->|"a date not judged"| BACK
-    T1 -->|"2 passes"| JOIN
-    DB -.-> JOIN
-    JOIN -->|"3"| PDR
+    T1 -->|"a listed day<br/>was never reviewed"| BACK
+    T1 -->|"passes"| JOIN
+    JOIN --> PDR
     PDR -.-> HR
-    PDR -->|"4"| HL
-    HL -->|"5"| HF
+    PDR --> HL
+    HL --> HF
     HL -.- SHOW
     HF -.- SHOW
-    HF -->|"6"| T2
-    T2 -->|"fails: fix the input<br/>with the practitioner"| HL
+    HF --> T2
+    T2 -->|"fails: fix it with you"| HL
     T2 -->|"passes"| OUT
-    OUT -->|"time entries recorded"| PDR
+    OUT -->|"records the time entries"| PDR
     OUT --> O4
 
     classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
@@ -322,7 +316,7 @@ flowchart TD
     class HR,HL,HF human
     class T1,T2 gate
     class PULL,JOIN step
-    class TCAMP,DB,OUT store
+    class TCAMP,OUT store
     class I4,O4,BACK link
     click I4 href "#review"
     click BACK href "#review"
@@ -330,56 +324,56 @@ flowchart TD
 </pre>
     </div>
 
-    <h2 id="render">5. Render, sign and issue: Steps 7 to 9 and /issue-invoice</h2>
+    <h2 id="render">5. Make, sign and issue the invoice</h2>
     <div class="chart">
 <pre class="mermaid">
 flowchart TD
-    I5(["from 4. Vet and tie out"])
-    I5B(["from 1. waiting for signature"])
-    CH["Chart from invoice_lines.json<br/>if the last invoice had one"]
-    HW(["👤 Word or PDF?"])
-    TPL["Firm template, letterhead<br/>and style from /practice-data"]
-    HT(["👤 Corrects and approves<br/>a new template"])
-    TAX["Tax rates worked out<br/>from the last invoice, shown once"]
-    DISB{{"collect_disbursements.py<br/>each fee once, doubts flagged"}}
-    HD(["👤 Decides each flagged fee<br/>and each tax status"])
-    REN{{"render_invoice.py<br/>recomputes every amount,<br/>refuses what does not tie"}}
-    DRAFT[("Draft invoice<br/>marked DRAFT")]
-    HY(["👤 Ready for signature?<br/>the yes closes the billing period"])
-    CHG(["back to the step<br/>the change touches"])
-    HN(["👤 Bill number<br/>from accounting"])
-    FIN[("Invoice ready for signature<br/>no DRAFT mark")]
-    SIGN(["👤 The lawyer signs"])
-    II["/issue-invoice"]
-    FRZ{{"freeze_invoice.py<br/>signed total must equal<br/>the vetted time"}}
-    HI(["👤 Approves issuing<br/>one-way, locks the records"])
-    DONE[("Issued<br/>later corrections are adjustments")]
-    SCR[["lawyer:scrivener<br/>drafts the trust email"]]
-    HS(["👤 Names the recipient<br/>and sends it"])
-    DC[["lawyer:delivery-checker<br/>was it sent and delivered?"]]
+    I5(["from 4. Check every line of time"])
+    I5B(["from 1: a bill already<br/>waiting for signature"])
+    CH["Draw a chart of the time<br/>if the last invoice had one"]
+    HW(["👤 You choose Word or PDF"])
+    TPL["/practice-data supplies the<br/>firm's invoice template and letterhead"]
+    HT(["👤 You correct and approve<br/>the template, first time only"])
+    TAX["Work out the tax rates<br/>from the last invoice"]
+    DISB{{"Collect court fees and receipts:<br/>each fee counted once,<br/>doubtful ones flagged"}}
+    HD(["👤 You decide each<br/>flagged fee and its tax"])
+    REN{{"Fill in the invoice:<br/>recompute every amount,<br/>refuse anything that doesn't add up"}}
+    DRAFT[("Draft invoice,<br/>marked DRAFT")]
+    HY(["👤 You say it is ready to sign.<br/>From then on, new work<br/>goes on the next bill"])
+    CHG(["back to the step<br/>that needs changing"])
+    HN(["👤 You give the bill number<br/>from accounting"])
+    FIN[("Final invoice,<br/>ready for signature")]
+    SIGN(["👤 The lawyer signs it"])
+    II["/issue-invoice<br/>records the signed invoice"]
+    FRZ{{"Does the signed total<br/>match the checked time?"}}
+    HI(["👤 You approve issuing it.<br/>This cannot be undone"])
+    DONE[("Invoice issued and locked.<br/>Later fixes are recorded<br/>as adjustments")]
+    SCR[["scrivener agent<br/>drafts the email to accounting<br/>about moving trust money"]]
+    HS(["👤 You check and<br/>send that email"])
+    DC[["delivery-checker agent<br/>checks the invoice was<br/>sent and received"]]
 
-    I5 -->|"Step 7"| CH
-    CH -->|"Step 8"| HW
+    I5 --> CH
+    CH --> HW
     HW --> TPL
-    TPL -.->|"none yet"| HT
+    TPL -.->|"no template yet"| HT
     TPL --> TAX
     TAX --> DISB
     DISB --> HD
     HD --> REN
     REN --> DRAFT
-    DRAFT -->|"Step 9"| HY
+    DRAFT --> HY
     I5B --> HY
-    HY -->|"a change"| CHG
+    HY -->|"needs a change"| CHG
     HY -->|"yes"| HN
-    HN -->|"render again"| FIN
+    HN -->|"fill it in again,<br/>without the DRAFT mark"| FIN
     FIN --> SIGN
     SIGN --> II
     II --> FRZ
     FRZ --> HI
     HI --> DONE
-    HI -.->|"trust applied"| SCR
+    HI -.->|"if trust money<br/>pays part of it"| SCR
     SCR --> HS
-    DONE -.->|"when it went out"| DC
+    DONE -.->|"later"| DC
 
     classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
     classDef agent fill:#eef1f5,stroke:#5b6675,stroke-width:3px,color:#1d2733
@@ -403,18 +397,7 @@ flowchart TD
 </pre>
     </div>
 
-    <div class="note">
-      <p>Not drawn:</p>
-      <ul>
-        <li>Reopening a bill waiting for signature, and starting over. Both need the practitioner's request, and a start-over keeps the evidence, the review decisions and the TimeCamp changes.</li>
-        <li>The bill record gets one row per finished step, so a fresh session on any computer resumes from it. Steps 6 to 9 always run again.</li>
-        <li>Staff-only dates are not reviewed day by day. Their lines are vetted from their notes and the surrounding evidence.</li>
-        <li>The judged-dates file is kept per matter, so a day reviewed in full for one matter counts as unreviewed for the next.</li>
-        <li>A review decision counts only once it is written to TimeCamp, because the bill pulls only the matter's own task.</li>
-        <li>When accounting confirms a trust transfer, the amount paid is imported. A correction after issue is recorded as an adjustment, never an edit.</li>
-      </ul>
-      <p>The full prose is <a href="../Planned/Client billing process.md">Client billing process.md</a>. Sources: <code>plugins/lawyer/skills/bill-client/</code> (with <code>render_invoice.py</code>, <code>collect_disbursements.py</code>, <code>freeze_invoice.py</code>), <code>plugins/lawyer/skills/issue-invoice/SKILL.md</code>, <code>plugins/timekeeper/skills/triage-billing-dates/SKILL.md</code>, <code>plugins/timekeeper/skills/timecamping/</code>, <code>plugins/timekeeper/skills/timecamping-data/SKILL.md</code>, <code>plugins/timekeeper/skills/vet-billable-time/</code> (with <code>tie_out.py</code>), <code>plugins/timekeeper/skills/build-timeline/SKILL.md</code>.</p>
-    </div>
+    <p class="sources">Full account: <a href="../Planned/Client billing process.md">Client billing process.md</a>. Sources: the <code>bill-client</code>, <code>issue-invoice</code>, <code>triage-billing-dates</code>, <code>timecamping</code>, <code>timecamping-data</code>, <code>vet-billable-time</code> and <code>build-timeline</code> skills and their scripts.</p>
   </figure>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
