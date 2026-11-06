@@ -1,4 +1,4 @@
-// build-stamp: bfd3fb46d083
+// build-stamp: 2978a73f4b87
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75261,7 +75261,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "bfd3fb46d083";
+var BUILD_STAMP = false ? null : "2978a73f4b87";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -111966,7 +111966,7 @@ var MOCKUP_ONLY_HEADINGS = [
   "Legend"
 ];
 var INLINE_TAG_RES = [
-  / \(quoting .*?\)(?= \(|\r?$)/gm,
+  / \(quoting .*?\)(?= \(|[^\p{L}\p{N}()\n]*$)/gmu,
   / \[facts [^\]]*\]/g,
   / 🧩 \[GAP -- no fact linked\]/g,
   / \[PRACTITIONER — total exceeds the Rule 24\(j\) cap; Rule 24\(h\) consent position required\]/g,

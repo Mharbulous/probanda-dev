@@ -1,4 +1,4 @@
-Read when: the practitioner asks to research a board's research jobs together, or `/work` hands the session here to do so.
+Read when: the practitioner asks to research a board's research jobs together, or `/work` hands the session here to do so, or `/legal-research` is run with no arguments (see "Unfinished jobs").
 
 # Board mode: several research jobs on one board
 
@@ -40,6 +40,16 @@ The jobs share the retrieval lanes, which the doctrine sets. One Chrome-mode `la
 5. Release whatever is now ready (step 2).
 
 Board mode ends when no research job on the board is queued or held. Then show each memo saved in this run as its file card.
+
+## Unfinished jobs
+
+For `/legal-research` with no arguments. Render the board's `live` and `rejected` lanes (`drafting_forms__board_card`) and list its research jobs as a numbered list, in this order. This reads only: it runs no sweep, assigns no job and writes nothing.
+
+1. Ready, Bring Forward and Blocked jobs, which no session holds.
+2. In Progress jobs, which other sessions hold, each with its holder.
+3. The count of shelved research jobs (the `rejected` lane), on one line. List none of them.
+
+Within 1 and 2, newest first by the later of a job's `last activity` and the time its `answers:` line shows its memo was saved. A job with neither goes last.
 
 ## The rewording review
 
