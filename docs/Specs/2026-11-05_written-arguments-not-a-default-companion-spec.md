@@ -66,3 +66,26 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 
 Check every path, line number and quotation in §2 against HEAD, mark each confirmed or not, and correct this spec before building on anything that moved.
+
+## 11. Verification against HEAD (2026-11-05, at `caee95e6`)
+
+Paths are under `.claude/skills/` (skills) and `source/lawyer/mcp/src/` (server).
+
+| §2 claim | Result |
+|---|---|
+| `draft/references/CAN/BC/BCSC/Documents/notice-of-application.md` line 9 declares `"companions": ["written-arguments"]` | Confirmed |
+| `application-response.md` line 9, same | Confirmed |
+| `requisition-consent.md` line 8, same | Confirmed |
+| `requisition-default-judgment.md` line 8, same | Confirmed |
+| `shared/declared-layout.md` `companions` row and "`companions` members" text | Confirmed, lines 69 and 112 |
+| `drafting-data/references/filing-checklists.md` line 150, "Companions" bullet | Confirmed |
+| `create_writing` stores the type's layout; `resnapshot_writing` re-reads the type file | Confirmed (`submission/forms/layout-snapshot.ts`, `submission/writing-snapshot.ts`) |
+| `terms-and-symbols.md` lines 160, 166, 366 | Confirmed (160 pointer lists, 166 Rendering of crossed-out material, 366 the 🧵 decision-log line) |
+| `filing-checklists.md` lines 239, 254, 652 | Confirmed (239 the `loose-thread` key row, 254 the citation scan, 652 the WA numbering row) |
+
+Corrections to §4, found in the server:
+
+- All four types are `renderer: "bespoke"`. A bespoke Writing's render takes its companions from the live type file (`submission/forms/render-documents.ts`, `venueDocumentsForFiling` reads `composeFiller(...).block.companions`), not from the Writing's stored layout. Deleting the declaration alone would therefore drop Written Arguments from every existing Writing too, breaking §5's first constraint. The render must read companions from the stored layout.
+- 🧵 *loose thread* (`markers.ts` `looseThreadMarker`, called in `render-notice-of-application.ts` and `render-application-response.ts`) fires on every item the form deploys that no Written Arguments pointer row deploys. On a Writing with no Written Arguments it would fire on every item, and the `open-items` criterion (`goal-criteria.ts`, slug `loose-thread`) could never be met. It must fire only when the Writing has Written Arguments.
+- §9's second question: the requisition renderers read no Written Arguments pointer and raise no 🧵. Their criteria (`noting-up`, `open-items`, `counsel-review`) need Written Arguments only through 🧵, so none needs it once 🧵 is scoped as above.
+- The citation scan reads the documents the render produced, so a Writing with no Written Arguments scans the venue document alone. No change needed beyond the text.
