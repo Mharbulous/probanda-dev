@@ -1942,9 +1942,24 @@ class TestV32DeliveredAndLayoutFreeze(unittest.TestCase):
 
 class TestLetterStockJobIdioms(unittest.TestCase):
     """jobs-stock.md section 3b's letter save idiom, run as written: a letter's save writes the
-    fixed-text job 'Deliver' alone, blocked by nothing (ADR 0024 D10; no 'Draft the letter' since
-    2026-10-23), and a save under the 'Availability letter' job writes 'Deliver' alone, blocked by that job."""
+    fixed-text job 'Draft and send the letter' alone, blocked by nothing (its 12 steps are the letter's
+    phases; no 'Draft the letter' since 2026-10-23), and a save under the 'Availability letter' job
+    writes 'Deliver' alone, blocked by that job (ADR 0024 D10)."""
 
+    PHASE_STEPS = [
+        "Frame the letter: real audience, purpose as an outcome, fit with the goal, capacity and register, without prejudice, delivery method, copies, enclosures, what it must not say",
+        "Source or attribute each fact, and list the gaps",
+        "Settle the law: propositions, research jobs, excerpts and note-ups",
+        "Approve the outline; the scrivener drafts",
+        "Review: facts traced, tone and audience, risk, counsel's paragraph review, DRAFT label removed",
+        "Client approval",
+        "Finalize: letterhead, enclosures, signature",
+        "Send the letter to its recipients",
+        "Record the letter as sent",
+        "Confirm delivery",
+        "Acknowledgement received",
+        "Follow up on the date the practitioner set, and log the response",
+    ]
     JOBS = Path(__file__).resolve().parents[1] / "references" / "jobs-stock.md"
     GATE = Path(__file__).resolve().parents[1] / "references" / "jobs-gate.md"
     SEED = """
@@ -1971,22 +1986,22 @@ class TestLetterStockJobIdioms(unittest.TestCase):
         con.executescript(self.SEED)
         return con
 
-    def test_a_letter_save_writes_deliver_alone_and_no_block(self):
+    def test_a_letter_save_writes_the_phase_job_alone_and_no_block(self):
         self.assertEqual(len(self.blocks), 2)
         con = self._db("plain.sqlite")
         con.executescript(self.blocks[0])
         self.assertEqual(
             con.execute("SELECT id, filing_id, title, intent, kind, priority FROM tickets WHERE id > 19 ORDER BY id").fetchall(),
-            [(20, 8, "Deliver", "Send this letter to its recipients and record it as sent.", "work", 0)],
+            [(20, 8, "Draft and send the letter", "Draft this letter, send it to its recipients, and see it through to a reply.", "work", 0)],
         )
-        self.assertEqual(con.execute("SELECT count(*) FROM tickets WHERE title = 'Draft the letter'").fetchone(), (0,))
+        self.assertEqual(con.execute("SELECT count(*) FROM tickets WHERE title IN ('Draft the letter', 'Deliver')").fetchone(), (0,))
         self.assertEqual(
             con.execute("SELECT ticket_id, ordinal, text FROM ticket_steps ORDER BY ticket_id, ordinal").fetchall(),
-            [(20, 1, "Send the letter to its recipients"), (20, 2, "Record the letter as sent")],
+            [(20, ordinal, text) for ordinal, text in enumerate(self.PHASE_STEPS, 1)],
         )
         self.assertEqual(
             con.execute("SELECT ticket_id, entity, entity_id FROM ticket_scope ORDER BY id").fetchall(),
-            [(20, "filings", 8), (20, "documents", None)],
+            [(20, "filings", 8), (20, "documents", None), (20, "filing_prose", None), (20, "filing_recipients", None)],
         )
         self.assertEqual(con.execute("SELECT blocker_id, blocked_id FROM ticket_blocks").fetchall(), [])
 
@@ -1996,13 +2011,18 @@ class TestLetterStockJobIdioms(unittest.TestCase):
         self.assertEqual(
             con.execute("SELECT id, title FROM tickets WHERE filing_id = 8 ORDER BY id").fetchall(), [(20, "Deliver")]
         )
-        self.assertEqual(con.execute("SELECT count(*) FROM tickets WHERE title = 'Draft the letter'").fetchone(), (0,))
-        self.assertEqual(con.execute("SELECT count(*) FROM ticket_steps WHERE ticket_id = 20").fetchone(), (2,))
+        self.assertEqual(con.execute("SELECT count(*) FROM tickets WHERE title IN ('Draft the letter', 'Draft and send the letter')").fetchone(), (0,))
+        self.assertEqual(
+            con.execute("SELECT ordinal, text FROM ticket_steps WHERE ticket_id = 20 ORDER BY ordinal").fetchall(),
+            [(1, "Send the letter to its recipients"), (2, "Record the letter as sent")],
+        )
         self.assertEqual(con.execute("SELECT blocker_id, blocked_id FROM ticket_blocks").fetchall(), [(19, 20)])
 
-    def test_the_gate_jobs_nothing_open_read_leaves_both_out(self):
+    def test_the_gate_jobs_nothing_open_read_leaves_the_letter_jobs_out(self):
         gate = self.GATE.read_text(encoding="utf-8").replace("\r\n", "\n")
-        self.assertIn("'Draft the letter', 'Deliver', 'Pre-send gate')", gate[gate.index("## 14."):])
+        read = gate[gate.index("## 14."):]
+        self.assertIn("'Draft the letter', 'Deliver', 'Pre-send gate')", read)
+        self.assertIn("'Draft and send the letter', 'Draft the letter', 'Deliver', 'Pre-send gate')", read)
 
     def test_the_gate_jobs_nothing_open_read_leaves_out_every_stock_job_of_amended_rule_8_1(self):
         gate = self.GATE.read_text(encoding="utf-8").replace("\r\n", "\n")

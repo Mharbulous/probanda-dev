@@ -12,7 +12,9 @@
 // text; then one transaction writing the party rows it was sent with (forms/parties-snapshot.ts,
 // schema v42), the sent copy's `documents` row, `sent_copy_id`, the signer
 // snapshot and `filed_on` (the Sent date), which freezes the exhibits and moves the revision, with
-// the Pre-send gate job's step rewrites, waivers and completion and the `Deliver` job's closure. Only the `held` refusal writes
+// the Pre-send gate job's step rewrites, waivers and completion and the `Deliver` job's closure (a
+// letter's one job, `Draft and send the letter`, has its send and record steps ticked, and closes
+// only when every step is resolved). Only the `held` refusal writes
 // before that transaction: the job and its steps.
 // `layout_snapshot` and `needs_forum_parts` are never written: the v32 layout-freeze trigger
 // refuses them in the statement that sets `filed_on`.
@@ -31,13 +33,17 @@ import { storedLayout, type StoredLayout } from "./layout-snapshot.js";
 import type { LayoutPart } from "./projections.js";
 import { partiesSnapshotStatements } from "./parties-snapshot.js";
 import type { MarkerInventory } from "./proposal-inventory.js";
-import { fetchProse, fetchRevision, isJobOnlyBoard, liveTicketClause, type FilingRow } from "./query.js";
+import { LETTER_JOB_TITLE } from "./goal-gate.js";
+import { fetchProse, fetchRevision, isJobOnlyBoard, liveTicketClause, stepStatusHeld, type FilingRow } from "./query.js";
 import { PRE_SEND_TITLE, unmetAuthorityConfirmedCriterion, unmetCurrencyCriterion, unmetHeldCriteria, unmetPositionConflictCriterion, type GoalCriterion } from "./render-work-board.js";
 import { nowMinuteSql } from "./timings.js";
 import { rows } from "../query-rows.js";
 
 const TOOL = "drafting_data__record_sent";
 const DELIVER_TITLE = "Deliver";
+/** The only steps of the letter's one job (LETTER_JOB_TITLE) this write ticks, matched by exact text:
+ * `Deliver`'s two, kept word for word (jobs-stock.md §3b). */
+const SENT_STEP_TEXTS = ["Send the letter to its recipients", "Record the letter as sent"];
 const WAIVER = " — WAIVED: ";
 const PRE_SEND_INTENT = "Meet or waive each criterion that holds this Writing back from being recorded as sent.";
 
@@ -83,7 +89,8 @@ export interface RecordSentResult {
   signer_snapshot: Record<string, unknown>;
   /** The Pre-send gate job this write closed, with the held criteria it waived; null when none exists. */
   pre_send_gate: { ticket_id: number; waived: string[] } | null;
-  /** The `Deliver` job this write closed, both its steps done; null when none was live. */
+  /** The `Deliver` job this write closed, both its steps done, or the letter's one job (`Draft and send the
+   * letter`) when this write left no step of it to do; null when none was live or the letter's job has one open. */
   deliver: { ticket_id: number } | null;
   note: string;
   warning?: string;
@@ -181,11 +188,11 @@ function planPreSendGate(dbPath: string, filing: FilingRow, held: GoalCriterion[
     if (held.length === 0) return { live: null, job: null, statements: [] };
     const [anchor] = rows<{ billing_anchor: string }>(
       dbPath,
-      "SELECT billing_anchor FROM tickets WHERE filing_id = ? AND billing_anchor IS NOT NULL ORDER BY (title = 'Deliver') DESC, id DESC LIMIT 1",
-      [filing.id]
+      "SELECT billing_anchor FROM tickets WHERE filing_id = ? AND billing_anchor IS NOT NULL ORDER BY (title IN (?, ?)) DESC, id DESC LIMIT 1",
+      [filing.id, DELIVER_TITLE, LETTER_JOB_TITLE]
     );
     if (anchor === undefined) {
-      throw refused(`no job on "${filing.title}"'s Work Board says what to bill the Pre-send gate job to; a letter's Deliver job, written when it is saved, says it`, "no_billing_anchor");
+      throw refused(`no job on "${filing.title}"'s Work Board says what to bill the Pre-send gate job to; a letter's job, written when it is saved, says it`, "no_billing_anchor");
     }
     const notDeleted = liveTicketClause(dbPath);
     const job: JobRef = { sql: `(SELECT id FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`, params: [filing.id, PRE_SEND_TITLE] };
@@ -417,14 +424,38 @@ export async function submissionDataRecordSent(args: RecordSentArgs, env: NodeJS
   // The Writing's live `Deliver` job closes in the same transaction (jobs.md §3b): a recorded sent
   // copy is the evidence that the send happened, so both steps are done. A job already completed or
   // superseded matches nothing and is left as it stands, as is a shelved one (jobs.md §10a).
-  const deliverId =
-    rows<{ id: number }>(args.db_path, `${liveJobSql(args.db_path).replace("ORDER BY", "AND rejected_at IS NULL ORDER BY")}`, [filing.id, DELIVER_TITLE])[0]?.id ?? null;
+  const liveSendJob = (title: string): number | null =>
+    rows<{ id: number }>(args.db_path, `${liveJobSql(args.db_path).replace("ORDER BY", "AND rejected_at IS NULL ORDER BY")}`, [filing.id, title])[0]?.id ?? null;
+  const live = "status IN ('queued', 'wip') AND rejected_at IS NULL";
+  /** Each job this write tried to close, with the index of its completing statement. */
+  const closures: { ticket_id: number; at: number }[] = [];
+  const deliverId = liveSendJob(DELIVER_TITLE);
   if (deliverId !== null) {
-    const live = "status IN ('queued', 'wip') AND rejected_at IS NULL";
     statements.push(
       { sql: `UPDATE ticket_steps SET done_at = ${nowMinuteSql()} WHERE ticket_id = ? AND done_at IS NULL AND ticket_id IN (SELECT id FROM tickets WHERE id = ? AND ${live})`, params: [deliverId, deliverId] },
       { sql: `UPDATE tickets SET status = 'completed', completed_at = ${nowMinuteSql()}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${live}`, params: [deliverId] }
     );
+    closures.push({ ticket_id: deliverId, at: statements.length - 1 });
+  }
+  // A letter's one job (jobs-stock.md §3b) has phases before and after the send: only the two steps that
+  // send and record it are ticked, and the job completes only once every step is resolved (done, or
+  // cancelled or deferred on the practitioner's words, as complete_job reads step-state.ts's stepResolved).
+  const letterJobId = liveSendJob(LETTER_JOB_TITLE);
+  if (letterJobId !== null) {
+    const unresolved = stepStatusHeld(args.db_path) ? "done_at IS NULL AND COALESCE(status, '') NOT IN ('cancelled', 'deferred')" : "done_at IS NULL";
+    statements.push(
+      {
+        sql: `UPDATE ticket_steps SET done_at = ${nowMinuteSql()} WHERE ticket_id = ? AND done_at IS NULL AND text IN (?, ?) AND ticket_id IN (SELECT id FROM tickets WHERE id = ? AND ${live})`,
+        params: [letterJobId, ...SENT_STEP_TEXTS, letterJobId],
+      },
+      {
+        sql:
+          `UPDATE tickets SET status = 'completed', completed_at = ${nowMinuteSql()}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${live} ` +
+          `AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = ? AND ${unresolved})`,
+        params: [letterJobId, letterJobId],
+      }
+    );
+    closures.push({ ticket_id: letterJobId, at: statements.length - 1 });
   }
   const written = await submissionDataWriteAll(args.db_path, statements, env);
   if (!written.ok) {
@@ -437,6 +468,7 @@ export async function submissionDataRecordSent(args: RecordSentArgs, env: NodeJS
   const gateJob =
     gate.job === null ? null : (gate.live ?? rows<{ id: number }>(args.db_path, "SELECT id FROM tickets WHERE filing_id = ? AND title = ? ORDER BY id DESC LIMIT 1", [filing.id, PRE_SEND_TITLE])[0].id);
 
+  const closed = closures.find((c) => written.results[c.at].changes > 0);
   const unused = args.send_anyway !== undefined && waived.length === 0 ? " Nothing held sending, so the send_anyway words were not recorded." : "";
   const [after] = rows<{ sent_copy_id: number }>(args.db_path, "SELECT sent_copy_id FROM filings WHERE id = ?", [filing.id]);
   return {
@@ -448,8 +480,9 @@ export async function submissionDataRecordSent(args: RecordSentArgs, env: NodeJS
     comparison: { ...comparison, paragraphs: paragraphs.length },
     signer_snapshot: signer,
     pre_send_gate: gateJob === null ? null : { ticket_id: gateJob, waived },
-    // Null when another session finished the job between the read and the write.
-    deliver: deliverId === null || written.results[written.results.length - 1].changes === 0 ? null : { ticket_id: deliverId },
+    // Null when no job closed: none was live, another session finished it between the read and the
+    // write, or the letter's one job still has a step to do after the send.
+    deliver: closed === undefined ? null : { ticket_id: closed.ticket_id },
     note:
       `"${filing.title}" recorded as sent on ${args.sent_on}; its exhibits are frozen.` +
       (comparison.note ? ` ${comparison.note}.` : "") +

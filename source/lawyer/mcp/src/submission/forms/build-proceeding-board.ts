@@ -19,6 +19,7 @@ import {
 import type { WorkBoardEdge, WorkBoardTicket } from "./work-board-ticket.js";
 import { fetchOpenSeeds, type WorkBoardSeed } from "./work-board-seeds.js";
 import { fetchJobActivity } from "./job-activity.js";
+import { LETTER_JOB_TITLE } from "./goal-gate.js";
 import { activeAt, classify, holdsMaterial, lapsesAt, lockLapsed, reachesItself, scopesShare, supersededReason } from "./ticket-category.js";
 import { nowStamp } from "./timings.js";
 import { UNATTENDED_TOKEN_PREFIX } from "./unattended-eligibility.js";
@@ -184,8 +185,8 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, rende
   const holding = tickets.map((t) => t.ticket).filter(holdsMaterial);
   for (const { ticket } of tickets) {
     if (ticket.category !== "ready") continue;
-    // A `Deliver` is the practitioner's too: its first step, sending, is their own act (jobs-stock.md §3b).
-    if (ticket.title.startsWith("Counsel's review of ") || ticket.title === "Deliver") ticket.dispatch_skips.push({ reason: "practitioner_own" });
+    // A `Deliver` or a letter's one job is the practitioner's too: sending is their own act (jobs-stock.md §3b).
+    if (ticket.title.startsWith("Counsel's review of ") || ticket.title === "Deliver" || ticket.title === LETTER_JOB_TITLE) ticket.dispatch_skips.push({ reason: "practitioner_own" });
     for (const p of ticket.conflicts) if (p.status === "queued" && !p.rejected) ticket.dispatch_skips.push({ reason: "either_or", job: p.id });
     for (const held of holding) {
       if (held.id === ticket.id) continue;

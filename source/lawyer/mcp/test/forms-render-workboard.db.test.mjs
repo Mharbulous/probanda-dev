@@ -1361,6 +1361,40 @@ test("goal: a queued stock bundle job names no job on the gate row, and an ordin
   }
 });
 
+// A letter's one job (jobs-stock.md §3b) is the practitioner's own, as `Deliver` is: its steps include
+// sending and the follow-up, so Dispatch skips it, and as a stock job the gate row does not count it.
+test("tickets: a Ready Draft and send the letter job reads dispatch: skip (practitioner's own) and is left out of the gate count", async () => {
+  const f = seededDbFixture();
+  try {
+    await freshSubmissionDb(f.dbPath);
+    await seedNoticeOfApplication(f.dbPath);
+    await submissionDataExecute(
+      f.dbPath,
+      `INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, created)
+         VALUES (1, 1, 1, 'Draft and send the letter', 'Draft this letter, send it to its recipients, and see it through to a reply.', 'queued', 0, 'work', 'L9002|letter', '2026-09-24T09:00');
+       INSERT INTO ticket_steps (ticket_id, ordinal, text)
+         VALUES (1, 1, 'Source or attribute each fact, and list the gaps'), (1, 2, 'Send the letter to its recipients'), (1, 3, 'Record the letter as sent'), (1, 4, 'Confirm delivery');`
+    );
+    const GATE = { id: "gate", text: "The pre-filing checks are passed or waived", source: "sqlite" };
+
+    const data = boardWithInventory(f.dbPath, []);
+    assert.equal(ticketIn(data, 1).category, "ready");
+    assert.deepEqual(ticketIn(data, 1).dispatch_skips, [{ reason: "practitioner_own" }]);
+    const head = renderLiveLanes(data).find((l) => l.startsWith("- Job #1 "));
+    assert.ok(head.endsWith("dispatch: skip (practitioner's own)"), head);
+    assert.deepEqual(criterionOf(data, "gate"), { ...GATE, state: "unmet", outstanding: 0, items: [] }, "the letter's job is not counted");
+
+    await submissionDataExecute(
+      f.dbPath,
+      `INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, created)
+         VALUES (4, 1, 1, 'Draft the affidavit of service', 'Swear it before filing.', 'queued', 0, 'work', 'L9002|service', '2026-09-24T09:03');`
+    );
+    assert.deepEqual(criterionOf(boardWithInventory(f.dbPath, []), "gate").items, ["Draft the affidavit of service"], "an ordinary job is counted beside it");
+  } finally {
+    f.cleanup();
+  }
+});
+
 // Spec 2026-10-08 (pre-filing gate post-filing deadlock): a job that waits on File and serve, directly or
 // through other open jobs, runs after filing, so it must not hold open the gate File and serve waits on.
 test("goal: a job waiting on File and serve, directly or through open jobs, is not counted on the gate row, and a completed link breaks the chain", async () => {

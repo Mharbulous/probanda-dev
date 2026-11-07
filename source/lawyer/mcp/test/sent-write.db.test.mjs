@@ -620,6 +620,144 @@ test("a Deliver job a job session already completed is left as it is, and the Se
   assert.equal(filing(g, id).filed_on, "2026-09-25");
 });
 
+// A letter's one job, `Draft and send the letter` (jobs-stock.md §3b): twelve steps, of which the Sent
+// write ticks only the two that send and record the letter, and which closes only once every step is resolved.
+const LETTER_JOB = "Draft and send the letter";
+const LETTER_STEPS = [
+  "Frame the letter: real audience, purpose as an outcome, fit with the goal, capacity and register, without prejudice, delivery method, copies, enclosures, what it must not say",
+  "Source or attribute each fact, and list the gaps",
+  "Settle the law: propositions, research jobs, excerpts and note-ups",
+  "Approve the outline; the scrivener drafts",
+  "Review: facts traced, tone and audience, risk, counsel's paragraph review, DRAFT label removed",
+  "Client approval",
+  "Finalize: letterhead, enclosures, signature",
+  "Send the letter to its recipients",
+  "Record the letter as sent",
+  "Confirm delivery",
+  "Acknowledgement received",
+  "Follow up on the date the practitioner set, and log the response",
+];
+const letterJob = (g, id) => g.query("SELECT id, status, completed_at, locked_by, locked_at FROM tickets WHERE filing_id = ? AND title = ?", [id, LETTER_JOB])[0];
+const inList = (ordinals) => `(${ordinals.join(", ")})`;
+/** Turns the drafted letter's `Deliver` job into the letter's one job, with its twelve steps in order.
+ * `done`, `cancelled`, `deferred` and `waiting` are step ordinals set that way beforehand. */
+async function letterJobOf(g, id, { done = [], cancelled = [], deferred = [], waiting = [], jobStatus = "queued", steps = LETTER_STEPS } = {}) {
+  const { id: ticketId } = deliverJob(g, id);
+  const rowsSql = steps.map((text, i) => `(${ticketId}, ${i + 1}, '${text.replaceAll("'", "''")}')`).join(", ");
+  const setStatus = (status, ordinals, extra = "") => (ordinals.length === 0 ? "" : `UPDATE ticket_steps SET status = '${status}'${extra} WHERE ticket_id = ${ticketId} AND ordinal IN ${inList(ordinals)};`);
+  await g.execute(
+    `UPDATE tickets SET title = '${LETTER_JOB}', intent = 'Draft this letter, send it to its recipients, and see it through to a reply.' WHERE id = ${ticketId};` +
+      `INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES ${rowsSql};` +
+      (done.length === 0 ? "" : `UPDATE ticket_steps SET done_at = '2026-09-25T09:10' WHERE ticket_id = ${ticketId} AND ordinal IN ${inList(done)};`) +
+      setStatus("cancelled", cancelled) +
+      setStatus("deferred", deferred) +
+      setStatus("waiting", waiting, ", wait_until = '2099-01-01T09:00'") +
+      (jobStatus === "wip" ? `UPDATE tickets SET status = 'wip', locked_by = 'session-1', locked_at = '2026-09-25T09:30' WHERE id = ${ticketId};` : "")
+  );
+  return ticketId;
+}
+/** Each step of the job as `done`, or its status when it is not done. */
+const stateOf = (g, ticketId) => g.query("SELECT ordinal, done_at, status FROM ticket_steps WHERE ticket_id = ? ORDER BY ordinal", [ticketId]).map((s) => (s.done_at !== null ? "done" : (s.status ?? "open")));
+
+test("recording a letter as sent ticks only steps 8 and 9 of Draft and send the letter: the earlier steps stay open, and the job stays queued while step 10 or later is open", async (t) => {
+  const { g, id } = await drafted(t);
+  const ticketId = await letterJobOf(g, id);
+  const result = await send(g, id);
+  assert.equal(result.deliver, null, "the job did not close, so the closed-job field is null");
+  assert.equal(filing(g, id).filed_on, "2026-09-25");
+  const job = letterJob(g, id);
+  assert.deepEqual([job.status, job.completed_at], ["queued", null]);
+  assert.deepEqual(
+    stateOf(g, ticketId),
+    ["open", "open", "open", "open", "open", "open", "open", "done", "done", "open", "open", "open"],
+    "steps 1 to 7 stay open, steps 8 and 9 are done, steps 10 to 12 stay open"
+  );
+});
+
+test("Draft and send the letter stays queued while step 10 alone is open, and a wip one keeps its lock", async (t) => {
+  const { g, id } = await drafted(t);
+  const ticketId = await letterJobOf(g, id, { done: [1, 2, 3, 4, 5, 6, 7], cancelled: [11, 12], jobStatus: "wip" });
+  assert.equal((await send(g, id)).deliver, null);
+  const job = letterJob(g, id);
+  assert.deepEqual([job.status, job.locked_by], ["wip", "session-1"], "Confirm delivery is still open");
+  assert.deepEqual(stateOf(g, ticketId).slice(7), ["done", "done", "open", "cancelled", "cancelled"]);
+});
+
+test("Draft and send the letter is completed, its lock cleared, when every step other than 8 and 9 is done, cancelled or deferred, and the result names it", async (t) => {
+  const { g, id } = await drafted(t);
+  const ticketId = await letterJobOf(g, id, { done: [1, 2, 3, 4, 5, 7, 10], cancelled: [6, 11], deferred: [12], jobStatus: "wip" });
+  const result = await send(g, id);
+  assert.deepEqual(result.deliver, { ticket_id: ticketId });
+  const job = letterJob(g, id);
+  assert.deepEqual([job.status, job.locked_by, job.locked_at], ["completed", null, null]);
+  assert.notEqual(job.completed_at, null);
+  assert.deepEqual(stateOf(g, ticketId), ["done", "done", "done", "done", "done", "cancelled", "done", "done", "done", "done", "cancelled", "deferred"]);
+});
+
+test("a waiting or retry step of Draft and send the letter is still open, so the job stays queued", async (t) => {
+  for (const [label, options] of [
+    ["waiting", { done: [1, 2, 3, 4, 5, 6, 7, 10, 11], waiting: [12] }],
+    ["retry", { done: [1, 2, 3, 4, 5, 6, 7, 10, 11] }],
+  ]) {
+    const { g, id } = await drafted(t);
+    const ticketId = await letterJobOf(g, id, options);
+    if (label === "retry") await g.execute(`UPDATE ticket_steps SET status = 'retry' WHERE ticket_id = ${ticketId} AND ordinal = 12;`);
+    assert.equal((await send(g, id)).deliver, null, label);
+    assert.equal(letterJob(g, id).status, "queued", label);
+    assert.deepEqual(stateOf(g, ticketId).slice(7), ["done", "done", "done", "done", label], label);
+  }
+});
+
+test("the Sent write ticks a step of Draft and send the letter only by its exact text", async (t) => {
+  const { g, id } = await drafted(t);
+  const ticketId = await letterJobOf(g, id, {
+    steps: ["Send the letter to its recipients and file a copy", "Record the letter as sent, with the courier receipt", "Send the letter to its recipients", "Record the letter as sent"],
+  });
+  await send(g, id);
+  assert.deepEqual(stateOf(g, ticketId), ["open", "open", "done", "done"]);
+  assert.equal(letterJob(g, id).status, "queued", "the two near-matches are still open");
+});
+
+test("a refused Sent write leaves Draft and send the letter as it stood", async (t) => {
+  const { g, id } = await drafted(t);
+  const ticketId = await letterJobOf(g, id);
+  const before = [letterJob(g, id), stepsOf(g, ticketId)];
+  setInventory(g, id, [unquoted]);
+  await assert.rejects(send(g, id), code("held"));
+  assert.deepEqual([letterJob(g, id), stepsOf(g, ticketId)], before);
+  await send(g, id, { send_anyway: WORDS });
+  assert.deepEqual(stateOf(g, ticketId).slice(6, 10), ["open", "done", "done", "open"], "send anyway ticks the same two steps");
+});
+
+test("a Pre-send gate job copies its billing anchor from Draft and send the letter", async (t) => {
+  const { g, id } = await drafted(t);
+  await letterJobOf(g, id);
+  await g.execute(
+    `UPDATE tickets SET billing_anchor = 'L0000|letter job' WHERE filing_id = ${id} AND title = '${LETTER_JOB}';` +
+      `INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created) VALUES (1, ${id}, 'Other', 'x', 'work', 5, 'L0000|other', '2026-09-25T09:00');`
+  );
+  setInventory(g, id, [unquoted]);
+  await assert.rejects(send(g, id), code("held", /excerpts/));
+  const [job] = gateJobs(g, id);
+  assert.equal(job.billing_anchor, "L0000|letter job");
+});
+
+test("a superseded or shelved Draft and send the letter job is left as it stands, and the Sent write still succeeds", async (t) => {
+  for (const [label, set] of [
+    ["superseded", (job) => `UPDATE tickets SET status = 'superseded', superseded_by = ${job + 1} WHERE id = ${job};`],
+    ["shelved", (job) => `UPDATE tickets SET rejected_at = '2026-09-25T09:45' WHERE id = ${job};`],
+  ]) {
+    const { g, id } = await drafted(t);
+    const ticketId = await letterJobOf(g, id);
+    await g.execute(`INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created) VALUES (1, ${id}, 'Other', 'x', 'work', 5, 'L0000|x', '2026-09-25T09:00');`);
+    await g.execute(set(ticketId));
+    const before = [letterJob(g, id), stepsOf(g, ticketId)];
+    assert.equal((await send(g, id)).deliver, null, label);
+    assert.deepEqual([letterJob(g, id), stepsOf(g, ticketId)], before, label);
+    assert.equal(filing(g, id).filed_on, "2026-09-25", label);
+  }
+});
+
 /** An internal memo (#1161: sent like a letter), saved with the memo's `Deliver` job (jobs.md §3b), drafted and rendered once. */
 async function draftedMemo(t) {
   const g = await generalWritingFixture(t);

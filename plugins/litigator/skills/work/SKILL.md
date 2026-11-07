@@ -23,7 +23,7 @@ These rules moved from `/draft` verbatim. A file, section or part of SKILL.md th
 
 | The job | Worked by |
 |---|---|
-| Work on a Writing: drafting, revising, assembling, a letter or its `Deliver` job, counsel's review, a scrutiny review | `/draft` |
+| Work on a Writing: drafting, revising, assembling, a letter or its `Draft and send the letter` or `Deliver` job, counsel's review, a scrutiny review | `/draft` |
 | A research question | `/legal-research` |
 | A case brief, its title opening `Brief the case: ` | `/case-brief` |
 | A job whose only step is the plan marker | `/job-planning`, then this table again |
