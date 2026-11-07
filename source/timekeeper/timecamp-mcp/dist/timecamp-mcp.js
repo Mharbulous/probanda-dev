@@ -1,4 +1,4 @@
-// build-stamp: 4818593f8ca7
+// build-stamp: 9c865a95484e
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15783,7 +15783,7 @@ import { randomBytes } from "node:crypto";
 
 // src/repo-root.ts
 import { existsSync as existsSync2, readFileSync, readdirSync as readdirSync2, statSync } from "node:fs";
-import { basename, dirname as dirname2, join as join4, resolve, win32 as pathWin32 } from "node:path";
+import { basename, dirname as dirname2, join as join4, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // src/config-path.ts
@@ -15856,7 +15856,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "4818593f8ca7";
+var BUILD_STAMP = false ? null : "9c865a95484e";
 
 // src/local-page/listener.ts
 import { createServer, get } from "node:http";

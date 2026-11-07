@@ -1,4 +1,4 @@
-// build-stamp: 874b734a3fae
+// build-stamp: 84a950bb993e
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -108273,7 +108273,7 @@ function jsonText(name2, result) {
 // src/mail/tools.ts
 import { createHash as createHash4 } from "node:crypto";
 import { mkdirSync as mkdirSync3, readdirSync as readdirSync4, readFileSync as readFileSync5, rmSync as rmSync2, statSync as statSync3, writeFileSync as writeFileSync2 } from "node:fs";
-import { basename as basename2, extname, join as join6, win32 as pathWin322 } from "node:path";
+import { basename as basename2, extname, join as join6, win32 as pathWin32 } from "node:path";
 
 // ../../mcp-shared/dpapi-store.js
 import { spawn } from "node:child_process";
@@ -119506,7 +119506,7 @@ import { randomBytes } from "node:crypto";
 
 // src/repo-root.ts
 import { existsSync as existsSync2, readFileSync as readFileSync3, readdirSync as readdirSync3, statSync as statSync2 } from "node:fs";
-import { basename, dirname as dirname2, join as join5, resolve, win32 as pathWin32 } from "node:path";
+import { basename, dirname as dirname2, join as join5, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // src/config-path.ts
@@ -119579,7 +119579,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "874b734a3fae";
+var BUILD_STAMP = false ? null : "84a950bb993e";
 
 // src/local-page/listener.ts
 import { createServer, get } from "node:http";
@@ -122303,7 +122303,7 @@ function saveDirArg(tool, args) {
   const saveDir = args.save_dir;
   let isDir = false;
   try {
-    isDir = pathWin322.isAbsolute(saveDir) && statSync3(saveDir).isDirectory();
+    isDir = pathWin32.isAbsolute(saveDir) && statSync3(saveDir).isDirectory();
   } catch {
     isDir = false;
   }
@@ -122515,7 +122515,7 @@ function findThreadMessages(run, args) {
 }
 async function saveDraft(run, args) {
   const emlPath = args.eml_path;
-  if (!pathWin322.isAbsolute(emlPath)) throw new ValidationError("mail__save_draft.eml_path must be an absolute path");
+  if (!pathWin32.isAbsolute(emlPath)) throw new ValidationError("mail__save_draft.eml_path must be an absolute path");
   let size;
   try {
     const stat = statSync3(emlPath);

@@ -36,9 +36,8 @@ export type CaseRecordNames =
   /** A database behind the current schema, or a failed read. */
   | { status: "unavailable" };
 
-/** One result per folder of `caseDataDirs`, in order. Never throws: a failed spawn reads every folder unavailable.
- * `scriptsDir` is a test seam for a host whose paths caseDataMigrateScriptsDir does not resolve. */
-export function listCaseRecordNames(caseDataDirs: string[], env: NodeJS.ProcessEnv = process.env, scriptsDir?: string): CaseRecordNames[] {
+/** One result per folder of `caseDataDirs`, in order. Never throws: a failed spawn reads every folder unavailable. */
+export function listCaseRecordNames(caseDataDirs: string[], env: NodeJS.ProcessEnv = process.env): CaseRecordNames[] {
   if (caseDataDirs.length === 0) return [];
   const unavailable = caseDataDirs.map((): CaseRecordNames => ({ status: "unavailable" }));
   try {
@@ -48,7 +47,7 @@ export function listCaseRecordNames(caseDataDirs: string[], env: NodeJS.ProcessE
       payload: JSON.stringify({ case_data_dirs: caseDataDirs }),
       env,
       timeoutMs: pythonTimeoutMs(env, READ_TIMEOUT_MS, "COCLERK_CASE_PYTHON_TIMEOUT_MS"),
-      extraEnv: { PYTHONPATH: scriptsDir ?? caseDataMigrateScriptsDir(env) },
+      extraEnv: { PYTHONPATH: caseDataMigrateScriptsDir(env) },
     }) as { ok: boolean; result?: { results?: unknown[] } };
     const results = parsed.ok ? parsed.result?.results : undefined;
     if (!Array.isArray(results) || results.length !== caseDataDirs.length) return unavailable;

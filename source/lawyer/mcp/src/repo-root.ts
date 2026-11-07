@@ -47,7 +47,7 @@ import { homedir } from "node:os";
 // only real, native, absolute HOST paths (import.meta.url, %APPDATA%,
 // %USERPROFILE%) -- files/scope.ts's win32 grammar is for caller-supplied
 // relative paths and must not be reused here.
-import { basename, dirname, join, resolve, win32 as pathWin32 } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { configPath } from "./config-path.js";
@@ -483,8 +483,9 @@ function migrateScriptsDir(skill: string, env: NodeJS.ProcessEnv | undefined, in
     plugin: MIGRATE_SKILL_PLUGIN[skill],
     installRoot,
   });
-  const dir = pathWin32.join(shipped.root, skill, "references", "scripts");
-  if (!existsSync(pathWin32.join(dir, "migrate_engine.py"))) {
+  // Platform `join`: a host path, so on Windows this is path.win32 as before.
+  const dir = join(shipped.root, skill, "references", "scripts");
+  if (!existsSync(join(dir, "migrate_engine.py"))) {
     throw new DataServerError(
       `migrate_engine.py not found under ${dir} -- ` +
         (shipped.shipped_from === "install"

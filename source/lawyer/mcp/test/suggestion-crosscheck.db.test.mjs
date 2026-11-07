@@ -2,17 +2,12 @@
 // practice items, a firm profile, a folder map and a real matter-data database each hold one planted
 // token, and the check through the data server's tool finds each in a card, named by its record
 // source. A source that cannot be read is reported, never its error text.
-//
-// The runtime resolves /matter-data's scripts by Windows paths only (repo-root.ts), as the nightly
-// suite runs on Windows. Off Windows the tests read case data through the same script, named by its
-// POSIX path, and the one test through the data server's tool runs on Windows only.
 
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
 
 import { memoryKv, seedItems } from "./helpers/fake-cloud.mjs";
 import { writeCaseData } from "./helpers/matter-data-fixture.mjs";
@@ -20,12 +15,8 @@ import { writeCaseData } from "./helpers/matter-data-fixture.mjs";
 const { PracticeStore } = await import("../build/practice/store.js");
 const { callTool } = await import("../build/dispatch.js");
 const { readRecordTexts } = await import("../build/suggestions/records.js");
-const { listCaseRecordNames } = await import("../build/case/list-record-names.js");
 const { loadStopWords, runCrossCheck } = await import("../build/suggestions/crosscheck.js");
 
-const WINDOWS = process.platform === "win32";
-const SCRIPTS = WINDOWS ? undefined : join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", ".claude", "skills", "matter-data", "references", "scripts");
-const seams = WINDOWS ? {} : { listNames: (folders, env) => listCaseRecordNames(folders, env, SCRIPTS) };
 const STOP = loadStopWords(process.env);
 
 const SEED = `
@@ -54,7 +45,7 @@ function device(t) {
   // The matter's own case data folder (ADR 0013), named for its matter number.
   const caseData = join(library, "L901 Orlavikson v Brumbridge", "0. CASE DATA");
   mkdirSync(caseData, { recursive: true });
-  writeCaseData(caseData, SEED, ...(SCRIPTS ? [SCRIPTS] : []));
+  writeCaseData(caseData, SEED);
   const env = { ...process.env, COCLERK_CONFIG_PATH: config, COCLERK_CASE_DATA_ROOT: root };
   const kv = memoryKv();
   seedItems(kv, [
@@ -67,7 +58,7 @@ function device(t) {
 
 test("each record source is read, and a planted token from each is found in the card", async (t) => {
   const { store, env } = device(t);
-  const records = await readRecordTexts(store, env, seams);
+  const records = await readRecordTexts(store, env);
   assert.deepEqual(records.states, {
     client: "read", matter: "read", contact: "read", folder_name: "read", document_title: "read", file_name: "read",
   });
@@ -106,7 +97,7 @@ test("each record source is read, and a planted token from each is found in the 
 
 test("the planted token is found in every part, and the result carries no record text", async (t) => {
   const { store, env } = device(t);
-  const records = await readRecordTexts(store, env, seams);
+  const records = await readRecordTexts(store, env);
   const card = {
     pain_point: "Quillfeather",
     items: ["Vantressa"],
@@ -143,7 +134,7 @@ test("a source that cannot be read is reported by its state only", async (t) => 
   assert.equal(records.firmName, null);
 });
 
-test("the data server's tool reads every source itself", { skip: WINDOWS ? false : "the runtime resolves case data scripts by Windows paths only" }, async (t) => {
+test("the data server's tool reads every source itself", async (t) => {
   const { store } = device(t);
   for (const word of ["Quillfeather", "Halvorsend", "Pemberforth", "Yovanovich", "Ashgrove"]) {
     const result = await callTool({ practiceDb: store }, "suggestion_card__check", { comment: `near ${word}` });
