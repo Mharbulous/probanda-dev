@@ -1,7 +1,7 @@
 {
   "name": "timekeeper",
   "displayName": "Timekeeper",
-  "version": "0.8.8",
+  "version": "0.8.9",
   "description": "Optional Probanda plugin for British Columbia lawyers that tracks time automatically: it gathers the evidence of a day's work (TimeCamp, phone logs, calendars, sent mail, screen activity), sorts it to client matters, corrects TimeCamp and drafts time entries. Billing, invoices and trust stay in the lawyer plugin. Requires the lawyer plugin: install lawyer first.",
   "author": {
     "name": "Probanda Legal",
@@ -13,26 +13,12 @@
     {
       "name": "lawyer",
       "marketplace": "Probanda_Legal_experimental",
-      "version": "^0.25.10"
+      "version": "^0.25.11"
     }
   ],
   "mcpServers": "./.mcp.json",
   "hooks": {
     "PreToolUse": [
-      {
-        "matcher": "mcp__.+time_pipeline__(delete|bulk_apply)$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PLUGIN_ROOT}/hooks/one-way-gate.py"
-            ],
-            "timeout": 10,
-            "statusMessage": "One-way approval gate"
-          }
-        ]
-      },
       {
         "matcher": "^AskUserQuestion$",
         "hooks": [

@@ -1,4 +1,4 @@
-// build-stamp: e82e3a7b9f9a
+// build-stamp: 0d1bb6e9304b
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15627,7 +15627,7 @@ function housekeepingToolDefinitions() {
     },
     {
       name: "housekeeping__serve_page",
-      description: "Serve a run's approval page on 127.0.0.1 and return its `url` for the practitioner (Ctrl+click opens it). The run must be the matter's newest run with a valid proposal.json (else `stale_run` or `invalid_proposal`). Serving invalidates every earlier page link for the matter in this session, so an old tab cannot approve. The link stops working when a newer run is served or the session ends. The page's Submit writes approval.json. Returns {url, run_id, rows, approved}. Then call housekeeping__wait_approval.",
+      description: "Serve a run's approval page on 127.0.0.1 and return its `url` for the practitioner (Ctrl+click opens it). The run must be the matter's newest run with a valid proposal.json (else `stale_run` or `invalid_proposal`). Serving invalidates every earlier page link for the matter, from any session, so an old tab cannot approve. The link stops working when a newer run is served for the matter (from any session), or after 30 days. The page's Submit writes approval.json. Returns {url, run_id, rows, approved, warning?}: `warning: \"older_holder\"` when another session's server on a different version of Probanda holds the page port and so answers the link. Fails `page_port_taken` when the page port is held by something that is not Probanda's page server, or cannot be listened on (the message names the error). Then call housekeeping__wait_approval.",
       inputSchema: {
         type: "object",
         properties: matterRun,
@@ -16331,7 +16331,7 @@ import { readFileSync as readFileSync3 } from "node:fs";
 
 // src/housekeeping/run-dir.ts
 import { randomBytes as randomBytes2 } from "node:crypto";
-import { closeSync as closeSync2, existsSync as existsSync3, fsyncSync as fsyncSync2, mkdirSync, openSync as openSync2, readdirSync as readdirSync3, readFileSync as readFileSync2, realpathSync as realpathSync3, statSync as statSync2, writeSync as writeSync2 } from "node:fs";
+import { closeSync, existsSync as existsSync3, fsyncSync, mkdirSync, openSync, readdirSync as readdirSync3, readFileSync as readFileSync2, realpathSync as realpathSync3, statSync as statSync2, writeSync } from "node:fs";
 import { win32 as pathWin324 } from "node:path";
 
 // src/status-file.ts
@@ -16644,18 +16644,6 @@ var Checker = class {
   }
 };
 
-// src/local-page/durable.ts
-import { closeSync, fsyncSync, openSync, writeSync } from "node:fs";
-function writeNewDurably(path, text2) {
-  const fd = openSync(path, "wx");
-  try {
-    writeSync(fd, text2);
-    fsyncSync(fd);
-  } finally {
-    closeSync(fd);
-  }
-}
-
 // src/housekeeping/run-dir.ts
 var RUN_ID_RE = /^\d{8}-\d{6}(?:\d{3})?-[0-9a-f]{4}$/;
 var PROPOSAL = "proposal.json";
@@ -16802,12 +16790,12 @@ function appendLineDurably(path, line) {
     const text2 = readFileSync2(path, "utf-8");
     if (text2.length && !text2.endsWith("\n")) prefix = "\n";
   }
-  const fd = openSync2(path, "a");
+  const fd = openSync(path, "a");
   try {
-    writeSync2(fd, prefix + line + "\n");
-    fsyncSync2(fd);
+    writeSync(fd, prefix + line + "\n");
+    fsyncSync(fd);
   } finally {
-    closeSync2(fd);
+    closeSync(fd);
   }
 }
 function writeReplacing(path, text2) {
@@ -16937,7 +16925,7 @@ function stamp(d) {
 }
 
 // src/file_ops/move.ts
-import { closeSync as closeSync3, lstatSync as lstatSync2, mkdirSync as mkdirSync4, openSync as openSync3, readdirSync as readdirSync8, realpathSync as realpathSync6, renameSync as renameSync3, statSync as statSync6, unlinkSync as unlinkSync3 } from "node:fs";
+import { closeSync as closeSync2, lstatSync as lstatSync2, mkdirSync as mkdirSync4, openSync as openSync2, readdirSync as readdirSync8, realpathSync as realpathSync6, renameSync as renameSync3, statSync as statSync6, unlinkSync as unlinkSync3 } from "node:fs";
 import { win32 as pathWin329 } from "node:path";
 
 // src/housekeeping/resolve.ts
@@ -17680,7 +17668,7 @@ function fileOpsMove(matterRoot, source, destination, createFolders = [], draftU
   const claim = !sameFile(src, dest);
   if (claim) {
     try {
-      closeSync3(openSync3(dest, "wx"));
+      closeSync2(openSync2(dest, "wx"));
     } catch (err) {
       if (err.code === "EEXIST") {
         throw new DataServerError(`destination already exists; nothing is overwritten: ${dest}`, "dest_exists");
@@ -17748,7 +17736,7 @@ function present2(path) {
 }
 
 // src/file_ops/move-from-downloads.ts
-import { closeSync as closeSync4, lstatSync as lstatSync3, mkdirSync as mkdirSync5, openSync as openSync4, realpathSync as realpathSync7, renameSync as renameSync4, statSync as statSync8, unlinkSync as unlinkSync4 } from "node:fs";
+import { closeSync as closeSync3, lstatSync as lstatSync3, mkdirSync as mkdirSync5, openSync as openSync3, realpathSync as realpathSync7, renameSync as renameSync4, statSync as statSync8, unlinkSync as unlinkSync4 } from "node:fs";
 import { win32 as pathWin3211 } from "node:path";
 
 // src/files/downloads.ts
@@ -17828,7 +17816,7 @@ function fileOpsMoveFromDownloads(matterRoot, sourceFilename, destination, env =
   for (let attempt = 0; attempt < MAX_ATTEMPTS && dest === void 0; attempt++) {
     const candidate = pathWin3211.join(destDir, nextVersionName(destDir, stem, ext));
     try {
-      closeSync4(openSync4(candidate, "wx"));
+      closeSync3(openSync3(candidate, "wx"));
       dest = candidate;
     } catch (err) {
       if (err.code !== "EEXIST") throw err;
@@ -24362,6 +24350,7 @@ var approval_js_default = `(function () {
   var data = JSON.parse(document.getElementById("hk-data").textContent);
   var P = data.proposal, A = data.approval, GROUPS = data.groups, INFO = data.info;
   var APPROVED = "Approved. You can go back to Claude.";
+  var UNREACHABLE = "The approval could not be sent, so nothing was approved. Go back to Claude and ask it to show this page again.";
   var base = location.pathname.replace(/\\/+$/, "");
   var approved = !!A;
   var state = {}, views = [], app = document.getElementById("app");
@@ -24532,11 +24521,20 @@ var approval_js_default = `(function () {
     nLeave.textContent = String(decidable.length - n);
     if (approved) { button.style.display = "none"; message.className = "msg done"; message.textContent = APPROVED; }
   }
+  // A network error is retried once after 3 s: the gap while another Claude session's process
+  // takes the page's port over. A reply from the server, even a refusal, is never retried.
+  function postApproval(body, retried) {
+    return fetch(base + "/approve", { method: "POST", headers: { "Content-Type": "application/json" }, body: body })
+      .catch(function () {
+        if (retried) throw new Error(UNREACHABLE);
+        return new Promise(function (resolve) { setTimeout(resolve, 3000); }).then(function () { return postApproval(body, true); });
+      });
+  }
   // Always enabled: submitting with nothing approved posts rows: [], a valid approval (spec \xA7B8.3).
   button.addEventListener("click", function () {
     var rows = decidable.filter(function (r) { return state[r.row_id]; }).map(function (r) { return { row_id: r.row_id, approve: true }; });
     button.disabled = true; message.className = "msg"; message.textContent = "Saving\\u2026";
-    fetch(base + "/approve", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ run: P.run_id, rows: rows }) })
+    postApproval(JSON.stringify({ run: P.run_id, rows: rows }), false)
       .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
       .then(function (out) {
         if (!out.ok) throw new Error(out.body && out.body.error || "The approval was not saved.");
@@ -24567,7 +24565,7 @@ function renderApprovalPage(proposal2, approval2, page2 = PAGE) {
 function stalePage() {
   return simplePage(
     "This page is out of date",
-    "A newer housekeeping run has started for this matter, or the Claude session that made this page has ended. Nothing was approved from it. Go back to Claude."
+    "A newer housekeeping run has been served for this matter, or this page's link is more than 30 days old. Nothing was approved from it. Go back to Claude."
   );
 }
 function simplePage(title, body) {
@@ -24603,7 +24601,19 @@ import { existsSync as existsSync15, realpathSync as realpathSync10, statSync as
 import { win32 as pathWin3217 } from "node:path";
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "e82e3a7b9f9a";
+var BUILD_STAMP = false ? null : "0d1bb6e9304b";
+
+// src/local-page/durable.ts
+import { closeSync as closeSync4, fsyncSync as fsyncSync2, openSync as openSync4, writeSync as writeSync2 } from "node:fs";
+function writeNewDurably(path, text2) {
+  const fd = openSync4(path, "wx");
+  try {
+    writeSync2(fd, text2);
+    fsyncSync2(fd);
+  } finally {
+    closeSync4(fd);
+  }
+}
 
 // src/local-page/links.ts
 import { mkdirSync as mkdirSync9, readdirSync as readdirSync12, readFileSync as readFileSync9, renameSync as renameSync6, statSync as statSync10, unlinkSync as unlinkSync7, writeFileSync as writeFileSync7 } from "node:fs";
@@ -24717,7 +24727,7 @@ function sweepLinks(env, now = Date.now()) {
 }
 
 // src/local-page/listener.ts
-import { createServer } from "node:http";
+import { createServer, get } from "node:http";
 
 // src/local-page/ports.ts
 import { existsSync as existsSync14, readFileSync as readFileSync10 } from "node:fs";
@@ -24828,14 +24838,15 @@ async function startPageListener(options) {
   const wanted = fixed ? pagePort(options.bundle, options.env) : 0;
   const log = options.log ?? ((line) => console.error(line));
   const retryMs = options.retryMs ?? RETRY_MS;
-  const tag = `[${options.bundle} pages]`;
+  const tag = options.logTag ?? `[${options.bundle} pages]`;
   let held = false;
   let stopped = false;
   let warnedBusy = false;
+  let failure = null;
   let retry;
   const server2 = createServer((req, res) => {
     route(req, res, options).catch((err) => {
-      if (!res.headersSent) json(res, 500, { error: err instanceof Error ? err.message : String(err) });
+      if (!res.headersSent) json(res, 500, { error: err instanceof Error ? err.message : String(err) }, options.cors ? { cors: req } : {});
       else res.destroy();
     });
   });
@@ -24864,11 +24875,13 @@ async function startPageListener(options) {
       retry.unref();
       return;
     }
+    failure = err;
     log(`${tag} listener off: ${err.message}`);
   }
   return {
     port: fixed ? wanted : server2.address().port,
     holding: () => held && server2.listening,
+    failure: () => failure,
     close: () => {
       stopped = true;
       if (retry) clearTimeout(retry);
@@ -24878,22 +24891,56 @@ async function startPageListener(options) {
     }
   };
 }
+function probeHolder(port, bundle, timeoutMs = 1e3) {
+  return new Promise((resolve3) => {
+    const req = get({ host: "127.0.0.1", port, path: "/health", timeout: timeoutMs, agent: false }, (res) => {
+      let body = "";
+      res.setEncoding("utf-8");
+      res.on("data", (chunk) => body += chunk);
+      res.on("end", () => resolve3(holderFrom(res.statusCode, body, bundle)));
+      res.on("error", (err) => resolve3({ kind: "other", reason: err.message }));
+    });
+    req.on("timeout", () => req.destroy(new Error(`no answer within ${timeoutMs} ms`)));
+    req.on("error", (err) => resolve3(err.code === "ECONNREFUSED" ? { kind: "none" } : { kind: "other", reason: err.message }));
+  });
+}
+function holderFrom(status, body, bundle) {
+  if (status !== 200) return { kind: "other", reason: `/health answered ${status}` };
+  let h;
+  try {
+    h = JSON.parse(body);
+  } catch {
+    return { kind: "other", reason: "/health is not JSON" };
+  }
+  const stringOrNull = (v) => v === null || typeof v === "string";
+  if (h?.bundle !== bundle || !stringOrNull(h.build_stamp) || !stringOrNull(h.plugin_version)) {
+    return { kind: "other", reason: `/health does not describe a ${bundle} page listener` };
+  }
+  return { kind: "probanda", build_stamp: h.build_stamp, plugin_version: h.plugin_version };
+}
 async function route(req, res, options) {
   const url = new URL(req.url ?? "/", "http://127.0.0.1");
+  const fail = (status, message) => options.cors ? json(res, status, { error: message }, { cors: req }) : text(res, status, message);
+  if (options.cors && req.method === "OPTIONS") {
+    res.writeHead(204, { ...corsHeaders(req), "Access-Control-Allow-Methods": "GET, POST", "Access-Control-Allow-Headers": "Content-Type" });
+    res.end();
+    return;
+  }
   if (url.pathname === "/health") {
-    if (req.method !== "GET") return text(res, 405, "Method not allowed");
+    if (req.method !== "GET") return fail(405, "Method not allowed");
     const kinds = [...new Set(options.routes.map((r) => r.kind))];
-    return json(res, 200, { bundle: options.bundle, pid: process.pid, ...options.about, kinds });
+    const body = options.health ? options.health() : { bundle: options.bundle, pid: process.pid, ...options.about, kinds };
+    return json(res, 200, body, options.cors ? { cors: req } : {});
   }
   let pathMatched = false;
   for (const r of options.routes) {
     const match = r.path.exec(url.pathname);
     if (!match) continue;
     pathMatched = true;
-    if (req.method === r.method) return r.handle(req, res, match, url);
+    if (r.method === "*" || req.method === r.method) return r.handle(req, res, match, url);
   }
-  if (pathMatched) return text(res, 405, "Method not allowed");
-  text(res, 404, "Not found");
+  if (pathMatched) return fail(405, "Method not allowed");
+  fail(404, "Not found");
 }
 
 // src/housekeeping/server.ts
@@ -24941,12 +24988,33 @@ async function servePage(matterRoot, runId, env = process.env) {
   if (newest !== runId) {
     throw new DataServerError(`run ${runId} is not the matter's newest run with a proposal (${newest}); serve that one`, "stale_run");
   }
-  const { port } = await startHousekeepingPages(env);
+  const pages = await startHousekeepingPages(env);
+  const { port } = pages;
+  const failure = pages.holding() ? null : pages.failure();
+  if (failure) {
+    throw new DataServerError(
+      `the page listener cannot listen on port ${port} (${failure.message}); set another port for "file-manager" under page_ports in probanda.json`,
+      "page_port_taken"
+    );
+  }
+  const warning = pages.holding() ? null : await holderWarning(port);
   const key = matter.root.toLowerCase();
   dropLinks(KIND, (target2) => parseTarget(target2)?.matter_root.toLowerCase() === key, env);
   const target = { matter_root: matter.root, run_id: runId, serve: randomBytes4(9).toString("base64url") };
   const id = deviceLink(KIND, JSON.stringify(target), env);
-  return { url: `http://127.0.0.1:${port}/h/${id}/`, run_id: runId, rows: proposal2.rows.length, approved: readApproval(runDir, runId).approval !== null };
+  const served = { url: `http://127.0.0.1:${port}/h/${id}/`, run_id: runId, rows: proposal2.rows.length, approved: readApproval(runDir, runId).approval !== null };
+  return warning ? { ...served, warning } : served;
+}
+async function holderWarning(port) {
+  const holder = await probeHolder(port, "file-manager");
+  if (holder.kind === "none") return null;
+  if (holder.kind === "other") {
+    throw new DataServerError(
+      `port ${port} is held by a program that is not a Probanda file-manager page listener (${holder.reason}); set another port for "file-manager" under page_ports in probanda.json`,
+      "page_port_taken"
+    );
+  }
+  return holder.build_stamp === BUILD_STAMP ? null : "older_holder";
 }
 function routes(env) {
   return [
@@ -24983,7 +25051,7 @@ function withGrant(id, env, res, route2, then) {
   const grant = grantFor(id, env);
   if (grant) return then(grant);
   if (route2 === "approve") {
-    return json(res, 410, { error: "This page is out of date: a newer run has started for this matter, or the Claude session has ended. Nothing was approved." }, REPLY);
+    return json(res, 410, { error: "This page is out of date: a newer run has been served for this matter, or the link is more than 30 days old. Nothing was approved." }, REPLY);
   }
   html(res, 410, stalePage(), REPLY);
 }
@@ -25061,23 +25129,38 @@ function file2(grant, rowId, res) {
 
 // src/housekeeping/wait.ts
 import { win32 as pathWin3218 } from "node:path";
+
+// src/local-page/wait.ts
+var timerSleep = (ms) => new Promise((resolve3) => setTimeout(resolve3, ms));
+async function waitFor(check, options) {
+  const sleep = options.sleep ?? timerSleep;
+  const now = options.now ?? Date.now;
+  const started = now();
+  for (; ; ) {
+    const value = await check();
+    if (value !== void 0) return { value };
+    const waited = now() - started;
+    if (waited >= options.budgetMs) return { pending: true, waited_ms: waited };
+    await sleep(Math.min(options.pollMs, options.budgetMs - waited));
+  }
+}
+
+// src/housekeeping/wait.ts
 var WAIT_TIMEOUT_MS = 45e3;
 var POLL_MS = 300;
 async function waitApproval(matterRoot, runId, env = process.env) {
   const budget = pythonTimeoutMs(env, WAIT_TIMEOUT_MS, "COCLERK_HOUSEKEEPING_WAIT_MS");
   const matter = openMatter(matterRoot);
   const dir = existingRunDir(matter, runId);
-  const started = Date.now();
-  for (; ; ) {
+  const outcome = await waitFor(() => {
     const { approval: approval2, problem } = readApproval(dir, runId);
     if (approval2) return { status: "approved", run_id: runId, approved_at: approval2.approved_at, rows: approval2.rows.length };
     if (problem) return { status: "corrupt", run_id: runId, file: pathWin3218.join(dir, APPROVAL), problem };
     const newer = newerRun(matter, runId);
     if (newer !== null) return { status: "invalidated", run_id: runId, newer_run: newer };
-    const waited = Date.now() - started;
-    if (waited >= budget) return { status: "pending", run_id: runId, waited_ms: waited };
-    await new Promise((resolve3) => setTimeout(resolve3, Math.min(POLL_MS, budget - waited)));
-  }
+    return void 0;
+  }, { budgetMs: budget, pollMs: POLL_MS });
+  return "value" in outcome ? outcome.value : { status: "pending", run_id: runId, waited_ms: outcome.waited_ms };
 }
 
 // src/file-manager-dispatch.ts
