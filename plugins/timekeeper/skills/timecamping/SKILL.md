@@ -175,13 +175,12 @@ attachment" takes reading the content, not applying a duration threshold.
 
 **Look at the screen before proposing** (Brahm, 2026-10-01, #942). OCR text
 and window titles are never enough to propose a block. For every block that
-rests on a stretch SyncoPaid covers, decrypt and view the screenshots with
-`evidence show` (`reference/SyncoPaidCaptures.md`): at least the first, a
-middle and the last capture of the stretch, and more wherever the window
-title moves between matters. A stretch whose captures carry no OCR text is
-where the image matters most, because it is the only content evidence.
-"Encrypted" is not "unavailable": a capture is unavailable only when
-`evidence show` itself fails, and that failure is disclosed in the ceremony.
+rests on a stretch SyncoPaid covers, pick at least the first, a middle and
+the last capture, and more wherever the window title moves between matters.
+A stretch whose captures carry no OCR text is where the image matters most.
+Decrypt them as `reference/SyncoPaidCaptures.md` says, and have them viewed
+only by `timekeeper:screenshot-reader`, up to 5 per dispatch, passing no
+model or effort. A failed decrypt is disclosed in the ceremony.
 Record the viewed capture ids in the proposal's evidence record. A proposal
 resting on a covered stretch without them is not ready to commit.
 

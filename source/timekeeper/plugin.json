@@ -32,6 +32,20 @@
             "statusMessage": "Time-block question gate"
           }
         ]
+      },
+      {
+        "matcher": "^(Read|Agent|Task)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/screenshot-reader-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Screenshot reader gate"
+          }
+        ]
       }
     ]
   }
