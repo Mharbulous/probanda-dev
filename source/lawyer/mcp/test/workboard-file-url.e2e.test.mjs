@@ -46,6 +46,13 @@ const BROWSERS = [...new Map(CANDIDATES.filter(([, path]) => path && existsSync(
 // The column each category draws into.
 const SECTION_OF = { ready: "ready", wip: "in-progress", waiting: "waiting-on", superseded: "superseded", completed: "completed", rejected: "rejected-angles" };
 
+/** This machine's local minute in the server's stamp form, as the page's localMinute() reads it. */
+function localMinute() {
+  const d = new Date();
+  const two = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}T${two(d.getHours())}:${two(d.getMinutes())}`;
+}
+
 // The golden board data: the one fixture carrying Proposals in all three lanes.
 const FIXTURE_BOARD = JSON.parse(readFileSync(new URL("./fixtures/work-board-data.json", import.meta.url), "utf-8"));
 
@@ -402,8 +409,10 @@ for (const [name, executable] of BROWSERS) {
         assert.deepEqual(page.refs.sort(), data.tickets.map((t) => [`ticket-${t.id}`, `Job #${t.id}`]).sort(), "each card is referred to as Job #N");
         assert.deepEqual(
           page.cards.sort(),
-          data.tickets.map((t) => [SECTION_OF[t.category], `ticket-${t.id}`]).sort(),
-          "expected one card per ticket, each in its category's column"
+          // The page's lapse rule (milestone.js, 358b034): a held job whose lapse minute has passed by
+          // the browser's clock is drawn in its after-lapse category.
+          data.tickets.map((t) => [SECTION_OF[t.lapses_at && t.lapses_at <= localMinute() ? t.category_after_lapse : t.category], `ticket-${t.id}`]).sort(),
+          "expected one card per ticket, each in its category's column, after the page's lapse rule"
         );
         // The mirror: each job line the session reads starts with its card's collapsed text, on
         // board_card's live lane or, for a Completed or Shelved job, which the live lane only counts,

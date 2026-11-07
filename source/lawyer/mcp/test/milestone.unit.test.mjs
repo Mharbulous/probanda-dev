@@ -8,7 +8,7 @@
 // label in milestone.js, whose glyph changed from a work marker to a coloured circle, which also takes
 // in the page changes since the last pin (944856d8, a14c68d4).
 // It was retaken on 2026-11-07 for the lapsed-lock block and the hoisted localMinute() in
-// milestone.js (358b034).
+// milestone.js (358b034), and again that day for the fixture's lapse fields (358b034).
 
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -22,7 +22,7 @@ const SECTION = JSON.parse(readFileSync(new URL("./fixtures/work-board-data.json
 const DATA = { meta: { revision: 3, matter: "L200", client: "Acme <Co>", rendered: "2026-10-19 09:30" }, sections: [SECTION] };
 
 test("the Work Board renders byte-identically to the pinned page", () => {
-  assertSha256Pin(renderWorkBoardHtml(DATA), "753dd155628d908a18fe6cdaf38557004d2ce6baecbb6d87c21172b2112cedfa", "Work Board");
+  assertSha256Pin(renderWorkBoardHtml(DATA), "666c6c3053be55dbf8e6245297a042f0d7ec4bbb0c53ce68a9eee90853bea53e", "Work Board");
 });
 
 test("WORKBOARD_CSS and WORKBOARD_JS are byte-identical to the pinned constants", () => {

@@ -148,6 +148,8 @@
       "active_at": null
     },
     {
+      "lapses_at": "2026-09-20T10:50",
+      "category_after_lapse": "ready",
       "id": 4,
       "title": "Rebuild the evidence index",
       "intent": "Reconcile the exhibit list against the disclosure log.",
