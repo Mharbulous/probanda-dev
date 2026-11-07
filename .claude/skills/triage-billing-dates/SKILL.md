@@ -58,7 +58,7 @@ Fastest first: the drafts folder, then sent mail, calls against the service list
 - *TimeCamp entries* on the matter's task, all users: the connector's `status`, `tasks`, then `entries` with `out_file`, under the hard rule in `build-timeline/reference/TimeCamp.md`.
 - *Phone numbers in window titles, on every run:* a call can show only as a calling app's window whose title is the number. Call `activities` with `out_file`, at most 20 dates a call, covering the window once, and read none of it. Run `timecamping-data/scripts/scan_windows.py phones` over those files, with `--numbers` every service-list number, from case data and never guessed, and `--tasks` the matter's task ids, and `--out` `phone-matches.json` in `<matter-data folder>\triage-billing-dates\`. Every match is a candidate date. Report its date, start, end, entry id and task, and flag a match off the matter's task or with no entry. This needs no carrier portal.
 - *TimeCamp activities:* one background subagent, with `model: sonnet`, over the whole range, with the brief below, because the rows of a long range run to about 100k tokens. It only reads and matches, so it does not need the session's model, and a missed stretch would lose a candidate date, so it does not go on the cheapest model either.
-- *SyncoPaid and screenshots:* read only with SyncoPaid's own evidence access on. Never switch it on. Otherwise list it under unexplored leads.
+- *SyncoPaid and screenshots:* read only with SyncoPaid's own evidence access on. Never switch it on. Otherwise list it under unexplored leads. Screenshots are viewed only as `/timecamping` Step 5 says.
 
 **Records and history**
 - Practice tasks, deadlines and Work Board jobs. An empty set of practice time entries does not mean no work was done.

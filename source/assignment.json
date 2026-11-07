@@ -203,9 +203,12 @@
         "timecamping-data",
         "vet-billable-time"
       ],
-      "agents": [],
+      "agents": [
+        "screenshot-reader"
+      ],
       "hooks": {
-        "ceremony-gate": "source/timekeeper/hooks/ceremony-gate.py"
+        "ceremony-gate": "source/timekeeper/hooks/ceremony-gate.py",
+        "screenshot-reader-gate": "source/timekeeper/hooks/screenshot-reader-gate.py"
       },
       "servers": [
         "timecamp"

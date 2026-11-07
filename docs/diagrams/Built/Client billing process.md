@@ -1,6 +1,6 @@
 # How Probanda bills a client: the `/bill-client` process
 
-Based on commit `c9154155` on `main` of probanda-dev (lawyer 0.25.10, timekeeper 0.8.8), 2026-11-06. The installed copies on this PC (lawyer 0.25.5, timekeeper 0.8.5) have the same skill text apart from version comments.
+Based on commit `c9154155` on `main` of probanda-dev (lawyer 0.25.10, timekeeper 0.8.8), 2026-11-06. Screenshot review updated against commit `a0ac8923` plus the `timekeeper:screenshot-reader` change, 2026-11-06. The installed copies on this PC (lawyer 0.25.5, timekeeper 0.8.5) have the same skill text apart from version comments.
 
 This is the prose for a planned diagram. It describes the process as built, not as it might be improved.
 
@@ -39,11 +39,12 @@ A script, not the model, refuses to produce invoice lines until that is true (se
 | Agent | Where | Role |
 |---|---|---|
 | A background helper on Sonnet (general-purpose, no custom type) | `/triage-billing-dates`, Phase 2 | Scans the range's TimeCamp computer activity for the matter's keywords and returns matching stretches. Reads only. |
+| `timekeeper:screenshot-reader` (Haiku 5.5, effort high, fixed in its file) | `/timecamping` Step 5 and `/triage-billing-dates`, Phase 2 | Views up to 5 decrypted screenshots of one stretch and reports what each shows: on screen, identifiers, unchanged or not, unreadable parts. Holds only `Read`, and a hook lets it open only `.png` files in a `syncopaid-screens` folder and refuses a dispatch that sets its model or effort. Judges no matter and no billing. |
 | `file-manager:housekeeping-reader` and `housekeeping-namer` | `/housekeeping`, only when Step 2 sends the practitioner there | Read page 1 of each file and propose names. |
 | `lawyer:scrivener` | `/issue-invoice` Step 4 | Writes the body of the trust-transfer email to accounting. |
 | `lawyer:delivery-checker` | `/issue-invoice`, "When it went out" | Checks whether the invoice was sent and delivered before anyone asks. |
 
-`/bill-client`, `/timecamping` and `/vet-billable-time` dispatch no custom agent themselves. The day-by-day review of L145 on 5 November used extra helpers (Sonnet fetchers, Opus inference, Haiku screenshot readers). Those came from a session-made plan for that run, not from the shipped skills.
+Every screenshot a model reads goes to `timekeeper:screenshot-reader`. Apart from it, `/bill-client`, `/timecamping` and `/vet-billable-time` dispatch no custom agent.
 
 ### Data stores
 
@@ -95,6 +96,7 @@ This narrows the unbilled period to the days with any indicator of work on the m
    - TimeCamp entries on the matter's task, for all users
    - a phone-number scan of every TimeCamp window title, which runs on every run
    - the background helper's keyword scan of computer activity
+   - SyncoPaid captures, only when SyncoPaid's evidence access is on. **Review point:** any screenshot is viewed by `timekeeper:screenshot-reader`.
 3. **Reconcile with the last bill:**
    - a date the bill already covers is dropped, unless the evidence shows more work than was billed ("under-billed")
    - if the bill is over three months old, earlier dates are written off without review
@@ -112,12 +114,12 @@ For each date:
 1. **Fetch** the day's evidence from seven sources through `/build-timeline`: TimeCamp entries, TimeCamp computer activity, SyncoPaid screen captures, the call archive, Google Calendar, the iCloud calendar and sent mail. **Human:** a fetch that replaces stored rows waits for a pasted approval.
 2. **The evidence gate.** The day's evidence can be read only through one sanctioned query. That query returns nothing but a violation line if any registered source lacks a final status for the day. This is enforced by the database query, not by an instruction to the model.
 3. **Read the whole day,** for every client. Lines from different sources stay separate, never merged.
-4. **Group and propose.** Each block of time gets a proposed matter and note, by the named presumptions (P1 to P10) and the evidence doctrine. Screenshots are viewed before any block resting on them is proposed. A block of client work that no entry covers is flagged as **uncovered**: possible unbilled time.
+4. **Group and propose.** Each block of time gets a proposed matter and note, by the named presumptions (P1 to P10) and the evidence doctrine. **Review point:** before any block resting on screen captures is proposed, the session decrypts its first, middle and last captures (more where the window title changes matter) and `timekeeper:screenshot-reader` views them. The proposal records the viewed capture ids. A block of client work that no entry covers is flagged as **uncovered**: possible unbilled time.
 5. **Decide.** A grid sorts each proposal:
    - a silent commit, where the evidence names the matter outright, or
    - a question to the practitioner, where it rests on a leap, indirect evidence (a calendar entry, TimeCamp's own label) or a conflict.
 
-   **Human:** every question is the practitioner's to answer, under `/show-me`.
+   **Human:** every question is the practitioner's to answer, under `/show-me`. **Presentation point:** the practitioner sees the block's actual screenshots and those around it, and any capture that failed to decrypt is named as a gap.
 6. **Write back, dry run first.** A report lists every change ready for TimeCamp. **Human:** nothing is written until the practitioner says to commit. Then each entry is written one at a time, and each is re-read to confirm it. Locked (invoiced) entries are skipped.
 7. **Mark the date judged** only when no proposal is pending and every entry's write-back has been answered.
 
@@ -180,7 +182,7 @@ Each guard below names what enforces it. A script check refuses outright; a skil
 | # | Guard | What it catches | Enforced by |
 |---|---|---|---|
 | 1 | The start of the period is read from the signed invoice itself, then hash-checked on every resume | Starting from the wrong invoice, or from a rounded date | Skill rule; hash test |
-| 2 | Candidate dates come from up to eight independent sources, not from TimeCamp alone | A day of work TimeCamp never recorded under the matter | Skill rule |
+| 2 | Candidate dates come from up to nine independent sources, not from TimeCamp alone | A day of work TimeCamp never recorded under the matter | Skill rule |
 | 3 | Reconciliation against the last bill: "under-billed" and "suspicious" flags | Work the last bill missed or under-counted | Skill rule |
 | 4 | Each date's whole day is reviewed, for every client | Matter time sitting in another client's entry, or in a review queue. On L145's 30 reviewed dates this was up to 44% of the matter's time. | Skill rule |
 | 5 | The evidence gate: no reading until all seven sources report for the day | A judgment made on partial evidence | **Database query** |
