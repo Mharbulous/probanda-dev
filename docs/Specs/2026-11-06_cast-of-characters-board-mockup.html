@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cast of Characters — T512</title>
+<style>
+:root{--page:#f2f8f5;--ink:#24302d;--title:#0f5257;--head:#1d5e4d;--rule:#1d5e4d;--label:#a9c4bb;
+--mono:Consolas,"Cascadia Mono","Courier New",monospace;--serif:"Trebuchet MS","Segoe UI",sans-serif;
+--panel:#d0e5da;--panel-line:#93b8a6;--tab:#a9c9b9;--tab-line:#86ad9b;--tab-ink:#3b5a4f;--card-line:#2f6f64;
+--gold1:#e0b326;--gold2:#b07a2c;--badge:#b8782c;--warn:#9a5b00;--warnbg:#fff4dc;--priv:#7a2e6b;--privbg:#f6e6f2;--sub:#59625f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:14px/1.45 "Segoe UI",system-ui,sans-serif}
+.page{max-width:840px;margin:0 auto;padding:28px 16px 48px}
+h1{font-family:var(--serif);color:var(--title);font-size:22px;margin:0 0 8px}
+.bar{width:140px;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--gold1),var(--gold2));margin-bottom:12px}
+.meta{font:12px/1.8 var(--mono)}.meta .k{color:var(--label);margin-right:4px}.meta .v{margin-right:14px}
+.tabr,.opener,#o-none{position:absolute;opacity:0;pointer-events:none}
+.tabs{display:flex;gap:2px;margin:24px 0 0 12px;position:relative;z-index:1;flex-wrap:wrap}
+.tab{font:600 13px var(--serif);color:var(--tab-ink);background:linear-gradient(#b9d5c6,var(--tab));border:1px solid var(--tab-line);border-bottom:none;border-radius:9px 9px 0 0;padding:6px 14px 5px;cursor:pointer;position:relative;top:1px}
+.page:has(#t-svc:checked) label[for="t-svc"]{background:var(--panel);color:var(--head);border-color:var(--panel-line);font-weight:700;padding-top:8px;margin-top:-2px}
+.page:has(#t-svc:checked) .view[data-v="svc"]{display:block}
+.page:has(#t-lit:checked) label[for="t-lit"]{background:var(--panel);color:var(--head);border-color:var(--panel-line);font-weight:700;padding-top:8px;margin-top:-2px}
+.page:has(#t-lit:checked) .view[data-v="lit"]{display:block}
+.page:has(#t-wit:checked) label[for="t-wit"]{background:var(--panel);color:var(--head);border-color:var(--panel-line);font-weight:700;padding-top:8px;margin-top:-2px}
+.page:has(#t-wit:checked) .view[data-v="wit"]{display:block}
+.page:has(#t-dec:checked) label[for="t-dec"]{background:var(--panel);color:var(--head);border-color:var(--panel-line);font-weight:700;padding-top:8px;margin-top:-2px}
+.page:has(#t-dec:checked) .view[data-v="dec"]{display:block}
+
+.panel{background:var(--panel);border:1px solid var(--panel-line);border-radius:0 10px 10px 10px;padding:18px 18px 22px;min-height:300px}
+.filters{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+.filters label{color:var(--title);font-size:13px;display:flex;align-items:center;gap:8px}
+select,input[type=search]{font:inherit;font-size:13px;color:var(--ink);background:#fff;border:1px solid #b7c9c1;border-radius:5px;padding:5px 8px}
+select{min-width:180px}input[type=search]{width:100%;max-width:360px;margin-top:10px}
+.view{display:none}
+h2{font-family:var(--serif);color:var(--head);font-size:22px;font-weight:600;margin:26px 0 0;padding-bottom:8px;border-bottom:2px solid var(--rule);display:flex;align-items:center;gap:10px}
+.badge{font:11px var(--mono);background:var(--badge);color:#2a1a05;border-radius:10px;padding:1px 7px}
+.list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.none{background:#fff;border:1px dashed #6f9b8c;border-radius:8px;padding:12px 14px;font-size:13px}
+.none[hidden]{display:none}
+.card{background:#fff;border:2px solid var(--card-line);border-radius:10px;padding:8px 14px;position:relative}
+.card:hover{box-shadow:0 1px 4px rgba(15,82,87,.25)}
+.card.unconfirmed{border-style:dashed}
+.head{display:block;cursor:pointer}
+.r1{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;overflow:hidden}
+.code{font:12px var(--mono);color:var(--sub);flex:none}
+.name{font-weight:700;color:var(--title);font-size:14.5px;flex:none}
+.pills{display:flex;gap:6px;overflow:hidden;min-width:0}
+.pill{font:11px var(--mono);border:1px solid var(--card-line);color:var(--head);border-radius:9px;padding:0 7px;white-space:nowrap;flex:none}
+.pill.warn{border-color:var(--warn);color:var(--warn);background:var(--warnbg)}
+.pill.priv{border-color:var(--priv);color:var(--priv);background:var(--privbg)}
+.pill.inl{display:inline-block;margin-top:3px}
+.r2{display:block;font:12.5px var(--mono);color:var(--sub);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r2 .sep{color:#b5c4be;margin:0 6px}.gap,.missing{color:var(--warn);font-style:italic}
+.x{display:none;position:absolute;top:12px;right:14px;font:12px var(--mono);border:1px solid var(--card-line);background:#fff;color:var(--head);border-radius:9px;padding:1px 10px;cursor:pointer}
+.detail{display:none;margin-top:10px}
+/* one card open: hide every other card, heading and empty box in that view */
+.view:has(.opener:checked) .card:not(:has(.opener:checked)),
+.view:has(.opener:checked) section:not(:has(.opener:checked)),
+.view:has(.opener:checked) h2,
+.view:has(.opener:checked) .none,
+.view:has(.opener:checked) .listtools,
+.page:has(.opener:checked) .filters,
+.page:has(.opener:checked) input[type=search]{display:none}
+.view:has(.opener:checked) .list{margin-top:4px}
+.card:has(.opener:checked){padding:14px 18px 18px}
+.card:has(.opener:checked) .head{cursor:default}
+.card:has(.opener:checked) .r1{white-space:normal;flex-wrap:wrap;padding-right:80px}
+.card:has(.opener:checked) .pills{flex-wrap:wrap;overflow:visible}
+.card:has(.opener:checked) .r2{display:none}
+.card:has(.opener:checked) .x{display:inline-block}
+.card:has(.opener:checked) .detail{display:block}
+.detail h3{font:600 14px var(--serif);color:var(--head);margin:14px 0 4px;padding-bottom:3px;border-bottom:1px solid #c5d9cf}
+.rows{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:13px}
+.rows .k{font:11.5px var(--mono);color:#7d9a90;padding-top:2px}.rows .v{min-width:0;overflow-wrap:anywhere}
+.src{display:block;font:11px var(--mono);color:#8a9792}
+.copy{font:11px var(--mono);border:1px solid #b7c9c1;background:#f6faf8;color:var(--head);border-radius:4px;padding:0 5px;margin-left:6px;cursor:pointer}
+.note{margin-top:8px;font-size:12.5px;padding:6px 9px;border-radius:6px;background:var(--warnbg);color:var(--warn)}
+.actions{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap}
+.actions button{font:11px var(--mono);border:1px solid var(--card-line);background:#fff;color:var(--head);border-radius:9px;padding:1px 8px;cursor:pointer}
+.aka{color:var(--sub);font-size:12.5px;margin-top:2px}
+.hidebyfilter{display:none!important}
+.card.former{opacity:.55}
+.page:not(:has(#former:checked)) .card.former{display:none}
+</style>
+</head>
+<body>
+<div class="page">
+  <input type="radio" name="tab" class="tabr" id="t-svc" checked><input type="radio" name="tab" class="tabr" id="t-lit"><input type="radio" name="tab" class="tabr" id="t-wit"><input type="radio" name="tab" class="tabr" id="t-dec"><input type="radio" name="open" id="o-none" checked>
+  <h1>Cast of Characters</h1>
+  <div class="bar"></div>
+  <div class="meta">
+    <span class="k">Matter</span><span class="v">T512</span>
+    <span class="k">Client</span><span class="v">Maple Grove Dental Inc.</span>
+    <span class="k">Rev</span><span class="v">4</span>
+    <span class="k">Rendered</span><span class="v">2026-11-06 17:30</span>
+    <span class="k">Data</span><span class="v">MOCKUP: fictional entries</span>
+  </div>
+  <div class="tabs"><label class="tab" for="t-svc">Service List</label><label class="tab" for="t-lit">Litigants</label><label class="tab" for="t-wit">Witnesses</label><label class="tab" for="t-dec">Public Bodies</label></div>
+  <div class="panel">
+    <div class="filters">
+      <label>Side <select id="side"><option value="">All sides</option><option value="P">Plaintiffs</option><option value="D">Defendants</option><option value="N">Neutral</option></select></label>
+      <label>Flags <select id="flag"><option value="">All entries</option><option value="unc">Unconfirmed</option><option value="gap">Missing details</option><option value="conflict">Conflicting details</option><option value="priv">Privileged source</option></select></label>
+      <label><input type="checkbox" id="former"> Show former</label>
+    </div>
+    <input type="search" id="q" placeholder="Search names, aliases, file codes, firms">
+    <div class="view" data-v="svc"><section><h2>Plaintiffs <span class="badge">1</span></h2><div class="list"><div class="card" data-side="P" data-flags="" data-search="pat counsel counselp  counsel of record for: alan wei park for: maple grove dental inc. example law llp pat@examplelaw.example">
+  <input type="radio" name="open" class="opener" id="o-svc0-0">
+  <label class="head" for="o-svc0-0">
+    <span class="r1"><span class="code">CounselP</span><span class="name">Pat Counsel</span><span class="pills"><span class="pill">Counsel of record</span><span class="pill">For: Alan Wei Park</span><span class="pill">For: Maple Grove Dental Inc.</span></span></span>
+    <span class="r2">pat@examplelaw.example<span class="sep">·</span>604-555-0100<span class="sep">·</span>Example Law LLP, 900-555 Sample St, Vancouver BC</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v">pat@examplelaw.example<button class="copy" type="button">copy</button><span class="src">Notice of Civil Claim</span></span><span class="k">Phone</span><span class="v">604-555-0100<button class="copy" type="button">copy</button><span class="src">Notice of Civil Claim</span></span><span class="k">Address for service</span><span class="v">Example Law LLP, 900-555 Sample St, Vancouver BC<span class="src">Notice of Civil Claim</span></span></div><h3>Service</h3><div class="rows"><span class="k">Firm</span><span class="v">Example Law LLP</span><span class="k">Basis</span><span class="v">Address for service and email for service as filed in the Notice of Civil Claim.</span></div></div>
+</div><div class="none" hidden>None.</div></div></section><section><h2>Defendants <span class="badge">4</span></h2><div class="list"><div class="card" data-side="D" data-flags="" data-search="sample counsel a counsela  counsel of record for: bo lin for: victor chan sample llp counsel.a@example.com">
+  <input type="radio" name="open" class="opener" id="o-svc1-0">
+  <label class="head" for="o-svc1-0">
+    <span class="r1"><span class="code">CounselA</span><span class="name">Sample Counsel A</span><span class="pills"><span class="pill">Counsel of record</span><span class="pill">For: Bo Lin</span><span class="pill">For: Victor Chan</span></span></span>
+    <span class="r2">counsel.a@example.com<span class="sep">·</span>604-555-0171<span class="sep">·</span>300-111 Sample St, Vancouver BC</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v">counsel.a@example.com<button class="copy" type="button">copy</button><span class="src">Response to Civil Claim</span></span><span class="k">Phone</span><span class="v">604-555-0171<button class="copy" type="button">copy</button><span class="src">Response to Civil Claim</span></span><span class="k">Address for service</span><span class="v">300-111 Sample St, Vancouver BC<span class="src">Response to Civil Claim</span></span></div><h3>Service</h3><div class="rows"><span class="k">Firm</span><span class="v">Sample LLP</span></div></div>
+</div><div class="card" data-side="D" data-flags="conflict" data-search="sample counsel b counselb  counsel of record for: grace liu sample law corp. counsel.b@example.com">
+  <input type="radio" name="open" class="opener" id="o-svc1-1">
+  <label class="head" for="o-svc1-1">
+    <span class="r1"><span class="code">CounselB</span><span class="name">Sample Counsel B</span><span class="pills"><span class="pill">Counsel of record</span><span class="pill">For: Grace Liu</span><span class="pill warn">Conflicting details</span></span></span>
+    <span class="r2">counsel.b@example.com<span class="sep">·</span>604-555-0177<span class="sep">·</span>400-222 Sample Ave, Vancouver BC</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v">counsel.b@example.com<button class="copy" type="button">copy</button><span class="src">Response to Civil Claim</span></span><span class="k">Phone</span><span class="v">604-555-0177<button class="copy" type="button">copy</button><span class="src">Response to Civil Claim</span></span><span class="k">Phone (other)</span><span class="v">604-555-0188<button class="copy" type="button">copy</button><span class="src">Email signature, 2026-10-01</span></span><span class="k">Address for service</span><span class="v">400-222 Sample Ave, Vancouver BC<span class="src">Response to Civil Claim</span></span></div><h3>Service</h3><div class="rows"><span class="k">Firm</span><span class="v">Sample Law Corp.</span></div></div>
+</div><div class="card former" data-side="D" data-flags="" data-search="sample counsel e counsele  former counsel of record for: grace liu replaced 2026-09-15 old firm llp counsel.e@example.com">
+  <input type="radio" name="open" class="opener" id="o-svc1-2">
+  <label class="head" for="o-svc1-2">
+    <span class="r1"><span class="code">CounselE</span><span class="name">Sample Counsel E</span><span class="pills"><span class="pill">Former counsel of record</span><span class="pill">For: Grace Liu</span><span class="pill">Replaced 2026-09-15</span></span></span>
+    <span class="r2">counsel.e@example.com<span class="sep">·</span><span class="gap">no phone</span><span class="sep">·</span>600-444 Sample Blvd, Vancouver BC</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v">counsel.e@example.com<button class="copy" type="button">copy</button><span class="src">Response to Civil Claim</span></span><span class="k">Phone</span><span class="v missing">Missing</span><span class="k">Address for service</span><span class="v">600-444 Sample Blvd, Vancouver BC<span class="src">Response to Civil Claim</span></span></div><h3>Service</h3><div class="rows"><span class="k">Firm</span><span class="v">Old Firm LLP</span></div></div>
+</div><div class="card" data-side="D" data-flags="" data-search="sample counsel c counselc  counsel of record for: northshore holdings ltd. for: 1234567 b.c. ltd. sample &amp; partners counsel.c@example.com">
+  <input type="radio" name="open" class="opener" id="o-svc1-3">
+  <label class="head" for="o-svc1-3">
+    <span class="r1"><span class="code">CounselC</span><span class="name">Sample Counsel C</span><span class="pills"><span class="pill">Counsel of record</span><span class="pill">For: Northshore Holdings Ltd.</span><span class="pill">For: 1234567 B.C. Ltd.</span></span></span>
+    <span class="r2">counsel.c@example.com<span class="sep">·</span><span class="gap">no phone</span><span class="sep">·</span>500-333 Sample Rd, Vancouver BC</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v">counsel.c@example.com<button class="copy" type="button">copy</button><span class="src">Response to Civil Claim</span></span><span class="k">Phone</span><span class="v missing">Missing</span><span class="k">Address for service</span><span class="v">500-333 Sample Rd, Vancouver BC<span class="src">Response to Civil Claim</span></span></div><h3>Service</h3><div class="rows"><span class="k">Firm</span><span class="v">Sample &amp; Partners</span></div></div>
+</div><div class="card" data-side="D" data-flags="gap" data-search="the owners, strata plan eps0000 strataeps0000  self-represented insurer-appointed counsel not yet filed  council@strata.example">
+  <input type="radio" name="open" class="opener" id="o-svc1-4">
+  <label class="head" for="o-svc1-4">
+    <span class="r1"><span class="code">StrataEPS0000</span><span class="name">The Owners, Strata Plan EPS0000</span><span class="pills"><span class="pill">Self-represented</span><span class="pill">Insurer-appointed counsel not yet filed</span></span></span>
+    <span class="r2">council@strata.example<span class="sep">·</span><span class="gap">no phone</span></span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v">council@strata.example<button class="copy" type="button">copy</button><span class="src">Response to Civil Claim (email for service)</span></span><span class="k">Phone</span><span class="v missing">Missing</span><span class="k">Address for service</span><span class="v missing">Missing</span></div></div>
+</div><div class="none" hidden>None.</div></div></section><div class="actions listtools"><button type="button">Copy all service emails</button><button type="button">Copy service list as table</button></div></div><div class="view" data-v="lit"><section><h2>Plaintiffs <span class="badge">2</span></h2><div class="list"><div class="card" data-side="P" data-flags="priv" data-search="alan wei park parka alan park, wei park plaintiff client director  alan@mapleexample.example">
+  <input type="radio" name="open" class="opener" id="o-lit0-0">
+  <label class="head" for="o-lit0-0">
+    <span class="r1"><span class="code">ParkA</span><span class="name">Alan Wei Park</span><span class="pills"><span class="pill">Plaintiff</span><span class="pill">Client</span><span class="pill">Director</span><span class="pill priv">Privileged source</span></span></span>
+    <span class="r2">alan@mapleexample.example<span class="sep">·</span>778-555-0101<span class="sep">·</span>210-1000 Example Way, Richmond BC</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><div class="aka">Also known as: Alan Park, Wei Park</div><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v">alan@mapleexample.example<button class="copy" type="button">copy</button><span class="src">Client email, 2026-03-03</span></span><span class="k">Phone</span><span class="v">778-555-0101<button class="copy" type="button">copy</button><span class="src">Client email signature, 2026-11-04</span></span><span class="k">Address</span><span class="v">210-1000 Example Way, Richmond BC<span class="src">Notice of Civil Claim</span></span></div><h3>Counsel</h3><div class="rows"><span class="k">Counsel of record</span><span class="v">Pat Counsel, Example Law LLP (Service List)</span><span class="k">Other counsel</span><span class="v">Sam Defender, Defender Criminal Law: criminal matter. Not on the Service List.<span class="src">Client email &quot;Peace bond&quot;, 2026-11-02</span><span class="pill priv inl">Privileged source</span></span></div><h3>Related</h3><div class="rows"><span class="k">·</span><span class="v">Director of Maple Grove Dental Inc.</span></div><h3>In the case data</h3><div class="rows"><span class="k">Facts</span><span class="v">12</span><span class="k">Documents</span><span class="v">31</span></div><div class="note">Proposed peace bond: no contact with Bo Lin. Sign date 2026-11-09.</div></div>
+</div><div class="card" data-side="P" data-flags="" data-search="maple grove dental inc. maplegd  plaintiff client occupant: unit 210  office@mapleexample.example">
+  <input type="radio" name="open" class="opener" id="o-lit0-1">
+  <label class="head" for="o-lit0-1">
+    <span class="r1"><span class="code">MapleGD</span><span class="name">Maple Grove Dental Inc.</span><span class="pills"><span class="pill">Plaintiff</span><span class="pill">Client</span><span class="pill">Occupant: Unit 210</span></span></span>
+    <span class="r2">office@mapleexample.example<span class="sep">·</span>604-555-0102<span class="sep">·</span>210-1000 Example Way, Richmond BC</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v">office@mapleexample.example<button class="copy" type="button">copy</button><span class="src">Client email</span></span><span class="k">Phone</span><span class="v">604-555-0102<button class="copy" type="button">copy</button><span class="src">Letterhead</span></span><span class="k">Address</span><span class="v">210-1000 Example Way, Richmond BC<span class="src">BC Registry search</span></span></div><h3>Counsel</h3><div class="rows"><span class="k">Counsel of record</span><span class="v">Pat Counsel, Example Law LLP (Service List)</span></div><h3>Related</h3><div class="rows"><span class="k">·</span><span class="v">Director: Alan Wei Park</span></div><h3>In the case data</h3><div class="rows"><span class="k">Facts</span><span class="v">4</span><span class="k">Documents</span><span class="v">6</span></div></div>
+</div><div class="none" hidden>None.</div></div></section><section><h2>Defendants <span class="badge">6</span></h2><div class="list"><div class="card" data-side="D" data-flags="" data-search="bo lin linb &quot;ben&quot; defendant  ">
+  <input type="radio" name="open" class="opener" id="o-lit1-0">
+  <label class="head" for="o-lit1-0">
+    <span class="r1"><span class="code">LinB</span><span class="name">Bo Lin</span><span class="pills"><span class="pill">Defendant</span></span></span>
+    <span class="r2"><span class="gap">no email</span><span class="sep">·</span><span class="gap">no phone</span><span class="sep">·</span>Sample address</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><div class="aka">Also known as: &quot;Ben&quot;</div><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v missing">Missing</span><span class="k">Phone</span><span class="v missing">Missing</span><span class="k">Address</span><span class="v">Sample address<span class="src">Notice of Civil Claim</span></span></div><h3>Counsel</h3><div class="rows"><span class="k">Counsel of record</span><span class="v">Sample Counsel A, Sample LLP (Service List)</span></div><h3>In the case data</h3><div class="rows"><span class="k">Facts</span><span class="v">9</span><span class="k">Documents</span><span class="v">11</span></div><div class="note">Proposed peace bond: Alan Wei Park may not contact him. All contact through counsel.</div></div>
+</div><div class="card" data-side="D" data-flags="" data-search="grace liu liug d.b.a. harmony wellness studio defendant tenant: unit 220  ">
+  <input type="radio" name="open" class="opener" id="o-lit1-1">
+  <label class="head" for="o-lit1-1">
+    <span class="r1"><span class="code">LiuG</span><span class="name">Grace Liu</span><span class="pills"><span class="pill">Defendant</span><span class="pill">Tenant: Unit 220</span></span></span>
+    <span class="r2"><span class="gap">no email</span><span class="sep">·</span><span class="gap">no phone</span><span class="sep">·</span>220-1000 Example Way, Richmond BC</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><div class="aka">Also known as: d.b.a. Harmony Wellness Studio</div><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v missing">Missing</span><span class="k">Phone</span><span class="v missing">Missing</span><span class="k">Address</span><span class="v">220-1000 Example Way, Richmond BC<span class="src">Notice of Civil Claim</span></span></div><h3>Counsel</h3><div class="rows"><span class="k">Counsel of record</span><span class="v">Sample Counsel B, Sample Law Corp. (Service List)</span></div><h3>In the case data</h3><div class="rows"><span class="k">Facts</span><span class="v">18</span><span class="k">Documents</span><span class="v">22</span></div></div>
+</div><div class="card" data-side="D" data-flags="" data-search="victor chan chanv  defendant  ">
+  <input type="radio" name="open" class="opener" id="o-lit1-2">
+  <label class="head" for="o-lit1-2">
+    <span class="r1"><span class="code">ChanV</span><span class="name">Victor Chan</span><span class="pills"><span class="pill">Defendant</span></span></span>
+    <span class="r2"><span class="gap">no email</span><span class="sep">·</span><span class="gap">no phone</span><span class="sep">·</span>Sample address</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v missing">Missing</span><span class="k">Phone</span><span class="v missing">Missing</span><span class="k">Address</span><span class="v">Sample address<span class="src">Notice of Civil Claim</span></span></div><h3>Counsel</h3><div class="rows"><span class="k">Counsel of record</span><span class="v">Sample Counsel A, Sample LLP (Service List)</span></div><h3>In the case data</h3><div class="rows"><span class="k">Facts</span><span class="v">3</span><span class="k">Documents</span><span class="v">4</span></div></div>
+</div><div class="card" data-side="D" data-flags="" data-search="northshore holdings ltd. northshoreh  defendant landlord: unit 220  ">
+  <input type="radio" name="open" class="opener" id="o-lit1-3">
+  <label class="head" for="o-lit1-3">
+    <span class="r1"><span class="code">NorthshoreH</span><span class="name">Northshore Holdings Ltd.</span><span class="pills"><span class="pill">Defendant</span><span class="pill">Landlord: Unit 220</span></span></span>
+    <span class="r2"><span class="gap">no email</span><span class="sep">·</span><span class="gap">no phone</span><span class="sep">·</span>Sample registered office</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v missing">Missing</span><span class="k">Phone</span><span class="v missing">Missing</span><span class="k">Address</span><span class="v">Sample registered office<span class="src">BC Registry search</span></span></div><h3>Counsel</h3><div class="rows"><span class="k">Counsel of record</span><span class="v">Sample Counsel C (Service List)</span></div><h3>In the case data</h3><div class="rows"><span class="k">Facts</span><span class="v">7</span><span class="k">Documents</span><span class="v">9</span></div></div>
+</div><div class="card" data-side="D" data-flags="" data-search="1234567 b.c. ltd. 1234567bc  defendant  ">
+  <input type="radio" name="open" class="opener" id="o-lit1-4">
+  <label class="head" for="o-lit1-4">
+    <span class="r1"><span class="code">1234567BC</span><span class="name">1234567 B.C. Ltd.</span><span class="pills"><span class="pill">Defendant</span></span></span>
+    <span class="r2"><span class="gap">no email</span><span class="sep">·</span><span class="gap">no phone</span><span class="sep">·</span>Sample registered office</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v missing">Missing</span><span class="k">Phone</span><span class="v missing">Missing</span><span class="k">Address</span><span class="v">Sample registered office<span class="src">BC Registry search</span></span></div><h3>Counsel</h3><div class="rows"><span class="k">Counsel of record</span><span class="v">Sample Counsel C (Service List)</span></div><h3>In the case data</h3><div class="rows"><span class="k">Facts</span><span class="v">2</span><span class="k">Documents</span><span class="v">3</span></div></div>
+</div><div class="card" data-side="D" data-flags="gap" data-search="the owners, strata plan eps0000 strataeps0000  defendant  council@strata.example">
+  <input type="radio" name="open" class="opener" id="o-lit1-5">
+  <label class="head" for="o-lit1-5">
+    <span class="r1"><span class="code">StrataEPS0000</span><span class="name">The Owners, Strata Plan EPS0000</span><span class="pills"><span class="pill">Defendant</span></span></span>
+    <span class="r2">council@strata.example<span class="sep">·</span><span class="gap">no phone</span></span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v">council@strata.example<button class="copy" type="button">copy</button><span class="src">Response to Civil Claim</span></span><span class="k">Phone</span><span class="v missing">Missing</span><span class="k">Address</span><span class="v missing">Missing</span></div><h3>Counsel</h3><div class="rows"><span class="k">Counsel of record</span><span class="v">Self-represented (Service List)</span></div><h3>Related</h3><div class="rows"><span class="k">·</span><span class="v">Insurer: Sample Mutual · adjuster Sample Adjuster</span></div><h3>In the case data</h3><div class="rows"><span class="k">Facts</span><span class="v">21</span><span class="k">Documents</span><span class="v">40</span></div></div>
+</div><div class="none" hidden>None.</div></div></section></div><div class="view" data-v="wit"><section><h2>Plaintiffs' Witnesses <span class="badge">3</span></h2><div class="list"><div class="card" data-side="P" data-flags="" data-search="alan wei park parka  party witness smoke odour  alan@mapleexample.example">
+  <input type="radio" name="open" class="opener" id="o-wit0-0">
+  <label class="head" for="o-wit0-0">
+    <span class="r1"><span class="code">ParkA</span><span class="name">Alan Wei Park</span><span class="pills"><span class="pill">Party witness</span><span class="pill">Smoke odour</span></span></span>
+    <span class="r2">alan@mapleexample.example<span class="sep">·</span>778-555-0101</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v">alan@mapleexample.example<button class="copy" type="button">copy</button><span class="src">Client email</span></span><span class="k">Phone</span><span class="v">778-555-0101<button class="copy" type="button">copy</button><span class="src">Client email signature</span></span><span class="k">Address for service</span><span class="v missing">Missing</span></div><h3>In the case data</h3><div class="rows"><span class="k">Facts</span><span class="v">12</span><span class="k">Documents</span><span class="v">31</span></div></div>
+</div><div class="card" data-side="P" data-flags="gap" data-search="jordan kim kimj  client's staff identified the tenant  jordan@mapleexample.example">
+  <input type="radio" name="open" class="opener" id="o-wit0-1">
+  <label class="head" for="o-wit0-1">
+    <span class="r1"><span class="code">KimJ</span><span class="name">Jordan Kim</span><span class="pills"><span class="pill">Client's staff</span><span class="pill">Identified the tenant</span></span></span>
+    <span class="r2">jordan@mapleexample.example<span class="sep">·</span><span class="gap">no phone</span></span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v">jordan@mapleexample.example<button class="copy" type="button">copy</button><span class="src">Cc on client email, 2026-11-02</span></span><span class="k">Phone</span><span class="v missing">Missing</span><span class="k">Address for service</span><span class="v missing">Missing</span></div><h3>In the case data</h3><div class="rows"><span class="k">Facts</span><span class="v">3</span><span class="k">Documents</span><span class="v">2</span></div></div>
+</div><div class="card unconfirmed" data-side="P" data-flags="unc gap" data-search="sample investigations ltd. investigators  private investigator unconfirmed  pi@example.com">
+  <input type="radio" name="open" class="opener" id="o-wit0-2">
+  <label class="head" for="o-wit0-2">
+    <span class="r1"><span class="code">InvestigatorS</span><span class="name">Sample Investigations Ltd.</span><span class="pills"><span class="pill">Private investigator</span><span class="pill warn">Unconfirmed</span></span></span>
+    <span class="r2">pi@example.com<span class="sep">·</span><span class="gap">no phone</span></span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v">pi@example.com<button class="copy" type="button">copy</button><span class="src">Your email, 2026-11-04</span></span><span class="k">Phone</span><span class="v missing">Missing</span><span class="k">Address for service</span><span class="v missing">Missing</span></div><div class="actions"><button type="button">Confirm</button><button type="button">Not a character</button><button type="button">Merge with…</button></div></div>
+</div><div class="none" hidden>None.</div></div></section><section><h2>Defendants' Witnesses <span class="badge">0</span></h2><div class="list"><div class="none">None.</div></div></section><section><h2>Expert Witnesses <span class="badge">1</span></h2><div class="list"><div class="card" data-side="P" data-flags="" data-search="dr. sample air-quality airm  plaintiffs' expert air quality proposed  expert@example.com">
+  <input type="radio" name="open" class="opener" id="o-wit2-0">
+  <label class="head" for="o-wit2-0">
+    <span class="r1"><span class="code">AirM</span><span class="name">Dr. Sample Air-Quality</span><span class="pills"><span class="pill">Plaintiffs' expert</span><span class="pill">Air quality</span><span class="pill">Proposed</span></span></span>
+    <span class="r2">expert@example.com<span class="sep">·</span>604-555-0140</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v">expert@example.com<button class="copy" type="button">copy</button><span class="src">Engagement letter</span></span><span class="k">Phone</span><span class="v">604-555-0140<button class="copy" type="button">copy</button><span class="src">Engagement letter</span></span><span class="k">Address for service</span><span class="v missing">Missing</span></div></div>
+</div><div class="none" hidden>None.</div></div></section></div><div class="view" data-v="dec"><section><h2>Court <span class="badge">2</span></h2><div class="list"><div class="card" data-side="N" data-flags="" data-search="justice sample judges  supreme court of bc consent injunction order  ">
+  <input type="radio" name="open" class="opener" id="o-dec0-0">
+  <label class="head" for="o-dec0-0">
+    <span class="r1"><span class="code">JudgeS</span><span class="name">Justice Sample</span><span class="pills"><span class="pill">Supreme Court of BC</span><span class="pill">Consent injunction order</span></span></span>
+    <span class="r2"><span class="gap">no email</span><span class="sep">·</span><span class="gap">no phone</span><span class="sep">·</span>Vancouver Law Courts</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v missing">Missing</span><span class="k">Phone</span><span class="v missing">Missing</span><span class="k">Address for service</span><span class="v">Vancouver Law Courts<span class="src">Entered order</span></span></div><h3>Appearances</h3><div class="rows"><span class="k">2026-08-31</span><span class="v">Consent injunction order, S-000000</span></div></div>
+</div><div class="card" data-side="N" data-flags="" data-search="associate judge sample assocjudges  chambers case planning conference  ">
+  <input type="radio" name="open" class="opener" id="o-dec0-1">
+  <label class="head" for="o-dec0-1">
+    <span class="r1"><span class="code">AssocJudgeS</span><span class="name">Associate Judge Sample</span><span class="pills"><span class="pill">Chambers</span><span class="pill">Case planning conference</span></span></span>
+    <span class="r2"><span class="gap">no email</span><span class="sep">·</span><span class="gap">no phone</span><span class="sep">·</span>Vancouver Law Courts</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v missing">Missing</span><span class="k">Phone</span><span class="v missing">Missing</span><span class="k">Address for service</span><span class="v">Vancouver Law Courts<span class="src">Notice of hearing</span></span></div></div>
+</div><div class="none" hidden>None.</div></div></section><section><h2>Enforcement &amp; Public Bodies <span class="badge">2</span></h2><div class="list"><div class="card" data-side="N" data-flags="" data-search="richmond rcmp rcmp  police file r000-00000 injunction enforcement  ">
+  <input type="radio" name="open" class="opener" id="o-dec1-0">
+  <label class="head" for="o-dec1-0">
+    <span class="r1"><span class="code">RCMP</span><span class="name">Richmond RCMP</span><span class="pills"><span class="pill">Police file R000-00000</span><span class="pill">Injunction enforcement</span></span></span>
+    <span class="r2"><span class="gap">no email</span><span class="sep">·</span>604-555-0199<span class="sep">·</span>Sample detachment address</span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v missing">Missing</span><span class="k">Phone</span><span class="v">604-555-0199<button class="copy" type="button">copy</button><span class="src">Police file card</span></span><span class="k">Address for service</span><span class="v">Sample detachment address<span class="src">Police file card</span></span></div></div>
+</div><div class="card" data-side="N" data-flags="" data-search="city community bylaws citybylaws  smoke complaint, unit 220  bylaws@example.com">
+  <input type="radio" name="open" class="opener" id="o-dec1-1">
+  <label class="head" for="o-dec1-1">
+    <span class="r1"><span class="code">CityBylaws</span><span class="name">City Community Bylaws</span><span class="pills"><span class="pill">Smoke complaint, Unit 220</span></span></span>
+    <span class="r2">bylaws@example.com<span class="sep">·</span><span class="gap">no phone</span></span>
+  </label>
+  <label class="x" for="o-none">Close ✕</label>
+  <div class="detail"><h3>Contact</h3><div class="rows"><span class="k">Email</span><span class="v">bylaws@example.com<button class="copy" type="button">copy</button><span class="src">Letter</span></span><span class="k">Phone</span><span class="v missing">Missing</span><span class="k">Address for service</span><span class="v missing">Missing</span></div></div>
+</div><div class="none" hidden>None.</div></div></section></div>
+  </div>
+</div>
+<script>
+const q=document.getElementById('q'),side=document.getElementById('side'),flag=document.getElementById('flag');
+function filter(){const t=q.value.trim().toLowerCase(),s=side.value,f=flag.value;
+ document.querySelectorAll('.view').forEach(v=>v.querySelectorAll('section').forEach(sec=>{let n=0;
+  sec.querySelectorAll('.card').forEach(c=>{const ok=(!t||c.dataset.search.includes(t))&&(!s||c.dataset.side===s)&&(!f||c.dataset.flags.split(' ').includes(f));
+   c.classList.toggle('hidebyfilter',!ok);if(ok)n++;});
+  sec.querySelector('.badge').textContent=n;sec.querySelector('.none').hidden=n>0;}));}
+[q,side,flag].forEach(el=>el.addEventListener('input',filter));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('o-none').checked=true;});
+document.querySelectorAll('.tabr').forEach(r=>r.addEventListener('change',()=>{document.getElementById('o-none').checked=true;}));
+</script>
+</body>
+</html>
