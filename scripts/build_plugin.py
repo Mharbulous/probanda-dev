@@ -18,14 +18,21 @@ A skill is found at .claude/skills/<name>/ or at public/plugins/*/skills/<name>/
 never both. The skill selection and the SKILL.md stamp are ported from CoClerk's
 plugin-packager build_plugin.py (native-tree path).
 
+A built file is mode 755 when it ends in .py or the assignment lists it under
+"executables", and 644 otherwise. --check also compares each built file's mode
+with the one git records for it, because a Windows checkout cannot hold the
+executable bit on disk: there `git update-index --chmod=+x <file>` sets it.
+
 Exit codes: 0 built or identical, 1 --check found differences, 2 a gate stopped
 the build before anything was written, or another build was running. Standard
 library only.
 """
 import argparse
 import json
+import os
 import re
 import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -57,6 +64,7 @@ OLD_IDENTIFIERS = (rb"plugin_litigation_", rb"plugin_legal-commons_", rb"plugin_
 REPLACE_RETRY_SECONDS = 30  # a file watcher or sync client locks a folder for seconds
 # A path a hook runs from the installed plugin's folder.
 HOOK_PATH = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\s\"']+)")
+EXECUTABLE, NOT_EXECUTABLE = 0o755, 0o644
 
 # No Word template or image may ship beside the letterhead renderer (CoClerk #1003:
 # a firm letterhead and a scanned signature once shipped to every install), except
@@ -278,8 +286,7 @@ def write(files, out, executables=()):
             path = building / rel
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(data)
-            if path.suffix == ".py" or rel in executables:
-                path.chmod(0o755)
+            path.chmod(built_mode(rel, executables))
         if replaced.exists():
             shutil.rmtree(replaced)
         if out.exists():
@@ -297,21 +304,60 @@ def write(files, out, executables=()):
         shutil.rmtree(replaced)
 
 
-def check(files, target):
+def built_mode(rel, executables):
+    """The mode the build gives a file: 755 for a .py file or a listed executable, else 644."""
+    return EXECUTABLE if Path(rel).suffix == ".py" or rel in executables else NOT_EXECUTABLE
+
+
+def git_modes(repo):
+    """{repo-relative posix path: 755 or 644} as git's index records them, or {} when `repo`
+    is not a git work tree. A Windows disk cannot hold the executable bit, so git's record
+    is the only place a built file's mode can be read there."""
+    if not (repo / ".git").exists():
+        return {}
+    out = subprocess.run(["git", "-C", str(repo), "ls-files", "-s", "-z"],
+                         capture_output=True, check=True).stdout
+    modes = {}
+    for entry in out.split(b"\0"):
+        if entry:
+            meta, path = entry.split(b"\t", 1)
+            modes[path.decode("utf-8")] = EXECUTABLE if meta.startswith(b"100755") else NOT_EXECUTABLE
+    return modes
+
+
+def recorded_mode(path, rel, modes):
+    """The mode git records for `path` (`rel` from the repo root), else its mode on disk where
+    the disk can hold one, else None: Windows has no executable bit to read."""
+    if rel in modes:
+        return modes[rel]
+    if os.name == "nt":
+        return None
+    return EXECUTABLE if path.stat().st_mode & 0o111 else NOT_EXECUTABLE
+
+
+def check(files, target, repo, modes, executables=()):
     try:
         on_disk = {p.relative_to(target).as_posix(): p for p in target.rglob("*") if p.is_file()} \
             if target.is_dir() else {}
         changed = sorted(p for p in set(files) & set(on_disk) if on_disk[p].read_bytes() != files[p])
+        mode_changed = []
+        for p in sorted(set(files) & set(on_disk)):
+            want = built_mode(p, executables)
+            rel = on_disk[p].relative_to(repo).as_posix() if on_disk[p].is_relative_to(repo) else None
+            have = recorded_mode(on_disk[p], rel, modes)
+            if have is not None and have != want:
+                mode_changed.append(f"{p}: {rel or on_disk[p]} is {have:o}, the build gives {want:o}")
     except FileNotFoundError as e:
         stop(f"{e.filename} disappeared while {target} was being read: a build appears to be "
              "running. Run --check again once it has finished.")
     added = sorted(set(files) - set(on_disk))
     removed = sorted(set(on_disk) - set(files))
-    for label, paths in (("added", added), ("removed", removed), ("changed", changed)):
+    for label, paths in (("added", added), ("removed", removed), ("changed", changed), ("mode", mode_changed)):
         for p in paths:
             print(f"{label}: {p}")
-    if added or removed or changed:
-        print(f"{target} is stale: {len(added)} added, {len(removed)} removed, {len(changed)} changed")
+    if added or removed or changed or mode_changed:
+        print(f"{target} is stale: {len(added)} added, {len(removed)} removed, {len(changed)} changed, "
+              f"{len(mode_changed)} with the wrong mode (set one with git update-index --chmod=+x or -x)")
         return 1
     print(f"{target} is current")
     return 0
@@ -331,7 +377,9 @@ def main():
     stale = sorted(p for p in plugins_dir.iterdir() if p.is_dir() and p.name not in built
                    and not p.name.startswith(".")) if plugins_dir.is_dir() else []
     if args.check:
-        code = max([check(files, plugins_dir / name) for name, files in built.items()], default=0)
+        modes = git_modes(repo)
+        code = max([check(files, plugins_dir / name, repo, modes, specs[name]["executables"])
+                    for name, files in built.items()], default=0)
         for folder in stale:
             print(f"{folder} is stale: no plugin in source/assignment.json builds it")
         return 1 if stale else code

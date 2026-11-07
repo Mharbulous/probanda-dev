@@ -302,6 +302,43 @@ class CutoverBuildTest(unittest.TestCase):
             self.assertTrue(os.stat(research / "scripts" / "run").st_mode & 0o111)
         self.assertEqual(self.build("--check").returncode, 0)
 
+    def git(self, *args):
+        subprocess.run(["git", "-C", str(self.repo), *args], check=True, capture_output=True)
+
+    def test_check_fails_when_git_records_the_wrong_mode_of_a_built_file(self):
+        self.with_payload(["scripts/run"])
+        self.assertEqual(self.build().returncode, 0)
+        # As on Windows: git records each file's mode, whatever the disk holds.
+        self.git("init", "-q")
+        self.git("add", "-A")
+        guard = "plugins/practice/skills/shared/hooks/guard.py"  # a .py file: the build gives 755
+        run = "plugins/research/scripts/run"  # a listed executable: 755
+        plain = "plugins/research/lib/pkg/mod.py"  # also .py
+        self.git("update-index", "--chmod=+x", guard, run, plain,
+                 "plugins/research/skills/shared/hooks/guard.py")
+        result = self.build("--check")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        for wrong in (guard, run):
+            with self.subTest(wrong=wrong):
+                self.git("update-index", "--chmod=-x", wrong)
+                result = self.build("--check")
+                self.assertEqual(result.returncode, 1)
+                self.assertIn(f"{wrong} is 644, the build gives 755", result.stdout)
+                self.git("update-index", "--chmod=+x", wrong)
+        self.git("update-index", "--chmod=+x", "plugins/research/LICENSE")
+        result = self.build("--check")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("plugins/research/LICENSE is 755, the build gives 644", result.stdout)
+
+    def test_windows_disk_mode_is_never_read(self):
+        sys.path.insert(0, str(REPO / "scripts"))
+        import build_plugin
+        path = self.repo / "source" / "practice" / "README.md"
+        with mock.patch.object(build_plugin.os, "name", "nt"):
+            self.assertIsNone(build_plugin.recorded_mode(path, "source/practice/README.md", {}))
+            self.assertEqual(build_plugin.recorded_mode(path, "source/practice/README.md",
+                                                        {"source/practice/README.md": 0o644}), 0o644)
+
     def test_a_plugin_can_leave_out_the_shared_tree(self):
         assignment = json.loads(json.dumps(ASSIGNMENT))
         assignment["plugins"]["research"]["shared"] = False
