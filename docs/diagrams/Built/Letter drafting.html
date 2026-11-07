@@ -46,11 +46,11 @@ pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap 
 <body>
 <main>
   <figure class="diagram" id="letter-drafting"
-          data-based-on-commit="495bec07566e3e6a9bdb9ab87744650e4e1aba78"
-          data-updated="2026-11-06T17:00:00-08:00">
+          data-based-on-commit="4f0251aae1e3644e8586d319e8bed307e1b04bea"
+          data-updated="2026-11-06T21:00:00-08:00">
     <figcaption>
       <h1>How Probanda drafts a letter, from your request to the letter as sent</h1>
-      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/495bec07566e3e6a9bdb9ab87744650e4e1aba78"><code>495bec07</code></a> on main · Last updated 2026-11-06 17:00 -08:00</p>
+      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/4f0251aae1e3644e8586d319e8bed307e1b04bea"><code>4f0251aa</code></a> on main · Last updated 2026-11-06 21:00 -08:00</p>
     </figcaption>
     <p>Worked example: the November 6, 2026 letter to the Richmond RCMP asking it to enforce a consent order. The 📌 notes show where that letter sits in each stage. They rest on the files in its draft workspace and the matter's law folder. No transcript of the sessions that drafted it was found on this computer, so the notes say what the files show, not which calls were made.</p>
     <div class="legend" aria-label="Colour key">
@@ -105,7 +105,7 @@ flowchart TD
     LOOK["Look up the recipient, counsel<br/>and addresses: never asks you"]
     RCV{"An unfinished draft<br/>of this letter exists?"}
     HR(["👤 You choose: recover it<br/>or start new"])
-    DD["/drafting-data<br/>creates the letter's record<br/>and its Deliver job"]
+    DD["/drafting-data<br/>creates the letter's record<br/>and its Draft and send the letter job"]
     DB[("Drafting database<br/>the letter's text, recipients and jobs")]
     REF{"Replying to or revising<br/>earlier correspondence?"}
     RD["Read those letters in full<br/>from 3. CORRESPONDENCE"]
@@ -330,7 +330,7 @@ flowchart TD
     SEND(["👤 You send it.<br/>Probanda never sends"])
     RS{{"Record as sent: held if a<br/>pre-send criterion is unmet"}}
     HS(["👤 You meet each criterion,<br/>or say send anyway"])
-    DONE[("Recorded as sent, Deliver job closed,<br/>procedural history updated")]
+    DONE[("Recorded as sent, send steps ticked<br/>(job closes once delivery and follow-up resolve),<br/>procedural history updated")]
     BF(["👤 You give a follow-up date<br/>when the letter asks for a reply"])
     TP["/task-prioritization<br/>adds the follow-up"]
     DLC[["delivery-checker<br/>was it sent and delivered? does the<br/>sent copy match the draft?"]]

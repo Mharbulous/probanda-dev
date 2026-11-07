@@ -10,7 +10,7 @@ Fixed-text jobs `/prepare` may offer per Writing kind (the 2026-09-21 design §6
 | Notice of Application | `Availability letter` (opening stage), `Serve the application` (after the gate job completes), `Set down for hearing` and optionally `Reply affidavits` (once each response is in or its time has run), `Application book` (after set-down), `Reset for hearing` (once adjourned generally). `File and serve` (after the gate job completes) only for a notice filed under the rule before B.C. Reg. 105/2026 |
 | Application Response | `Serve the response` (after the gate job completes), `File the served response` (once the notice of hearing is filed or served). `File and serve` (after the gate job completes) only for a response filed under the rule before B.C. Reg. 105/2026 |
 | Either | `Review the opposing arguments`, one per document setting out an opposing party's arguments, at any stage. Its step 4 writes `Answer opposing point` jobs |
-| A letter kind (any `_NoVenue` letter kind, or a venue's `letter` kind) | `Deliver` alone, at the letter's save (ADR 0024 D10; a letter saved before 2026-10-23 also holds `Draft the letter`) |
+| A letter kind (any `_NoVenue` letter kind, or a venue's `letter` kind) | `Draft and send the letter` alone, at the letter's save. A letter saved under the `Availability letter` job gets `Deliver` alone instead, because that job is its drafting job. A letter saved before 2026-11-06 keeps the `Deliver` it was given (ADR 0024 D10; one saved before 2026-10-23 also holds `Draft the letter`) |
 | `internal-memo` | `Deliver` alone, at the memo's save, with the memo's own intent and steps below (#1161: a memo is sent like a letter; a memo saved before 2026-10-23 also holds `Draft the letter`) |
 | `unstructured` (a venue's stock type for a document type with no type file of its own), or `unstructured-<recipient>` (a `_NoVenue` recipient's) other than `unstructured-internal` | `Draft the Writing` and `Deliver`, both at the Writing's save |
 | `unstructured-internal` (the `_NoVenue` stock type for a Writing for counsel only, which is never sent) | `Draft the Writing` alone, at the Writing's save: no `Deliver` |
@@ -123,7 +123,28 @@ Both take `guard: "title_and_step_any_status"` in place of `"none"`, so a docume
 - Step 1: `Draft the letter`
 - Scope: `('filing_prose', NULL)` and `('filing_recipients', NULL)`
 
-**`Deliver`.** Blocked by nothing at a letter's or a memo's own save; by the `Availability letter` job when saved under it; on an `unstructured` or `unstructured-<recipient>` Writing by `Draft the Writing`; and on a letter or memo saved before 2026-10-23 by `Draft the letter`. Its last step, `Record the letter as sent` (on a memo, `Record the memo as sent`; on an Unstructured Writing, `Record the Writing as sent`), is the Sent write, `drafting_data__record_sent` (`filing-checklists.md` §13 "Sent write"), which is lawyer-only and carries the pre-send hold (§14a). The Sent write itself closes `Deliver`: in its transaction both steps are stamped done and the job is completed, whichever session made the call, so a bare "record it as sent" leaves nothing queued. This is the one place a write other than the job's own session clears a `wip` lock (§9). A job session that already completed `Deliver`, and a shelved or superseded one, are tolerated: the Sent write leaves that job as it stands.
+**`Draft and send the letter`.** Written at a letter's own save since 2026-11-06, in place of `Deliver`, `filing_id` the letter's own id, blocked by nothing. One job carries the letter through its phases, and its steps are the letter's checklist:
+
+- Intent: `Draft this letter, send it to its recipients, and see it through to a reply.`
+- Step 1: `Frame the letter: real audience, purpose as an outcome, fit with the goal, capacity and register, without prejudice, delivery method, copies, enclosures, what it must not say`
+- Step 2: `Source or attribute each fact, and list the gaps`
+- Step 3 †: `Settle the law: propositions, research jobs, excerpts and note-ups`
+- Step 4: `Approve the outline; the scrivener drafts`
+- Step 5: `Review: facts traced, tone and audience, risk, counsel's paragraph review, DRAFT label removed`
+- Step 6 †: `Client approval`
+- Step 7: `Finalize: letterhead, enclosures, signature`
+- Step 8: `Send the letter to its recipients`
+- Step 9: `Record the letter as sent`
+- Step 10: `Confirm delivery`
+- Step 11 †: `Acknowledgement received`
+- Step 12 †: `Follow up on the date the practitioner set, and log the response`
+- Scope: `('filings', <the letter's id>)`, `('documents', NULL)`, `('filing_prose', NULL)` and `('filing_recipients', NULL)`
+
+A † step is left out at the save only when the practitioner's request already rules it out, and the remaining steps keep their order, renumbered from 1. A step found not to apply later is set `cancelled` on the practitioner's words (`drafting_data__set_step`). No step stores or computes a date: step 12's date is the practitioner's, held by `/task-prioritization`'s follow-up.
+
+The Sent write stamps only the steps whose text is `Send the letter to its recipients` or `Record the letter as sent`, and completes the job only when every step is then done or cancelled; otherwise the job stays as it stands, so delivery, acknowledgement and follow-up remain open on the board. Like `Deliver`, it is the practitioner's own: `/draft`'s Dispatch never chooses it. The saving session takes it at the save, because the practitioner named this letter.
+
+**`Deliver`.** Blocked by nothing at a memo's own save, and at a letter's own save before 2026-11-06; by the `Availability letter` job when saved under it; on an `unstructured` or `unstructured-<recipient>` Writing by `Draft the Writing`; and on a letter or memo saved before 2026-10-23 by `Draft the letter`. Its last step, `Record the letter as sent` (on a memo, `Record the memo as sent`; on an Unstructured Writing, `Record the Writing as sent`), is the Sent write, `drafting_data__record_sent` (`filing-checklists.md` §13 "Sent write"), which is lawyer-only and carries the pre-send hold (§14a). The Sent write itself closes `Deliver`: in its transaction both steps are stamped done and the job is completed, whichever session made the call, so a bare "record it as sent" leaves nothing queued. This is the one place a write other than the job's own session clears a `wip` lock (§9). A job session that already completed `Deliver`, and a shelved or superseded one, are tolerated: the Sent write leaves that job as it stands.
 
 - Intent: `Send this letter to its recipients and record it as sent.`
 - Step 1: `Send the letter to its recipients`
@@ -163,24 +184,36 @@ The Writing's save writes `Draft the Writing` and this `Deliver` by two `draftin
 
 An `unstructured-internal` Writing's save writes `Draft the Writing` alone, by one `drafting_data__create_job` call; by hand, call 1 inserts that one row, call 2 recovers its id, and call 3 writes its step and its four scope rows. No `Deliver` row and no `ticket_blocks` edge are written. Its stored layout declares no `recipients`, and its Work Board has no `gate` row, because it is never sent.
 
-**These twelve jobs sit outside §14's nothing-open test**, read by these titles, so a queued stock job never holds the gate job back. That is their only exception in the job checklist: every other script treats them as ordinary `work` jobs. (The `gate` completion criterion, which reads unmet while a job is open, leaves out all twelve by the same titles, and §14a's `Pre-send gate` job too.)
+**These thirteen jobs sit outside §14's nothing-open test**, read by these titles (`Draft and send the letter` among them), so a queued stock job never holds the gate job back. That is their only exception in the job checklist: every other script treats them as ordinary `work` jobs. (The `gate` completion criterion, which reads unmet while a job is open, leaves out all thirteen by the same titles, and §14a's `Pre-send gate` job too.)
 
 ### Letter save idiom
 
-The letter's `Deliver` job is written by one `drafting_data__create_job` call, `guard: "none"`, `kind = 'work'`, `billing_anchor` by §3's rule, and `filing_id` the letter's own id. The statements below are that call's contract. Its `title` and `intent` here are this section's fixed text. The example's ids are literals: proceeding `1`, the letter Writing `8`, an `Availability letter` job `19`, and the new job `20`, which in practice the tool returns. A new letter has nothing queued on it, so the job takes §3's starting priority, `0`. A memo's save runs the same statements with the memo's intents and step text (above) in place of the letter's, and an Unstructured Writing's `Deliver` with its own (above), never the letter's.
+The letter's job is written by one `drafting_data__create_job` call, `guard: "none"`, `kind = 'work'`, `billing_anchor` by §3's rule, and `filing_id` the letter's own id. The statements below are that call's contract. Its `title` and `intent` here are this section's fixed text. The example's ids are literals: proceeding `1`, the letter Writing `8`, an `Availability letter` job `19`, and the new job `20`, which in practice the tool returns. A new letter has nothing queued on it, so the job takes §3's starting priority, `0`. A memo's save runs the `Deliver` statements of the second block below, without its `ticket_blocks` row, with the memo's intent and step text (above) in place of the letter's, and an Unstructured Writing's `Deliver` runs them with its own (above), never the letter's.
 
-The plain save writes `Deliver` alone, blocked by nothing. Its first statement is call 1; by hand, run call 2 for its id, `20` here, then the rest as call 3:
+The plain save writes `Draft and send the letter` alone, blocked by nothing, with all twelve steps (a † step the practitioner's request rules out is simply not inserted, and the ordinals close up). Its first statement is call 1; by hand, run call 2 for its id, `20` here, then the rest as call 3:
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
-  VALUES (1, 8, 'Deliver', 'Send this letter to its recipients and record it as sent.', 'work', 0, '<matter>|late jurisdictional objection', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
-INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (20, 1, 'Send the letter to its recipients');
-INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (20, 2, 'Record the letter as sent');
+  VALUES (1, 8, 'Draft and send the letter', 'Draft this letter, send it to its recipients, and see it through to a reply.', 'work', 0, '<matter>|late jurisdictional objection', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (20, 1, 'Frame the letter: real audience, purpose as an outcome, fit with the goal, capacity and register, without prejudice, delivery method, copies, enclosures, what it must not say');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (20, 2, 'Source or attribute each fact, and list the gaps');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (20, 3, 'Settle the law: propositions, research jobs, excerpts and note-ups');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (20, 4, 'Approve the outline; the scrivener drafts');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (20, 5, 'Review: facts traced, tone and audience, risk, counsel''s paragraph review, DRAFT label removed');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (20, 6, 'Client approval');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (20, 7, 'Finalize: letterhead, enclosures, signature');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (20, 8, 'Send the letter to its recipients');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (20, 9, 'Record the letter as sent');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (20, 10, 'Confirm delivery');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (20, 11, 'Acknowledgement received');
+INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (20, 12, 'Follow up on the date the practitioner set, and log the response');
 INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (20, 'filings', 8);
 INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (20, 'documents', NULL);
+INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (20, 'filing_prose', NULL);
+INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (20, 'filing_recipients', NULL);
 ```
 
-A save under the `Availability letter` job writes the same `Deliver`, blocked by that job: the same call with `blocks` naming the `Availability letter` job. By hand:
+A save under the `Availability letter` job writes `Deliver` alone, blocked by that job, because that job is the letter's drafting job: the same call with `Deliver`'s title, intent, steps and scope, and `blocks` naming the `Availability letter` job. By hand:
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)

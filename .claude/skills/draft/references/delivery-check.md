@@ -1,4 +1,4 @@
-Read when: a letter's `Deliver` job is open at the opening, `/ingest` hands over an ingested letter, the Sent write refuses with `sent_copy_mismatch`, the practitioner asks whether a letter went out or arrived or says a client letter did, or the session is about to ask them that.
+Read when: a letter's `Deliver` job, or the send step of its `Draft and send the letter` job, is open at the opening, `/ingest` hands over an ingested letter, the Sent write refuses with `sent_copy_mismatch`, the practitioner asks whether a letter went out or arrived or says a client letter did, or the session is about to ask them that.
 Assumes SKILL.md is loaded. Rules are not restated here.
 
 # Delivery check
@@ -7,11 +7,11 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 
 Never ask the practitioner whether a letter was sent, delivered or received, in any wording, until the `lawyer:delivery-checker` agent has checked that letter. The letter's own face says how it was sent, so the evidence is looked up first. After the check, ask only about what its result lists under `could_not_determine`, and name in the question what was checked and what could not be (section 5).
 
-The agent only reads. This session acts on its result, updates the draft, records the letter as sent and shows the files. The result is used in this session and kept nowhere: no table, no file and no note holds it. The only lasting memory that a letter went is the Sent write on its Writing, which closes its `Deliver` job and so ends the opening check below, or for a client letter the history entry the practitioner's word adds (`references/letters.md` section 10). A letter with no Writing is simply checked again whenever one of the triggers fires.
+The agent only reads. This session acts on its result, updates the draft, records the letter as sent and shows the files. The result is used in this session and kept nowhere: no table, no file and no note holds it. The only lasting memory that a letter went is the Sent write on its Writing, which closes its `Deliver` job, or ticks the send steps of `Draft and send the letter`, and so ends the opening check below, or for a client letter the history entry the practitioner's word adds (`references/letters.md` section 10). A letter with no Writing is simply checked again whenever one of the triggers fires.
 
 ## 2. When to run it
 
-- **At the opening**, after the fast open's lines and the idle report, when the open Writing is a letter whose `Deliver` job the `live` lane does not show completed. Search the matter's correspondence folder, as `/find-document` step 1 searches, for a dated or signed copy of this letter: the same addressee and subject, dated on or after the draft's date. A file ending ` UNSIGNED.pdf` is not one. With no such copy, run nothing and say nothing. With more than one, check the newest.
+- **At the opening**, after the fast open's lines and the idle report, when the open Writing is a letter whose `Deliver` job the `live` lane does not show completed, or whose `Draft and send the letter` job has `Record the letter as sent` open. Search the matter's correspondence folder, as `/find-document` step 1 searches, for a dated or signed copy of this letter: the same addressee and subject, dated on or after the draft's date. A file ending ` UNSIGNED.pdf` is not one. With no such copy, run nothing and say nothing. With more than one, check the newest.
 - **Before any question** about whether a letter went out or arrived (section 1).
 - **On `sent_copy_mismatch`** from the Sent write, when the copy passed has not been checked yet.
 - **When the practitioner asks** for a letter to be checked, for any letter file in the matter, or says a client letter went.

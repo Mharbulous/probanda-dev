@@ -9,6 +9,9 @@ export const GATE_TITLE = "Pre-filing consistency gate";
 export const POSITION_CONFLICT_TITLE = "Decide a position our own correspondence contradicts";
 /** The job the Sent write's pre-send hold creates (jobs.md "Pre-send gate"). */
 export const PRE_SEND_TITLE = "Pre-send gate";
+/** A letter's one job since 2026-11-06 (jobs-stock.md §3b): its steps are the letter's phases, from
+ * framing to follow-up. The Sent write ticks its send steps and completes it only once every step is resolved. */
+export const LETTER_JOB_TITLE = "Draft and send the letter";
 /** The stock jobs' fixed titles (jobs-stock.md §3b, the one list), which are not drafting work. The
  * service and set-down jobs follow amended Rule 8-1 (B.C. Reg. 105/2026); `File and serve` stays for
  * a notice filed under the old rule. */
@@ -25,6 +28,7 @@ export const STOCK_TITLES: ReadonlySet<string> = new Set([
   "Draft the letter",
   "Draft the Writing",
   "Deliver",
+  LETTER_JOB_TITLE,
 ]);
 /** Jobs identified by fixed title that the gate row's open-job reading leaves out (design §2.4): the
  * two gate jobs (jobs.md §14 and "Pre-send gate") and the stock jobs (plan decision 3; jobs.md §3b). */

@@ -1,6 +1,7 @@
 // One proceeding's tickets, each classified, with its open loose threads and its Proposal holders.
 
 import { rows } from "../query-rows.js";
+import { LETTER_JOB_TITLE } from "./goal-gate.js";
 import { isResearchWriting, ticketAnswersHeld } from "./query.js";
 import { ticketSourcesHeld } from "./track-source.js";
 import {
@@ -185,7 +186,8 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, rende
   for (const { ticket } of tickets) {
     if (ticket.category !== "ready") continue;
     // A `Deliver` is the practitioner's too: its first step, sending, is their own act (jobs-stock.md §3b).
-    if (ticket.title.startsWith("Counsel's review of ") || ticket.title === "Deliver") ticket.dispatch_skips.push({ reason: "practitioner_own" });
+    // So is a `Draft and send the letter`, which the practitioner named at the letter's save.
+    if (ticket.title.startsWith("Counsel's review of ") || ticket.title === "Deliver" || ticket.title === LETTER_JOB_TITLE) ticket.dispatch_skips.push({ reason: "practitioner_own" });
     for (const p of ticket.conflicts) if (p.status === "queued" && !p.rejected) ticket.dispatch_skips.push({ reason: "either_or", job: p.id });
     for (const held of holding) {
       if (held.id === ticket.id) continue;

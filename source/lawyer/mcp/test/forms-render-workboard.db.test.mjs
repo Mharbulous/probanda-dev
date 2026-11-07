@@ -3044,6 +3044,26 @@ test("goal: a no-forum Writing with an unmet Excerpts shows its gate row reading
   assert.deepEqual([criterionOf(fixed, "gate").state, fixed.goal.text], ["unmet", "Drafting conditions hold. Pre-send checks: 1 open."]);
 });
 
+test("a letter's Draft and send the letter job is the practitioner's own for Dispatch and is left out of the gate row's open count (jobs-stock.md §3b)", async (t) => {
+  const vetted = { ...LETTER_BLOCK, title: "Letter to opposing counsel", parts: LETTER_BLOCK.parts.map(({ rule_ref, ...rest }) => rest) };
+  const g = await generalWritingFixture(t, { front: null, block: vetted });
+  const { filing_id } = await g.createLetter();
+  await g.prose(filing_id, "body", "We write about the late objection.");
+  await g.execute(
+    `INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
+       VALUES (1, ${filing_id}, 'Draft and send the letter', 'Draft this letter, send it to its recipients, and see it through to a reply.', 'work', 0, 'L0000|late objection', '2026-09-25T09:00');`
+  );
+  renderGeneral(g, filing_id);
+  const manifest = manifestFileOf(g.dbPath, filing_id);
+  const unquoted = { generating: false, marker: "👃", instance: "law", table: "statements_of_law", id: 1, item: "Example v. Authority, 2020 BCSC 1", doc: "General_writing" };
+  writeFileSync(manifest, JSON.stringify({ ...JSON.parse(readFileSync(manifest, "utf-8")), inventory: [unquoted] }), "utf-8");
+  const board = renderGeneral(g, filing_id).board;
+  const job = board.tickets.find((x) => x.title === "Draft and send the letter");
+  assert.deepEqual(job.dispatch_skips, [{ reason: "practitioner_own" }]);
+  assert.deepEqual(criterionOf(board, "gate").items, ["Every excerpt is quoted, pinpointed and checked"], "the gate row names the held criterion, not the letter's job");
+  assert.ok(renderLiveLanes(board).some((l) => l.startsWith(`- Job #${job.id} `) && l.endsWith("dispatch: skip (practitioner's own)")));
+});
+
 test("goal: a venue's letter reads the Pre-send gate, never the pre-filing gate, and after the Sent write its card still reads Filed (#1236)", async (t) => {
   const vetted = { ...LETTER_BLOCK, title: "Letter to opposing counsel", parts: LETTER_BLOCK.parts.map(({ rule_ref, ...rest }) => rest) };
   const g = await generalWritingFixture(t, { front: null, block: vetted });
