@@ -54,7 +54,8 @@ test("the approval page renders byte-identically to the inline page.ts it replac
   assertSha256Pin(renderApprovalPage({ ...proposal, matter_root: "/" }, null), "08f61d900f53350308acace453322d1c21c6b6b82b5eea242aff2925ee9525d8", "renderApprovalPage(root matter)");
 });
 
+// Re-pinned 2026-11-07: the stale page now says the link expires when a newer run is served or after 30 days (4bddcf6).
 test("the simple pages render byte-identically to the inline page.ts they replaced", () => {
-  assertSha256Pin(stalePage(), "fed22ced5441352276a8da0b8473f3975bfb0c688fef987a71e1d2715e89b3bb", "stalePage");
+  assertSha256Pin(stalePage(), "6d1332fe5fd40318738a33ecf78e5a2616a90303a1141c1cd6a634ee1a59bebd", "stalePage");
   assertSha256Pin(simplePage("A <b> & \"c\"", "It's <gone>."), "f0582f75fcbd30c02b3804361ac6489a6941566ca265fc402ebede0781e7b984", "simplePage");
 });
