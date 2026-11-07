@@ -9,7 +9,8 @@ uses and how to handle edge cases.
 - `.eml` and `.msg` files are emails — their delivery code must always start
   with `E`. Use `ELT` not `LET` on a .msg; `ELF` not `LEF` on a .msg. The
   `L`-first variants (`LET`, `LEF`) are correct only on .pdf copies of the
-  letter itself.
+  letter itself. An email that only passed among the firm's own staff has no
+  delivery to name: it takes `IE` instead.
 - When a code includes `#` followed by a number (e.g. `INV#7413`, `CHQ#873`),
   the `#` is part of the code and must not be stripped. No space between `#`
   and the number.
@@ -103,6 +104,14 @@ Fax" / "By Email" is printed first) rather than defaulting to `LEFF`.
 | `REPLY` | Reply | 5 |
 | `PET` | Petition | 5 |
 | `RTP` | Response to Petition | 5 |
+
+Note — amended pleadings: an amended pleading keeps the code of the pleading
+it amends, and the amendment word the document's own title uses ("amended",
+"further amended", "re-amended") is the first word of the subject. No separate
+code exists for an amended version, so a search on the code finds every
+version. Its date is the court stamp on the amended filing.
+Example: an Amended Response to Civil Claim filed 2024-06-11 →
+`2024-06-11 RNOCC SmithJ amended FILED.pdf`.
 
 ### Affidavits and service
 
@@ -225,9 +234,17 @@ entered order that follows. Both may exist for one decision. Oral reasons take
 | `ICCF` | Identification & Conflict Check Form (LSBC client ID & conflict check) | 2 |
 | `ID` | Government-issued client identification scan (BCID, driver's licence, passport) | 2 |
 | `CCARD` | Credit/payment card scan kept on file (distinct from a government ID scan) | 2 |
-| `CCS` | Casemap Conflict Search (internal Casemap conflict-check search output) | 2 |
-| `CONF` | Internal Casemap conflict search, approved by supervising lawyer | 2 |
+| `CCS` | Casemap Conflict Search with no approval stamp | 2 |
+| `CONF` | Casemap Conflict Search bearing the supervising lawyer's approval stamp | 2 |
 | `RET` | Retainer / engagement agreement (signed retainer letter or engagement contract) | 2 |
+
+Note — `CCS` vs `CONF`: the approval is a green stamp reading "APPROVED / By
+<name> at <time>, <date>". Nothing else marks it: no initials, no sign-off
+page. The stamp sits on the rendered page, not in the text layer, so extracted
+text never shows it. Look at each page image. Its position varies: below the
+results on some printouts, top right over the summary on others. On a
+printout of more than one page, check every page, not only the last. A stamp
+anywhere → `CONF`. No stamp on any page → `CCS`.
 
 ---
 
@@ -237,6 +254,7 @@ entered order that follows. Both may exist for one decision. Oral reasons take
 |---|---|---|
 | `MT` | Memorandum to (named person) | 4 |
 | `MTF` | Memo to file | 2, 4 |
+| `IE` | Internal email: an email or chain among the firm's own staff only (no client or outside party on it) | 2 |
 | `ML` | Memorandum of law (firm-authored research memo) | 4, 6 |
 | `Notes` | Notes | 2, 4 |
 | `SRCH` | Title search | 4 |
