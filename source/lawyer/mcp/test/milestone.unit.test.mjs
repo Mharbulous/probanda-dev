@@ -7,6 +7,8 @@
 // moved activity stamp (job staleness fixtures). It was retaken on 2026-11-04 for the Blocked lane's
 // label in milestone.js, whose glyph changed from a work marker to a coloured circle, which also takes
 // in the page changes since the last pin (944856d8, a14c68d4).
+// It was retaken on 2026-11-07 for the lapsed-lock block and the hoisted localMinute() in
+// milestone.js (358b034).
 
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -20,7 +22,7 @@ const SECTION = JSON.parse(readFileSync(new URL("./fixtures/work-board-data.json
 const DATA = { meta: { revision: 3, matter: "L200", client: "Acme <Co>", rendered: "2026-10-19 09:30" }, sections: [SECTION] };
 
 test("the Work Board renders byte-identically to the pinned page", () => {
-  assertSha256Pin(renderWorkBoardHtml(DATA), "6a5f7d38bb00d71c614e612a89281b5648e336a2026efe27b3478d41d46906a6", "Work Board");
+  assertSha256Pin(renderWorkBoardHtml(DATA), "753dd155628d908a18fe6cdaf38557004d2ce6baecbb6d87c21172b2112cedfa", "Work Board");
 });
 
 test("WORKBOARD_CSS and WORKBOARD_JS are byte-identical to the pinned constants", () => {
