@@ -8,7 +8,8 @@ receipts and statements, and internal solicitor-client memos.
 
 Direction codes (`LT`, `ET`, `ELT`, `LET`, `LF`, `EF`, `LEF`, `UP`, `HT`,
 `HF`), accounting codes (`RCPT`, `INV#`, `STMT`, `CHQ#`, `INTERAC`, `DEP`),
-intake codes (`ICCF`, `ID`, `CCS`, `CONF`, `RET`), and memo codes (`MTF`, `Notes`).
+intake codes (`ICCF`, `ID`, `CCS`, `CONF`, `RET`), memo codes (`MTF`, `Notes`),
+and `IE` for internal email.
 Look up definitions in `code-registry.md`.
 
 ## Judgment calls
@@ -20,6 +21,11 @@ Look up definitions in `code-registry.md`.
 - **Client account documents** always include `$Amount`.
 - **Memo codes** (`MTF`, `Notes`) cover internal notes about the client
   relationship — instructions taken, advice given, file-opening notes.
+- **Internal email** (`IE`): a staff-only email or chain about this client's
+  account or relationship (billing, trust handling, a refund) belongs here and
+  is not misfiled, even though no client is on it. Name it like any account
+  document, with the amount: e.g.
+  `2024-07-30 IE SmithJ re INV#6217 cheque trust refund $448.msg`.
 
 ## Known thin spots
 
