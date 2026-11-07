@@ -36,6 +36,8 @@ const { LEGAL_RESEARCH_FIXTURE } = await import("../build/board-fixtures/legal-r
 const { ARGUMENTS_FIXTURE } = await import("../build/board-fixtures/arguments.js");
 const { LOOSE_THREADS_FIXTURE } = await import("../build/board-fixtures/loose-threads.js");
 const { HOUSEKEEPING_FIXTURE } = await import("../build/housekeeping/fixture.js");
+const { CAST_FIXTURE } = await import("../build/board-fixtures/cast-of-characters.js");
+const { CAST_PAGE, renderCastPage } = await import("../build/cast/cast-page.js");
 
 const sha = (text) => createHash("sha256").update(text).digest("hex");
 const fixtureFile = (html) => `${html}${html.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}\n`;
@@ -53,6 +55,7 @@ const PAGES = [
     ["Arguments", ARGUMENTS_FIXTURE],
   ].map(([name, f]) => [name, `${name} - Work Board 1`, (page) => renderViewPageHtml({ ...viewPage(name), ...page }, f.meta, f.data)]),
   ["Loose Threads", "Loose Threads", (page) => renderViewPageHtml({ ...viewPage("Loose Threads"), ...page }, LOOSE_THREADS_FIXTURE.meta, LOOSE_THREADS_FIXTURE.data)],
+  ["Cast of Characters", "Cast of Characters", (page) => renderCastPage(CAST_FIXTURE.model, CAST_FIXTURE.meta, page ?? CAST_PAGE)],
 ];
 
 /** The page's template set with the first .css file's text marked, so an override is visible. */

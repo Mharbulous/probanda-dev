@@ -8,10 +8,14 @@ Contact details are copied into each matter's case-data `parties` row, so the sa
 
 - **`contact`**: one person or organization, tagged `person` or `organization`, holding email, phone and address. It is the source of truth. The practitioner's CardDAV address book (`contacts__get`, `contacts__search`) is only a pre-fill source.
 - **`affiliation`**: links {person, organization}, data {from, to, title}. A lawyer who changes firms stays one contact with two affiliations. Directors and officers are recorded this way when known.
-- **`matter_role`**: links {matter, contact}, a `role` tag from a cloud-checked vocabulary (client, prospective_client, opposing_party, opposing_counsel, co_counsel, expert, adjuster, referral_source), data {from, to, note, case_party_id?, case_proceeding_id?}. The optional ids point to the case-data party and proceeding, so case-data is unchanged. Witnesses and tribunal members stay in case-data only.
+- **`matter_role`**: links {matter, contact}, a `role` tag from a cloud-checked vocabulary (client, prospective_client, opposing_party, opposing_counsel, co_counsel, expert, adjuster, referral_source), data {from, to, note, case_party_id?, case_proceeding_id?}. The optional ids point to the case-data party and proceeding, so case-data is unchanged. Witnesses and tribunal members stay in case-data only (amended 2026-11-06, below).
 - **`client`** stays the billing account (client number, lawyers, account label). Who the client is comes from the matter's `matter_role` items tagged `client`, one per client contact, so joint clients need no special case. `upsert_client_matter` creates them when a matter opens.
 
 Counsel of record stays in case-data as filed (`.claude/skills/case-data/references/design-decisions.md` #55): `parties.lawyer_name`, `lawyer_firm`, `lawyer_email`, `lawyer_phone`, `address`, `service_address_filed_date` and `replaced_representative`. Only `parties.contact_info` duplicates the contact. It is no longer written, and existing values are left alone. Where a contact's details differ from counsel of record, the practitioner is asked whether a notice of change was filed, and nothing is overwritten.
+
+## Amendment 2026-11-06: contact details for witnesses and tribunal members
+
+Decided by the developer in `docs/Specs/2026-11-06_cast-of-characters-board-spec.md` §3. A witness's or tribunal member's identity, aliases and file codes stay in case-data. Their phones, emails and addresses go on a `contact`, tied by a `matter_role` whose data carries `case_witness_id` (role `witness`) or `case_tribunal_member_id` (role `court_staff`), the way `case_party_id` ties a party. The role vocabulary gains `client_other_counsel`, `client_representative`, `witness`, `investigator`, `insurer`, `public_body` and `court_staff`, and a role may carry `for_case_party_id` (the party an insurer insures, an investigator was engaged by, or a representative or other counsel acts for), `privileged_source`, and a `status` tag whose one value `proposed` marks a role a session recorded without asking. No table is added.
 
 ## Considered options
 

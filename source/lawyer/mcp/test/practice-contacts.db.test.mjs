@@ -337,3 +337,54 @@ test("an old copy's reads are the same with contacts, affiliations and matter ro
 
   assert.deepEqual(await readAll(), before);
 });
+
+// Cast of Characters spec 3.2 to 3.4: the ids that tie a contact to a witness, a tribunal member
+// or a related party, the privileged-source mark and status proposed.
+test("a role's witness, tribunal member and related-party ids and privileged mark leave only as hashes, and status proposed is a tag that confirming clears", async (t) => {
+  const { store, cloud } = await setup(t, "cast-fields");
+  await matter(store, "L113");
+  const { contact_id } = await person(store, "Sample Witness");
+  const proposed = await contacts.upsert_matter_role(store, {
+    matt_num: "L113", contact_id, role: "witness", case_witness_id: 4, privileged_source: true, status: "proposed",
+    note: "client email, 2026-11-02, Peace bond",
+  });
+  assert.deepEqual([proposed.role, proposed.status, proposed.case_witness_id, proposed.privileged_source], ["witness", "proposed", 4, true]);
+  const [op] = cloud.writes().at(-1).ops;
+  assert.deepEqual(op.tags, { role: "witness", status: "proposed" });
+  for (const field of ["case_witness_id", "privileged_source", "note"]) assert.match(op.hashes[field], /^[0-9a-f]{64}$/, field);
+  assert.doesNotMatch(JSON.stringify(cloud.writes()), /Peace bond/);
+
+  const plain = await contacts.upsert_matter_role(store, { matt_num: "L113", contact_id, role: "witness", case_witness_id: 5 });
+  assert.notEqual(plain.id, proposed.id, "a role for another witness is a second role");
+  const officer = await contacts.upsert_matter_role(store, { matt_num: "L113", contact_id, role: "court_staff", case_tribunal_member_id: 2 });
+  const insurer = await contacts.upsert_matter_role(store, { matt_num: "L113", contact_id, role: "insurer", for_case_party_id: 3 });
+  assert.deepEqual([officer.case_tribunal_member_id, insurer.for_case_party_id], [2, 3]);
+
+  const confirmed = await contacts.upsert_matter_role(store, { id: proposed.id, status: null });
+  assert.equal(confirmed.status, undefined, "confirming clears status");
+  assert.equal(confirmed.case_witness_id, 4);
+});
+
+test("merge_contact folds a proposed role into the keep contact's confirmed twin and carries the new fields", async (t) => {
+  const { store } = await setup(t, "cast-merge");
+  await matter(store, "L114");
+  const keep = await person(store, "Sam Defender");
+  const spare = await person(store, "S. Defender");
+  const kept = await contacts.upsert_matter_role(store, { matt_num: "L114", contact_id: keep.contact_id, role: "client_other_counsel", for_case_party_id: 1 });
+  await contacts.upsert_matter_role(store, {
+    matt_num: "L114", contact_id: spare.contact_id, role: "client_other_counsel", for_case_party_id: 1, status: "proposed", privileged_source: true,
+  });
+  const result = await contacts.merge_contact(store, { keep_id: keep.contact_id, spare_id: spare.contact_id });
+  assert.deepEqual([result.merged, result.combined, result.moved], [true, 1, 0]);
+  const roles = store.rows("matter_role");
+  assert.equal(roles.length, 1);
+  assert.deepEqual([roles[0].id, roles[0].status, roles[0].privileged_source], [kept.id, undefined, true]);
+
+  const keep2 = await person(store, "Pat Proposed");
+  const spare2 = await person(store, "Pat Confirmed");
+  const proposedTwin = await contacts.upsert_matter_role(store, { matt_num: "L114", contact_id: keep2.contact_id, role: "witness", case_witness_id: 9, status: "proposed" });
+  await contacts.upsert_matter_role(store, { matt_num: "L114", contact_id: spare2.contact_id, role: "witness", case_witness_id: 9 });
+  await contacts.merge_contact(store, { keep_id: keep2.contact_id, spare_id: spare2.contact_id });
+  const [twin] = store.rows("matter_role").filter((row) => row.id === proposedTwin.id);
+  assert.equal(twin.status, undefined, "the combined role is confirmed when either one was");
+});

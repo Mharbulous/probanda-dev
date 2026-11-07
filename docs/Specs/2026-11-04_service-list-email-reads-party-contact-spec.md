@@ -28,6 +28,7 @@ Extend the existing not-addressed handling in `shared/email.md`: for each left-o
 
 - Never guess an address. A former lawyer's address is never offered. No client content in shipped text.
 - A contact's email is offered only when the role ties that contact to this party on this proceeding, and to the party's own or current counsel's capacity. A contact matched by name alone is not offered.
+- A role with `status: "proposed"` is never read for this. Only a confirmed role (no `status`) addresses mail ([Cast of Characters spec](2026-11-06_cast-of-characters-board-spec.md) 3.4).
 - `/draft`'s email-first order stays as it is. `lawyer` skill text names nothing in another plugin.
 
 ## 6. Options considered (streamline and deburr first, additions last)

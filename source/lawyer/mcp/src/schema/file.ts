@@ -23,6 +23,7 @@ const PAGE_NAMES = [
   "Legal Research",
   "Arguments",
   "Loose Threads",
+  "Cast of Characters",
   "Housekeeping approval",
 ];
 

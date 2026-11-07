@@ -22,14 +22,17 @@ STAGEABLE_NAMES = ["Work Board 1.html", "Work Board - proceeding 2.html", "Work 
                    # A Writing's own folder's pages (spec 2026-10-22).
                    "Work Board.html", "Procedural History.html", "Arguments.html", "LOOSE THREADS.HTML",
                    # Raw Research renamed (2026-10-31).
-                   "Legal Research.html", "Legal Research - Work Board 1.html", "Legal Memos.html", "Legal Memos - Work Board 1.html"]
+                   "Legal Research.html", "Legal Research - Work Board 1.html", "Legal Memos.html", "Legal Memos - Work Board 1.html",
+                   # The matter's Cast of Characters (spec 2026-11-06).
+                   "Cast of Characters.html", "CAST OF CHARACTERS.HTML"]
 # A preview of each current page (#139), stageable like its page.
 PREVIEW_NAMES = ["Work Board preview 1.html", "Litigation Strategy preview 2.html", "Work Board 1 preview 1.html",
                  "Work Board - proceeding 2 preview 3.html", "Provable Facts - Work Board 1 preview 1.html",
                  "Raw Research - Work Board 4 preview 2.html", "Arguments - Work Board 1 preview 10.html",
                  "Loose Threads - Work Board 1 preview 1.html", "WORK BOARD PREVIEW 1.HTML",
                  "Procedural History - Work Board 1 preview 1.html", "Material Facts - Work Board 1 preview 2.html",
-                 "Work Board preview 1.html", "Raw Research preview 2.html", "Legal Memos preview 1.html", "Legal Research preview 1.html"]
+                 "Work Board preview 1.html", "Raw Research preview 2.html", "Legal Memos preview 1.html", "Legal Research preview 1.html",
+                 "Cast of Characters preview 1.html"]
 STAGEABLE_NAMES += PREVIEW_NAMES
 UNSTAGEABLE_NAMES = ["Work Board - SUB Opening.html", "Work Board 1-1.html",
                      "Work Board-1.html", "Work Board .html", "Work Board 1 (2).html",
@@ -68,6 +71,8 @@ PAGE_PATHS = [
     DRAFT + r"\Notice of Hearing of Application\Legal Memos.html",
     DRAFT + r"\Notice of Hearing of Application\Raw Research.html",
     DRAFT + r"\Raw Research - Work Board 1.html",
+    DRAFT + r"\Cast of Characters.html",
+    "/mnt/<matter>/0. DRAFT/Cast of Characters.html",
 ]
 OTHER_PATHS = [
     DRAFT + r"\approval.html",

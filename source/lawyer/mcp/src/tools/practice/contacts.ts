@@ -87,13 +87,16 @@ export async function upsert_matter_role(store: PracticeStore, args: Record<stri
   const creating = !args.id;
   const { ops, items } = await store.write("upsert_matter_role", {}, [{
     op: creating ? "upsert" : "update", id: creating ? newId() : String(args.id), kind: "matter_role",
-    tags: { role: args.role },
+    // A null status clears the tag, which confirms a proposed role.
+    tags: { role: args.role, status: args.status },
     links: { matter: matterId, contact: args.contact_id as string | undefined },
     // `case_proceeding_id` is part of the upsert key, so a new role always sends it.
     data: {
       from: args.from, to: args.to, note: args.note, case_party_id: args.case_party_id,
       case_proceeding_id: creating ? args.case_proceeding_id ?? null : args.case_proceeding_id,
       from_source_id: args.from_source_id, to_source_id: args.to_source_id, unfiled: args.unfiled,
+      case_witness_id: args.case_witness_id, case_tribunal_member_id: args.case_tribunal_member_id,
+      for_case_party_id: args.for_case_party_id, privileged_source: args.privileged_source,
     },
   }]);
   return rowOf(items, ops[0].as);
@@ -382,11 +385,14 @@ export async function merge_contact(
   let combined = 0;
   const linked = (kind: string, roles: string[]) =>
     [...items].filter(([, item]) => item.kind === kind && roles.some((role) => item.links[role] === spareId));
+  // A role's status is not part of its identity: a proposed role folds into its confirmed twin,
+  // and the combined role is confirmed when either one was.
+  const identity = ({ status: _status, ...tags }: Record<string, unknown>) => tags;
   const shift = (kind: string, keyLinks: string[], keyData: string[], fields: string[]) => {
     for (const [spareItemId, item] of linked(kind, keyLinks)) {
       const role = keyLinks.find((name) => item.links[name] === spareId) as string;
       const twin = [...items].find(([, other]) =>
-        other.kind === kind && other.links[role] === keepId && same(other.tags, item.tags) &&
+        other.kind === kind && other.links[role] === keepId && same(identity(other.tags), identity(item.tags)) &&
         keyLinks.every((name) => name === role || other.links[name] === item.links[name]) &&
         keyData.every((name) => same(other.data[name], item.data[name])));
       if (!twin) {
@@ -395,13 +401,17 @@ export async function merge_contact(
         continue;
       }
       const filled = fill(twin[0], twin[1].data, item.data, fields, conflicts);
-      if (Object.keys(filled).length) ops.push({ op: "update", id: twin[0], kind, data: filled });
+      const confirm = present(twin[1].tags.status) && !present(item.tags.status);
+      if (Object.keys(filled).length || confirm) {
+        ops.push({ op: "update", id: twin[0], kind, data: filled, ...(confirm ? { tags: { status: null } } : {}) });
+      }
       ops.push({ op: "delete", id: spareItemId, kind });
       combined++;
     }
   };
-  shift("matter_role", ["contact", "matter"], ["case_proceeding_id", "case_party_id", "from"],
-    ["to", "note", "from_source_id", "to_source_id", "unfiled"]);
+  shift("matter_role", ["contact", "matter"],
+    ["case_proceeding_id", "case_party_id", "case_witness_id", "case_tribunal_member_id", "for_case_party_id", "from"],
+    ["to", "note", "from_source_id", "to_source_id", "unfiled", "privileged_source"]);
   shift("affiliation", ["person", "organization"], ["from"], ["to", "title"]);
 
   if (conflicts.length) return { merged: false, conflicts };

@@ -138,6 +138,14 @@ export function practiceToolDefinitions(): ToolDefinition[] {
       inputSchema: objectSchema([]),
     },
     {
+      name: practicePrefixed("render_cast_of_characters"),
+      description: "Write the matter's Cast of Characters, a read-only page of everyone involved (parties, counsel of record, witnesses and experts, tribunal members, public bodies, and every contact with a matter role on it, with their sourced contact details), to `<matter_root>\\0. DRAFT\\Cast of Characters.html`, from case data and practice data, and return cast_of_characters_path, the number of current entries on each tab, and how many carry each flag (unconfirmed, missing_details, conflicting_details, privileged_source). The matter is named by matt_num or matter_id; matter_root defaults to the folder recorded for the matter. It refuses to overwrite a file this renderer did not write. The page is a human interface: present cast_of_characters_path as a file card and relay the counts; never read, grep or parse the page (shared/html-pages.md). To answer who someone is or how to reach them, use contact_lookup and matter_data__resolve_participant.",
+      inputSchema: objectSchema([
+        ...matterRef,
+        { name: "matter_root", type: "str" },
+      ]),
+    },
+    {
       name: practicePrefixed("ar_data"),
       description: "Non-closed, billable matters with trust status, WIP hours, and pending payment-in-flight state for AR reporting. Non-billable matters (billable: false) are excluded, and the WIP hours count only entries flagged billable: true. WIP hours start at each matter's own billing cutoff, derived from its invoices exactly as wip_hours derives it (date_to + 1 day when set, else issue_date), and each row reports it as cutoff_date/cutoff_source; a matter with no invoices sums all its billable entries with cutoff_date and cutoff_source null.",
       inputSchema: objectSchema([]),
@@ -654,7 +662,7 @@ export function practiceToolDefinitions(): ToolDefinition[] {
     },
     {
       name: practicePrefixed("upsert_matter_role"),
-      description: "Create (omit id) or update (provide id) one matter role: a contact's role on a matter (client, prospective_client, opposing_party, opposing_counsel, co_counsel, expert, adjuster, referral_source). The matter is named by matt_num or matter_id. case_party_id and case_proceeding_id point to the matter-data party and proceeding. Without id it upserts on (matter, contact, role, case_proceeding_id, case_party_id, from), so proposing the same role twice returns the one already recorded, while one lawyer acting for two parties, or coming back on record after leaving, gets a role for each. An ended role keeps its row with to set; nothing is deleted when a matter closes. For counsel of record, from and to are the on-record and off-record dates, from_source_id and to_source_id the matter-data source_id of the instrument that dated each, and unfiled true while from is the signed date of a notice not yet filed; change an existing role's dates by id, never by a second upsert. Returns the role row.",
+      description: "Create (omit id) or update (provide id) one matter role: a contact's role on a matter (client, prospective_client, opposing_party, opposing_counsel, co_counsel, expert, adjuster, referral_source, client_other_counsel: the client's lawyer on another matter, client_representative: a person who speaks for the client without being an officer or director, witness, investigator, insurer: the insurer as an organization, its adjusters being adjuster roles, public_body: police, a regulator or a municipality, court_staff: registry or scheduling staff). The matter is named by matt_num or matter_id. case_party_id and case_proceeding_id point to the matter-data party and proceeding, case_witness_id (role witness) and case_tribunal_member_id (role court_staff) to the matter-data witness or tribunal member whose contact details this contact holds, and for_case_party_id to the party an insurer insures, an investigator was engaged by, or a client_representative or client_other_counsel acts for. status proposed marks a role a session recorded without asking (practice-data SKILL.md); absent means confirmed, and sending status null confirms it. A proposed role is never used to address mail. privileged_source true marks a role whose details came from a client communication. Without id it upserts on (matter, contact, role, case_proceeding_id, case_party_id, case_witness_id, case_tribunal_member_id, for_case_party_id, from), so proposing the same role twice returns the one already recorded, while one lawyer acting for two parties, or coming back on record after leaving, gets a role for each. An ended role keeps its row with to set; nothing is deleted when a matter closes. For counsel of record, from and to are the on-record and off-record dates, from_source_id and to_source_id the matter-data source_id of the instrument that dated each, and unfiled true while from is the signed date of a notice not yet filed; change an existing role's dates by id, never by a second upsert. Returns the role row.",
       inputSchema: objectSchema([
         { name: "id", type: "str" },
         ...matterRef,
@@ -668,6 +676,11 @@ export function practiceToolDefinitions(): ToolDefinition[] {
         { name: "from_source_id", type: "num" },
         { name: "to_source_id", type: "num" },
         { name: "unfiled", type: "bool" },
+        { name: "case_witness_id", type: "num" },
+        { name: "case_tribunal_member_id", type: "num" },
+        { name: "for_case_party_id", type: "num" },
+        { name: "privileged_source", type: "bool" },
+        { name: "status", type: "str", enum: ["proposed"] },
       ]),
     },
     {
@@ -691,7 +704,7 @@ export function practiceToolDefinitions(): ToolDefinition[] {
     },
     {
       name: practicePrefixed("merge_contact"),
-      description: "Merge the duplicate contact spare_id into keep_id, deleting no information. Emails, phones, addresses and other names are combined, a spare name that differs from keep's goes into other_names, and a field set on only one side is kept. Every matter role and affiliation of spare moves to keep; where keep already holds the same role (same matter, role, case_proceeding_id, case_party_id and from) or affiliation (same organization or person, and from), the two are combined into keep's. All of this is one write, saved whole or not at all. When the two hold different values for anything (entity, carddav_url, note, a combined role's to, note, from_source_id, to_source_id or unfiled, or a combined affiliation's to or title), nothing is written and the result is {merged: false, conflicts: [{item, field, keep, spare}]}: put each to the practitioner, settle it with the upsert tools, then merge again. Otherwise returns {merged: true, contact_id, moved, combined}.",
+      description: "Merge the duplicate contact spare_id into keep_id, deleting no information. Emails, phones, addresses and other names are combined, a spare name that differs from keep's goes into other_names, and a field set on only one side is kept. Every matter role and affiliation of spare moves to keep; where keep already holds the same role (same matter, role, case_proceeding_id, case_party_id, case_witness_id, case_tribunal_member_id, for_case_party_id and from, whatever its status; the combined role is confirmed when either was) or affiliation (same organization or person, and from), the two are combined into keep's. All of this is one write, saved whole or not at all. When the two hold different values for anything (entity, carddav_url, note, a combined role's to, note, from_source_id, to_source_id or unfiled, or a combined affiliation's to or title), nothing is written and the result is {merged: false, conflicts: [{item, field, keep, spare}]}: put each to the practitioner, settle it with the upsert tools, then merge again. Otherwise returns {merged: true, contact_id, moved, combined}.",
       inputSchema: objectSchema([
         { name: "keep_id", type: "str" },
         { name: "spare_id", type: "str" },

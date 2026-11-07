@@ -1,6 +1,6 @@
 # Spec: Cast of Characters board
 
-Status: confirmed by the developer, 2026-11-06, after a grilling session and a mockup review. Not yet built.
+Status: confirmed by the developer, 2026-11-06, after a grilling session and a mockup review. Built 2026-11-06; the decisions taken at build time are written into the sections below and listed in 8.
 Plugin: `lawyer` (the page builder and both data stores are in its `data` server).
 Mockup: [`2026-11-06_cast-of-characters-board-mockup.html`](2026-11-06_cast-of-characters-board-mockup.html), fictional data. It is the reference for layout and behaviour. Where this spec and the mockup disagree, the mockup wins, and the spec is corrected to match.
 Builds on: [ADR 0009](../ADRs/0009-firm-wide-contacts-in-practice-data.md) and [the firm-wide contacts spec](2026-10-16_firm-wide-contacts-spec.md), which own contacts, affiliations and matter roles; [matter-data participants](../../.claude/skills/matter-data/operations/participants.md), which owns parties, counsel of record, witnesses, tribunal members and their aliases; ADR 0033 (view pages), as described in [`view-pages.ts`](../../source/lawyer/mcp/src/submission/view-pages.ts); and the service-list specs of 2026-11-04 ([counsel's assistant](2026-11-04_service-list-email-omits-counsels-assistant-spec.md), [self-represented parties](2026-11-04_service-list-email-omits-self-represented-parties-spec.md), [party contact](2026-11-04_service-list-email-reads-party-contact-spec.md)), which own who is on the service list. Where this spec touches those, they stay the source and this spec only refers to them.
@@ -47,6 +47,12 @@ A role is a tag value, so Commandment 5 is met. Whether an old copy refuses the 
 
 This amends ADR 0009's line "Witnesses and tribunal members stay in case-data only". Their identity, aliases and file codes stay in matter-data. Their phones, emails and addresses go on a practice-data contact, tied by a matter role that carries a new optional data field, `case_witness_id` (role `witness`) or `case_tribunal_member_id` (role `court_staff`, or a new role if the forum's member is the point of contact), in the same way `case_party_id` ties a party. Add the field to the cloud rule's hashed fields (`cloud/items/rules.sql`, beside `hash:case_party_id?`) and to `upsert_matter_role`. No table is added. ADR 0009 gets a short amendment that points here.
 
+Two more optional hashed data fields, added at build time (8):
+- `for_case_party_id`: the party an `insurer` insures, an `investigator` was engaged by, or a `client_representative` or `client_other_counsel` acts for. It sets their side (4.2) and where they show (4.4). `case_party_id` keeps its meaning, so `contact_checks` is unchanged.
+- `privileged_source`: true when the role's details came from a client communication. It drives the Privileged source flag (4.5).
+
+`case_witness_id`, `case_tribunal_member_id` and `for_case_party_id` are part of the role's upsert key.
+
 ### 3.3 Recording someone found only in email or files
 
 Both routes start with `contact-lookup` and its `near` list, so a find attaches to an existing contact where one fits:
@@ -54,7 +60,7 @@ Both routes start with `contact-lookup` and its `near` list, so a find attaches 
 1. The practitioner says "add X to the cast" (or names the role). The session pre-fills from `contacts__search` and the email in hand, and writes after approval under `/show-me`, as practice-data already requires.
 2. A session that has just found a person by searching mail or matter files, to answer a question about who someone is or how to reach them, records the find as a **proposed** matter role (3.4) without asking first, and says in one line what it recorded. This is the one exception to practice-data's "never create a contact without asking". Amend that rule's wording in practice-data's SKILL.md to name it.
 
-The role's `note` records where it was learned ("client email, <date>, <subject>"). When the email or document is a matter-data source, `from_source_id` points to it instead.
+The role's `note` records where it was learned ("client email, <date>, <subject>"). When the email or document is a matter-data source, `from_source_id` points to it instead. A find from a client communication also sets `privileged_source`.
 
 ### 3.4 Proposed matter roles
 
@@ -69,7 +75,7 @@ Add an optional tag field `status` to the matter role, with the one value `propo
 ### 4.1 File, build and access
 
 - One page per matter: `0. DRAFT\Cast of Characters.html`, beside `Loose Threads.html` and `Litigation Strategy.html`.
-- Built in the same page write as Loose Threads ([`matter-pages-build.ts`](../../source/lawyer/mcp/src/submission/matter-pages-build.ts)), with the view-page marker, the overwrite guard and the old-page sweep that the other pages use.
+- Written at session entry (`drafting_forms__open_session`, after its page write), with the view-page marker and the overwrite guard the other pages use; the old-page sweep keeps it. The background job and the renders after each job do not rewrite it, because they cannot read practice data. (Build decision, 8.)
 - Also built on demand by a new `practice_data` render tool that returns the page's path for a file card and relays only counts, the way `practice_data__render_practice_board` does. Not re-rendered after each contact write.
 - Its own entry template under `source/lawyer/mcp/src/templates/view-pages/`, sharing `view-head.html`, `shared.js` and `view-folder.css`.
 - Add `"cast of characters"` to `VIEW_NAMES` in [`html-pages-gate.py`](../../.claude/skills/drafting-data/hooks/html-pages-gate.py). No session reads the page ([`shared/html-pages.md`](../../.claude/skills/shared/html-pages.md)). A session answers the same questions from `contact_lookup` and `resolve_participant`.
@@ -79,7 +85,11 @@ Add an optional tag field `status` to the matter role, with the one value `propo
 For each matter, the data reader joins:
 
 - From matter-data: every party (name, `party_type`, proceeding roles), its counsel of record (`lawyer_name`, `lawyer_firm`, `lawyer_email`, `lawyer_phone`, `address`, `service_address_filed_date`, `replaced_representative`), every witness and expert (with `proceeding_witnesses.called_by_party_id` and `retained_by_party_id`), every tribunal member, every alias and file code in `participant_aliases`, and per participant the count of facts and of source documents that name them.
-- From practice-data: every matter role on the matter, its contact (`emails`, `phones`, `addresses`, `other_names`), the contact's affiliations, and the role's `from`, `to`, `note`, `from_source_id` and `status`.
+- From practice-data: every matter role on the matter, its contact (`emails`, `phones`, `addresses`, `other_names`, `note`), the contact's affiliations, and the role's `from`, `to`, `note`, `from_source_id`, `for_case_party_id`, `privileged_source` and `status`.
+
+A contact stores its details as plain values with no source each. A detail from counsel of record or a party's case-data row cites that record ("Counsel of record", with the address for service's filed date). A detail from a contact cites its role: the title and date of the `from_source_id` source, linked to its file, or else the role's `note`.
+
+The count of facts and documents that name a participant is a lead, not an identity. A fact counts when a position or admission ties it to the party, when it comes from the expert's report, or when its description or informant holds the participant's folded name or a spelling alias of four or more letters. A document counts when the party filed it, when it is the expert's report, when its file name holds one of the participant's file codes as a word, or when its title holds the name or a spelling alias.
 - A matter-data participant and a contact are one entry when a role's `case_party_id`, `case_witness_id` or `case_tribunal_member_id` points to it.
 
 **Side** is derived, never stored, and takes one of three values: Plaintiffs, Defendants, Neutral. ("Plaintiffs" and "Defendants" stand for the matter's own party labels: claimant and respondent, petitioner and respondent, and so on, taken from the proceeding roles.)
@@ -103,7 +113,7 @@ Look and feel match the other view pages (Legal Research, Arguments): the same s
 
 Entries that fit no tab (`client_other_counsel`, `client_representative`, `insurer`, adjusters) are not cards of their own. They show inside the opened card of the person or party they relate to (4.4), and search finds them there.
 
-A person may appear on more than one tab (a party who is also a witness). Within a section, entries are sorted by name.
+A person may appear on more than one tab (a party who is also a witness). Within a section, entries are sorted by name. A fact witness or investigator with no calling or engaging party goes in an "Other Witnesses" section after Expert Witnesses, shown only when it has entries; a party with no side, in "Other parties" likewise. The Service List shows every counsel of record, the client's own included, as the mockup does.
 
 **Filter row**, above the cards, as on Legal Research:
 - **Side** drop-down: All sides, Plaintiffs, Defendants, Neutral.
@@ -127,9 +137,9 @@ A proposed entry (3.4) has a dashed border.
 - Service (Service List cards): firm, address for service with its filed date, and email for service.
 - Counsel: counsel of record (pointing to the Service List), and other counsel (`client_other_counsel`) with its source.
 - Related: affiliations (director of, officer of, employee of), insurer and adjuster, `client_representative` people. These replace nesting cards inside one another.
-- Appearances (tribunal members): date and what was heard.
+- Appearances (tribunal members): the member's case-data `notes`. Matter-data records no appearances of its own.
 - In the case data: counts of facts and of documents.
-- Notes: a warning box for anything the practitioner must keep in mind, for example a no-contact order between two people on the board.
+- Notes: a warning box with the contact's own firm-wide `note`, for anything the practitioner must keep in mind, for example a no-contact order between two people on the board.
 - For a proposed entry: Confirm, Not a character and Merge with… (4.6).
 
 **Works without JavaScript.** Every card, tab and section is in the page's markup. Switching tabs and opening and closing a card work in CSS (radio inputs and `:has`), so the page is complete in a file preview that runs no script. JavaScript only adds search, the Side and Flags filters, the Esc key and the remembered tab.
@@ -141,7 +151,7 @@ Each flag is a badge on the card and an option in the Flags drop-down.
 | Flag | When |
 |---|---|
 | Unconfirmed | The role is proposed (3.4) |
-| Missing details | No phone and no email for the entry; or a matter-data party with no matter role (`contact_checks`' `parties_without_role`); or a party with neither counsel of record nor an address for service |
+| Missing details | A witness, expert or investigator missing a phone or an email; counsel, a public body, court staff or another contact-only entry with neither; a matter-data party with no matter role (`contact_checks`' `parties_without_role`); or a party with neither counsel of record nor an address for service. A represented party and a tribunal member are reached through counsel or the registry, so their own missing details are not flagged. As in the mockup, this flag shows as the "no email" or "no phone" warning on the card, with no badge |
 | Conflicting details | A contact's details differ from counsel of record, or two sources give different values for the same detail. Both values are shown with their sources. Neither record is overwritten. For counsel, the instruction asks whether a notice of change was filed (ADR 0009) |
 | Privileged source | A shown detail's source is a client communication or a record in matter-data's privileged store. The badge sits on the card and beside the detail. A detail with this flag is left out of anything built for someone outside the firm |
 
@@ -162,7 +172,7 @@ The page writes nothing. Each flag with a fix, and each of Confirm, Not a charac
 
 - "Last contact" stays out (section 2) until a concrete need appears.
 - Proposing non-party contacts during `/ingest` of correspondence is deferred (section 2).
-- Whether a tribunal member who is a point of contact needs a role other than `court_staff` is decided at build time.
+- ~~Whether a tribunal member who is a point of contact needs a role other than `court_staff`~~: decided at build time, `court_staff` only.
 
 ## 7. Done when
 
@@ -175,3 +185,14 @@ The page writes nothing. Each flag with a fix, and each of Confirm, Not a charac
   - with JavaScript turned off, the tabs switch and cards open and close.
 - `"cast of characters"` is in `VIEW_NAMES`, and the gate's tests cover it.
 - `python scripts/build_plugin.py --check`, `python scripts/check_plugin.py` and `python scripts/check_publishable.py --new-since origin/main` pass.
+
+## 8. Decisions taken at build time
+
+Settled by the developer on 2026-11-06, or by the mockup where it and this spec disagreed. Each is written into the section named.
+
+- Detail sources and the Privileged source flag come from the role, through `privileged_source` (3.2, 4.2).
+- Fact and document counts are name, alias and file-code matches plus the case-data links (4.2).
+- `for_case_party_id` names the related party of an insurer, investigator, representative or other counsel (3.2).
+- Notes shows the contact's own `note` (4.4).
+- Missing details follows the mockup's flags and has no badge (4.5).
+- The page is written at session entry and by `practice_data__render_cast_of_characters`, not in every page write, and its header row is written in the markup, so the page does not include `shared.js`, which fills that row by script (4.1).

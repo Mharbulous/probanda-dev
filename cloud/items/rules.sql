@@ -155,7 +155,10 @@ select v.kind, v.field, unnest(v.vals) from (values
   ('rule_overlay',  'record.source.kind', array['oic_pdf', 'consolidation', 'regulation']),
   ('contact',       'entity',          array['person', 'organization']),
   ('matter_role',   'role',            array['client', 'prospective_client', 'opposing_party', 'opposing_counsel',
-                                             'co_counsel', 'expert', 'adjuster', 'referral_source'])
+                                             'co_counsel', 'expert', 'adjuster', 'referral_source',
+                                             'client_other_counsel', 'client_representative', 'witness',
+                                             'investigator', 'insurer', 'public_body', 'court_staff']),
+  ('matter_role',   'status',          array['proposed'])
 ) as v(kind, field, vals);
 
 delete from rules.tag;
@@ -172,7 +175,8 @@ insert into rules.tag (kind, tag, form, required) values
   ('rule_overlay', 'deadline_type',   'text',    true),
   ('rule_overlay', 'amending_reg',    'text',    true),
   ('contact',      'entity',          'vocab',   true),
-  ('matter_role',  'role',            'vocab',   true);
+  ('matter_role',  'role',            'vocab',   true),
+  ('matter_role',  'status',          'vocab',   false);
 
 delete from rules.link_role;
 insert into rules.link_role (kind, role, target_kind, required, synced) values
@@ -228,7 +232,9 @@ insert into rules.natural_key (kind, purpose, rank, parts, states) values
                                   array['active']),
   ('affiliation',   'upsert',    1, array['link:person', 'link:organization', 'hash:from?'], null),
   ('matter_role',   'upsert',    1, array['link:matter', 'link:contact', 'tag:role', 'hash:case_proceeding_id?',
-                                        'hash:case_party_id?', 'hash:from?'], null);
+                                        'hash:case_party_id?', 'hash:case_witness_id?',
+                                        'hash:case_tribunal_member_id?', 'hash:for_case_party_id?',
+                                        'hash:from?'], null);
 
 delete from rules.status_policy;
 insert into rules.status_policy (status_label, required_signals, blocking_signals, auto_advance, description) values

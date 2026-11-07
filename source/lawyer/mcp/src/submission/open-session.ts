@@ -17,6 +17,7 @@ import { existsSync, mkdirSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
 import { inOneCall } from "../call-memo.js";
+import { writeCastPage } from "../cast/cast-write.js";
 import { moveSeedsOnce, type SeedsLeft, type SeedsMove } from "../loose-threads/migrate.js";
 import { releaseLapsedLocks } from "./forms/job-activity.js";
 import type { PracticeStore } from "../practice/store.js";
@@ -416,6 +417,14 @@ async function openSession(
   if (!refused) await phase("lapsed_locks", () => releaseLapsedLocks(dbPath, undefined));
   const opening: Opening =
     draftDir === undefined || todos === undefined || dates === undefined || refused ? {} : openBoard(dbPath, draftDir, identity, todos, dates, result, filingId, timings);
+  // Cast of Characters spec 4.1: the matter's Cast page is written with the matter pages at session
+  // entry. It reads practice data, so it is written here, never by the background job; a failure is a
+  // note, never a refused opening.
+  const matterNo = identity.matterNo;
+  const cast = opening.matter_board_path === undefined || matterNo === undefined ? undefined
+    : await phase("cast_of_characters", () => writeCastPage(practiceDb, root, matterNo, nowStamp(), fetchRevision(dbPath))
+      .then((written) => ({ cast_of_characters_path: written.cast_of_characters_path }))
+      .catch((err: Error) => ({ cast_of_characters_note: `The Cast of Characters page was not written: ${err.message}` })));
   const drift = await phase("parties_drift", () => matterPartiesDrift(dbPath));
   const offers = await phase("counsel_offers", () => counselOffers(dbPath));
   const courtFile = await phase("court_file_affidavits", () =>
@@ -427,6 +436,7 @@ async function openSession(
     result: {
       ...result,
       ...opening,
+      ...cast,
       matter_root: root,
       ...(draftDir !== undefined ? { draft_dir: draftDir } : {}),
       db_path: dbPath,

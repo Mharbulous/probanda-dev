@@ -3,6 +3,7 @@
 import { dirname, join } from "node:path";
 
 import { buildStampStatus } from "../build-stamp.js";
+import { CAST_FILE } from "../cast/cast-page.js";
 import type { ComposedTemplate } from "../compose-template.js";
 import { attachedDrafts, withCodes } from "./board-attachments.js";
 import { BoardIndex, sameBoard } from "./forms/board-members.js";
@@ -170,7 +171,8 @@ export function buildMatterPages(
   const html = [matterBoard, threads, ...milestones, ...viewPages];
   return {
     pages: guardTargets(groupsWritten.map((g) => g.file), viewsWritten).map((t, i) => ({ ...t, html: html[i] })),
-    keep: [LOOSE_THREADS_FILE, ...groups.map((g) => g.file), ...views.map((v) => v.file)],
+    // The Cast of Characters page is written at session entry and by its render tool (cast/cast-write.ts), never here, and the sweep keeps it.
+    keep: [LOOSE_THREADS_FILE, CAST_FILE, ...groups.map((g) => g.file), ...views.map((v) => v.file)],
     paths: {
       milestone_paths: targets.map((t) => ({ filing_id: t.filing_id, proceeding_id: t.proceeding_id, path: join(draftDir, t.file) })),
       matter_board_path: join(draftDir, MATTER_BOARD_FILE),

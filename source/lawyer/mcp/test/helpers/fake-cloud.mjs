@@ -26,7 +26,8 @@ const UPSERT_KEYS = {
   signal: [["link:matter", "tag:signal_key"]],
   calendar_year: [["hash:year"]],
   affiliation: [["link:person", "link:organization", "hash:from?"]],
-  matter_role: [["link:matter", "link:contact", "tag:role", "hash:case_proceeding_id?", "hash:case_party_id?", "hash:from?"]],
+  matter_role: [["link:matter", "link:contact", "tag:role", "hash:case_proceeding_id?", "hash:case_party_id?",
+    "hash:case_witness_id?", "hash:case_tribunal_member_id?", "hash:for_case_party_id?", "hash:from?"]],
 };
 
 const stripNulls = (object) => Object.fromEntries(Object.entries(object ?? {}).filter(([, v]) => v !== null && v !== undefined));

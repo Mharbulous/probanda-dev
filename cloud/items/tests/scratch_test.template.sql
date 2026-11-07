@@ -311,7 +311,7 @@ begin
     'links', (select count(*) from rules.link_role),
     'keys', (select count(*) from rules.natural_key)) into v_counts;
   perform pg_temp.t_check('P3 applying both files twice leaves one copy of every table of the rulebook',
-    v_counts = '{"kinds": 20, "policies": 8, "vocabulary": 76, "tags": 13, "links": 25, "keys": 12}'::jsonb, v_counts::text);
+    v_counts = '{"kinds": 20, "policies": 8, "vocabulary": 84, "tags": 14, "links": 25, "keys": 12}'::jsonb, v_counts::text);
 end $t$;
 
 -- =============================================================================
@@ -1786,6 +1786,44 @@ begin
     and r3->>'question' = format('Is {{item:%s}} an organization?', v_p)
     and pg_temp.live(v_t, 'matter_role') = 0 and pg_temp.live(v_t, 'affiliation') = 0,
     format('%s / %s / %s', r1, r2, r3));
+end $t$;
+
+do $t$
+declare
+  v_t uuid := gen_random_uuid();
+  v_m uuid;
+  v_p uuid;
+  v_role text;
+  v_ok boolean := true;
+  v_seen text := '';
+  r jsonb;
+  rp jsonb;
+  rc jsonb;
+  ru jsonb;
+begin
+  -- Cast of Characters spec 3.1 and 3.4: the seven new roles, and status proposed as an optional tag.
+  v_m := pg_temp.matter(v_t, 'L205');
+  v_p := pg_temp.as_id(pg_temp.contact(v_t, 'person', 'Cast Person'));
+  foreach v_role in array array['client_other_counsel', 'client_representative', 'witness', 'investigator',
+                                'insurer', 'public_body', 'court_staff'] loop
+    r := pg_temp.mrole(v_t, v_m, v_p, v_role);
+    v_ok := v_ok and pg_temp.saved(r);
+    v_seen := v_seen || ' ' || r::text;
+  end loop;
+  rp := pg_temp.w(v_t, 'upsert_matter_role', jsonb_build_array(pg_temp.op('upsert', gen_random_uuid(), 'matter_role',
+    jsonb_build_object('tags', jsonb_build_object('role', 'witness', 'status', 'proposed'),
+      'links', jsonb_build_object('matter', v_m, 'contact', v_p),
+      'hashes', jsonb_build_object('case_proceeding_id', null, 'case_witness_id', pg_temp.h('7'))))));
+  rc := pg_temp.upd(v_t, 'upsert_matter_role', pg_temp.as_id(rp), 'matter_role', '{"tags": {"status": null}}'::jsonb);
+  ru := pg_temp.w(v_t, 'upsert_matter_role', jsonb_build_array(pg_temp.op('upsert', gen_random_uuid(), 'matter_role',
+    jsonb_build_object('tags', jsonb_build_object('role', 'witness', 'status', 'maybe'),
+      'links', jsonb_build_object('matter', v_m, 'contact', v_p),
+      'hashes', jsonb_build_object('case_proceeding_id', null, 'case_witness_id', pg_temp.h('8'))))));
+  perform pg_temp.t_check('R12 each Cast of Characters role is saved, a proposed role is saved apart from the plain witness role and confirmed by clearing status, and an unknown status is refused',
+    v_ok and pg_temp.saved(rp) and pg_temp.saved(rc) and pg_temp.refused(ru)
+    and (pg_temp.item(v_t, pg_temp.as_id(rp))).tags = '{"role": "witness"}'::jsonb
+    and pg_temp.live(v_t, 'matter_role') = 8,
+    format('%s / %s / %s / %s', v_seen, rp, rc, ru));
 end $t$;
 
 do $t$

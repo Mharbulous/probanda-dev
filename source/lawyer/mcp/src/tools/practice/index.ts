@@ -42,6 +42,7 @@ import { folder_map, set_folder_map } from "./folder-map.js";
 import { config_set_root, config_status } from "./config.js";
 import { rule_overlay, upsert_rule_overlay } from "./rule-overlay.js";
 import { render_practice_board } from "./practice-board.js";
+import { render_cast_of_characters } from "../../cast/cast-write.js";
 import {
   contact_checks,
   contact_lookup,
@@ -107,6 +108,7 @@ export const practiceTools = [
   practiceTool("practice_data__upsert_rule_overlay", (args, store) => upsert_rule_overlay(store, args)),
   practiceTool("practice_data__rule_overlay", (args, store) => rule_overlay(store, args), { read: true }),
   practiceTool("practice_data__render_practice_board", (_args, store) => render_practice_board(store), { read: true }),
+  practiceTool("practice_data__render_cast_of_characters", (args, store) => render_cast_of_characters(store, args), { read: true }),
   practiceTool("practice_data__upsert_contact", (args, store) => upsert_contact(store, args)),
   practiceTool("practice_data__upsert_affiliation", (args, store) => upsert_affiliation(store, args)),
   practiceTool("practice_data__upsert_matter_role", (args, store) => upsert_matter_role(store, args)),

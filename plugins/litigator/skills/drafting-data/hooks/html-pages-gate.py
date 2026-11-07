@@ -66,7 +66,8 @@ STEM = r"(?:work board|milestone|job board|litigation strategy|to do list|practi
 # Each new view page adds its lowercased name here. "loose ideas" is the Loose Threads page's name
 # before 2026-10-08, "provable facts" the Material Facts page's before 2026-10-20 (docs/ADRs/0011), and
 # "raw research" and "legal memos" the Legal Research page's before 2026-10-31 and 2026-11-01, each kept so an old copy not yet moved to TRASH is still refused.
-VIEW_NAMES = ("procedural history", "material facts", "legal research", "arguments", "loose threads", "loose ideas", "provable facts", "raw research", "legal memos")
+VIEW_NAMES = ("procedural history", "material facts", "legal research", "arguments", "loose threads", "loose ideas", "provable facts", "raw research", "legal memos",
+              "cast of characters")
 # A view page: a listed name, then ".html" in a Writing's own folder, or " - Work Board <id>.html",
 # or " - Milestone <id>.html", its name before 2026-11-01,
 # or " - Job Board <id>.html", its name before 2026-10-28,
@@ -96,7 +97,8 @@ SAMPLE_PAGES = ("Work Board.html", "Work Board 1.html", "Work Board - filing 1.h
                 "Procedural History.html", "Material Facts.html", "Raw Research.html", "Arguments.html", "Loose Threads.html",
                 "Legal Research.html", "Legal Research - Work Board 1.html", "Legal Research - Work Board 1 preview 1.html",
                 "Legal Memos.html", "Legal Memos - Work Board 1.html", "Legal Memos - Work Board 1 preview 1.html",
-                "Work Board preview 1.html", "Arguments preview 1.html")
+                "Work Board preview 1.html", "Arguments preview 1.html",
+                "Cast of Characters.html", "Cast of Characters preview 1.html")
 
 FILE_TOOLS = {"Read": "file_path", "Write": "file_path", "Edit": "file_path", "MultiEdit": "file_path",
               "NotebookRead": "notebook_path", "NotebookEdit": "notebook_path"}

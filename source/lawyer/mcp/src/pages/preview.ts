@@ -31,6 +31,9 @@ import { LOOSE_THREADS_FIXTURE } from "../board-fixtures/loose-threads.js";
 import { MATERIAL_FACTS_FIXTURE } from "../board-fixtures/material-facts.js";
 import { PROCEDURAL_HISTORY_FIXTURE } from "../board-fixtures/procedural-history.js";
 import { LEGAL_RESEARCH_FIXTURE } from "../board-fixtures/legal-research.js";
+import { CAST_FIXTURE } from "../board-fixtures/cast-of-characters.js";
+import { CAST_FILE, CAST_PAGE, CAST_PAGE_NAME, renderCastPage } from "../cast/cast-page.js";
+import { readCastModel } from "../cast/cast-write.js";
 import { nowStamp, resolveDraftDir } from "../submission/forms.js";
 import { LOOSE_IDEAS_PAGE, LOOSE_THREADS_FILE, LOOSE_THREADS_PAGE_NAME, type LooseIdeasData } from "../submission/forms/loose-ideas-page.js";
 import { LITIGATION_STRATEGY_TEMPLATE, MATTER_BOARD_FILE, renderMatterBoardHtml } from "../submission/forms/matter-board-shell.js";
@@ -52,6 +55,7 @@ export const PAGE_TEMPLATES: Readonly<Record<string, TemplateSet>> = {
   "Litigation Strategy": LITIGATION_STRATEGY_TEMPLATE,
   "Work Board": MILESTONE_TEMPLATE,
   ...Object.fromEntries([...VIEW_PAGES, LOOSE_IDEAS_PAGE].map((p) => [p.name, p.template])),
+  [CAST_PAGE_NAME]: CAST_PAGE.template,
   [HOUSEKEEPING_PAGE]: APPROVAL_TEMPLATE,
 };
 
@@ -104,6 +108,7 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
       return { path: writePreview(dir, stem(viewPageFile(viewPage, FIXTURE_BOARD)), renderViewPageHtml(viewPage, meta, fixture), true) };
     }
     if (threads) return { path: writePreview(dir, page, renderViewPageHtml(threads, LOOSE_THREADS_FIXTURE.meta, LOOSE_THREADS_FIXTURE.data), true) };
+    if (page === CAST_PAGE_NAME) return { path: writePreview(dir, page, renderCastPage(CAST_FIXTURE.model, CAST_FIXTURE.meta, composed), true) };
     if (page === "Practice Board") return { path: writePreview(dir, stem(PRACTICE_BOARD_FILE), renderPracticeBoardHtml(PRACTICE_BOARD_FIXTURE, composed), true) };
     if (page === "Litigation Strategy") return { path: writePreview(dir, stem(MATTER_BOARD_FILE), renderMatterBoardHtml(LITIGATION_STRATEGY_FIXTURE, composed), true) };
     return { path: writePreview(dir, `Work Board ${FIXTURE_BOARD.filing_id}`, renderWorkBoardHtml(MILESTONE_FIXTURE, composed), true) };
@@ -118,7 +123,7 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
   }
 
   if (args.matter_root === undefined) throw new ValidationError(`real data for the ${page} page needs matter_root`);
-  if ((page === "Litigation Strategy" || threads) && (ids.filing_id !== undefined || ids.proceeding_id !== undefined)) {
+  if ((page === "Litigation Strategy" || page === CAST_PAGE_NAME || threads) && (ids.filing_id !== undefined || ids.proceeding_id !== undefined)) {
     throw new ValidationError(`the ${page} covers the whole matter: it takes no filing_id or proceeding_id`);
   }
   if (page === "Work Board" && (ids.filing_id === undefined) === (ids.proceeding_id === undefined)) {
@@ -129,6 +134,16 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
   }
 
   const root = validateMatterRoot(args.matter_root);
+  if (page === CAST_PAGE_NAME) {
+    const found = findDraftDir(root);
+    if (found === undefined) throw new ValidationError(`${root} has no 0. DRAFT folder, so it has no ${page} page to preview`);
+    const draftDir = resolveDraftDir(found, "pages__preview.matter_root");
+    const matterNo = (await lookUpMatter(root, store, {})).client.matterNo ?? matterToken(root);
+    if (!matterNo) throw new ValidationError(`no matter number was found for ${root}, so its ${page} cannot be read`);
+    const { model, client } = await readCastModel(store, root, matterNo);
+    const html = renderCastPage(model, { matter: matterNo, client, revision: null, rendered: nowStamp() }, composed);
+    return { path: writePreview(draftDir, stem(CAST_FILE), html, false) };
+  }
   const dbPath = resolveDbPath(root);
   const found = findDraftDir(root);
   if (found === undefined) throw new ValidationError(`${root} has no 0. DRAFT folder, so it has no ${page} page to preview`);
