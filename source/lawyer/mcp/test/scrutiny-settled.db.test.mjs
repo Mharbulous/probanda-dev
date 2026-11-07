@@ -114,12 +114,12 @@ function doc(result, type) {
   return d;
 }
 
-/** The marker line traced `trace`, and the citation line just above it. */
+/** The line traced `trace`, and its citation part: the line up to its first marker glyph or trace comment
+ * (statementBlock prints citation, tags, markers and the id comment on one line). */
 function traced(md, trace) {
-  const lines = md.split("\n");
-  const i = lines.findIndex((l) => l.includes(trace));
-  assert.ok(i > 0, `expected a line traced ${trace}`);
-  return { line: lines[i], before: lines[i - 1] };
+  const line = md.split("\n").find((l) => l.includes(trace));
+  assert.ok(line, `expected a line traced ${trace}`);
+  return { line, before: line.slice(0, line.search(/\p{Extended_Pictographic}|<!--/u)).trimEnd() };
 }
 
 /** Every generating key the render recorded, and every key the board proposes. */
