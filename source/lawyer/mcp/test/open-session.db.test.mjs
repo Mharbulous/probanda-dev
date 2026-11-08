@@ -877,7 +877,8 @@ test("no filing and no proceeding: the Litigation Strategy is written, no Work B
   assert.ok(existsSync(result.loose_threads_path));
   assert.equal(result.milestone_path, null);
   assert.deepEqual(result.milestone_paths, []);
-  assert.deepEqual(readdirSync(join(m.matterRoot, "0. DRAFT")).filter((name) => name.endsWith(".html")), ["Litigation Strategy.html", "Loose Threads.html"]);
+  assert.ok(existsSync(result.cast_of_characters_path));
+  assert.deepEqual(readdirSync(join(m.matterRoot, "0. DRAFT")).filter((name) => name.endsWith(".html")), ["Cast of Characters.html", "Litigation Strategy.html", "Loose Threads.html"]);
 });
 
 // ADR 0021 D1, D2: open_session reads the looked-up matter's open to-dos for the page, and writes
