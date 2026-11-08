@@ -431,7 +431,9 @@ async function seedNoticeAndRequisition(dbPath) {
   await submissionDataWrite(dbPath, "UPDATE filings SET layout_snapshot = ? WHERE id = 1", [JSON.stringify(stored)]);
 }
 
-/** Runs the Work Board page's drawing script against stand-in elements and returns its header and main. */
+/** Runs the Work Board page's drawing script against stand-in elements and returns its header and main.
+ * The script's clock stands at the page's own Rendered minute, so a held job's lapse and a step's wait
+ * read as they did when the page was drawn, and its reload timer and `location` are stubs. */
 function drawPage(file) {
   class Node {
     constructor(tag) {
@@ -478,7 +480,18 @@ function drawPage(file) {
     createTextNode: (text) => Object.assign(new Node("#text"), { text: String(text) }),
   };
   const script = readFileSync(file, "utf-8").split("<script>")[2].split("</script>")[0];
-  runInNewContext(script, { window: { WORKBOARD: readBoardData(file) }, document });
+  const board = readBoardData(file);
+  const [, y, mo, d, h, mi] = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(board.meta.rendered);
+  const renderedAt = new Date(+y, +mo - 1, +d, +h, +mi).getTime();
+  class PageDate extends Date {
+    constructor(...args) {
+      super(...(args.length ? args : [renderedAt]));
+    }
+    static now() {
+      return renderedAt;
+    }
+  }
+  runInNewContext(script, { window: { WORKBOARD: board }, document, Date: PageDate, setTimeout() {}, location: { reload() {} } });
   return { header, main };
 }
 
