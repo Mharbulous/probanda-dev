@@ -8,6 +8,7 @@ current user: through local-implementer-trigger.yml (a label that puts an issue 
 lane, any issue opened, /CPR, or the beat in step 6), and once a day as a backstop.
 Needs no administrator rights.
 
+0. Starts the task "Probanda local runner" if it is not running, and logs that it did.
 1. Creates the dedicated clone on first run:
    $env:LOCALAPPDATA\probanda-local-implementer\probanda-dev
    It is never the shared checkout or a worktree of it.
@@ -149,6 +150,14 @@ function Get-LocalLock {
 }
 
 Write-Log "Local implementer run. Clone: $Clone"
+
+# The runner that starts this script on a label. A dead one strands every queued start, so the
+# daily run starts it again and says so.
+$runnerTask = Get-ScheduledTask -TaskName 'Probanda local runner' -ErrorAction SilentlyContinue
+if ($runnerTask -and $runnerTask.State -ne 'Running') {
+    Start-ScheduledTask -TaskName 'Probanda local runner'
+    Write-Log 'Runner was down; restarted.'
+}
 
 $Git = Find-Exe @('git')
 if (-not $Git) { Stop-Run 'git is not on PATH.' }

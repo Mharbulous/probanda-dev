@@ -13,8 +13,8 @@ the PC from sleep to run, but cannot run while you are signed out or the PC is
 shut down. The daily run is the backstop.
 
 It also registers the task "Probanda local runner", which starts GitHub's Actions
-runner at logon and keeps it running, the same way: as you, at limited rights, with
-no stored password. The runner is what lets .github/workflows/local-implementer-trigger.yml
+runner at logon and every 5 minutes after, so a runner that exits is back within 5
+minutes, the same way: as you, at limited rights, with no stored password. The runner is what lets .github/workflows/local-implementer-trigger.yml
 start the implementer task when a label puts an issue in the local lane. Install it
 first in $env:LOCALAPPDATA\probanda-local-implementer\runner: extract GitHub's
 actions-runner-win-x64 zip there, after checking its SHA-256 against the release notes,
@@ -121,14 +121,20 @@ Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Se
 
 Write-Host ("Registered '{0}' for {1}: daily at {2:HH:mm}, plus up to 10 minutes. Runs {3}" -f $TaskName, $user, $time, $CloneRun)
 
-# The runner, kept up while signed in. No time limit, and a restart if it dies.
+# The runner, kept up while signed in. No time limit.
 $runnerArgs = '-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -Command "& ''{0}''"' -f $RunnerCmd
 $runnerAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $runnerArgs -WorkingDirectory $RunnerDir
-$runnerTrigger = New-ScheduledTaskTrigger -AtLogOn -User $user
+# Task Scheduler's RestartCount covers only a failure to start, never a runner that exits (it stayed
+# down from 2026-11-05 to 2026-11-07 that way). So a 5-minute repeat starts it again; IgnoreNew
+# leaves a running one alone.
+$runnerTriggers = @(
+    (New-ScheduledTaskTrigger -AtLogOn -User $user),
+    (New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5))
+)
 $runnerSettings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) `
-    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
-Register-ScheduledTask -TaskName $RunnerTaskName -Action $runnerAction -Trigger $runnerTrigger -Settings $runnerSettings `
+    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+Register-ScheduledTask -TaskName $RunnerTaskName -Action $runnerAction -Trigger $runnerTriggers -Settings $runnerSettings `
     -Principal $principal -Force `
     -Description 'Runs the GitHub Actions runner that starts the local implementer when a label queues an issue.' | Out-Null
 Start-ScheduledTask -TaskName $RunnerTaskName
-Write-Host "Registered and started '$RunnerTaskName': starts at logon. Runs $RunnerCmd"
+Write-Host "Registered and started '$RunnerTaskName': starts at logon and every 5 minutes. Runs $RunnerCmd"
