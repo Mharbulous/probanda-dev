@@ -29,7 +29,7 @@ Probanda handles four kinds of information:
 
 6. A cloud reply to a write never states a rule. It says whether the write was saved and, when it was not, asks a guiding question about the item.
 
-7. Only the file-manager plugin changes, moves or deletes a file on the User's Machine that Probanda did not create. Without it, Probanda treats such files as read-only.
+7. Only the file-manager plugin changes, moves or deletes a file on the User’s Machine that Probanda did not create. Without it, Probanda treats such files as read-only. TokenEconomizer may add and remove its own entries in a coding agent’s or git’s local settings.
 
 8. Avoid building features shaped like a one-way door. 
 
