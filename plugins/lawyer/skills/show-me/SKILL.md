@@ -139,17 +139,13 @@ The file's text goes to the gatekeeper write as read from the file, never retype
 ## Mechanics
 
 1. **Locate the source.** Find the document each decision turns on and the pages and paragraphs at issue. Verify any absence firsthand and write it up (rules 4 and 5). Do this before composing the question.
-2. **Build the highlighted page extract** with the script, and check one rendered page image yourself before sending, to confirm the highlight covers the right text. From this skill's folder (the installed copy):
+2. **Build the highlighted page extract** with the script, and check one rendered page image yourself before sending, to confirm the highlight covers the right text.
 
    ```bash
-   python scripts/highlight_pages.py <source> [--pages 12-13] --out <extract.pdf> --para 44 yellow --span "<start words>" "<end words>" orange --preview <png folder> [--excerpt-out <excerpt.txt>]
+   python <absolute path of this skill's scripts/highlight_pages.py> <source> [--pages 12-13] --out <extract.pdf> --para 44 yellow --span "<start words>" "<end words>" orange --preview <png folder> [--excerpt-out <excerpt.txt>]
    ```
 
-   From the repo root the same call is:
-
-   ```bash
-   python .claude/skills/show-me/scripts/highlight_pages.py <source> [--pages 12-13] --out <extract.pdf> --para 44 yellow --span "<start words>" "<end words>" orange --preview <png folder> [--excerpt-out <excerpt.txt>]
-   ```
+   Run it as one Bash call: the absolute script path, no `cd`, no variable, no pipe, no redirect. Resolve the path as the Installed copy note says, and again after a re-sync. The parser may print `Syntax Error` lines to stderr. They are harmless: leave them unfiltered.
 
    The source is a PDF, or a .doc, .docx or .rtf that the script converts with LibreOffice first, so a by-hand run of a Word source needs LibreOffice installed. `/draft`'s `scrutiny_review` host step converts with Word instead and hands the script a PDF. `--pages` is optional: without it every page is loaded and the pages written run from the first to the last page a spec lands on. `--para N` finds the line-leading paragraph numbers (`[N]`, `N.` or a bare number) that form the longest consecutive run in one column, so indented sub-lists and years are skipped. `--excerpt <file>` paints a stored excerpt, split on `[...]`, yellow where it matches the source and orange where the source differs or was omitted. `--para` and `--span` repeat as often as needed. A span can cross pages. The script prints one line per spec, found or not, with the tokens painted in its colour, and for `--para` and `--excerpt` adds `crossed page break` and `margin band: <words>` for painted words in a page's top or bottom 8 %. It exits 1 and writes nothing when any spec is not found or matches more than once: lengthen the words or correct the pages and run it again, and never send an unmarked file in its place. `--preview` writes one PNG per page. Open one and look at it. When a highlight crosses a page break, check the preview for painted running headers or footers. The optional `--excerpt-out` writes the single span's text to the file for the verbatim check and the gatekeeper write, and refuses a span that crosses a page. A bilingual report (an official S.C.R. PDF, English and French in parallel columns) is detected by itself: the script prints `layout: bilingual, English column`, and every spec finds and paints only that column, never the running header. Add `--lang fr` for the French column; `--columns off` reads each page whole, as before. In Cowork, write the extract to the session's outputs folder or a connected folder, then call `mcp__cowork__present_files` on it.
 3. **Send in this order:**
