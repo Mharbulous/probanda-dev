@@ -33,7 +33,7 @@ Each item below is a pool. A heading is only a scope (whose data it is), not a p
 | Practice records | Contacts, matters, roles, tasks, file status, conflict information |
 | Billing | Time entries, invoices, accounts receivable |
 | Trust accounting | Each matter's current retainer and trust balances. The regulated ledger, with its sub-ledger per client, is kept in the firm's trust accounting system, not in Probanda |
-| Institutional knowledge | What is true for this firm only: its own forms and precedents in house style, the document types it declares and its overrides of shipped values, practice quirks, time-entry description patterns, each person's preferences. Client Information even when it names no client, so it stays on the User's Machine |
+| Institutional knowledge | What is true for this firm only: its own forms and precedents in house style, the document types it declares and its overrides of shipped values, its own rulings on the venue and document-kind lists, the source websites it approved, practice quirks, time-entry description patterns, each person's preferences. Client Information even when it names no client, so it stays on the User's Machine |
 
 **The lawyer's own**: not yet sorted to a matter.
 
@@ -46,14 +46,14 @@ Each item below is a pool. A heading is only a scope (whose data it is), not a p
 | Pool | Holds |
 |---|---|
 | The law | Case law, statutes, court rules (including the firm's record of rule changes, the rule overlay), the court's sitting calendar, commentary, research memos |
-| Know-how | What is true for any firm in the same venue: generic precedents, venue requirements learned from published sources, the lists of venues and document kinds, approved source websites. Transferable, so it may one day be shared |
+| Know-how | What is true for any firm in the same venue: generic precedents, venue requirements learned from published sources, the shipped lists of venues and document kinds, the shipped file-naming convention. Transferable, so it may one day be shared |
 
 Outside the client pools: Probanda's own records (the Suggestion Box and the troubleshooting store, which hold Account Information under the Commandments).
 
 ## Rules
 
 1. **A pool is defined by what data is for, not where it comes from.** The calendar, call logs and the mailbox are sources. A skill that reads one sorts each item into its pool: a court hearing goes to events, a client meeting to events and timekeeping records, a personal appointment to neither.
-2. **A skill belongs to the plugin that owns the pool it writes.** A skill that writes nothing belongs with the pool it mainly reads. Reading across pools is normal legal work and does not decide membership.
+2. **A skill belongs to the plugin that owns the pool it writes.** A skill that writes nothing belongs with the pool it mainly reads. Reading across pools is normal legal work and does not decide membership. Owning a pool and serving its store can differ: a pool whose records share a cloud sync stream with another pool's records is served by that store's plugin (`docs/Plans/2026-11-10_data-store-restructure-phase-2.md`, decision 6).
 3. **A plugin owns one or more pools.** Billing and trust accounting share a scope but can sit in different plugins.
 4. **A deadline that passes stays on record**, linked to the event that answered it, so it shows whether it was met.
 5. **Pools are kept apart by stores, not by plugins.** The target is one store per pool with one gatekeeper skill. The plugin split only decides what is installed. A pool's scope and its store's scope can differ: events are per matter, while anchors and deadlines sit today in the firm-wide practice store.

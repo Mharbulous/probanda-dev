@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<!--
+  This diagram's tag gives the commit it was checked against and when it was last updated.
+  To update it: re-read the sources at the new commit, correct the chart if needed,
+  then change both data- attributes and the visible stamp.
+  PLANNED: the entry skills by plugin as they will stand once Phase 2
+  (docs/Plans/2026-11-10_data-store-restructure-phase-2.md) is built, each with the data pools
+  it uses. Phase 2 moves no skill between plugins; it changes the stores under the pools.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planned Progressive Context Tree</title>
+<style>
+/* Single light theme by choice: the diagram's colours carry meaning and stay fixed. */
+:root {
+  color-scheme: light;
+  --ink: #1d2733;
+  --muted: #55616f;
+  --paper: #f8f9fb;
+  --rule: #d5dbe3;
+  --body: "Segoe UI", system-ui, sans-serif;
+  --mono: Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--body); }
+main { max-width: 1500px; margin: 0 auto; padding: 28px 20px 48px; display: grid; gap: 20px; }
+h1 { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 600; text-wrap: balance; }
+h2 { margin: 8px 0 0; font-size: 20px; font-weight: 600; }
+code { font: 500 0.92em var(--mono); }
+figure { margin: 0; display: grid; gap: 12px; }
+figcaption { display: grid; gap: 4px; }
+.stamp { font-size: 14px; color: var(--muted); margin: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 15px; height: 15px; border: 2px solid; border-radius: 3px; display: inline-block; }
+.chart { overflow-x: auto; background: #fff; border: 1px solid var(--rule); border-radius: 6px; padding: 16px; }
+pre.mermaid { margin: 0; font-family: var(--body); }
+pre.mermaid svg { display: block; margin: 0 auto; }
+/* Mermaid caps each label at 200 px and wraps inside words; labels here break only at <br/>. */
+pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap !important; }
+/* Mermaid's theme sets label colour on the container; force the pool lines dark enough to read. */
+pre.mermaid .pools, pre.mermaid .pools * { font-size: 13px; color: #1d2733 !important; fill: #1d2733 !important; opacity: 1 !important; }
+.sources { font-size: 13px; color: var(--muted); margin: 0; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 14px; background: #fff; min-width: 760px; }
+th, td { border: 1px solid var(--rule); padding: 6px 10px; text-align: left; vertical-align: top; }
+th { background: #eef1f5; font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <figure class="diagram" id="planned-progressive-context-tree"
+          data-based-on-commit="d36176e2e06200ac38c4df22c08ebe9e94d0b418"
+          data-updated="2026-11-10T16:00:00-07:00">
+    <figcaption>
+      <h1>Planned: where a lawyer's session starts after Phase 2, with the data pools each skill uses</h1>
+      <p class="stamp">Planned, not built · Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/d36176e2e06200ac38c4df22c08ebe9e94d0b418"><code>d36176e2</code></a> on main · Last updated 2026-11-10 16:00 -07:00</p>
+    </figcaption>
+    <div class="legend" aria-label="Colour and icon key">
+      <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer plugin skill</span>
+      <span><i style="background:#ddf3ef;border-color:#1f7a6d"></i>researcher plugin skill</span>
+      <span><i style="background:#f8e3dc;border-color:#9c3d22"></i>litigator plugin skill</span>
+      <span><i style="background:#e3eefb;border-color:#2563a8"></i>billing plugin skill</span>
+      <span><i style="background:#efe8fb;border-color:#6b46b0"></i>file-manager plugin skill</span>
+      <span><i style="background:#ffffff;border-color:#8a94a0"></i>plugin with no lawyer entry skills</span>
+      <span>🗄️ records store (a database or a file of records)</span>
+      <span>📁 folder of original files (matter folders, mail folders)</span>
+      <span>★ a store Phase 2 builds or moves</span>
+    </div>
+
+    <div class="chart">
+<pre class="mermaid">
+---
+title: Probanda Marketplace Progressive Context Disclosure Map, after Phase 2
+---
+flowchart LR
+    MKT(["Probanda_Legal_experimental<br/>marketplace"])
+
+    P_LAW["lawyer plugin"]
+    P_RES["researcher plugin"]
+    P_LIT["litigator plugin"]
+    P_SOL["solicitor plugin<br/>ships no skills yet"]
+    P_FM["file-manager plugin"]
+    P_BIL["billing plugin"]
+    P_DEV["developer plugin<br/>maintainer-only, no lawyer skills"]
+    P_TE["tokeneconomizer plugin<br/>ships no skills"]
+
+    EA["<b>/executive-assistant</b><br/>the morning briefing<br/><span class='pools'>🗄️ Practice records<br/>🗄️ Events<br/>🗄️ Trust accounting</span>"]
+    TP["<b>/task-prioritization</b><br/>the ranked to-do list<br/><span class='pools'>🗄️ Practice records<br/>🗄️ Events<br/>🗄️ Trust accounting<br/>🗄️ Drafts (Job Boards)</span>"]
+    CR["<b>/calendar-reminders</b><br/>what the calendar says is unfinished<br/><span class='pools'>🗄️ Practice records (to-dos)<br/>🗄️ Events</span>"]
+    FRP["<b>/file-review-prep</b><br/>brief me on a matter<br/><span class='pools'>🗄️ Practice records<br/>🗄️ Events<br/>🗄️ Trust accounting<br/>🗄️ Correspondence ★<br/>🗄️ Evidence</span>"]
+    FD["<b>/find-document</b><br/>show me a document or email<br/><span class='pools'>📁 Evidence · 📁 Court record<br/>📁 Correspondence · 📁 Privileged<br/>🗄️ Correspondence ★</span>"]
+    ING["<b>/ingest</b><br/>add a document to the case data<br/><span class='pools'>📁 every matter folder (reads)<br/>🗄️ Evidence · 🗄️ Court record<br/>🗄️ The law · 🗄️ Privileged<br/>🗄️ Events</span>"]
+    LFE["<b>/litigation-fact-extractor</b><br/>review facts extracted from case documents<br/><span class='pools'>📁 Evidence</span>"]
+    MST["<b>/matter-status-tracking</b><br/>where each file stands<br/><span class='pools'>🗄️ Practice records</span>"]
+    PRF["<b>/proof-read</b><br/>improve a piece of legal writing<br/><span class='pools'>no data pool</span>"]
+    CD["<b>/compare-documents</b><br/>what changed between two PDFs<br/><span class='pools'>no data pool</span>"]
+    PRC["<b>/precedents</b><br/>make or find a standard form<br/><span class='pools'>📁 Institutional knowledge</span>"]
+    RT["<b>/retainer-tracking</b><br/>trust and retainer balances<br/><span class='pools'>🗄️ Trust accounting</span>"]
+    DE["<b>/deduping-email</b><br/>remove duplicate emails<br/><span class='pools'>📁 Correspondence (mail folders)</span>"]
+    CC["<b>/call-contact</b><br/>call someone in your contacts<br/><span class='pools'>no data pool (the address book)</span>"]
+    VBL["<b>/verify-bc-lawyer</b><br/>is this person a BC lawyer?<br/><span class='pools'>no data pool (the Law Society)</span>"]
+    PS["<b>/probanda-setup</b><br/>set Probanda up on this device<br/><span class='pools'>🗄️ Practice records<br/>🗄️ Institutional knowledge</span>"]
+    SG["<b>/suggestion</b><br/>send an idea or complaint<br/><span class='pools'>🗄️ Probanda's own records</span>"]
+    RU["<b>/rule-update</b><br/>a court rule has changed<br/><span class='pools'>🗄️ The law (rule overlay)<br/>🗄️ Events</span>"]
+
+    LR["<b>/legal-research</b><br/>what the law is<br/><span class='pools'>🗄️ The law · 📁 The law<br/>📁 Know-how<br/>🗄️ Drafts (research jobs)</span>"]
+    CB["<b>/case-brief</b><br/>summarize one decision<br/><span class='pools'>📁 The law · 🗄️ The law</span>"]
+    VL["<b>/verify-law</b><br/>check a quote, pinpoint or citation<br/><span class='pools'>🗄️ The law · 📁 The law<br/>🗄️ Drafts</span>"]
+    PT["<b>/probanda-troubleshooting</b><br/>a tool fails or misbehaves<br/><span class='pools'>🗄️ Probanda's own records</span>"]
+    LME["<b>/legal-memo-extractor</b><br/>index the questions in AI research memos<br/><span class='pools'>📁 The law</span>"]
+
+    WK["<b>/work</b><br/>a matter's Work Board and its jobs<br/><span class='pools'>🗄️ Drafts ★<br/>🗄️ Events<br/>📁 Know-how</span>"]
+    DR["<b>/draft</b><br/>draft or revise a letter, memo or filing<br/><span class='pools'>🗄️ Drafts ★ · 📁 Drafts<br/>🗄️ Evidence · 🗄️ Work product ★<br/>🗄️ The law · 📁 Correspondence<br/>📁 Know-how · 🗄️ Events</span>"]
+    PR["<b>/prepare</b><br/>open a BCSC application and its jobs<br/><span class='pools'>🗄️ Drafts ★<br/>🗄️ Events</span>"]
+    PB["<b>/publish</b><br/>turn a draft into a court form<br/><span class='pools'>🗄️ Drafts ★ · 📁 Drafts<br/>📁 Know-how<br/>🗄️ Institutional knowledge</span>"]
+    AS["<b>/assemble</b><br/>bind documents into one PDF<br/><span class='pools'>📁 Drafts · 📁 Evidence<br/>📁 Court record</span>"]
+    EF["<b>/e-file</b><br/>file through the court portal<br/><span class='pools'>📁 Court record<br/>🗄️ Events</span>"]
+    ATF["<b>/apply-to-facts</b><br/>what the law means for this matter<br/><span class='pools'>🗄️ Work product ★<br/>🗄️ Evidence · 🗄️ The law</span>"]
+    CAL["<b>/calculate</b><br/>interest and bill-of-costs figures<br/><span class='pools'>🗄️ Work product ★<br/>🗄️ Court record</span>"]
+
+    HK["<b>/housekeeping</b><br/>name and file a matter's loose files<br/><span class='pools'>📁 every matter folder<br/>🗄️ Evidence · 🗄️ Drafts<br/>🗄️ file-manager's review log</span>"]
+    RA["<b>/route-accounting</b><br/>file loose bookkeeping files<br/><span class='pools'>📁 Billing · 📁 Trust accounting</span>"]
+
+    BC["<b>/bill-client</b><br/>bill a matter from the last invoice<br/><span class='pools'>🗄️ Billing records (lawyer's store)<br/>🗄️ Billing work in progress ★<br/>🗄️ Trust accounting</span>"]
+    II["<b>/issue-invoice</b><br/>record a signed invoice<br/><span class='pools'>🗄️ Billing records (lawyer's store)<br/>🗄️ Billing work in progress ★<br/>🗄️ Trust accounting<br/>📁 Events · 📁 Correspondence</span>"]
+    IR["<b>/invoice-reviewing</b><br/>check a draft invoice<br/><span class='pools'>🗄️ Billing records (lawyer's store)</span>"]
+    WIP["<b>/wip-tracker</b><br/>unbilled work in progress<br/><span class='pools'>🗄️ Billing records (lawyer's store)</span>"]
+    AR["<b>/ar-follow-up</b><br/>chase what clients owe<br/><span class='pools'>🗄️ Billing records (lawyer's store)<br/>🗄️ Trust accounting</span>"]
+    IT["<b>/invoice-tracking</b><br/>import past invoices<br/><span class='pools'>🗄️ Billing records (lawyer's store)</span>"]
+    TED["<b>/time-entry-drafting</b><br/>draft the day's time entries<br/><span class='pools'>🗄️ Timekeeping ★<br/>🗄️ Billing work in progress ★<br/>🗄️ Institutional knowledge ★<br/>🗄️ Billing records (lawyer's store)</span>"]
+    TC["<b>/timecamping</b><br/>correct a day's TimeCamp entries<br/><span class='pools'>🗄️ Timekeeping ★<br/>🗄️ Practice records</span>"]
+    TBD["<b>/triage-billing-dates</b><br/>which days to look at before billing<br/><span class='pools'>🗄️ Timekeeping ★<br/>🗄️ Billing records (lawyer's store)</span>"]
+
+    MKT --> P_LAW & P_RES & P_LIT & P_SOL & P_FM & P_BIL & P_DEV & P_TE
+    P_LAW --> EA & TP & CR & FRP & FD & ING & LFE & MST & PRF & CD & PRC & RT & DE & CC & VBL & PS & SG & RU
+    P_RES --> LR & CB & VL & PT & LME
+    P_LIT --> WK & DR & PR & PB & AS & EF & ATF & CAL
+    P_FM --> HK & RA
+    P_BIL --> BC & II & IR & WIP & AR & IT & TED & TC & TBD
+
+    %% Layout spacers: invisible, so a plugin with no skills gets its own row and no line crosses it.
+    S_SOL[" "]
+    S_DEV[" "]
+    S_TE[" "]
+    P_SOL ~~~ S_SOL
+    P_DEV ~~~ S_DEV
+    P_TE ~~~ S_TE
+    classDef spacer fill:none,stroke:none,color:transparent
+    class S_SOL,S_DEV,S_TE spacer
+
+    classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
+    classDef researcher fill:#ddf3ef,stroke:#1f7a6d,color:#1d2733
+    classDef litigator fill:#f8e3dc,stroke:#9c3d22,color:#1d2733
+    classDef bil fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef fm fill:#efe8fb,stroke:#6b46b0,color:#1d2733
+    classDef root fill:#1d2733,stroke:#1d2733,color:#ffffff
+    classDef empty fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    class P_LAW,EA,TP,CR,FRP,FD,ING,LFE,MST,PRF,CD,PRC,RT,DE,CC,VBL,PS,SG,RU lawyer
+    class P_RES,LR,CB,VL,PT,LME researcher
+    class P_LIT,WK,DR,PR,PB,AS,EF,ATF,CAL litigator
+    class P_BIL,BC,II,IR,WIP,AR,IT,TC,TBD,TED bil
+    class P_FM,HK,RA fm
+    class MKT root
+    class P_SOL,P_DEV,P_TE empty
+    style P_LAW stroke-width:3px
+    style P_RES stroke-width:3px
+    style P_LIT stroke-width:3px
+    style P_BIL stroke-width:3px
+    style P_FM stroke-width:3px
+</pre>
+    </div>
+
+    <h2>The stores under the pools after Phase 2</h2>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Store</th><th>Scope</th><th>Served by</th><th>Pools it holds</th><th>What Phase 2 does</th></tr></thead>
+      <tbody>
+        <tr><td>🗄️ <code>practice.db</code></td><td>practice</td><td>lawyer</td><td>Practice records, Events (anchors, deadlines), Trust accounting, Billing records, The law (rule overlay, court calendar)</td><td>nothing: decisions 1 to 4 keep it. Billing records stay here because they share its one cloud sync stream (decision 6)</td></tr>
+        <tr><td>🗄️ matter store (today's <code>main.sqlite</code>)</td><td>matter</td><td>lawyer</td><td>Evidence, and the court record if lawyer owns it; the cast</td><td>converted to generic items with per-pool tools (legacy conversion)</td></tr>
+        <tr><td>🗄️ ★ litigator matter store</td><td>matter</td><td>litigator (new server)</td><td>Work product, and the court record if litigator owns it</td><td>new. Target only: the matter-data conversion plan prices it and the developer confirms before the server key is created</td></tr>
+        <tr><td>🗄️ <code>law.sqlite</code></td><td>matter</td><td>open</td><td>The law (the matter's authorities, concepts, criteria)</td><td>converted; who serves it is settled in the matter-data conversion plan</td></tr>
+        <tr><td>🗄️ <code>privileged.sqlite</code></td><td>matter</td><td>lawyer</td><td>Privileged communications</td><td>converted, with its own tools, so reading it needs a grant</td></tr>
+        <tr><td>🗄️ ★ drafting store (today's <code>submission.sqlite</code>) and <code>loose_threads.db</code></td><td>matter</td><td>litigator (target)</td><td>Drafts</td><td>converted; the drafting-data conversion plan applies decision 6's reasoning</td></tr>
+        <tr><td>🗄️ ★ correspondence store</td><td>matter</td><td>its own plan decides</td><td>Correspondence (and, with separate tools, client correspondence)</td><td>new: a derived, rebuildable index with body text, built from the two originals below</td></tr>
+        <tr><td>🗄️ ★ timekeeping store (today's <code>time_pipeline.db</code>)</td><td>practitioner</td><td>billing (new tool family)</td><td>Timekeeping records, Billing work in progress (<code>bill</code>, <code>tedraft</code>), Institutional knowledge (description patterns)</td><td>moved to billing in step 1; <code>timecamping.db</code> merged in at its conversion</td></tr>
+        <tr><td>📁 knowledge overlay</td><td>practice</td><td>lawyer</td><td>Know-how and Institutional knowledge, mixed</td><td>nothing now; sorting it is a precondition for ever sharing know-how</td></tr>
+        <tr><td>🗄️ quirks and preferences files</td><td>practice</td><td>lawyer</td><td>Institutional knowledge</td><td>nothing</td></tr>
+        <tr><td>📁 matter folders</td><td>matter</td><td>file-manager moves and renames</td><td>Evidence, Court record, Correspondence (folder type 3), Privileged (folder type 2), Drafts, The law (<code>6. LAW</code>), Events (<code>ProceduralHistory.md</code>)</td><td>nothing: they are the originals</td></tr>
+        <tr><td>📁 mailbox, read over IMAP</td><td>practitioner</td><td>lawyer's mail tools</td><td>Correspondence and client correspondence (originals)</td><td>nothing: originals</td></tr>
+        <tr><td>🗄️ <code>suggestions.json</code> and the cloud troubleshooting store</td><td>device; cloud</td><td>lawyer; researcher</td><td>Probanda's own records</td><td>nothing</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p class="sources">The plugins and their entry skills are the same as today's tree (<a href="../Built/Progressive-Context-Tree.html">Built/Progressive-Context-Tree.html</a>): Phase 2 moves no skill. Left out on purpose, as there: skills only other skills call (the gatekeepers), steps another skill runs for you, add-ons typed inside a session, and every <code>developer</code> skill. A pool listed on a skill is one it reads or writes, through its own tools, a gatekeeper skill it names, or an agent it dispatches (<code>docket-clerk</code> writes events, <code>research-agent</code> reads the law). Pools were found by scanning each skill's files for the data tools and gatekeepers they name, and from its description where it works through a gatekeeper; that second part is a judgment. "Billing records (lawyer's store)" are time entries, invoices, payments and rates in <code>practice.db</code>, which the billing skills write through lawyer's tools; "Billing work in progress" is a bill in progress and draft time entries, in billing's own store. The calendar, the address book and the Law Society directory are sources, not pools. Each pool is defined in <code>docs/Plans/2026-11-10_data-pool-framework.md</code>, and every store decision in <code>docs/Plans/2026-11-10_data-store-restructure-phase-2.md</code>.</p>
+  </figure>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: "neutral",
+    flowchart: { nodeSpacing: 18, rankSpacing: 90, curve: "linear", useMaxWidth: false, htmlLabels: true }, themeVariables: { fontFamily: "Segoe UI, system-ui, sans-serif", fontSize: "16px" } });
+  mermaid.run({ querySelector: "pre.mermaid" });
+</script>
+</body>
+</html>

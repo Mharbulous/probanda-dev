@@ -44,11 +44,11 @@ pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap 
 <body>
 <main>
   <figure class="diagram" id="planned-data-pool-map"
-          data-based-on-commit="cdef7e4c15f924da9a11a92bc2b7da23687cf151"
-          data-updated="2026-11-10T14:00:00-07:00">
+          data-based-on-commit="d36176e2e06200ac38c4df22c08ebe9e94d0b418"
+          data-updated="2026-11-10T16:00:00-07:00">
     <figcaption>
       <h1>Planned: every Probanda skill, by the data pool it writes</h1>
-      <p class="stamp">Planned, not built · Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/cdef7e4c15f924da9a11a92bc2b7da23687cf151"><code>cdef7e4c</code></a> on main · Last updated 2026-11-10 14:00 -07:00</p>
+      <p class="stamp">Planned, not built · Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/d36176e2e06200ac38c4df22c08ebe9e94d0b418"><code>d36176e2</code></a> on main · Last updated 2026-11-10 16:00 -07:00</p>
     </figcaption>
     <div class="legend" aria-label="Colour key: each skill's plugin today">
       <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer</span>
@@ -168,8 +168,6 @@ flowchart TB
         subgraph INST["Institutional knowledge"]
             direction TB
             n_precedents["precedents"]
-            n_file_naming["file-naming"]
-            n_precedents ~~~ n_file_naming
         end
     end
     SC_MATTER ~~~ SC_PRACTICE
@@ -214,8 +212,8 @@ flowchart TB
         subgraph KNOW["Know-how"]
             direction TB
             n_localize["localize"]
-            n_rule_migrate["rule-migrate"]
-            n_localize ~~~ n_rule_migrate
+            n_file_naming["file-naming"]
+            n_localize ~~~ n_file_naming
         end
     end
     SC_OWN ~~~ SC_NOCLIENT
@@ -262,6 +260,7 @@ flowchart TB
             n_fix_this["fix-this"]
             n_hitl_triage["hitl-triage"]
             n_streamline_skill["streamline-skill"]
+            n_rule_migrate["rule-migrate"]
             n_proof_read ~~~ n_compare_documents
             n_compare_documents ~~~ n_dyu
             n_dyu ~~~ n_TLDR
@@ -272,6 +271,7 @@ flowchart TB
             n_CPR ~~~ n_fix_this
             n_fix_this ~~~ n_hitl_triage
             n_hitl_triage ~~~ n_streamline_skill
+            n_streamline_skill ~~~ n_rule_migrate
         end
     end
     SC_NOCLIENT ~~~ SC_OTHER
@@ -292,7 +292,7 @@ flowchart TB
 </pre>
     </div>
 
-    <p class="sources">A data pool is a database (most are SQLite), folders of files, or both: evidence, for example, is the matter's records of who produced what and the produced documents themselves. Each skill sits under the pool it writes. A skill that writes nothing sits under the pool it mainly reads: <code>executive-assistant</code>, <code>wip-tracker</code>, <code>ar-follow-up</code>, <code>calendar-reminders</code> and most of researcher are placed this way. A skill that reads several pools and writes none (<code>find-document</code>, <code>file-review-prep</code>) is not forced into one, and a skill that works only on the documents it is handed (<code>proof-read</code>, <code>compare-documents</code>) has no data pool. Box colours show each skill's plugin today, after Phase 1 replaced timekeeper with billing. Know-how is what holds for any firm in the same venue and could one day be shared; institutional knowledge is what holds for this firm only and stays on its machine. <code>localize</code> writes both, learned venue requirements and the firm's declared document types, and sits under know-how, which it mainly writes. <code>rule-update</code> records a court-rule change, which is the law. <code>rule-migrate</code> maps <code>/draft</code>'s own working rules, shipped procedure, so it stays under know-how. The court calendar and the rule overlay are kept in the <code>practice-data</code> store. Where the stores differ from the pools: the <code>matter-data</code> store is three files per matter (<code>main.sqlite</code> for evidence and the court record, <code>law.sqlite</code> for the matter's stored authorities, <code>privileged.sqlite</code> for client instructions), all written by the one <code>matter-data</code> skill; the <code>practice-data</code> store holds practice records, billing, trust accounting and events (anchors and deadlines). Deadlines are written by the <code>docket-clerk</code> agent, which is not a skill, so the events pool shows only <code>calendar-reminders</code>. Correspondence with others lives in the mailbox, which skills read as a source and no skill writes. The file-manager skills under "Every pool's folders" name, file, move and trash files in whichever pool's folders they belong to, so they cut across pools by design. Probanda's own records are its suggestion box and troubleshooting store. Sources: <code>source/assignment.json</code>, each skill's <code>SKILL.md</code> and the data-server tools its files name. The placement of read-only skills is a judgment, not a check.</p>
+    <p class="sources">A data pool is a database (most are SQLite), folders of files, or both: evidence, for example, is the matter's records of who produced what and the produced documents themselves. Each skill sits under the pool it writes. A skill that writes nothing sits under the pool it mainly reads: <code>executive-assistant</code>, <code>wip-tracker</code>, <code>ar-follow-up</code>, <code>calendar-reminders</code> and most of researcher are placed this way. A skill that reads several pools and writes none (<code>find-document</code>, <code>file-review-prep</code>) is not forced into one, and a skill that works only on the documents it is handed (<code>proof-read</code>, <code>compare-documents</code>) has no data pool. Box colours show each skill's plugin today, after Phase 1 replaced timekeeper with billing. Know-how is what holds for any firm in the same venue and could one day be shared; institutional knowledge is what holds for this firm only and stays on its machine. <code>localize</code> writes both, learned venue requirements and the firm's declared document types, and sits under know-how, which it mainly writes. <code>rule-update</code> records a court-rule change, which is the law. <code>file-naming</code> writes nothing and its convention ships in the plugin, so it sits under know-how. <code>rule-migrate</code> writes nothing (it emits a prompt for repository edits), so it has no data pool. The court calendar and the rule overlay are kept in the <code>practice-data</code> store. Where the stores differ from the pools: the <code>matter-data</code> store is three files per matter (<code>main.sqlite</code> for evidence and the court record, <code>law.sqlite</code> for the matter's stored authorities, <code>privileged.sqlite</code> for client instructions), all written by the one <code>matter-data</code> skill; the <code>practice-data</code> store holds practice records, billing, trust accounting and events (anchors and deadlines). Deadlines are written by the <code>docket-clerk</code> agent, which is not a skill, so the events pool shows only <code>calendar-reminders</code>. Correspondence with others has two originals, the matter's mail folder and its Correspondence folder of scanned letters, which skills read as sources and no skill writes; a derived, searchable correspondence store is planned (Phase 2, decision 7). The file-manager skills under "Every pool's folders" name, file, move and trash files in whichever pool's folders they belong to, so they cut across pools by design. Probanda's own records are its suggestion box and troubleshooting store. Sources: <code>source/assignment.json</code>, each skill's <code>SKILL.md</code> and the data-server tools its files name. The placement of read-only skills is a judgment, not a check.</p>
   </figure>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
