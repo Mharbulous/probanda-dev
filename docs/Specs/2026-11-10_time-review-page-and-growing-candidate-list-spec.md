@@ -1,4 +1,4 @@
-# Time review page, growing candidate list and parallel day review
+# Time review page, growing candidate list, parallel day review and its orchestration
 
 Decided by the practitioner on 2026-11-10, in an interview about improving `/bill-client`. This is a spec, not a plan: it states what to build and the decisions behind it, and leaves the build order to the plan. The current process is drawn in `docs/diagrams/Built/Client billing.html` (checked against `72c1eb07`).
 
@@ -78,7 +78,7 @@ Only flagged blocks need the practitioner's action before the bill is made. Unfl
 
 - **What a resume searches.** Every source for the days after the list's last covered date, plus, for the whole period, each source listed under "Unexplored leads" or not reached last time. Saved dates are kept. A new date is added with the date it was found.
 - **Where the list lives.** In the time-review database, one row per date: strength, Lawyer or Staff, flags, when found, and links to its evidence rows. The `YYYY-MM-DD Candidate dates` file in `BILLING` is generated from those rows for the practitioner to read. No run parses it back.
-- **Changes in TimeCamp after a day is cleared.** When a day is cleared, save a fingerprint of its TimeCamp entries (each entry's id, start, end, task and note). On resume, compare each cleared day in the bill's period with its fingerprint. An entry added, removed or changed comes back flagged, and the day is no longer clear. The rest of the day keeps its approvals. This replaces the reviewed-day mark that never expires.
+- **Changes in TimeCamp after a day is cleared.** When a day is judged or cleared, save a fingerprint of its TimeCamp entries (each entry's id, start, end, task and note). On resume, compare each cleared day in the bill's period with its fingerprint. An entry added, removed or changed comes back flagged, and the day is no longer clear. The rest of the day keeps its approvals. This replaces the reviewed-day mark that never expires.
 - **Lost saves.** On resume, check each listed date against its evidence rows. A date missing rows is searched again for that date alone, and the practitioner is told. Separately, find and fix the cause of the evidence save lost on 2026-11-04 (rerun audit).
 - **The status wording stays.** A resume says the list was extended and what was added. It never calls Step 6 done, kept or saved (`/bill-client` "The status").
 
@@ -104,6 +104,27 @@ The day review runs in the main session, one date after another, and stops each 
 - Evidence is stored as rows linked to a block, each labelled with its source, never one column per source, so a new source needs no schema change.
 - **Doubt.** When a block is unclear, it first asks the screenshot reader specific questions about named captures ("What name appears in the document's heading?"), and each answer is saved with its capture. Only when those answers seem doubtful or unreliable does it open a capture itself, sparingly. A block still unclear after that is flagged for the practitioner.
 - Opening a capture itself requires loosening `source/billing/hooks/screenshot-reader-gate.py` for this agent alone. That hook enforces the rule that only the reader views screenshots (commit `99659a15`), so the builder states what will no longer be enforced and gets the practitioner's instruction for the change.
+
+## Part 4: orchestration, so parallel reviews never overwrite each other
+
+### The problem
+
+Found while billing L145 on 2026-11-10: nothing stops parallel sessions or subagents from overwriting each other's work.
+
+1. No date can be reserved. `/timecamping` reads a whole TimeCamp day, so two sessions can judge one date at once and write competing proposals for the same entry, even while billing different matters. L145 and L166 share about 29 candidate dates.
+2. The bill record's `time_pipeline__set` overwrites whatever is there, so the last writer wins.
+3. `judged-dates.jsonl` is kept per matter folder and written only when a date is finished. It neither spans matters nor marks a date in progress.
+4. There is no re-check mode. A judged date is skipped, never checked for errors.
+
+The timecamping database's write lock (`source/lawyer/mcp/src/timecamping/lock.ts`) prevents corruption only.
+
+### Decisions
+
+- **Concurrency.** The orchestrator runs at most 10 day reviewers at once, candidate dates first, strongest first. That leaves room under the session's 20-subagent limit for the readers they question.
+- **One status per date, shared by every matter.** The time-review store holds each date's status: not started, in progress (who claimed it and when), judged, clear. It replaces `judged-dates.jsonl` and carries Part 2's clear status and TimeCamp fingerprint. A date is claimed through a tool that refuses a second claim, and the claim expires after a set time (for example 2 hours), so a crashed run never blocks a date for good.
+- **A date is judged once for every matter.** The review is whole-day, so one judgment holds every matter's blocks. A bill that reaches a date another bill has claimed moves on to its other dates and uses the judged day when it is finished. It never judges the date again.
+- **The bill record has one writer.** Day reviewers never write it. The orchestrator writes it, and a save is refused when the record changed since it was read, so two sessions on one bill cannot erase each other's step rows.
+- **Re-checking a judged date.** Every time, the date's TimeCamp entries are compared with the fingerprint saved when it was judged, and anything changed comes back flagged (Part 2). On request only, for one date or a whole bill, a fresh day reviewer judges the day again in compare mode: where its result differs from the stored one, the block is flagged, and nothing stored is overwritten.
 
 ## Open points
 
