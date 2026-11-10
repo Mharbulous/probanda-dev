@@ -42,17 +42,17 @@ pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap 
 <body>
 <main>
   <figure class="diagram" id="progressive-context-tree"
-          data-based-on-commit="7f30d975a21646a1595a31ed56661bbbc2d9af2a"
-          data-updated="2026-11-10T00:33:00-07:00">
+          data-based-on-commit="bc42a17497d6f3e929e6391ef555b2041ae550b3"
+          data-updated="2026-11-10T09:30:00-07:00">
     <figcaption>
       <h1>Where a lawyer's session starts: Probanda's main entry points, by plugin</h1>
-      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/7f30d975a21646a1595a31ed56661bbbc2d9af2a"><code>7f30d975</code></a> on main · Last updated 2026-11-10 00:33 -07:00</p>
+      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/bc42a17497d6f3e929e6391ef555b2041ae550b3"><code>bc42a174</code></a> on main, with timekeeper retired · Last updated 2026-11-10 09:30 -07:00</p>
     </figcaption>
     <div class="legend" aria-label="Colour key">
       <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer plugin skill</span>
       <span><i style="background:#ddf3ef;border-color:#1f7a6d"></i>researcher plugin skill</span>
       <span><i style="background:#f8e3dc;border-color:#9c3d22"></i>litigator plugin skill</span>
-      <span><i style="background:#e3eefb;border-color:#2563a8"></i>timekeeper plugin skill</span>
+      <span><i style="background:#e3eefb;border-color:#2563a8"></i>billing plugin skill</span>
       <span><i style="background:#efe8fb;border-color:#6b46b0"></i>file-manager plugin skill</span>
       <span><i style="background:#ffffff;border-color:#8a94a0"></i>plugin with no lawyer entry skills</span>
     </div>
@@ -70,7 +70,7 @@ flowchart LR
     P_LIT["litigator plugin"]
     P_SOL["solicitor plugin<br/>ships no skills yet"]
     P_FM["file-manager plugin"]
-    P_TK["timekeeper plugin"]
+    P_BIL["billing plugin"]
     P_DEV["developer plugin<br/>maintainer-only, no lawyer skills"]
     P_TE["tokeneconomizer plugin<br/>ships no skills"]
 
@@ -121,12 +121,12 @@ flowchart LR
     TBD["/triage-billing-dates<br/>which days to look at before billing"]
     TED["/time-entry-drafting<br/>draft the day's time entries"]
 
-    MKT --> P_LAW & P_RES & P_LIT & P_SOL & P_FM & P_TK & P_DEV & P_TE
-    P_LAW --> EA & TP & CR & FRP & FD & ING & MST & PRF & CD & PRC & BC & II & WIP & AR & IR & RT & DE & CC & VBL & PS & SG & RU & IT
+    MKT --> P_LAW & P_RES & P_LIT & P_SOL & P_FM & P_BIL & P_DEV & P_TE
+    P_LAW --> EA & TP & CR & FRP & FD & ING & LFE & MST & PRF & CD & PRC & RT & DE & CC & VBL & PS & SG & RU
     P_RES --> LR & CB & VL & PT & LME
-    P_LIT --> WK & DR & PR & PB & AS & EF & ATF & CAL & LFE
+    P_LIT --> WK & DR & PR & PB & AS & EF & ATF & CAL
     P_FM --> HK & RA
-    P_TK --> TC & TBD & TED
+    P_BIL --> BC & II & IR & WIP & AR & IT & TED & TC & TBD
 
     %% Layout spacers: invisible, so a plugin with no skills gets its own row and no line crosses it.
     S_SOL[" "]
@@ -141,26 +141,26 @@ flowchart LR
     classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
     classDef researcher fill:#ddf3ef,stroke:#1f7a6d,color:#1d2733
     classDef litigator fill:#f8e3dc,stroke:#9c3d22,color:#1d2733
-    classDef tk fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef bil fill:#e3eefb,stroke:#2563a8,color:#1d2733
     classDef fm fill:#efe8fb,stroke:#6b46b0,color:#1d2733
     classDef root fill:#1d2733,stroke:#1d2733,color:#ffffff
     classDef empty fill:#ffffff,stroke:#8a94a0,color:#1d2733
-    class P_LAW,EA,TP,CR,FRP,FD,ING,MST,PRF,CD,PRC,BC,II,WIP,AR,IR,RT,DE,CC,VBL,PS,SG,RU,IT lawyer
+    class P_LAW,EA,TP,CR,FRP,FD,ING,LFE,MST,PRF,CD,PRC,RT,DE,CC,VBL,PS,SG,RU lawyer
     class P_RES,LR,CB,VL,PT,LME researcher
-    class P_LIT,WK,DR,PR,PB,AS,EF,ATF,CAL,LFE litigator
-    class P_TK,TC,TBD,TED tk
+    class P_LIT,WK,DR,PR,PB,AS,EF,ATF,CAL litigator
+    class P_BIL,BC,II,IR,WIP,AR,IT,TC,TBD,TED bil
     class P_FM,HK,RA fm
     class MKT root
     class P_SOL,P_DEV,P_TE empty
     style P_LAW stroke-width:3px
     style P_RES stroke-width:3px
     style P_LIT stroke-width:3px
-    style P_TK stroke-width:3px
+    style P_BIL stroke-width:3px
     style P_FM stroke-width:3px
 </pre>
     </div>
 
-    <p class="sources">Left out on purpose: skills only other skills call (<code>matter-data</code>, <code>practice-data</code>, <code>drafting-data</code> and the other gatekeepers), steps another skill runs for you (<code>solver</code>, <code>narrator</code>, <code>bcsc-legal-basis</code>, <code>vet-billable-time</code>, <code>build-timeline</code>, <code>time-sorting</code>, <code>job-planning</code>, <code>ingest-orchestrator</code>), add-ons typed inside a session (<code>dyu</code>, <code>TLDR</code>, <code>reflect</code>, <code>show-me</code>), and every <code>developer</code> skill. Sources: <code>source/assignment.json</code> and each skill's <code>SKILL.md</code> description.</p>
+    <p class="sources">Left out on purpose: skills only other skills call (<code>matter-data</code>, <code>practice-data</code>, <code>drafting-data</code> and the other gatekeepers), steps another skill runs for you (<code>solver</code>, <code>narrator</code>, <code>bcsc-legal-basis</code>, <code>vet-billable-time</code>, <code>build-timeline</code>, <code>time-sorting</code>, <code>job-planning</code>, <code>ingest-orchestrator</code>), add-ons typed inside a session (<code>dyu</code>, <code>TLDR</code>, <code>reflect</code>, <code>show-me</code>), and every <code>developer</code> skill. The retired <code>timekeeper</code> plugin is gone: <code>billing</code> replaced it. Each data pool and the skills in it are in <a href="../Planned/Data-Pool-Map.html">Data-Pool-Map.html</a>. Sources: <code>source/assignment.json</code> and each skill's <code>SKILL.md</code> description.</p>
   </figure>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>

@@ -183,15 +183,6 @@
         "files"
       ]
     },
-    "timekeeper": {
-      "requires": [
-        "lawyer"
-      ],
-      "skills": [],
-      "agents": [],
-      "hooks": {},
-      "servers": []
-    },
     "billing": {
       "requires": [
         "lawyer"

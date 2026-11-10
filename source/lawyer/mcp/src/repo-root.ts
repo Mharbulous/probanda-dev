@@ -247,7 +247,7 @@ export function pluginManifest(installRoot: string): { name: string | null; vers
 
 /** The only plugins whose installs may serve skill source beside this one, in lookup order. Any other
  *  manifest name is ignored, so a stale `probanda` left beside them can never serve a file. */
-const SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing", "timekeeper"];
+const SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing"];
 
 export interface SiblingInstall {
   /** The manifest `name`, never the folder name: a host may name the folder `plugin_<id>`. */

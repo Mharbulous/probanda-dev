@@ -38,12 +38,6 @@
       "description": "Optional. Every Probanda tool that renames, moves, changes or deletes files on your computer that Probanda did not create: matter housekeeping, routing accounting files, applying approved renames. Without it, Probanda only reads or copies those files. Requires lawyer. Install lawyer first, then file-manager."
     },
     {
-      "name": "timekeeper",
-      "source": "./plugins/timekeeper",
-      "author": {"name": "Probanda Legal (experimental)", "url": "https://github.com/Probanda-app"},
-      "description": "Retired: replaced by billing, and ships nothing. Install billing, then remove timekeeper."
-    },
-    {
       "name": "billing",
       "source": "./plugins/billing",
       "author": {"name": "Probanda Legal (experimental)", "url": "https://github.com/Probanda-app"},

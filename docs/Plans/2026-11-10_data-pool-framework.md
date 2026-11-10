@@ -2,7 +2,7 @@
 
 Status: planning. Agreed with the developer on 2026-11-09 and 2026-11-10, revised after an independent review. Nothing here is built.
 
-The map of every skill by pool is `docs/diagrams/Planned/Data-Pool-Map.html`. The billing plan that follows from it is `docs/diagrams/Planned/Progressive-Context-Tree.html`.
+The map of every skill by pool is `docs/diagrams/Planned/Data-Pool-Map.html`. The plugin layout that followed from it, built on 2026-11-10, is `docs/diagrams/Built/Progressive-Context-Tree.html`.
 
 ## Why pools
 

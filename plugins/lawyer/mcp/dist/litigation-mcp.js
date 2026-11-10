@@ -1,4 +1,4 @@
-// build-stamp: 64dd9a4bd4ae
+// build-stamp: c6384edb0ef1
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75111,7 +75111,7 @@ function pluginManifest(installRoot) {
     return { name: null, version: null };
   }
 }
-var SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing", "timekeeper"];
+var SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing"];
 function siblingInstalls(installRoot = INSTALL_ROOT, names = SIBLING_PLUGINS) {
   if (installSkillsRoot(installRoot) === void 0) return [];
   const own = resolve(installRoot);
@@ -75261,7 +75261,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "64dd9a4bd4ae";
+var BUILD_STAMP = false ? null : "c6384edb0ef1";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -80878,7 +80878,7 @@ function suggestionToolDefinitions() {
     },
     {
       name: "suggestion_card__environment_facts",
-      description: "The technical details about Probanda on this computer that a suggestion carries: each Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager, billing, timekeeper, developer), installed or not, with its version; for each installed one, when tool_names is given, which of its tools this session sees and which expected ones are missing (missing is null for a server whose tools this plugin does not know); every other tool as a count only; the host (Cowork or Code, read from how this session's Probanda tool names are written; unknown when none is given); and the operating system. Pass tool_names: every tool name this session sees, exactly as written, Probanda's and every other. It holds no user name, host name or path. Returns {plugins: [{plugin, installed, version, servers?: [{server, visible, missing}]}], other_tools, host, os: {platform, release, arch}}.",
+      description: "The technical details about Probanda on this computer that a suggestion carries: each Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager, billing, developer), installed or not, with its version; for each installed one, when tool_names is given, which of its tools this session sees and which expected ones are missing (missing is null for a server whose tools this plugin does not know); every other tool as a count only; the host (Cowork or Code, read from how this session's Probanda tool names are written; unknown when none is given); and the operating system. Pass tool_names: every tool name this session sees, exactly as written, Probanda's and every other. It holds no user name, host name or path. Returns {plugins: [{plugin, installed, version, servers?: [{server, visible, missing}]}], other_tools, host, os: {platform, release, arch}}.",
       inputSchema: {
         type: "object",
         properties: {
@@ -123832,7 +123832,7 @@ function timecampToolDefinitions() {
 }
 
 // src/suggestions/environment.ts
-var PROBANDA_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing", "timekeeper", "developer"];
+var PROBANDA_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing", "developer"];
 var SERVERS = {
   lawyer: ["data", "contacts-calendars-email"],
   researcher: ["canlii", "commons"],
@@ -123840,7 +123840,6 @@ var SERVERS = {
   solicitor: [],
   "file-manager": ["files"],
   billing: ["timecamp"],
-  timekeeper: [],
   developer: []
 };
 function expectedTools(plugin, server) {

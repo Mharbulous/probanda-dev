@@ -1,8 +1,8 @@
 # Phase 1: move the plugins and skills to the planned tree
 
-Status: planning. Nothing here is built. Run this in its own session. Phase 2 (`docs/Plans/2026-11-10_data-store-restructure-phase-2.md`) follows it and changes the stores.
+Status: built on 2026-11-10. The planned tree this targeted was deleted once `docs/diagrams/Built/Progressive-Context-Tree.html` was redrawn to match it. Slice 1 reworded `design-decisions.md` instead of moving it, by the developer's choice, and the public copy of slice 4 is moved but not yet approved or published. Phase 2 (`docs/Plans/2026-11-10_data-store-restructure-phase-2.md`) follows it and changes the stores.
 
-The target is `docs/diagrams/Planned/Progressive-Context-Tree.html`: every skill it marks "moved from" changes plugin, and nothing else does. Why the skills are grouped this way is in `docs/Plans/2026-11-10_data-pool-framework.md`. This plan does not restate either.
+The target was the planned tree (now deleted; the result is `docs/diagrams/Built/Progressive-Context-Tree.html`): every skill it marked "moved from" changes plugin, and nothing else does. Why the skills are grouped this way is in `docs/Plans/2026-11-10_data-pool-framework.md`. This plan does not restate either.
 
 ## Goal
 

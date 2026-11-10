@@ -1,4 +1,4 @@
-// build-stamp: 5b4cbc4e017f
+// build-stamp: f2e02c1f7e3f
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -17121,7 +17121,7 @@ function pluginManifest(installRoot) {
     return { name: null, version: null };
   }
 }
-var SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing", "timekeeper"];
+var SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing"];
 function siblingInstalls(installRoot = INSTALL_ROOT, names = SIBLING_PLUGINS) {
   if (installSkillsRoot(installRoot) === void 0) return [];
   const own = resolve2(installRoot);
@@ -24602,7 +24602,7 @@ import { existsSync as existsSync15, realpathSync as realpathSync10, statSync as
 import { win32 as pathWin3216 } from "node:path";
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "5b4cbc4e017f";
+var BUILD_STAMP = false ? null : "f2e02c1f7e3f";
 
 // src/local-page/durable.ts
 import { closeSync as closeSync4, fsyncSync as fsyncSync2, openSync as openSync4, writeSync as writeSync2 } from "node:fs";

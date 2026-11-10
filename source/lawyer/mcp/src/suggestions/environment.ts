@@ -28,7 +28,7 @@ import {
 } from "../schema-gen.js";
 import { timecampToolDefinitions } from "../timecamp/tools.js";
 
-export const PROBANDA_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing", "timekeeper", "developer"] as const;
+export const PROBANDA_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing", "developer"] as const;
 export type ProbandaPlugin = (typeof PROBANDA_PLUGINS)[number];
 
 /** Each plugin's MCP server keys (CLAUDE.md, Permanent names). */
@@ -39,7 +39,6 @@ export const SERVERS: Record<ProbandaPlugin, readonly string[]> = {
   solicitor: [],
   "file-manager": ["files"],
   billing: ["timecamp"],
-  timekeeper: [],
   developer: [],
 };
 

@@ -201,7 +201,7 @@ export function suggestionToolDefinitions(): ToolDefinition[] {
     {
       name: "suggestion_card__environment_facts",
       description:
-        "The technical details about Probanda on this computer that a suggestion carries: each Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager, billing, timekeeper, developer), installed or not, with its version; " +
+        "The technical details about Probanda on this computer that a suggestion carries: each Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager, billing, developer), installed or not, with its version; " +
         "for each installed one, when tool_names is given, which of its tools this session sees and which expected ones are missing (missing is null for a server whose tools this plugin does not know); " +
         "every other tool as a count only; the host (Cowork or Code, read from how this session's Probanda tool names are written; unknown when none is given); and the operating system. " +
         "Pass tool_names: every tool name this session sees, exactly as written, Probanda's and every other. It holds no user name, host name or path. " +

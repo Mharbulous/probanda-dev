@@ -62,7 +62,6 @@ test("the facts name each plugin, installed or not, with its version, and no use
     ["solicitor", false, null],
     ["file-manager", true, null],
     ["billing", false, null],
-    ["timekeeper", false, null],
     ["developer", true, "0.1.29"],
   ]);
   const lawyerFacts = facts.plugins[0];
