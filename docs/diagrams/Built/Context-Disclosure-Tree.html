@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<!--
+  This diagram's tag gives the commit it was checked against and when it was last updated.
+  To update it: re-read the sources at the new commit, correct the chart if needed,
+  then change both data- attributes and the visible stamp.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Context Disclosure Tree</title>
+<style>
+/* Single light theme by choice: the diagram's colours carry meaning and stay fixed. */
+:root {
+  color-scheme: light;
+  --ink: #1d2733;
+  --muted: #55616f;
+  --paper: #f8f9fb;
+  --rule: #d5dbe3;
+  --body: "Segoe UI", system-ui, sans-serif;
+  --mono: Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--body); }
+main { max-width: 1500px; margin: 0 auto; padding: 28px 20px 48px; display: grid; gap: 20px; }
+h1 { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 600; text-wrap: balance; }
+code { font: 500 0.92em var(--mono); }
+figure { margin: 0; display: grid; gap: 12px; }
+figcaption { display: grid; gap: 4px; }
+.stamp { font-size: 14px; color: var(--muted); margin: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 15px; height: 15px; border: 2px solid; border-radius: 3px; display: inline-block; }
+.chart { overflow-x: auto; background: #fff; border: 1px solid var(--rule); border-radius: 6px; padding: 16px; }
+pre.mermaid { margin: 0; font-family: var(--body); }
+pre.mermaid svg { display: block; margin: 0 auto; }
+/* Mermaid caps each label at 200 px and wraps inside words; labels here break only at <br/>. */
+pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap !important; }
+.sources { font-size: 13px; color: var(--muted); margin: 0; }
+</style>
+</head>
+<body>
+<main>
+  <figure class="diagram" id="context-disclosure-tree"
+          data-based-on-commit="6dd7b13844aca2b9747d366612b41452ed669a86"
+          data-updated="2026-11-09T22:40:00-07:00">
+    <figcaption>
+      <h1>Where a lawyer's session starts: Probanda's main entry points, by activity</h1>
+      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/6dd7b13844aca2b9747d366612b41452ed669a86"><code>6dd7b138</code></a> on main · Last updated 2026-11-09 22:40 -07:00</p>
+    </figcaption>
+    <div class="legend" aria-label="Colour key">
+      <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer plugin skill</span>
+      <span><i style="background:#ddf3ef;border-color:#1f7a6d"></i>researcher plugin skill</span>
+      <span><i style="background:#f8e3dc;border-color:#9c3d22"></i>litigator plugin skill</span>
+      <span><i style="background:#e3eefb;border-color:#2563a8"></i>timekeeper plugin skill</span>
+      <span><i style="background:#efe8fb;border-color:#6b46b0"></i>file-manager plugin skill</span>
+      <span><i style="background:#fbe4ec;border-color:#b03060;border-radius:8px"></i>👤 You act here</span>
+      <span><i style="background:#ffffff;border-color:#8a94a0"></i>Kind of activity</span>
+    </div>
+
+    <div class="chart">
+<pre class="mermaid">
+flowchart LR
+    START(["👤 You start a new session"])
+
+    G1["Run the day"]
+    G2["Work a matter"]
+    G3["Draft and file"]
+    G4["Research the law"]
+    G5["Bill and track time"]
+    G6["Files, mail and contacts"]
+    G7["Set up and get help"]
+
+    EA["/executive-assistant<br/>the morning briefing"]
+    TP["/task-prioritization<br/>the ranked to-do list"]
+    CR["/calendar-reminders<br/>what the calendar says is unfinished"]
+
+    WK["/work<br/>a matter's Work Board and its jobs"]
+    FRP["/file-review-prep<br/>brief me on a matter"]
+    FD["/find-document<br/>show me a document or email"]
+    ING["/ingest<br/>add a document to the case data"]
+    MST["/matter-status-tracking<br/>where each file stands"]
+
+    DR["/draft<br/>draft or revise a letter, memo or filing"]
+    PR["/prepare<br/>open a BCSC application and its jobs"]
+    PB["/publish<br/>turn a draft into a court form"]
+    AS["/assemble<br/>bind documents into one PDF"]
+    EF["/e-file<br/>file through the court portal"]
+    PRF["/proof-read<br/>improve a piece of legal writing"]
+    CD["/compare-documents<br/>what changed between two PDFs"]
+    PRC["/precedents<br/>make or find a standard form"]
+
+    LR["/legal-research<br/>what the law is"]
+    ATF["/apply-to-facts<br/>what the law means for this matter"]
+    CB["/case-brief<br/>summarize one decision"]
+    VL["/verify-law<br/>check a quote, pinpoint or citation"]
+    CAL["/calculate<br/>interest and bill-of-costs figures"]
+
+    BC["/bill-client<br/>bill a matter from the last invoice"]
+    II["/issue-invoice<br/>record a signed invoice"]
+    TC["/timecamping<br/>correct a day's TimeCamp entries"]
+    TBD["/triage-billing-dates<br/>which days to look at before billing"]
+    WIP["/wip-tracker<br/>unbilled work in progress"]
+    AR["/ar-follow-up<br/>chase what clients owe"]
+    IR["/invoice-reviewing<br/>check a draft invoice"]
+    RT["/retainer-tracking<br/>trust and retainer balances"]
+
+    HK["/housekeeping<br/>name and file a matter's loose files"]
+    RA["/route-accounting<br/>file loose bookkeeping files"]
+    DE["/deduping-email<br/>remove duplicate emails"]
+    CC["/call-contact<br/>call someone in your contacts"]
+    VBL["/verify-bc-lawyer<br/>is this person a BC lawyer?"]
+
+    PS["/probanda-setup<br/>set Probanda up on this device"]
+    PT["/probanda-troubleshooting<br/>a tool fails or misbehaves"]
+    SG["/suggestion<br/>send an idea or complaint"]
+    RU["/rule-update<br/>a court rule has changed"]
+
+    START --> G1 & G2 & G3 & G4 & G5 & G6 & G7
+    G1 --> EA & TP & CR
+    G2 --> WK & FRP & FD & ING & MST
+    G3 --> DR & PR & PB & AS & EF & PRF & CD & PRC
+    G4 --> LR & ATF & CB & VL & CAL
+    G5 --> BC & II & TC & TBD & WIP & AR & IR & RT
+    G6 --> HK & RA & DE & CC & VBL
+    G7 --> PS & PT & SG & RU
+
+    classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
+    classDef researcher fill:#ddf3ef,stroke:#1f7a6d,color:#1d2733
+    classDef litigator fill:#f8e3dc,stroke:#9c3d22,color:#1d2733
+    classDef tk fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef fm fill:#efe8fb,stroke:#6b46b0,color:#1d2733
+    classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    class EA,TP,CR,FRP,FD,ING,MST,PRF,CD,PRC,BC,II,WIP,AR,IR,RT,DE,CC,VBL,PS,SG,RU lawyer
+    class LR,CB,VL,PT researcher
+    class WK,DR,PR,PB,AS,EF,ATF,CAL litigator
+    class TC,TBD tk
+    class HK,RA fm
+    class START human
+    class G1,G2,G3,G4,G5,G6,G7 step
+</pre>
+    </div>
+
+    <p class="sources">Left out on purpose: skills only other skills call (<code>matter-data</code>, <code>practice-data</code>, <code>drafting-data</code> and the other gatekeepers), steps another skill runs for you (<code>solver</code>, <code>narrator</code>, <code>bcsc-legal-basis</code>, <code>vet-billable-time</code>, <code>build-timeline</code>, <code>time-sorting</code>, <code>job-planning</code>, <code>ingest-orchestrator</code>), add-ons typed inside a session (<code>dyu</code>, <code>TLDR</code>, <code>reflect</code>, <code>show-me</code>), and every <code>developer</code> skill. Sources: <code>source/assignment.json</code> and each skill's <code>SKILL.md</code> description.</p>
+  </figure>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: "neutral",
+    flowchart: { nodeSpacing: 18, rankSpacing: 70, useMaxWidth: false, htmlLabels: true }, themeVariables: { fontFamily: "Segoe UI, system-ui, sans-serif", fontSize: "16px" } });
+  mermaid.run({ querySelector: "pre.mermaid" });
+</script>
+</body>
+</html>
