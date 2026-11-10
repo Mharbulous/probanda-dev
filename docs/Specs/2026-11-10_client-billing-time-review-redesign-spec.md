@@ -194,6 +194,8 @@ Done means each of these holds, each checked by a test or a recorded run, not by
 
 ## Open points
 
+- **Sequencing with Phase 2.** `docs/Plans/2026-11-10_data-store-restructure-phase-2.md` merges `timecamping.db` into `time_pipeline.db` as items whose `kind` is a value (decision 5), retires the `timecamping_data__*` tools at the timetracking-data conversion, and moves `time_pipeline.db`'s tools to `billing` (decision 6, Order step 1). Every store change in this spec lands in that store, so the build plan decides whether each change waits for that conversion or is built on the new store as part of it, never on `timecamping.db`'s typed tables.
+
 - What the page does in Cowork, where screenshots can be read only on the PC.
 - How the page gets the screenshot images: decrypted PNGs kept for the page, or decrypted when shown.
 - The table changes in the time-review store (merged-into and split-from links, readings, fingerprints, candidate-date rows, date status and claims) must be checked against Commandment 5.
