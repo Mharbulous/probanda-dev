@@ -16,7 +16,7 @@ Surveyed on 2026-11-10 at commit `b37348d7`, and checked against the data server
 
 | Pool | Store today | Scope of the store | Shape | Gap |
 |---|---|---|---|---|
-| The law | `law.sqlite`: 5 tables (authorities, their treatments, concepts, criteria) | per matter | typed tables (legacy) | none in placement |
+| The law | `law.sqlite`: 5 tables (authorities, their treatments, concepts, criteria); `practice.db`, kinds `rule_overlay`, `calendar_day`, `calendar_year` | per matter; per practice | typed tables (legacy); generic items | the rule overlay and the court calendar sit in the practice store, which decision 4 keeps |
 | Privileged communications | `privileged.sqlite`: 3 tables (privileged sources, fact provenance, client instructions) | per matter | typed tables (legacy) | none in placement |
 | Evidence | `main.sqlite` (sources, facts, admissions, evidence links, source references) | per matter | typed tables (legacy) | shares a file with the court record and work product |
 | Court record | `main.sqlite` (proceedings, parties of record, positions, relief, sought orders) | per matter | typed tables (legacy) | shares a file with evidence |
@@ -27,7 +27,8 @@ Surveyed on 2026-11-10 at commit `b37348d7`, and checked against the data server
 | Practice records | `practice.db`, kinds `client`, `matter`, `matter_role`, `contact`, `affiliation`, `task`, `signal` | per practice | generic items | shares a file with four other pools |
 | Billing | `practice.db`, kinds `time_entry`, `invoice`, `invoice_line`, `payment`, `rate`, `adjustment`; and `time_pipeline.db`, namespaces `bill` and `tedraft` | per practice; per practitioner | generic | split across two stores, one of them the timekeeping store |
 | Trust accounting | `practice.db`: fields `regular_trust`, `term_trust`, `last_trust_date` on each `matter` item, and kind `retainer_notice` | per practice | generic | no ledger: balances are fields on a practice record |
-| Know-how | `practice.db` kinds `calendar_day`, `calendar_year`, `rule_overlay`; the knowledge overlay folder `_practice\knowledge\`; each skill's shipped `references/` | per practice | generic items and files | court calendar days and the rule overlay sit in the practice store |
+| Know-how | each skill's shipped `references/`; in the knowledge overlay `_practice\knowledge\`, the learned `venue.md` files, `venues.local.json`, `kinds.local.json` and `_hosts.json` | shipped; per practice | files | shares the knowledge overlay with institutional knowledge, so no part of it can be shared without sorting the overlay first |
+| Institutional knowledge | in the knowledge overlay, the declared `Documents\<kind>.md` type files and the `corrected` sidecar rows; `_practice\quirks\quirks.json`; `_practice\preferences\<person>.json`; the description patterns in `time_pipeline.db`'s `tedraft` namespace | per practice; per practitioner | files; generic | spread across four stores, one of them shared with know-how |
 | Timekeeping records | `timecamping.db` and `time_pipeline.db` (namespaces `timeline`, `timesort`, `evidence`) | per practitioner | 12 typed tables (legacy); generic | two stores for one pool |
 
 What the table does not show:
@@ -35,7 +36,7 @@ What the table does not show:
 - `main.sqlite` also holds data that no pool names: the matter's cast (`parties`, `witnesses`, `tribunal_members`, `participant_aliases` and their links to proceedings), the `matter_metadata` row, and `housekeeping_reviews`, the record of which files file-manager's review has seen. A split of `main.sqlite` (decision 6) has to place each of them.
 - The practice board shows rows of kind `event` and `todo`, but `src/tools/practice/practice-board.ts` builds them from anchors, deadlines and tasks. They are not stored kinds.
 - `time_pipeline.db`'s own header comment (`src/time-pipeline/backend.ts`) still names only `timeline`, `timesort` and `tedraft`. The `/time-pipeline-data` skill's namespace table is the full list: those three, plus `evidence` and `bill`.
-- Three more stores are generic files that the framework places in no pool. `_practice\quirks\quirks.json` (`src/quirks/tools.ts`) holds practice quirks: rules and facts about how this practice works, which read as know-how. `_practice\preferences\<person>.json` (`src/preferences/tools.ts`) holds each person's preferences. `suggestions\suggestions.json` beside `probanda.json` (`src/suggestions/store.ts`) holds every suggestion this device sent or held, which is Account Information and stays outside `0. CASE DATA`.
+- `suggestions\suggestions.json` beside `probanda.json` (`src/suggestions/store.ts`) holds every suggestion this device sent or held. It is Probanda's own records (Account Information), outside the client pools, and stays outside `0. CASE DATA`.
 
 Two facts shape everything below:
 
@@ -53,6 +54,7 @@ Each of these is the developer's to make before anything is built for it. Ask th
 3. **Trust accounting.** Give it a ledger of dated entries with a sub-ledger per client, as a regulated trust account is kept, or keep the three balance fields on the matter item. Today no record shows how a balance was reached.
    **Decided 2026-11-10: the gap stays.** The regulated ledger is the firm's trust accounting system (UNITY® Accounting), and Probanda keeps only each matter's current balances, imported from its Trust Listing export by `retainer-tracking`, whose vision puts the transaction history out of scope. A second ledger in Probanda could disagree with the books of record. A dated snapshot per import was offered and declined: no skill needs a balance history today.
 4. **Court calendar days and the rule overlay.** Move them from `practice.db` to the knowledge overlay, where the other know-how lives, or leave them.
+   **Decided 2026-11-10: they are the law, and they stay in `practice.db`.** Neither is know-how: the rule overlay records a court-rule change and the calendar is a court's published sitting days, so the framework now lists both under the law. In `practice.db` a year's calendar is replaced in one transaction, and a rule change keeps the cloud's contract check and the refusal of client matter codes, both of which the knowledge overlay's files lack. In the same decision the developer split the old know-how pool in two: know-how (true for any firm in the venue, and transferable) and institutional knowledge (true for this firm only, and Client Information). The table's two rows show where each sits today. Nothing moves now. Sorting the knowledge overlay between them is a precondition for ever sharing know-how.
 5. **Timekeeping.** Merge `timecamping.db` and the three timekeeping namespaces of `time_pipeline.db` into one store when timetracking-data is converted, or keep two.
 6. **`main.sqlite`.** Split evidence, the court record and work product into separate files when matter-data is converted, or keep one file for the matter's non-privileged data. They share many links (a fact to its source, a criterion to its facts).
 7. **Correspondence with others.** Give it a store, or leave it in the mailbox.

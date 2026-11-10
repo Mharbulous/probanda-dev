@@ -33,6 +33,7 @@ Each item below is a pool. A heading is only a scope (whose data it is), not a p
 | Practice records | Contacts, matters, roles, tasks, file status, conflict information |
 | Billing | Time entries, invoices, accounts receivable |
 | Trust accounting | Each matter's current retainer and trust balances. The regulated ledger, with its sub-ledger per client, is kept in the firm's trust accounting system, not in Probanda |
+| Institutional knowledge | What is true for this firm only: its own forms and precedents in house style, the document types it declares and its overrides of shipped values, practice quirks, time-entry description patterns, each person's preferences. Client Information even when it names no client, so it stays on the User's Machine |
 
 **The lawyer's own**: not yet sorted to a matter.
 
@@ -44,8 +45,8 @@ Each item below is a pool. A heading is only a scope (whose data it is), not a p
 
 | Pool | Holds |
 |---|---|
-| The law | Case law, statutes, court rules, commentary, research memos |
-| Know-how | Precedents, firm forms, learned venue requirements, court calendar days, the firm's rule overlay |
+| The law | Case law, statutes, court rules (including the firm's record of rule changes, the rule overlay), the court's sitting calendar, commentary, research memos |
+| Know-how | What is true for any firm in the same venue: generic precedents, venue requirements learned from published sources, the lists of venues and document kinds, approved source websites. Transferable, so it may one day be shared |
 
 Outside the client pools: Probanda's own records (the Suggestion Box and the troubleshooting store, which hold Account Information under the Commandments).
 
