@@ -47,6 +47,7 @@ Two facts shape everything below:
 Each of these is the developer's to make before anything is built for it. Ask them one at a time, each with a worked example of what every option would produce and a "do nothing" option. Record each answer in this file under the decision.
 
 1. **Events.** Move anchors and deadlines out of `practice.db` into a store in each matter's `0. CASE DATA` folder, or leave them practice-wide with their link to a matter. A per-matter store matches the pool's scope. It also means the morning briefing must open every matter's store to list what is due, where today it reads one file.
+   **Decided 2026-11-10: the gap stays.** Anchors and deadlines stay in `practice.db`, each linked to its matter, and past events stay in each matter's `ProceduralHistory.md`. The isolation a per-matter store would give is small for dates and labels, and the briefing and practice board keep their single read of one file. Order step 3 drops out.
 2. **`practice.db`.** Split it into one file per pool (practice records, billing, trust accounting), or keep one file and treat the item's kind as the pool boundary. Separate files make the boundary physical. One file keeps a time entry's link to its matter inside one store.
 3. **Trust accounting.** Give it a ledger of dated entries with a sub-ledger per client, as a regulated trust account is kept, or keep the three balance fields on the matter item. Today no record shows how a balance was reached.
 4. **Court calendar days and the rule overlay.** Move them from `practice.db` to the knowledge overlay, where the other know-how lives, or leave them.
@@ -60,7 +61,7 @@ Work one store per release, cheapest and most reversible first:
 
 1. Move the `bill` and `tedraft` namespaces to the billing pool's store. Both are generic already, so this is a copy and a change of tool family, with no conversion.
 2. Whatever decisions 2, 3 and 4 settle for `practice.db`. It is generic already, so a split is a move of items by kind.
-3. Events, if decision 1 moves them.
+3. ~~Events, if decision 1 moves them.~~ Dropped: decision 1 keeps them in `practice.db`.
 4. The three legacy conversions, smallest first: timetracking-data (12 tables, SQL in one skill), then drafting-data, then matter-data. Each needs its own plan on the pattern of the practice-db conversion, and each leaves the Exception when it complies. Decisions 5 and 6 are settled inside those plans.
 
 Steps 1 to 3 do not wait for step 4.
