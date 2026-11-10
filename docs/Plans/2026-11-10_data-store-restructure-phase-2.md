@@ -1,6 +1,6 @@
 # Phase 2: restructure the local stores to match the data pools
 
-Status: planning. Nothing here is built. Run this in its own session, after Phase 1 (`docs/Plans/2026-11-10_plugin-reorganization-phase-1.md`) has landed.
+Status: the seven decisions were settled on 2026-11-10, after Phase 1 (`docs/Plans/2026-11-10_plugin-reorganization-phase-1.md`) landed. Nothing here is built. The Order section is next.
 
 The pools, their scopes and the rules for them are in `docs/Plans/2026-11-10_data-pool-framework.md`. This plan does not restate them.
 
@@ -22,7 +22,7 @@ Surveyed on 2026-11-10 at commit `b37348d7`, and checked against the data server
 | Court record | `main.sqlite` (proceedings, parties of record, positions, relief, sought orders) | per matter | typed tables (legacy) | shares a file with evidence |
 | Work product | `main.sqlite` (issues, causes of action, criteria applied to facts) | per matter | typed tables (legacy) | shares a file with evidence |
 | Drafts | `submission.sqlite`; and `loose_threads.db` beside it (`src/loose-threads/`, ADR 0018) | per matter | 70 typed tables (legacy); generic | `submission.sqlite` also holds the rules engine's session state (`src/files/rules-position.ts` writes the position to the matter's drafting database) |
-| Correspondence with others | none: the mailbox only | | | no store, by design so far |
+| Correspondence with others | the originals only: each matter's Correspondence folder (folder type 3: scanned letters and saved email) and its mail folder in the mailbox | per matter | files; mail | no derived store, so each search re-reads both places and a scan's text is not searchable (decision 7 adds one) |
 | Events | `ProceduralHistory.md` in the matter folder (past events, `src/case/procedural-history.ts`); `practice.db`, kinds `anchor`, `anchor_source`, `deadline` | per matter; per practice | one file; generic items | split across two stores, and the deadlines sit in a practice-wide store |
 | Practice records | `practice.db`, kinds `client`, `matter`, `matter_role`, `contact`, `affiliation`, `task`, `signal` | per practice | generic items | shares a file with four other pools |
 | Billing | `practice.db`, kinds `time_entry`, `invoice`, `invoice_line`, `payment`, `rate`, `adjustment`; and `time_pipeline.db`, namespaces `bill` and `tedraft` | per practice; per practitioner | generic | split across two stores, one of them the timekeeping store |
@@ -62,6 +62,7 @@ Each of these is the developer's to make before anything is built for it. Ask th
    **Decided 2026-11-10: split at the plugin boundary, with per-pool tools.** The principle: a pool's seam is enforced by the tools a reader is granted, so every pool gets its own typed tools at conversion, and a separate file is needed only where a plugin boundary runs through the data, because a plugin owns a pool only when its own server serves it, and two servers do not write one file. Within one plugin, per-pool tools in one file are enough. For `main.sqlite`, evidence stays in `lawyer`'s file and server, and the pools the map gives `litigator` (work product, and the court record if `litigator` owns it) move to a `litigator`-owned file served by a new `litigator` server, whose key is a permanent name. The gain is ownership: `litigator` releases, migrates and uninstalls its own data. The cost accepted: a link across the boundary (a criterion or position to a fact) is a reference by id, checked on read, since two servers share no transaction. Still to settle in the matter-data conversion plan: who owns the court record (the map places `e-file` there, and `matter-data`'s ingest may also write positions and sought orders), and where the cast, `matter_metadata` and `housekeeping_reviews` go (the last is file-manager's run record). The same reasoning applies to drafts, served today by `lawyer`'s `drafting_data__*` tools; the drafting-data conversion plan applies it.
    **Applied to billing (decided 2026-11-10).** The principle applies to `billing`'s local stores only. The timekeeping store of decision 5, which already holds the `bill` and `tedraft` namespaces, is served by a `billing` server through a new tool family, and the `time_pipeline__*` and `timecamping_data__*` families in `lawyer` are retired (retired, not renamed, so the permanent-name constraint holds; a minor bump). Billing's records in `practice.db` (time entries, invoices, invoice lines, payments, rates, adjustments) stay there and stay `lawyer`'s, so decision 2 stands: every practice write is one cloud write applied from one sync stream, and the cloud's rules link those records to their matters (a time entry inherits `billable` from its matter). Splitting them out would mean a routed or second cloud stream and a partial-sync failure between a matter and its entries. Whether the new family is a new server key or extra tools on `billing`'s `timecamp` server is settled in the step that builds it.
 7. **Correspondence with others.** Give it a store, or leave it in the mailbox.
+   **Decided 2026-11-10: a derived correspondence store.** The originals are the matter's mail folder and its Correspondence folder (folder type 3), which holds scanned paper letters and any saved email; paper never reaches the mailbox, and emails are not copied into the folder. A per-matter, local, generic store holds one entry per letter, email or attachment: its parties, date, subject, channel, body as lightly formatted text, and a pointer to its original, keyed by message id or SHA-256. It is rebuildable from the originals, which win when they disagree. Every field and every email body is built by code (message headers, the HTML or RTF body, a PDF's text layer, and the fields a filed scan's name encodes); only a scanned page's body text is read by a model, once per fingerprint, and kept, so a rebuild or a rename does not re-read it. A scan not yet named to the convention enters with its body text and a "not yet named" mark. Client correspondence (folder type 2) follows the same design under privileged communications, with its own tools. The store is built under its own plan (Order step 5).
 
 ## Order
 
@@ -72,7 +73,9 @@ Work one store per release, cheapest and most reversible first:
 3. ~~Events, if decision 1 moves them.~~ Dropped: decision 1 keeps them in `practice.db`.
 4. The three legacy conversions, smallest first: timetracking-data (12 tables, SQL in one skill), then drafting-data, then matter-data. Each needs its own plan on the pattern of the practice-db conversion, and each leaves the Exception when it complies. Decisions 5 and 6 were settled on 2026-11-10 and bind those plans. Before the matter-data plan is written, settle who owns the court record (decision 6).
 
-Steps 1 to 3 do not wait for step 4.
+5. Build the correspondence store (decision 7) under its own plan. It is a new store, so it is generic from its first release.
+
+Steps 1 and 5 do not wait for step 4.
 
 ## Constraints
 

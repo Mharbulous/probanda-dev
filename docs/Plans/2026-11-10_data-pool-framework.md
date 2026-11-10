@@ -63,7 +63,7 @@ Outside the client pools: Probanda's own records (the Suggestion Box and the tro
 
 - The `matter-data` store is three files per matter. `main.sqlite` holds parties, facts, evidence links, relief and issues. `law.sqlite` holds the matter's stored authorities, concepts and criteria. `privileged.sqlite` holds client instructions and privileged sources. So the law and privileged material already sit in their own files, while evidence and the court record share `main.sqlite`. Procedural history is a file, `ProceduralHistory.md`, in the matter's folder.
 - The `practice-data` store is one file, `practice.db`, holding practice records, billing, trust accounting, events (anchors and deadlines), court calendar days and the firm's rule overlay.
-- The `matter-data` skill writes client instructions to `privileged.sqlite`. No skill writes correspondence with others: it lives only in the mailbox, which skills read as a source.
+- The `matter-data` skill writes client instructions to `privileged.sqlite`. No skill writes correspondence with others: its originals are the matter's mail folder and its Correspondence folder (scanned paper letters), which skills read as sources. A derived, searchable correspondence store is planned (`docs/Plans/2026-11-10_data-store-restructure-phase-2.md`, decision 7).
 - Deadlines are written by the `docket-clerk` agent, not by a skill.
 
 A new store is allowed if it complies with the Commandments. The Exception's list of legacy stores (matter-data, drafting-data, timetracking-data) never grows, so a new store gets no exemption.
