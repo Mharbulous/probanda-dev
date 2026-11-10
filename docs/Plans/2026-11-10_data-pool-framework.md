@@ -60,9 +60,9 @@ Outside the client pools: Probanda's own records (the Suggestion Box and the tro
 
 ## How Probanda's stores differ from the pools today
 
-- The `matter-data` store holds evidence, the court record (procedural history), privileged client instructions and the law (a matter's stored authorities and concepts, `law.authorities`) side by side. The law sitting beside client facts is the mix rule 5 exists to prevent.
-- The `practice-data` store holds practice records, billing, trust accounting and events (anchors and deadlines).
-- No skill writes privileged communications or correspondence with others: both live only in the mailbox, which skills read as a source.
+- The `matter-data` store is three files per matter. `main.sqlite` holds parties, facts, evidence links, relief and issues. `law.sqlite` holds the matter's stored authorities, concepts and criteria. `privileged.sqlite` holds client instructions and privileged sources. So the law and privileged material already sit in their own files, while evidence and the court record share `main.sqlite`. Procedural history is a file, `ProceduralHistory.md`, in the matter's folder.
+- The `practice-data` store is one file, `practice.db`, holding practice records, billing, trust accounting, events (anchors and deadlines), court calendar days and the firm's rule overlay.
+- The `matter-data` skill writes client instructions to `privileged.sqlite`. No skill writes correspondence with others: it lives only in the mailbox, which skills read as a source.
 - Deadlines are written by the `docket-clerk` agent, not by a skill.
 
 A new store is allowed if it complies with the Commandments. The Exception's list of legacy stores (matter-data, drafting-data, timetracking-data) never grows, so a new store gets no exemption.
@@ -80,7 +80,6 @@ Pools do not remove most `source/layering.json` exceptions, because exceptions c
 
 ## Open
 
-- Whether to split the law out of the `matter-data` store (a schema change).
-- Whether to move events out of the `practice-data` store into a per-matter events store.
-- Whether a skill should write the privileged communications pool, or it stays in the mailbox.
+- The store questions (events per matter, splitting `practice.db`, a trust ledger) are in `docs/Plans/2026-11-10_data-store-restructure-phase-2.md`.
+- The plugin moves are in `docs/Plans/2026-11-10_plugin-reorganization-phase-1.md`.
 - Cheap cuts to matter-data's layering rulings found by the review: rename its `operations/verify-law.md` operation, which collides with the `/verify-law` skill; move the maintainer history file `references/design-decisions.md` out of the shipped tree; and reword the "never calls any `legal_commons__*` tool" lines. About 23 of the 54 rulings for matter-data, show-me and localize would go.
