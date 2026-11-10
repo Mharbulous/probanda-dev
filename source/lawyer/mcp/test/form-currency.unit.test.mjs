@@ -133,7 +133,7 @@ test("the warning names no deadline and no date but the commencement date", (t) 
 });
 
 // Forms 33.01 and 30.001 resolve by their registry keys to the identity files /publish ships.
-const SHIPPED_DOCUMENTS = new URL("../../../../.claude/skills/publish/references/CAN/BC/BCSC/Documents/", import.meta.url);
+const SHIPPED_DOCUMENTS = new URL("../../../../source/skills/publish/references/CAN/BC/BCSC/Documents/", import.meta.url);
 
 test("the shipped Form 33.01 and Form 30.001 identity files are clear", (t) => {
   const f = knowledgeFixture(t);

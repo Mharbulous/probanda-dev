@@ -407,7 +407,7 @@ test("a release another session renders between two of this session's renders st
   assert.deepEqual(Object.keys(state.sessions).sort(), [x.session_token, y.session_token].sort());
 });
 
-const SHIPPED_BC = new URL("../../../../.claude/skills/draft/references/CAN/BC/", import.meta.url);
+const SHIPPED_BC = new URL("../../../../source/skills/draft/references/CAN/BC/", import.meta.url);
 
 /** The layout block of a shipped /draft file under CAN/BC. */
 function shippedBlock(rel) {

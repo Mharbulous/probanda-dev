@@ -19,7 +19,7 @@ import hook_io  # noqa: E402
 REPO = Path(__file__).resolve().parents[4]
 CLOSED_GATES = ("source/lawyer/hooks/rule-gate.py", "source/litigator/hooks/correspondence-review-gate.py",
                 "source/researcher/hooks/commons-read-only.py",
-                ".claude/skills/drafting-data/hooks/practitioner-words-gate.py")
+                "source/skills/drafting-data/hooks/practitioner-words-gate.py")
 
 
 def test_payload_reads_the_stdin_json_as_utf8(monkeypatch):

@@ -25,7 +25,7 @@ test.after(() => rmSync(scratch, { recursive: true, force: true }));
 /** A checkout holding skill `rlife`, for this test only, set after the database exists. */
 function checkout(t) {
   const root = mkdtempSync(join(tmpdir(), "coclerk-rules-lifecycle-"));
-  const skill = join(root, ".claude", "skills", "rlife");
+  const skill = join(root, "source", "skills", "rlife");
   const nodes = join(skill, "rules", "nodes");
   mkdirSync(nodes, { recursive: true });
   copyFileSync(join(FIXTURE, "SKILL.md"), join(skill, "SKILL.md"));

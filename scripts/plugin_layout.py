@@ -45,10 +45,10 @@ SERVERS = {
 SERVER_DIRS = {key: server["dir"] for key, server in SERVERS.items()}
 # Skills already free of Trade Secrets live under public/, the source of the public
 # repository, one skills folder per public plugin (a glob from the repo root). A skill
-# lives there or under .claude/skills/, never both.
+# lives there or under source/skills/, never both.
 PUBLIC_SKILLS = "public/plugins/*/skills"
 # Private skills, and one skills folder per public plugin (globs from the repo root).
-SKILL_ROOTS = (".claude/skills", PUBLIC_SKILLS)
+SKILL_ROOTS = ("source/skills", PUBLIC_SKILLS)
 
 
 def stop(message):
@@ -108,8 +108,8 @@ def public_skill_dirs(repo):
 
 
 def skill_dir(repo, skill):
-    """A skill's source folder: its public folder if it has one, else under .claude/skills/."""
-    return public_skill_dirs(repo).get(skill) or Path(repo) / ".claude" / "skills" / skill
+    """A skill's source folder: its public folder if it has one, else under source/skills/."""
+    return public_skill_dirs(repo).get(skill) or Path(repo) / "source" / "skills" / skill
 
 
 def skill_owners(plugins):

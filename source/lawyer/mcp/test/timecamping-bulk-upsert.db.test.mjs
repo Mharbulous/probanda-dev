@@ -149,7 +149,7 @@ function perTable(rows) {
 
 function readSplice() {
   const path = fileURLToPath(
-    new URL("../../../../.claude/skills/timecamping-data/references/splice.sql", import.meta.url)
+    new URL("../../../../source/skills/timecamping-data/references/splice.sql", import.meta.url)
   );
   return readFileSync(path, "utf-8");
 }

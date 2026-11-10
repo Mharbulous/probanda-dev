@@ -82,7 +82,7 @@ CONCEPT_TYPES = {'cause of action': 'cause_of_action', 'doctrine': 'doctrine',
                  'legal test': 'test', 'defence': 'defence', 'remedy': 'remedy'}
 REQUIREMENT_TYPES = {'mandatory element': 'element', 'weighed factor': 'factor'}
 # Relationship code values. Their definitions are in
-# .claude/skills/shared/treatment-vocabulary.md and nowhere else (design:
+# source/skills/shared/treatment-vocabulary.md and nowhere else (design:
 # docs/Specs/2026-10-15_per-principle-treatment-vocabulary-spec.md, ADR 0006).
 # The extractor may give any principle-link value; the relationship CHECK holds
 # only STORABLE_RELATIONSHIPS, so a link with any other value is held back and

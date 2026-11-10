@@ -12,7 +12,7 @@ LONG_LAST_PARAGRAPH characters drops keepLines for widowControl, so it may split
 The rendering test needs LibreOffice (or, failing that, Word) and pdftotext, and skips,
 saying which is missing, on a machine without them.
 
-Run: python -m unittest discover -s .claude/skills/publish/tests
+Run: python -m unittest discover -s source/skills/publish/tests
 """
 from __future__ import annotations
 

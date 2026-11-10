@@ -14,7 +14,7 @@ the payload the assignment names (files and folders of source/P/, copied whole).
 --out <dir> holds one folder per plugin, <dir>/P/. A folder under plugins/ that
 no plugin builds is reported stale by --check and removed by a build.
 
-A skill is found at .claude/skills/<name>/ or at public/plugins/*/skills/<name>/,
+A skill is found at source/skills/<name>/ or at public/plugins/*/skills/<name>/,
 never both. The skill selection and the SKILL.md stamp are ported from CoClerk's
 plugin-packager build_plugin.py (native-tree path).
 
@@ -161,7 +161,7 @@ def collect(repo, spec):
     """Every output file of one plugin as {relative path: bytes}. Stops on a gate failure."""
     name = spec["name"]
     src = repo / spec["source"]
-    skills_root = repo / ".claude" / "skills"
+    skills_root = repo / "source" / "skills"
     for required in ("plugin.json", "roster.json"):
         if not (src / required).is_file():
             stop(f"no {src / required}")
@@ -176,7 +176,7 @@ def collect(repo, spec):
     public = plugin_layout.public_skill_dirs(repo)
     both = [t for t in public if t in roster or t in EXTRA_TREES or (skills_root / t).exists()]
     if both:
-        stop("skill in both public/ and .claude/skills/ (a skill lives in one): " + ", ".join(both))
+        stop("skill in both public/ and source/skills/ (a skill lives in one): " + ", ".join(both))
     # The assignment says which skills and agents the plugin ships, and the
     # plugin's source says which folders of a private skill are assets and
     # holds the agent files, so the two must agree.

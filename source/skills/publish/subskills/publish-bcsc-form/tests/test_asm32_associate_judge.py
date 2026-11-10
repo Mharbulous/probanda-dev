@@ -4,7 +4,7 @@ drafting_forms__emit_form32 always states the value, so fill_plain.py's
 missing-key default of "yes" never decides a court filing's jurisdiction
 sentence on the assembly path.
 
-Run: python -m unittest discover -s .claude/skills/publish/subskills/publish-bcsc-form/tests -p "test_asm32*.py"
+Run: python -m unittest discover -s source/skills/publish/subskills/publish-bcsc-form/tests -p "test_asm32*.py"
 """
 
 import sys

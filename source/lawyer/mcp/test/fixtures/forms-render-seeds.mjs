@@ -422,7 +422,7 @@ export const DEFAULT_JUDGMENT_CASE_DATA = {
 
 const BCSC_VENUE = JSON.parse(
   /^```json\n([\s\S]*?)\n```$/m.exec(
-    readFileSync(new URL("../../../../../.claude/skills/draft/references/CAN/BC/BCSC/venue.md", import.meta.url), "utf-8").replace(/\r\n/g, "\n")
+    readFileSync(new URL("../../../../../source/skills/draft/references/CAN/BC/BCSC/venue.md", import.meta.url), "utf-8").replace(/\r\n/g, "\n")
   )[1]
 );
 

@@ -28,7 +28,7 @@ schema or anyone's data. --hook also lets through CRLF endings, a file type off 
 allowlist and an unfinished CHANGELOG.md entry. These are format rules, which the full-tree
 check (approve_public, export_public, CI) still reports.
 
-The private side is .claude/skills/, cloud/ and the source folder of every plugin
+The private side is source/skills/, cloud/ and the source folder of every plugin
 the repo builds (plugin_layout.py reads which from source/assignment.json). A
 private folder that is missing stops the check.
 
@@ -62,7 +62,7 @@ GENERIC_WORDS = frozenset(("publish", "published", "update", "updates", "updated
                            "misc", "release", "from", "the", "probanda", "development", "repository", "repo"))
 # Where the fingerprints are read from, beside the source folder of every plugin the
 # repo builds (private_roots).
-PRIVATE_ROOTS = (".claude/skills", "cloud")
+PRIVATE_ROOTS = ("source/skills", "cloud")
 # Third-party code and build output: a public bundle may rightly share their lines.
 SKIP_DIRS = ("node_modules", "__pycache__", ".pytest_cache", "build", "dist")
 # Files of a plugin's source folder whose content is not secret, so public/ may repeat it.

@@ -60,7 +60,7 @@ note-up date: `migrations/0002_retire_note_up_date.sql` drops
 `text` — **there is no CHECK constraint on any treatment value**, so
 the vocabulary is enforced in the runtime (`../src/legal-commons/tools.ts`,
 `TREATMENT_VALUES` / `EDGE_TREATMENT_VALUES`) and documented for callers in
-`.claude/skills/legal-commons/SKILL.md` § "Currency — treatments, not rewrites".
+`source/skills/legal-commons/SKILL.md` § "Currency — treatments, not rewrites".
 The two sets differ by tense on purpose and are not interchangeable. A migration
 adding a value must change the runtime constant, not this schema.
 

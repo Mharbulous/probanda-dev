@@ -20,7 +20,7 @@ const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "fixtures", "rule
 function mapWith(t, overlay) {
   const root = mkdtempSync(join(tmpdir(), "coclerk-rules-dag-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  const skill = join(root, ".claude", "skills", "rdag");
+  const skill = join(root, "source", "skills", "rdag");
   const nodes = join(skill, "rules", "nodes");
   mkdirSync(nodes, { recursive: true });
   copyFileSync(join(FIXTURES, "SKILL.md"), join(skill, "SKILL.md"));
@@ -114,8 +114,8 @@ test("every lint fixture folder has a test", () => {
 test("no node files is a lint, not an empty map", (t) => {
   const root = mkdtempSync(join(tmpdir(), "coclerk-rules-dag-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  mkdirSync(join(root, ".claude", "skills", "rdag"), { recursive: true });
-  copyFileSync(join(FIXTURES, "SKILL.md"), join(root, ".claude", "skills", "rdag", "SKILL.md"));
+  mkdirSync(join(root, "source", "skills", "rdag"), { recursive: true });
+  copyFileSync(join(FIXTURES, "SKILL.md"), join(root, "source", "skills", "rdag", "SKILL.md"));
   process.env.COCLERK_REPO_ROOT = root;
   assert.throws(() => loadRulesDag("rdag"), lintError("rdag/rules/nodes: no node files"));
 });

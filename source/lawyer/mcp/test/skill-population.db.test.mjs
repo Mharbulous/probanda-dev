@@ -48,7 +48,7 @@ const { withWrittenArguments } = await import("./fixtures/forms-render-seeds.mjs
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 
-// Every glyph markers.ts can emit (see .claude/skills/drafting-data/
+// Every glyph markers.ts can emit (see source/skills/drafting-data/
 // references/work-markers.md and drafting-data/references/filing-checklists.md
 // §5) a clean render must contain none of, EXCEPT 🧵 and 🧾 (see file header) --
 // checked for separately, and deliberately, per venue-form document below.

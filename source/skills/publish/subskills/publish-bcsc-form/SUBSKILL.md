@@ -99,7 +99,7 @@ guides to be loaded.
 
 # --- Resolve the harness (environment-aware) ---
 # Local (repo checkout), run from repo root:
-HARNESS = "python .claude/skills/publish/subskills/publish-bcsc-form/scripts/harness.py"
+HARNESS = "python source/skills/publish/subskills/publish-bcsc-form/scripts/harness.py"
 #
 # Cowork: never run the harness in the sandbox shell, which cannot see the matter
 # folder or the matter-data folder (#1267, ADR 0025). Each BASH("{HARNESS} <command> ...")

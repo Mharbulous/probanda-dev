@@ -3,7 +3,7 @@
 // file entries (render-manifest.ts ManifestFile.label).
 //
 // The codes are copied from the firm's file-naming code registry
-// (.claude/skills/file-naming/references/code-registry.md) because the runtime reads no skill
+// (source/skills/file-naming/references/code-registry.md) because the runtime reads no skill
 // file. The three with no registry entry (RB, WA, INDEX) are chosen here.
 
 import type { AffidavitRow } from "./render-bcsc-affidavit.js";

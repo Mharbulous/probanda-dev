@@ -5,10 +5,10 @@ from pathlib import Path
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = SKILL_ROOT.parents[2]
 
-# .claude/skills carries the full body. The Probanda plugin ships that full
+# source/skills carries the full body. The Probanda plugin ships that full
 # source since #1266 (no stub under plugins/litigation/skills), so there is no
 # second projection to check.
-FULL_PROJECTION = REPO_ROOT / ".claude" / "skills" / "safe-file-deletion" / "SKILL.md"
+FULL_PROJECTION = REPO_ROOT / "source" / "skills" / "safe-file-deletion" / "SKILL.md"
 
 FRONTMATTER_TOKENS = (
     "client-matter project",

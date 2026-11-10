@@ -4,7 +4,7 @@ Spec `2026-10-06_research-results-to-board-spec.md` §4.4: on request only, list
 statements of law in a plain draft file by line number, states no law, writes nothing, and
 stays inside this skill tree's hard constraint (no drafting database tool or skill).
 
-Run: python -m pytest .claude/skills/verify-law/tests/test_sweep_draft_routing.py -q
+Run: python -m pytest source/skills/verify-law/tests/test_sweep_draft_routing.py -q
 """
 
 import unittest

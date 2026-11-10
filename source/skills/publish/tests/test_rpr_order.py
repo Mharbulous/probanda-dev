@@ -6,7 +6,7 @@ another OOXML library, a validator, a future Word. The September 2026 letterhead
 left one such site behind: the enclosure/cc runs concatenated emphasis onto a size-bearing
 prefix, giving rFonts, sz, szCs, i, iCs where the schema wants i and iCs before sz.
 
-Run: python -m unittest discover -s .claude/skills/publish/tests
+Run: python -m unittest discover -s source/skills/publish/tests
 """
 from __future__ import annotations
 

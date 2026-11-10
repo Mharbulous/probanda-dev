@@ -1,6 +1,6 @@
 ---
 journey: Flag now, decide later
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: while evidence is being linked to a fact, the practitioner — or the assistant, spotting it — voices an admissibility concern in one sentence
 outcome: the concern is captured on the evidence link without interrupting drafting, renders as a text annotation on the mockup's evidence line, and is disposed of in one consolidated pass before the package goes out
@@ -43,7 +43,7 @@ source: effort owner's flow selection, 2026-08-23
 
 ## Principles this journey encodes
 
-- **Capture at the moment of sight.** The concern is recorded where and when it is seen — on the evidence link, by whoever saw it — because that is when the context is free. Paired data journey: `.claude/skills/drafting-data/User_Journeys/flag-inadmissible-evidence.md`.
+- **Capture at the moment of sight.** The concern is recorded where and when it is seen — on the evidence link, by whoever saw it — because that is when the context is free. Paired data journey: `source/skills/drafting-data/User_Journeys/flag-inadmissible-evidence.md`.
 - **Drafting is never interrupted to litigate admissibility.** A one-sentence note and onward; the fact still drafts into the document, because the practitioner may choose to run the risk.
 - **The mockup carries the reminder.** The note rides the evidence line as a plain text annotation, so it is visible on every review pass — no separate list to maintain or forget.
 - **One decision pass, not many interruptions.** Concerns accumulate silently and are disposed of together — keep and defend, swap, or reserve — at the natural gate before the package goes out.

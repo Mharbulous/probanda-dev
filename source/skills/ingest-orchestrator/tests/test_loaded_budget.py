@@ -4,7 +4,7 @@ SKILL.md plus the routing reference, which the skill reads once per run, is at m
 80,000 characters (est.), about 20k tokens, so the main thread's per-turn input keeps
 room for its document lines and Path B under the 100k ceiling.
 
-Run: python .claude/skills/ingest-orchestrator/tests/test_loaded_budget.py
+Run: python source/skills/ingest-orchestrator/tests/test_loaded_budget.py
 """
 
 from pathlib import Path

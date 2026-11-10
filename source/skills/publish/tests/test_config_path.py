@@ -1,6 +1,6 @@
 """COCLERK_CONFIG_PATH: the publish scripts read the same coclerk.json the MCP runtime does (#1230).
 
-Run: python -m unittest discover -s .claude/skills/publish/tests
+Run: python -m unittest discover -s source/skills/publish/tests
 """
 from __future__ import annotations
 

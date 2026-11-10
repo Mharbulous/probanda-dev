@@ -54,7 +54,7 @@ function caseFixture(t) {
     evidence_sql_path: join("4. LAWYER BRIEF", "CoWork", "evidence.sql"),
   }));
   // execute reads triggers.sql from the skills tree (#1254): give it a synthetic one.
-  const references = join(matterRoot, "skills-root", ".claude", "skills", "matter-data", "references");
+  const references = join(matterRoot, "skills-root", "source", "skills", "matter-data", "references");
   mkdirSync(references, { recursive: true });
   writeFileSync(join(references, "triggers.sql"), "SELECT 1;");
   return {
@@ -120,8 +120,8 @@ test("a matter-data execute killed mid-script leaves the databases untouched", a
 function stallingCaseDataRepo(t, sentinel) {
   const repo = mkdtempSync(join(tmpdir(), "coclerk-migrate-stall-repo-"));
   t.after(() => rmSync(repo, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
-  const references = join(repo, ".claude", "skills", "matter-data", "references");
-  cpSync(join(import.meta.dirname, "..", "..", "..", "..", ".claude", "skills", "matter-data", "references"), references, { recursive: true });
+  const references = join(repo, "source", "skills", "matter-data", "references");
+  cpSync(join(import.meta.dirname, "..", "..", "..", "..", "source", "skills", "matter-data", "references"), references, { recursive: true });
   writeFileSync(join(references, "scripts", "sitecustomize.py"), [
     "import os, shutil, time",
     "_copy2 = shutil.copy2",

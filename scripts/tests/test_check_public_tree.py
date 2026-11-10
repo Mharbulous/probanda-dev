@@ -26,22 +26,22 @@ LONG_PRIVATE_LINE = "The clerk counts back from the anchor and lands on the next
 MIT_LINE = "Permission is hereby granted, free of charge, to any person obtaining a copy"
 
 PRIVATE = {
-    ".claude/skills/data/references/schema.sql":
+    "source/skills/data/references/schema.sql":
         f"{CREATE} evidence_links (\n  evidence_link_id INTEGER,\n  source_locator TEXT,\n  file_path TEXT\n);\n"
         f"-- a comment naming comment_only_name\n{CREATE} IF NOT EXISTS facts (description TEXT);\n",
-    ".claude/skills/data/references/queries.sql": "SELECT description FROM main.facts;\n",
-    ".claude/skills/data/SKILL.md": f"# Data\n\n{LONG_PRIVATE_LINE}\n\nShort line.\n",
-    ".claude/skills/data/node_modules/lib/index.js": "const a_library_line_that_is_long_enough_to_be_counted_as_a_long_line = 1;\n",
+    "source/skills/data/references/queries.sql": "SELECT description FROM main.facts;\n",
+    "source/skills/data/SKILL.md": f"# Data\n\n{LONG_PRIVATE_LINE}\n\nShort line.\n",
+    "source/skills/data/node_modules/lib/index.js": "const a_library_line_that_is_long_enough_to_be_counted_as_a_long_line = 1;\n",
     "source/lawyer/mcp/src/store.ts": f"db.exec(`{CREATE} practice_anchors (id)`);\nconst unrelated_name = 1;\n",
     "source/lawyer/mcp/src/practice/backend.ts":
         f"const SCHEMA_SQL = `\n{CREATE} IF NOT EXISTS practice_matters (\n"
         "  id TEXT PRIMARY KEY, regular_trust REAL CHECK (regular_trust <= 0),\n"
         "  -- a comment naming ddl_comment_name\n  last_trust_date TEXT\n);\n`.trim();\n"
         "const after_the_statement = 1;\n",
-    ".claude/skills/data/notes.md": f"Send the {CREATE} helper_view (section whole.\n\nThen read prose_after_blank here.\n",
+    "source/skills/data/notes.md": f"Send the {CREATE} helper_view (section whole.\n\nThen read prose_after_blank here.\n",
     "cloud/pool/schema.sql": "create table if not exists pool.pooled_statements (\n  statement_text text\n);\n",
     "source/lawyer/plugin.json": '{\n  "description": "A litigation practice plugin for British Columbia lawyers and their staff."\n}\n',
-    ".claude/skills/data/references/generic.sql":
+    "source/skills/data/references/generic.sql":
         f"{CREATE} notes (\n  created_at TEXT,\n  style_of_cause TEXT,\n  style_of_cause_or_title TEXT\n);\n"
         "SELECT group_concat(created_at) FROM notes;\n",
     "source/lawyer/mcp/LICENSE": f"MIT License\n\n{MIT_LINE}\n",
@@ -110,7 +110,7 @@ class TreeProblemsTest(unittest.TestCase):
         self.assert_reports({"a.md": "<!-- edge to=draft/enter weight=0 -->\n"}, "rules-map marker")
 
     def test_copy_of_a_private_file_is_reported(self):
-        self.assert_reports({"skill.md": PRIVATE[".claude/skills/data/SKILL.md"]}, "copy of a private source file")
+        self.assert_reports({"skill.md": PRIVATE["source/skills/data/SKILL.md"]}, "copy of a private source file")
 
     def test_long_line_repeated_from_a_private_file_is_reported(self):
         self.assert_reports({"a.md": f"intro\n  {LONG_PRIVATE_LINE}\n"}, "repeats a line of a private source file")
@@ -119,7 +119,7 @@ class TreeProblemsTest(unittest.TestCase):
         self.assertEqual(self.messages({"a.md": "Short line.\n"}), [])
 
     def test_third_party_code_is_not_a_fingerprint(self):
-        self.assertEqual(self.messages({"a.js": PRIVATE[".claude/skills/data/node_modules/lib/index.js"]}), [])
+        self.assertEqual(self.messages({"a.js": PRIVATE["source/skills/data/node_modules/lib/index.js"]}), [])
 
     def test_shared_manifest_lines_may_repeat(self):
         self.assertEqual(self.messages({"plugins/lawyer/.claude-plugin/plugin.json":
@@ -236,7 +236,7 @@ class TreeProblemsTest(unittest.TestCase):
             found = self.hook_messages({"a.md": text})
             self.assertTrue(any(expected in msg for msg in found), f"{expected!r} not in {found}")
         self.assertTrue(any("copy of a private source file" in msg
-                            for msg in self.hook_messages({"skill.md": PRIVATE[".claude/skills/data/SKILL.md"]})))
+                            for msg in self.hook_messages({"skill.md": PRIVATE["source/skills/data/SKILL.md"]})))
 
     def test_public_files_reads_only_public(self):
         (self.repo / "public" / "sub").mkdir(parents=True)

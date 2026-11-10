@@ -134,7 +134,7 @@ test("a server spawned before a rebuild reports server_outdated from its bootstr
   mkdirSync(dirname(trackedBundle), { recursive: true });
   copyFileSync(LITIGATION_BUNDLE, trackedBundle);
   // Bootstrap reads the schema version through the drafting-data migration scripts.
-  const submissionSkill = join(".claude", "skills", "drafting-data");
+  const submissionSkill = join("source", "skills", "drafting-data");
   cpSync(join(REPO_ROOT, submissionSkill), join(repoRoot, submissionSkill), { recursive: true });
   const db = unstampedSubmissionDb();
   try {
@@ -161,7 +161,7 @@ test("a server spawned before a rebuild reports server_outdated from its bootstr
  * only the pdfium.wasm that ships beside it in dist/, where one does --
  * nothing else from the repo is present, and the tmpdir's own ancestry (under
  * the OS temp root) holds no repo marker either. This is the same shape as an
- * extracted .plugin install: no .git, no .claude/skills, anywhere above the
+ * extracted .plugin install: no .git, no source/skills, anywhere above the
  * running file.
  */
 async function withDistOnlyServer(env, fn, bundle = LITIGATION_BUNDLE) {

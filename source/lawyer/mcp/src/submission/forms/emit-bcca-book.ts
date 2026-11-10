@@ -1,5 +1,5 @@
 // bcca-book.md filed-face emitter (publish-bcca-book interchange contract), per
-// .claude/skills/publish/subskills/publish-bcca-book/references/bcca-book-contract.md (SSOT).
+// source/skills/publish/subskills/publish-bcca-book/references/bcca-book-contract.md (SSOT).
 // Produces the frontmatter-only data file /publish with publish-bcca-book
 // fills into court-ready .docx files: the Response Book's cover page and
 // table of contents, and the Book of Authorities' cover page and table of contents.

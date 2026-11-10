@@ -1,6 +1,6 @@
 ---
 journey: Capture the loose threads the job turned up
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: while a claimed job's approved work runs, that work turns up something outside the job's scope — a defect in a neighbouring record, a discrepancy between two stored facts
 outcome: each surfaced item is recorded as a loose thread of the matter in the same turn it surfaces, acknowledged in one line, and found by a later outlining session on the Loose Threads page — nothing lives only in chat

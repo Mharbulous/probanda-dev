@@ -8,7 +8,7 @@ the next " vN" (highest + 1), reporting the copy passed over as versioned_from.
 The package path is covered by test_versioned_output.py and
 test_asm32_generate_context.py, unchanged.
 
-Run: python -m pytest .claude/skills/publish/subskills/publish-bcsc-form/tests/test_draft_root_output.py -q
+Run: python -m pytest source/skills/publish/subskills/publish-bcsc-form/tests/test_draft_root_output.py -q
 """
 
 import contextlib

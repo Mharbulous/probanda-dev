@@ -14,7 +14,7 @@ import { assertMatchesGolden } from "./fixtures/forms-render-seeds.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const { subskillScriptPath } = await import("../build/submission/publish-host.js");
 // The runtime's own lookup, given an install root with no skill source, so it serves the
-// checkout's .claude/skills copy: plugins/litigation/skills/ is untracked since #1266.
+// checkout's source/skills copy: plugins/litigation/skills/ is untracked since #1266.
 const VALIDATOR = subskillScriptPath("publish", "publish-bcca-factum", "fill_factum.py", process.env, join(HERE, "no-install"));
 const PY_CANDIDATES = [process.env.COCLERK_PYTHON, "python", "python3"].filter(Boolean);
 
@@ -42,7 +42,7 @@ function validate(dir, markdown) {
   writeFileSync(path, markdown, "utf-8");
   let lastErr = "";
   for (const py of PY_CANDIDATES) {
-    // -B: write no __pycache__ into the checkout's .claude/skills tree.
+    // -B: write no __pycache__ into the checkout's source/skills tree.
     const res = spawnSync(py, ["-B", VALIDATOR, "--validate", path], { encoding: "utf-8" });
     if (res.error) {
       lastErr = String(res.error);

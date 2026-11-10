@@ -5,7 +5,7 @@ runs it. On a queued, approved job it appends the step after the highest ordinal
 step's stamp and clears the plan approval. On a completed, superseded, shelved or in-progress job it
 writes nothing, so a completed job takes a step only once reopened (jobs-closeout.md §10e).
 
-Run: python -m pytest .claude/skills/drafting-data/tests/test_form_job_append_step.py -q
+Run: python -m pytest source/skills/drafting-data/tests/test_form_job_append_step.py -q
 """
 
 import re

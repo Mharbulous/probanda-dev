@@ -27,7 +27,7 @@ working folder, the state file, the "Bill of costs details" form and the Sources
 of Authority that bind this member. If the state file does not exist yet, render
 the details form and create it first.
 
-Practitioner input renders per `.claude/skills/shared/elicitation-widget.md` —
+Practitioner input renders per `source/skills/shared/elicitation-widget.md` —
 plain chat text only as that file's fallback rung, never as the primary ask.
 
 ## 1. Ask for the export

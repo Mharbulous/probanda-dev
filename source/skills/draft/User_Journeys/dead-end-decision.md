@@ -1,6 +1,6 @@
 ---
 journey: Dead-end decision
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: research on a basis slot comes back exhausted — no supporting authority found — and 🚧 dead end lands on the mockup
 outcome: the practitioner chooses the point's fate — reframe, drop, or proceed unsupported — the choice is written and the mockup re-rendered to reflect it
@@ -43,4 +43,4 @@ source: effort owner's flow selection, 2026-08-23
 - **A dead end is not a denial and not a gap.** 🚧 renders only when research or investigation actually ran dry; a refusal to admit, or a slot not yet researched, stays on its own marker.
 - **Rendered for the human, withheld from the forum.** A dropped-to-reserve point stays visible in *Held in reserve* on the mockup; an unsupported point is carried as the practitioner's recorded call, never as verified law.
 
-Paired data journeys: `.claude/skills/drafting-data/User_Journeys/two-kinds-of-legal-basis.md` (the two basis slots and how each dead-ends), `.claude/skills/drafting-data/User_Journeys/broad-sweep-to-verified-authority.md` (the research path that ends at filled or 🚧).
+Paired data journeys: `source/skills/drafting-data/User_Journeys/two-kinds-of-legal-basis.md` (the two basis slots and how each dead-ends), `source/skills/drafting-data/User_Journeys/broad-sweep-to-verified-authority.md` (the research path that ends at filled or 🚧).

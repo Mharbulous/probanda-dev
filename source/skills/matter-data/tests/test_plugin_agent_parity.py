@@ -15,7 +15,7 @@ model cannot produce weak extraction *and* an equally weak check of it. Design d
 pinned to Opus at high effort, the configuration the token-efficiency report chose.
 `extract-caselaw`, `extract-provision` and `extract-sought-orders` carry the same pin.
 
-Run: python -m unittest discover -s .claude/skills/matter-data/tests
+Run: python -m unittest discover -s source/skills/matter-data/tests
 """
 
 from pathlib import Path
@@ -24,7 +24,7 @@ import unittest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-SKILLS = REPO_ROOT / ".claude" / "skills"
+SKILLS = REPO_ROOT / "source" / "skills"
 SOURCE = REPO_ROOT / "source"
 
 # agent name -> (skill that owns the template, pinned model or None for "inherit")

@@ -19,8 +19,8 @@ const REPO_ROOT = resolve(HERE, "..", "..", "..", "..");
 /** A throwaway repo root carrying both authoritative skills trees. */
 function skillsFixture() {
   const root = mkdtempSync(join(tmpdir(), "coclerk-skills-"));
-  const skills = join(root, ".claude", "skills");
-  const claudeSkills = join(root, ".claude", "skills");
+  const skills = join(root, "source", "skills");
+  const claudeSkills = join(root, "source", "skills");
   mkdirSync(join(skills, "demo", "stages"), { recursive: true });
   mkdirSync(join(skills, "shared"), { recursive: true });
   mkdirSync(join(claudeSkills, "matter-data", "operations"), { recursive: true });
@@ -76,7 +76,7 @@ test("skill_source__read returns content, size, sha256, and the containing dir",
 test("skill_source__read round-trips a real repo file byte-for-byte", () => {
   const env = { COCLERK_REPO_ROOT: REPO_ROOT };
   const result = skillSourceRead("matter-data/references/scripts/compute_hash.py", env);
-  const onDisk = readFileSync(join(REPO_ROOT, ".claude", "skills", "matter-data", "references", "scripts", "compute_hash.py"));
+  const onDisk = readFileSync(join(REPO_ROOT, "source", "skills", "matter-data", "references", "scripts", "compute_hash.py"));
   assert.equal(result.content, onDisk.toString("utf-8"));
   assert.equal(result.size, onDisk.byteLength);
   assert.equal(result.sha256, createHash("sha256").update(onDisk).digest("hex"));
@@ -154,7 +154,7 @@ test("skill_source__read `match` ORs several terms and hard-fails on a miss", ()
   }
 });
 
-test("skill_source__read serves skills rooted at .claude/skills", () => {
+test("skill_source__read serves skills rooted at source/skills", () => {
   const f = skillsFixture();
   try {
     const root = skillSourceRead("matter-data/SKILL.md", f.env);
@@ -201,7 +201,8 @@ test("skill_source__read accepts a reference in every form skill text uses", () 
       "shared\\conventions.md",
       "shared/conventions.md",
       ".claude\\skills\\shared\\conventions.md",
-      join(f.root, ".claude", "skills", "shared", "conventions.md"),
+      "source/skills/shared/conventions.md",
+      join(f.root, "source", "skills", "shared", "conventions.md"),
       "demo/../shared/conventions.md",
       "demo/stages/../../shared/conventions.md",
     ]) {
@@ -243,7 +244,7 @@ test("skill_source__read resolves a reference against `from` by either conventio
     // Tree root still reachable when neither of the above has it.
     assert.equal(skillSourceRead("demo/SKILL.md", f.env, anchor).path, "demo/SKILL.md");
 
-    // An explicit .claude/skills/ prefix is tree-rooted as written; `from` is
+    // An explicit source/skills/ prefix is tree-rooted as written; `from` is
     // not consulted, so it must not be mis-resolved under the anchor's dir.
     assert.equal(
       skillSourceRead("shared/conventions.md", f.env, anchor).path,

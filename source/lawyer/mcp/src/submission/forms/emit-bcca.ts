@@ -27,7 +27,7 @@ export interface EmitBccaBookRefusal {
 /**
  * The bcca-book.md filed-face emitter: response-book and Book of Authorities cover/TOC data
  * for one bcca_stay_response filing, per
- * .claude/skills/publish/subskills/publish-bcca-book/references/bcca-book-contract.md (SSOT). Mirrors
+ * source/skills/publish/subskills/publish-bcca-book/references/bcca-book-contract.md (SSOT). Mirrors
  * submissionFormsEmitForm32/33 exactly -- same write-nothing-to-disk shape, same
  * ahead-of-bundle schema gate.
  */
@@ -68,7 +68,7 @@ export function submissionFormsEmitBccaBook(dbPath: string, filingId: number): E
 
 /**
  * The bcca-factum.md filed-face emitter (#648): one bcca_factum filing's cover, parts and
- * appendices, per .claude/skills/publish/subskills/publish-bcca-factum/references/bcca-factum-contract.md (SSOT).
+ * appendices, per source/skills/publish/subskills/publish-bcca-factum/references/bcca-factum-contract.md (SSOT).
  * Same shape as submissionFormsEmitBccaBook; datedOn is the factum's date, which is never stored.
  */
 export function submissionFormsEmitBccaFactum(dbPath: string, filingId: number, datedOn: string): EmitBccaBookResult | EmitBccaBookRefusal | PartiesDriftRefusal {

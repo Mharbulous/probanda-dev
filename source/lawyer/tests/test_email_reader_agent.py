@@ -10,9 +10,9 @@ sys.path.insert(0, str(REPO / "scripts"))
 from check_plugin_agents import agent_tools  # noqa: E402
 
 AGENT = REPO / "source" / "lawyer" / "agents" / "email-reader.md"
-RULES = REPO / ".claude" / "skills" / "shared" / "mail-judging.md"
+RULES = REPO / "source" / "skills" / "shared" / "mail-judging.md"
 DEDUPE = REPO / "source" / "lawyer" / "mcp" / "src" / "mail" / "dedupe.ts"
-SKILL = REPO / ".claude" / "skills" / "deduping-email" / "SKILL.md"
+SKILL = REPO / "source" / "skills" / "deduping-email" / "SKILL.md"
 GRANTS = [
     "matter_data__dispatch_inputs", "matter_data__stage_result", "skill_source__read",
 ]

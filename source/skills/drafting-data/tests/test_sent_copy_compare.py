@@ -4,7 +4,7 @@ A .pdf and a .eml are read and compared with the stored paragraphs; pasted text 
 as given; a .msg is recorded by path and not compared, and the result says so. The fixture PDF
 is written here with PyMuPDF, the dependency the comparison itself uses.
 
-Run: python -m unittest discover -s .claude/skills/drafting-data/tests
+Run: python -m unittest discover -s source/skills/drafting-data/tests
 """
 
 import json

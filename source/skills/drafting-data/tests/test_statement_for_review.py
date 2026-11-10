@@ -1,7 +1,7 @@
 """Tests for statement_for_review.py, the read-only statement read behind
 drafting_forms__draft_harness's scrutiny_review step (references/scrutiny.md).
 
-Run: python -m pytest .claude/skills/drafting-data/tests/test_statement_for_review.py -q
+Run: python -m pytest source/skills/drafting-data/tests/test_statement_for_review.py -q
 """
 
 import hashlib

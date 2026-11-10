@@ -86,7 +86,7 @@ never carry `tariffScale`, `unitValue` or `tariffItems[]`.
 ## The "Bill of costs details" form
 
 Whichever member runs first and finds no state file renders one elicitation form
-(`.claude/skills/shared/elicitation-widget.md`), inferring first and dropping any
+(`source/skills/shared/elicitation-widget.md`), inferring first and dropping any
 group the conversation already answers:
 
 1. Style of cause — `.elicit-textarea`

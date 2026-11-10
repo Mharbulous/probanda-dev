@@ -1,5 +1,5 @@
 // matter_data__procedural_history_append: the one writer of a matter's ProceduralHistory.md
-// (.claude/skills/shared/procedural-history.md). It runs host-side, so last_updated is the
+// (source/skills/shared/procedural-history.md). It runs host-side, so last_updated is the
 // host's own local time with its offset, never a session's hand conversion from a UTC shell.
 
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";

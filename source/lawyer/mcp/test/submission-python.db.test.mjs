@@ -153,7 +153,7 @@ test("the schema version is read once while the engine file is unchanged", () =>
 
 test("a schema bump in the engine file is read on the next call", () => {
   const root = mkdtempSync(join(tmpdir(), "coclerk-schema-version-"));
-  const rel = join(".claude", "skills", "drafting-data", "references", "scripts");
+  const rel = join("source", "skills", "drafting-data", "references", "scripts");
   const engine = join(root, rel, "migrate_engine.py");
   try {
     mkdirSync(join(root, rel), { recursive: true });

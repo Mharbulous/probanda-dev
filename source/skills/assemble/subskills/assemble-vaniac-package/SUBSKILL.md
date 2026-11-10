@@ -56,7 +56,7 @@ In the filing's mockup folder, `<draft folder>\SUB <filing folder>\`:
 
 2. **Gather.** Resolve both scripts below from `/assemble`'s folder: in a
    repo checkout run them as
-   `python .claude/skills/assemble/subskills/assemble-vaniac-package/scripts/<script>`
+   `python source/skills/assemble/subskills/assemble-vaniac-package/scripts/<script>`
    from the repo root. Both need PyMuPDF, so both run on the PC only: in
    Cowork they refuse with `missing_dependency` (Error handling, below).
 

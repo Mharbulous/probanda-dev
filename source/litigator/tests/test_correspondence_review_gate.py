@@ -11,7 +11,7 @@ import unittest
 from pathlib import Path
 import tempfile
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / ".claude" / "skills" / "shared" / "tests"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "source" / "skills" / "shared" / "tests"))
 from hook_runner import run_hook  # noqa: E402
 
 

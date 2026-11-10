@@ -19,7 +19,7 @@ const { submissionDataExecute } = await import("../build/submission/backend.js")
 const { callTool } = await import("../build/dispatch.js");
 const { skillRulesApplicable } = await import("../build/files/skill-rules.js");
 
-const DRAFT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", ".claude", "skills", "draft");
+const DRAFT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "source", "skills", "draft");
 const WORK = join(DRAFT, "..", "work");
 const NEVER_OFFER = "draft.shelve.never-offer";
 const SPIN_OFF = "draft.obstacle.spin-off";
@@ -58,7 +58,7 @@ test.after(() => rmSync(scratch, { recursive: true, force: true }));
 /** A checkout holding a copy of the real /draft skill (SKILL.md, references and node map) and of /work (SKILL.md and references). */
 function checkout(t) {
   const root = mkdtempSync(join(tmpdir(), "coclerk-rules-shelve-"));
-  const skill = join(root, ".claude", "skills", "draft");
+  const skill = join(root, "source", "skills", "draft");
   mkdirSync(join(skill, "references"), { recursive: true });
   mkdirSync(join(skill, "rules", "nodes"), { recursive: true });
   copyFileSync(join(DRAFT, "SKILL.md"), join(skill, "SKILL.md"));
@@ -68,7 +68,7 @@ function checkout(t) {
   for (const name of readdirSync(join(DRAFT, "rules", "nodes"))) {
     copyFileSync(join(DRAFT, "rules", "nodes", name), join(skill, "rules", "nodes", name));
   }
-  const work = join(root, ".claude", "skills", "work");
+  const work = join(root, "source", "skills", "work");
   mkdirSync(join(work, "references"), { recursive: true });
   copyFileSync(join(WORK, "SKILL.md"), join(work, "SKILL.md"));
   for (const e of readdirSync(join(WORK, "references"), { withFileTypes: true })) {

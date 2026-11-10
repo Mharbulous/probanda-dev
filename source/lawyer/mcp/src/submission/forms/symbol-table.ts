@@ -2,7 +2,7 @@
 //
 // One row per glyph markers.ts can print, keyed by the glyph itself, spelled byte for byte as in
 // ALL_MARKER_GLYPHS. The wording was taken from the rows two reference docs held before stage 5
-// (.claude/skills/drafting-data/references/work-markers.md tables 1a to 1c and the emoji legend of
+// (source/skills/drafting-data/references/work-markers.md tables 1a to 1c and the emoji legend of
 // terms-and-symbols.md), with schema detail removed; those rows now live only here. Nothing here is read at runtime from a
 // file. markers.ts's print step imports it (splitGlyphs), legend.ts builds the legend from it, and
 // proposal-inventory.ts derives GLYPH_SLUGS and WORK_NAMES from its slugs and titles, so a Work Board

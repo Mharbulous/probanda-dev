@@ -1,6 +1,6 @@
 ---
 journey: Outline a new application
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: the practitioner asks to start an application on a matter whose proceeding is already recorded and which has no Writing of that kind yet
 outcome: the empty Writing exists, and the work on its Work Board was outlined by the practitioner, recorded in their words, and read back before it was written — the assistant proposed none of it
@@ -89,7 +89,7 @@ Hypothetical: Northgate, an Alberta numbered company, sues our client Hasbro and
 
 ## Principles this journey encodes
 
-- **Four question shapes, no others.** Every prompt confirms a fact the practitioner gave, asks for a missing piece, asks them to choose, or reads back and asks whether it still stands (`.claude/skills/shared/paralegal-posture.md`).
+- **Four question shapes, no others.** Every prompt confirms a fact the practitioner gave, asks for a missing piece, asks them to choose, or reads back and asks whether it still stands (`source/skills/shared/paralegal-posture.md`).
 - **The practitioner supplies what the record cannot.** The assistant never proposes a position, a figure, a legal test, or a priority. Where the record already holds the candidates, it proposes them with their sources and the practitioner approves or changes them. An empty board with nothing on record to draw from opens with a question, not candidates. How the work divides into jobs, and what waits on what, is the assistant's and never asked.
 - **Reasoning is recorded verbatim.** What the practitioner says, including why, goes in as they said it, and is read back before anything is written.
 - **Legal views are the practitioner's propositions.** A stated view of the law is recorded as theirs and becomes research only on their instruction, never by the assistant's own dispatch.

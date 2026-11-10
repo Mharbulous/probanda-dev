@@ -167,7 +167,7 @@ async function push(client: LegalCommonsClient, args: Record<string, unknown>): 
 // The three vocabularies, tense-separated on purpose (D7), and the single place
 // they are enforced — every one of these pool columns is bare `text`, so nothing
 // in Postgres refuses a typo. Each value's definition, and which column takes it,
-// is in `.claude/skills/shared/treatment-vocabulary.md` and nowhere else; these
+// is in `source/skills/shared/treatment-vocabulary.md` and nowhere else; these
 // lists hold only the code values. Design:
 // `docs/Specs/2026-10-15_per-principle-treatment-vocabulary-spec.md`.
 //

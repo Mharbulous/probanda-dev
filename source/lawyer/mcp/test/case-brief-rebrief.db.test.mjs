@@ -40,7 +40,7 @@ test("a brief saved as .docx is no Westlaw report", () => {
 });
 
 test("the template finds a saved brief through the whole law tree and re-saves it beside itself", () => {
-  const template = readFileSync(new URL("../../../../.claude/skills/shared/case-brief-template.md", import.meta.url), "utf-8");
+  const template = readFileSync(new URL("../../../../source/skills/shared/case-brief-template.md", import.meta.url), "utf-8");
   assert.match(template, /with no board, look through `6\. LAW` and every folder under it by `case-brief\/SKILL\.md` step 3's route/);
   assert.doesNotMatch(template, /or `research_filing__list_law_folder` with no board/);
   assert.match(template, /numbered only within one folder, so its `destination_dir` is the folder holding that brief/);

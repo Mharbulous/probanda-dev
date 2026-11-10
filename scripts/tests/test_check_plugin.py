@@ -170,7 +170,7 @@ class Fixture:
         self.write(src + "mcp/src/submission/migrate.ts", "from migrate_engine import MigrateError, run\n")
         self.write(src + "mcp/src/repo-root.ts", 'const RULES = "alpha/references/rules.md";\n')
 
-        s = ".claude/skills/"
+        s = "source/skills/"
         self.write(s + "alpha/SKILL.md", SOURCE_SKILL_MD)
         self.write(s + "alpha/references/rules.md", "rules\n")
         self.write(s + "alpha/references/schema.sql", "-- fixture\n")
@@ -315,25 +315,25 @@ class TestPlantedViolations(FixtureTest):
         self.assertOnlyFails("roster-sanity", "missing source for: beta")
 
     def test_reserved_name(self):
-        self.fixture.write(".claude/skills/claude-helper/SKILL.md", skill_md("claude-helper", "Reserved."))
+        self.fixture.write("source/skills/claude-helper/SKILL.md", skill_md("claude-helper", "Reserved."))
         self.fixture.roster["claude-helper"] = []
         self.fixture.build()
         self.assertOnlyFails("reserved-name", "claude-helper")
 
     def test_description_no_xml_tags(self):
-        self.fixture.write(".claude/skills/alpha/SKILL.md",
+        self.fixture.write("source/skills/alpha/SKILL.md",
                            SOURCE_SKILL_MD.replace("Fixture roster skill.", "Writes docs/<run-date>/ output."))
         self.fixture.build()
         self.assertOnlyFails("description-no-xml-tags", "alpha: <run-date>")
 
     def test_description_length(self):
-        self.fixture.write(".claude/skills/alpha/SKILL.md",
+        self.fixture.write("source/skills/alpha/SKILL.md",
                            SOURCE_SKILL_MD.replace("Fixture roster skill.", "x" * 1100))
         self.fixture.build()
         self.assertOnlyFails("description-length", "alpha: 1100 chars, 76 over")
 
     def test_description_near_limit_passes_with_advisory(self):
-        self.fixture.write(".claude/skills/alpha/SKILL.md",
+        self.fixture.write("source/skills/alpha/SKILL.md",
                            SOURCE_SKILL_MD.replace("Fixture roster skill.", "x" * 1000))
         self.fixture.build()
         ok, detail = self.fixture.results()["description-length"]
@@ -342,17 +342,17 @@ class TestPlantedViolations(FixtureTest):
 
     def test_no_absolute_repo_paths(self):
         # Under tests/, which never ships, so the host-path ratchet is not involved.
-        absolute = os.path.join(self.fixture.root, ".claude", "skills", "alpha", "references", "rules.md")
-        self.fixture.write(".claude/skills/alpha/tests/notes.md", f"see {absolute}\n")
+        absolute = os.path.join(self.fixture.root, "source", "skills", "alpha", "references", "rules.md")
+        self.fixture.write("source/skills/alpha/tests/notes.md", f"see {absolute}\n")
         self.assertOnlyFails("no-absolute-repo-paths", "alpha/tests/notes.md")
 
     def test_reference_resolution(self):
-        self.fixture.write(".claude/skills/alpha/SKILL.md", SOURCE_SKILL_MD + "And `references/missing.md`.\n")
+        self.fixture.write("source/skills/alpha/SKILL.md", SOURCE_SKILL_MD + "And `references/missing.md`.\n")
         self.fixture.build()
         self.assertOnlyFails("reference-resolution", "alpha/SKILL.md -> references/missing.md")
 
     def test_entry_point_registry(self):
-        self.fixture.write(".claude/skills/drafting-data/references/scripts/migrate_engine.py",
+        self.fixture.write("source/skills/drafting-data/references/scripts/migrate_engine.py",
                            ENGINE.replace("def run(request):", "def run2(request):"))
         self.fixture.build()
         self.assertOnlyFails("entry-point-registry", "'run' not found at top level")
@@ -401,7 +401,7 @@ class TestPlantedViolations(FixtureTest):
         # A plugin that ships the commons agents may name them, so this one stops shipping them.
         for name in check_plugin_sources.COMMONS_AGENTS:
             os.remove(os.path.join(self.fixture.root, "source", "litigator", "agents", f"{name}.md"))
-        self.fixture.write(".claude/skills/alpha/references/rules.md", "Ask the tech-support agent.\n")
+        self.fixture.write("source/skills/alpha/references/rules.md", "Ask the tech-support agent.\n")
         self.fixture.build()
         self.assertOnlyFails("inverse-reference", "'tech-support' in alpha/references/rules.md")
 
@@ -418,7 +418,7 @@ class TestPlantedViolations(FixtureTest):
         self.assertOnlyFails("agent-bridged-grants", f"helper.md lacks the bridged twin {BRIDGED}matter_data__query")
 
     def test_commons_encapsulation(self):
-        self.fixture.write(".claude/skills/legal-commons/SKILL.md", COMMONS_SKILL_MD + "Reads practice.db.\n")
+        self.fixture.write("source/skills/legal-commons/SKILL.md", COMMONS_SKILL_MD + "Reads practice.db.\n")
         self.fixture.build()
         self.assertOnlyFails("commons-encapsulation", "legal-commons/SKILL.md has 'practice.db'")
 
@@ -490,7 +490,7 @@ class TestShippedTreePurity(FixtureTest):
 
     def test_shipped_confirmation_sidecar_fails(self):
         rel = "alpha/references/CAN/BC/BCSC/x.md.confirmations.local.json"
-        self.fixture.write(".claude/skills/" + rel, '{"file": "x.md", "items": []}\n')
+        self.fixture.write("source/skills/" + rel, '{"file": "x.md", "items": []}\n')
         self.fixture.build()
         self.assertIn("skills/" + rel, {arcname for _sha, arcname in self.fixture.manifest()})
         hits, _ = self.fixture.purity()
@@ -511,10 +511,10 @@ class TestShippedTreePurity(FixtureTest):
         self.assertIn("differs from source: VISION.md", self.fixture.purity(changed)[0])
 
     def test_host_path_ratchet(self):
-        self.fixture.write(".claude/skills/alpha/references/rules.md",
+        self.fixture.write("source/skills/alpha/references/rules.md",
                            "see C:\\" + "Users\\someone and /Users/someone/x\n")
         self.fixture.build()
-        key = ".claude/skills/alpha/references/rules.md"
+        key = "source/skills/alpha/references/rules.md"
 
         hits, _ = self.fixture.purity()
         self.assertEqual(hits, [f"host_path hits over baseline in {key}: 2 (baseline 0)"])
@@ -527,14 +527,14 @@ class TestShippedTreePurity(FixtureTest):
         self.assertEqual(hits, [f"host_path hits over baseline in {key}: 2 (baseline 1)"])
 
     def test_matter_code_ratchet_covers_tree_agents_and_fixtures_and_never_prints_the_code(self):
-        self.fixture.write(".claude/skills/shared/conventions.md", "matter L1234 and L5678\n")
+        self.fixture.write("source/skills/shared/conventions.md", "matter L1234 and L5678\n")
         self.fixture.write("source/litigator/agents/helper.md", "---\nname: helper\n---\n# helper for L9999\n")
         self.fixture.write("source/litigator/mcp/test/fixtures/rule-overlay/r.json", '{"matter": "L4321"}\n')
         self.fixture.build()
 
         hits, _ = self.fixture.purity()
         self.assertEqual(sorted(hits), [
-            "matter_code hits over baseline in .claude/skills/shared/conventions.md: 2 (baseline 0)",
+            "matter_code hits over baseline in source/skills/shared/conventions.md: 2 (baseline 0)",
             "matter_code hits over baseline in source/litigator/agents/helper.md: 1 (baseline 0)",
             "matter_code hits over baseline in source/litigator/mcp/test/fixtures/rule-overlay/r.json: 1 (baseline 0)",
         ])
@@ -542,22 +542,22 @@ class TestShippedTreePurity(FixtureTest):
             self.assertFalse(any(code in h for h in hits))
 
         baseline = {"host_path": {}, "matter_code": {
-            ".claude/skills/shared/conventions.md": 2, "source/litigator/agents/helper.md": 1,
+            "source/skills/shared/conventions.md": 2, "source/litigator/agents/helper.md": 1,
             "source/litigator/mcp/test/fixtures/rule-overlay/r.json": 1}}
         hits, summary = self.fixture.purity(baseline=baseline)
         self.assertEqual(hits, [])
         self.assertIn("matter-code 4 hits in 3 files", summary)
 
     def test_one_more_utbms_code_used_as_utbms_does_not_fail_the_ratchet(self):
-        self.fixture.write(".claude/skills/alpha/references/rules.md",
+        self.fixture.write("source/skills/alpha/references/rules.md",
                            "| L330 | Depositions |\nDeposition prep for trial -> L330/A101\nre L1234 file\n")
         self.fixture.build()
-        key = ".claude/skills/alpha/references/rules.md"
+        key = "source/skills/alpha/references/rules.md"
         hits, _ = self.fixture.purity()
         self.assertEqual(hits, [f"matter_code hits over baseline in {key}: 1 (baseline 0)"])
 
     def test_binary_asset_is_not_scanned_as_text(self):
-        self.fixture.write(".claude/skills/alpha/templates/form.docx", b"\x00C:\\" + b"Users\\x L1234")
+        self.fixture.write("source/skills/alpha/templates/form.docx", b"\x00C:\\" + b"Users\\x L1234")
         self.fixture.build()
         hits, _ = self.fixture.purity()
         self.assertEqual(hits, [])
@@ -592,8 +592,8 @@ class TestPublicSkill(FixtureTest):
         self.assertOnlyFails("shipped-tree-purity", "no public source file: skills/beta/extra.md")
 
     def test_skill_in_both_places_fails(self):
-        self.fixture.write(".claude/skills/beta/SKILL.md", skill_md("beta", "A private copy."))
-        self.assertOnlyFails("shipped-tree-purity", "skill in both public/ and .claude/skills/: beta")
+        self.fixture.write("source/skills/beta/SKILL.md", skill_md("beta", "A private copy."))
+        self.assertOnlyFails("shipped-tree-purity", "skill in both public/ and source/skills/: beta")
 
     def test_overlong_public_description_fails(self):
         self.fixture.write(self.PUBLIC + "beta/SKILL.md", skill_md("beta", "x" * 1100))
@@ -607,7 +607,7 @@ class TestReferenceToUnshippedFile(FixtureTest):
 
     def setUp(self):
         super().setUp()
-        self.fixture.write(".claude/skills/alpha/SKILL.md",
+        self.fixture.write("source/skills/alpha/SKILL.md",
                            SOURCE_SKILL_MD + "See `tests/test_alpha.py`.\n")
         self.shipped = check_plugin_tree.skill_source_expected(
             check_plugin_sources.skills_root(self.fixture.root), ["alpha"], ASSETS)
@@ -719,30 +719,30 @@ class TestAcrossPlugins(unittest.TestCase):
 
     def layering(self, rulings):
         self.assign({"skills": ["show-me"]}, {"skills": ["matter-data"]})
-        write(self.root, ".claude/skills/show-me/SKILL.md", "Ask `/matter-data` first.\n")
-        write(self.root, ".claude/skills/matter-data/SKILL.md", "Present it with /show-me.\n")
+        write(self.root, "source/skills/show-me/SKILL.md", "Ask `/matter-data` first.\n")
+        write(self.root, "source/skills/matter-data/SKILL.md", "Present it with /show-me.\n")
         write(self.root, "source/layering.json", json.dumps(rulings))
         return check_plugin.check_layering_rule(self.root)
 
-    PAIR = {"file": ".claude/skills/show-me/SKILL.md", "target": "matter-data"}
+    PAIR = {"file": "source/skills/show-me/SKILL.md", "target": "matter-data"}
 
     def test_upward_reference_with_no_ruling_fails(self):
         self.assertEqual(self.layering({"allowed": [], "todo": []}),
-                         (False, "no ruling: .claude/skills/show-me/SKILL.md names matter-data"))
+                         (False, "no ruling: source/skills/show-me/SKILL.md names matter-data"))
 
     def test_reference_still_to_fix_fails(self):
         self.assertEqual(self.layering({"allowed": [], "todo": [self.PAIR]}),
-                         (False, "still to fix: .claude/skills/show-me/SKILL.md names matter-data"))
+                         (False, "still to fix: source/skills/show-me/SKILL.md names matter-data"))
 
     def test_allowed_reference_passes_and_a_stale_ruling_fails(self):
         self.assertEqual(self.layering({"allowed": [self.PAIR], "todo": []}), (True, "1 upward pairs"))
-        stale = {"file": ".claude/skills/show-me/SKILL.md", "target": "draft"}
+        stale = {"file": "source/skills/show-me/SKILL.md", "target": "draft"}
         ok, detail = self.layering({"allowed": [self.PAIR, stale], "todo": []})
         self.assertFalse(ok)
-        self.assertIn("stale ruling (nothing matches it): .claude/skills/show-me/SKILL.md names draft", detail)
+        self.assertIn("stale ruling (nothing matches it): source/skills/show-me/SKILL.md names draft", detail)
 
     def test_skill_folder_with_no_plugin_fails_instead_of_ending_the_run(self):
-        write(self.root, ".claude/skills/orphan/SKILL.md", "x\n")
+        write(self.root, "source/skills/orphan/SKILL.md", "x\n")
         ok, detail = self.layering({"allowed": [self.PAIR], "todo": []})
         self.assertFalse(ok)
         self.assertIn("has no plugin in source/assignment.json", detail)
@@ -964,7 +964,7 @@ class TestCommittedBaselines(unittest.TestCase):
         for scan, entries in data.items():
             for path, n in entries.items():
                 with self.subTest(scan=scan, path=path):
-                    self.assertRegex(path, r"^(\.claude/skills/|source/[^/]+/(agents|mcp/test/fixtures/rule-overlay)/)")
+                    self.assertRegex(path, r"^(source/skills/|source/[^/]+/(agents|mcp/test/fixtures/rule-overlay)/)")
                     self.assertIsInstance(n, int)
                     self.assertGreater(n, 0)
         self.assertIsNone(check_plugin_tree.MATTER_CODE.search(text))

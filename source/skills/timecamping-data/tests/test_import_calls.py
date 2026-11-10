@@ -2,7 +2,7 @@
 no database.
 
 Run from the repo root:
-    python -m unittest discover -s .claude/skills/timecamping-data/tests
+    python -m unittest discover -s source/skills/timecamping-data/tests
 """
 
 import csv

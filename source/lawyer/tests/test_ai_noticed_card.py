@@ -16,7 +16,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / ".claude" / "skills" / "shared" / "tests"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "source" / "skills" / "shared" / "tests"))
 from hook_runner import run_hook  # noqa: E402
 
 HOOK = Path(__file__).resolve().parent.parent / "hooks" / "ai-noticed-card.py"

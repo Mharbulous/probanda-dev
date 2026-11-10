@@ -43,7 +43,7 @@ const STAMP_PLACEHOLDER = "__LITIGATION_BUILD_STAMP_PLACEHOLDER__";
 // it. Baked before the hash, so a schema bump changes the build stamp too.
 const engineFile = resolve(
   root, "..", "..", "..",
-  ".claude", "skills", "drafting-data", "references", "scripts", "migrate_engine.py"
+  "source", "skills", "drafting-data", "references", "scripts", "migrate_engine.py"
 );
 const engineText = await readFile(engineFile, "utf-8");
 const schemaMatch = /^TARGET_SCHEMA_VERSION\s*=\s*(\d+)\s*$/m.exec(engineText);

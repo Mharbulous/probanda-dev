@@ -18,7 +18,7 @@ const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { callTool, dispatchTool } = await import("../build/dispatch.js");
 
-const DRAFT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", ".claude", "skills", "draft");
+const DRAFT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "source", "skills", "draft");
 
 // No step reads the practitioner's coclerk.json: a scratch config for the whole file.
 const scratch = mkdtempSync(join(tmpdir(), "coclerk-rules-oob-config-"));
@@ -29,7 +29,7 @@ test.after(() => rmSync(scratch, { recursive: true, force: true }));
 /** A checkout holding a copy of the real /draft skill: SKILL.md, references and node map. */
 function checkout(t) {
   const root = mkdtempSync(join(tmpdir(), "coclerk-rules-oob-"));
-  const skill = join(root, ".claude", "skills", "draft");
+  const skill = join(root, "source", "skills", "draft");
   mkdirSync(join(skill, "references"), { recursive: true });
   mkdirSync(join(skill, "rules", "nodes"), { recursive: true });
   copyFileSync(join(DRAFT, "SKILL.md"), join(skill, "SKILL.md"));

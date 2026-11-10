@@ -1,7 +1,7 @@
 // Adapter-level tests for matter_data__relocate (ADR 0013).
 //
 // The copy, the checks and the pointer rewrite are covered by
-// .claude/skills/matter-data/tests/test_relocate_case_data.py. These prove the wiring:
+// source/skills/matter-data/tests/test_relocate_case_data.py. These prove the wiring:
 // tool registration, dispatch routing, PYTHONPATH resolution to the skills tree, the
 // refusal round trip into a DataServerError, and lock release.
 

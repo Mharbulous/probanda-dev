@@ -6,7 +6,7 @@ a person only for a reason on the closed list.
   python scripts/check_brief.py <brief file> [<brief file> ...]
 
 Triage and /hitl-triage run this over a brief before posting it
-(.claude/commands/triage-issue.md, .claude/skills/hitl-triage/references/issue-route.md).
+(.claude/commands/triage-issue.md, source/skills/hitl-triage/references/issue-route.md).
 
 A brief fails when:
 - `### Done when` holds a whole-suite or folder run, which the repo's hook refuses

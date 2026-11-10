@@ -26,7 +26,7 @@ const job = (rule) =>
 function checkout(t, nodes) {
   const root = mkdtempSync(join(tmpdir(), "coclerk-coexist-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  const skill = join(root, ".claude", "skills", "rdag");
+  const skill = join(root, "source", "skills", "rdag");
   mkdirSync(skill, { recursive: true });
   copyFileSync(SKILL_MD, join(skill, "SKILL.md"));
   if (nodes) {
@@ -77,6 +77,6 @@ test("a node map failing its lints fails the pilot call too", (t) => {
 
 test("a skill never tagged refuses not_served, naming no lint", (t) => {
   checkout(t, null);
-  writeFileSync(join(process.env.COCLERK_REPO_ROOT, ".claude", "skills", "rdag", "SKILL.md"), "---\nname: rdag\n---\n\n## 1. Plain rules\n\nNo atoms here.\n");
+  writeFileSync(join(process.env.COCLERK_REPO_ROOT, "source", "skills", "rdag", "SKILL.md"), "---\nname: rdag\n---\n\n## 1. Plain rules\n\nNo atoms here.\n");
   assert.throws(() => skillRulesApplicable("rdag", "release"), (err) => err.code === "not_served" && /serves no rules by operation/.test(err.message));
 });

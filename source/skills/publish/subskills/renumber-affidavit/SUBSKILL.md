@@ -55,7 +55,7 @@ Run the scripts from the repo root. The draft folder is the matter's one
    deponent at the old number:
 
    ```
-   python .claude/skills/publish/subskills/renumber-affidavit/scripts/renumber_affidavit.py <probe.json>
+   python source/skills/publish/subskills/renumber-affidavit/scripts/renumber_affidavit.py <probe.json>
    ```
 
    `{"mode": "probe", "source": "<abs .docx>"}` returns each identifier found,

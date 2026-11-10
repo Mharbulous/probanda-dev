@@ -7,7 +7,7 @@ Acceptance test 2 (a failed row cannot be written without a finding) is covered 
 TestV46FailedScrutiny.test_a_failed_statement_without_a_finding_is_refused in
 test_migrate_engine.py and is not repeated here.
 
-Run: python -m pytest .claude/skills/drafting-data/tests/test_scrutiny_writes.py -q
+Run: python -m pytest source/skills/drafting-data/tests/test_scrutiny_writes.py -q
 """
 
 import re

@@ -2,7 +2,7 @@
 // document text and the filing's Evidence Index rows. No I/O, no model call,
 // deterministic output -- the same inputs always yield the same findings in
 // the same order. The authoritative check list, pass conditions and severities
-// are .claude/skills/drafting-data/references/pre-filing-checks.md; this file
+// are source/skills/drafting-data/references/pre-filing-checks.md; this file
 // implements it and never edits any document (decision D4).
 
 import type { ExtractedDocument } from "./extract.js";

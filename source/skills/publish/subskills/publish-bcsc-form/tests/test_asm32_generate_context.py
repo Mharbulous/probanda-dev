@@ -7,7 +7,7 @@ missing_datum warning, for each caption field the sidecar lacks; asm32.fill
 names the .docx from the caption's title when the asm32 session carries no
 Generate scalars.
 
-Run: python -m pytest .claude/skills/publish/subskills/publish-bcsc-form/tests/test_asm32_generate_context.py -q
+Run: python -m pytest source/skills/publish/subskills/publish-bcsc-form/tests/test_asm32_generate_context.py -q
 """
 
 import io

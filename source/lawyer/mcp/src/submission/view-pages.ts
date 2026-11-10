@@ -9,7 +9,7 @@
 // then `<name> - filing <id>.html`, which the page write's old-page sweep trashes).
 // The html-pages gate knows each view page by its name in the hook's VIEW_NAMES, refuses every read
 // of it and lets a remote-device-only host stage it, so a page added here also adds its lowercased
-// name there (.claude/skills/drafting-data/hooks/html-pages-gate.py).
+// name there (source/skills/drafting-data/hooks/html-pages-gate.py).
 //
 // Like the other pages, a view page draws as a lone file card: its stylesheet, its data and its
 // script are all inline, and only the data line differs from filing to filing. No session reads one

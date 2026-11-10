@@ -74,7 +74,7 @@ function installFixture(t) {
 function checkoutFixture(t) {
   const root = mkdtempSync(join(tmpdir(), "coclerk-checkout-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  const skills = join(root, ".claude", "skills");
+  const skills = join(root, "source", "skills");
   write(join(skills, "matter-data", "SKILL.md"), "# matter-data (checkout)\n");
   write(join(skills, "matter-data", "only-in-checkout.md"), "checkout only\n");
   write(join(skills, "devtool", "SKILL.md"), "# devtool (checkout)\n");
@@ -270,10 +270,19 @@ test("the deciding test is the first segment's folder, never the file", (t) => {
   const bundled = resolveShippedRoot("matter-data/does-not-exist.md", co.env, { installRoot: inst.root });
   assert.deepEqual(bundled, { root: join(inst.root, "skills"), shipped_from: "install", plugin: "litigation", plugin_version: "9.9.9" });
   const other = resolveShippedRoot("devtool/SKILL.md", co.env, { installRoot: inst.root });
-  assert.deepEqual(other, { root: join(co.root, ".claude", "skills"), shipped_from: "checkout", plugin: null, plugin_version: null });
+  assert.deepEqual(other, { root: join(co.root, "source", "skills"), shipped_from: "checkout", plugin: null, plugin_version: null });
   // `..` and `.` never count as a bundled folder, even though both name real directories.
   assert.equal(resolveShippedRoot("..\\x.md", co.env, { installRoot: inst.root }).shipped_from, "checkout");
   assert.equal(resolveShippedRoot(".", co.env, { installRoot: inst.root }).shipped_from, "checkout");
+});
+
+test("a checkout with no source/skills serves CoClerk's .claude/skills", (t) => {
+  const inst = installFixture(t);
+  const root = mkdtempSync(join(tmpdir(), "coclerk-checkout-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  write(join(root, ".claude", "skills", "devtool", "SKILL.md"), "# devtool (CoClerk)\n");
+  const served = resolveShippedRoot("devtool/SKILL.md", { COCLERK_REPO_ROOT: root }, { installRoot: inst.root });
+  assert.equal(served.root, join(root, ".claude", "skills"));
 });
 
 test("in this repo the default install root is source/practice, which bundles nothing", () => {

@@ -5,7 +5,7 @@ their Cowork branch never runs a fill in the sandbox shell or writes a host path
 tool. publish-bcca-book, publish-boc, publish-notice-to-admit and publish-small-claims-form are
 Code-tab (PC) jobs: each refuses in Cowork before its first step.
 
-Run: python -m unittest discover -s .claude/skills/publish/tests
+Run: python -m unittest discover -s source/skills/publish/tests
 """
 from __future__ import annotations
 

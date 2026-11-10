@@ -3,7 +3,7 @@ no plan spawn and no issue forms; the doctrine rewords a question holding more t
 splits it; a new question the practitioner raises gets exactly one two-option question; and the
 end of the job invites no further memo.
 
-Run: python -m pytest .claude/skills/legal-research/tests/test_one_question_scope.py -q
+Run: python -m pytest source/skills/legal-research/tests/test_one_question_scope.py -q
 """
 
 import unittest

@@ -21,7 +21,7 @@ Rulings live in source/layering.json:
 shared/ ships in every plugin and is read only when a skill points at it, so its
 files are listed by --shared and never fail the check.
 
-Skills are read from .claude/skills/ and from every public/plugins/*/skills/.
+Skills are read from source/skills/ and from every public/plugins/*/skills/.
 Agents are read from each plugin's source/<plugin>/agents/. check_plugin.py runs
 this check too, through judge(), strict.
 

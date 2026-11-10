@@ -22,7 +22,7 @@ import check_plugin_sources  # noqa: E402
 import plugin_layout  # noqa: E402
 
 MIGRATE_ENGINE_REAL = os.path.join(
-    plugin_layout.REPO, ".claude", "skills", "drafting-data", "references", "scripts", "migrate_engine.py")
+    plugin_layout.REPO, "source", "skills", "drafting-data", "references", "scripts", "migrate_engine.py")
 MIGRATE_TS_REAL = check_plugin_sources.server_path(
     plugin_layout.REPO, plugin_layout.server_owner(plugin_layout.REPO, "data"), "data", "src", "submission", "migrate.ts")
 

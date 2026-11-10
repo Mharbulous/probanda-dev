@@ -6,7 +6,7 @@ returns `done`. Verify only reports once the .docx exists: a template token
 left standing makes `verify_passed` false, never a halt. A law-report year in
 the body is not a template token.
 
-Run: python -m pytest .claude/skills/publish/subskills/publish-bcsc-form/tests/test_asm32_auto_advance.py -q
+Run: python -m pytest source/skills/publish/subskills/publish-bcsc-form/tests/test_asm32_auto_advance.py -q
 """
 
 import importlib

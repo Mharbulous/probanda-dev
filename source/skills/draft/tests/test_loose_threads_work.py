@@ -4,7 +4,7 @@ A thread is worked only by outlining it on a Work Board the practitioner names. 
 that outlived the job: discards need the practitioner's yes, and an instruction about the held
 job's own work is applied, not captured.
 
-Run: python -m pytest .claude/skills/draft/tests/test_loose_threads_work.py -q
+Run: python -m pytest source/skills/draft/tests/test_loose_threads_work.py -q
 """
 
 import re

@@ -636,7 +636,7 @@ test("a research memo's item paragraphs print summary, excerpt, citation and mar
   const g = await generalWritingFixture(t);
   await g.execute("INSERT INTO proceedings (id, matter_reference, forum) VALUES (4, 'L0000', NULL);");
   // The shipped ICRA type's own block, in /legal-research's tree under the fixture's jurisdiction.
-  const shipped = readFileSync(new URL("../../../../.claude/skills/legal-research/references/CAN/BC/_NoVenue/Documents/research-memo.md", import.meta.url), "utf-8");
+  const shipped = readFileSync(new URL("../../../../source/skills/legal-research/references/CAN/BC/_NoVenue/Documents/research-memo.md", import.meta.url), "utf-8");
   const memoDocs = `legal-research/${NO_VENUE_TREE.country}/${NO_VENUE_TREE.jurisdiction}/_NoVenue/Documents`;
   g.f.local(`${memoDocs}/kinds.local.json`, {
     kinds: [{ file: "research-memo", name: "Research memo", recipient: "internal", aliases: [{ name: "research_memo", source: "agent", ref: "L0000", recorded: "2026-10-31" }] }],

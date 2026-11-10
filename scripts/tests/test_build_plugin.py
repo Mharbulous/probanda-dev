@@ -30,7 +30,7 @@ def build(*args):
 def copy_repo(repo):
     """Copy what a build reads into `repo`: the skills, the plugin sources and the public skills."""
     skip = shutil.ignore_patterns("tests", "test", "src", "build", "__pycache__", "node_modules")
-    shutil.copytree(REPO / ".claude" / "skills", repo / ".claude" / "skills", ignore=skip)
+    shutil.copytree(REPO / "source" / "skills", repo / "source" / "skills", ignore=skip)
     shutil.copytree(SOURCE, repo / "source", ignore=skip)
     # A hook of the lawyer plugin runs a script in a public skill.
     shutil.copytree(REPO / "public" / "plugins", repo / "public" / "plugins", ignore=skip)
@@ -119,7 +119,7 @@ class BuildPluginTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
             copy_repo(repo)
-            skill_md = repo / ".claude" / "skills" / "draft" / "SKILL.md"
+            skill_md = repo / "source" / "skills" / "draft" / "SKILL.md"
             skill_md.write_text("---\nname: draft\ndescription: " + "x" * 1100 + "\n---\n\nBody.\n",
                                 encoding="utf-8")
             out = repo / "out"
@@ -149,10 +149,10 @@ class BuildPluginTest(unittest.TestCase):
             self.assertTrue((shipped / "references" / "notes.txt").is_file())
             self.assertFalse((out / "researcher" / "skills" / "zz-public").exists())
 
-            (repo / ".claude" / "skills" / "zz-public").mkdir()
+            (repo / "source" / "skills" / "zz-public").mkdir()
             result = build("--repo", str(repo), "--out", str(repo / "out2"))
             self.assertEqual(result.returncode, 2)
-            self.assertIn("skill in both public/ and .claude/skills/", result.stderr)
+            self.assertIn("skill in both public/ and source/skills/", result.stderr)
 
 
 def skill(name):
@@ -178,12 +178,12 @@ CUTOVER_REPO = {
     "source/practice/mcp/dist/server.js": "var server = 1;\n",
     "source/research/plugin.json": json.dumps({"name": "research", "version": "0.3.1"}),
     "source/research/roster.json": json.dumps({"beta": []}),
-    ".claude/skills/alpha/SKILL.md": skill("alpha"),
-    ".claude/skills/alpha/assets/form.bin": "asset\n",
-    ".claude/skills/beta/SKILL.md": skill("beta"),
-    ".claude/skills/legal-commons/SKILL.md": skill("legal-commons"),
-    ".claude/skills/shared/hooks/guard.py": "print('guard')\n",
-    ".claude/skills/shared/x.md": "shared\n",
+    "source/skills/alpha/SKILL.md": skill("alpha"),
+    "source/skills/alpha/assets/form.bin": "asset\n",
+    "source/skills/beta/SKILL.md": skill("beta"),
+    "source/skills/legal-commons/SKILL.md": skill("legal-commons"),
+    "source/skills/shared/hooks/guard.py": "print('guard')\n",
+    "source/skills/shared/x.md": "shared\n",
     "public/plugins/practice/skills/pub-one/SKILL.md": skill("pub-one"),
     "public/plugins/probanda/skills/pub-two/SKILL.md": skill("pub-two"),
     "plugins/probanda/old.md": "left over from the single plugin\n",
@@ -258,14 +258,14 @@ class CutoverBuildTest(unittest.TestCase):
     def test_hook_whose_script_is_not_in_its_plugin_stops_the_build(self):
         missing = "${CLAUDE_PLUGIN_ROOT}/skills/beta/hooks/gate.py"
         self.put("source/practice/plugin.json", json.dumps(PRACTICE).replace(HOOK, missing))
-        self.put(".claude/skills/beta/hooks/gate.py", "print('in research only')\n")
+        self.put("source/skills/beta/hooks/gate.py", "print('in research only')\n")
         self.assert_stops(f"hook path {missing} names no file in the built plugin 'practice'")
 
     def test_single_plugin_identifiers_in_another_plugin_stop_the_build(self):
         for text, needle in (("Call mcp__plugin_probanda_data__x.\n", "plugin_probanda_"),
                              ("Spawn probanda:clerk.\n", "probanda:[A-Za-z]")):
             with self.subTest(needle=needle):
-                self.put(".claude/skills/beta/notes.md", text)
+                self.put("source/skills/beta/notes.md", text)
                 self.assert_stops(f"skills/beta/notes.md: {needle}")
 
     def test_roster_that_disagrees_with_the_assignment_stops_the_build(self):

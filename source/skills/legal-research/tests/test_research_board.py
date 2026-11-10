@@ -2,7 +2,7 @@
 blocker graph and worked under one token per job, at most three held, with the blockers' memos
 passed forward word for word and every rewording shown to the practitioner before it lands.
 
-Run: python -m pytest .claude/skills/legal-research/tests/test_research_board.py -q
+Run: python -m pytest source/skills/legal-research/tests/test_research_board.py -q
 """
 
 import json
@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[4]
-SKILLS = REPO / ".claude" / "skills"
+SKILLS = REPO / "source" / "skills"
 INSTRUCTION = ("Here are the memos that will provide some background context for your research. Repeat the "
                "propositions and excerpts from the previous memo only if they are necessary context for "
                "explaining your own research memo, but make sure that you go beyond that information and dig "

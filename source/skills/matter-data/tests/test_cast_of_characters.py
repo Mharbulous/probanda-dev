@@ -2,7 +2,7 @@
 case data behind the Cast of Characters board (spec 4.2). Fictional test matter
 T512; every name is invented.
 
-Run: python -m pytest .claude/skills/matter-data/tests/test_cast_of_characters.py -q
+Run: python -m pytest source/skills/matter-data/tests/test_cast_of_characters.py -q
 """
 
 import sqlite3

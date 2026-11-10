@@ -2,7 +2,7 @@
 
 What the capture writes is tested against the store in source/lawyer/mcp/test/loose-threads-store.db.test.mjs.
 
-Run: python -m pytest .claude/skills/drafting-data/tests/test_no_job_capture.py -q
+Run: python -m pytest source/skills/drafting-data/tests/test_no_job_capture.py -q
 """
 
 import unittest

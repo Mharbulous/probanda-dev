@@ -312,7 +312,7 @@ test("harness.py resolves install-first, and from the checkout when the install 
   try {
     assert.equal(bcscFormHarnessPath(process.env, f.install), join(f.scripts, "harness.py"));
     const checkout = bcscFormHarnessPath(process.env, join(f.base, "no-install"));
-    assert.match(checkout, /[\\/]\.claude[\\/]skills[\\/]publish[\\/]subskills[\\/]publish-bcsc-form[\\/]scripts[\\/]harness\.py$/);
+    assert.match(checkout, /[\/]source[\/]skills[\\/]publish[\\/]subskills[\\/]publish-bcsc-form[\\/]scripts[\\/]harness\.py$/);
   } finally {
     f.cleanup();
   }

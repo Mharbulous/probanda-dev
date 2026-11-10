@@ -7,7 +7,7 @@ and a job plan's Westlaw step has no approval point.
 
 Spec: docs/Specs/2026-10-21_research-job-memo-always-answers-spec.md
 
-Run: python -m pytest .claude/skills/legal-research/tests/test_job_memo_answers.py -q
+Run: python -m pytest source/skills/legal-research/tests/test_job_memo_answers.py -q
 """
 
 import unittest

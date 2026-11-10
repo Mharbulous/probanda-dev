@@ -1,5 +1,5 @@
 // Work-marker glyph predicates for the submission form renderers (build
-// ticket #297). Source of truth: .claude/skills/drafting-data/
+// ticket #297). Source of truth: source/skills/drafting-data/
 // references/work-markers.md (SSOT, issue #305; each marker's own row is
 // symbol-table.ts, whose counts test/symbol-table.unit.test.mjs pins).
 //
@@ -518,7 +518,7 @@ export function counselReviewMarker(otherWorkMarkers: string, currentSnapshot: s
 }
 
 /** The stored fields a counsel's-review snapshot holds, per reviewed table, in key order. Mirrors
- * the "Snapshot fields" table of .claude/skills/drafting-data/references/review.md;
+ * the "Snapshot fields" table of source/skills/drafting-data/references/review.md;
  * test/counsel-review-marker.unit.test.mjs pins the two together, so change both or neither. */
 export const REVIEW_SNAPSHOT_FIELDS = {
   statements_of_law: ["excerpt", "pinpoint", "treatment"],
@@ -812,7 +812,7 @@ export function statementOfFactMarkers(row: StatementOfFactRow): string {
 // The per-party per-method admission-ladder state (∅ 🎾 ⏳ 🤝 🙅🏻‍♂️ 🫸 🤷 ⏰
 // ⚡️ 🕹️ ✅), derived at render time -- never stored (ADR-0006:
 // docs/adr/0006-submission-admissions-derived-per-party-per-route.md).
-// Source of truth: .claude/skills/drafting-data/references/
+// Source of truth: source/skills/drafting-data/references/
 // terms-and-symbols.md's ladder table (lines 168-177) and per-method table
 // (179-184) -- NOT work-markers.md's superseded single-flag ladder
 // (📮 / ⏳ / ⏰⊕🤝⊕🙅🏻‍♂️ on facts.source_kind), which is not implemented

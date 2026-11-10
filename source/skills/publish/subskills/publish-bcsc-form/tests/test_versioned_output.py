@@ -5,7 +5,7 @@ Amend and Render write the first unused "<stem> vN<ext>" sibling instead, leavin
 existing file byte-for-byte unchanged. With no existing target, names are
 exactly as before.
 
-Run: python -m pytest .claude/skills/publish/subskills/publish-bcsc-form/tests/test_versioned_output.py
+Run: python -m pytest source/skills/publish/subskills/publish-bcsc-form/tests/test_versioned_output.py
 """
 
 import json

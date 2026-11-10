@@ -106,7 +106,7 @@ sources:
 
 function skillsFixture() {
   const root = mkdtempSync(join(tmpdir(), "coclerk-sources-"));
-  const venue = join(root, ".claude", "skills", "demo-venue");
+  const venue = join(root, "source", "skills", "demo-venue");
   mkdirSync(join(venue, "Sources"), { recursive: true });
   writeFileSync(join(venue, "venue.md"), VENUE);
   writeFileSync(join(venue, "Sources", "rules.md"), RECORD);
@@ -193,7 +193,7 @@ test("a PDF linked by a relative href resolves against the page's final URL", as
   const f = skillsFixture();
   t.after(f.cleanup);
   writeFileSync(
-    join(f.seams.env.COCLERK_REPO_ROOT, ".claude", "skills", "demo-venue", "Sources", "relative.md"),
+    join(f.seams.env.COCLERK_REPO_ROOT, "source", "skills", "demo-venue", "Sources", "relative.md"),
     `---\npage_url: https://fixture.test/docs/relative\npdf_url: https://fixture.test/rules.pdf\npdf_sha256: ${PDF_SHA}\n---\n`
   );
   const fetcher = createSourceFetcher(() => ["fixture.test"], transport);

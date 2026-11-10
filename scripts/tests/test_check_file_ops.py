@@ -45,17 +45,17 @@ class ScanTest(unittest.TestCase):
         code = ("import os, shutil\nos.rename(a, b)\nshutil.move(a, b)\np.unlink()\n"
                 "name = name.replace('x', 'y')\nos.replace(a, b)\nrm = re.search(p, s)\n"
                 "cmd = 'mkdir -p ' + d + ' && mv --backup=numbered ' + src\n")
-        self.assertEqual(self.pairs({".claude/skills/show-me/scripts/x.py": code}),
-                         [(".claude/skills/show-me/scripts/x.py", op)
+        self.assertEqual(self.pairs({"source/skills/show-me/scripts/x.py": code}),
+                         [("source/skills/show-me/scripts/x.py", op)
                           for op in ("os.rename", "os.replace", "path.unlink", "shell mv", "shutil.move")])
 
     def test_prose_that_tells_the_model_to_rename_is_found(self):
-        self.assertEqual(self.pairs({".claude/skills/show-me/SKILL.md": "Then rename the file (F2).\n"}),
-                         [(".claude/skills/show-me/SKILL.md", "prose rename")])
+        self.assertEqual(self.pairs({"source/skills/show-me/SKILL.md": "Then rename the file (F2).\n"}),
+                         [("source/skills/show-me/SKILL.md", "prose rename")])
 
     def test_file_manager_and_tests_are_not_scanned(self):
-        self.assertEqual(self.pairs({".claude/skills/file-apply/scripts/apply.py": "os.rename(a, b)\n",
-                                     ".claude/skills/show-me/tests/test_x.py": "os.remove(a)\n"}), [])
+        self.assertEqual(self.pairs({"source/skills/file-apply/scripts/apply.py": "os.rename(a, b)\n",
+                                     "source/skills/show-me/tests/test_x.py": "os.remove(a)\n"}), [])
 
     def test_server_source_is_read_by_its_imports_and_fs_names_by_their_import(self):
         plugins = json.loads(json.dumps(PLUGINS))
@@ -69,7 +69,7 @@ class ScanTest(unittest.TestCase):
 
 
 class RulingTest(unittest.TestCase):
-    FILE = ".claude/skills/show-me/scripts/x.py"
+    FILE = "source/skills/show-me/scripts/x.py"
 
     def run_main(self, rulings, code="os.remove(tmp)\n"):
         with tempfile.TemporaryDirectory() as tmp:

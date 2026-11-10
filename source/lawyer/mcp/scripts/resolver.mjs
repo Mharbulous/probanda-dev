@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "..", "..");
 export const RESOLVER_SOURCE = resolve(
-  ROOT, "..", "..", "..", ".claude", "skills", "matter-data", "references", "scripts", "case_data_resolver.py"
+  ROOT, "..", "..", "..", "source", "skills", "matter-data", "references", "scripts", "case_data_resolver.py"
 );
 export const RESOLVER_MODULE = resolve(ROOT, "src", "case", "case-data-resolver.py.ts");
 

@@ -36,7 +36,7 @@ KEY = "sb_secret_test_only_value"
 
 LAWYER_SKILL = "public/plugins/lawyer/skills/dyu/SKILL.md"
 RESEARCHER_SKILL = "public/plugins/researcher/skills/legal-citation/SKILL.md"
-DEV_SKILL = ".claude/skills/draft/SKILL.md"
+DEV_SKILL = "source/skills/draft/SKILL.md"
 
 
 def plugin_json(name, version):

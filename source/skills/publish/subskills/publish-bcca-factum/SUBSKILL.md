@@ -85,7 +85,7 @@ host path it returns.
 
 7. **Validate, then fill.** Resolve `subskills/publish-bcca-factum/scripts/fill_factum.py`
    from `/publish`'s folder: in a repo checkout run
-   `python .claude/skills/publish/subskills/publish-bcca-factum/scripts/fill_factum.py`
+   `python source/skills/publish/subskills/publish-bcca-factum/scripts/fill_factum.py`
    from the repo root (in Cowork, never run it: call the host tool instead,
    as "In Cowork" above says). Then run:
 

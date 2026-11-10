@@ -43,7 +43,7 @@ function scratchDir(t, prefix) {
 
 /** Populates `dir` so it satisfies the marker predicate. */
 function makeMarked(dir) {
-  mkdirSync(join(dir, ".claude", "skills"), { recursive: true });
+  mkdirSync(join(dir, "source", "skills"), { recursive: true });
   mkdirSync(join(dir, "source", "lawyer", "mcp"), { recursive: true });
   return dir;
 }
@@ -93,7 +93,7 @@ test("with no override, walk-up finds this checkout from its own build/ dir", ()
 
 test("walk-up requires BOTH markers", (t) => {
   const { env, req, startDir } = isolatedEnv(t);
-  mkdirSync(join(startDir, ".claude", "skills"), { recursive: true }); // one marker only
+  mkdirSync(join(startDir, "source", "skills"), { recursive: true }); // one marker only
   assert.equal(codeOf(() => resolveRepoRoot(env, req)), "skills_root_missing");
 });
 
@@ -101,6 +101,13 @@ test("walk-up also accepts a CoClerk checkout: .claude/skills with .claude/skill
   const { env, req, startDir } = isolatedEnv(t);
   mkdirSync(join(startDir, ".claude", "skills", "plugin-packager"), { recursive: true });
   assert.equal(resolveRepoRoot(env, req), startDir);
+});
+
+test("walk-up does not accept .claude/skills with source/lawyer/mcp, the layout Probanda left", (t) => {
+  const { env, req, startDir } = isolatedEnv(t);
+  mkdirSync(join(startDir, ".claude", "skills"), { recursive: true });
+  mkdirSync(join(startDir, "source", "lawyer", "mcp"), { recursive: true });
+  assert.equal(codeOf(() => resolveRepoRoot(env, req)), "skills_root_missing");
 });
 
 test("walk-up no longer accepts .claude/skills with plugins/dev-tools, which CoClerk retired", (t) => {
@@ -112,7 +119,7 @@ test("walk-up no longer accepts .claude/skills with plugins/dev-tools, which CoC
 
 test("walk-up does not false-positive on the shape of an extracted .plugin install", (t) => {
   // Verified shape of a real installed plugin: .claude-plugin/, mcp/, skills/,
-  // agents/ -- but neither .claude/skills nor source/practice/mcp nor .claude/skills/plugin-packager.
+  // agents/ -- but neither source/skills nor source/lawyer/mcp nor .claude/skills/plugin-packager.
   const { env, startDir } = isolatedEnv(t);
   mkdirSync(join(startDir, ".claude-plugin"), { recursive: true });
   mkdirSync(join(startDir, "mcp", "dist"), { recursive: true });
@@ -172,7 +179,7 @@ test("step 4 marker-validates %USERPROFILE%\\Git\\probanda-dev", (t) => {
   assert.equal(codeOf(() => resolveRepoRoot(env, req)), "skills_root_missing");
 
   // Only one marker -- still misses.
-  mkdirSync(join(half, ".claude", "skills"), { recursive: true });
+  mkdirSync(join(half, "source", "skills"), { recursive: true });
   assert.equal(codeOf(() => resolveRepoRoot(env, req)), "skills_root_missing");
 
   // Both markers -- resolves.

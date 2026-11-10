@@ -5,7 +5,7 @@ practitioner waives it, and a memo with any sub-issue heading.
 
 Spec: docs/Specs/2026-10-21_held-job-research-sub-issues-implicitly-approved-spec.md
 
-Run: python -m pytest .claude/skills/draft/tests/test_research_job_gaps.py -q
+Run: python -m pytest source/skills/draft/tests/test_research_job_gaps.py -q
 """
 
 import unittest

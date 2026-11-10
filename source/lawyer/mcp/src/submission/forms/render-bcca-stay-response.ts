@@ -5,7 +5,7 @@
 // R. 21(1)(a). No prescribed form exists -- the filed document is a
 // "response book" whose contents the registrar's completion instructions
 // set (R. 21(2); canonical requirements doc at
-// .claude/skills/draft/references/bcca-response-book-form.md,
+// source/skills/draft/references/bcca-response-book-form.md,
 // primary sources at planning/bcca-response-inputs/): a required cover page,
 // a required table of contents, Part 1 evidence/affidavits not already in
 // the application book, Part 2 written argument -- itself carrying its OWN

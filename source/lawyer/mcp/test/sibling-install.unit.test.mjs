@@ -56,7 +56,7 @@ function store(t) {
 
 function checkout(t, folders) {
   const root = tempDir(t);
-  for (const folder of folders) write(join(root, ".claude", "skills", folder, "SKILL.md"), `# ${folder} (checkout)\n`);
+  for (const folder of folders) write(join(root, "source", "skills", folder, "SKILL.md"), `# ${folder} (checkout)\n`);
   return { root, env: { COCLERK_REPO_ROOT: root } };
 }
 
@@ -232,7 +232,7 @@ test("nothing is scanned when the own root is not a packaged install", (t) => {
   assert.deepEqual(siblingInstalls(own), []);
   const co = checkout(t, ["verify-law"]);
   assert.deepEqual(served(own, "verify-law/SKILL.md", co.env), {
-    root: join(co.root, ".claude", "skills"),
+    root: join(co.root, "source", "skills"),
     shipped_from: "checkout",
     plugin: null,
     plugin_version: null,

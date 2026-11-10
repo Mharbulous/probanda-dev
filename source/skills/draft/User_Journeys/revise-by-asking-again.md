@@ -1,6 +1,6 @@
 ---
 journey: Revise by asking again
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: the practitioner, reviewing a rendered mockup, asks for a change — new substance, or a reorder/insert/remove spoken in the mockup's own numbering
 outcome: the change is elicited, written, and re-rendered with no approval pause; the new mockup carries a bumped revision number and the superseded copy is archived
@@ -34,5 +34,5 @@ source: effort owner's flow selection, 2026-08-23
 - **Revision is the same door as drafting.** A "change this" request re-enters elicitation exactly like the first draft: elicit what's changing, write it, re-render. No revision mode, no different vocabulary to learn.
 - **The mockup's numbers are the shared language.** The practitioner says "submission 3" and "the second order" as printed on the page they are looking at; renumbering after a move, insert, or removal is entirely the machinery's job.
 - **No approval pauses.** Writing and rendering never block on confirmation — write, render, and let the mockup carry the review, consistent with `SKILL.md`'s anti-patterns.
-- **One current copy, a paper trail behind it.** Every substantive change bumps the mockup's revision number and archives the superseded copy — the practitioner never wonders which file is current, and prior revisions remain retrievable. The mockup's place among a document's later versions: `.claude/skills/drafting-data/User_Journeys/drafted-document-lifecycle.md`.
+- **One current copy, a paper trail behind it.** Every substantive change bumps the mockup's revision number and archives the superseded copy — the practitioner never wonders which file is current, and prior revisions remain retrievable. The mockup's place among a document's later versions: `source/skills/drafting-data/User_Journeys/drafted-document-lifecycle.md`.
 - **Legal content only through the gate.** A revision that needs an authority routes through `/legal-research`; an open slot rendering its work marker is correct data, never something to paper over.

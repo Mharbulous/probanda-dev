@@ -4,7 +4,7 @@ returns strict JSON and ships in researcher; and the gate reviews every memo aft
 rule and before it persists, sends back required research and working-matter identifiers, never
 edits the memo, and invites no further memo.
 
-Run: python .claude/skills/legal-research/tests/test_memo_reviewer.py
+Run: python source/skills/legal-research/tests/test_memo_reviewer.py
 """
 
 import json
@@ -12,7 +12,7 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[4]
-SKILLS = REPO / ".claude" / "skills"
+SKILLS = REPO / "source" / "skills"
 AGENT = REPO / "source" / "researcher" / "agents" / "memo-reviewer.md"
 
 

@@ -2,7 +2,7 @@
 additional issue is written as one job, its title and intent their question, its one step the
 plan marker, and no research dispatched by the write.
 
-Run: python -m pytest .claude/skills/drafting-data/tests/test_research_question_jobs.py -q
+Run: python -m pytest source/skills/drafting-data/tests/test_research_question_jobs.py -q
 """
 
 import unittest

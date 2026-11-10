@@ -5,7 +5,7 @@ asmaff operation parses it strictly and fills affidavit.dotx from it, so the
 filed .docx carries the mockup's paragraphs, bold exhibit letters and
 affidavit number, and the ordinal is never asked a second time.
 
-Run: python -m pytest .claude/skills/publish/subskills/publish-bcsc-form/tests/test_asmaff.py -q
+Run: python -m pytest source/skills/publish/subskills/publish-bcsc-form/tests/test_asmaff.py -q
 """
 
 import json

@@ -5,7 +5,7 @@ gather-disbursements, itemize-boc and calculate-boc are Code-tab (PC) jobs, as p
 Cowork instruction in the members or their shared workspace reference runs boc_context.py in the
 sandbox shell, requests folder access, or writes a host path with the Write tool.
 
-Run: python -m unittest discover -s .claude/skills/calculate/tests
+Run: python -m unittest discover -s source/skills/calculate/tests
 """
 from __future__ import annotations
 

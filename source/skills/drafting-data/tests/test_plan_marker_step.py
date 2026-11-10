@@ -2,7 +2,7 @@
 fixed step, /draft routes such a job to /job-planning instead of assigning it, and /job-planning
 replaces the marker without touching a done step.
 
-Run: python -m pytest .claude/skills/drafting-data/tests/test_plan_marker_step.py -q
+Run: python -m pytest source/skills/drafting-data/tests/test_plan_marker_step.py -q
 """
 
 import unittest

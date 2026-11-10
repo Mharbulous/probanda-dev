@@ -21,7 +21,7 @@
 // here for the same reason: timecamping.db lives in the same SharePoint/OneDrive
 // -synced `0. CASE DATA` tree as practice.db and time_pipeline.db, where a
 // live handle left on a synced binary risks stale-metadata corruption (see
-// .claude/skills/matter-data/shared/conventions.md §1/§2.1). `query` opens the
+// source/skills/matter-data/shared/conventions.md §1/§2.1). `query` opens the
 // live file directly with mode=ro -- the drafting-data precedent, since the
 // staging discipline binds writes, not reads.
 

@@ -20,8 +20,8 @@ FETCH_GRANT_AGENTS = ("localize-helper.md", "law-getter.md")
 PLAIN_PREFIX = "mcp__plugin_"
 BRIDGE_PREFIX = "mcp__remote-devices__"
 
-RECITAL_RULE_SOURCE = ".claude/skills/shared/authority-claim-verification.md"
-# The copies of the recital rule: files under .claude/skills/, each checked in the
+RECITAL_RULE_SOURCE = "source/skills/shared/authority-claim-verification.md"
+# The copies of the recital rule: files under source/skills/, each checked in the
 # plugin that ships its skill (shared/ ships in every plugin), and agent files,
 # each checked in the plugin that ships the agent.
 RECITAL_RULE_SKILL_MIRRORS = (
@@ -180,7 +180,7 @@ def recital_rule_blocks(path):
 
 def recital_rule_mirrors(plugin):
     """The copies of the recital rule the plugin ships, as repo-relative paths."""
-    skills = [f".claude/skills/{rel}" for rel in RECITAL_RULE_SKILL_MIRRORS
+    skills = [f"source/skills/{rel}" for rel in RECITAL_RULE_SKILL_MIRRORS
               if rel.split("/")[0] == SHARED_TREE or ships_skill(plugin, rel.split("/")[0])]
     agents = [f"{plugin['source']}/agents/{a}.md" for a in RECITAL_RULE_AGENT_MIRRORS if ships_agent(plugin, a)]
     return tuple(skills + agents)

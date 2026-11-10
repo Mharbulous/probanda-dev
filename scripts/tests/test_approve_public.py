@@ -39,7 +39,7 @@ class ApproveTest(unittest.TestCase):
         self.repo = Path(self._tmp.name).resolve()
         fake_repo.write_assignment(self.repo, {"lawyer": {"skills": ["x", "y"]}})
         self.put("source/lawyer/plugin.json", "{}")
-        self.put(".claude/skills/data/SKILL.md", "the private skill\n")
+        self.put("source/skills/data/SKILL.md", "the private skill\n")
         self.put("cloud/pool/notes.md", "the pool\n")
         for rel, text in PUBLIC.items():
             self.put(f"public/{rel}", text)

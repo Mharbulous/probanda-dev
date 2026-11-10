@@ -1600,7 +1600,7 @@ async function readBackfill() {
   const { readFileSync } = await import("node:fs");
   const { fileURLToPath } = await import("node:url");
   const path = fileURLToPath(
-    new URL("../../../../.claude/skills/timecamping-data/references/backfill.sql", import.meta.url)
+    new URL("../../../../source/skills/timecamping-data/references/backfill.sql", import.meta.url)
   );
   return readFileSync(path, "utf-8");
 }
@@ -1609,7 +1609,7 @@ async function readSplice() {
   const { readFileSync } = await import("node:fs");
   const { fileURLToPath } = await import("node:url");
   const path = fileURLToPath(
-    new URL("../../../../.claude/skills/timecamping-data/references/splice.sql", import.meta.url)
+    new URL("../../../../source/skills/timecamping-data/references/splice.sql", import.meta.url)
   );
   return readFileSync(path, "utf-8");
 }

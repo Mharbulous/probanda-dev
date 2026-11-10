@@ -1,14 +1,14 @@
 // Read-only skills-tree surface (MCP file-surface design §2.1-§2.2, §3).
 //
-// Serves `.claude/skills/**` over MCP so a Cowork session can follow a skill
+// Serves the skills tree over MCP so a Cowork session can follow a skill
 // without a repo folder grant and without a FUSE-mounted read. Content arrives
 // as text with no filesystem location, so `read` also returns the file's `dir`
 // -- the base every relative cross-reference inside that file resolves against.
 //
-// `.claude/skills` is the only skills tree (the `.agents/skills` root was
-// retired 2026-08-21). A legacy `.agents/skills/` prefix in a caller-supplied
-// path is still accepted and means the same tree, so older skill text keeps
-// resolving.
+// A checkout has one skills tree: `source/skills` in Probanda, `.claude/skills`
+// in CoClerk (the `.agents/skills` root was retired 2026-08-21). A
+// `source/skills/`, `.claude/skills/` or `.agents/skills/` prefix in a
+// caller-supplied path means that tree, so older skill text keeps resolving.
 //
 // Two copies of that tree can serve a path (#1002). The litigation .plugin
 // ships each roster skill's full source tree under `skills/` plus
@@ -100,8 +100,9 @@ function provenance(
   };
 }
 
-/** Everything up to and including a `.claude/skills/` (or legacy `.agents/skills/`) segment. */
-const SKILLS_PREFIX = /^.*[.](?:agents|claude)[\\/]+skills[\\/]+/i;
+/** Everything up to and including a `source/skills/` segment, or a `.claude/skills/` or
+ *  `.agents/skills/` one, which older skill text and a CoClerk checkout still write. */
+const SKILLS_PREFIX = /^(?:.*[\\/])?(?:source|[.]agents|[.]claude)[\\/]+skills[\\/]+/i;
 
 /**
  * Accept a cross-reference in whatever form it appears inside skill text, so the
@@ -111,7 +112,7 @@ const SKILLS_PREFIX = /^.*[.](?:agents|claude)[\\/]+skills[\\/]+/i;
  * Two normalizations, both scoped to this surface (repo-docs.ts keeps the
  * stricter raw screen):
  *
- *   1. Strip a repo-rooted or absolute `.claude/skills/` prefix, since a skill
+ *   1. Strip a repo-rooted or absolute skills-tree prefix, since a skill
  *      citing the tree explicitly is already rooted.
  *   2. Collapse `..` lexically, so `demo/stages/../shared/x.md` resolves. Note a
  *      `..` that escapes the tree does NOT collapse away -- `demo/../../x.md`
@@ -328,7 +329,7 @@ export function skillSourceList(
 ): SkillSourceListing {
   const e = env || process.env;
   // The `/` sentinel is matched before normalizing, since it would otherwise
-  // normalize to a rooted `\` and be rejected. `.claude/skills/` strips to "",
+  // normalize to a rooted `\` and be rejected. `source/skills/` strips to "",
   // which is the same request.
   const normalizedDir = dir === "/" ? "" : normalizeSkillPath(dir);
   const entries: SkillSourceEntry[] = [];

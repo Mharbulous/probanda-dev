@@ -15,7 +15,7 @@ import { assertMatchesGolden, replaceStamp, seedApplicationResponse } from "./fi
 const HERE = dirname(fileURLToPath(import.meta.url));
 const { bcscFormHarnessPath } = await import("../build/submission/bcsc-form-harness.js");
 // The runtime's own lookup, given an install root with no skill source, so it serves the
-// checkout's .claude/skills copy: plugins/litigation/skills/ is untracked since #1266.
+// checkout's source/skills copy: plugins/litigation/skills/ is untracked since #1266.
 const HARNESS_PATH = bcscFormHarnessPath(process.env, join(HERE, "no-install"));
 const PY_CANDIDATES = [process.env.COCLERK_PYTHON, "python", "python3"].filter(Boolean);
 
@@ -196,7 +196,7 @@ test("Application Response states the respondent's position on the applicant's h
 function runValidate33(path) {
   let lastErr = "";
   for (const py of PY_CANDIDATES) {
-    // -B: write no __pycache__ into the checkout's .claude/skills tree.
+    // -B: write no __pycache__ into the checkout's source/skills tree.
     const res = spawnSync(py, ["-B", HARNESS_PATH, "validate33", path], { encoding: "utf-8" });
     if (res.error) {
       lastErr = String(res.error);

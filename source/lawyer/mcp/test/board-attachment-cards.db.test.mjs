@@ -20,7 +20,7 @@ const { renderWorkBoardHtml } = await import("../build/submission/forms/workboar
 const { attachedDrafts, withCodes } = await import("../build/submission/board-attachments.js");
 const { submissionFormsBoardCard } = await import("../build/submission/matter-pages.js");
 
-const GATE = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", ".claude", "skills", "file-naming", "scripts", "name_gate.py");
+const GATE = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "source", "skills", "file-naming", "scripts", "name_gate.py");
 const META = { revision: 1, matter: "L8470", client: "Larchmont", rendered: "2026-10-27 12:00" };
 const CLIENT = { clientName: "Larchmont", clientNo: "8470", matterNo: "L8470" };
 const LETTER = "2026-10-20 ET Client re award.md";
@@ -31,7 +31,7 @@ const REPLY = "2026-10-08 ZZQ Smith re hearing.md";
 async function fixture(t) {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-attachment-cards-"));
   t.after(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
-  const naming = join(dir, "checkout", ".claude", "skills", "file-naming");
+  const naming = join(dir, "checkout", "source", "skills", "file-naming");
   mkdirSync(join(naming, "scripts"), { recursive: true });
   mkdirSync(join(naming, "references"), { recursive: true });
   copyFileSync(GATE, join(naming, "scripts", "name_gate.py"));

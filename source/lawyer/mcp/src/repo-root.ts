@@ -32,7 +32,7 @@
 //   2. Marker walk-up from this module's own location. Covers dev runs, the
 //      tsc build/ output, and the test suite. In a packaged .plugin install
 //      (extracted under an app-data session directory, no .git or
-//      .claude/skills anywhere above it -- confirmed by inspection) this
+//      skills tree anywhere above it -- confirmed by inspection) this
 //      correctly finds nothing and falls through.
 //   3. %APPDATA%\Coclerk\probanda.json -> optional "repo_root" key. Per-device
 //      config that already exists for this purpose (see
@@ -53,10 +53,19 @@ import { fileURLToPath } from "node:url";
 import { configPath } from "./config-path.js";
 import { DataServerError } from "./errors.js";
 
-/** A dir is a repo root iff it holds SKILLS_MARKER and at least one of CHECKOUT_MARKERS, as directories:
- *  `source/lawyer/mcp` marks a Probanda checkout, `.claude/skills/plugin-packager` a CoClerk checkout. */
-const SKILLS_MARKER = join(".claude", "skills");
-const CHECKOUT_MARKERS = [join("source", "lawyer", "mcp"), join(".claude", "skills", "plugin-packager")] as const;
+/** A dir is a repo root iff it holds one layout's `skills` and `marker`, as directories. A Probanda
+ *  checkout keeps its skills tree at `source/skills`, a CoClerk checkout at `.claude/skills`. */
+const CHECKOUT_LAYOUTS = [
+  { skills: join("source", "skills"), marker: join("source", "lawyer", "mcp") },
+  { skills: join(".claude", "skills"), marker: join(".claude", "skills", "plugin-packager") },
+] as const;
+
+/** The skills tree of a checkout: the first layout's tree that exists, else the Probanda one,
+ *  so a root that holds neither fails downstream naming that path. */
+function checkoutSkillsRoot(repoRoot: string): string {
+  const layout = CHECKOUT_LAYOUTS.find((candidate) => isDirectory(join(repoRoot, candidate.skills)));
+  return join(repoRoot, (layout ?? CHECKOUT_LAYOUTS[0]).skills);
+}
 
 const SELF_DIR = dirname(fileURLToPath(import.meta.url));
 
@@ -129,7 +138,7 @@ function autoDetect(env: NodeJS.ProcessEnv, startDir: string): AutoDetectResult 
 
   const walked = walkUp(startDir);
   if (walked) return remember(cacheKey, walked, tried);
-  tried.push(`walk-up from ${startDir} -- no ancestor holds ${SKILLS_MARKER} with ${CHECKOUT_MARKERS.join(" or ")}`);
+  tried.push(`walk-up from ${startDir} -- no ancestor holds ${CHECKOUT_LAYOUTS.map((layout) => `${layout.skills} with ${layout.marker}`).join(", or ")}`);
 
   const cfgPath = configPath(env);
   const declared = readConfigRepoRoot(cfgPath, tried);
@@ -154,7 +163,7 @@ function remember(cacheKey: string, root: string, tried: string[]): AutoDetectRe
 }
 
 function isRepoRoot(dir: string): boolean {
-  return isDirectory(join(dir, SKILLS_MARKER)) && CHECKOUT_MARKERS.some((marker) => isDirectory(join(dir, marker)));
+  return CHECKOUT_LAYOUTS.some((layout) => isDirectory(join(dir, layout.skills)) && isDirectory(join(dir, layout.marker)));
 }
 
 function walkUp(startDir: string): string | undefined {
@@ -193,7 +202,7 @@ function conventionalCandidates(env: NodeJS.ProcessEnv): string[] {
 export type ShippedFrom = "install" | "checkout";
 
 export interface ShippedRoot {
-  /** `<install>/skills` (native trees, #1266), or `<checkout>/.claude/skills` -- same relative layout. */
+  /** `<install>/skills` (native trees, #1266), or a checkout's skills tree (`source/skills`, or CoClerk's `.claude/skills`) -- same relative layout. */
   root: string;
   /** `install` for this plugin's own install and for a sibling's alike; `plugin` tells them apart. */
   shipped_from: ShippedFrom;
@@ -393,7 +402,7 @@ export function resolveShippedRoot(
   const code = request.code ?? "skills_root_missing";
   try {
     const repoRoot = resolveRepoRoot(env, { code, subject: request.subject ?? "the skills tree" });
-    return { root: join(repoRoot, ".claude", "skills"), shipped_from: "checkout", plugin: null, plugin_version: null };
+    return { root: checkoutSkillsRoot(repoRoot), shipped_from: "checkout", plugin: null, plugin_version: null };
   } catch (err) {
     if (!(err instanceof DataServerError) || err.code !== code) throw err;
     throw new DataServerError(`${err.message}\n\n${rosterLine(installRoot, segment, request.plugin)}`, code);
@@ -429,7 +438,7 @@ function rosterLine(installRoot: string, segment: string, plugin?: string): stri
 }
 
 /**
- * `.claude/skills/matter-data/references/scripts/` -- owns migrate_engine.py.
+ * `source/skills/matter-data/references/scripts/` -- owns migrate_engine.py.
  *
  * Deliberately NOT the sibling `scripts/` dir: migrate_engine.py imports
  * `rebuild` and `resolve_paths`, which are bare sibling imports resolvable only
@@ -445,7 +454,7 @@ export function caseDataMigrateScriptsDir(env?: NodeJS.ProcessEnv, installRoot?:
 }
 
 /**
- * `.claude/skills/timecamping-data/references/scripts/` -- owns migrate_engine.py.
+ * `source/skills/timecamping-data/references/scripts/` -- owns migrate_engine.py.
  *
  * Mirrors caseDataMigrateScriptsDir exactly, one directory over: the
  * /timecamping-data gatekeeper skill's migration engine, resolved the same
@@ -457,7 +466,7 @@ export function timecampingDataMigrateScriptsDir(env?: NodeJS.ProcessEnv, instal
 }
 
 /**
- * `.claude/skills/drafting-data/references/scripts/` -- owns migrate_engine.py.
+ * `source/skills/drafting-data/references/scripts/` -- owns migrate_engine.py.
  *
  * Same shape as the two above: the /drafting-data gatekeeper skill's
  * migration chain, schema, and every migration SQL statement stay in the

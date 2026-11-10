@@ -11,7 +11,7 @@ REFS = SKILL_ROOT / "references"
 CHECK = REFS / "reliance-check.md"
 TRACER = REPO / "source" / "litigator" / "agents" / "source-tracer.md"
 SCRIVENER = REPO / "source" / "lawyer" / "agents" / "scrivener.md"
-MATTER_DATA = REPO / ".claude" / "skills" / "matter-data"
+MATTER_DATA = REPO / "source" / "skills" / "matter-data"
 APPLY = MATTER_DATA / "operations" / "reliance-verify.md"
 
 

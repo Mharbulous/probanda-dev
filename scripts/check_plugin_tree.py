@@ -64,7 +64,7 @@ def shipped_manifest(repo, plugin):
 
 
 def skill_source_expected(root, roster_names, assets, extra=EXTRA_TREES):
-    """The `.claude/skills/`-relative paths the plugin should ship under `skills/`:
+    """The `source/skills/`-relative paths the plugin should ship under `skills/`:
     every allowlisted text file under each roster skill and each extra tree, plus every
     file in one of that skill's declared asset dirs (an Office lock file excepted)."""
     expected = set()
@@ -114,7 +114,7 @@ def skill_source_hit_counts(repo, plugin, shipped_rels):
         text = _text_of(os.path.join(skills_root(repo), *rel.split("/")))
         if text is None:
             continue
-        key = f".claude/skills/{rel}"
+        key = f"source/skills/{rel}"
         for scan, find in (("host_path", HOST_PATH.findall), ("matter_code", matter_codes)):
             n = len(find(text))
             if n:
@@ -141,7 +141,7 @@ def shipped_tree_purity(repo, plugin, manifest, roster_names, assets, baseline, 
     shipped = set()
     public_dirs, public = public_skill_dirs(repo), set(public_skills(repo, plugin))
     for top in sorted(set(public_dirs) & (tops | set(os.listdir(root) if os.path.isdir(root) else ()))):
-        hits.append(f"skill in both public/ and .claude/skills/: {top}")
+        hits.append(f"skill in both public/ and source/skills/: {top}")
     public_shipped = set()
     for sha, arcname in manifest:
         if not arcname.startswith(SHIPPED_PREFIX):

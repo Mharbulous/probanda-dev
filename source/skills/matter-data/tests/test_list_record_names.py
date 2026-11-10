@@ -4,7 +4,7 @@ records, which the suggestion cross-check spawns (design decision #74).
 Each fixture is a matter-data folder holding a main.sqlite built from the canonical
 schema.sql and stamped at the current version.
 
-Run: python -m unittest discover -s .claude/skills/matter-data/tests -p "test_list_record_names.py"
+Run: python -m unittest discover -s source/skills/matter-data/tests -p "test_list_record_names.py"
 """
 
 import sqlite3

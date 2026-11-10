@@ -26,7 +26,7 @@ const KEY = "note-up:authorities:5";
 const ITEM = "Smith v. Jones, 2023 BCCA 182";
 const DELETED_TITLE = "Note up the Smith authority";
 
-const REFERENCES = new URL("../../../../.claude/skills/", import.meta.url);
+const REFERENCES = new URL("../../../../source/skills/", import.meta.url);
 const doc = (rel) => readFileSync(new URL(rel, REFERENCES), "utf-8").replace(/\r\n/g, "\n");
 const CLOSEOUT = doc("drafting-data/references/jobs-closeout.md");
 const CREATE = doc("drafting-data/references/jobs-create.md");

@@ -2,7 +2,7 @@
 // Regulations Bulletin lists against a consolidated B.C. Reg. with an effective
 // date after the consolidation's marker date, and the provisions each amends as
 // its B.C. Gazette Part II text names them. Rules:
-// .claude/skills/shared/legislation-currency.md. It quotes the
+// source/skills/shared/legislation-currency.md. It quotes the
 // publisher's own words and never states what an amendment does or whether it
 // matters.
 

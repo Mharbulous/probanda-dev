@@ -1,6 +1,6 @@
 // Form 32 filed-face emitter (issue #392, handoff contract settled in #376).
 // Produces form-32.md in the strict grammar owned by
-// .claude/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md
+// source/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md
 // (SSOT) -- consumed by publish-bcsc-form's asm32 operation, which hard-
 // validates and fills the court-ready .docx. Not a strip pass over
 // render-notice-of-application.ts's mockup: that mockup prints Part 3

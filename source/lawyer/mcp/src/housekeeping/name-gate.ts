@@ -1,6 +1,6 @@
 // /file-naming's name gate, run host-side for /housekeeping's resolve (spec §B9.1, §B9.4).
 //
-// The grammar stays in `.claude/skills/file-naming/scripts/name_gate.py`; nothing here parses a
+// The grammar stays in `source/skills/file-naming/scripts/name_gate.py`; nothing here parses a
 // name. runPythonDriver passes no argv, so a small driver feeds the gate's own CLI entry point
 // (`name_gate.main(argv)`) once per flag-token set, all in one spawn, and collects each call's
 // printed results.

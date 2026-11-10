@@ -4,7 +4,7 @@ The template's response line names the notice by its date, its Rule 8-1(10)(b)(i
 paragraph is replaced by the emitter's sentence or removed on "Nil.", and a form over 10 pages
 (the NOT FINAL cover not counted) gets an advisory, never a block.
 
-Run: python -m pytest .claude/skills/publish/subskills/publish-bcsc-form/tests/test_form33_reg_105_2026.py -q
+Run: python -m pytest source/skills/publish/subskills/publish-bcsc-form/tests/test_form33_reg_105_2026.py -q
 """
 
 import sys

@@ -6,7 +6,7 @@ deliverable's. The deliverable is refused, naming the rule_ref, and is written o
 item reads confirmed. A letterhead render reports overridden_by_letterhead once. Output is
 named from --out-name, and a taken name gets the next " vN": nothing is ever overwritten.
 
-Run: python -m unittest discover -s .claude/skills/publish/tests
+Run: python -m unittest discover -s source/skills/publish/tests
 """
 from __future__ import annotations
 

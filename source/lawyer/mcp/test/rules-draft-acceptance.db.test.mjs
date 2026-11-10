@@ -28,7 +28,7 @@ const { callTool } = await import("../build/dispatch.js");
 const { skillRulesApplicable } = await import("../build/files/skill-rules.js");
 const { loadRulesDag } = await import("../build/files/rules-dag.js");
 
-const DRAFT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", ".claude", "skills", "draft");
+const DRAFT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "source", "skills", "draft");
 const WORK = join(DRAFT, "..", "work");
 const OPEN_RULE = "draft.test.open-then";
 const DISPATCH_RULE = "draft.test.dispatch-choose";
@@ -50,7 +50,7 @@ test.after(() => rmSync(scratch, { recursive: true, force: true }));
 /** A checkout holding a copy of the real /draft skill (SKILL.md, references and node map, plus `extra` node rules) and of /work. */
 function checkout(t, extra) {
   const root = mkdtempSync(join(tmpdir(), "coclerk-rules-draft-"));
-  const skill = join(root, ".claude", "skills", "draft");
+  const skill = join(root, "source", "skills", "draft");
   mkdirSync(join(skill, "references"), { recursive: true });
   mkdirSync(join(skill, "rules", "nodes"), { recursive: true });
   copyFileSync(join(DRAFT, "SKILL.md"), join(skill, "SKILL.md"));
@@ -61,7 +61,7 @@ function checkout(t, extra) {
     copyFileSync(join(DRAFT, "rules", "nodes", name), join(skill, "rules", "nodes", name));
   }
   for (const [name, text] of Object.entries(extra)) appendFileSync(join(skill, "rules", "nodes", name), text);
-  const work = join(root, ".claude", "skills", "work");
+  const work = join(root, "source", "skills", "work");
   mkdirSync(join(work, "references"), { recursive: true });
   copyFileSync(join(WORK, "SKILL.md"), join(work, "SKILL.md"));
   for (const e of readdirSync(join(WORK, "references"), { withFileTypes: true })) {

@@ -62,7 +62,7 @@ export interface EmitForm32Refusal {
 /**
  * The Form 32 filed-face emitter (issue #392, handoff contract #376):
  * strict-grammar form-32.md for one notice_of_application filing, per
- * .claude/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md
+ * source/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md
  * (SSOT). Writes nothing to disk -- mirrors submissionFormsRender's
  * renderMode:'filed' precedent: under the contract's "Division of
  * discipline" the emitter owns filed-face content and the caller owns
@@ -158,7 +158,7 @@ export interface EmitForm33Refusal {
 /**
  * The Form 33 filed-face emitter (issue #386, handoff contract #376):
  * strict-grammar form-33.md for one application_response filing, per
- * .claude/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md
+ * source/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md
  * (SSOT). Mirrors submissionFormsEmitForm32 (#392) exactly -- same
  * write-nothing-to-disk shape, same ahead-of-bundle schema gate, same
  * optional host-side write given caseDataFolder, same publish sidecar and lenient emit.

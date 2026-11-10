@@ -86,7 +86,7 @@ not a stylistic preference.
    From the repo root the same call is:
 
    ```bash
-   python .claude/skills/verify-law/scripts/diff_excerpt.py --excerpt-file <excerpt.txt> --source <resolved document>
+   python source/skills/verify-law/scripts/diff_excerpt.py --excerpt-file <excerpt.txt> --source <resolved document>
    ```
 
    The excerpt text is supplied by the caller as bare text. This skill never reads it from any

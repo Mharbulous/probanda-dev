@@ -1,6 +1,6 @@
 ---
 journey: Render and review the mockup
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: any drafting journey reaches a point where something was written — or the practitioner simply asks to see the current state of a document
 outcome: the practitioner has opened the one current mockup of the document, read the outstanding work off its markers without a manual, and asked for the next change in plain words
@@ -49,4 +49,4 @@ Every other journey funnels into this one. Whatever was just written — a new s
 
 ## What happens next
 
-In v1 the mockup is this pipeline's only output — there is no export to Word or PDF yet. The road from Word draft through sworn to filed is the data journey `.claude/skills/drafting-data/User_Journeys/drafted-document-lifecycle.md`.
+In v1 the mockup is this pipeline's only output — there is no export to Word or PDF yet. The road from Word draft through sworn to filed is the data journey `source/skills/drafting-data/User_Journeys/drafted-document-lifecycle.md`.

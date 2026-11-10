@@ -8,7 +8,7 @@ Goal: a spec for restructuring the skills this session used, so future sessions 
 
 1. **Inventory.** From this session's transcript, list every skill you used and each reference file and section you read. Mark each item: needed, read but not needed, needed but found late, skipped, or never reached.
 
-2. **Read the current source.** Open each listed skill's SKILL.md and the reference files involved, so every location in the spec is quoted from the file, not from memory. In a probanda-dev checkout, read `.claude/skills/<skill>/`. Elsewhere, such as Cowork, read the installed copy from the base directory the skill's load message named.
+2. **Read the current source.** Open each listed skill's SKILL.md and the reference files involved, so every location in the spec is quoted from the file, not from memory. In a probanda-dev checkout, read `source/skills/<skill>/`. Elsewhere, such as Cowork, read the installed copy from the base directory the skill's load message named.
 
 3. **Diagnose.** For each item read but not needed, and each item needed but found late, skipped or never reached, name its cause:
    1. Bloat: situational SKILL.md content most sessions don't need.
@@ -20,7 +20,7 @@ Goal: a spec for restructuring the skills this session used, so future sessions 
    - Hub and spoke: SKILL.md is the hub holding every signpost. Reference files are one level deep and never point to another reference file in the same skill.
    - Each signpost states when to read its target, precisely enough to be followed only when it applies.
    - A hand-off to another skill lands on a new, self-signposting hub, so cross-skill references are fine.
-   - Material used by several skills goes in `.claude/skills/shared/`, which each SKILL.md points to directly.
+   - Material used by several skills goes in `source/skills/shared/`, which each SKILL.md points to directly.
 
 5. **Write the spec.** For each proposed change give:
    - source location (file and section)
@@ -28,4 +28,4 @@ Goal: a spec for restructuring the skills this session used, so future sessions 
    - destination
    - the exact replacement pointer text
 
-   Every location names the source path (`.claude/skills/<skill>/...` or `source/...`), never a built `plugins/` path or an installed copy's path. Save the spec as `docs/skill-streamlining/<YYYY-MM-DD>_<skill-names>.md` in the probanda-dev repo. Where the repo is not granted as a folder, such as Cowork, write it with `repo_docs__write` (under whichever of `mcp__plugin_lawyer_data__repo_docs__write` and `mcp__remote-devices__plugin_lawyer_data__repo_docs__write` this host grants), whose `path` is relative to `docs/` (`skill-streamlining/<YYYY-MM-DD>_<skill-names>.md`). Report the path and a one-paragraph summary.
+   Every location names the source path (`source/skills/<skill>/...` or `source/...`), never a built `plugins/` path or an installed copy's path. Save the spec as `docs/skill-streamlining/<YYYY-MM-DD>_<skill-names>.md` in the probanda-dev repo. Where the repo is not granted as a folder, such as Cowork, write it with `repo_docs__write` (under whichever of `mcp__plugin_lawyer_data__repo_docs__write` and `mcp__remote-devices__plugin_lawyer_data__repo_docs__write` this host grants), whose `path` is relative to `docs/` (`skill-streamlining/<YYYY-MM-DD>_<skill-names>.md`). Report the path and a one-paragraph summary.

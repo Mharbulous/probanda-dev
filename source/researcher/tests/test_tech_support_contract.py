@@ -44,7 +44,7 @@ class TechSupportContract(unittest.TestCase):
         for mode in ("diagnose", "screen"):
             name = f"probanda-troubleshooting/references/{mode}.md"
             self.assertIn(name, self.text)
-            self.assertTrue((REPO_ROOT / ".claude" / "skills" / name).is_file(), name)
+            self.assertTrue((REPO_ROOT / "source" / "skills" / name).is_file(), name)
 
 
 if __name__ == "__main__":

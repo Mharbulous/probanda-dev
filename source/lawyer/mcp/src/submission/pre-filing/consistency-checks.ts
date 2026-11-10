@@ -3,7 +3,7 @@
 // database. Every comparison is anchored to a database value -- text alone cannot
 // say that two different numbers were meant to be the same fact. Same contract,
 // ordering and determinism as checks.ts; the authoritative rules are
-// .claude/skills/drafting-data/references/pre-filing-checks.md.
+// source/skills/drafting-data/references/pre-filing-checks.md.
 
 import type { ExtractedDocument } from "./extract.js";
 import { EXHIBIT_FILE_RE, extractExhibitReferences, looksSigned, sortFindings, type CheckResult, type Finding } from "./checks.js";

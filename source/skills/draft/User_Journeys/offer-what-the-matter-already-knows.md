@@ -1,6 +1,6 @@
 ---
 journey: Offer what the matter already knows
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: /draft invoked to start a Writing, on a matter whose drafting database predates the current schema and whose proceeding has not yet been recorded
 outcome: the database is brought current without conversation, the proceeding and its parties are recorded once from confirmed details the matter already held, and the Writing's mockup is presented — the practitioner re-typed nothing
@@ -21,7 +21,7 @@ source: effort owner's flow selection, 2026-08-23
 
    Then straight on to the work. (A migrate on entry was observed live in `docs/E2E-tests/2026-08-23-1220 draft-submission-e2e-test.md` §3.6–3.7.)
 
-3. **Assistant:** this matter has no proceeding on record yet, so the shared prologue comes first — the proceeding and every party with their role, gathered once and reused by every later Writing (`.claude/skills/drafting-data/references/filing-checklists.md` §0). But instead of opening with blank questions, the assistant first consults `/matter-data` and the practice database's matter lookup, and proposes what the matter already knows:
+3. **Assistant:** this matter has no proceeding on record yet, so the shared prologue comes first — the proceeding and every party with their role, gathered once and reused by every later Writing (`source/skills/drafting-data/references/filing-checklists.md` §0). But instead of opening with blank questions, the assistant first consults `/matter-data` and the practice database's matter lookup, and proposes what the matter already knows:
 
    > This proceeding isn't recorded yet. From the matter file, here is what I would record — confirm or correct anything:
    >

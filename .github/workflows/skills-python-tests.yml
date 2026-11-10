@@ -1,4 +1,4 @@
-# Runs every Python test in this repo (.claude/skills/**, source/*/tests, scripts/tests) on a
+# Runs every Python test in this repo (source/skills/**, source/*/tests, scripts/tests) on a
 # clean Windows checkout. Ported from CoClerk's skills-python-tests.yml (shape settled there on #1038).
 # Windows only, like data-mcp-tests.yml: the skills resolve Windows paths.
 #
@@ -49,7 +49,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: >-
           bash .github/scripts/changed-since-tested.sh skills-python-tests.yml
-          '^(\.claude/skills/|source/|scripts/|plugins/|\.github/workflows/skills-python-tests\.yml$)'
+          '^(source/skills/|source/|scripts/|plugins/|\.github/workflows/skills-python-tests\.yml$)'
 
   test:
     needs: changed
@@ -98,7 +98,7 @@ jobs:
               echo "--- $dir failed (exit $code) ---" | tee -a "$log"
               status=1
             fi
-          done < <(find .claude/skills source/*/tests scripts/tests -name 'test_*.py' | sed 's#/[^/]*$##' | sort -u)
+          done < <(find source/skills source/*/tests scripts/tests -name 'test_*.py' | sed 's#/[^/]*$##' | sort -u)
           [ "$count" -gt 0 ] || { echo "no test folders found"; exit 1; }
           exit $status
 

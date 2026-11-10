@@ -44,7 +44,7 @@ PRIVATE = {
     "source/lawyer/plugin.json": "{}",
     "cloud/pool/notes.md": "the pool\n",
     "plugins/lawyer/skills/secret/SKILL.md": "the development plugin\n",
-    ".claude/skills/data/schema.sql": f"{DDL};\n",
+    "source/skills/data/schema.sql": f"{DDL};\n",
 }
 
 

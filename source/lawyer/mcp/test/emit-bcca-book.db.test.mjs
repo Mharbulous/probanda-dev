@@ -1,5 +1,5 @@
 // Tests for the bcca-book.md filed-face emitter (drafting_forms__emit_bcca_book), per
-// .claude/skills/publish/subskills/publish-bcca-book/references/bcca-book-contract.md (SSOT). Reuses the
+// source/skills/publish/subskills/publish-bcca-book/references/bcca-book-contract.md (SSOT). Reuses the
 // same CA52140-shaped fixture as bcca-stay-response.db.test.mjs so both the mockup and this
 // emitter exercise identical underlying data -- the cross-check test below depends on that.
 
@@ -15,7 +15,7 @@ import { assertMatchesGolden } from "./fixtures/forms-render-seeds.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 // The contract's own acceptance oracle (bcca-book-contract.md, "CLI acceptance oracle"), the
 // same way emit-bcca-factum.db.test.mjs runs fill_factum.py --validate. resolveShippedRoot, given an
-// install root with no skill source, serves the checkout's .claude/skills copy:
+// install root with no skill source, serves the checkout's source/skills copy:
 // plugins/litigation/skills/ is untracked since #1266.
 const { resolveShippedRoot } = await import("../build/repo-root.js");
 const BOOK_SCRIPT = ["publish", "scripts", "fill_book.py"];
@@ -43,7 +43,7 @@ function validate(dir, markdown) {
   writeFileSync(path, markdown, "utf-8");
   let lastErr = "";
   for (const py of PY_CANDIDATES) {
-    // -B: write no __pycache__ into the checkout's .claude/skills tree.
+    // -B: write no __pycache__ into the checkout's source/skills tree.
     const res = spawnSync(py, ["-B", VALIDATOR, "--validate", path], { encoding: "utf-8" });
     if (res.error) {
       lastErr = String(res.error);

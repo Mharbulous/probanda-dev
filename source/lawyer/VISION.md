@@ -190,7 +190,7 @@ The following examples illustrate how the principles in Section 3 apply to curre
 - File, serve, or send anything on the practitioner's behalf. Drafts are mockups, and the practitioner decides what reaches a court, a party, or a client
 - Sign anything for the lawyer. No output carries the lawyer's signature or anything presented as one, so nothing the plugin produces can appear to bear the lawyer's approval. The lawyer signs their own documents, by whatever means they choose (Adobe Acrobat, ink). This holds even when the lawyer asks: the plugin refuses and tells the lawyer they must sign it themselves
 - State the law from web search, training knowledge, or secondary commentary. A statement of law comes only from the `research-agent` agent through `/legal-research`, or it is not made
-- Do legal work that does not serve a live issue in a client matter being billed (see `.claude/skills/shared/live-issue-test.md`)
+- Do legal work that does not serve a live issue in a client matter being billed (see `source/skills/shared/live-issue-test.md`)
 - Decide which matters to take on or decline
 - Choose billing rates or fee arrangements
 - Make judgment calls about litigation strategy

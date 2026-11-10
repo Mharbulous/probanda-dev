@@ -26,7 +26,7 @@ function rendererDocumentTypes() {
 
 /** The italic terms of terms-and-symbols.md's "Banned terms" paragraph. */
 function bannedTerms() {
-  const text = readFileSync(new URL("../../../../.claude/skills/drafting-data/references/terms-and-symbols.md", import.meta.url), "utf-8");
+  const text = readFileSync(new URL("../../../../source/skills/drafting-data/references/terms-and-symbols.md", import.meta.url), "utf-8");
   const paragraph = text.split("**Banned terms**")[1].split(". Where")[0];
   return [...paragraph.matchAll(/\*([^*]+)\*/g)].map((m) => m[1].toLowerCase());
 }

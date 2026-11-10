@@ -5,7 +5,7 @@ Each fixture is a temp matter tree with a `6. LAW` folder and a matter-data fold
 law.sqlite built from the canonical schema.sql. The Word conversion test calls Microsoft Word and
 is skipped where Word is not installed.
 
-Run: python -m pytest .claude/skills/matter-data/tests/test_resolve_authority_source.py -q
+Run: python -m pytest source/skills/matter-data/tests/test_resolve_authority_source.py -q
 """
 
 import hashlib

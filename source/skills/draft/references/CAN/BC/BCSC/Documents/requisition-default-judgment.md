@@ -19,4 +19,4 @@ Forum: BC Supreme Court. Assembly route: none in v1.
 
 ## Deployment
 
-A newly drafted order reaches the venue form. To hold one back, deploy it nowhere. Facts and submissions reach no document, since the form has no section for them. A Writing with Written Arguments follows `.claude/skills/drafting-data/references/filing-checklists.md` §9 instead.
+A newly drafted order reaches the venue form. To hold one back, deploy it nowhere. Facts and submissions reach no document, since the form has no section for them. A Writing with Written Arguments follows `source/skills/drafting-data/references/filing-checklists.md` §9 instead.

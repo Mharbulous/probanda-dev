@@ -8,7 +8,7 @@ Usage:
 
 Ported from CoClerk's plugin-packager `direct_mode.py check litigation`, with
 every path and identifier moved to this repo: skill sources under
-.claude/skills/ (the keys of a plugin's roster.json, plus shared/ and
+source/skills/ (the keys of a plugin's roster.json, plus shared/ and
 legal-commons/), plugin sources under source/<plugin>/, and the built plugin
 under plugins/<plugin>/.
 

@@ -1,6 +1,6 @@
 ---
 journey: Run an admission route end to end
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: practitioner asks to seek admissions of chosen facts and documents by Notice to Admit
 outcome: every requested item climbs its ladder — drafted, served, waited on, classified or deemed, surviving a strike where one lands — until the admission is entered before the tribunal and the line goes clean
@@ -25,7 +25,7 @@ source: effort owner's flow selection, 2026-08-23; steps 2, 6 and 10 amended 202
 
 5. **Practitioner:** (weeks later) the response has arrived and hands it over.
 
-6. **Assistant:** records the response and reads back, item by item, how the response appears to answer each — 🤝 admitted, 🙅🏻‍♂️ denied, 🫸 refused, 🤷 no knowledge — quoting the response's own words for each, and asks the practitioner to confirm or correct the classification before it is recorded. An item the response is silent on counts as unanswered on that item, so it lands ⏰ deemed admission, and the assistant says which items those are. Once the practitioner has confirmed each, the mockup re-renders and the ladder is legible at a glance — each 🤝 and ⏰ now shows the capture work it routes (📑 the passage, 📌 the pinpoint into the notice and response — the exhibit pair, because a Notice to Admit and its response are answers drafted by counsel, where interrogatories or an examination would owe 💬 and 🧷 for the party's own words), while each 🙅🏻‍♂️ 🫸 🤷 hands its fact to the evidence branch (see `.claude/skills/drafting-data/User_Journeys/fact-work-on-the-witness-statement.md`).
+6. **Assistant:** records the response and reads back, item by item, how the response appears to answer each — 🤝 admitted, 🙅🏻‍♂️ denied, 🫸 refused, 🤷 no knowledge — quoting the response's own words for each, and asks the practitioner to confirm or correct the classification before it is recorded. An item the response is silent on counts as unanswered on that item, so it lands ⏰ deemed admission, and the assistant says which items those are. Once the practitioner has confirmed each, the mockup re-renders and the ladder is legible at a glance — each 🤝 and ⏰ now shows the capture work it routes (📑 the passage, 📌 the pinpoint into the notice and response — the exhibit pair, because a Notice to Admit and its response are answers drafted by counsel, where interrogatories or an examination would owe 💬 and 🧷 for the party's own words), while each 🙅🏻‍♂️ 🫸 🤷 hands its fact to the evidence branch (see `source/skills/drafting-data/User_Journeys/fact-work-on-the-witness-statement.md`).
 
 7. **Practitioner:** (later) opposing counsel applied and one deemed admission was struck; a fresh response period was ordered. Separately, a late answer to another item arrived, and the practitioner asks whether it displaces that item's deemed admission.
 

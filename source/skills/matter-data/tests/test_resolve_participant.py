@@ -4,7 +4,7 @@ matter_data__resolve_participant (design-decisions.md #65, #66).
 Each fixture is a matter-data folder holding a main.sqlite built from the
 canonical schema.sql and stamped at the current version. Every name is invented.
 
-Run: python -m unittest discover -s .claude/skills/matter-data/tests -p "test_resolve_participant.py"
+Run: python -m unittest discover -s source/skills/matter-data/tests -p "test_resolve_participant.py"
 """
 
 import sqlite3

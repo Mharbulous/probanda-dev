@@ -6,7 +6,7 @@ relationship and the png content type. The signer must be an active roster lawye
 signature is placed only when this machine's `person` is the signer, and a `signature`
 whose file is absent, an unknown signer or a missing template stops the render.
 
-Run: python -m unittest discover -s .claude/skills/publish/tests
+Run: python -m unittest discover -s source/skills/publish/tests
 """
 from __future__ import annotations
 

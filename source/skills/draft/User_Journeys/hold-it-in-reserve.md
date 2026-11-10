@@ -1,6 +1,6 @@
 ---
 journey: Hold it in reserve (and bring it back)
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: mid-drafting, the practitioner says "don't put that in yet" about a submission, an authority, or a piece of evidence
 outcome: the material moves to the mockup's trailing *Held in reserve* section — always visible to the practitioner, never on the filed face — and one later sentence brings it back
@@ -38,4 +38,4 @@ source: effort owner's flow selection, 2026-08-23
 - **Reserved is deferred work, not finished work.** 🂡 marks a pending deploy-or-abandon decision, and 🤥 names its impeachment species. The hold posture is orthogonal to the work markers: a reserved item keeps its own to-dos, and both render together.
 - **Bringing it back is symmetric.** Nothing is deleted by reserving, so "actually, put that in" is a complete instruction — the material returns to the filed face on the next render with its work intact.
 
-Related data journeys: `.claude/skills/drafting-data/User_Journeys/broad-sweep-to-verified-authority.md` (tier-3 authority leads render under the same held-in-reserve rule) and `.claude/skills/drafting-data/User_Journeys/fact-work-on-the-witness-statement.md` (the trailing-section mechanism carrying drafting to-dos).
+Related data journeys: `source/skills/drafting-data/User_Journeys/broad-sweep-to-verified-authority.md` (tier-3 authority leads render under the same held-in-reserve rule) and `source/skills/drafting-data/User_Journeys/fact-work-on-the-witness-statement.md` (the trailing-section mechanism carrying drafting to-dos).

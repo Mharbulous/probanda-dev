@@ -527,7 +527,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       name: formsPrefixed("emit_form32"),
       description:
         "Emit the strict-grammar Form 32 filed face (issue #392) for one notice_of_application filing, per " +
-        ".claude/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md (SSOT) -- the input " +
+        "source/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md (SSOT) -- the input " +
         "publish-bcsc-form's " +
         "asm32 operation hard-validates and fills into the court-ready .docx. Writes nothing to disk; returns " +
         "{ file_name: 'form-32.md', markdown, warnings }; a lenient emit's warnings also name each Part 2 fact with no " +
@@ -567,7 +567,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       name: formsPrefixed("emit_bcca_book"),
       description:
         "Emit the response-book and Book of Authorities data for one bcca_stay_response or bcca_factum filing, per " +
-        ".claude/skills/publish/subskills/publish-bcca-book/references/bcca-book-contract.md (SSOT) -- /publish " +
+        "source/skills/publish/subskills/publish-bcca-book/references/bcca-book-contract.md (SSOT) -- /publish " +
         "with publish-bcca-book fills this into the court-ready Word documents: four for a stay response (the Response " +
         "Book's cover page and table of contents, the Book of Authorities' cover page and table of contents), and for a " +
         "factum the two Book of Authorities documents alone, since a factum has no response-book half. " +
@@ -594,7 +594,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       name: formsPrefixed("emit_bcca_factum"),
       description:
         "Emit the respondent's factum filed face for one bcca_factum filing, per " +
-        ".claude/skills/publish/subskills/publish-bcca-factum/references/bcca-factum-contract.md (SSOT) -- /publish " +
+        "source/skills/publish/subskills/publish-bcca-factum/references/bcca-factum-contract.md (SSOT) -- /publish " +
         "with publish-bcca-factum fills it into the court's respondent's factum template. dated_on " +
         "(YYYY-MM-DD) is the date the factum is dated; it is never stored. Writes nothing to disk; returns " +
         "{ file_name: 'bcca-factum.md', markdown }. The caller writes the markdown to " +
@@ -619,7 +619,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       name: formsPrefixed("emit_form33"),
       description:
         "Emit the strict-grammar Form 33 filed face (issue #386) for one application_response filing, per " +
-        ".claude/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md (SSOT) -- the input " +
+        "source/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md (SSOT) -- the input " +
         "publish-bcsc-form's " +
         "asm33 operation hard-validates and fills into the court-ready .docx. Writes nothing to disk; returns " +
         "{ file_name: 'form-33.md', markdown }. The caller writes the markdown to the matter's substance folder " +
@@ -1015,7 +1015,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "Writes nothing: the gate reports, a job fixes. package_dir must be an absolute folder beneath the matter's " +
         "0. DRAFT folder, never inside privileged/ or disclosed/. Refuses a retired filing and a database ahead of the " +
         "installed bundle's schema (bundle_outdated true). The authoritative check list is " +
-        ".claude/skills/drafting-data/references/pre-filing-checks.md.",
+        "source/skills/drafting-data/references/pre-filing-checks.md.",
       inputSchema: {
         type: "object",
         properties: {

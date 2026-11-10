@@ -4,7 +4,7 @@
 Usage:
   python scripts/check_internals.py      list every hit; exit 1 on any
 
-The runtime doctrine `.claude/skills/shared/internals-confidentiality.md` keeps
+The runtime doctrine `source/skills/shared/internals-confidentiality.md` keeps
 Probanda's internals out of everything user-visible. This lint enforces it where
 the text is fixed in source, in four places:
 

@@ -14,7 +14,7 @@ Decision rule
   4. Otherwise (main session)                                       -> allow.
 
 The skill's own first gate line is the backstop for a subagent that reads
-SKILL.md without the Skill tool. Policy: .claude/skills/shared/legal-research.md
+SKILL.md without the Skill tool. Policy: source/skills/shared/legal-research.md
 
 Registered in plugins/litigation/.claude-plugin/plugin.json. Fails OPEN on any
 unexpected error, loudly.

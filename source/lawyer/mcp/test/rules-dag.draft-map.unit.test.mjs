@@ -14,7 +14,7 @@ const { skillRulesApplicable, skillRulesCoverage } = await import("../build/file
 
 test("the real /draft map loads with no lint error, one node per file, and leaves no SKILL.md line unmapped", () => {
   const dag = loadRulesDag("draft");
-  assert.equal(dag.nodes.length, readdirSync(join(REPO, ".claude", "skills", "draft", "rules", "nodes")).length);
+  assert.equal(dag.nodes.length, readdirSync(join(REPO, "source", "skills", "draft", "rules", "nodes")).length);
   assert.equal(dag.byId.has("draft/session"), true);
   assert.deepEqual(
     skillRulesCoverage("draft").files.filter((f) => f.lines_unmapped > 0).map((f) => f.path),

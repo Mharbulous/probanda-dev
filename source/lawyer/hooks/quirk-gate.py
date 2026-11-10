@@ -31,7 +31,7 @@ try:
     HERE = Path(__file__).resolve()
     # shared/scripts in the built plugin, else in this repo's source tree
     sys.path[:0] = [str(p) for p in (HERE.parents[1] / "skills" / "shared" / "scripts",
-                                     HERE.parents[3] / ".claude" / "skills" / "shared" / "scripts") if p.is_dir()]
+                                     HERE.parents[2] / "skills" / "shared" / "scripts") if p.is_dir()]
     import hook_io
     from transcript import STRUCK, approval, norm, practitioner_turns
     # The word list that says a practitioner is asking to remove or replace a rule is rule-gate's.

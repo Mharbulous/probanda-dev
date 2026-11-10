@@ -4,7 +4,7 @@
 // Generate run's context.json: its `caption` is the style of proceeding and the other caption fields,
 // read here from the drafting database (counsel from case data, as partiesFor reads it), and its
 // `warnings` are what the filler prints on the document's NOT FINAL cover page. The sidecar's grammar
-// is owned by .claude/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md.
+// is owned by source/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md.
 
 import { groupPartiesByRole, pluralizeRole } from "./forms/components.js";
 import type { RenderContext } from "./forms/render-context.js";

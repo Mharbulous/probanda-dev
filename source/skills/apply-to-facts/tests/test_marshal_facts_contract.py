@@ -4,7 +4,7 @@ Static contract for the marshal-facts agent and the /apply-to-facts skill that
 dispatches it (spec Engineering/1. Design/2026-10-04_marshal-facts-agent-spec.md,
 section 10, tests 5 and 6).
 
-Run: python -m unittest discover -s .claude/skills/apply-to-facts/tests
+Run: python -m unittest discover -s source/skills/apply-to-facts/tests
 """
 
 import re
@@ -13,8 +13,8 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[4]
 AGENT = REPO / "source" / "litigator" / "agents" / "marshal-facts.md"
-SKILL = REPO / ".claude" / "skills" / "apply-to-facts" / "SKILL.md"
-SCHEMA = REPO / ".claude" / "skills" / "matter-data" / "references" / "schema.sql"
+SKILL = REPO / "source" / "skills" / "apply-to-facts" / "SKILL.md"
+SCHEMA = REPO / "source" / "skills" / "matter-data" / "references" / "schema.sql"
 
 EXPECTED_TOOLS = [
     "Read",

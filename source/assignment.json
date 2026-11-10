@@ -1,6 +1,6 @@
 {
   "status": "cutover",
-  "note": "The plugin each unit ships in since the plugin split (docs/Plans/2026-10-13_four-plugin-split.md). A skill is named by its folder under .claude/skills/ or public/plugins/*/skills/, an agent by its file under source/<plugin>/agents/, a hook by its script's path from the repo root. A plugin's \"payload\" names the files and folders of source/<plugin>/ that the build copies whole, and its \"executables\" the payload files the build marks executable. \"shared\": false leaves the shared/ tree out of a plugin.",
+  "note": "The plugin each unit ships in since the plugin split (docs/Plans/2026-10-13_four-plugin-split.md). A skill is named by its folder under source/skills/ or public/plugins/*/skills/, an agent by its file under source/<plugin>/agents/, a hook by its script's path from the repo root. A plugin's \"payload\" names the files and folders of source/<plugin>/ that the build copies whole, and its \"executables\" the payload files the build marks executable. \"shared\": false leaves the shared/ tree out of a plugin.",
   "plugins": {
     "lawyer": {
       "requires": [],
@@ -57,7 +57,7 @@
         "ai-noticed-card": "source/lawyer/hooks/ai-noticed-card.py",
         "client-file-label": "source/lawyer/hooks/client-file-label.py",
         "hidden-skills-note": "source/lawyer/hooks/hidden-skills-note.py",
-        "inject-practice-quirks": ".claude/skills/practice-data/hooks/inject-practice-quirks.py",
+        "inject-practice-quirks": "source/skills/practice-data/hooks/inject-practice-quirks.py",
         "inject-preferences": "source/lawyer/hooks/inject-preferences.py",
         "mail-send-gate": "source/lawyer/hooks/mail-send-gate.py",
         "missing-key-note": "source/lawyer/hooks/missing-key-note.py",
@@ -65,10 +65,10 @@
         "pending-approvals-note": "source/lawyer/hooks/pending-approvals-note.py",
         "plugin-cache-guard": "source/lawyer/hooks/plugin-cache-guard.py",
         "quirk-gate": "source/lawyer/hooks/quirk-gate.py",
-        "redirect-delete-to-trash": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py",
+        "redirect-delete-to-trash": "source/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py",
         "rule-gate": "source/lawyer/hooks/rule-gate.py",
-        "session-lane-guard": ".claude/skills/shared/docket-clerk/hooks/session-lane-guard.py",
-        "staged-file-gate": ".claude/skills/show-me/hooks/staged-file-gate.py",
+        "session-lane-guard": "source/skills/shared/docket-clerk/hooks/session-lane-guard.py",
+        "staged-file-gate": "source/skills/show-me/hooks/staged-file-gate.py",
         "trailing-dyu": "public/plugins/lawyer/skills/dyu/hooks/trailing-dyu.py",
         "verdict-gate": "source/lawyer/hooks/verdict-gate.py"
       },
@@ -103,8 +103,8 @@
         "verify-claim"
       ],
       "hooks": {
-        "block-main-session-canlii": ".claude/skills/legal-research/hooks/block-main-session-canlii.py",
-        "block-subagent-legal-research": ".claude/skills/legal-research/hooks/block-subagent-legal-research.py",
+        "block-main-session-canlii": "source/skills/legal-research/hooks/block-main-session-canlii.py",
+        "block-subagent-legal-research": "source/skills/legal-research/hooks/block-subagent-legal-research.py",
         "commons-read-only": "source/researcher/hooks/commons-read-only.py",
         "one-way-gate": "source/researcher/hooks/one-way-gate.py"
       },
@@ -144,10 +144,10 @@
       "hooks": {
         "correspondence-note": "source/litigator/hooks/correspondence-note.py",
         "correspondence-review-gate": "source/litigator/hooks/correspondence-review-gate.py",
-        "html-pages-gate": ".claude/skills/drafting-data/hooks/html-pages-gate.py",
-        "milestone-card-gate": ".claude/skills/drafting-data/hooks/milestone-card-gate.py",
+        "html-pages-gate": "source/skills/drafting-data/hooks/html-pages-gate.py",
+        "milestone-card-gate": "source/skills/drafting-data/hooks/milestone-card-gate.py",
         "one-way-gate": "source/litigator/hooks/one-way-gate.py",
-        "practitioner-words-gate": ".claude/skills/drafting-data/hooks/practitioner-words-gate.py"
+        "practitioner-words-gate": "source/skills/drafting-data/hooks/practitioner-words-gate.py"
       },
       "servers": []
     },

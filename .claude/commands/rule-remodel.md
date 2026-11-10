@@ -4,7 +4,7 @@ description: Use only when the user explicitly invokes /rule-remodel in a Claude
 
 # Rule remodel
 
-Maintainer-only: this command lives in `.claude/commands/`, so no plugin ships it. It brings a shipped rule file in this repo (`.claude/skills/shared/docket-clerk/references/`) up to an amending regulation, so a plugin release replaces the firm overlay records that `/lawyer:rule-update` wrote. After the release, `rule-update.md` §2 reconciliation marks each matching overlay record `superseded_by_shipped` on its next resolution. Repo sessions only: a Cowork session never edits these files.
+Maintainer-only: this command lives in `.claude/commands/`, so no plugin ships it. It brings a shipped rule file in this repo (`source/skills/shared/docket-clerk/references/`) up to an amending regulation, so a plugin release replaces the firm overlay records that `/lawyer:rule-update` wrote. After the release, `rule-update.md` §2 reconciliation marks each matching overlay record `superseded_by_shipped` on its next resolution. Repo sessions only: a Cowork session never edits these files.
 
 ## Before starting
 

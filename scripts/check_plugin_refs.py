@@ -69,7 +69,7 @@ def reference_resolves(repo, ref, reldir, skill, tree_rooted, assets, shipped=No
     (skill prose cites repo files outside the tree as design authority). A tree-rooted
     citation resolves only against the tree root.
 
-    `shipped`: the `.claude/skills/`-relative paths the plugin ships. When given, a
+    `shipped`: the `source/skills/`-relative paths the plugin ships. When given, a
     hit inside the skills tree counts only if its path ships (or is a directory holding
     a shipped file), because an install reads that tree and has nothing else.
 

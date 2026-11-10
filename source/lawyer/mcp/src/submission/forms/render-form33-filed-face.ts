@@ -1,6 +1,6 @@
 // Form 33 filed-face emitter (build ticket #386, handoff from #376): a
 // deterministic renderer producing `form-33.md` conforming exactly to
-// .claude/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md,
+// source/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md,
 // consumed by publish-bcsc-form's asm33 step. Named and shaped to match its
 // sibling, render-form32-filed-face.ts (#392): unlike the mockup renderer
 // (render-application-response.ts), this queries the DB directly and

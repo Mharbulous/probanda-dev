@@ -35,7 +35,7 @@ def make_repo(root, skills, agents=None, hooks=None):
         plugins[plugin]["hooks"] = mapping
     fake_repo.write_assignment(root, plugins)
     for name, text in skills.items():
-        path = root / ".claude" / "skills" / name
+        path = root / "source" / "skills" / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
     for name, text in (agents or {}).items():
@@ -56,7 +56,7 @@ class ScanTest(unittest.TestCase):
 
     def test_upward_reference_is_found(self):
         self.assertEqual(self.pairs({"show-me/SKILL.md": "Ask `/matter-data` first.\n"}),
-                         [(".claude/skills/show-me/SKILL.md", "matter-data")])
+                         [("source/skills/show-me/SKILL.md", "matter-data")])
 
     def test_downward_reference_is_not(self):
         self.assertEqual(self.pairs({"draft/SKILL.md": "Present it with /show-me, after /legal-research.\n"}), [])
@@ -64,7 +64,7 @@ class ScanTest(unittest.TestCase):
     def test_one_word_name_needs_a_mark(self):
         self.assertEqual(self.pairs({"show-me/SKILL.md": "Show the draft in full. The key `draft:2026` is not it.\n"}), [])
         self.assertEqual(self.pairs({"show-me/SKILL.md": "As `/draft` does.\n"}),
-                         [(".claude/skills/show-me/SKILL.md", "draft")])
+                         [("source/skills/show-me/SKILL.md", "draft")])
 
     def test_folder_named_for_a_skill_is_not_the_skill(self):
         self.assertEqual(self.pairs({"show-me/SKILL.md": "Save it in the matter-data folder.\n"}), [])
@@ -100,8 +100,8 @@ class ScanTest(unittest.TestCase):
 
     def test_hook_script_in_another_plugins_folder(self):
         found = self.pairs({"draft/hooks/gate.py": "pass\n", "show-me/SKILL.md": "x\n"},
-                           hooks={"practice": {"gate": ".claude/skills/draft/hooks/gate.py"}})
-        self.assertEqual(found, [(".claude/skills/draft/hooks/gate.py", "folder draft")])
+                           hooks={"practice": {"gate": "source/skills/draft/hooks/gate.py"}})
+        self.assertEqual(found, [("source/skills/draft/hooks/gate.py", "folder draft")])
 
 
 class RulingTest(unittest.TestCase):
@@ -117,7 +117,7 @@ class RulingTest(unittest.TestCase):
             finally:
                 sys.argv = old
 
-    PAIR = {"file": ".claude/skills/show-me/SKILL.md", "target": "matter-data"}
+    PAIR = {"file": "source/skills/show-me/SKILL.md", "target": "matter-data"}
 
     def test_no_ruling_fails_both_modes(self):
         empty = {"allowed": [], "todo": []}
@@ -133,7 +133,7 @@ class RulingTest(unittest.TestCase):
         self.assertEqual(self.run_main({"allowed": [self.PAIR], "todo": []}, strict=True), 0)
 
     def test_stale_ruling_fails(self):
-        stale = {"file": ".claude/skills/show-me/SKILL.md", "target": "draft"}
+        stale = {"file": "source/skills/show-me/SKILL.md", "target": "draft"}
         self.assertEqual(self.run_main({"allowed": [self.PAIR, stale], "todo": []}, strict=True), 1)
 
 

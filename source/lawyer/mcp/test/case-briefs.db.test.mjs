@@ -586,7 +586,7 @@ test("a request in another proceeding reads as no request, as the guard treats i
 });
 
 test("the template tells a re-brief to reuse the stem and the Writing", () => {
-  const template = readFileSync(new URL("../../../../.claude/skills/shared/case-brief-template.md", import.meta.url), "utf-8");
+  const template = readFileSync(new URL("../../../../source/skills/shared/case-brief-template.md", import.meta.url), "utf-8");
   assert.match(template, /A re-brief of a case that already has a saved brief reuses that brief's file stem, date included, and saves onto the same Writing/);
   assert.match(template, /so the save is that brief's next version/);
   assert.doesNotMatch(template, /every saved version is the same brief/);

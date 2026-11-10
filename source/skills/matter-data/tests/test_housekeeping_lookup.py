@@ -5,7 +5,7 @@ housekeeping__candidates spawns once per run (design-decisions.md #73).
 Each fixture is a matter-data folder holding main, law and privileged built from the
 canonical schema.sql, main stamped at the current version, beside a temp matter folder.
 
-Run: python -m unittest discover -s .claude/skills/matter-data/tests -p "test_housekeeping_lookup.py"
+Run: python -m unittest discover -s source/skills/matter-data/tests -p "test_housekeeping_lookup.py"
 """
 
 import hashlib

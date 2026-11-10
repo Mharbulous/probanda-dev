@@ -1,7 +1,7 @@
 // REGRESSION-PRONE: CanLII-first research has recurred repeatedly. See docs/design/2026-09-24 research-lawyer Westlaw-first fix plan.md before editing. Tests: legal-research/tests/.
 //
-// Leg 1 of .claude/skills/shared/statute-currency.md, as code. The rules are
-// .claude/skills/shared/legislation-currency.md; this module
+// Leg 1 of source/skills/shared/statute-currency.md, as code. The rules are
+// source/skills/shared/legislation-currency.md; this module
 // applies them and nothing else. It reports CanLII metadata about each
 // instrument's own record and, for a current B.C. Reg., the amendments after its
 // marker (amendments.ts). It never states what an instrument says.

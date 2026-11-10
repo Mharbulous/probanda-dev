@@ -5,7 +5,7 @@ the path the caller passes, checked against coclerk.json's case_data_dir. Final
 documents go to <the one 0. DRAFT* folder>/<Writing folder>/. Nothing creates
 a lawyer-brief or CoWork folder.
 
-Run: python -m pytest .claude/skills/publish/subskills/publish-bcsc-form/tests/test_output_paths.py
+Run: python -m pytest source/skills/publish/subskills/publish-bcsc-form/tests/test_output_paths.py
 """
 
 import contextlib

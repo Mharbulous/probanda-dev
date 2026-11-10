@@ -1,5 +1,5 @@
 // bcca-factum.md filed-face emitter (#648), per
-// .claude/skills/publish/subskills/publish-bcca-factum/references/bcca-factum-contract.md (SSOT).
+// source/skills/publish/subskills/publish-bcca-factum/references/bcca-factum-contract.md (SSOT).
 // Consumed by /publish with publish-bcca-factum, which fills the court's respondent's factum
 // template. Like render-form32-filed-face.ts, a purpose-built renderer rather than a strip of the
 // Factum.md mockup: it cannot emit a marker or comment, and missing content refuses (naming it)

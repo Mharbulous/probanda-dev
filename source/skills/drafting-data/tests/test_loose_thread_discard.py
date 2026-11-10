@@ -3,7 +3,7 @@
 What each write does is tested against the store in source/lawyer/mcp/test/loose-threads-store.db.test.mjs
 and loose-thread-discard.db.test.mjs.
 
-Run: python -m pytest .claude/skills/drafting-data/tests/test_loose_thread_discard.py -q
+Run: python -m pytest source/skills/drafting-data/tests/test_loose_thread_discard.py -q
 """
 
 import unittest

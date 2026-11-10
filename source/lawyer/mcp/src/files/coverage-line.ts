@@ -1,5 +1,5 @@
 // The research agent's per-tier coverage line, checked against its fixed shape
-// (`.claude/skills/shared/research-priority.md`, "Per-tier coverage reporting") when `write_scratch`
+// (`source/skills/shared/research-priority.md`, "Per-tier coverage reporting") when `write_scratch`
 // saves notes with `kind: "research-notes"` (planning/1. Design/2026-10-05_coverage-line-check-spec.md).
 // Free text is allowed only where a `<reason>` sits. Every tier may instead read `NOT AUDITED` or
 // `NOT AUDITED: <reason>` (practitioner's decision, 2026-10-05). No parenthetical qualifiers: detail

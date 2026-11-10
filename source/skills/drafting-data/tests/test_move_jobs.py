@@ -6,7 +6,7 @@ board 7 refuses it, and a note-up job, a job keyed on the Writing's own rows, a 
 completed job stay. §9a's close of board 7 then supersedes none of the moved jobs. The amended
 "What never changes" sentence of jobs-create.md §3a and the pointers at §10c are pinned too.
 
-Run: python -m pytest .claude/skills/drafting-data/tests/test_move_jobs.py -q
+Run: python -m pytest source/skills/drafting-data/tests/test_move_jobs.py -q
 """
 
 import re

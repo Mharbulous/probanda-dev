@@ -4,7 +4,7 @@ only when the practitioner asks, and kept apart from research jobs and from the 
 
 Plan: docs/Plans/2026-11-01_legal-research-board-and-case-briefs.md
 
-Run: python -m pytest .claude/skills/legal-research/tests/test_case_brief.py -q
+Run: python -m pytest source/skills/legal-research/tests/test_case_brief.py -q
 """
 
 import json

@@ -1,6 +1,6 @@
 ---
 journey: Pick up where you left off (resume, review, orchestrate)
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: /draft invoked with no arguments, in a project whose workspace is a specific litigation matter folder
 outcome: the in-progress submission's mockups are regenerated and shown immediately, outstanding work is dispatched to parallel subagents under the practitioner's own list of what to do, read back and approved, and a revised mockup (revision bumped) is presented when they finish

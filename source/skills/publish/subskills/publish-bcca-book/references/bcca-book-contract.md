@@ -3,7 +3,7 @@
 This file is the single source of truth for the interchange between
 `/draft`'s `bcca_stay_response` and `bcca_factum` filings and `/publish`'s
 `publish-bcca-book` subskill. It is the same kind of document as
-`.claude/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md`
+`source/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md`
 (the Form 32/33 precedent) — read that file's "Division of discipline"
 section first; the same split applies here:
 

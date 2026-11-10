@@ -15,7 +15,7 @@ from check_plugin_sources import NotApplicable, server_path  # noqa: E402
 # one level ("Cls.meth").
 ENTRY_POINT_REGISTRY = (
     {
-        "path": ".claude/skills/drafting-data/references/scripts/migrate_engine.py",
+        "path": "source/skills/drafting-data/references/scripts/migrate_engine.py",
         "symbols": ("run", "MigrateError", "MigrateError.as_dict", "TARGET_SCHEMA_VERSION"),
         "server": "data",
         "consumers": ("src/submission/migrate.ts",),

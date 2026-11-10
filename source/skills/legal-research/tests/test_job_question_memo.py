@@ -5,7 +5,7 @@ rewording, and the memo has one Issue and no sub-issues.
 Specs: docs/Specs/2026-10-21_research-job-memo-restates-job-question-spec.md,
 docs/Specs/2026-10-31_job-question-from-intent-spec.md
 
-Run: python -m pytest .claude/skills/legal-research/tests/test_job_question_memo.py -q
+Run: python -m pytest source/skills/legal-research/tests/test_job_question_memo.py -q
 """
 
 import unittest

@@ -27,7 +27,7 @@ REPO = Path(__file__).resolve().parent.parent
 
 SHARED_SRC = "source/mcp-shared/"
 # The data bundle bakes in this script's schema version.
-MIGRATE_ENGINE = ".claude/skills/drafting-data/references/scripts/migrate_engine.py"
+MIGRATE_ENGINE = "source/skills/drafting-data/references/scripts/migrate_engine.py"
 
 
 stop = plugin_layout.stop

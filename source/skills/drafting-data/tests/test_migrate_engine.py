@@ -6,7 +6,7 @@ none. Plus one content check: the backup is the PRE-migration file (a copy
 taken after the hops would satisfy the existence assertion while protecting
 nothing).
 
-Run: python -m unittest discover -s .claude/skills/drafting-data/tests
+Run: python -m unittest discover -s source/skills/drafting-data/tests
 """
 
 import json

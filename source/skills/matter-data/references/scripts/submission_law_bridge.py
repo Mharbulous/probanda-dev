@@ -58,7 +58,7 @@ STYLE_OF_CAUSE_RE = re.compile(r'\sv\.?\s', re.IGNORECASE)
 
 # `answered` is absent on purpose: only an opposing authority's tie writes it (#48).
 # The relationship values the local CHECK can hold. Their definitions are in
-# .claude/skills/shared/treatment-vocabulary.md (design:
+# source/skills/shared/treatment-vocabulary.md (design:
 # docs/Specs/2026-10-15_per-principle-treatment-vocabulary-spec.md, ADR 0006).
 VALID_RELATIONSHIPS = ('establishes', 'applies', 'distinguishes')
 

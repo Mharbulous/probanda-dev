@@ -16,7 +16,7 @@ after(() => triggerRoots.forEach((root) => rmSync(root, { recursive: true, force
 function triggersEnv(text, base = process.env) {
   const root = mkdtempSync(join(tmpdir(), "coclerk-case-triggers-"));
   triggerRoots.push(root);
-  const references = join(root, ".claude", "skills", "matter-data", "references");
+  const references = join(root, "source", "skills", "matter-data", "references");
   mkdirSync(references, { recursive: true });
   if (text !== null) writeFileSync(join(references, "triggers.sql"), text);
   return { ...base, COCLERK_REPO_ROOT: root };

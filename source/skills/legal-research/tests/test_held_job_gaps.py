@@ -4,7 +4,7 @@ held job, runs each tier a gap names before saving, once per tier per issue.
 
 Spec: docs/Specs/2026-10-21_held-job-research-sub-issues-implicitly-approved-spec.md
 
-Run: python -m pytest .claude/skills/legal-research/tests/test_held_job_gaps.py -q
+Run: python -m pytest source/skills/legal-research/tests/test_held_job_gaps.py -q
 """
 
 import unittest

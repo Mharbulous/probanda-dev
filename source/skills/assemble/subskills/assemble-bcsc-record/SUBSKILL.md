@@ -59,7 +59,7 @@ three scripts need PyMuPDF, so they run on the PC only (Error handling).
    `kind` and the title the index shows.
 
 5. **Bind.** Run the scripts from `/assemble`'s folder: in a repo checkout as
-   `python .claude/skills/assemble/subskills/assemble-bcsc-record/scripts/<script>`
+   `python source/skills/assemble/subskills/assemble-bcsc-record/scripts/<script>`
    from the repo root.
 
    ```

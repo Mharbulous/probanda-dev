@@ -73,13 +73,13 @@ class RecitalRuleMirrorTest(unittest.TestCase):
         self.assertEqual([m for m in mirrors if not m.startswith(".claude/")],
                          [f"source/litigator/agents/{n}.md" for n in self.AGENTS])
         self.assertEqual([m for m in mirrors if m.startswith(".claude/")],
-                         [f".claude/skills/{rel}" for rel in check_plugin_agents.RECITAL_RULE_SKILL_MIRRORS])
+                         [f"source/skills/{rel}" for rel in check_plugin_agents.RECITAL_RULE_SKILL_MIRRORS])
 
     def test_a_plugin_checks_only_the_mirrors_it_ships_and_always_the_shared_one(self):
         plugin = {"name": "research", "source": "source/research", "skills": ["verify-law"], "agents": ["verify-claim"]}
         self.assertEqual(check_plugin_agents.recital_rule_mirrors(plugin),
-                         (".claude/skills/shared/legal-audit-protocol.md",
-                          ".claude/skills/verify-law/agents/verify-claim.md",
+                         ("source/skills/shared/legal-audit-protocol.md",
+                          "source/skills/verify-law/agents/verify-claim.md",
                           "source/research/agents/verify-claim.md"))
 
     def test_real_repo_copies_match(self):

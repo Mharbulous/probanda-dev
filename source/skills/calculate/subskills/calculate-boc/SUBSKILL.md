@@ -28,7 +28,7 @@ This member needs a state file that already carries the header, `tariffScale`,
 `unitValue`, `tariffItems[]` and `disbursements[]`. If any of those is missing, say
 which member fills it and stop.
 
-Practitioner input renders per `.claude/skills/shared/elicitation-widget.md` —
+Practitioner input renders per `source/skills/shared/elicitation-widget.md` —
 plain chat text only as that file's fallback rung, never as the primary ask.
 
 ## 1. The summary
@@ -42,7 +42,7 @@ python subskills/calculate-boc/scripts/boc_context.py \
 
 Resolve `subskills/calculate-boc/scripts/` from `/calculate`'s own folder: in a
 repo checkout run it from the repo root as
-`python .claude/skills/calculate/subskills/calculate-boc/scripts/boc_context.py`;
+`python source/skills/calculate/subskills/calculate-boc/scripts/boc_context.py`;
 from an installed plugin, run it from the folder this front door was opened from
 (its `Base directory for this skill:` line).
 

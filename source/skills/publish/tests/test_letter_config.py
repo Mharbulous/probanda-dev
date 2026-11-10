@@ -6,7 +6,7 @@ the firm name and roster. The signer's details come from the signer's roster ent
 the preparer is this machine's `person` in the Roaming coclerk.json. Everything here runs
 on synthetic assets.
 
-Run: python -m unittest discover -s .claude/skills/publish/tests
+Run: python -m unittest discover -s source/skills/publish/tests
 """
 from __future__ import annotations
 

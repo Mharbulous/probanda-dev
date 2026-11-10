@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
-const WORK = join(REPO, ".claude", "skills", "work");
+const WORK = join(REPO, "source", "skills", "work");
 process.env.COCLERK_REPO_ROOT = REPO;
 const { skillRulesApplicable, skillRulesCoverage } = await import("../build/files/skill-rules.js");
 
@@ -55,7 +55,7 @@ test("/work loads in a checkout with no /draft skill", (t) => {
     process.env.COCLERK_REPO_ROOT = REPO;
     rmSync(root, { recursive: true, force: true });
   });
-  const skill = join(root, ".claude", "skills", "work");
+  const skill = join(root, "source", "skills", "work");
   mkdirSync(join(skill, "references"), { recursive: true });
   copyFileSync(join(WORK, "SKILL.md"), join(skill, "SKILL.md"));
   for (const e of readdirSync(join(WORK, "references"), { withFileTypes: true })) {

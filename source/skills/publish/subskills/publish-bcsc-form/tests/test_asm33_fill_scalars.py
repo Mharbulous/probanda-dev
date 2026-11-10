@@ -5,7 +5,7 @@ never runs gen.scalars, so asm33.fill names the .docx from the asm33
 context's title, or the form-33 registry name when it has none. The shared
 asm.fill treats None scalars as empty for every caller.
 
-Run: python -m pytest .claude/skills/publish/subskills/publish-bcsc-form/tests/test_asm33_fill_scalars.py -q
+Run: python -m pytest source/skills/publish/subskills/publish-bcsc-form/tests/test_asm33_fill_scalars.py -q
 """
 
 import io

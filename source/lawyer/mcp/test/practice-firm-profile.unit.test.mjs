@@ -328,14 +328,14 @@ test("an active lawyer missing a signer field registers, with signer_fields_miss
 });
 
 test("SIGNER_FIELDS matches the letterhead renderer's own list", () => {
-  const renderer = readFileSync(new URL("../../../../.claude/skills/publish/scripts/render_letterhead.py", import.meta.url), "utf-8");
+  const renderer = readFileSync(new URL("../../../../source/skills/publish/scripts/render_letterhead.py", import.meta.url), "utf-8");
   const tuple = renderer.match(/^SIGNER_FIELDS = \(([^)]*)\)/m);
   assert.ok(tuple, "render_letterhead.py has no SIGNER_FIELDS tuple");
   assert.deepEqual([...tuple[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]), SIGNER_FIELDS);
 });
 
 test("TOKENS matches the letterhead renderer's own list", () => {
-  const renderer = readFileSync(new URL("../../../../.claude/skills/publish/scripts/render_letterhead.py", import.meta.url), "utf-8");
+  const renderer = readFileSync(new URL("../../../../source/skills/publish/scripts/render_letterhead.py", import.meta.url), "utf-8");
   const tuple = renderer.match(/^TOKENS = \(([^)]*)\)/m);
   assert.ok(tuple, "render_letterhead.py has no TOKENS tuple");
   assert.deepEqual([...tuple[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]), TOKENS);

@@ -16,7 +16,7 @@ instrument's own record and states no law. The raw legislation tools it
 composes are no agent's grant any more (the legislation-currency mode of
 law-getter's predecessor retired into it, 2026-10-06).
 
-Policy (closed-gate rule, Westlaw-first gate): .claude/skills/shared/legal-research.md
+Policy (closed-gate rule, Westlaw-first gate): source/skills/shared/legal-research.md
 
 Decision rule
   1. Not a CanLII server tool, a credential setup tool, or

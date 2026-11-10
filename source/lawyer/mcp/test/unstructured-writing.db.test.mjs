@@ -299,7 +299,7 @@ test("a practitioner layout's create writes the form's source record, a learned 
 
 // Step 8: the Sent write on an Unstructured Writing, then the conversion job written by the SQL
 // /drafting-data's jobs-stock.md §3h gives, as an accepted offer writes it.
-const JOBS_STOCK = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", ".claude", "skills", "drafting-data", "references", "jobs-stock.md");
+const JOBS_STOCK = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "source", "skills", "drafting-data", "references", "jobs-stock.md");
 
 test("the Sent write records a written Unstructured Writing from a pasted copy, closes Deliver and offers no retirement at a venue; the accepted conversion job sits on its Work Board", async (t) => {
   const g = await generalWritingFixture(t);

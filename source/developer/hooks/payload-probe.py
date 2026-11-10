@@ -17,7 +17,7 @@ from pathlib import Path
 try:
     HERE = Path(__file__).resolve()
     sys.path[:0] = [str(p) for p in (HERE.parents[1] / "skills" / "shared" / "scripts",
-                                     HERE.parents[3] / ".claude" / "skills" / "shared" / "scripts") if p.is_dir()]
+                                     HERE.parents[2] / "skills" / "shared" / "scripts") if p.is_dir()]
     import hook_io
 except Exception as exc:
     sys.stderr.write(f"payload-probe cannot load its helper: {exc!r}\n")

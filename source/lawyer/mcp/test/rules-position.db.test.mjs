@@ -28,7 +28,7 @@ test.after(() => rmSync(scratch, { recursive: true, force: true }));
  * migration scripts resolve through the real checkout. */
 function checkout(t) {
   const root = mkdtempSync(join(tmpdir(), "coclerk-rules-position-"));
-  const skill = join(root, ".claude", "skills", "rpos");
+  const skill = join(root, "source", "skills", "rpos");
   const nodes = join(skill, "rules", "nodes");
   mkdirSync(nodes, { recursive: true });
   copyFileSync(join(FIXTURE, "SKILL.md"), join(skill, "SKILL.md"));

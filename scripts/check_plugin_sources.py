@@ -42,7 +42,7 @@ class NotApplicable(Exception):
 
 
 def skills_root(repo):
-    return os.path.join(repo, ".claude", "skills")
+    return os.path.join(repo, "source", "skills")
 
 
 def source_path(repo, plugin, *parts):

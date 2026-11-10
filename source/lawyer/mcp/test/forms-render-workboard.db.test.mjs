@@ -706,7 +706,7 @@ async function seedNoticeOfApplication(dbPath, { snapshot = true } = {}) {
   if (snapshot) await snapshotFromShipped(dbPath, 1, "notice-of-application");
 }
 
-const SHIPPED_BC = new URL("../../../../.claude/skills/draft/references/CAN/BC/", import.meta.url);
+const SHIPPED_BC = new URL("../../../../source/skills/draft/references/CAN/BC/", import.meta.url);
 
 /** The layout block of a shipped /draft file under CAN/BC. */
 function shippedBlock(rel) {
@@ -3164,7 +3164,7 @@ test("tickets: Ready Serve the application and Serve the response jobs are skipp
 // answer jobs) are matched by the prefix before their first `<`, are drafting work, and are not
 // stock jobs, so no stock title may start with that prefix.
 test("STOCK_TITLES is exactly the bold titles of jobs-stock.md §3b", () => {
-  const md = readFileSync(join(import.meta.dirname, "../../../../.claude/skills/drafting-data/references/jobs-stock.md"), "utf-8");
+  const md = readFileSync(join(import.meta.dirname, "../../../../source/skills/drafting-data/references/jobs-stock.md"), "utf-8");
   const section = md.slice(md.indexOf("## 3b."), md.indexOf("## 3c."));
   const all = [...section.matchAll(/^\*\*`([^`]+)`/gm)].map((m) => m[1]);
   const titles = all.filter((t) => !t.includes("<"));

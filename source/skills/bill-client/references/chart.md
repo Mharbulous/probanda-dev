@@ -16,7 +16,7 @@ Write the workbook from `invoice_lines.json` with the session's spreadsheet tool
 
 No Total row. Never write a figure into the workbook that is not from that file, so the chart shows what the invoice bills.
 
-The workbook goes in the matter's draft folder's `BILLING` subfolder. Resolve the draft folder by glob (`0. DRAFT*`, case-insensitive, exactly one match, never create it — per the workspace output rule's bucket-1 rule, `.claude/skills/shared/workspace-output-rule.md`); create only the `BILLING` leaf if absent. Name the workbook `YYYY-MM-DD TimeCamp Time report re YYYY-MM-DD  to present.xlsx` (today's date, then the range start date). If a file of that name is already there, stop and ask the practitioner; never overwrite it.
+The workbook goes in the matter's draft folder's `BILLING` subfolder. Resolve the draft folder by glob (`0. DRAFT*`, case-insensitive, exactly one match, never create it — per the workspace output rule's bucket-1 rule, `source/skills/shared/workspace-output-rule.md`); create only the `BILLING` leaf if absent. Name the workbook `YYYY-MM-DD TimeCamp Time report re YYYY-MM-DD  to present.xlsx` (today's date, then the range start date). If a file of that name is already there, stop and ask the practitioner; never overwrite it.
 
 ## 2. Open and tidy the workbook
 

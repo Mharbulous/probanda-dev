@@ -1,7 +1,7 @@
 // Adapter-level tests for matter_data__migrate.
 //
 // The engine's own behaviour (chain building, token, backup, restore) is
-// covered by .claude/skills/matter-data/tests/test_migrate_engine.py. What these
+// covered by source/skills/matter-data/tests/test_migrate_engine.py. What these
 // prove is the wiring the Python suite cannot see: tool registration, dispatch
 // routing, repo-root/PYTHONPATH resolution to the skills tree, the MigrateError
 // round trip into a DataServerError, and lock release.
@@ -19,7 +19,7 @@ const { buildToolDefinitions } = await import("../build/schema-gen.js");
 const { callTool } = await import("../build/dispatch.js");
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
-const SCHEMA = join(REPO_ROOT, ".claude", "skills", "matter-data", "references", "schema.sql");
+const SCHEMA = join(REPO_ROOT, "source", "skills", "matter-data", "references", "schema.sql");
 const PYTHON = process.env.COCLERK_PYTHON || "python";
 
 // Isolate every run from %LOCALAPPDATA% so a test never touches real backups.

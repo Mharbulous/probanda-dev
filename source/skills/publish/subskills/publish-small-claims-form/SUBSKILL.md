@@ -17,7 +17,7 @@ Produces three deliverables for a defendant responding to a BC Small Claims Noti
 
 All lawyer-facing outputs save into the Reply's Writing folder, `<draft folder>\<writing folder>\`. The draft folder is the matter's `0. DRAFT` folder (resolved by matching `0. DRAFT*`, since matters spell that folder variously; never created by the skill — if absent, stop and tell the user). `<writing folder>` is the name the caller passes, or else a `REPLY {description}` folder named by `/file-naming`'s grammar, created if absent. Nothing is saved at the top of the draft folder.
 
-**Never overwrite.** Every Word and PDF output below (the Reply `.docx`, Form 2 and Form 38) follows the workspace output rule (`.claude/skills/shared/workspace-output-rule.md`): before saving, check whether the file name already exists in the Writing folder. If it does, save to the first free `<stem> vN<ext>` name instead (v2, v3, and so on). Never overwrite, rename or delete an existing file. Present each file under the name it was actually saved as.
+**Never overwrite.** Every Word and PDF output below (the Reply `.docx`, Form 2 and Form 38) follows the workspace output rule (`source/skills/shared/workspace-output-rule.md`): before saving, check whether the file name already exists in the Writing folder. If it does, save to the first free `<stem> vN<ext>` name instead (v2, v3, and so on). Never overwrite, rename or delete an existing file. Present each file under the name it was actually saved as.
 
 ## Bundled Forms
 

@@ -1,5 +1,5 @@
 // The maintainer's side of the key-request queue, for /view-key-requests
-// (.claude/skills/view-key-requests/SKILL.md). Run from Probanda's development
+// (source/skills/view-key-requests/SKILL.md). Run from Probanda's development
 // machine.
 //
 //   node key-requests.mjs list [--all]

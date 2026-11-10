@@ -1,6 +1,6 @@
 ---
 journey: Work a witness statement from empty to signed
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: a session opens on a matter whose submission needs a witness statement that does not exist yet — a fact has no one to prove it
 outcome: over several sessions, one witness statement climbs from nothing to executed, each session starting from the regenerated mockup that shows exactly which rung the statement is on
@@ -19,7 +19,7 @@ source: effort owner's flow selection, 2026-08-23; step 7 amended 2026-09-13 so 
 
    > Jesse Marlowe can speak to that — he was on the site that week.
 
-3. **Assistant:** records the attribution through `/drafting-data`, regenerates, and presents the witness-statement mockup as a file card (`shared/present-files.md`). No approval pause before writing or rendering. The fact now sits in the statement's trailing to-do subsection at 🗣️ *talk to witness* — attributed, not yet interviewed. The statement itself shows no *sign it*: nothing has been drafted, so there is nothing to sign (see the paired data journey, `.claude/skills/drafting-data/User_Journeys/fact-work-on-the-witness-statement.md`).
+3. **Assistant:** records the attribution through `/drafting-data`, regenerates, and presents the witness-statement mockup as a file card (`shared/present-files.md`). No approval pause before writing or rendering. The fact now sits in the statement's trailing to-do subsection at 🗣️ *talk to witness* — attributed, not yet interviewed. The statement itself shows no *sign it*: nothing has been drafted, so there is nothing to sign (see the paired data journey, `source/skills/drafting-data/User_Journeys/fact-work-on-the-witness-statement.md`).
 
 4. **Practitioner:** conducts the interview away from the assistant — days later, in a new session — and returns with the account.
 
@@ -35,7 +35,7 @@ source: effort owner's flow selection, 2026-08-23; step 7 amended 2026-09-13 so 
 
    Only then does it write the confirmed paragraphs and links through `/drafting-data`, regenerate, and present the mockup. Any 🧩 *gap* on a drafted paragraph with no fact behind it closes as facts get attributed. With at least one paragraph linked, the statement's own line now reads 🖋️ *sign it* — or ✒️ *swear it* where the instrument is an affidavit — reachable for the first time.
 
-8. **Practitioner:** reviews the mockup, asks for wording changes the same way they asked for the draft. **Assistant:** writes, regenerates, presents — no separate revision mode. This review pass is also where exhibits meet witnesses: a paragraph that tenders a document is how the exhibit gets its sponsor (see `.claude/skills/drafting-data/User_Journeys/tender-an-exhibit-through-a-witness.md`).
+8. **Practitioner:** reviews the mockup, asks for wording changes the same way they asked for the draft. **Assistant:** writes, regenerates, presents — no separate revision mode. This review pass is also where exhibits meet witnesses: a paragraph that tenders a document is how the exhibit gets its sponsor (see `source/skills/drafting-data/User_Journeys/tender-an-exhibit-through-a-witness.md`).
 
 9. **Practitioner:** obtains the signature — again away from the assistant — and reports it in a later session.
 

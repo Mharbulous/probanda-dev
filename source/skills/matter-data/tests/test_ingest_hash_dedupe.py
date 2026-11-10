@@ -13,7 +13,7 @@ TRIGGERS_PATH = CASE_DATA_ROOT / "references" / "triggers.sql"
 SCHEMA_PATH = CASE_DATA_ROOT / "references" / "schema.sql"
 INGEST_GATE_PATH = CASE_DATA_ROOT / "operations" / "ingest.md"
 INGEST_EXTRACT_PATH = CASE_DATA_ROOT / "operations" / "ingest-extract.md"
-INGEST_ROUTER_PATH = CASE_DATA_ROOT.parents[2] / ".claude" / "skills" / "ingest" / "SKILL.md"
+INGEST_ROUTER_PATH = CASE_DATA_ROOT.parents[2] / "source" / "skills" / "ingest" / "SKILL.md"
 
 sys.path.insert(0, str(CASE_DATA_ROOT / "references" / "scripts"))
 

@@ -52,7 +52,7 @@ except ImportError as exc:  # refuse in this script's JSON contract, not as a tr
 # bcca_stay_response filing's Response Book (a bcca_factum filing's book is the Book of
 # Authorities alone), so the stay-only cap is the default;
 # a combined leave-and-stay response passes --argument-cap 10.
-# Source: .claude/skills/draft/references/bcca-response-book-form.md section 6.2.
+# Source: source/skills/draft/references/bcca-response-book-form.md section 6.2.
 STAY_ONLY_ARGUMENT_CAP = 5
 
 # The number is read from the top of the page, where both this pipeline's stamp
