@@ -32,7 +32,7 @@ Each item below is a pool. A heading is only a scope (whose data it is), not a p
 |---|---|
 | Practice records | Contacts, matters, roles, tasks, file status, conflict information |
 | Billing | Time entries, invoices, accounts receivable |
-| Trust accounting | Retainer and trust balances: one regulated ledger with a sub-ledger per client |
+| Trust accounting | Each matter's current retainer and trust balances. The regulated ledger, with its sub-ledger per client, is kept in the firm's trust accounting system, not in Probanda |
 
 **The lawyer's own**: not yet sorted to a matter.
 
