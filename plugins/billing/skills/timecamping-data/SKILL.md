@@ -23,7 +23,7 @@ description: Sole gatekeeper for the timecamping database — evidence-source ta
 
 Helper skill — not user-invocable. The single gatekeeper for the timecamping database: **one SQLite file, per practitioner** (not per matter, unlike `/matter-data`), reached only through the `timecamping_data__*` MCP tools. No other skill may embed SQL, resolve the database path, or assume schema shape — all of that stays here.
 
-Design source of truth: `Engineering/1. Design/2026-08-28_timecamping-evidence-first-design.md` (the seven-point evidence-first pipeline, the evidence doctrine, the 9-row ceremony grid, the presumption lifecycle) and `.claude/skills/timecamping/VISION.md` (the core principle: inference forbidden until evidence assembly is complete, enforced by pipeline structure). This skill is the schema's home, not a restatement of the design doc — read it there for rationale; read `references/schema.sql` here for the current DDL.
+Design source of truth: `Engineering/1. Design/2026-08-28_timecamping-evidence-first-design.md` (the seven-point evidence-first pipeline, the evidence doctrine, the 9-row ceremony grid, the presumption lifecycle) and `source/skills/timecamping/VISION.md` (the core principle: inference forbidden until evidence assembly is complete, enforced by pipeline structure). This skill is the schema's home, not a restatement of the design doc — read it there for rationale; read `references/schema.sql` here for the current DDL.
 
 ## Operation Routing
 

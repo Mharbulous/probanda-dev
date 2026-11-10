@@ -94,7 +94,7 @@ Output filename pattern:
 ```
 written to the top of the draft folder, the one folder matching `0. DRAFT*`
 under the matter (none, or more than one, fails loudly; never create it), per
-the workspace output rule (`.claude/skills/shared/workspace-output-rule.md`).
+the workspace output rule (`source/skills/shared/workspace-output-rule.md`).
 The exception is an affidavit sworn for a package, such as one supporting a
 Notice of Application: when the caller says so, it goes in the package folder
 the caller names. Pass the full path as `output_path`; the script creates no

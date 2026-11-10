@@ -72,7 +72,7 @@ Fields, per block:
 
 If the live CLI returns fields beyond this list, store them verbatim inside `raw_payload` rather than dropping them — this field list comes from the design decision, not from observed CLI output.
 
-**Known capture gaps.** Some date ranges return captures with a field missing on every row, which reaches the blocks built from them. The dates, fields and upstream issue are recorded once, in `.claude/skills/timecamping/reference/SyncoPaidCaptures.md`, section "Fetching — confirmed against the live CLI", paragraph **Known evidence gaps**. Read them there.
+**Known capture gaps.** Some date ranges return captures with a field missing on every row, which reaches the blocks built from them. The dates, fields and upstream issue are recorded once, in `source/skills/timecamping/reference/SyncoPaidCaptures.md`, section "Fetching — confirmed against the live CLI", paragraph **Known evidence gaps**. Read them there.
 
 Row schema:
 

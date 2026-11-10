@@ -89,7 +89,7 @@ When the practitioner states a view of the law, record it labelled as their prop
 
 ## 7. Clerical work is not elicitation
 
-None of the above applies to clerical work. It is done, or offered, without an interview. That includes rendering, migrating, offering facts already on file for the practitioner to confirm (`.claude/skills/draft/User_Journeys/offer-what-the-matter-already-knows.md`), a closed statutory menu such as a requisition's term template set, a closed set of reasons a skill defines, and assembling a form from settled substance.
+None of the above applies to clerical work. It is done, or offered, without an interview. That includes rendering, migrating, offering facts already on file for the practitioner to confirm (`source/skills/draft/User_Journeys/offer-what-the-matter-already-knows.md`), a closed statutory menu such as a requisition's term template set, a closed set of reasons a skill defines, and assembling a form from settled substance.
 
 The test: are you supplying content the practitioner would otherwise have to think of, or presenting a fixed set the forum, the skill's own rule, or the record already defines? The first is a proposal, and sections 3 to 6 govern it. The second is clerical.
 

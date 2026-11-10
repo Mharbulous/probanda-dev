@@ -1,6 +1,6 @@
 ---
 journey: Requisition in minutes
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: practitioner asks for a BCSC requisition — default judgment or consent order — on a matter whose proceeding is already known
 outcome: both drafts of the Writing — the requisition and its draft order or judgment — rendered and presented as file cards, with attachment status visible on the requisition mockup

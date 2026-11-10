@@ -1,6 +1,6 @@
 ---
 journey: A fresh outline after a blocker changes
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: a job the practitioner outlined was waiting on another, what it waited on was superseded and came out differently, and the Work Board shows the waiting job as Blocked by a superseded job
 outcome: the practitioner decides, in their own words, how the waiting job now stands; that decision and their reasoning are recorded verbatim and the job is written afresh; a loose thread from an earlier session is put to them as a three-way choice and handled as they say
@@ -25,7 +25,7 @@ Continues `outline-a-new-application.md`. The orders job was outlined as waiting
 
    > Ask for $50,000. Round up — the bill is a floor, not a ceiling.
 
-4. **Assistant:** records the decision and the reasoning in the practitioner's words, says so, names the waiting-on that is now gone, and reads back the steps the orders job had. One job is not a list, so the read-back is the ordinary approve-or-change decision form, not the multi-select that starts at two items (`.claude/skills/shared/elicitation-widget.md` §2a).
+4. **Assistant:** records the decision and the reasoning in the practitioner's words, says so, names the waiting-on that is now gone, and reads back the steps the orders job had. One job is not a list, so the read-back is the ordinary approve-or-change decision form, not the multi-select that starts at two items (`source/skills/shared/elicitation-widget.md` §2a).
 
    > Recorded as your reasoning, in those words. The orders job is no longer waiting on the bill of costs. Same three steps as before?
    >
@@ -43,7 +43,7 @@ Continues `outline-a-new-application.md`. The orders job was outlined as waiting
 
 ## Principles this journey encodes
 
-- **A superseded blocker reopens the practitioner's decision, never the assistant's.** What changed is stated from the record, and how the waiting job now stands is asked (`.claude/skills/shared/paralegal-posture.md`).
+- **A superseded blocker reopens the practitioner's decision, never the assistant's.** What changed is stated from the record, and how the waiting job now stands is asked (`source/skills/shared/paralegal-posture.md`).
 - **Reasoning is recorded verbatim.** The practitioner's reason for the new figure goes in as they said it, and they are told so.
 - **Steps are read back, not re-planned.** The job's existing steps are put back to the practitioner to confirm or change.
 - **A loose thread is quoted and put to a three-way choice.** Outline it now, leave it as an idea, or drop it. The practitioner chooses; the assistant never ranks the options.

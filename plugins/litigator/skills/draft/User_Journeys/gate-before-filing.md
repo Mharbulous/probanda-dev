@@ -1,6 +1,6 @@
 ---
 journey: Gate before filing
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: the last substance job on a Writing completes and the package exists as files; the Work Board now shows a `Pre-filing consistency gate` job
 outcome: every check has passed, is not applicable, or is waived with the practitioner's one-line reason, recorded on the job — and only then is the filing presented as ready for the practitioner's final approval to file

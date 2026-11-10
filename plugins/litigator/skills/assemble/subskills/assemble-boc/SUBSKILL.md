@@ -24,7 +24,7 @@ being the one `probanda.json`'s `case_data_dir` names (in Cowork, request access
 to that folder itself, never a parent or the firm root). The filled bill is the
 `.docx` at the top of the draft folder, where `/publish` wrote it, the draft
 folder resolved by glob per the workspace output rule
-(`.claude/skills/shared/workspace-output-rule.md`): the path `publish-boc`
+(`source/skills/shared/workspace-output-rule.md`): the path `publish-boc`
 printed as written, else ask the practitioner which file. The bound PDF goes
 beside it, at the top of the draft folder, as `<bill stem> - bound.pdf`.
 
@@ -69,7 +69,7 @@ carries `"voucher": null`.
 
 Run the binder from `/assemble`'s own folder: in a repo checkout, from the repo
 root as
-`python .claude/skills/assemble/subskills/assemble-boc/scripts/bind_boc.py`. It
+`python source/skills/assemble/subskills/assemble-boc/scripts/bind_boc.py`. It
 needs PyMuPDF, so it runs on the PC only: in Cowork it refuses with
 `missing_dependency` (Error handling, below).
 

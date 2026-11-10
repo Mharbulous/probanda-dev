@@ -2,7 +2,7 @@
 
 **Source:** B.C. Reg. 168/2009, Appendix B, Schedule 1.
 **Status:** figures are sourced from
-`.claude/skills/calculate/subskills/itemize-boc/references/tariff-appendix-b.md`'s
+`source/skills/calculate/subskills/itemize-boc/references/tariff-appendix-b.md`'s
 "Schedule 1 -- Default Judgment (Rule 3-8)" section, which `itemize-boc`'s
 `tariff-checker` agent re-verifies against bclaws.gov.bc.ca and bccourts.ca on
 every `itemize-boc` run. The Form 63 route never runs `itemize-boc` (Form 63 has

@@ -93,7 +93,7 @@ at binding.
    if it doesn't exist.
 
 5. **Validate, then fill.** Resolve `scripts/fill_book.py` from `/publish`'s
-   folder: in a repo checkout run `python .claude/skills/publish/scripts/fill_book.py`
+   folder: in a repo checkout run `python source/skills/publish/scripts/fill_book.py`
    from the repo root. Then run, via Bash:
 
    ```

@@ -140,7 +140,7 @@ lookup — tool absent, unconfigured, or erroring after a retry — is
   release reference, "Legislation citations".
 - **The Sent write's pre-send hold** (`drafting_data__record_sent`) — reads the
   same stored result and holds sending on the same rule, waivable by the
-  practitioner (`.claude/skills/drafting-data/SKILL.md` "Job and scrutiny operations" §14a). It
+  practitioner (`source/skills/drafting-data/SKILL.md` "Job and scrutiny operations" §14a). It
   consumes a result and never runs the check.
 - **Candidate adopter** — `case-brief` also cites legislation and may adopt
   this protocol by referencing this file. Adoption is a change to *that* skill,

@@ -1,4 +1,4 @@
-// build-stamp: f2e02c1f7e3f
+// build-stamp: 389ab0b8c1ba
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -17024,8 +17024,14 @@ import { existsSync as existsSync7, readFileSync as readFileSync5, readdirSync a
 import { homedir as homedir2 } from "node:os";
 import { basename as basename2, dirname as dirname2, join as join5, resolve as resolve2 } from "node:path";
 import { fileURLToPath } from "node:url";
-var SKILLS_MARKER = join5(".claude", "skills");
-var CHECKOUT_MARKERS = [join5("source", "lawyer", "mcp"), join5(".claude", "skills", "plugin-packager")];
+var CHECKOUT_LAYOUTS = [
+  { skills: join5("source", "skills"), marker: join5("source", "lawyer", "mcp") },
+  { skills: join5(".claude", "skills"), marker: join5(".claude", "skills", "plugin-packager") }
+];
+function checkoutSkillsRoot(repoRoot) {
+  const layout = CHECKOUT_LAYOUTS.find((candidate) => isDirectory2(join5(repoRoot, candidate.skills)));
+  return join5(repoRoot, (layout ?? CHECKOUT_LAYOUTS[0]).skills);
+}
 var SELF_DIR = dirname2(fileURLToPath(import.meta.url));
 var INSTALL_ROOT = resolve2(SELF_DIR, "..", "..");
 function installSkillsRoot(installRoot) {
@@ -17052,7 +17058,7 @@ function autoDetect(env, startDir) {
   if (cached2) return { root: cached2, tried };
   const walked = walkUp(startDir);
   if (walked) return remember(cacheKey, walked, tried);
-  tried.push(`walk-up from ${startDir} -- no ancestor holds ${SKILLS_MARKER} with ${CHECKOUT_MARKERS.join(" or ")}`);
+  tried.push(`walk-up from ${startDir} -- no ancestor holds ${CHECKOUT_LAYOUTS.map((layout) => `${layout.skills} with ${layout.marker}`).join(", or ")}`);
   const cfgPath = configPath(env);
   const declared = readConfigRepoRoot(cfgPath, tried);
   if (declared) return remember(cacheKey, declared, tried);
@@ -17070,7 +17076,7 @@ function remember(cacheKey, root, tried) {
   return { root, tried };
 }
 function isRepoRoot(dir) {
-  return isDirectory2(join5(dir, SKILLS_MARKER)) && CHECKOUT_MARKERS.some((marker) => isDirectory2(join5(dir, marker)));
+  return CHECKOUT_LAYOUTS.some((layout) => isDirectory2(join5(dir, layout.skills)) && isDirectory2(join5(dir, layout.marker)));
 }
 function walkUp(startDir) {
   let cursor = resolve2(startDir);
@@ -17199,7 +17205,7 @@ function resolveShippedRoot(relPath, env = process.env, request = {}) {
   const code = request.code ?? "skills_root_missing";
   try {
     const repoRoot = resolveRepoRoot(env, { code, subject: request.subject ?? "the skills tree" });
-    return { root: join5(repoRoot, ".claude", "skills"), shipped_from: "checkout", plugin: null, plugin_version: null };
+    return { root: checkoutSkillsRoot(repoRoot), shipped_from: "checkout", plugin: null, plugin_version: null };
   } catch (err) {
     if (!(err instanceof DataServerError) || err.code !== code) throw err;
     throw new DataServerError(`${err.message}
@@ -24602,7 +24608,7 @@ import { existsSync as existsSync15, realpathSync as realpathSync10, statSync as
 import { win32 as pathWin3216 } from "node:path";
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "f2e02c1f7e3f";
+var BUILD_STAMP = false ? null : "389ab0b8c1ba";
 
 // src/local-page/durable.ts
 import { closeSync as closeSync4, fsyncSync as fsyncSync2, openSync as openSync4, writeSync as writeSync2 } from "node:fs";

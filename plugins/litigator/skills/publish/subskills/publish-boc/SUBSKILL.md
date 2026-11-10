@@ -31,7 +31,7 @@ Both read the shared working folder
 `{matter-data folder}/bill-of-costs/`, the matter-data folder being the one
 `probanda.json`'s `case_data_dir` names. A bill of costs is an individual
 document, so per the workspace output rule
-(`.claude/skills/shared/workspace-output-rule.md`) its `.docx`, Form 62's or
+(`source/skills/shared/workspace-output-rule.md`) its `.docx`, Form 62's or
 Form 63's, is written at the top of the draft folder as `<stem>.docx`: the
 draft folder is the one folder matching `0. DRAFT*` under the matter (none, or
 more than one, fails loudly; never create it). Form 63's `.md` mockup stays in
@@ -59,13 +59,13 @@ step, report it to the practitioner, and give it to `assemble-boc` as
 `bill_docx`. Form 63's `.md` mockup is the exception, rewritten in place on
 every run.
 
-Practitioner input renders per `.claude/skills/shared/elicitation-widget.md` —
+Practitioner input renders per `source/skills/shared/elicitation-widget.md` —
 plain chat text only as that file's fallback rung, never as the primary ask.
 
 ## Resolving the scripts
 
 In a repo checkout, run them from the repo root as
-`python .claude/skills/publish/subskills/publish-boc/scripts/<script>`.
+`python source/skills/publish/subskills/publish-boc/scripts/<script>`.
 
 `fill_boc.py` finds `subskills/publish-boc/templates/062-boc.dotx` itself, and
 `fill_form63.py` finds `063-djboc.dotx` the same way, relative to this subskill's
@@ -84,7 +84,7 @@ makes it work.
 2. Compose the stem (**Name the bill** above), then fill:
 
    ```bash
-   python .claude/skills/publish/subskills/publish-boc/scripts/fill_boc.py \
+   python source/skills/publish/subskills/publish-boc/scripts/fill_boc.py \
        --context "<working folder>/boc-context.json" \
        --out-dir "<draft folder>" --out-name "<stem>"
    ```
@@ -93,7 +93,7 @@ makes it work.
    ` vN` suffix when an earlier bill already held the name:
 
    ```bash
-   python .claude/skills/publish/scripts/verify.py "<the printed .docx path>"
+   python source/skills/publish/scripts/verify.py "<the printed .docx path>"
    ```
 
    Report the printed path to the practitioner, with any residual
@@ -124,7 +124,7 @@ figure and no layout in chat.
 3. **Render.** Compose the `.docx` stem (**Name the bill** above), then:
 
    ```bash
-   python .claude/skills/publish/subskills/publish-boc/scripts/fill_form63.py \
+   python source/skills/publish/subskills/publish-boc/scripts/fill_form63.py \
        --context "<working folder>/form63-context.json" \
        --out "<draft folder>/<writing folder>/YYYY-MM-DD Form 63 Default Judgment BOC <PartyShort> DRAFT.md" \
        --docx-dir "<draft folder>" --out-name "<stem>"
@@ -150,7 +150,7 @@ figure and no layout in chat.
 4. **Verify the filed face** (the `.docx` the second `Written:` line printed):
 
    ```bash
-   python .claude/skills/publish/scripts/verify.py "<the printed .docx path>"
+   python source/skills/publish/scripts/verify.py "<the printed .docx path>"
    ```
 
    `[dd/mmm/yyyy]` is the only placeholder that may survive — the assessing

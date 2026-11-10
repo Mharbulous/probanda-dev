@@ -1,4 +1,4 @@
-// build-stamp: 9c865a95484e
+// build-stamp: 6c54976c04eb
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15836,8 +15836,10 @@ function configPath(env) {
 }
 
 // src/repo-root.ts
-var SKILLS_MARKER = join4(".claude", "skills");
-var CHECKOUT_MARKERS = [join4("source", "lawyer", "mcp"), join4(".claude", "skills", "plugin-packager")];
+var CHECKOUT_LAYOUTS = [
+  { skills: join4("source", "skills"), marker: join4("source", "lawyer", "mcp") },
+  { skills: join4(".claude", "skills"), marker: join4(".claude", "skills", "plugin-packager") }
+];
 var SELF_DIR = dirname2(fileURLToPath(import.meta.url));
 var INSTALL_ROOT = resolve(SELF_DIR, "..", "..");
 function pluginVersion(installRoot = INSTALL_ROOT) {
@@ -15856,7 +15858,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "9c865a95484e";
+var BUILD_STAMP = false ? null : "6c54976c04eb";
 
 // src/local-page/listener.ts
 import { createServer, get } from "node:http";

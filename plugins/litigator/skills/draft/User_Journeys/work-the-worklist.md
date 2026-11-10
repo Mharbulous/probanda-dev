@@ -1,6 +1,6 @@
 ---
 journey: Work the worklist
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: the practitioner asks to work through what's outstanding on a submission — from any starting point (after a first draft, after a revision burst, mid-session), not only the resume flow
 outcome: every work marker on the mockup is either worked as the practitioner directed, under their own list read back and approved, or listed for the practitioner where only a human can do it, and a revised mockup (revision bumped) is presented as a file card when the dispatched work finishes
@@ -12,7 +12,7 @@ note: superseded in part by schema v15 / ADR 0009 (2026-09-02) — a session is 
 
 # Work the worklist
 
-This is the marker-driven orchestration flow as a standalone journey. Steps 5–8 of `.claude/skills/draft/User_Journeys/pick-up-where-you-left-off.md` are one instance of it, entered from a session resume; this journey can be entered from anywhere.
+This is the marker-driven orchestration flow as a standalone journey. Steps 5–8 of `source/skills/draft/User_Journeys/pick-up-where-you-left-off.md` are one instance of it, entered from a session resume; this journey can be entered from anywhere.
 
 ## The journey
 

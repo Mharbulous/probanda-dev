@@ -6,7 +6,7 @@ points to the file-manager plugin's file_ops__trash tool, which moves the item t
 <workspace root>/TRASH/<same relative path>. It never moves a file itself, so
 without file-manager no file Probanda did not create is deleted or moved.
 
-Policy (scope rules, rationale): .claude/skills/safe-file-deletion/SKILL.md
+Policy (scope rules, rationale): source/skills/safe-file-deletion/SKILL.md
 
 Decision rule
   1. Not a shell tool, or no destructive pattern in the command, in a shell

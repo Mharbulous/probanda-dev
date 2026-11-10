@@ -34,7 +34,7 @@ approved corrections back to TimeCamp as the system of record. The same
 evidence also flags uncovered time: client work that no TimeCamp entry
 covers, reported for the practitioner to enter by hand.
 
-**The governing principle — read `.claude/skills/timecamping/VISION.md`
+**The governing principle — read `source/skills/timecamping/VISION.md`
 before touching this skill's logic:** inference is forbidden until evidence
 assembly is complete, enforced by pipeline structure, not by asking the
 model to wait. An LLM shown one source at a time infers confidently and

@@ -128,7 +128,7 @@ each file card names a host path it returns.
 
 8. **Fill.** Resolve `subskills/publish-vaniac-package/scripts/fill_vaniac.py`
    from `/publish`'s folder: in a repo checkout run it as
-   `python .claude/skills/publish/subskills/publish-vaniac-package/scripts/fill_vaniac.py`
+   `python source/skills/publish/subskills/publish-vaniac-package/scripts/fill_vaniac.py`
    from the repo root (in Cowork, never run it: call the host tool instead,
    as "In Cowork" above says). Then run:
 

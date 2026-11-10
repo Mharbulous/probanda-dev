@@ -1,4 +1,4 @@
-// build-stamp: 84a950bb993e
+// build-stamp: 95bce3aabf6f
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -119559,8 +119559,10 @@ function configPath(env) {
 }
 
 // src/repo-root.ts
-var SKILLS_MARKER = join5(".claude", "skills");
-var CHECKOUT_MARKERS = [join5("source", "lawyer", "mcp"), join5(".claude", "skills", "plugin-packager")];
+var CHECKOUT_LAYOUTS = [
+  { skills: join5("source", "skills"), marker: join5("source", "lawyer", "mcp") },
+  { skills: join5(".claude", "skills"), marker: join5(".claude", "skills", "plugin-packager") }
+];
 var SELF_DIR = dirname2(fileURLToPath(import.meta.url));
 var INSTALL_ROOT = resolve(SELF_DIR, "..", "..");
 function pluginVersion(installRoot = INSTALL_ROOT) {
@@ -119579,7 +119581,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "84a950bb993e";
+var BUILD_STAMP = false ? null : "95bce3aabf6f";
 
 // src/local-page/listener.ts
 import { createServer, get } from "node:http";

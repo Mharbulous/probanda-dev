@@ -1,6 +1,6 @@
 ---
 journey: Retire a Writing
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: a Writing's work is over — its appeal period ran out, it settled, it was abandoned, or the practitioner simply says it is finished
 outcome: the retirement and its reason are recorded, the Writing's open jobs are closed out with it, its research is handed to the matter's case file so it outlives the Writing, the board reads Retired — and consolidation is offered in the next turn without anyone having to remember it
@@ -65,4 +65,4 @@ source: design `Engineering/1. Design/2026-09-08_retire-filing-consolidation-cur
 - **Remembering is the machine's job; deciding stays the practitioner's.** Consolidation is offered unprompted in the next turn, and every approval downstream of that offer still gets taken.
 - **Recovery undoes the retirement and nothing else.** Superseded jobs stay superseded, and the billable flip is offered, never performed.
 
-The Writing's lifecycle states, the dates behind them, and the write and recovery mechanics are `/drafting-data`'s (`.claude/skills/drafting-data/references/filing-checklists.md` §11); this journey describes only what the practitioner experiences.
+The Writing's lifecycle states, the dates behind them, and the write and recovery mechanics are `/drafting-data`'s (`source/skills/drafting-data/references/filing-checklists.md` §11); this journey describes only what the practitioner experiences.

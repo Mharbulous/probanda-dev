@@ -27,7 +27,7 @@ The tool binds any file named, from anywhere on the PC: the safeguard is the law
 
 ## 1. Locate the Writing
 
-The `.docx` is the deliverable at the top of the draft folder, resolved by glob per the workspace output rule (`.claude/skills/shared/workspace-output-rule.md`): the `deliverable` path `publish-general` reported, else ask the practitioner which file. Never bind its review copy, `<name> (format unverified).docx`. The working folder is `<matter-data folder>\assemble-general\`, the matter-data folder being the one `probanda.json`'s `case_data_dir` names; create `assemble-general\` if it is absent.
+The `.docx` is the deliverable at the top of the draft folder, resolved by glob per the workspace output rule (`source/skills/shared/workspace-output-rule.md`): the `deliverable` path `publish-general` reported, else ask the practitioner which file. Never bind its review copy, `<name> (format unverified).docx`. The working folder is `<matter-data folder>\assemble-general\`, the matter-data folder being the one `probanda.json`'s `case_data_dir` names; create `assemble-general\` if it is absent.
 
 ## 2. Name the enclosures
 
@@ -51,7 +51,7 @@ Record the answers in `enclosures.json` in the working folder, rewritten on each
 
 ## 3. Bind
 
-Run the binder from `/assemble`'s own folder: in a repo checkout, from the repo root as `python .claude/skills/assemble/subskills/assemble-general/scripts/bind_general.py`. It needs PyMuPDF and Word or LibreOffice, so this step runs on the PC only. In Cowork, call the host tool instead (In Cowork, above).
+Run the binder from `/assemble`'s own folder: in a repo checkout, from the repo root as `python source/skills/assemble/subskills/assemble-general/scripts/bind_general.py`. It needs PyMuPDF and Word or LibreOffice, so this step runs on the PC only. In Cowork, call the host tool instead (In Cowork, above).
 
 ```
 python bind_general.py --manifest "<working folder>/enclosures.json"

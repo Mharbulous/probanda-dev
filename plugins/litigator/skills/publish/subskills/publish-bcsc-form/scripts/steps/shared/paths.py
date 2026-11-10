@@ -1,6 +1,6 @@
 """Shared matter-folder output paths for BCSC form workflows.
 
-Two buckets, per the workspace output rule in .claude/skills/shared/workspace-output-rule.md:
+Two buckets, per the workspace output rule in source/skills/shared/workspace-output-rule.md:
 
 - writing_output_dir   -> <the matter's draft folder>/<Writing folder>/ (final
   .docx / PDF). The Writing folder's name comes from the caller.

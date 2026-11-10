@@ -1,6 +1,6 @@
 ---
 journey: Answer the other side
-kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
+kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: an opposing point lands — in the other side's submissions, correspondence, or an application response — and the practitioner forwards or mentions it
 outcome: every opposing point is recorded against the submission or order it attacks, and the package renders with zero silent ↩️ — each point answered or deliberately unanswered
@@ -48,4 +48,4 @@ source: effort owner's flow selection, 2026-08-23; steps 2, 4, 7 and 8 amended 2
 - **The practitioner places the point.** Which submission or order a point attacks is asked, offered as the Writing's own fixed list, and never inferred.
 - **The answer is the practitioner's; law goes through the gate.** A rebuttal is dictated or asked for. The assistant may offer facts the matter already holds for the practitioner to pick from, but never composes the answer. Its legal content comes only through `/legal-research`. An open legal slot renders as an honest marker, never as guessed law.
 - **Deliberate silence is recorded, not implied.** A point held for the hearing (🂡, rendered for the human and withheld from the forum) or declined outright is a decision on the record — the finish line is zero silent ↩️, not zero unanswered points.
-- **Same capture habit as the evidence side.** Recording a concern where it was seen, for a later fact-by-fact pass, mirrors `.claude/skills/drafting-data/User_Journeys/flag-inadmissible-evidence.md` — whose objection list serves the same responding flow.
+- **Same capture habit as the evidence side.** Recording a concern where it was seen, for a later fact-by-fact pass, mirrors `source/skills/drafting-data/User_Journeys/flag-inadmissible-evidence.md` — whose objection list serves the same responding flow.

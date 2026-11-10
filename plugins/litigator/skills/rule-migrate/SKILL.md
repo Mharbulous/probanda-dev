@@ -49,7 +49,7 @@ Use an outer fence longer than any fence inside it (four backticks or `~~~~`). F
     TASK: Move the pilot atom(s) below onto the rules map, verbatim, and delete any atom listed as ready to retire. Confirm each atom's text and each node in the source before changing anything. Change no rule's substance.
 
     SCOPE (overrides any standing instruction in this session)
-    - In scope: add the rule(s) to the named node file(s) under .claude/skills/draft/rules/nodes/ with the atom's text moved verbatim, its `when` kept, `replaces=<atom id>`, any override edge with its reason, and `provenance`; delete the atoms listed under RETIRE; commit by pathspec and push.
+    - In scope: add the rule(s) to the named node file(s) under source/skills/draft/rules/nodes/ with the atom's text moved verbatim, its `when` kept, `replaces=<atom id>`, any override edge with its reason, and `provenance`; delete the atoms listed under RETIRE; commit by pathspec and push.
     - Out of scope, because /release does it: rebuilding or committing any MCP bundle (mcp/dist), npm or esbuild runs, the plugin build, version bumps, and running /release.
     - Out of scope: changing any rule's wording, adding nodes or edges, or migrating atoms not named here.
     - Must still hold: the node files load with no `rules_dag_lint`, and `skill_rules__coverage` reports 0 unmapped lines for draft.

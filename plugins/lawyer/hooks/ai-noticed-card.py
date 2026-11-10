@@ -34,7 +34,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve()
 # shared/scripts in the built plugin, else in this repo's source tree
 sys.path[:0] = [str(p) for p in (HERE.parents[1] / "skills" / "shared" / "scripts",
-                                 HERE.parents[3] / ".claude" / "skills" / "shared" / "scripts") if p.is_dir()]
+                                 HERE.parents[2] / "skills" / "shared" / "scripts") if p.is_dir()]
 import hook_io  # noqa: E402
 
 # The session ids the data server takes (observation.ts, sessionIdOf).

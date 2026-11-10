@@ -113,7 +113,7 @@ only -- see Error handling.
 5. **Build each book.** Resolve `subskills/assemble-bcca-book/scripts/book_manifest.py`
    and `subskills/assemble-bcca-book/scripts/paginate_book.py` from
    `/assemble`'s folder: in a repo checkout run them as
-   `python .claude/skills/assemble/subskills/assemble-bcca-book/scripts/<script>`
+   `python source/skills/assemble/subskills/assemble-bcca-book/scripts/<script>`
    from the repo root; in Cowork, run `book_manifest.py` from the folder this
    front door was opened from (its `Base directory for this skill:` line).
    `paginate_book.py` binds and needs PyMuPDF, so it runs on the PC only: in
