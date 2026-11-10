@@ -45,15 +45,15 @@ pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap 
 <body>
 <main>
   <figure class="diagram" id="client-billing"
-          data-based-on-commit="c9154155c853130c6f8d587c74e106dabce0bbe0"
-          data-updated="2026-11-06T15:30:00-08:00">
+          data-based-on-commit="72c1eb077e1c824ef05869eabde5998763fa3953"
+          data-updated="2026-11-10T12:57:00-07:00">
     <figcaption>
       <h1>How Probanda bills a client, from the last invoice to the signed one</h1>
-      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/c9154155c853130c6f8d587c74e106dabce0bbe0"><code>c9154155</code></a> on main · Last updated 2026-11-06 15:30 -08:00</p>
+      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/72c1eb077e1c824ef05869eabde5998763fa3953"><code>72c1eb07</code></a> on main · Last updated 2026-11-10 12:57 -07:00</p>
     </figcaption>
     <div class="legend" aria-label="Colour key">
       <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer plugin skill</span>
-      <span><i style="background:#e3eefb;border-color:#2563a8"></i>timekeeper plugin skill</span>
+      <span><i style="background:#e3eefb;border-color:#2563a8"></i>billing plugin skill</span>
       <span><i style="background:#efe8fb;border-color:#6b46b0"></i>file-manager plugin skill</span>
       <span><i style="background:#eef1f5;border-color:#5b6675;border-style:double;border-width:3px"></i>Custom agent or helper</span>
       <span><i style="background:#fbe4ec;border-color:#b03060;border-radius:8px"></i>👤 You act here</span>
@@ -85,29 +85,37 @@ flowchart TD
     PD["/practice-data<br/>the firm's records<br/>of past invoices"]
     AGREE{{"Do the firm's records match<br/>the invoices in the folder?<br/>If not, open each one to confirm<br/>its signature and number"}}
     O1(["to 2. Find the days with work"])
-    O5(["to 5. Make the invoice"])
+    WAIT["Show you the unsigned final copy<br/>(finish making it first if it was never made).<br/>New work goes on the next bill"]
+    REOPEN(["👤 Reopen this bill?<br/>Only if you ask and say why"])
+    STOP1["Stop"]
+    SO(["👤 Start over?<br/>Otherwise stop"])
 
     GO --> BC
     BC -->|"who is the client?"| MD
     BC -->|"any saved progress?"| REC
     REC --> LIVE
     LIVE -->|"yes, still being worked on"| RES
-    LIVE -->|"yes, waiting for your signature"| O5
+    LIVE -->|"yes, waiting for your signature"| WAIT
+    WAIT --> REOPEN
+    REOPEN -->|"no"| STOP1
+    REOPEN -->|"yes: the final copy<br/>is marked superseded"| RES
     RES -->|"nothing changed:<br/>skip ahead"| O1
     RES -->|"something changed"| NAMES
     LIVE -->|"no: start a new bill"| NAMES
     NAMES -->|"yes: the bill waits<br/>until they are fixed"| HK
     HK --> HKS
     HKS --> HKA
-    HKS -.->|"then run /bill-client again"| NAMES
+    HKS -.->|"you say it is done:<br/>the bill carries on"| NAMES
     NAMES -->|"no"| LAST
     LAST --> READ
+    LAST -->|"a bill under way, but this is<br/>not the invoice it started from"| SO
     READ --> AGREE
     PD <-.->|"compares, and adds<br/>any missing invoices"| AGREE
     AGREE -->|"saves the start of this bill"| REC
     AGREE --> O1
 
     classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
+    classDef tk fill:#e3eefb,stroke:#2563a8,color:#1d2733
     classDef fm fill:#efe8fb,stroke:#6b46b0,color:#1d2733
     classDef agent fill:#eef1f5,stroke:#5b6675,stroke-width:3px,color:#1d2733
     classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
@@ -115,16 +123,16 @@ flowchart TD
     classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
     classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
     classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
-    class BC,MD,PD lawyer
+    class MD,PD lawyer
+    class BC tk
     class HKS fm
     class HKA agent
-    class GO,HK human
+    class GO,HK,REOPEN,SO human
     class AGREE gate
-    class LIVE,RES,NAMES,LAST,READ step
+    class LIVE,RES,NAMES,LAST,READ,WAIT,STOP1 step
     class REC store
-    class O1,O5 link
+    class O1 link
     click O1 href "#dates"
-    click O5 href "#render"
 </pre>
     </div>
 
@@ -193,22 +201,23 @@ flowchart TD
     I3(["from 2. Find the days with work"])
     CW{"Running in Cowork,<br/>the web version?"}
     STOPC["Stop here: screenshots<br/>can only be read on your PC"]
-    TC["/timecamping<br/>reviews each listed day,<br/>strongest days first"]
+    TC["/timecamping<br/>reviews each listed day,<br/>strongest days first.<br/>Days with only staff work are skipped"]
     JD[("Reviewed-days list<br/>kept separately<br/>for each matter")]
-    BT["/build-timeline<br/>gathers the day's evidence<br/>from 7 sources"]
-    HP(["👤 You approve replacing<br/>evidence saved earlier"])
+    BT["/build-timeline<br/>gathers 5 sources: computer activity,<br/>calls, two calendars, sent mail"]
+    OWN["/timecamping fetches the other 2 itself:<br/>TimeCamp time entries<br/>and SyncoPaid screenshots"]
     TCD["/timecamping-data<br/>stores the evidence"]
     DB[("Time-review database<br/>all evidence and decisions,<br/>for every matter")]
     GATE{{"Have all 7 sources<br/>reported in for this day?<br/>Nothing may be read until they have"}}
-    HALT["Stop and say<br/>which sources are missing"]
+    HALT["Skip this day and say<br/>which sources are missing"]
     WHOLE["Read the whole day,<br/>for every client,<br/>not just this one"]
-    PROP["Split the day into blocks of work,<br/>look at the screenshots,<br/>suggest the matter for each block"]
+    PROP["Split the day into blocks of work<br/>and suggest the matter for each block"]
+    SR[["screenshot-reader agent<br/>looks at the screenshots,<br/>up to 5 at a time"]]
     GRID{"Does the evidence itself<br/>name the matter?"}
     SIL["Accept the suggestion<br/>without asking you"]
     ASK(["👤 You answer a question<br/>about each unclear block,<br/>shown with its screenshots"])
     SHOW["/show-me<br/>rules for how each<br/>question is put to you"]
     DRY["List every change<br/>to be made in TimeCamp"]
-    HC(["👤 You say go ahead,<br/>then approve each change"])
+    HC(["👤 You say go ahead,<br/>once for the day"])
     WB{{"Make one change in TimeCamp,<br/>then read it back to confirm it"}}
     TCAMP[("TimeCamp<br/>each time entry belongs<br/>to exactly one matter")]
     MARK["Record the day as reviewed"]
@@ -222,13 +231,16 @@ flowchart TD
     CW -->|"no"| TC
     TC <-.->|"skips days<br/>already reviewed"| JD
     TC -->|"for each day"| BT
-    BT -.-> HP
+    TC -->|"for each day"| OWN
     BT --> TCD
+    OWN --> TCD
     TCD --> DB
     DB --> GATE
     GATE -->|"no"| HALT
+    HALT -.->|"next day"| TC
     GATE -->|"yes"| WHOLE
     WHOLE --> PROP
+    PROP <-.-> SR
     PROP --> GRID
     GRID -->|"yes"| SIL
     GRID -->|"no, or sources disagree"| ASK
@@ -249,6 +261,7 @@ flowchart TD
 
     classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
     classDef tk fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef agent fill:#eef1f5,stroke:#5b6675,stroke-width:3px,color:#1d2733
     classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
     classDef gate fill:#fff8c5,stroke:#8a6d00,stroke-width:2px,color:#1d2733
     classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
@@ -256,9 +269,10 @@ flowchart TD
     classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
     class SHOW lawyer
     class TC,BT,TCD tk
-    class HP,ASK,HC,HU,WEAK human
+    class SR agent
+    class ASK,HC,HU,WEAK human
     class GATE,WB gate
-    class CW,STOPC,HALT,WHOLE,PROP,GRID,SIL,DRY,MARK,UNC step
+    class CW,STOPC,HALT,WHOLE,PROP,GRID,SIL,DRY,MARK,UNC,OWN step
     class JD,DB,TCAMP store
     class I3,O3 link
     click I3 href "#dates"
@@ -329,12 +343,13 @@ flowchart TD
 <pre class="mermaid">
 flowchart TD
     I5(["from 4. Check every line of time"])
-    I5B(["from 1: a bill already<br/>waiting for signature"])
     CH["Draw a chart of the time<br/>if the last invoice had one"]
     HW(["👤 You choose Word or PDF"])
     TPL["/practice-data supplies the<br/>firm's invoice template and letterhead"]
     HT(["👤 You correct and approve<br/>the template, first time only"])
     TAX["Work out the tax rates<br/>from the last invoice"]
+    HTX(["👤 You see the tax rates once"])
+    TRU["State the trust balance<br/>if the last invoice applied trust"]
     DISB{{"Collect court fees and receipts:<br/>each fee counted once,<br/>doubtful ones flagged"}}
     HD(["👤 You decide each<br/>flagged fee and its tax"])
     REN{{"Fill in the invoice:<br/>recompute every amount,<br/>refuse anything that doesn't add up"}}
@@ -357,12 +372,13 @@ flowchart TD
     HW --> TPL
     TPL -.->|"no template yet"| HT
     TPL --> TAX
-    TAX --> DISB
+    TAX --> HTX
+    HTX --> TRU
+    TRU --> DISB
     DISB --> HD
     HD --> REN
     REN --> DRAFT
     DRAFT --> HY
-    I5B --> HY
     HY -->|"needs a change"| CHG
     HY -->|"yes"| HN
     HN -->|"fill it in again,<br/>without the DRAFT mark"| FIN
@@ -375,7 +391,7 @@ flowchart TD
     SCR --> HS
     DONE -.->|"later"| DC
 
-    classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
+    classDef tk fill:#e3eefb,stroke:#2563a8,color:#1d2733
     classDef agent fill:#eef1f5,stroke:#5b6675,stroke-width:3px,color:#1d2733
     classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
     classDef gate fill:#fff8c5,stroke:#8a6d00,stroke-width:2px,color:#1d2733
@@ -383,16 +399,15 @@ flowchart TD
     classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
     classDef done fill:#e2f3e6,stroke:#2f7d46,color:#1d2733
     classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
-    class II lawyer
+    class II tk
     class SCR,DC agent
-    class HW,HT,HD,HY,HN,SIGN,HI,HS human
+    class HW,HT,HTX,HD,HY,HN,SIGN,HI,HS human
     class DISB,REN,FRZ gate
-    class CH,TPL,TAX step
+    class CH,TPL,TAX,TRU step
     class DRAFT store
     class FIN,DONE done
-    class I5,I5B,CHG link
+    class I5,CHG link
     click I5 href "#vet"
-    click I5B href "#start"
     click CHG href "#start"
 </pre>
     </div>
