@@ -10,6 +10,8 @@ build_body(data) reads:
     warning         str            optional, a review copy's format warning, printed bold as
                                    the body's first paragraph
     date            str            required
+    marker          str            optional, e.g. "SOLICITOR CLIENT PRIVILEGED", one bold line
+                                   between the date and the address block
     recipient       [str]          address block lines, unless recipients is given
     attention       str            optional, bolded under the address after "Attention: "
     delivery        str            optional, e.g. "VIA EMAIL ONLY"
@@ -364,9 +366,12 @@ def keep_together(paragraph, keep_lines=True, widow_control=False, keep_next=Tru
 
 
 def list_fields_problem(data):
-    """What is wrong with the payload's `attention`, `enclosures` or `cc`, or None. Absent or
-    null `attention` means no Attention line. Absent, null and [] `enclosures` or `cc` mean no
-    Encl. block and no cc lines. Every route to build_body checks this first."""
+    """What is wrong with the payload's `marker`, `attention`, `enclosures` or `cc`, or None.
+    Absent or null `marker` or `attention` means no such line. Absent, null and [] `enclosures`
+    or `cc` mean no Encl. block and no cc lines. Every route to build_body checks this first."""
+    marker = data.get("marker")
+    if marker is not None and not isinstance(marker, str):
+        return "`marker` must be a string, not %r" % (marker,)
     entries = [("attention", data)]
     entries += [("recipients[%d].attention" % i, entry)
                 for i, entry in enumerate(data.get("recipients") or []) if isinstance(entry, dict)]
@@ -399,9 +404,10 @@ def build_body(data):
     parts = []
     if data.get("warning"):
         parts += [para(data["warning"], "", MINOR + "<w:b/><w:bCs/>"), blank(MINOR)]
+    parts += [para(data["date"], "", MINOR), blank(MINOR)]
+    if data.get("marker"):
+        parts += [para(data["marker"], "", MINOR + "<w:b/><w:bCs/>"), blank(MINOR)]
     parts += [
-        para(data["date"], "", MINOR),
-        blank(MINOR),
         recipient_blocks(data),
         blank(MINOR),
         para(data["salutation"], "", MINOR),
@@ -517,7 +523,7 @@ PRINTED_LABEL = {
     "enclosures": re.compile(r"^\s*encl(osures?)?\s*[.:]", re.I),
 }
 # The payload fields that print a face line outside `body`.
-LETTER_FIELDS = ("date", "salutation", "re", "recipient", "recipients", "attention", "delivery",
+LETTER_FIELDS = ("date", "marker", "salutation", "re", "recipient", "recipients", "attention", "delivery",
                  "recipient_email", "enclosures", "cc")
 BOLD = "<w:b/><w:bCs/>"
 

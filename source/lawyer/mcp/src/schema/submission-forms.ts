@@ -794,17 +794,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "signoff_duplicates_signature). It " +
         "returns no file content. Refuses, code path_out_of_scope, an output_name or folder that is a path or resolves " +
         "elsewhere through a link; draft_dir_missing or draft_dir_ambiguous for a matter with no 0. DRAFT folder or two; " +
-        "and any other step. 55 s budget (code python_timeout). An attachment that is a client letter's review draft with " +
-        "counsel's review pending is refused (attachment_on_hold). " +
-        "step client_letter_fill (matter_root, output_name, letter, the letter's parts: signer, file_number, date, recipient, " +
-        "salutation, re, body, optional delivery, recipient_email, attention, enclosures, cc; on a revision, revises, the newest " +
-        "copy's stem) writes a client letter's Word review draft at the top of 0. DRAFT from the firm profile's registered " +
-        "letterhead, read here with no folder grant: its tokens filled, the signing space blank, its first paragraph the hold " +
-        "line `Counsel's review: pending`. Nothing is overwritten: a revision is the next \" vN\", and a revised copy with no " +
-        "hold line gets it back. step client_letter_approve (matter_root, output_name, the file's stem) removes the hold line " +
-        "from the newest copy and changes nothing else, on a machine whose person is an active roster lawyer. Each returns the " +
-        "script's JSON line, success with path, or error and detail: copy_exists, newer_copy, letterhead_refused, " +
-        "not_a_roster_lawyer, no_hold, open_in_word, not_found. No database is opened. " +
+        "and any other step. 55 s budget (code python_timeout). " +
         "step scrutiny_review (ADR 0036; db_path, the drafting database in the matter's matter-data folder, and statement_id; " +
         "optional context_paras, paragraph numbers the practitioner names for the context extract, which when omitted are " +
         "derived from the finding's para/paras numbers less the pinpoint and returned as context_paras_derived, any the " +
@@ -826,11 +816,9 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       inputSchema: {
         type: "object",
         properties: {
-          step: { type: "string", enum: ["write_email", "scrutiny_review", "client_letter_fill", "client_letter_approve"] },
+          step: { type: "string", enum: ["write_email", "scrutiny_review"] },
           matter_root: { type: "string" },
           output_name: { type: "string" },
-          letter: { type: "object" },
-          revises: { type: "string" },
           folder: { type: "string" },
           to: { type: "array", items: { type: "string" } },
           cc: { type: "array", items: { type: "string" } },

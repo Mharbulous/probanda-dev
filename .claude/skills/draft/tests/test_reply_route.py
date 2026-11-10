@@ -45,7 +45,7 @@ class ReplyRouteTest(unittest.TestCase):
     def test_save_first_exempts_it(self):
         save_first = next(line for line in section(self.procedure, "## 8. New matter setup").splitlines()
                           if line.startswith("**Save first**"))
-        self.assertIn(f"a reply on the reply route (`{ROUTE}`; ADR 0040) are not Writings", save_first)
+        self.assertIn(f"a reply on the reply route (`{ROUTE}`; ADR 0040) is not a Writing", save_first)
 
     def test_letters_points_at_it(self):
         self.assertIn("`references/reply.md`", (REFERENCES / "letters.md").read_text(encoding="utf-8"))

@@ -140,6 +140,10 @@ test("a malformed overlay index fails hard, naming the file and the field", (t) 
   assert.match(err.message, /aliases\[0\]\.source: is required/, "a local alias records its provenance");
 
   f.local("draft/CAN/BC/_NoVenue/Documents/kinds.local.json", { kinds: [{ file: "letter-to-client", name: "Client letter", aliases: [], recipient: "client" }] });
+  const { view } = knowledgeRead("draft/CAN/BC/_NoVenue/Documents/kinds.json", f.seams);
+  assert.deepEqual(view.kinds.map((row) => [row.file, row.recipient]), [["letter-to-client", "client"]], "a client letter enters the tree");
+
+  f.local("draft/CAN/BC/_NoVenue/Documents/kinds.local.json", { kinds: [{ file: "letter-to-nobody", name: "Letter", aliases: [], recipient: "nobody" }] });
   err = errorOf(() => knowledgeRead("draft/CAN/BC/_NoVenue/Documents/kinds.json", f.seams));
   assert.equal(err.code, "invalid_index");
   assert.match(err.message, /recipient: must be one of/);

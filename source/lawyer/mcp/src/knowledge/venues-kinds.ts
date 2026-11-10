@@ -13,7 +13,7 @@
 import { DataServerError, ValidationError } from "../errors.js";
 import type { Layer } from "./tree.js";
 
-export const AUDIENCES: readonly string[] = ["opposing-counsel", "opposing-party", "witness", "expert", "public-body", "non-party", "internal"];
+export const AUDIENCES: readonly string[] = ["opposing-counsel", "opposing-party", "witness", "expert", "public-body", "non-party", "client", "internal"];
 const ALIAS_SOURCES = ["official", "practitioner", "agent"];
 export const NO_VENUE = "_NoVenue";
 
@@ -311,7 +311,7 @@ function recipientOf(row: Json, file: string, where: string, noVenue: boolean): 
   }
   const recipient = stringAt(row, "recipient", file, where, false);
   if (recipient !== undefined && !AUDIENCES.includes(recipient)) {
-    invalid(file, `${where}.recipient`, `must be one of ${AUDIENCES.join(", ")} (a letter to the client never enters the tree)`);
+    invalid(file, `${where}.recipient`, `must be one of ${AUDIENCES.join(", ")}`);
   }
   return recipient;
 }

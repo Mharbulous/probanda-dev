@@ -96,7 +96,6 @@
     {"file": ".claude/skills/matter-data/references/design-decisions.md", "target": "file-sorting", "why": "mention"},
     {"file": ".claude/skills/matter-data/references/design-decisions.md", "target": "files server", "why": "mention", "note": "Decision records describing file_ops__move's superseded mode and file_ops__comment_pdf."},
     {"file": ".claude/skills/matter-data/references/design-decisions.md", "target": "housekeeping", "why": "mention"},
-    {"file": ".claude/skills/draft/references/letters.md", "target": "files server", "why": "conditional", "note": "Trashes the send copy after a revision. Without file-manager it trashes nothing and says so."},
     {"file": ".claude/skills/draft/references/presentation-folder.md", "target": "files server", "why": "conditional", "note": "Renames a Writing folder an older build named with its type's code, on the practitioner's yes, with file_ops__move. Without file-manager it renames nothing and says so; no shell fallback."},
     {"file": ".claude/skills/work/references/loose-thread-triage.md", "target": "housekeeping", "why": "mention", "note": "A loose-thread category named housekeeping, not the skill."},
     {"file": ".claude/skills/drafting-data/references/jobs-run.md", "target": "housekeeping", "why": "mention", "note": "The same loose-thread category."},

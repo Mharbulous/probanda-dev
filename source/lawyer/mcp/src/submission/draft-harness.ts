@@ -12,10 +12,6 @@
 // (Brahm, #1453). No file content is returned. A database is opened only to address the email from
 // case data (email-recipients.ts): counsel on the service list (to_service_list, optionally one
 // proceeding_id) or a saved Writing's recipients (filing_id), read from db_path, never written.
-//
-// client_letter_fill and client_letter_approve run publish/scripts/client_letter.py on a client
-// letter's Word review draft at the top of the 0. DRAFT folder (/draft letters.md section 10). The
-// server reads the firm profile, so the firm folder needs no grant. No database is opened.
 
 import { existsSync, mkdirSync, readdirSync, realpathSync } from "node:fs";
 import { win32 as pathWin32 } from "node:path";
@@ -29,7 +25,6 @@ import { pythonTimeoutMs } from "../python-timeout.js";
 import { installedPluginLabel, resolveShippedRoot } from "../repo-root.js";
 import { emailSignaturePath, readFirmProfile } from "../tools/practice/firm-profile.js";
 import { assertSegment, confineWritingFolder } from "./bcsc-form-harness.js";
-import { reviewStatus } from "./board-attachments.js";
 import { emailRecipients, type EmailRecipients, type RecipientSource } from "./email-recipients.js";
 import { scrutinyReview, type ScrutinyReviewArgs } from "./scrutiny-review.js";
 
@@ -40,7 +35,7 @@ import { scrutinyReview, type ScrutinyReviewArgs } from "./scrutiny-review.js";
  */
 export const DRAFT_HARNESS_TIMEOUT_MS = 55_000;
 
-export const DRAFT_STEPS = ["write_email", "scrutiny_review", "client_letter_fill", "client_letter_approve"] as const;
+export const DRAFT_STEPS = ["write_email", "scrutiny_review"] as const;
 
 export interface DraftHarnessArgs extends Omit<ScrutinyReviewArgs, "step" | "matter_root"> {
   step: string;
@@ -62,52 +57,15 @@ export interface DraftHarnessArgs extends Omit<ScrutinyReviewArgs, "step" | "mat
   body?: string;
   /** write_email: any host files, absolute or relative to the matter folder; absolute with no matter. */
   attachments?: string[];
-  /** client_letter_fill: the letter's parts, render_letterhead.py's payload. */
-  letter?: Record<string, unknown>;
-  /** client_letter_fill: on a revision, the stem of the copy it revises, the newest. */
-  revises?: string;
 }
 
 /** Runs one /draft step for a matter and returns its script's JSON line unchanged. */
 export function draftHarness(args: DraftHarnessArgs, env: NodeJS.ProcessEnv = process.env, installRoot?: string): unknown {
   if (args.step === "scrutiny_review") return scrutinyReview(args as ScrutinyReviewArgs, env, installRoot);
-  if (args.step === "client_letter_fill" || args.step === "client_letter_approve") return clientLetter(args, env, installRoot);
   if (args.step !== "write_email") {
     throw new ValidationError(`drafting_forms__draft_harness.step must be one of: ${DRAFT_STEPS.join(", ")} (got ${JSON.stringify(args.step)})`);
   }
   return writeEmail(args, env, installRoot);
-}
-
-function clientLetter(args: DraftHarnessArgs, env: NodeJS.ProcessEnv, installRoot?: string): unknown {
-  const field = (key: string) => `drafting_forms__draft_harness.${key}`;
-  const outputName = requireString(args, "output_name");
-  assertSegment(outputName, "output_name");
-  if (typeof args.matter_root !== "string") throw new ValidationError(`${field("matter_root")} is required for step ${args.step}`);
-  const filling = args.step === "client_letter_fill";
-  if (filling && (typeof args.letter !== "object" || args.letter === null || Array.isArray(args.letter))) {
-    throw new ValidationError(`${field("letter")} must be the letter's parts, an object, for step ${args.step}`);
-  }
-  if (args.revises !== undefined) assertSegment(args.revises, "revises");
-  const outDir = oneDraftFolder(args.matter_root, draftFolders(validateMatterRoot(args.matter_root)));
-  return runPythonDriver({
-    label: `draft ${args.step} (client_letter.py)`,
-    driver: shippedScript(["publish", "scripts", "client_letter.py"], env, installRoot),
-    payload: JSON.stringify({ action: filling ? "fill" : "approve", out_dir: outDir, output_name: outputName, revises: args.revises, letter: args.letter, profile: readFirmProfile(env) }),
-    env,
-    timeoutMs: pythonTimeoutMs(env, DRAFT_HARNESS_TIMEOUT_MS, "COCLERK_EMAIL_DRAFT_TIMEOUT_MS"),
-    extraEnv: { PYTHONDONTWRITEBYTECODE: "1" },
-    timeoutAdvice: "The script writes through a temporary file, so a killed run leaves the letter as it was: call this tool again.",
-  });
-}
-
-/** A held review draft is never attached (letters.md section 10, ban 20). A file whose status cannot be read is not a review draft this route can judge. */
-function isHeld(path: string): boolean {
-  if (!/\.(docx|md)$/i.test(path) || !existsSync(path)) return false;
-  try {
-    return /^pending\b/i.test(reviewStatus(path) ?? "");
-  } catch {
-    return false;
-  }
 }
 
 function writeEmail(args: DraftHarnessArgs, env: NodeJS.ProcessEnv, installRoot?: string): unknown {
@@ -138,14 +96,6 @@ function writeEmail(args: DraftHarnessArgs, env: NodeJS.ProcessEnv, installRoot?
   } else {
     root = validateMatterRoot(args.matter_root);
     outDir = args.folder === undefined ? oneDraftFolder(root, draftFolders(root)) : oneDraftFolder(root, confineWritingFolder(root, args.folder));
-  }
-  const held = attachments.map((path) => pathWin32.resolve(root, path)).filter(isHeld);
-  if (held.length > 0) {
-    return {
-      success: false,
-      error: "attachment_on_hold",
-      detail: `Counsel's review is pending on ${held.join("; ")}, so it cannot be attached. Only an active roster lawyer's approval lifts the hold. Nothing was written.`,
-    };
   }
   const from = sender(env);
   if ("error" in from) return from;

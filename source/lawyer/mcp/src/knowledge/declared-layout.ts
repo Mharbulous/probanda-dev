@@ -77,7 +77,7 @@ const TYPOGRAPHY = ["typeface", "font", "font_size", "line_spacing", "margins", 
  * layout's copy is read only to find a Writing folder an older build named with it (writing-folder.ts). */
 const TYPE_FIELDS = [
   "renderer", "needs_forum_parts", "folder_code", "title", "exhibit_numbering",
-  "parts", "goal_criteria", "companions", "page_limit", "letterhead", "signer", "ingest_inputs",
+  "parts", "goal_criteria", "companions", "page_limit", "letterhead", "marker", "signer", "ingest_inputs",
 ];
 /** Only these may be written as a cited scalar `{value, rule_ref}` in a type file. */
 const CITABLE_TYPE_FIELDS = ["title", "page_limit", "exhibit_numbering"];
@@ -207,6 +207,11 @@ export function validateTypeBlock(raw: unknown, file: string, context: TypeConte
     const letterhead = scalar(block, "letterhead", file, false);
     if (typeof letterhead !== "boolean") fail(file, "letterhead", "must be true or false");
     if (letterhead && !general) fail(file, "letterhead", "is allowed on general types only");
+  }
+  if (Object.hasOwn(block, "marker")) {
+    // One bold line the letterhead prints above the address, e.g. a privilege marker.
+    requireString(scalar(block, "marker", file, false), file, "marker");
+    if (scalar(block, "letterhead", file, false) !== true) fail(file, "marker", "is allowed only where letterhead is true");
   }
   if (Object.hasOwn(block, "signer")) {
     const signer = scalar(block, "signer", file, false);

@@ -325,7 +325,7 @@ A completed review job never blocks a new one: the guard reads only `queued` and
 
 ## 3g. Pass finding jobs
 
-One fixed-text job per finding the pre-review passes leave undecided: `/draft`'s letter passes (`draft/references/letters.md` section 4) and its overstatement review (`draft/references/overstatement.md`) on any Writing. A finding lives on the Work Board and nowhere else: never in the Writing's text, its mockup, a report file or a file card (spec `Engineering/1. Design/2026-10-06_letter-passes-emit-board-items-spec.md` §12). A client letter is no Writing and gets none: its findings stay in chat.
+One fixed-text job per finding the pre-review passes leave undecided: `/draft`'s letter passes (`draft/references/letters.md` section 4) and its overstatement review (`draft/references/overstatement.md`) on any Writing. A finding lives on the Work Board and nowhere else: never in the Writing's text, its mockup, a report file or a file card (spec `Engineering/1. Design/2026-10-06_letter-passes-emit-board-items-spec.md` §12).
 
 **Who creates it.** The session that ran the pass, in the turn it states the finding to the practitioner, for each finding not resolved in that turn, written straight to Ready with no closing read-back. A finding fixed or decided in the same turn is never written.
 

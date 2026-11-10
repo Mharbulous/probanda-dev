@@ -2,7 +2,7 @@
 // cover every such recipient: `public-body` (police, a ministry, a bylaw office) and the catch-all
 // `non-party` each resolve and save as a _NoVenue Writing, through the dispatch path as /draft
 // reaches it, against /draft's shipped tree with an empty firm overlay. The five earlier audiences
-// resolve as before, and a client letter still never enters the tree.
+// resolve as before, and a client letter resolves under `client` (ADR 0019).
 
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -69,9 +69,12 @@ test("the five earlier audiences resolve exactly as before", async (t) => {
   assert.deepEqual([release.result, release.code], ["resolved", "release"]);
 });
 
-test("a client letter still never resolves", async (t) => {
+test("a client letter resolves under its own recipient", async (t) => {
   await db(t);
-  await assert.rejects(resolve("letter", "client"), /recipient must be one of/);
+  for (const name of ["letter-to-client", "client letter", "reporting letter", "blank letter"]) {
+    const r = await resolve(name, "client");
+    assert.deepEqual([r.result, r.code], ["resolved", "letter-to-client"], name);
+  }
 });
 
 test("the Writing saves on a forum-less and a forum proceeding, with the general letter layout and letterhead", async (t) => {
@@ -102,5 +105,5 @@ test("both tool schemas offer exactly the runtime's audiences", () => {
     assert.deepEqual(tools[name].inputSchema.properties.recipient.enum, [...AUDIENCES], name);
   }
   for (const recipient of Object.keys(NEW)) assert.ok(AUDIENCES.includes(recipient), recipient);
-  assert.ok(!AUDIENCES.includes("client"), "a client letter never enters the tree");
+  assert.ok(AUDIENCES.includes("client"), "a client letter enters the tree");
 });

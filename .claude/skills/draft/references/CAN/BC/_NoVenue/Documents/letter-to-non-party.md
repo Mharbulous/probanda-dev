@@ -31,7 +31,7 @@ How every letter is drafted, checked on its mockup and sent is `references/lette
 Check each of these in order, and use this file only when every answer is no:
 
 1. Does the recipient prescribe the form or procedure of what is sent to it? Then it is a venue, and the letter is that venue's own kind.
-2. Is the recipient the client? Then it is a client letter, which is never a Writing.
+2. Is the recipient the client? Then use `client`.
 3. Is the recipient on the other side, or their lawyer? Then use `opposing-party` or `opposing-counsel`.
 4. Is the recipient a witness or a retained expert? Then use `witness` or `expert`.
 5. Is the recipient a government or law-enforcement body acting under a public mandate? Then use `public-body`.

@@ -297,5 +297,69 @@ class TestCcAndEnclosures(Base):
                 (self.tmp / "letter.docx").unlink()
 
 
+
+class TestLayout(Base):
+    """The page a letter gets, the same on every render."""
+
+    MARKER = "SOLICITOR CLIENT PRIVILEGED"
+
+    def setUp(self):
+        super().setUp()
+        self.config(person=STAFF["key"])
+        self.payload = {**PAYLOAD, "attention": "Jane Doe", "marker": self.MARKER}
+        self.doc = self.render_ok(self.payload)["word/document.xml"]
+        self.body = list(ET.fromstring(self.doc).find("{%s}body" % W))
+
+    def in_fresh_folder(self):
+        """Point later renders at a new folder, so each writes its own letter.docx."""
+        self.tmp = Path(tempfile.mkdtemp(dir=self._tmp.name))
+
+    def bold(self, run):
+        rpr = run.find("{%s}rPr" % W)
+        return rpr is not None and rpr.find("{%s}b" % W) is not None
+
+    def test_two_renders_of_one_payload_give_the_same_document(self):
+        self.in_fresh_folder()
+        again = self.render_ok(self.payload)["word/document.xml"]
+        self.assertEqual(again, self.doc)
+
+    def test_the_file_number_is_in_no_body_paragraph(self):
+        for p in ET.fromstring(self.doc).iter("{%s}p" % W):
+            self.assertNotIn(PAYLOAD["file_number"], text(p))
+
+    def test_attention_is_the_only_bold_run_in_the_address_cell(self):
+        table = next(e for e in self.body if e.tag == "{%s}tbl" % W)
+        address = table.find("{%s}tr/{%s}tc" % (W, W))
+        bold = [r.findtext("{%s}t" % W) for r in address.iter("{%s}r" % W) if self.bold(r)]
+        self.assertEqual(bold, ["Attention: Jane Doe"])
+
+    def test_the_re_paragraph_has_a_bottom_border(self):
+        re_para = next(p for p in self.body if p.tag == "{%s}p" % W and text(p).startswith("Re:"))
+        self.assertIsNotNone(re_para.find("{%s}pPr/{%s}pBdr/{%s}bottom" % (W, W, W)))
+
+    def test_the_marker_is_one_bold_line_between_the_date_and_the_address(self):
+        texts = [text(e) if e.tag == "{%s}p" % W else "<table>" for e in self.body]
+        date, marker, table = (texts.index(PAYLOAD["date"]), texts.index(self.MARKER),
+                               texts.index("<table>"))
+        self.assertLess(date, marker)
+        self.assertLess(marker, table)
+        runs = self.body[marker].findall("{%s}r" % W)
+        self.assertTrue(runs and all(self.bold(r) for r in runs))
+
+    def test_no_marker_prints_no_marker_line(self):
+        self.in_fresh_folder()
+        doc = self.render_ok(PAYLOAD)["word/document.xml"].decode("utf-8")
+        self.assertNotIn(self.MARKER, doc)
+
+    def test_a_non_string_marker_is_refused_naming_it(self):
+        self.in_fresh_folder()
+        self.assert_refused("`marker`", {**PAYLOAD, "marker": ["x"]})
+
+    def test_the_section_properties_are_the_templates(self):
+        pattern = re.compile(rb"<w:sectPr\b.*</w:sectPr>", re.S)
+        self.assertEqual(pattern.search(self.doc).group(0),
+                         pattern.search(self.template_parts["word/document.xml"]).group(0))
+
+
 if __name__ == "__main__":
     unittest.main()

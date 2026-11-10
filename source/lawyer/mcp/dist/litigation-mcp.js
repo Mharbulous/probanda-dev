@@ -1,4 +1,4 @@
-// build-stamp: 24dffb7524f6
+// build-stamp: 263563546713
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75261,7 +75261,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "24dffb7524f6";
+var BUILD_STAMP = false ? null : "263563546713";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -76924,7 +76924,7 @@ function practiceToolDefinitions() {
     },
     {
       name: practicePrefixed("render_cast_of_characters"),
-      description: "Write the matter's Cast of Characters, a read-only page of everyone involved (parties, counsel of record, witnesses and experts, tribunal members, public bodies, and every contact with a matter role on it, with their sourced contact details), to `<matter_root>\\0. DRAFT\\Cast of Characters.html`, from case data and practice data, and return cast_of_characters_path, the number of current entries on each tab, and how many carry each flag (unconfirmed, missing_details, conflicting_details, privileged_source). The matter is named by matt_num or matter_id; matter_root defaults to the folder recorded for the matter. It refuses to overwrite a file this renderer did not write. The page is a human interface: present cast_of_characters_path as a file card and relay the counts; never read, grep or parse the page (shared/html-pages.md). To answer who someone is or how to reach them, use contact_lookup and matter_data__resolve_participant.",
+      description: "Write the matter's Characters board, a read-only page of everyone involved with their sourced contact details, in five tabs (Client(s), Service List, Witnesses, Proceedings, Public Bodies), to `<matter_root>\\0. DRAFT\\Cast of Characters.html`, from case data and practice data, and return cast_of_characters_path, the count on each tab by its name (proceedings on Proceedings, current entries elsewhere), and how many entries carry each flag (unconfirmed, missing_details, conflicting_details, privileged_source). The matter is named by matt_num or matter_id; matter_root defaults to the folder recorded for the matter. It refuses to overwrite a file this renderer did not write. The page is a human interface: present cast_of_characters_path as a file card and relay the counts; never read, grep or parse the page (shared/html-pages.md). To answer who someone is or how to reach them, use contact_lookup and matter_data__resolve_participant.",
       inputSchema: objectSchema([
         ...matterRef,
         { name: "matter_root", type: "str" }
@@ -78003,7 +78003,7 @@ function timecampingToolDefinitions() {
 }
 
 // src/knowledge/venues-kinds.ts
-var AUDIENCES = ["opposing-counsel", "opposing-party", "witness", "expert", "public-body", "non-party", "internal"];
+var AUDIENCES = ["opposing-counsel", "opposing-party", "witness", "expert", "public-body", "non-party", "client", "internal"];
 var ALIAS_SOURCES = ["official", "practitioner", "agent"];
 var NO_VENUE = "_NoVenue";
 function invalid(file, where, rule) {
@@ -78194,7 +78194,7 @@ function recipientOf(row2, file, where, noVenue) {
   }
   const recipient = stringAt(row2, "recipient", file, where, false);
   if (recipient !== void 0 && !AUDIENCES.includes(recipient)) {
-    invalid(file, `${where}.recipient`, `must be one of ${AUDIENCES.join(", ")} (a letter to the client never enters the tree)`);
+    invalid(file, `${where}.recipient`, `must be one of ${AUDIENCES.join(", ")}`);
   }
   return recipient;
 }
@@ -79897,15 +79897,13 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("draft_harness"),
-      description: `/draft's host steps (issue #1453, ADR 0031), for a Cowork session, whose sandbox cannot reach the matter folder or Outlook: one step per call, named by step, with that step's arguments. matter_root is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json); write_email opens a database only to read recipients (below). step write_email is the only route for any outgoing email, in /draft or not (skills/shared/email.md): never a mail send tool. It (output_name, subject, and to or a recipient source; optional body, folder, cc, attachments) writes an unsent Outlook draft, <output_name>.eml with X-Unsent: 1, which Outlook opens as a new message ready to send; nothing is sent. It goes at the top of the matter's one 0. DRAFT folder (never created), or in folder, one folder name under it, created when absent. For an email that belongs to no matter, omit matter_root: the draft goes under <case_data_root>\\_practice\\drafts (or folder under it), created when absent, and every attachment must be absolute. output_name is a bare file name stem, no extension, that the caller composed under the firm's naming convention; a taken name gets the next " vN", reported as versioned_from, and nothing is ever overwritten. to (at least one) and cc are address strings, "Name <a@b>" or "a@b". Instead of to, the step can address the email itself from case data, so no address is typed: to_service_list: true (optional proceeding_id) is counsel of record for every party on the proceeding's service list, read live from case data as the mockup reads it, the client's side and the forum's own addressees left out; with no proceeding_id it is counsel across all the matter's proceedings, and the result's addressed.note says so. filing_id is that saved Writing's own to and cc recipients; one with a bcc recipient is refused (bcc_unsupported), because the step writes no Bcc. Either needs matter_root and db_path (the matter's drafting database), and to with either is refused. Each lawyer is addressed once. Case data holds each lawyer's email as one value that may list several addresses (split on ; and ,) with no role per address, so the first address goes in To and the rest (a paralegal, an assistant) in Cc; a cc recipient's all go in Cc. The firm's cc_on_counsel_email people (firm profile roster keys) are added to Cc, the sender left out. cc, when given, is added after them. A recipient with no email (withdrawn counsel, a party not linked to case data) is never guessed: it is listed in addressed.not_addressed with the reason, to tell the practitioner; when no To address is left the step refuses (no_recipients) and writes nothing. body is plain text, and omitted or empty writes a blank draft; attachments are any host files, absolute or relative to the matter folder. From is this machine's person in the firm roster, its name and email: with no person set, or no email on its entry, the step refuses with { success: false, error: from_unresolved } and writes nothing; set them with practice_data__upsert_firm_profile. The signature is the roster person's template, <case_data_root>\\_practice\\firm\\email-signatures\\<key>.htm, when present, else Outlook's own default new-message signature for that address on this PC, with its images inline; with neither, a plain-text draft with signature null and signature_note saying why. body is the message only, with no closing and no name: while a signature applies, a body whose last lines repeat the roster closing or name is refused (signoff_duplicates_signature) and nothing is written. Returns the script's JSON line, with addressed {to, cc, not_addressed, note?} added when a recipient source was used: success with path, signature, signature_source (template, outlook or null) and attachments [{name, size}], or error and detail (attachment_unresolved names every attachment it cannot find, before anything is written; bad_address; signature_image_missing; signature_registry_error; signoff_duplicates_signature). It returns no file content. Refuses, code path_out_of_scope, an output_name or folder that is a path or resolves elsewhere through a link; draft_dir_missing or draft_dir_ambiguous for a matter with no 0. DRAFT folder or two; and any other step. 55 s budget (code python_timeout). An attachment that is a client letter's review draft with counsel's review pending is refused (attachment_on_hold). step client_letter_fill (matter_root, output_name, letter, the letter's parts: signer, file_number, date, recipient, salutation, re, body, optional delivery, recipient_email, attention, enclosures, cc; on a revision, revises, the newest copy's stem) writes a client letter's Word review draft at the top of 0. DRAFT from the firm profile's registered letterhead, read here with no folder grant: its tokens filled, the signing space blank, its first paragraph the hold line \`Counsel's review: pending\`. Nothing is overwritten: a revision is the next " vN", and a revised copy with no hold line gets it back. step client_letter_approve (matter_root, output_name, the file's stem) removes the hold line from the newest copy and changes nothing else, on a machine whose person is an active roster lawyer. Each returns the script's JSON line, success with path, or error and detail: copy_exists, newer_copy, letterhead_refused, not_a_roster_lawyer, no_hold, open_in_word, not_found. No database is opened. step scrutiny_review (ADR 0036; db_path, the drafting database in the matter's matter-data folder, and statement_id; optional context_paras, paragraph numbers the practitioner names for the context extract, which when omitted are derived from the finding's para/paras numbers less the pinpoint and returned as context_paras_derived, any the highlight script cannot find dropped and returned as context_paras_not_found; source_path, a file the practitioner named; proposed {authority_id?, pinpoint?, span? {start, end}}) assembles a "Review scrutiny finding: " job's review in one call, reading the database without writing it: the statement and finding, with the answer file the finding names (when it names none, the finding is written beside the extracts as plain text, "3 finding - ....txt", and its path returned as finding.file); the authority's own file, found by its recorded path, else a hash search of 6. LAW then the matter, else source_path, and converted to PDF by Word into %LOCALAPPDATA%\\Coclerk\\scrutiny-review; verbatim, the word-level check of the stored excerpt; and two highlighted extracts, each a PDF and a PNG per page, "1 cited - ..." and "2 context - ...", written into 0. DRAFT\\Scrutiny review\\statement <id>\\ (created when absent; only this step's own files are replaced, and any other file there is left as it is and listed in foreign_files), with proposed adding the same for a proposed authority, pinpoint or excerpt span, and model_only.proposed_excerpt, the span's text for the gatekeeper write and never for chat. It never returns the stored excerpt, and refuses with { success: false, error, detail, partial? }: statement_not_found, proposed_authority_not_found, no_excerpt, authority_ambiguous, source_unresolved (partial: statement, finding, and the paths tried and folders searched), converter_missing, conversion_failed, highlight_failed, budget_exceeded (the conversion is cached: call again).`,
+      description: `/draft's host steps (issue #1453, ADR 0031), for a Cowork session, whose sandbox cannot reach the matter folder or Outlook: one step per call, named by step, with that step's arguments. matter_root is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json); write_email opens a database only to read recipients (below). step write_email is the only route for any outgoing email, in /draft or not (skills/shared/email.md): never a mail send tool. It (output_name, subject, and to or a recipient source; optional body, folder, cc, attachments) writes an unsent Outlook draft, <output_name>.eml with X-Unsent: 1, which Outlook opens as a new message ready to send; nothing is sent. It goes at the top of the matter's one 0. DRAFT folder (never created), or in folder, one folder name under it, created when absent. For an email that belongs to no matter, omit matter_root: the draft goes under <case_data_root>\\_practice\\drafts (or folder under it), created when absent, and every attachment must be absolute. output_name is a bare file name stem, no extension, that the caller composed under the firm's naming convention; a taken name gets the next " vN", reported as versioned_from, and nothing is ever overwritten. to (at least one) and cc are address strings, "Name <a@b>" or "a@b". Instead of to, the step can address the email itself from case data, so no address is typed: to_service_list: true (optional proceeding_id) is counsel of record for every party on the proceeding's service list, read live from case data as the mockup reads it, the client's side and the forum's own addressees left out; with no proceeding_id it is counsel across all the matter's proceedings, and the result's addressed.note says so. filing_id is that saved Writing's own to and cc recipients; one with a bcc recipient is refused (bcc_unsupported), because the step writes no Bcc. Either needs matter_root and db_path (the matter's drafting database), and to with either is refused. Each lawyer is addressed once. Case data holds each lawyer's email as one value that may list several addresses (split on ; and ,) with no role per address, so the first address goes in To and the rest (a paralegal, an assistant) in Cc; a cc recipient's all go in Cc. The firm's cc_on_counsel_email people (firm profile roster keys) are added to Cc, the sender left out. cc, when given, is added after them. A recipient with no email (withdrawn counsel, a party not linked to case data) is never guessed: it is listed in addressed.not_addressed with the reason, to tell the practitioner; when no To address is left the step refuses (no_recipients) and writes nothing. body is plain text, and omitted or empty writes a blank draft; attachments are any host files, absolute or relative to the matter folder. From is this machine's person in the firm roster, its name and email: with no person set, or no email on its entry, the step refuses with { success: false, error: from_unresolved } and writes nothing; set them with practice_data__upsert_firm_profile. The signature is the roster person's template, <case_data_root>\\_practice\\firm\\email-signatures\\<key>.htm, when present, else Outlook's own default new-message signature for that address on this PC, with its images inline; with neither, a plain-text draft with signature null and signature_note saying why. body is the message only, with no closing and no name: while a signature applies, a body whose last lines repeat the roster closing or name is refused (signoff_duplicates_signature) and nothing is written. Returns the script's JSON line, with addressed {to, cc, not_addressed, note?} added when a recipient source was used: success with path, signature, signature_source (template, outlook or null) and attachments [{name, size}], or error and detail (attachment_unresolved names every attachment it cannot find, before anything is written; bad_address; signature_image_missing; signature_registry_error; signoff_duplicates_signature). It returns no file content. Refuses, code path_out_of_scope, an output_name or folder that is a path or resolves elsewhere through a link; draft_dir_missing or draft_dir_ambiguous for a matter with no 0. DRAFT folder or two; and any other step. 55 s budget (code python_timeout). step scrutiny_review (ADR 0036; db_path, the drafting database in the matter's matter-data folder, and statement_id; optional context_paras, paragraph numbers the practitioner names for the context extract, which when omitted are derived from the finding's para/paras numbers less the pinpoint and returned as context_paras_derived, any the highlight script cannot find dropped and returned as context_paras_not_found; source_path, a file the practitioner named; proposed {authority_id?, pinpoint?, span? {start, end}}) assembles a "Review scrutiny finding: " job's review in one call, reading the database without writing it: the statement and finding, with the answer file the finding names (when it names none, the finding is written beside the extracts as plain text, "3 finding - ....txt", and its path returned as finding.file); the authority's own file, found by its recorded path, else a hash search of 6. LAW then the matter, else source_path, and converted to PDF by Word into %LOCALAPPDATA%\\Coclerk\\scrutiny-review; verbatim, the word-level check of the stored excerpt; and two highlighted extracts, each a PDF and a PNG per page, "1 cited - ..." and "2 context - ...", written into 0. DRAFT\\Scrutiny review\\statement <id>\\ (created when absent; only this step's own files are replaced, and any other file there is left as it is and listed in foreign_files), with proposed adding the same for a proposed authority, pinpoint or excerpt span, and model_only.proposed_excerpt, the span's text for the gatekeeper write and never for chat. It never returns the stored excerpt, and refuses with { success: false, error, detail, partial? }: statement_not_found, proposed_authority_not_found, no_excerpt, authority_ambiguous, source_unresolved (partial: statement, finding, and the paths tried and folders searched), converter_missing, conversion_failed, highlight_failed, budget_exceeded (the conversion is cached: call again).`,
       inputSchema: {
         type: "object",
         properties: {
-          step: { type: "string", enum: ["write_email", "scrutiny_review", "client_letter_fill", "client_letter_approve"] },
+          step: { type: "string", enum: ["write_email", "scrutiny_review"] },
           matter_root: { type: "string" },
           output_name: { type: "string" },
-          letter: { type: "object" },
-          revises: { type: "string" },
           folder: { type: "string" },
           to: { type: "array", items: { type: "string" } },
           cc: { type: "array", items: { type: "string" } },
@@ -85470,6 +85468,7 @@ var TYPE_FIELDS = [
   "companions",
   "page_limit",
   "letterhead",
+  "marker",
   "signer",
   "ingest_inputs"
 ];
@@ -85568,6 +85567,10 @@ function validateTypeBlock(raw, file, context) {
     const letterhead = scalar(block2, "letterhead", file, false);
     if (typeof letterhead !== "boolean") fail(file, "letterhead", "must be true or false");
     if (letterhead && !general) fail(file, "letterhead", "is allowed on general types only");
+  }
+  if (Object.hasOwn(block2, "marker")) {
+    requireString(scalar(block2, "marker", file, false), file, "marker");
+    if (scalar(block2, "letterhead", file, false) !== true) fail(file, "marker", "is allowed only where letterhead is true");
   }
   if (Object.hasOwn(block2, "signer")) {
     const signer = scalar(block2, "signer", file, false);
@@ -86502,11 +86505,11 @@ function fetchProceeding(dbPath, proceedingId) {
   if (found2.length === 0) throw new Error(`No proceeding found with id ${proceedingId}`);
   return found2[0];
 }
-function requireForum(proceeding, needsForum) {
-  if (needsForum && proceeding.forum === null) {
+function requireForum(proceeding2, needsForum) {
+  if (needsForum && proceeding2.forum === null) {
     throw new Error("The proceeding has no court or tribunal recorded, and this Writing prints parts only a court or tribunal supplies");
   }
-  return proceeding;
+  return proceeding2;
 }
 function isObject4(value2) {
   return typeof value2 === "object" && value2 !== null && !Array.isArray(value2);
@@ -86549,8 +86552,8 @@ function shippedVenueBlock(filing, forum) {
   }
   return extractJsonBlock(content, path, true);
 }
-function venueHeadingFor(filing, proceeding) {
-  const block2 = filing.layout_snapshot !== null ? storedLayout(filing).venue : proceeding.forum === null ? null : shippedVenueBlock(filing, proceeding.forum);
+function venueHeadingFor(filing, proceeding2) {
+  const block2 = filing.layout_snapshot !== null ? storedLayout(filing).venue : proceeding2.forum === null ? null : shippedVenueBlock(filing, proceeding2.forum);
   if (block2 === null) return null;
   validateVenueBlock(block2, `"${filing.title}"'s court or tribunal part`);
   const fields2 = block2;
@@ -86561,8 +86564,8 @@ function venueHeadingFor(filing, proceeding) {
     display_label: scalarValue(fields2.display_label)
   };
 }
-function captionHeadingFor(filing, proceeding) {
-  const heading = venueHeadingFor(filing, proceeding);
+function captionHeadingFor(filing, proceeding2) {
+  const heading = venueHeadingFor(filing, proceeding2);
   if (heading === null) {
     const why = filing.layout_snapshot === null ? "its proceeding has no court or tribunal recorded" : "its stored layout has no court or tribunal part";
     throw new DataServerError(`"${filing.title}" prints a style of cause, but ${why}`, "venue_missing");
@@ -92670,11 +92673,11 @@ function deriveLifecycle(filing, hearingDate, today3, appealDeadline) {
 }
 
 // src/submission/forms/render-context.ts
-function buildContext(dbPath, proceeding, filing, parties2, revision, client, appealDeadline, now = nowStamp()) {
+function buildContext(dbPath, proceeding2, filing, parties2, revision, client, appealDeadline, now = nowStamp()) {
   const rendered = now;
   return {
     dbPath,
-    proceeding: requireForum(proceeding, filing.needs_forum_parts === 1),
+    proceeding: requireForum(proceeding2, filing.needs_forum_parts === 1),
     parties: parties2,
     filing,
     revision,
@@ -92683,7 +92686,7 @@ function buildContext(dbPath, proceeding, filing, parties2, revision, client, ap
     // hearing_details row, and the caller-supplied appeal deadline -- `today` is `rendered`'s own
     // date part, so the board's state and its Rendered stamp can never disagree.
     lifecycle: deriveLifecycle(filing, fetchHearingDate(dbPath, filing.id), rendered.slice(0, 10), appealDeadline),
-    clientName: client.clientName ?? proceeding.matter_reference,
+    clientName: client.clientName ?? proceeding2.matter_reference,
     clientNo: client.clientNo ?? "",
     matterNo: client.matterNo ?? "",
     matterDescription: client.matterDescription ?? "",
@@ -92697,21 +92700,21 @@ function buildContext(dbPath, proceeding, filing, parties2, revision, client, ap
     inventory: [],
     // Read once per render; the forum emit sites print 🧐 from it. The filed-face emitters and the
     // pre-filing check carry it too and never read it.
-    review: fetchReviewState(dbPath, proceeding.id)
+    review: fetchReviewState(dbPath, proceeding2.id)
   };
 }
 function fetchApprovalsMark(dbPath) {
   const found2 = submissionDataQuery(dbPath, "SELECT COALESCE(MAX(id), 0) AS mark FROM review_approvals", []).rows;
   return found2[0].mark;
 }
-function stampFor(filingId, proceeding, client, now, revision, schemaVersion, buildStamp, approvals) {
+function stampFor(filingId, proceeding2, client, now, revision, schemaVersion, buildStamp, approvals) {
   return {
     filing_id: filingId,
     revision,
     approvals,
     schema_version: schemaVersion,
     build_stamp: buildStamp,
-    client_name: client.clientName ?? proceeding.matter_reference,
+    client_name: client.clientName ?? proceeding2.matter_reference,
     client_no: client.clientNo ?? "",
     matter_no: client.matterNo ?? "",
     date: now.slice(0, 10)
@@ -92791,14 +92794,14 @@ function fetchStatementsOfFact(dbPath, factIds) {
 }
 
 // src/submission/forms/filing-frontmatter.ts
-function filingFrontmatter(proceeding, ctx, documentType) {
+function filingFrontmatter(proceeding2, ctx, documentType) {
   const fields2 = {
     clientName: ctx.clientName,
     clientNo: ctx.clientNo,
     matterNo: ctx.matterNo,
     matterDescription: ctx.matterDescription,
-    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
-    proceedingFileNo: proceeding.file_number ?? "",
+    venue: proceeding2.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding2).display_label,
+    proceedingFileNo: proceeding2.file_number ?? "",
     documentType,
     documentName: ctx.filing.title,
     documentDate: BLANK_UNDERLINE,
@@ -94383,11 +94386,11 @@ var WRITTEN_ARGUMENTS_VENUES = /* @__PURE__ */ new Map([
   ["CAN/BC/Vancouver-International-Arbitration-Centre", { tribunal: "the Arbitral Tribunal", awardCap: true, interestAndCosts: true }],
   ["CAN/BC/BCSC", { tribunal: "the Court", awardCap: false, interestAndCosts: false }]
 ]);
-function writtenArgumentsVenue(proceeding) {
-  const venue = proceeding.forum === null ? void 0 : WRITTEN_ARGUMENTS_VENUES.get(proceeding.forum);
+function writtenArgumentsVenue(proceeding2) {
+  const venue = proceeding2.forum === null ? void 0 : WRITTEN_ARGUMENTS_VENUES.get(proceeding2.forum);
   if (venue === void 0) {
     throw new DataServerError(
-      `Proceeding ${proceeding.id} has forum ${proceeding.forum === null ? "null" : `"${proceeding.forum}"`}, which has no Written Arguments settings`,
+      `Proceeding ${proceeding2.id} has forum ${proceeding2.forum === null ? "null" : `"${proceeding2.forum}"`}, which has no Written Arguments settings`,
       "venue_unknown"
     );
   }
@@ -95053,7 +95056,7 @@ function renderNoticeOfApplication(ctx) {
 }
 
 // src/submission/forms/vaniac-frontmatter.ts
-function frontmatterFor4(documentType, proceeding, filing, revision, rendered, clientName, clientNo, matterNo, matterDescription) {
+function frontmatterFor4(documentType, proceeding2, filing, revision, rendered, clientName, clientNo, matterNo, matterDescription) {
   const fields2 = {
     matterNo,
     matterDescription,
@@ -95062,8 +95065,8 @@ function frontmatterFor4(documentType, proceeding, filing, revision, rendered, c
     documentType,
     documentName: filing.title,
     documentDate: BLANK_UNDERLINE,
-    venue: proceeding.court_or_centre ?? captionHeadingFor(filing, proceeding).display_label,
-    proceedingFileNo: proceeding.file_number ?? "",
+    venue: proceeding2.court_or_centre ?? captionHeadingFor(filing, proceeding2).display_label,
+    proceedingFileNo: proceeding2.file_number ?? "",
     revision,
     rendered
   };
@@ -95335,13 +95338,13 @@ function buildSnapshot(args, seams = {}) {
     );
   }
   const needsForum = composed.needs_forum_parts === 1;
-  const { proceeding } = args;
-  if (!noVenue && proceeding.forum !== key) {
-    if (proceeding.forum === null && needsForum) {
-      throw new DataServerError(`${TOOL2}: proceeding ${proceeding.id} has no forum, and ${typeFile} needs forum parts; choose the forum first`, "needs_forum");
+  const { proceeding: proceeding2 } = args;
+  if (!noVenue && proceeding2.forum !== key) {
+    if (proceeding2.forum === null && needsForum) {
+      throw new DataServerError(`${TOOL2}: proceeding ${proceeding2.id} has no forum, and ${typeFile} needs forum parts; choose the forum first`, "needs_forum");
     }
     throw new DataServerError(
-      `${TOOL2}: tree key ${key} is not proceeding ${proceeding.id}'s forum (${proceeding.forum ?? "not chosen"}); a venue's Writing sits on a proceeding in that venue`,
+      `${TOOL2}: tree key ${key} is not proceeding ${proceeding2.id}'s forum (${proceeding2.forum ?? "not chosen"}); a venue's Writing sits on a proceeding in that venue`,
       "forum_mismatch"
     );
   }
@@ -95379,12 +95382,12 @@ function signerRefused(message) {
 function activeLawyer(profile, key) {
   return profile.roster.some((entry3) => entry3.key === key && entry3.role === "lawyer" && entry3.active !== false);
 }
-function chooseSigner(layout, args, proceeding, env, fallback) {
+function chooseSigner(layout, args, proceeding2, env, fallback) {
   if (layout.signer === "party") {
     if (args.signer_key !== void 0) throw signerRefused("signer_key names a roster lawyer, but this type declares signer: party; pass signer_party_id");
     if (args.signer_party_id === void 0) return { signer_key: null, signer_party_id: null };
-    if (!fetchParties(args.db_path, proceeding.id).some((p3) => p3.id === args.signer_party_id)) {
-      throw signerRefused(`party ${args.signer_party_id} is not a party of proceeding ${proceeding.id}`);
+    if (!fetchParties(args.db_path, proceeding2.id).some((p3) => p3.id === args.signer_party_id)) {
+      throw signerRefused(`party ${args.signer_party_id} is not a party of proceeding ${proceeding2.id}`);
     }
     return { signer_key: null, signer_party_id: args.signer_party_id };
   }
@@ -95409,8 +95412,8 @@ async function submissionDataCreateWriting(args, seams = {}) {
   if (args.kind === MILESTONE_KIND) {
     throw new ValidationError(`${TOOL2}.kind "${MILESTONE_KIND}" is reserved for a Work Board with no Writing; create one through drafting_data__create_milestone`, "reserved_kind");
   }
-  const proceeding = fetchProceeding(args.db_path, args.proceeding_id);
-  const styleSuffix = proceeding.style_of_cause ? ` - ${proceeding.style_of_cause}` : null;
+  const proceeding2 = fetchProceeding(args.db_path, args.proceeding_id);
+  const styleSuffix = proceeding2.style_of_cause ? ` - ${proceeding2.style_of_cause}` : null;
   const title2 = args.title.trim();
   if (styleSuffix !== null && title2.endsWith(styleSuffix)) {
     throw new ValidationError(
@@ -95418,15 +95421,15 @@ async function submissionDataCreateWriting(args, seams = {}) {
       "title_holds_style"
     );
   }
-  const built = buildSnapshot({ tree: args.tree, kind: args.kind, recipient: args.recipient, proceeding }, seams);
-  const signer = chooseSigner(built.stored.layout, args, proceeding, env, seams.caseDataRoot);
+  const built = buildSnapshot({ tree: args.tree, kind: args.kind, recipient: args.recipient, proceeding: proceeding2 }, seams);
+  const signer = chooseSigner(built.stored.layout, args, proceeding2, env, seams.caseDataRoot);
   const statements = [
     {
       // The WHERE re-checks, inside the INSERT's own transaction, the forum buildSnapshot reconciled
       // against, so a forum changed since that read inserts nothing and rolls the whole write back.
       sql: "INSERT INTO filings (proceeding_id, kind, subkind, round, title, needs_forum_parts, layout_snapshot, signer_key, signer_party_id) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ? IS NULL OR (SELECT forum FROM proceedings WHERE id = ?) IS ?",
       params: [
-        proceeding.id,
+        proceeding2.id,
         built.kind,
         args.subkind ?? null,
         args.round ?? null,
@@ -95436,7 +95439,7 @@ async function submissionDataCreateWriting(args, seams = {}) {
         signer.signer_key,
         signer.signer_party_id,
         built.forum,
-        proceeding.id,
+        proceeding2.id,
         built.forum
       ],
       expect_changes: 1
@@ -95445,7 +95448,7 @@ async function submissionDataCreateWriting(args, seams = {}) {
   if (boardAttachmentsHeld(args.db_path) && !isResearchWriting({ kind: built.kind })) {
     statements.push({
       sql: `UPDATE board_attachments SET filing_id = last_insert_rowid() WHERE proceeding_id = ? AND (filing_id IS NULL OR filing_id IN (SELECT id FROM filings WHERE proceeding_id = ? AND kind IN (${RESEARCH_WRITING_KINDS_SQL}))) AND NOT EXISTS (SELECT 1 FROM filings WHERE proceeding_id = ? AND id <> last_insert_rowid() AND kind NOT IN (${RESEARCH_WRITING_KINDS_SQL}))`,
-      params: [proceeding.id, proceeding.id, proceeding.id]
+      params: [proceeding2.id, proceeding2.id, proceeding2.id]
     });
   }
   let written;
@@ -95457,7 +95460,7 @@ async function submissionDataCreateWriting(args, seams = {}) {
   }
   if (!written.ok) {
     throw new DataServerError(
-      `${TOOL2}: proceeding ${proceeding.id}'s forum changed from ${built.forum} while the Writing was being created; nothing was written`,
+      `${TOOL2}: proceeding ${proceeding2.id}'s forum changed from ${built.forum} while the Writing was being created; nothing was written`,
       "forum_mismatch"
     );
   }
@@ -96066,8 +96069,8 @@ async function submissionDataSetBoardGoal(args, env = process.env) {
 }
 
 // src/submission/forms/no-writing-boards.ts
-function preFilingLabel(proceeding) {
-  return proceeding.forum === null ? "Forum not yet chosen" : "No filing yet";
+function preFilingLabel(proceeding2) {
+  return proceeding2.forum === null ? "Forum not yet chosen" : "No filing yet";
 }
 function milestoneLabel(filing) {
   return filing.retired_on ? "Closed" : "Open";
@@ -96100,30 +96103,30 @@ function buildJobOnlyBoardData(ctx) {
     goals: fetchBoardGoals(ctx.dbPath, { filing_id: own, proceeding_id: ctx.proceeding.id }, ctx.filing.title)
   };
 }
-function buildPreFilingBoardData(dbPath, proceeding, meta2) {
-  const board = buildProceedingBoard(dbPath, proceeding.id, meta2.rendered);
+function buildPreFilingBoardData(dbPath, proceeding2, meta2) {
+  const board = buildProceedingBoard(dbPath, proceeding2.id, meta2.rendered);
   return {
     meta: {
       revision: meta2.revision,
       matter: meta2.matter,
       client: meta2.client,
-      file: proceeding.file_number ?? "",
+      file: proceeding2.file_number ?? "",
       filing: "",
       filing_id: null,
-      proceeding_id: proceeding.id,
+      proceeding_id: proceeding2.id,
       rendered: meta2.rendered,
       state: null,
-      state_label: preFilingLabel(proceeding),
+      state_label: preFilingLabel(proceeding2),
       state_since: null,
       ready_to_retire: false
     },
     tickets: board.tickets.map((t3) => t3.ticket),
     seeds: board.seeds,
     deleted: board.deleted.map((d3) => ({ id: d3.id, title: d3.title })),
-    attachments: fetchAttachments(dbPath, proceeding.id, null),
+    attachments: fetchAttachments(dbPath, proceeding2.id, null),
     proposals: [],
     lapsed_keys: [],
-    goals: fetchBoardGoals(dbPath, { filing_id: null, proceeding_id: proceeding.id }, `Proceeding ${proceeding.id}`)
+    goals: fetchBoardGoals(dbPath, { filing_id: null, proceeding_id: proceeding2.id }, `Proceeding ${proceeding2.id}`)
   };
 }
 
@@ -96599,13 +96602,13 @@ function withCaseData(p3, caseParty) {
   for (const field of CASE_DATA_FIELDS) values[field] = caseParty === void 0 ? null : caseParty[field];
   return { ...p3, ...values };
 }
-function draftingParties(caseDataDir, proceeding, parties2, env = process.env) {
+function draftingParties(caseDataDir, proceeding2, parties2, env = process.env) {
   if (parties2.length === 0) return { parties: [], drift: { rows: [] } };
-  const fileNumber = (proceeding.file_number ?? "").trim();
+  const fileNumber = (proceeding2.file_number ?? "").trim();
   const linkOf = (p3) => p3.case_party_id ?? null;
   const linked = [...new Set(parties2.flatMap((p3) => linkOf(p3) === null ? [] : [linkOf(p3)]))];
   const base = (p3) => ({
-    proceeding_id: proceeding.id,
+    proceeding_id: proceeding2.id,
     file_number: fileNumber,
     party_id: p3.id,
     name: p3.name,
@@ -96614,7 +96617,7 @@ function draftingParties(caseDataDir, proceeding, parties2, env = process.env) {
   });
   const record2 = fileNumber !== "" ? readPartiesOfRecord(caseDataDir, fileNumber, env) : linked.length > 0 ? readPartiesById(caseDataDir, linked, env) : null;
   if (record2 !== null && record2.status !== "ok") {
-    const which = fileNumber !== "" ? `proceeding ${fileNumber}` : `pre-filing proceeding ${proceeding.id}`;
+    const which = fileNumber !== "" ? `proceeding ${fileNumber}` : `pre-filing proceeding ${proceeding2.id}`;
     return {
       parties: parties2.map((p3) => withCaseData(p3, void 0)),
       drift: {
@@ -96637,8 +96640,8 @@ function draftingParties(caseDataDir, proceeding, parties2, env = process.env) {
 function matterPartiesDrift(dbPath, env = process.env) {
   const rows5 = [];
   const uncheckedWhy = [];
-  for (const proceeding of fetchAllProceedings(dbPath)) {
-    const { drift } = draftingParties(dirname14(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
+  for (const proceeding2 of fetchAllProceedings(dbPath)) {
+    const { drift } = draftingParties(dirname14(dbPath), proceeding2, fetchParties(dbPath, proceeding2.id), env);
     rows5.push(...drift.rows);
     if (drift.unchecked) uncheckedWhy.push(drift.unchecked.note);
   }
@@ -96654,18 +96657,18 @@ function heldValues(p3) {
 }
 function counselOffers(dbPath, env = process.env) {
   const offers = [];
-  for (const proceeding of fetchAllProceedings(dbPath)) {
-    const stored = fetchPartiesAsHeld(dbPath, proceeding.id);
+  for (const proceeding2 of fetchAllProceedings(dbPath)) {
+    const stored = fetchPartiesAsHeld(dbPath, proceeding2.id);
     const held2 = new Map(stored.map((p3) => [p3.id, heldValues(p3)]));
     if (![...held2.values()].some((h3) => Object.keys(h3).length > 0)) continue;
-    const { parties: parties2, drift } = draftingParties(dirname14(dbPath), proceeding, stored, env);
+    const { parties: parties2, drift } = draftingParties(dirname14(dbPath), proceeding2, stored, env);
     const drifted = new Map(drift.rows.map((r3) => [r3.party_id, r3]));
     for (const p3 of parties2) {
       const values = held2.get(p3.id) ?? {};
       if (Object.keys(values).length === 0) continue;
       const base = {
-        proceeding_id: proceeding.id,
-        file_number: (proceeding.file_number ?? "").trim(),
+        proceeding_id: proceeding2.id,
+        file_number: (proceeding2.file_number ?? "").trim(),
         party_id: p3.id,
         name: p3.name,
         role: p3.role,
@@ -97363,79 +97366,13 @@ async function writePastSuggestionsPage(env = process.env, options = {}) {
 }
 
 // src/templates/view-pages/cast-of-characters.css.ts
-var cast_of_characters_css_default = '/* Cast of Characters (spec 4.3 to 4.6, mockup 2026-11-06). Tabs, the open card and Show former work in CSS alone,\n   through radio inputs and :has, so the page is complete in a preview that runs no script. */\n.page{--panel:#d0e5da;--panel-line:#93b8a6;--tab:#a9c9b9;--tab-line:#86ad9b;--tab-ink:#3b5a4f;--card-line:#2f6f64;\n--c-title:#0f5257;--c-head:#1d5e4d;--c-rule:#1d5e4d;--c-badge:#b8782c;--c-warn:#9a5b00;--c-warnbg:#fff4dc;--c-priv:#7a2e6b;--c-privbg:#f6e6f2;--c-sub:#59625f;--c-ink:#24302d;\nmax-width:840px;margin:0 auto}\n.tabr,.opener,#o-none{position:absolute;opacity:0;pointer-events:none}\n.page .tabs{display:flex;gap:2px;margin:24px 0 0 12px;padding:0;position:relative;z-index:1;flex-wrap:wrap;align-items:flex-end}\n.tab{font:600 13px var(--sans-heading,"Segoe UI",sans-serif);color:var(--tab-ink);background:linear-gradient(#b9d5c6,var(--tab));border:1px solid var(--tab-line);border-bottom:none;border-radius:9px 9px 0 0;padding:6px 14px 5px;cursor:pointer;position:relative;top:1px}\n.page:has(#t-svc:checked) label[for="t-svc"],.page:has(#t-lit:checked) label[for="t-lit"],\n.page:has(#t-wit:checked) label[for="t-wit"],.page:has(#t-dec:checked) label[for="t-dec"]{background:var(--panel);color:var(--c-head);border-color:var(--panel-line);font-weight:700;padding-top:8px;margin-top:-2px}\n.page:has(#t-svc:checked) .view[data-v="svc"],.page:has(#t-lit:checked) .view[data-v="lit"],\n.page:has(#t-wit:checked) .view[data-v="wit"],.page:has(#t-dec:checked) .view[data-v="dec"]{display:block}\n.panel{background:var(--panel);border:1px solid var(--panel-line);border-radius:0 10px 10px 10px;padding:18px 18px 22px;min-height:300px;color:var(--c-ink)}\n.filters{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}\n.filters label{color:var(--c-title);font-size:13px;display:flex;align-items:center;gap:8px}\n.panel select,.panel input[type=search]{font:inherit;font-size:13px;color:var(--c-ink);background:#fff;border:1px solid #b7c9c1;border-radius:5px;padding:5px 8px}\n.panel select{min-width:180px}.panel input[type=search]{width:100%;max-width:360px;margin-top:10px}\n.view{display:none}\n.view section{background:none;border-radius:0;padding:0}\n.view h2{font-family:var(--sans-heading,"Segoe UI",sans-serif);color:var(--c-head);font-size:22px;font-weight:600;margin:26px 0 0;padding-bottom:8px;border-bottom:2px solid var(--c-rule);display:flex;align-items:center;gap:10px}\n.badge{font:11px var(--mono);background:var(--c-badge);color:#2a1a05;border-radius:10px;padding:1px 7px}\n.list{display:flex;flex-direction:column;gap:8px;margin-top:12px}\n.none{background:#fff;border:1px dashed #6f9b8c;border-radius:8px;padding:12px 14px;font-size:13px}\n.none[hidden]{display:none}\n.notice{margin:12px 0 0;font-size:13px;padding:8px 12px;border-radius:6px;background:var(--c-warnbg);color:var(--c-warn)}\n.card{background:#fff;border:2px solid var(--card-line);border-radius:10px;padding:8px 14px;position:relative}\n.card:hover{box-shadow:0 1px 4px rgba(15,82,87,.25)}\n.card.unconfirmed{border-style:dashed}\n.head{display:block;cursor:pointer}\n.r1{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;overflow:hidden}\n.code{font:12px var(--mono);color:var(--c-sub);flex:none}\n.name{font-weight:700;color:var(--c-title);font-size:14.5px;flex:none}\n.pills{display:flex;gap:6px;overflow:hidden;min-width:0}\n.pill{font:11px var(--mono);border:1px solid var(--card-line);color:var(--c-head);border-radius:9px;padding:0 7px;white-space:nowrap;flex:none}\n.pill.warn{border-color:var(--c-warn);color:var(--c-warn);background:var(--c-warnbg)}\n.pill.priv{border-color:var(--c-priv);color:var(--c-priv);background:var(--c-privbg)}\n.pill.inl{display:inline-block;margin-top:3px}\n.r2{display:block;font:12.5px var(--mono);color:var(--c-sub);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n.r2 .sep{color:#b5c4be;margin:0 6px}.gap,.missing{color:var(--c-warn);font-style:italic}\n.x{display:none;position:absolute;top:12px;right:14px;font:12px var(--mono);border:1px solid var(--card-line);background:#fff;color:var(--c-head);border-radius:9px;padding:1px 10px;cursor:pointer}\n.detail{display:none;margin-top:10px}\n/* one card open: hide every other card, heading, empty box and the filter row */\n.view:has(.opener:checked) .card:not(:has(.opener:checked)),\n.view:has(.opener:checked) section:not(:has(.opener:checked)),\n.view:has(.opener:checked) h2,\n.view:has(.opener:checked) .none,\n.view:has(.opener:checked) .listtools,\n.page:has(.opener:checked) .filters,\n.page:has(.opener:checked) input[type=search]{display:none}\n.view:has(.opener:checked) .list{margin-top:4px}\n.card:has(.opener:checked){padding:14px 18px 18px}\n.card:has(.opener:checked) .head{cursor:default}\n.card:has(.opener:checked) .r1{white-space:normal;flex-wrap:wrap;padding-right:80px}\n.card:has(.opener:checked) .pills{flex-wrap:wrap;overflow:visible}\n.card:has(.opener:checked) .r2{display:none}\n.card:has(.opener:checked) .x{display:inline-block}\n.card:has(.opener:checked) .detail{display:block}\n.detail h3{font:600 14px var(--sans-heading,"Segoe UI",sans-serif);color:var(--c-head);margin:14px 0 4px;padding-bottom:3px;border-bottom:1px solid #c5d9cf}\n.rows{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:13px}\n.rows .k{font:11.5px var(--mono);color:#7d9a90;padding-top:2px}.rows .v{min-width:0;overflow-wrap:anywhere}\n.src{display:block;font:11px var(--mono);color:#8a9792}\n.src a{color:inherit}\n.copy{font:11px var(--mono);border:1px solid #b7c9c1;background:#f6faf8;color:var(--c-head);border-radius:4px;padding:0 5px;margin-left:6px;cursor:pointer}\n.note{margin-top:8px;font-size:12.5px;padding:6px 9px;border-radius:6px;background:var(--c-warnbg);color:var(--c-warn)}\n.actions{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap}\n.actions button{font:11px var(--mono);border:1px solid var(--card-line);background:#fff;color:var(--c-head);border-radius:9px;padding:1px 8px;cursor:pointer}\n.aka{color:var(--c-sub);font-size:12.5px;margin-top:2px}\n.hidebyfilter{display:none!important}\n.card.former{opacity:.55}\n.page:not(:has(#former:checked)) .card.former{display:none}';
+var cast_of_characters_css_default = '/* Characters (spec 4.3 to 4.6, mockup 2026-11-06). Tabs and the open card work in CSS alone,\n   through radio inputs and :has, so the page is complete in a preview that runs no script. */\n.page{--panel:#d0e5da;--panel-line:#93b8a6;--tab:#a9c9b9;--tab-line:#86ad9b;--tab-ink:#3b5a4f;--card-line:#2f6f64;\n--c-title:#0f5257;--c-head:#1d5e4d;--c-rule:#1d5e4d;--c-badge:#b8782c;--c-warn:#9a5b00;--c-warnbg:#fff4dc;--c-priv:#7a2e6b;--c-privbg:#f6e6f2;--c-sub:#59625f;--c-ink:#24302d;\nmax-width:840px;margin:0 auto}\n.tabr,.opener,#o-none{position:absolute;opacity:0;pointer-events:none}\n.page .tabs{display:flex;gap:2px;margin:24px 0 0 12px;padding:0;position:relative;z-index:1;flex-wrap:wrap;align-items:flex-end}\n.tab{font:600 13px var(--sans-heading,"Segoe UI",sans-serif);color:var(--tab-ink);background:linear-gradient(#b9d5c6,var(--tab));border:1px solid var(--tab-line);border-bottom:none;border-radius:9px 9px 0 0;padding:6px 14px 5px;cursor:pointer;position:relative;top:1px}\n.page:has(#t-cli:checked) label[for="t-cli"],.page:has(#t-svc:checked) label[for="t-svc"],.page:has(#t-wit:checked) label[for="t-wit"],\n.page:has(#t-pro:checked) label[for="t-pro"],.page:has(#t-pub:checked) label[for="t-pub"]{background:var(--panel);color:var(--c-head);border-color:var(--panel-line);font-weight:700;padding-top:8px;margin-top:-2px}\n.page:has(#t-cli:checked) .view[data-v="cli"],.page:has(#t-svc:checked) .view[data-v="svc"],.page:has(#t-wit:checked) .view[data-v="wit"],\n.page:has(#t-pro:checked) .view[data-v="pro"],.page:has(#t-pub:checked) .view[data-v="pub"]{display:block}\n.panel{background:var(--panel);border:1px solid var(--panel-line);border-radius:0 10px 10px 10px;padding:18px 18px 22px;min-height:300px;color:var(--c-ink)}\n.view{display:none}\n.list{display:flex;flex-direction:column;gap:8px}\n/* one colour per proceeding: its proceeding badge, the roles in it and whose witness */\n.pb{font:11px var(--mono);border:1px solid;border-radius:9px;padding:0 7px;white-space:nowrap;flex:none}\n.c0{background:#fde2ec;border-color:#c2416f;color:#8a1f48}.c1{background:#fff3c4;border-color:#b38600;color:#6e5200}\n.c2{background:#dcebfb;border-color:#3a74b5;color:#1f4a7a}.c3{background:#ddf3e2;border-color:#3f8f55;color:#245a33}\n.c4{background:#ece2f7;border-color:#7a52a8;color:#4f2f78}.c5{background:#ffe5d2;border-color:#c3651f;color:#80400f}\n.proc{background:#fff;border:2px solid var(--card-line);border-radius:10px;padding:8px 14px}\n.proc .r1{white-space:normal;flex-wrap:wrap;margin-bottom:6px}\n.none{background:#fff;border:1px dashed #6f9b8c;border-radius:8px;padding:12px 14px;font-size:13px}\n.none[hidden]{display:none}\n.notice{margin:12px 0 0;font-size:13px;padding:8px 12px;border-radius:6px;background:var(--c-warnbg);color:var(--c-warn)}\n.card{background:#fff;border:2px solid var(--card-line);border-radius:10px;padding:8px 14px;position:relative}\n.card:hover{box-shadow:0 1px 4px rgba(15,82,87,.25)}\n.card.unconfirmed{border-style:dashed}\n.head{display:block;cursor:pointer}\n.r1{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;overflow:hidden}\n.code{font:12px var(--mono);color:var(--c-sub);flex:none}\n.name{font-weight:700;color:var(--c-title);font-size:14.5px;flex:none}\n.pills{display:flex;gap:6px;overflow:hidden;min-width:0}\n.pill{font:11px var(--mono);border:1px solid var(--card-line);color:var(--c-head);border-radius:9px;padding:0 7px;white-space:nowrap;flex:none}\n.pill.warn{border-color:var(--c-warn);color:var(--c-warn);background:var(--c-warnbg)}\n.pill.priv{border-color:var(--c-priv);color:var(--c-priv);background:var(--c-privbg)}\n.pill.inl{display:inline-block;margin-top:3px}\n.r2{display:block;font:12.5px var(--mono);color:var(--c-sub);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n.r2 .sep{color:#b5c4be;margin:0 6px}.gap,.missing{color:var(--c-warn);font-style:italic}\n.x{display:none;position:absolute;top:12px;right:14px;font:12px var(--mono);border:1px solid var(--card-line);background:#fff;color:var(--c-head);border-radius:9px;padding:1px 10px;cursor:pointer}\n.detail{display:none;margin-top:10px}\n/* one card open: hide every other card, the empty box and the list tools */\n.view:has(.opener:checked) .card:not(:has(.opener:checked)),\n.view:has(.opener:checked) .none,\n.view:has(.opener:checked) .listtools{display:none}\n.view:has(.opener:checked) .list{margin-top:4px}\n.card:has(.opener:checked){padding:14px 18px 18px}\n.card:has(.opener:checked) .head{cursor:default}\n.card:has(.opener:checked) .r1{white-space:normal;flex-wrap:wrap;padding-right:80px}\n.card:has(.opener:checked) .pills{flex-wrap:wrap;overflow:visible}\n.card:has(.opener:checked) .r2{display:none}\n.card:has(.opener:checked) .x{display:inline-block}\n.card:has(.opener:checked) .detail{display:block}\n.detail h3{font:600 14px var(--sans-heading,"Segoe UI",sans-serif);color:var(--c-head);margin:14px 0 4px;padding-bottom:3px;border-bottom:1px solid #c5d9cf}\n.rows{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:13px}\n.rows .k{font:11.5px var(--mono);color:#7d9a90;padding-top:2px}.rows .v{min-width:0;overflow-wrap:anywhere}\n.src{display:block;font:11px var(--mono);color:#8a9792}\n.src a{color:inherit}\n.copy{font:11px var(--mono);border:1px solid #b7c9c1;background:#f6faf8;color:var(--c-head);border-radius:4px;padding:0 5px;margin-left:6px;cursor:pointer}\n.note{margin-top:8px;font-size:12.5px;padding:6px 9px;border-radius:6px;background:var(--c-warnbg);color:var(--c-warn)}\n.actions{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap}\n.actions button{font:11px var(--mono);border:1px solid var(--card-line);background:#fff;color:var(--c-head);border-radius:9px;padding:1px 8px;cursor:pointer}\n.aka{color:var(--c-sub);font-size:12.5px;margin-top:2px}';
 
 // src/templates/view-pages/cast-of-characters.html.ts
-var cast_of_characters_html_default = "@@include(view-head.html)@@\n<title>Cast of Characters</title>\n<style>\n@@include(board.css)@@\n\n@@include(view-folder.css)@@\n\n@@include(cast-of-characters.css)@@\n</style>\n</head>\n<body>\n@@data@@\n<script>\n@@include(cast-of-characters.js)@@\n</script>\n</body>\n</html>";
+var cast_of_characters_html_default = "@@include(view-head.html)@@\n<title>Characters</title>\n<style>\n@@include(board.css)@@\n\n@@include(view-folder.css)@@\n\n@@include(cast-of-characters.css)@@\n</style>\n</head>\n<body>\n@@data@@\n<script>\n@@include(cast-of-characters.js)@@\n</script>\n</body>\n</html>";
 
 // src/templates/view-pages/cast-of-characters.js.ts
-var cast_of_characters_js_default = `// Cast of Characters: everything is in the markup and tabs, cards and Show former work in CSS.
-// This script only adds search, the Side and Flags filters, the Esc key, the remembered tab and
-// the copy buttons (spec 4.4). It writes nothing but the clipboard and one localStorage key.
-(function () {
-  "use strict";
-  var KEY = "cast-of-characters-tab";
-  var q = document.getElementById("q");
-  var side = document.getElementById("side");
-  var flag = document.getElementById("flag");
-  var former = document.getElementById("former");
-  var none = document.getElementById("o-none");
-
-  function fold(text) {
-    // The same fold as cast-data.ts, which folded each card's data-search.
-    return text.normalize("NFKD").replace(/\\p{M}/gu, "").toLowerCase()
-      .replace(/['\u2019-]/g, "").replace(/[^\\p{L}\\p{N}@.]+/gu, " ").trim();
-  }
-
-  function filter() {
-    var t = fold(q.value), s = side.value, f = flag.value, showFormer = former.checked;
-    document.querySelectorAll(".view section").forEach(function (sec) {
-      var n = 0;
-      sec.querySelectorAll(".card").forEach(function (c) {
-        var ok = (!t || c.getAttribute("data-search").indexOf(t) !== -1) &&
-          (!s || c.getAttribute("data-side") === s) &&
-          (!f || c.getAttribute("data-flags").split(" ").indexOf(f) !== -1);
-        c.classList.toggle("hidebyfilter", !ok);
-        if (ok && (showFormer || !c.classList.contains("former"))) n++;
-      });
-      sec.querySelector(".badge").textContent = String(n);
-      sec.querySelector(".none").hidden = n > 0;
-    });
-  }
-  [q, side, flag, former].forEach(function (el) { el.addEventListener("input", filter); el.addEventListener("change", filter); });
-
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") none.checked = true; });
-
-  var tabs = document.querySelectorAll(".tabr");
-  try {
-    var saved = localStorage.getItem(KEY);
-    tabs.forEach(function (r) { if (r.id === saved) r.checked = true; });
-  } catch (e) {}
-  tabs.forEach(function (r) {
-    r.addEventListener("change", function () {
-      none.checked = true;
-      try { localStorage.setItem(KEY, r.id); } catch (e) {}
-    });
-  });
-
-  // A copy button copies its data-copy text; where the clipboard is refused it shows the text instead.
-  document.querySelectorAll("button[data-copy]").forEach(function (b) {
-    var label = b.textContent;
-    var text = b.getAttribute("data-copy");
-    function show() { b.textContent = text; }
-    b.addEventListener("click", function (event) {
-      event.preventDefault();
-      event.stopPropagation();
-      if (!navigator.clipboard || !navigator.clipboard.writeText) { show(); return; }
-      navigator.clipboard.writeText(text).then(function () {
-        b.textContent = "Copied";
-        setTimeout(function () { b.textContent = label; }, 1500);
-      }, show);
-    });
-  });
-
-  filter();
-})();`;
+var cast_of_characters_js_default = '// Characters: everything is in the markup, and tabs and cards work in CSS. This script only adds\n// the Esc key, the remembered tab and the copy buttons (spec 4.4). It writes nothing but the\n// clipboard and one localStorage key.\n(function () {\n  "use strict";\n  var KEY = "cast-of-characters-tab";\n  var none = document.getElementById("o-none");\n\n  document.addEventListener("keydown", function (e) { if (e.key === "Escape") none.checked = true; });\n\n  var tabs = document.querySelectorAll(".tabr");\n  try {\n    var saved = localStorage.getItem(KEY);\n    tabs.forEach(function (r) { if (r.id === saved) r.checked = true; });\n  } catch (e) {}\n  tabs.forEach(function (r) {\n    r.addEventListener("change", function () {\n      none.checked = true;\n      try { localStorage.setItem(KEY, r.id); } catch (e) {}\n    });\n  });\n\n  // A copy button copies its data-copy text; where the clipboard is refused it shows the text instead.\n  document.querySelectorAll("button[data-copy]").forEach(function (b) {\n    var label = b.textContent;\n    var text = b.getAttribute("data-copy");\n    function show() { b.textContent = text; }\n    b.addEventListener("click", function (event) {\n      event.preventDefault();\n      event.stopPropagation();\n      if (!navigator.clipboard || !navigator.clipboard.writeText) { show(); return; }\n      navigator.clipboard.writeText(text).then(function () {\n        b.textContent = "Copied";\n        setTimeout(function () { b.textContent = label; }, 1500);\n      }, show);\n    });\n  });\n})();';
 
 // src/templates/view-pages/view-folder.css.ts
 var view_folder_css_default = '.board{gap:0}\n.tabs{display:flex;align-items:flex-end;padding:0 10px;position:relative}\n.tabs [role=tab]{position:relative;z-index:1;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:inherit;font-size:13px;font-weight:600;color:#3d5c50;background:none;border:0;padding:7px 18px 6px;margin-left:-6px;cursor:pointer}\n.tabs [role=tab]:first-child{margin-left:0}\n.tabs [role=tab]::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(#c4dacd,#aecaba);border:1px solid #8fb3a0;border-bottom:0;border-radius:9px 9px 0 0;box-shadow:inset 0 -4px 5px -3px rgba(0,0,0,.22);transform:perspective(10px) rotateX(1.6deg);transform-origin:bottom}\n.tabs [role=tab][aria-selected=true]{z-index:3;padding-top:10px;padding-bottom:8px;margin-bottom:-1px;color:#1d5e4a;font-weight:800}\n.tabs [role=tab][aria-selected=true]::before{background:linear-gradient(#eaf5ee,#cfe6d8);box-shadow:none}\n.tabs [role=tab]:focus-visible{outline:2px solid #1d5e4a;outline-offset:-5px}\n.folder{position:relative;z-index:2;background:#cfe6d8;border:1px solid #8fb3a0;border-radius:0 12px 12px 12px;padding:18px;display:flex;flex-direction:column;gap:28px}\n.folder section{background:none;padding:0;border-radius:0}\n.folder section>h2{font-size:22px;font-weight:800;color:#1d5e4a;border-bottom:2px solid #1d5e4a;align-items:center;flex-wrap:wrap;gap:10px}\n.folder>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}\n[hidden]{display:none!important}\n@media (max-width:600px){main{padding:16px}}\n@media (max-width:520px){\n.tabs{padding:0 4px}\n.tabs [role=tab]{font-size:11.5px;padding:6px 9px 5px}\n.tabs [role=tab][aria-selected=true]{padding-top:8px;padding-bottom:7px}\n.folder{padding:12px}\n}';
@@ -97450,6 +97387,7 @@ var FLAG_LABELS = {
   conflict: "Conflicting details",
   priv: "Privileged source"
 };
+var PROCEEDING_COLOURS = 6;
 var P_ROLES = ["plaintiff", "petitioner", "applicant", "appellant", "claimant"];
 var D_ROLES = ["defendant", "respondent", "third_party", "defendant_by_counterclaim"];
 var COUNSEL_ROLES = ["opposing_counsel", "co_counsel"];
@@ -97480,7 +97418,7 @@ function title(role2) {
   return words2.charAt(0).toUpperCase() + words2.slice(1);
 }
 function plural(label2) {
-  return label2.endsWith("s") ? label2 : `${label2}s`;
+  return label2.endsWith("s") ? label2 : label2.endsWith("y") ? `${label2.slice(0, -1)}ies` : `${label2}s`;
 }
 function addressText(value2) {
   if (typeof value2 === "string") return str(value2);
@@ -97511,6 +97449,17 @@ function buildCastModel(input) {
   const tribunal = caseData?.tribunal_members ?? [];
   const sources = new Map((caseData?.sources ?? []).map((s3) => [s3.source_id, s3]));
   const partyById = new Map(parties2.map((p3) => [p3.party_id, p3]));
+  const procIds = [.../* @__PURE__ */ new Set([...(caseData?.proceedings ?? []).map((p3) => p3.proceeding_id), ...parties2.flatMap((p3) => p3.proceedings.map((x3) => x3.proceeding_id))])];
+  const procById = new Map((caseData?.proceedings ?? []).map((p3) => [p3.proceeding_id, p3]));
+  const colourOf = (id) => Math.max(0, procIds.indexOf(id)) % PROCEEDING_COLOURS;
+  const procBadge = (id) => ({ text: str(procById.get(id)?.file_number) ?? `Proceeding ${procIds.indexOf(id) + 1}`, colour: colourOf(id) });
+  const dedupe = (badges) => badges.filter((b3, i3) => badges.findIndex((x3) => x3.text === b3.text && x3.colour === b3.colour) === i3);
+  const partyBadges = (party, only) => party.proceedings.filter((pr2) => !only?.length || only.includes(pr2.proceeding_id)).flatMap((pr2) => [procBadge(pr2.proceeding_id), { text: title(pr2.role), colour: colourOf(pr2.proceeding_id) }]);
+  const whoseBadge = (prefix, partyId, proceedingId) => {
+    const party = partyId === null ? void 0 : partyById.get(partyId);
+    if (!party) return [];
+    return [{ text: `${prefix} ${party.name}`, colour: colourOf(proceedingId ?? party.proceedings[0]?.proceeding_id ?? -1) }];
+  };
   const ties = input.contacts.flatMap((row2) => {
     const contact = contactOf(row2);
     return contact.roles.map((role2) => ({ contact, role: role2 }));
@@ -97519,22 +97468,8 @@ function buildCastModel(input) {
   const proposed = (role2) => role2.status === "proposed";
   const used = /* @__PURE__ */ new Set();
   const tiesFor = (pred) => ties.filter(pred);
-  const labelFor = (side) => {
-    const pool = side === "P" ? P_ROLES : D_ROLES;
-    const counts3 = /* @__PURE__ */ new Map();
-    for (const p3 of parties2) for (const pr2 of p3.proceedings) if (pool.includes(pr2.role)) counts3.set(pr2.role, (counts3.get(pr2.role) ?? 0) + 1);
-    const best = [...counts3].sort((a3, b3) => b3[1] - a3[1] || pool.indexOf(a3[0]) - pool.indexOf(b3[0]))[0]?.[0];
-    return plural(title(best ?? (side === "P" ? "plaintiff" : "defendant")));
-  };
-  const sideLabel = { P: labelFor("P"), D: labelFor("D") };
-  const partySide = (party) => {
-    const role2 = party?.proceedings[0]?.role;
-    return role2 && P_ROLES.includes(role2) ? "P" : role2 && D_ROLES.includes(role2) ? "D" : "N";
-  };
-  const sideOfParty = (id) => id === null ? "N" : partySide(partyById.get(id));
   const clientTies = tiesFor(({ role: role2 }) => role2.role === "client" && !ended(role2));
   const clientPartyIds = new Set(clientTies.map(({ role: role2 }) => num(role2.case_party_id)).filter((id) => id !== null));
-  const clientSide = [...clientPartyIds].map(sideOfParty).find((s3) => s3 !== "N") ?? "P";
   const sourceOf = (role2) => {
     const cited2 = num(role2.from_source_id) !== null ? sources.get(num(role2.from_source_id)) : void 0;
     const source = cited2 ? [cited2.title, cited2.date].filter(Boolean).join(", ") : str(role2.note) ?? void 0;
@@ -97545,7 +97480,6 @@ function buildCastModel(input) {
     reject: (name, role2) => `${name} is not a character on ${input.mattNum}: end matter role ${role2.id} with a note saying so.`,
     merge: (name, contact) => `Merge the contact ${name} (${contact.id}) on ${input.mattNum} into the existing contact I name: `,
     gap: (name) => `Find and record ${name}'s phone and email for ${input.mattNum}.`,
-    noRole: (name, id) => `Record the contact and matter role for the party ${name} (case_party_id ${id}) on ${input.mattNum}.`,
     noticeOfChange: (party, record2, contact) => `Was a notice of change filed for ${party} on ${input.mattNum}? Counsel of record gives ${record2}; the contact gives ${contact}.`
   };
   const contactDetails = (tie, base) => {
@@ -97581,9 +97515,9 @@ function buildCastModel(input) {
   const entry3 = (fields2) => {
     const e3 = {
       code: null,
+      badges: [],
       pills: [],
       flags: [],
-      former: false,
       proposed: false,
       email: null,
       phone: null,
@@ -97597,10 +97531,10 @@ function buildCastModel(input) {
       counts: null,
       notes: [],
       actions: [],
-      search: "",
       reach: "both",
       ...fields2
     };
+    e3.badges = dedupe(e3.badges);
     e3.email = first(e3.contact, "Email");
     e3.phone = first(e3.contact, "Phone");
     e3.address = first(e3.contact, "Address");
@@ -97614,16 +97548,6 @@ function buildCastModel(input) {
     for (const flag2 of e3.flags) if (flag2 !== "gap" && !e3.pills.some((p3) => p3.text === FLAG_LABELS[flag2])) {
       e3.pills.push({ text: FLAG_LABELS[flag2], kind: flag2 === "priv" ? "priv" : "warn" });
     }
-    e3.search = fold([
-      e3.name,
-      e3.code,
-      ...e3.aliases,
-      ...e3.pills.map((p3) => p3.text),
-      ...e3.contact.map((d3) => d3.value),
-      ...e3.service.map((d3) => d3.value),
-      ...e3.counsel.map((d3) => d3.value),
-      ...e3.related
-    ].filter(Boolean).join(" "));
     return e3;
   };
   const proposedActions = (name, tie) => [
@@ -97632,7 +97556,6 @@ function buildCastModel(input) {
     { label: "Merge with\u2026", instruction: instruction.merge(name, tie.contact) }
   ];
   const tieState = (tie) => ({
-    former: tie ? ended(tie.role) : false,
     proposed: tie ? proposed(tie.role) : false,
     flags: tie && proposed(tie.role) ? ["unc"] : []
   });
@@ -97658,7 +97581,7 @@ function buildCastModel(input) {
     return out;
   };
   for (const tie of ties) if (tie.role.role === "adjuster") used.add(tie);
-  const svc = { P: [], D: [], N: [] };
+  const svc = [];
   const counselGroups = /* @__PURE__ */ new Map();
   const counselOf = /* @__PURE__ */ new Map();
   for (const party of parties2) {
@@ -97676,15 +97599,17 @@ function buildCastModel(input) {
     }
     for (const record2 of named2) {
       const key = fold(record2.lawyer_name);
-      const group = counselGroups.get(key) ?? { name: record2.lawyer_name, parties: [], record: record2, aliases: [] };
-      if (!group.parties.includes(party)) group.parties.push(party);
+      const group = counselGroups.get(key) ?? { name: record2.lawyer_name, acts: [], record: record2, aliases: [] };
+      const act = group.acts.find((a3) => a3.party === party) ?? group.acts[group.acts.push({ party, proceedings: [] }) - 1];
+      if (record2.proceeding_id !== 0) act.proceedings.push(record2.proceeding_id);
       group.aliases.push(...party.counsel_aliases);
       counselGroups.set(key, group);
       counselOf.set(party.party_id, `${record2.lawyer_name}${record2.lawyer_firm ? `, ${record2.lawyer_firm}` : ""} (Service List)`);
     }
   }
   for (const group of counselGroups.values()) {
-    const partyIds = group.parties.map((p3) => p3.party_id);
+    const groupParties = group.acts.map((a3) => a3.party);
+    const partyIds = groupParties.map((p3) => p3.party_id);
     const tie = tiesFor(({ role: role2, contact: contact2 }) => COUNSEL_ROLES.includes(String(role2.role)) && !ended(role2) && partyIds.includes(num(role2.case_party_id) ?? -1) && fold(contact2.name) === fold(group.name))[0];
     if (tie) used.add(tie);
     const filed = group.record.service_address_filed_date ? `, filed ${group.record.service_address_filed_date}` : "";
@@ -97694,22 +97619,21 @@ function buildCastModel(input) {
       ...group.record.address ? [{ label: "Address for service", value: group.record.address, source: `Counsel of record${filed}` }] : []
     ];
     const contact = ensure(contactDetails(tie, record2), "Address for service");
-    const side = partySide(group.parties[0]);
     const flags = [];
     const actions = [];
     if (tie && conflicting(contact)) {
       flags.push("conflict");
       const recorded = [group.record.lawyer_email, group.record.lawyer_phone].filter(Boolean).join(", ");
       const other = [...tie.contact.emails, ...tie.contact.phones].join(", ");
-      actions.push({ label: "Conflicting details", instruction: instruction.noticeOfChange(group.parties.map((p3) => p3.name).join(", "), recorded, other) });
+      actions.push({ label: "Conflicting details", instruction: instruction.noticeOfChange(groupParties.map((p3) => p3.name).join(", "), recorded, other) });
     }
-    svc[side].push(entry3({
+    svc.push(entry3({
       key: `counsel-${fold(group.name)}`,
       name: group.name,
-      side,
       code: codeOf(group.aliases),
+      badges: group.acts.flatMap((a3) => partyBadges(a3.party, a3.proceedings)),
       aliases: group.aliases.filter((a3) => a3.kind === "spelling").map((a3) => a3.text),
-      pills: [{ text: "Counsel of record" }, ...group.parties.map((p3) => ({ text: `For: ${p3.name}` }))],
+      pills: [{ text: "Counsel of record" }, ...groupParties.map((p3) => ({ text: `For: ${p3.name}` }))],
       flags,
       actions,
       contact,
@@ -97721,20 +97645,6 @@ function buildCastModel(input) {
       notes: tie?.contact.note ? [tie.contact.note] : []
     }));
   }
-  for (const tie of tiesFor(({ role: role2 }) => COUNSEL_ROLES.includes(String(role2.role)) && ended(role2))) {
-    used.add(tie);
-    const party = partyById.get(num(tie.role.case_party_id) ?? -1);
-    const side = partySide(party);
-    svc[side].push(entry3({
-      key: `former-${tie.role.id}`,
-      name: tie.contact.name,
-      side,
-      former: true,
-      pills: [{ text: "Former counsel of record" }, ...party ? [{ text: `For: ${party.name}` }] : [], { text: `Replaced ${tie.role.to}` }],
-      contact: ensure(contactDetails(tie, []), "Address for service"),
-      aliases: tie.contact.otherNames
-    }));
-  }
   const partyTie = (party) => tiesFor(({ role: role2 }) => LITIGANT_ROLES.includes(String(role2.role)) && num(role2.case_party_id) === party.party_id).sort((a3, b3) => Number(ended(a3.role)) - Number(ended(b3.role)))[0];
   const partyBase = (party, addressLabel) => [
     ...str(party.contact_info)?.includes("@") ? [{ label: "Email", value: str(party.contact_info), source: "Case data", copy: true }] : [],
@@ -97743,46 +97653,36 @@ function buildCastModel(input) {
   for (const party of parties2) {
     if (counselOf.has(party.party_id)) continue;
     const tie = partyTie(party);
-    const side = partySide(party);
     const flags = [];
     if (!party.address) flags.push("gap");
-    svc[side].push(entry3({
+    svc.push(entry3({
       key: `self-${party.party_id}`,
       name: party.name,
-      side,
       code: codeOf(party.aliases),
+      badges: partyBadges(party),
       pills: [{ text: "Self-represented" }],
       flags,
       contact: ensure(contactDetails(tie, partyBase(party, "Address for service")), "Address for service"),
       aliases: party.aliases.filter((a3) => a3.kind === "spelling").map((a3) => a3.text)
     }));
   }
-  const lit2 = { P: [], D: [], N: [] };
-  for (const party of parties2) {
+  const cli = [];
+  for (const party of parties2.filter((p3) => clientPartyIds.has(p3.party_id))) {
     const tie = partyTie(party);
     if (tie) used.add(tie);
-    const side = partySide(party);
-    const roles = [...new Set(party.proceedings.map((p3) => title(p3.role)))];
     const flags = [];
-    const actions = [];
-    if (input.partiesWithoutRole.includes(party.party_id)) {
-      flags.push("gap");
-      actions.push({ label: "No matter role", instruction: instruction.noRole(party.name, party.party_id) });
-    }
-    if (!counselOf.has(party.party_id) && !party.address && !flags.includes("gap")) flags.push("gap");
-    const otherCounsel = tiesFor(({ role: role2 }) => role2.role === "client_other_counsel" && (num(role2.for_case_party_id) === party.party_id || num(role2.for_case_party_id) === null && clientPartyIds.has(party.party_id)));
+    if (!counselOf.has(party.party_id) && !party.address) flags.push("gap");
+    const otherCounsel = tiesFor(({ role: role2 }) => role2.role === "client_other_counsel" && (num(role2.for_case_party_id) === party.party_id || num(role2.for_case_party_id) === null));
     otherCounsel.forEach((t3) => used.add(t3));
     const titles = (tie?.contact.affiliations ?? []).filter((a3) => a3.person_id === tie?.contact.id).map((a3) => str(a3.title)).filter((t3) => t3 !== null);
-    lit2[side].push(entry3({
+    cli.push(entry3({
       key: `party-${party.party_id}`,
       name: party.name,
-      side,
       code: codeOf(party.aliases),
-      pills: [...roles.map((text11) => ({ text: text11 })), ...clientPartyIds.has(party.party_id) ? [{ text: "Client" }] : [], ...titles.map((text11) => ({ text: text11 }))],
+      badges: partyBadges(party),
+      pills: titles.map((text11) => ({ text: text11 })),
       flags: [...tieState(tie).flags, ...flags],
-      actions,
       proposed: tieState(tie).proposed,
-      former: false,
       reach: counselOf.has(party.party_id) ? "none" : "both",
       aliases: [...party.aliases.filter((a3) => a3.kind === "spelling").map((a3) => a3.text), ...tie?.contact.otherNames ?? []],
       contact: ensure(contactDetails(tie, partyBase(party, "Address"))),
@@ -97795,24 +97695,22 @@ function buildCastModel(input) {
       notes: tie?.contact.note ? [tie.contact.note] : []
     }));
   }
-  const wit = { P: [], D: [], N: [], X: [] };
+  const wit = [];
   const witnessTieKinds = ["witness", "expert"];
   for (const w3 of witnesses) {
     const tie = tiesFor(({ role: role2 }) => witnessTieKinds.includes(String(role2.role)) && num(role2.case_witness_id) === w3.witness_id)[0];
     if (tie) used.add(tie);
     const expert = w3.witness_type === "expert";
-    const caller = w3.proceedings.find((p3) => p3.called_by_party_id !== null)?.called_by_party_id ?? null;
-    const side = sideOfParty(expert ? w3.retained_by_party_id : caller);
+    const called = w3.proceedings.find((p3) => p3.called_by_party_id !== null);
     const state = tieState(tie);
-    const pills = expert ? [{ text: side === "N" ? "Expert" : `${side === "P" ? sideLabel.P : sideLabel.D}' expert` }, ...w3.field_of_expertise ? [{ text: w3.field_of_expertise }] : []] : [{ text: "Witness" }];
-    (expert ? wit.X : wit[side]).push(entry3({
+    wit.push(entry3({
       key: `witness-${w3.witness_id}`,
       name: w3.name,
-      side,
       code: codeOf(w3.aliases),
-      pills,
       ...state,
       reach: "either",
+      badges: expert ? whoseBadge("Retained by", w3.retained_by_party_id) : whoseBadge("Called by", called?.called_by_party_id ?? null, called?.proceeding_id),
+      pills: expert ? [{ text: "Expert" }, ...w3.field_of_expertise ? [{ text: w3.field_of_expertise }] : []] : [{ text: "Witness" }],
       aliases: [...w3.aliases.filter((a3) => a3.kind === "spelling").map((a3) => a3.text), ...tie?.contact.otherNames ?? []],
       contact: ensure(contactDetails(tie, []), "Address for service"),
       counts: w3.counts,
@@ -97820,19 +97718,18 @@ function buildCastModel(input) {
       actions: tie && state.proposed ? proposedActions(w3.name, tie) : []
     }));
   }
-  const court = [];
-  const bodies = [];
+  const pub = [];
   for (const m3 of tribunal) {
     const tie = tiesFor(({ role: role2 }) => role2.role === "court_staff" && num(role2.case_tribunal_member_id) === m3.tribunal_member_id)[0];
     if (tie) used.add(tie);
     const state = tieState(tie);
-    court.push(entry3({
+    pub.push(entry3({
       key: `tribunal-${m3.tribunal_member_id}`,
       name: m3.name,
-      side: "N",
       code: codeOf(m3.aliases),
       ...state,
       reach: "none",
+      badges: m3.proceeding_id === null ? [] : [procBadge(m3.proceeding_id)],
       pills: [m3.tribunal_body, m3.capacity].filter((t3) => Boolean(t3)).map((text11) => ({ text: text11 })),
       aliases: m3.aliases.filter((a3) => a3.kind === "spelling").map((a3) => a3.text),
       contact: ensure(contactDetails(tie, []), "Address for service"),
@@ -97842,72 +97739,62 @@ function buildCastModel(input) {
     }));
   }
   for (const tie of ties) {
-    if (used.has(tie)) continue;
+    if (used.has(tie) || ended(tie.role)) continue;
     const kind = String(tie.role.role);
-    const forParty = num(tie.role.for_case_party_id);
-    const side = kind === "client_other_counsel" || kind === "client_representative" ? clientSide : kind === "insurer" || kind === "investigator" ? sideOfParty(forParty) : kind === "client" ? clientSide : kind === "opposing_party" ? clientSide === "P" ? "D" : "P" : "N";
     const state = tieState(tie);
-    const make = (pills, reach = "both") => entry3({
+    const make = (pills, reach = "both", badges = []) => entry3({
       key: `role-${tie.role.id}`,
       name: tie.contact.name,
-      side,
       ...state,
+      badges,
       pills,
       reach,
       aliases: tie.contact.otherNames,
-      contact: ensure(contactDetails(tie, []), kind === "client" || kind === "opposing_party" ? "Address" : "Address for service"),
+      contact: ensure(contactDetails(tie, []), kind === "client" ? "Address" : "Address for service"),
       related: affiliationLines(tie.contact),
       notes: tie.contact.note ? [tie.contact.note] : [],
       actions: state.proposed ? proposedActions(tie.contact.name, tie) : []
     });
     const label2 = ROLE_LABELS[kind] ?? title(kind);
-    if (kind === "witness" || kind === "investigator") (side === "N" ? wit.N : wit[side]).push(make([{ text: label2 }], "either"));
-    else if (kind === "expert") wit.X.push(make([{ text: label2 }], "either"));
-    else if (kind === "court_staff") court.push(make([{ text: label2 }]));
-    else if (kind === "public_body") bodies.push(make([{ text: label2 }]));
-    else if (LITIGANT_ROLES.includes(kind)) lit2[side].push(make([{ text: label2 }]));
-    else if (kind === "client_other_counsel") {
-      const client = lit2[clientSide].find((e3) => e3.pills.some((p3) => p3.text === "Client"));
-      if (client) {
-        client.counsel.push({ label: "Other counsel", value: `${tie.contact.name}. Not on the Service List.`, ...sourceOf(tie.role) });
-        if (tie.role.privileged_source === true && !client.flags.includes("priv")) {
-          client.flags.push("priv");
-          client.pills.push({ text: FLAG_LABELS.priv, kind: "priv" });
-        }
-        client.search = fold(`${client.search} ${tie.contact.name}`);
-      }
+    if (kind === "witness" || kind === "investigator" || kind === "expert") {
+      wit.push(make([{ text: label2 }], "either", whoseBadge("For", num(tie.role.for_case_party_id))));
+    } else if (kind === "court_staff" || kind === "public_body") pub.push(make([{ text: label2 }]));
+    else if (kind === "client") cli.push(make([]));
+    else if (kind === "client_other_counsel" && cli.length) {
+      const client = cli[0];
+      client.counsel.push({ label: "Other counsel", value: `${tie.contact.name}. Not on the Service List.`, ...sourceOf(tie.role) });
     }
   }
-  for (const e3 of Object.values(lit2).flat()) {
+  for (const e3 of cli) {
     if (e3.counsel.some((d3) => d3.privileged) && !e3.flags.includes("priv")) {
       e3.flags.push("priv");
       e3.pills.push({ text: FLAG_LABELS.priv, kind: "priv" });
     }
   }
+  const rank = (role2) => P_ROLES.includes(role2) ? P_ROLES.indexOf(role2) : D_ROLES.includes(role2) ? 10 + D_ROLES.indexOf(role2) : 20;
+  const proceedings = procIds.map((id) => {
+    const byRole = /* @__PURE__ */ new Map();
+    for (const party of parties2) for (const pr2 of party.proceedings) {
+      if (pr2.proceeding_id === id && !byRole.get(pr2.role)?.includes(party.name)) byRole.set(pr2.role, [...byRole.get(pr2.role) ?? [], party.name]);
+    }
+    const sides = [...byRole].sort((a3, b3) => rank(a3[0]) - rank(b3[0])).map(([role2, names]) => ({ label: plural(title(role2)), names }));
+    const badge2 = procBadge(id);
+    const style = str(procById.get(id)?.style_of_cause) ?? (sides.length > 1 ? `${sides[0].names.join(", ")} v. ${sides[1].names.join(", ")}` : sides[0]?.names.join(", ") ?? badge2.text);
+    return { badge: badge2, style, sides };
+  });
   const byName = (a3, b3) => a3.name.localeCompare(b3.name, "en", { sensitivity: "base" });
-  const section3 = (t3, entries) => ({ title: t3, entries: [...entries].sort(byName) });
-  const neutralParties = (rec, label2) => rec.N.length ? [section3(label2, rec.N)] : [];
   const tabs = [
-    { id: "svc", label: "Service List", sections: [section3(sideLabel.P, svc.P), section3(sideLabel.D, svc.D), ...neutralParties(svc, "Other parties")] },
-    { id: "lit", label: "Litigants", sections: [section3(sideLabel.P, lit2.P), section3(sideLabel.D, lit2.D), ...neutralParties(lit2, "Other parties")] },
-    {
-      id: "wit",
-      label: "Witnesses",
-      sections: [
-        section3(`${sideLabel.P}' Witnesses`, wit.P),
-        section3(`${sideLabel.D}' Witnesses`, wit.D),
-        section3("Expert Witnesses", wit.X),
-        ...wit.N.length ? [section3("Other Witnesses", wit.N)] : []
-      ]
-    },
-    { id: "dec", label: "Public Bodies", sections: [section3("Court", court), section3("Enforcement & Public Bodies", bodies)] }
+    { id: "cli", label: "Client(s)", entries: cli.sort(byName) },
+    { id: "svc", label: "Service List", entries: svc.sort(byName) },
+    { id: "wit", label: "Witnesses", entries: wit.sort(byName) },
+    { id: "pro", label: "Proceedings", entries: [] },
+    { id: "pub", label: "Public Bodies", entries: pub.sort(byName) }
   ];
-  const current = tabs[0].sections.flatMap((s3) => s3.entries).filter((e3) => !e3.former);
   const serviceEmail = (e3) => e3.contact.find((d3) => d3.label === "Email" && d3.value && !d3.privileged)?.value ?? null;
-  const serviceEmails = [...new Set(current.map(serviceEmail).filter((v3) => v3 !== null))].join("; ");
+  const serviceEmails = [...new Set(svc.map(serviceEmail).filter((v3) => v3 !== null))].join("; ");
   const serviceTable = [
     ["For", "Counsel or party", "Firm", "Email", "Phone", "Address for service"].join("	"),
-    ...current.map((e3) => [
+    ...svc.map((e3) => [
       e3.pills.filter((p3) => p3.text.startsWith("For: ")).map((p3) => p3.text.slice(5)).join(", ") || e3.name,
       e3.name,
       e3.service.find((d3) => d3.label === "Firm")?.value ?? "",
@@ -97916,16 +97803,15 @@ function buildCastModel(input) {
       e3.contact.find((d3) => d3.label.startsWith("Address") && !d3.privileged)?.value ?? ""
     ].join("	"))
   ].join("\n");
-  return { tabs, sideLabels: sideLabel, serviceEmails, serviceTable, notes };
+  return { tabs, proceedings, serviceEmails, serviceTable, notes };
 }
 function castCounts(model) {
   const tabs = {};
   const flagged2 = { unconfirmed: 0, missing_details: 0, conflicting_details: 0, privileged_source: 0 };
   const names = { unc: "unconfirmed", gap: "missing_details", conflict: "conflicting_details", priv: "privileged_source" };
   for (const tab of model.tabs) {
-    const entries = tab.sections.flatMap((s3) => s3.entries).filter((e3) => !e3.former);
-    tabs[tab.label] = entries.length;
-    for (const e3 of entries) for (const f3 of e3.flags) flagged2[names[f3]]++;
+    tabs[tab.label] = tab.id === "pro" ? model.proceedings.length : tab.entries.length;
+    for (const e3 of tab.entries) for (const f3 of e3.flags) flagged2[names[f3]]++;
   }
   return { tabs, flagged: flagged2 };
 }
@@ -97957,13 +97843,14 @@ function summary(e3) {
   const bits = [part(e3.email, "no email"), part(e3.phone, "no phone"), ...e3.address ? [escapeHtml(e3.address)] : []];
   return bits.join(`<span class="sep">\xB7</span>`);
 }
+var badge = (b3) => `<span class="pb c${b3.colour}">${escapeHtml(b3.text)}</span>`;
 function card(e3, id) {
-  const cls = ["card", e3.proposed ? "unconfirmed" : "", e3.former ? "former" : ""].filter(Boolean).join(" ");
-  const pills = e3.pills.map((p3) => `<span class="pill${p3.kind ? ` ${p3.kind}` : ""}">${escapeHtml(p3.text)}</span>`).join("");
+  const cls = e3.proposed ? "card unconfirmed" : "card";
+  const pills = e3.badges.map(badge).join("") + e3.pills.map((p3) => `<span class="pill${p3.kind ? ` ${p3.kind}` : ""}">${escapeHtml(p3.text)}</span>`).join("");
   const related = e3.related.length ? `<h3>Related</h3><div class="rows">${e3.related.map((r3) => `<span class="k">\xB7</span><span class="v">${escapeHtml(r3)}</span>`).join("")}</div>` : "";
   const counts3 = e3.counts ? `<h3>In the case data</h3><div class="rows"><span class="k">Facts</span><span class="v">${e3.counts.facts}</span><span class="k">Documents</span><span class="v">${e3.counts.documents}</span></div>` : "";
-  const actions = e3.actions.length ? `<div class="actions">${e3.actions.map((a3) => copyButton(a3.label === "Missing details" || a3.label === "Conflicting details" || a3.label === "No matter role" ? `Copy instruction: ${a3.label}` : a3.label, a3.instruction)).join("")}</div>` : "";
-  return `<div class="${cls}" data-side="${e3.side}" data-flags="${e3.flags.join(" ")}" data-search="${escapeHtml(e3.search)}">
+  const actions = e3.actions.length ? `<div class="actions">${e3.actions.map((a3) => copyButton(a3.label === "Missing details" || a3.label === "Conflicting details" ? `Copy instruction: ${a3.label}` : a3.label, a3.instruction)).join("")}</div>` : "";
+  return `<div class="${cls}">
   <input type="radio" name="open" class="opener" id="${id}">
   <label class="head" for="${id}">
     <span class="r1">${e3.code ? `<span class="code">${escapeHtml(e3.code)}</span>` : ""}<span class="name">${escapeHtml(e3.name)}</span><span class="pills">${pills}</span></span>
@@ -97973,16 +97860,16 @@ function card(e3, id) {
   <div class="detail">${e3.aliases.length ? `<div class="aka">Also known as: ${escapeHtml(e3.aliases.join(", "))}</div>` : ""}${rows2("Contact", e3.contact)}${rows2("Service", e3.service)}${rows2("Counsel", e3.counsel)}${related}${rows2("Appearances", e3.appearances)}${counts3}${e3.notes.map((n3) => `<div class="note">${escapeHtml(n3)}</div>`).join("")}${actions}</div>
 </div>`;
 }
+function proceeding(p3) {
+  const sides = p3.sides.map((s3) => `<span class="k">${escapeHtml(s3.label)}</span><span class="v">${escapeHtml(s3.names.join(", "))}</span>`).join("");
+  return `<div class="proc"><div class="r1">${badge(p3.badge)}<span class="name">${escapeHtml(p3.style)}</span></div><div class="rows">${sides}</div></div>`;
+}
 function renderCastPage(model, meta2, composed = CAST_PAGE) {
   const metaRow = [["Matter", meta2.matter], ["Client", meta2.client], ["Rev", meta2.revision === null ? "" : String(meta2.revision)], ["Rendered", meta2.rendered]].filter(([, v3]) => v3 !== "").map(([k3, v3]) => `<span data-k="${escapeHtml(k3)}">${escapeHtml(v3)}</span>`).join("");
-  const flagOptions = Object.keys(FLAG_LABELS).map((f3) => `<option value="${f3}">${FLAG_LABELS[f3]}</option>`).join("");
   const views = model.tabs.map((tab) => {
-    const sections = tab.sections.map((s3, si2) => {
-      const shown = s3.entries.filter((e3) => !e3.former).length;
-      return `<section><h2>${escapeHtml(s3.title)} <span class="badge">${shown}</span></h2><div class="list">${s3.entries.map((e3, ei2) => card(e3, `o-${tab.id}${si2}-${ei2}`)).join("")}<div class="none"${shown ? " hidden" : ""}>None.</div></div></section>`;
-    }).join("");
+    const items2 = tab.id === "pro" ? model.proceedings.map(proceeding) : tab.entries.map((e3, i3) => card(e3, `o-${tab.id}-${i3}`));
     const tools = tab.id === "svc" ? `<div class="actions listtools">${copyButton("Copy all service emails", model.serviceEmails)}${copyButton("Copy service list as table", model.serviceTable)}</div>` : "";
-    return `<div class="view" data-v="${tab.id}">${sections}${tools}</div>`;
+    return `<div class="view" data-v="${tab.id}"><div class="list">${items2.join("")}<div class="none"${items2.length ? " hidden" : ""}>None.</div></div>${tools}</div>`;
   }).join("");
   const radios = model.tabs.map((t3, i3) => `<input type="radio" name="tab" class="tabr" id="t-${t3.id}"${i3 === 0 ? " checked" : ""}>`).join("");
   const labels = model.tabs.map((t3) => `<label class="tab" for="t-${t3.id}">${escapeHtml(t3.label)}</label>`).join("");
@@ -97990,17 +97877,11 @@ function renderCastPage(model, meta2, composed = CAST_PAGE) {
   const body = `<main class="page">
   ${radios}<input type="radio" name="open" id="o-none" checked>
   <header>
-    <h1>${CAST_PAGE_NAME}</h1>
+    <h1>Characters</h1>
     <div class="meta">${metaRow}</div>
   </header>
   <div class="tabs">${labels}</div>
-  <div class="panel">
-    <div class="filters">
-      <label>Side <select id="side"><option value="">All sides</option><option value="P">${escapeHtml(model.sideLabels.P)}</option><option value="D">${escapeHtml(model.sideLabels.D)}</option><option value="N">Neutral</option></select></label>
-      <label>Flags <select id="flag"><option value="">All entries</option>${flagOptions}</select></label>
-      <label><input type="checkbox" id="former"> Show former</label>
-    </div>
-    <input type="search" id="q" placeholder="Search names, aliases, file codes, firms">${notices}
+  <div class="panel">${notices}
     ${views}
   </div>
 </main>`;
@@ -98739,14 +98620,14 @@ function proceduralHistoryData(ctx) {
   return { order: "date", evidence, facts: dated.map((f3, i3) => ({ ...f3, position: i3 + 1 })) };
 }
 function factsFor(ctx) {
-  const { dbPath, filing, proceeding, now, revision } = ctx;
+  const { dbPath, filing, proceeding: proceeding2, now, revision } = ctx;
   const manifest = readManifest(dbPath, filing.id);
   const inventory = manifest !== null && manifest.stamp.revision === revision ? manifest.inventory : null;
   const facts = factsInFilingOrder(dbPath, filing.id);
   const statements = statementsOf(dbPath, facts.map((f3) => f3.id)).filter((s3) => s3.purpose !== "impeachment");
   const open = inventory === null ? /* @__PURE__ */ new Set() : linksWithWork(inventory, statements);
   const unrecorded = facts.filter((f3) => f3.court_record === null).map((f3) => f3.id);
-  const opposing = unrecorded.length === 0 ? [] : fetchParties(dbPath, proceeding.id).filter((p3) => p3.is_client !== 1).map((p3) => p3.id);
+  const opposing = unrecorded.length === 0 ? [] : fetchParties(dbPath, proceeding2.id).filter((p3) => p3.is_client !== 1).map((p3) => p3.id);
   const admitted = unrecorded.length === 0 ? /* @__PURE__ */ new Set() : fetchFactAdmissionCoverage(dbPath, unrecorded, opposing, now.slice(0, 10));
   return {
     evidence: manifest === null ? "never_rendered" : inventory === null ? "changed_since" : "read",
@@ -99344,10 +99225,10 @@ function memberRef(m3) {
   return { filing_id: m3.filing?.id ?? null, proceeding_id: m3.proceeding.id };
 }
 function liveMembers(dbPath) {
-  const proceedings = fetchAllProceedings(dbPath).map((proceeding) => ({ proceeding, filings: fetchAllFilingsForProceeding(dbPath, proceeding.id) }));
+  const proceedings = fetchAllProceedings(dbPath).map((proceeding2) => ({ proceeding: proceeding2, filings: fetchAllFilingsForProceeding(dbPath, proceeding2.id) }));
   return {
-    live: proceedings.flatMap(({ proceeding, filings }) => filings.filter((f3) => !f3.retired_on).map((filing) => ({ proceeding, filing }))),
-    preFiling: proceedings.filter(({ filings }) => filings.every(isResearchWriting)).map(({ proceeding }) => proceeding)
+    live: proceedings.flatMap(({ proceeding: proceeding2, filings }) => filings.filter((f3) => !f3.retired_on).map((filing) => ({ proceeding: proceeding2, filing }))),
+    preFiling: proceedings.filter(({ filings }) => filings.every(isResearchWriting)).map(({ proceeding: proceeding2 }) => proceeding2)
   };
 }
 function pageTargets(groups) {
@@ -101077,11 +100958,11 @@ function sentLetterLine(dbPath, filing) {
     sent_on: filing.filed_on
   };
 }
-function preFilingLine(proceeding, board) {
+function preFilingLine(proceeding2, board) {
   return {
-    proceeding_id: proceeding.id,
-    proceeding: { court_or_centre: proceeding.court_or_centre, file_number: proceeding.file_number },
-    state_label: preFilingLabel(proceeding),
+    proceeding_id: proceeding2.id,
+    proceeding: { court_or_centre: proceeding2.court_or_centre, file_number: proceeding2.file_number },
+    state_label: preFilingLabel(proceeding2),
     in_progress: inProgress(board.tickets.map((t3) => t3.ticket))
   };
 }
@@ -102540,8 +102421,8 @@ ${page.tail}`;
 
 // src/submission/matter-board-section.ts
 var DATES_NOT_READ = { note: "This matter's dates were not read." };
-function filingBoardData(dbPath, filing, proceeding, client, now, revision, dates = DATES_NOT_READ, manifest = isJobOnlyBoard(filing) ? null : readManifest(dbPath, filing.id)) {
-  const ctx = buildContext(dbPath, proceeding, filing, [], revision, client, void 0, now);
+function filingBoardData(dbPath, filing, proceeding2, client, now, revision, dates = DATES_NOT_READ, manifest = isJobOnlyBoard(filing) ? null : readManifest(dbPath, filing.id)) {
+  const ctx = buildContext(dbPath, proceeding2, filing, [], revision, client, void 0, now);
   return buildWorkBoardData({ ...ctx, inventory: manifest?.inventory ?? null }, deadlineCriteria(dates, filing.id));
 }
 function boardSectionOf(dbPath, own, client, now, revision, dates) {
@@ -102621,10 +102502,10 @@ function buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
     const board = combineSections(dbPath, raw, true);
     boardJobs.set(group, board.tickets);
     const sections = [board];
-    const { proceeding, filing } = group.members[0];
-    const named2 = group.members.length > 1 || !sameBoard(group.board, { filing_id: filing?.id ?? null, proceeding_id: proceeding.id });
+    const { proceeding: proceeding2, filing } = group.members[0];
+    const named2 = group.members.length > 1 || !sameBoard(group.board, { filing_id: filing?.id ?? null, proceeding_id: proceeding2.id });
     return renderWorkBoardHtml({
-      meta: { ...meta2, client_no: client.clientNo ?? "", forum: proceeding.forum ?? "", registry: proceeding.registry ?? "", file_number: proceeding.file_number ?? "", style_of_cause: proceeding.style_of_cause ?? "" },
+      meta: { ...meta2, client_no: client.clientNo ?? "", forum: proceeding2.forum ?? "", registry: proceeding2.registry ?? "", file_number: proceeding2.file_number ?? "", style_of_cause: proceeding2.style_of_cause ?? "" },
       ...named2 ? { board: group.board } : {},
       sections,
       dates: combinedPageDates(dates, raw, board),
@@ -103088,11 +102969,11 @@ function boardSection(dbPath, board, client, now, dates, revision = fetchRevisio
     refuseAbsorbedCard(dbPath, { filing_id: filing.id, proceeding_id: filing.proceeding_id });
     return boardSectionOf(dbPath, filingBoardData(dbPath, filing, fetchProceeding(dbPath, filing.proceeding_id), client, now, revision, dates), client, now, revision, dates);
   }
-  const proceeding = fetchProceeding(dbPath, board.proceeding_id);
-  refuseAbsorbedCard(dbPath, { filing_id: null, proceeding_id: proceeding.id });
+  const proceeding2 = fetchProceeding(dbPath, board.proceeding_id);
+  refuseAbsorbedCard(dbPath, { filing_id: null, proceeding_id: proceeding2.id });
   return boardSectionOf(
     dbPath,
-    buildPreFilingBoardData(dbPath, proceeding, { revision, matter: client.matterNo ?? "", client: client.clientName ?? proceeding.matter_reference, rendered: now }),
+    buildPreFilingBoardData(dbPath, proceeding2, { revision, matter: client.matterNo ?? "", client: client.clientName ?? proceeding2.matter_reference, rendered: now }),
     client,
     now,
     revision,
@@ -104035,9 +103916,9 @@ function documentsForFiling(ctx, timings, general, cited2) {
 
 // src/submission/forms/writing-parties.ts
 import { dirname as dirname26 } from "node:path";
-function partiesFor(dbPath, proceeding, filing) {
+function partiesFor(dbPath, proceeding2, filing) {
   if (filing.filed_on) return { parties: fetchSentParties(dbPath, filing), drift: { rows: [] } };
-  return draftingParties(dirname26(dbPath), proceeding, fetchParties(dbPath, proceeding.id));
+  return draftingParties(dirname26(dbPath), proceeding2, fetchParties(dbPath, proceeding2.id));
 }
 function partiesDigest({ parties: parties2, drift }) {
   return sha256(
@@ -104092,7 +103973,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
   }
   const loadStart = performance.now();
   const filing = fetchFilingById(dbPath, filingId);
-  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
+  const proceeding2 = fetchProceeding(dbPath, filing.proceeding_id);
   const jobOnly = isJobOnlyBoard(filing);
   if (jobOnly && (renderMode !== "mockup" || presentationDir !== void 0)) {
     throw new ValidationError(
@@ -104100,7 +103981,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
       "milestone_only"
     );
   }
-  const chosenDir = presentationDir === void 0 ? void 0 : resolvePresentationDir(dbPath, presentationDir, filing.title, proceeding.style_of_cause);
+  const chosenDir = presentationDir === void 0 ? void 0 : resolvePresentationDir(dbPath, presentationDir, filing.title, proceeding2.style_of_cause);
   const pagesDir = draftDir !== void 0 ? draftDirOfCaller(dbPath, draftDir) : chosenDir !== void 0 ? dirname27(chosenDir) : void 0;
   const moved = renderMode === "mockup" ? timed(timings, "move case-data mockups", () => moveCaseDataMockups(dbPath)) : [];
   const movedReport = moved.length > 0 ? { mockups_moved: moved } : {};
@@ -104108,9 +103989,9 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
   const approvals = fetchApprovalsMark(dbPath);
   const loadMs = elapsedMs(loadStart);
   const retiredMockup = renderMode === "mockup" && Boolean(filing.retired_on);
-  const { parties: parties2, drift } = retiredMockup || jobOnly ? { parties: [], drift: { rows: [] } } : timed(timings, "parties_drift", () => partiesFor(dbPath, proceeding, filing));
+  const { parties: parties2, drift } = retiredMockup || jobOnly ? { parties: [], drift: { rows: [] } } : timed(timings, "parties_drift", () => partiesFor(dbPath, proceeding2, filing));
   const contextStart = performance.now();
-  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, client, appealDeadline, now);
+  const ctx = buildContext(dbPath, proceeding2, filing, parties2, revision, client, appealDeadline, now);
   timings.push({ phase: "load_filing", ms: loadMs + elapsedMs(contextStart) });
   const writePages = (section4) => {
     if (!pagesDir) return void 0;
@@ -104181,7 +104062,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
   const baseDir = folder?.dir;
   const general = generalLayoutFor(filing);
   const liveTags = hasLiveTags(general);
-  const stamp3 = renderMode === "mockup" ? stampFor(filingId, proceeding, client, now, revision, schemaVersion, timed(timings, "build_stamp_check", () => buildStampStatus().build_stamp), approvals) : null;
+  const stamp3 = renderMode === "mockup" ? stampFor(filingId, proceeding2, client, now, revision, schemaVersion, timed(timings, "build_stamp_check", () => buildStampStatus().build_stamp), approvals) : null;
   const fresh = stamp3 === null || liveTags ? null : timed(timings, "stamp_check", () => freshManifest(dbPath, filingId, stamp3, driftDigest));
   const hit = fresh !== null && fresh.dir.toLowerCase() === baseDir.toLowerCase() ? fresh : null;
   const recordParagraphMap = (docs) => {
@@ -104272,10 +104153,10 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
 }
 function renderFilingInMemory(dbPath, filingId, now, partiesDb = dbPath) {
   const filing = fetchFilingById(dbPath, filingId);
-  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
+  const proceeding2 = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
-  const parties2 = filing.filed_on ? fetchSentParties(dbPath, filing) : draftingParties(dirname27(partiesDb), proceeding, fetchParties(dbPath, proceeding.id)).parties;
-  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {}, void 0, now);
+  const parties2 = filing.filed_on ? fetchSentParties(dbPath, filing) : draftingParties(dirname27(partiesDb), proceeding2, fetchParties(dbPath, proceeding2.id)).parties;
+  const ctx = buildContext(dbPath, proceeding2, filing, parties2, revision, {}, void 0, now);
   const general = generalLayoutFor(filing);
   const cited2 = general === null ? [] : citedStates(general, filing);
   const built = documentsForFiling(ctx, [], general, cited2);
@@ -104294,7 +104175,7 @@ function submissionFormsRenderProceedingBoard(dbPath, proceedingId, client = {},
   const timings = [];
   const started = performance.now();
   const draft = draftDir === void 0 ? void 0 : draftDirOfCaller(dbPath, draftDir);
-  const proceeding = fetchProceeding(dbPath, proceedingId);
+  const proceeding2 = fetchProceeding(dbPath, proceedingId);
   if (fetchBoardFilings(dbPath, proceedingId).length > 0) {
     throw new ValidationError(
       "This proceeding has a Writing, so its jobs are on each Writing's Work Board -- render a Writing instead"
@@ -104304,10 +104185,10 @@ function submissionFormsRenderProceedingBoard(dbPath, proceedingId, client = {},
   const section3 = timed(
     timings,
     "board_section",
-    () => buildPreFilingBoardData(dbPath, proceeding, {
+    () => buildPreFilingBoardData(dbPath, proceeding2, {
       revision,
       matter: client.matterNo ?? "",
-      client: client.clientName ?? proceeding.matter_reference,
+      client: client.clientName ?? proceeding2.matter_reference,
       rendered: now
     })
   );
@@ -104947,14 +104828,14 @@ function submissionFormsEmitForm32(dbPath, filingId, caseDataFolder2, seams = {}
   }
   const filing = fetchFilingById(dbPath, filingId);
   refuseJobOnlyBoard(filing);
-  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
+  const proceeding2 = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
-  const { parties: parties2, drift } = partiesFor(dbPath, proceeding, filing);
+  const { parties: parties2, drift } = partiesFor(dbPath, proceeding2, filing);
   const refusal3 = partiesDriftRefusal(filingId, revision, drift, "drafting_forms__emit_form32");
   if (refusal3) return refusal3;
   const lenient = publish3.lenient === true ? unplacedFactWarnings(dbPath, filing) : void 0;
   if (lenient === void 0) refuseUnplacedFacts(dbPath, filing, "drafting_forms__emit_form32");
-  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {});
+  const ctx = buildContext(dbPath, proceeding2, filing, parties2, revision, {});
   const markdown = renderForm32FiledFace(ctx, lenient);
   const sidecar2 = publishSidecar(ctx, lenient ?? [], publish3.cover_notes ?? []);
   const publishName = publishFileName("form-32.md");
@@ -104986,14 +104867,14 @@ function submissionFormsEmitForm33(dbPath, filingId, caseDataFolder2, seams = {}
   }
   const filing = fetchFilingById(dbPath, filingId);
   refuseJobOnlyBoard(filing);
-  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
+  const proceeding2 = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
-  const { parties: parties2, drift } = partiesFor(dbPath, proceeding, filing);
+  const { parties: parties2, drift } = partiesFor(dbPath, proceeding2, filing);
   const refusal3 = partiesDriftRefusal(filingId, revision, drift, "drafting_forms__emit_form33");
   if (refusal3) return refusal3;
   const lenient = publish3.lenient === true ? unplacedFactWarnings(dbPath, filing) : void 0;
   if (lenient === void 0) refuseUnplacedFacts(dbPath, filing, "drafting_forms__emit_form33");
-  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {});
+  const ctx = buildContext(dbPath, proceeding2, filing, parties2, revision, {});
   const markdown = renderForm33FiledFace(ctx, lenient);
   const sidecar2 = publishSidecar(ctx, lenient ?? [], publish3.cover_notes ?? []);
   const publishName = publishFileName("form-33.md");
@@ -105065,9 +104946,9 @@ function submissionFormsEmitAffidavit(dbPath, filingId, documentId, caseDataFold
   }
   const filing = fetchFilingById(dbPath, filingId);
   refuseJobOnlyBoard(filing);
-  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
+  const proceeding2 = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
-  const { parties: parties2, drift } = partiesFor(dbPath, proceeding, filing);
+  const { parties: parties2, drift } = partiesFor(dbPath, proceeding2, filing);
   const refusal3 = partiesDriftRefusal(filingId, revision, drift, "drafting_forms__emit_affidavit");
   if (refusal3) return refusal3;
   if (filing.kind !== "notice_of_application" && filing.kind !== "application_response") {
@@ -105079,7 +104960,7 @@ function submissionFormsEmitAffidavit(dbPath, filingId, documentId, caseDataFold
   if (affidavit === void 0) {
     throw new ValidationError(`That document is not an affidavit listed as supporting "${filing.title}".`);
   }
-  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {});
+  const ctx = buildContext(dbPath, proceeding2, filing, parties2, revision, {});
   const markdown = renderAffidavitFiledFace(ctx, affidavit);
   const fileName = `affidavit-${documentId}.md`;
   return {
@@ -105106,14 +104987,14 @@ function renderBccaBookFiledFace(ctx) {
     );
   }
   const isFactum = ctx.filing.kind === "bcca_factum";
-  const proceeding = ctx.proceeding;
-  const fileNumber = proceeding.file_number;
+  const proceeding2 = ctx.proceeding;
+  const fileNumber = proceeding2.file_number;
   if (!fileNumber) {
     throw new ValidationError(
       `"${ctx.filing.title}": the proceeding has no court file number recorded -- add it before this document can be assembled.`
     );
   }
-  const registry2 = proceeding.registry;
+  const registry2 = proceeding2.registry;
   if (!registry2) {
     throw new ValidationError(
       `"${ctx.filing.title}": the proceeding has no registry recorded -- add it before this document can be assembled.`
@@ -105161,7 +105042,7 @@ function renderBccaBookFiledFace(ctx) {
       email: rep?.counsel_email ?? null
     };
   });
-  const boaSource = isFactum ? factumBookAuthorities(ctx.dbPath, ctx.filing.id) : fetchCitedAuthorities(ctx.dbPath, ctx.filing.id, proceeding.id).map((a3) => ({
+  const boaSource = isFactum ? factumBookAuthorities(ctx.dbPath, ctx.filing.id) : fetchCitedAuthorities(ctx.dbPath, ctx.filing.id, proceeding2.id).map((a3) => ({
     authority: a3.style_of_cause_or_title,
     citation: a3.citation
   }));
@@ -105172,7 +105053,7 @@ function renderBccaBookFiledFace(ctx) {
     const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
     const affidavitDetails = fetchAffidavitDetails(ctx.dbPath, docs.map((d3) => d3.document_id));
     const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
-    const unverifiedDelta = fetchOpposingAuthoritiesCount(ctx.dbPath, proceeding.id) === 0;
+    const unverifiedDelta = fetchOpposingAuthoritiesCount(ctx.dbPath, proceeding2.id) === 0;
     responseBook = buildTocRows(
       docs,
       affidavitDetails,
@@ -105192,11 +105073,11 @@ function renderBccaBookFiledFace(ctx) {
   lines2.push(`file_number: ${fileNumber}`);
   lines2.push(`registry: ${registry2}`);
   lines2.push(`short_style: ${shortStyle}`);
-  if (proceeding.under_appeal_judge) lines2.push(`under_appeal_judge: ${proceeding.under_appeal_judge}`);
-  if (proceeding.under_appeal_court) lines2.push(`under_appeal_court: ${proceeding.under_appeal_court}`);
-  if (proceeding.under_appeal_pronounced) lines2.push(`under_appeal_pronounced: ${proceeding.under_appeal_pronounced}`);
-  if (proceeding.access_restrictions) {
-    lines2.push(`access_restrictions: ${JSON.stringify(proceeding.access_restrictions.split("\n"))}`);
+  if (proceeding2.under_appeal_judge) lines2.push(`under_appeal_judge: ${proceeding2.under_appeal_judge}`);
+  if (proceeding2.under_appeal_court) lines2.push(`under_appeal_court: ${proceeding2.under_appeal_court}`);
+  if (proceeding2.under_appeal_pronounced) lines2.push(`under_appeal_pronounced: ${proceeding2.under_appeal_pronounced}`);
+  if (proceeding2.access_restrictions) {
+    lines2.push(`access_restrictions: ${JSON.stringify(proceeding2.access_restrictions.split("\n"))}`);
   }
   if (responseBook) {
     lines2.push(`response_book_record_label: Response Book`);
@@ -105234,7 +105115,7 @@ function lawCite(row2) {
   return `${row2.authority_title}, ${row2.authority_citation}${pin ? `, ${pin}` : ""}`;
 }
 function renderBccaFactumFiledFace(ctx, datedOn) {
-  const { filing, proceeding } = ctx;
+  const { filing, proceeding: proceeding2 } = ctx;
   const refuse2 = (what) => {
     throw new ValidationError(`"${filing.title}": ${what} -- add it before this factum can be assembled.`);
   };
@@ -105244,7 +105125,7 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
     );
   }
   if (!ISO_DATE.test(datedOn)) throw new ValidationError(`dated_on must be YYYY-MM-DD, got "${datedOn}".`);
-  if (!proceeding.file_number) refuse2("the proceeding has no court file number recorded");
+  if (!proceeding2.file_number) refuse2("the proceeding has no court file number recorded");
   const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
   const groups = groupPartiesByRole(captionParties2);
   if (groups.length < 2) refuse2(`only ${groups.length} party role(s) are recorded on the proceeding; an appeal needs an appellant and a respondent`);
@@ -105369,15 +105250,15 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
   const put = (key, value2) => {
     if (value2 !== null && value2 !== void 0 && value2 !== "") front.push(`${key}: ${value2}`);
   };
-  put("file_number", proceeding.file_number);
+  put("file_number", proceeding2.file_number);
   put("short_style", `${firstAppellant.name} vs. ${firstRespondent.name}`);
-  if (proceeding.under_appeal_judge && proceeding.under_appeal_court && proceeding.under_appeal_pronounced) {
-    put("under_appeal_judge", proceeding.under_appeal_judge);
-    put("under_appeal_court", proceeding.under_appeal_court);
-    put("under_appeal_pronounced", proceeding.under_appeal_pronounced);
+  if (proceeding2.under_appeal_judge && proceeding2.under_appeal_court && proceeding2.under_appeal_pronounced) {
+    put("under_appeal_judge", proceeding2.under_appeal_judge);
+    put("under_appeal_court", proceeding2.under_appeal_court);
+    put("under_appeal_pronounced", proceeding2.under_appeal_pronounced);
   }
-  if (proceeding.access_restrictions) {
-    put("access_restrictions", JSON.stringify(proceeding.access_restrictions.split("\n").map((l3) => l3.trim()).filter((l3) => l3 !== "")));
+  if (proceeding2.access_restrictions) {
+    put("access_restrictions", JSON.stringify(proceeding2.access_restrictions.split("\n").map((l3) => l3.trim()).filter((l3) => l3 !== "")));
   }
   put("record_label", recordLabel);
   put("title", recordLabel.toUpperCase());
@@ -105410,12 +105291,12 @@ function submissionFormsEmitBccaBook(dbPath, filingId) {
   }
   const filing = fetchFilingById(dbPath, filingId);
   refuseJobOnlyBoard(filing);
-  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
+  const proceeding2 = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
-  const { parties: parties2, drift } = partiesFor(dbPath, proceeding, filing);
+  const { parties: parties2, drift } = partiesFor(dbPath, proceeding2, filing);
   const refusal3 = partiesDriftRefusal(filingId, revision, drift, "drafting_forms__emit_bcca_book");
   if (refusal3) return refusal3;
-  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {});
+  const ctx = buildContext(dbPath, proceeding2, filing, parties2, revision, {});
   return {
     filing_id: filingId,
     revision,
@@ -105437,12 +105318,12 @@ function submissionFormsEmitBccaFactum(dbPath, filingId, datedOn) {
   }
   const filing = fetchFilingById(dbPath, filingId);
   refuseJobOnlyBoard(filing);
-  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
+  const proceeding2 = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
-  const { parties: parties2, drift } = partiesFor(dbPath, proceeding, filing);
+  const { parties: parties2, drift } = partiesFor(dbPath, proceeding2, filing);
   const refusal3 = partiesDriftRefusal(filingId, revision, drift, "drafting_forms__emit_bcca_factum");
   if (refusal3) return refusal3;
-  const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {});
+  const ctx = buildContext(dbPath, proceeding2, filing, parties2, revision, {});
   return {
     filing_id: filingId,
     revision,
@@ -105744,13 +105625,13 @@ function listPackageFiles(dir) {
 function runPreFilingChecks(dbPath, filingId, packageDir) {
   const dir = resolvePackageDir(packageDir);
   const docs = extractDocuments(listPackageFiles(dir));
-  const [proceeding] = queryRows(
+  const [proceeding2] = queryRows(
     dbPath,
     `SELECT p.id, p.file_number, f.kind FROM filings f JOIN proceedings p ON p.id = f.proceeding_id WHERE f.id = ?`,
     [filingId]
   );
   const rows5 = fetchFilingDocuments(dbPath, filingId);
-  const filing = { kind: proceeding?.kind, proceeding_id: proceeding?.id ?? -1 };
+  const filing = { kind: proceeding2?.kind, proceeding_id: proceeding2?.id ?? -1 };
   const numbers = exhibitNumbersForFiling(dbPath, filing, rows5.map((r3) => r3.document_id));
   const proceedingNumbers = filing.kind === "submissions_package" ? numbers : /* @__PURE__ */ new Map();
   const index = rows5.map((r3) => ({
@@ -105769,7 +105650,7 @@ function runPreFilingChecks(dbPath, filingId, packageDir) {
      ORDER BY os.id`,
     [filingId]
   );
-  const partyNames2 = queryRows(dbPath, `SELECT name FROM parties WHERE proceeding_id = ? ORDER BY ordinal, id`, [proceeding?.id ?? -1]).map((p3) => p3.name);
+  const partyNames2 = queryRows(dbPath, `SELECT name FROM parties WHERE proceeding_id = ? ORDER BY ordinal, id`, [proceeding2?.id ?? -1]).map((p3) => p3.name);
   const instruments = queryRows(
     dbPath,
     `SELECT d.label, d.instrument, w.name AS deponent
@@ -105782,7 +105663,7 @@ function runPreFilingChecks(dbPath, filingId, packageDir) {
     checkExhibitNumbering(docs, index, proceedingNumbers),
     checkPlaceholders(docs),
     checkFigureConsistency(docs, dates, amounts),
-    checkPartyNames(docs, { file_number: proceeding?.file_number ?? null, party_names: partyNames2 }),
+    checkPartyNames(docs, { file_number: proceeding2?.file_number ?? null, party_names: partyNames2 }),
     checkExecution(docs, instruments),
     checkExhibitFiles(docs)
   ];
@@ -105868,7 +105749,7 @@ function rankFilings(dbPath, client, now, stamp3, timings) {
     timings,
     "filing_list",
     () => fetchAllProceedings(dbPath).flatMap(
-      (proceeding) => fetchAllFilingsForProceeding(dbPath, proceeding.id).map((filing) => ({ proceeding, filing }))
+      (proceeding2) => fetchAllFilingsForProceeding(dbPath, proceeding2.id).map((filing) => ({ proceeding: proceeding2, filing }))
     )
   );
   const activityByProceeding = /* @__PURE__ */ new Map();
@@ -105887,12 +105768,12 @@ function rankFilings(dbPath, client, now, stamp3, timings) {
   const digests = timed(timings, "parties_drift", () => {
     const drafting = /* @__PURE__ */ new Map();
     return new Map(
-      listed.filter(({ filing }) => !filing.retired_on && !isJobOnlyBoard(filing)).map(({ proceeding, filing }) => {
-        if (filing.filed_on) return [filing.id, partiesDigest(partiesFor(dbPath, proceeding, filing))];
-        let digest = drafting.get(proceeding.id);
+      listed.filter(({ filing }) => !filing.retired_on && !isJobOnlyBoard(filing)).map(({ proceeding: proceeding2, filing }) => {
+        if (filing.filed_on) return [filing.id, partiesDigest(partiesFor(dbPath, proceeding2, filing))];
+        let digest = drafting.get(proceeding2.id);
         if (digest === void 0) {
-          digest = partiesDigest(partiesFor(dbPath, proceeding, filing));
-          drafting.set(proceeding.id, digest);
+          digest = partiesDigest(partiesFor(dbPath, proceeding2, filing));
+          drafting.set(proceeding2.id, digest);
         }
         return [filing.id, digest];
       })
@@ -105901,7 +105782,7 @@ function rankFilings(dbPath, client, now, stamp3, timings) {
   const ranked = timed(
     timings,
     "filing_entries",
-    () => listed.map(({ proceeding, filing }) => {
+    () => listed.map(({ proceeding: proceeding2, filing }) => {
       if (isJobOnlyBoard(filing)) {
         const lifecycle2 = deriveLifecycle(filing, null, now.slice(0, 10));
         return {
@@ -105909,7 +105790,7 @@ function rankFilings(dbPath, client, now, stamp3, timings) {
           hearing_date: null,
           ...filing.retired_on ? noActivity : activityFor(filing.proceeding_id, filing.id),
           retired: Boolean(filing.retired_on),
-          proceeding,
+          proceeding: proceeding2,
           filing,
           lifecycle: lifecycle2,
           render_state: null,
@@ -105933,7 +105814,7 @@ function rankFilings(dbPath, client, now, stamp3, timings) {
           hearing_date: hearingDate,
           ...noActivity,
           retired: true,
-          proceeding,
+          proceeding: proceeding2,
           filing,
           lifecycle,
           render_state: null,
@@ -105950,7 +105831,7 @@ function rankFilings(dbPath, client, now, stamp3, timings) {
       }
       const state = renderStateFor(
         dbPath,
-        stampFor(filing.id, proceeding, client, now, stamp3.revision, stamp3.schemaVersion, stamp3.buildStamp, approvals),
+        stampFor(filing.id, proceeding2, client, now, stamp3.revision, stamp3.schemaVersion, stamp3.buildStamp, approvals),
         filing,
         digests.get(filing.id)
       );
@@ -105959,7 +105840,7 @@ function rankFilings(dbPath, client, now, stamp3, timings) {
         hearing_date: hearingDate,
         ...activityFor(filing.proceeding_id, filing.id),
         retired: false,
-        proceeding,
+        proceeding: proceeding2,
         filing,
         lifecycle,
         render_state: state,
@@ -106314,9 +106195,9 @@ function markRenderedInForeground(dbPath, filingId, env = process.env) {
 // src/submission/forms/bootstrap-job.ts
 function renderStateOf(dbPath, filingId, client) {
   const filing = fetchFilingById(dbPath, filingId);
-  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
-  const stamp3 = stampFor(filing.id, proceeding, client, nowStamp(), fetchRevision(dbPath), readSchemaVersion(dbPath), buildStampStatus().build_stamp, fetchApprovalsMark(dbPath));
-  return renderStateFor(dbPath, stamp3, filing, partiesDigest(partiesFor(dbPath, proceeding, filing)));
+  const proceeding2 = fetchProceeding(dbPath, filing.proceeding_id);
+  const stamp3 = stampFor(filing.id, proceeding2, client, nowStamp(), fetchRevision(dbPath), readSchemaVersion(dbPath), buildStampStatus().build_stamp, fetchApprovalsMark(dbPath));
+  return renderStateFor(dbPath, stamp3, filing, partiesDigest(partiesFor(dbPath, proceeding2, filing)));
 }
 function startBootstrapJob(result, client, dates = DATES_NOT_READ, viewsPending = false) {
   const dbPath = result.db_path;
@@ -106416,9 +106297,7 @@ async function readCastModel(store, matterRoot, mattNum) {
   } catch (err) {
     caseData = { status: "unavailable", reason: err.message };
   }
-  const tied = new Set(contacts.flatMap((c3) => c3.roles).map((role2) => String(role2.case_party_id)));
-  const partiesWithoutRole = caseData.status === "ok" ? caseData.parties.map((p3) => p3.party_id).filter((id) => !tied.has(String(id))) : [];
-  return { model: buildCastModel({ mattNum, caseData, contacts, contactNames, partiesWithoutRole, today: today() }), client };
+  return { model: buildCastModel({ mattNum, caseData, contacts, contactNames, today: today() }), client };
 }
 async function writeCastPage(store, matterRoot, mattNum, rendered, revision = null) {
   const root = validateMatterRoot(matterRoot);
@@ -115841,14 +115720,14 @@ async function submissionDataCreateMilestone(args, env = process.env) {
     throw new ValidationError(`${TOOL5}.title must name the Work Board`, "invalid_title");
   }
   const title2 = args.title.trim();
-  const proceeding = fetchProceeding(args.db_path, args.proceeding_id);
+  const proceeding2 = fetchProceeding(args.db_path, args.proceeding_id);
   const written = await submissionDataWriteAll(
     args.db_path,
     [
       {
         // The WHERE re-checks, inside the INSERT's own transaction, that the proceeding has a Writing with a board.
         sql: `INSERT INTO filings (proceeding_id, kind, title, needs_forum_parts) SELECT ?, ?, ?, 0 WHERE EXISTS (SELECT 1 FROM filings WHERE proceeding_id = ? AND kind <> ? AND kind NOT IN (${RESEARCH_WRITING_KINDS_SQL}))`,
-        params: [proceeding.id, MILESTONE_KIND, title2, proceeding.id, MILESTONE_KIND],
+        params: [proceeding2.id, MILESTONE_KIND, title2, proceeding2.id, MILESTONE_KIND],
         expect_changes: 1
       }
     ],
@@ -115856,13 +115735,13 @@ async function submissionDataCreateMilestone(args, env = process.env) {
   );
   if (!written.ok) {
     throw new DataServerError(
-      `${TOOL5}: proceeding ${proceeding.id} has no Writing, so its own Work Board already holds jobs with no Writing; nothing was written. Outline the work on that board (render it by proceeding_id)`,
+      `${TOOL5}: proceeding ${proceeding2.id} has no Writing, so its own Work Board already holds jobs with no Writing; nothing was written. Outline the work on that board (render it by proceeding_id)`,
       "no_writing"
     );
   }
   return {
     filing_id: written.results[0].rowid,
-    proceeding_id: proceeding.id,
+    proceeding_id: proceeding2.id,
     title: title2,
     ...written.warning ? { warning: written.warning } : {}
   };
@@ -115976,8 +115855,8 @@ var INSERT = "INSERT INTO parties_snapshot (filing_id, party_id, name, role, ord
 function partiesSnapshotStatements(dbPath, filing, tool, env = process.env) {
   const [held2] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM parties_snapshot WHERE filing_id = ?", [filing.id]).rows;
   if (held2.n > 0) return [];
-  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
-  const { parties: parties2, drift } = draftingParties(dirname31(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
+  const proceeding2 = fetchProceeding(dbPath, filing.proceeding_id);
+  const { parties: parties2, drift } = draftingParties(dirname31(dbPath), proceeding2, fetchParties(dbPath, proceeding2.id), env);
   if (drift.rows.length > 0) {
     throw new DataServerError(
       `${tool}: counsel of record and the address for service, which case data owns, could not be read for party row(s): ` + drift.rows.map((r3) => `${r3.name} (${r3.kind})`).join(", ") + (drift.unchecked ? ` (${drift.unchecked.note})` : "") + `. Nothing was written. Confirm each with the practitioner and link it to its matter-data party, or correct case data through /matter-data first (references/filing-checklists.md \xA70), then call ${tool} again`,
@@ -119088,6 +118967,10 @@ function renderRefusal(render) {
   return flag2 ? { success: false, error: flag2[0], detail: render.note, render } : null;
 }
 var json = (value2) => JSON.stringify(value2, null, 2);
+function withMarker(letter, layout) {
+  const { marker: _caller, ...rest } = letter;
+  return layout?.letterhead === true && typeof layout.marker === "string" ? { ...rest, marker: layout.marker } : rest;
+}
 function publishGeneral(args, env = process.env, installRoot) {
   assertSegment(args.output_name, "output_name");
   const target2 = publishDraftTarget(args.matter_root, args.db_path, env);
@@ -119105,7 +118988,7 @@ function publishGeneral(args, env = process.env, installRoot) {
   const format = knowledgeRead(args.format_path, { env, installRoot });
   const write2 = (name, value2) => writeWorkingFile(target2, ["publish-general"], name, json(value2));
   const argv = ["--filed", write2("filed.json", filed), "--format", write2("format.json", format), "--out-dir", target2.draft, "--out-name", args.output_name];
-  if (args.letter !== void 0) argv.push("--letter", write2("letter.json", args.letter));
+  if (args.letter !== void 0) argv.push("--letter", write2("letter.json", withMarker(args.letter, layout)));
   if (layout?.letterhead === true) argv.push("--profile", write2("profile.json", readFirmProfile(env)));
   if (args.tokens !== void 0) argv.push("--tokens", write2("tokens.json", args.tokens));
   return runPublishFill("publish-general", "fill_general.py", [argv], env, installRoot);
@@ -119250,9 +119133,9 @@ function emailRecipients(dbPath, source, senderKey, env) {
     const proceedings = source.proceeding_id === void 0 ? fetchAllProceedings(dbPath) : [fetchProceeding(dbPath, source.proceeding_id)];
     const rows5 = [];
     const drifted = /* @__PURE__ */ new Map();
-    for (const proceeding of proceedings) {
-      const { parties: parties2, drift } = draftingParties(dirname37(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
-      const counsel = fetchServiceListCounsel(dbPath, proceeding.id, parties2);
+    for (const proceeding2 of proceedings) {
+      const { parties: parties2, drift } = draftingParties(dirname37(dbPath), proceeding2, fetchParties(dbPath, proceeding2.id), env);
+      const counsel = fetchServiceListCounsel(dbPath, proceeding2.id, parties2);
       for (const d3 of drift.rows) {
         const why = d3.kind === "unlinked" ? `${d3.name} is not linked to a party in case data, so its counsel cannot be read` : d3.kind === "not_of_record" ? `${d3.name} is linked to a party case data does not hold for this proceeding` : `counsel were not read from case data: ${d3.reason}`;
         for (const r3 of counsel) if (r3.party_id === d3.party_id) drifted.set(r3.id, why);
@@ -119766,43 +119649,13 @@ function publish2(folder, files) {
 
 // src/submission/draft-harness.ts
 var DRAFT_HARNESS_TIMEOUT_MS = 55e3;
-var DRAFT_STEPS = ["write_email", "scrutiny_review", "client_letter_fill", "client_letter_approve"];
+var DRAFT_STEPS = ["write_email", "scrutiny_review"];
 function draftHarness(args, env = process.env, installRoot) {
   if (args.step === "scrutiny_review") return scrutinyReview(args, env, installRoot);
-  if (args.step === "client_letter_fill" || args.step === "client_letter_approve") return clientLetter(args, env, installRoot);
   if (args.step !== "write_email") {
     throw new ValidationError(`drafting_forms__draft_harness.step must be one of: ${DRAFT_STEPS.join(", ")} (got ${JSON.stringify(args.step)})`);
   }
   return writeEmail(args, env, installRoot);
-}
-function clientLetter(args, env, installRoot) {
-  const field = (key) => `drafting_forms__draft_harness.${key}`;
-  const outputName = requireString2(args, "output_name");
-  assertSegment(outputName, "output_name");
-  if (typeof args.matter_root !== "string") throw new ValidationError(`${field("matter_root")} is required for step ${args.step}`);
-  const filling = args.step === "client_letter_fill";
-  if (filling && (typeof args.letter !== "object" || args.letter === null || Array.isArray(args.letter))) {
-    throw new ValidationError(`${field("letter")} must be the letter's parts, an object, for step ${args.step}`);
-  }
-  if (args.revises !== void 0) assertSegment(args.revises, "revises");
-  const outDir = oneDraftFolder2(args.matter_root, draftFolders(validateMatterRoot(args.matter_root)));
-  return runPythonDriver({
-    label: `draft ${args.step} (client_letter.py)`,
-    driver: shippedScript(["publish", "scripts", "client_letter.py"], env, installRoot),
-    payload: JSON.stringify({ action: filling ? "fill" : "approve", out_dir: outDir, output_name: outputName, revises: args.revises, letter: args.letter, profile: readFirmProfile(env) }),
-    env,
-    timeoutMs: pythonTimeoutMs(env, DRAFT_HARNESS_TIMEOUT_MS, "COCLERK_EMAIL_DRAFT_TIMEOUT_MS"),
-    extraEnv: { PYTHONDONTWRITEBYTECODE: "1" },
-    timeoutAdvice: "The script writes through a temporary file, so a killed run leaves the letter as it was: call this tool again."
-  });
-}
-function isHeld2(path) {
-  if (!/\.(docx|md)$/i.test(path) || !existsSync58(path)) return false;
-  try {
-    return /^pending\b/i.test(reviewStatus(path) ?? "");
-  } catch {
-    return false;
-  }
 }
 function writeEmail(args, env, installRoot) {
   const outputName = requireString2(args, "output_name");
@@ -119830,14 +119683,6 @@ function writeEmail(args, env, installRoot) {
   } else {
     root = validateMatterRoot(args.matter_root);
     outDir = args.folder === void 0 ? oneDraftFolder2(root, draftFolders(root)) : oneDraftFolder2(root, confineWritingFolder(root, args.folder));
-  }
-  const held2 = attachments.map((path) => pathWin3225.resolve(root, path)).filter(isHeld2);
-  if (held2.length > 0) {
-    return {
-      success: false,
-      error: "attachment_on_hold",
-      detail: `Counsel's review is pending on ${held2.join("; ")}, so it cannot be attached. Only an active roster lawyer's approval lifts the hold. Nothing was written.`
-    };
   }
   const from = sender(env);
   if ("error" in from) return from;
@@ -127132,11 +126977,13 @@ var CAST_FIXTURE = {
   model: buildCastModel({
     mattNum: "T512",
     today: "2026-11-06",
-    partiesWithoutRole: [],
     contactNames: /* @__PURE__ */ new Map([["c1", "Alan Wei Park"], ["c2", "Maple Grove Dental Inc."]]),
     caseData: {
       status: "ok",
-      proceedings: [{ proceeding_id: 1, court: "BCSC", registry: "Vancouver", file_number: "S-000000", style_of_cause: null, status: "active" }],
+      proceedings: [
+        { proceeding_id: 1, court: "BCSC", registry: "Vancouver", file_number: "S-000000", style_of_cause: null, status: "active" },
+        { proceeding_id: 2, court: "BCSC", registry: "Vancouver", file_number: "S-000777", style_of_cause: null, status: "active" }
+      ],
       parties: [
         {
           party_id: 1,
@@ -127150,7 +126997,7 @@ var CAST_FIXTURE = {
           contact_info: null,
           service_address_filed_date: "2026-03-01",
           replaced_representative: null,
-          proceedings: [{ proceeding_id: 1, role: "plaintiff" }],
+          proceedings: [{ proceeding_id: 1, role: "plaintiff" }, { proceeding_id: 2, role: "defendant" }],
           counsel_by_proceeding: [{ proceeding_id: 1, lawyer_name: "Pat Counsel", lawyer_firm: "Example Law LLP", lawyer_email: "pat@examplelaw.example", lawyer_phone: "604-555-0100", address: "900-555 Sample St, Vancouver BC", service_address_filed_date: "2026-03-01" }],
           aliases: [{ text: "ParkA", kind: "file_code" }, { text: "Wei Park", kind: "spelling" }],
           counsel_aliases: [{ text: "CounselP", kind: "file_code" }],
@@ -127168,7 +127015,7 @@ var CAST_FIXTURE = {
           contact_info: null,
           service_address_filed_date: null,
           replaced_representative: null,
-          proceedings: [{ proceeding_id: 1, role: "defendant" }],
+          proceedings: [{ proceeding_id: 1, role: "defendant" }, { proceeding_id: 2, role: "plaintiff" }],
           counsel_by_proceeding: [{ proceeding_id: 1, lawyer_name: "Sample Counsel A", lawyer_firm: "Sample LLP", lawyer_email: "counsel.a@example.com", lawyer_phone: "604-555-0171", address: "300-111 Sample St, Vancouver BC", service_address_filed_date: null }],
           aliases: [{ text: "LinB", kind: "file_code" }],
           counsel_aliases: [],

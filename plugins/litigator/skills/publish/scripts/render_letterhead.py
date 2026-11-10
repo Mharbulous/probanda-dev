@@ -14,8 +14,9 @@ Inputs:
                   roster key, required) and `signature` (optional, a scanned PNG's path).
     payload       a JSON object: `signer` (a roster key) and `file_number` are required,
                   plus the letter fields fill_general.build_body reads (`date`, `recipient`
-                  or `recipients`, `salutation`, `re` and `body` required; `attention`,
-                  `delivery`, `recipient_email`, `enclosures` and `cc` optional). Give
+                  or `recipients`, `salutation`, `re` and `body` required; `marker`,
+                  `attention`, `delivery`, `recipient_email`, `enclosures` and `cc`
+                  optional). Give
                   `attention`, `re`, `cc` and `enclosures` without the "Attention:",
                   "Re:", "cc." or "Encl." label: the body builder prints it. `enclosures`
                   and `cc` must be lists, never a bare string.
@@ -288,9 +289,8 @@ def verify(out_path, template_path, signed, values):
             sys.exit("output sectPr differs from the template")
 
 
-def render(payload, profile, out, scan=True):
-    """Write the letter to `out`, or stop naming what is wrong. With scan False the signing
-    space stays blank whoever prepares it: client_letter.py's letter is signed by hand."""
+def render(payload, profile, out):
+    """Write the letter to `out`, or stop naming what is wrong."""
     if os.path.exists(out):
         sys.exit("refusing to overwrite an existing file: " + out)
     check_payload(payload)
@@ -309,7 +309,7 @@ def render(payload, profile, out, scan=True):
     check_template(parts)
 
     image = None
-    if scan and signature and person == payload["signer"]:
+    if signature and person == payload["signer"]:
         blob, image = signature_image(signature)
         add_signature(parts, names, blob)
 

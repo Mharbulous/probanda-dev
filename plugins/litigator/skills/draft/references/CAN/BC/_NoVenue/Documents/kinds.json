@@ -51,6 +51,17 @@
       "recipient": "non-party"
     },
     {
+      "file": "letter-to-client",
+      "name": "Letter to client",
+      "aliases": [
+        { "name": "letter_to_client" },
+        { "name": "client letter" },
+        { "name": "reporting letter" },
+        { "name": "blank letter" }
+      ],
+      "recipient": "client"
+    },
+    {
       "file": "internal-memo",
       "name": "Internal memo",
       "aliases": [

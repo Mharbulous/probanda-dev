@@ -133,8 +133,8 @@ class LetterFileTests(unittest.TestCase):
                 self.assertNotIn("Checklist", path.read_text(encoding="utf-8"))
                 self.assertNotIn("## Before Sending", path.read_text(encoding="utf-8"))
 
-    def test_six_letter_files_keep_their_layout_and_point_to_their_wording(self):
-        self.assertEqual(len(LETTER_FILES), 6)
+    def test_seven_letter_files_keep_their_layout_and_point_to_their_wording(self):
+        self.assertEqual(len(LETTER_FILES), 7)
         for path in LETTER_FILES:
             text = path.read_text(encoding="utf-8")
             recipient = path.stem.removeprefix("letter-to-")

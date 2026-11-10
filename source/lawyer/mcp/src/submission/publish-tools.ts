@@ -54,6 +54,16 @@ function renderRefusal(render: RenderResult): Record<string, unknown> | null {
 
 const json = (value: unknown) => JSON.stringify(value, null, 2);
 
+/**
+ * The letter payload with its `marker` line taken from the stored layout, never from the caller: the
+ * type's declared marker on a letterhead Writing, else no marker. The scrivener's without-prejudice
+ * mode is recorded nowhere this server reads, so it cannot replace the marker here.
+ */
+export function withMarker(letter: Record<string, unknown>, layout: Record<string, unknown> | undefined): Record<string, unknown> {
+  const { marker: _caller, ...rest } = letter;
+  return layout?.letterhead === true && typeof layout.marker === "string" ? { ...rest, marker: layout.marker } : rest;
+}
+
 /** publish-general steps 2-5: the filed render, the format file, the letterhead inputs, then fill_general.py. */
 export function publishGeneral(args: PublishGeneralArgs, env: NodeJS.ProcessEnv = process.env, installRoot?: string): unknown {
   assertSegment(args.output_name, "output_name");
@@ -73,7 +83,7 @@ export function publishGeneral(args: PublishGeneralArgs, env: NodeJS.ProcessEnv 
 
   const write = (name: string, value: unknown) => writeWorkingFile(target, ["publish-general"], name, json(value));
   const argv = ["--filed", write("filed.json", filed), "--format", write("format.json", format), "--out-dir", target.draft, "--out-name", args.output_name];
-  if (args.letter !== undefined) argv.push("--letter", write("letter.json", args.letter));
+  if (args.letter !== undefined) argv.push("--letter", write("letter.json", withMarker(args.letter, layout)));
   if (layout?.letterhead === true) argv.push("--profile", write("profile.json", readFirmProfile(env)));
   if (args.tokens !== undefined) argv.push("--tokens", write("tokens.json", args.tokens));
   return runPublishFill("publish-general", "fill_general.py", [argv], env, installRoot);

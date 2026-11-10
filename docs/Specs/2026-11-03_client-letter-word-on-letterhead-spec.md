@@ -1,6 +1,7 @@
 # Spec: client letter straight to a signable letterhead Word document
 
 Status: proposed, 2026-11-03. Written in a matter session; implementation is handed to Claude Code.
+Superseded for client letters, 2026-11-09: a client letter is a Writing, by `docs/ADRs/0019-a-client-letter-is-a-writing.md`.
 Plugin: `litigator` (installed copy seen at v0.16.1; `/draft`), with `lawyer` (v0.21.7, v0.21.9 by session end) for `shared/email.md`. Paths below are as seen in the installed copy and are **UNVERIFIED** against the repo unless marked otherwise.
 Related specs, same date: `2026-11-03_client-disclosure-standard-paragraph-spec.md`, `2026-11-03_matter-mail-coverage-for-fact-checks-spec.md`, `2026-11-03_helpers-read-matter-folder-spec.md`, `2026-11-03_client-letter-setup-and-board-attach-spec.md`, `2026-11-03_record-client-bill-and-letter-sent-spec.md`, `2026-11-03_firm-invoice-template-and-style-guide-spec.md`.
 

@@ -1,6 +1,7 @@
 # Spec: record a client bill and client letter as sent
 
 Status: proposed, 2026-11-03. Written in a matter session; implementation is handed to Claude Code.
+Superseded for client letters, 2026-11-09: a client letter is a Writing, by `docs/ADRs/0019-a-client-letter-is-a-writing.md`.
 Plugin: `lawyer` and `litigator` (installed copies seen at lawyer v0.21.7 to v0.21.9, litigator v0.16.1). Paths below are as seen in the installed copy and are **UNVERIFIED** against the repo unless marked otherwise.
 Related specs, same date: `2026-11-03_trust-application-instruction-spec.md`; `2026-11-03_retainer-top-up-follow-up-spec.md` (depends on this one); `2026-11-03_defensible-time-entries-spec.md` (K: sent date and sent-copy path).
 
