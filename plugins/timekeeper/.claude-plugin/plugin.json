@@ -1,7 +1,7 @@
 {
   "name": "timekeeper",
   "displayName": "Timekeeper",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Retired. Its skills, agent, hooks and TimeCamp server moved to the billing plugin, which replaces it. It ships nothing. Install billing instead, then remove this plugin.",
   "author": {
     "name": "Probanda Legal",
@@ -13,7 +13,7 @@
     {
       "name": "lawyer",
       "marketplace": "Probanda_Legal_experimental",
-      "version": "^0.27.0"
+      "version": "^0.28.0"
     }
   ]
 }
