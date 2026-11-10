@@ -177,7 +177,7 @@ gate.
 at `0` ships content the local record marks unchecked, and bulk-flipping to `1` to
 clear the gate is exactly the unread confirmation the verification architecture
 exists to prevent. The sanctioned escapes are the real ones — run
-[`verify-law.md`](verify-law.md) for `0` edges, or the lawyer clears `2` edges
+[`verify-edges.md`](verify-edges.md) for `0` edges, or the lawyer clears `2` edges
 through [`review.md`](review.md). A concept with **zero** edges passes the gate
 vacuously — including one that reaches zero edges mid-run via rejection; that is
 existing behavior and is preserved.

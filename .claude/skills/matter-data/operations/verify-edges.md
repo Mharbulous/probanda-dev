@@ -1,4 +1,4 @@
-# Operation: verify-law
+# Operation: verify-edges
 
 Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the live `matter_root` per §2.2 and read `probanda.json` only to confirm initialization; halt on any tool error per §2.3.
 
@@ -10,10 +10,10 @@ The backend-free semantics (session isolation, the unsourced-gloss test, the app
 
 | Operation | Writes | Never writes |
 |---|---|---|
-| **verify-law** (this file) | `concept_authorities.verified`, `concept_authorities.notes` | any text field |
+| **verify-edges** (this file) | `concept_authorities.verified`, `concept_authorities.notes` | any text field |
 | [`amend-law.md`](amend-law.md) | law-side **text** (and `verified` as its consequence) | — |
 
-This does **not** dent `amend-law`'s invariant that it is the *sole* path that changes law-side text: verify-law changes no text. It exists because `amend-law` structurally cannot express what a verifier produces — its input record requires `field`/`current_text`/`new_text`, so it has no shape for a bare confirmation; its `verifier` mode sets `verified = 0`, so an autonomous run can never mark an edge verified; and it refuses an unresolvable source outright, which would leave an unverifiable edge sitting at `0` with nothing recorded.
+This does **not** dent `amend-law`'s invariant that it is the *sole* path that changes law-side text: verify-edges changes no text. It exists because `amend-law` structurally cannot express what a verifier produces — its input record requires `field`/`current_text`/`new_text`, so it has no shape for a bare confirmation; its `verifier` mode sets `verified = 0`, so an autonomous run can never mark an edge verified; and it refuses an unresolvable source outright, which would leave an unverifiable edge sitting at `0` with nothing recorded.
 
 A **correction** is not this operation's to write. Hand it to `amend-law` in `verifier` mode and let it re-run its own anchor check.
 
@@ -22,7 +22,7 @@ A **correction** is not this operation's to write. Hand it to `amend-law` in `ve
 - **Never** writes `proposition`, `finding`, `factual_context`, `obiter`, `order_terms`, `pinpoint`, `excerpt`, `relationship`, `treatment`, or any other text/structure column. Corrections route to `amend-law.md`.
 - **Never** inserts or deletes rows. A wrong edge is rejected (`verified = -1`), never deleted — the audit trail is the point.
 - **Never** writes `cloud_principle_id` / `pushed_at` / `pushed_source_hash` ([`push-state.md`](push-state.md) owns those).
-- **Never** writes the pool or calls any `legal_commons__*` tool. This operation is local-only.
+- **Never** writes the shared pool or calls any of its tools. This operation is local-only.
 - **Never** sets `human_reviewed` — that column is facts/positions only (decision #18) and does not exist law-side.
 - **Never** passes matter context, party names, or the style of cause to the verifier subagent (decision #10).
 

@@ -177,7 +177,7 @@ Two consequences, both deliberate:
   re-read a document, and the whole point of that column is that it attests a
   re-read.
 - **A bridged `0` is held back, and that is the correct outcome.** The remedy is
-  to run [`../operations/verify-law.md`](../operations/verify-law.md) over those
+  to run [`../operations/verify-edges.md`](../operations/verify-edges.md) over those
   edges, never to flip them to clear the push gate. The bridge's own
   `pinpoint`/`excerpt` capture is what makes that verification pass cheap: it
   hands the verifier the pinpoint and the quoted passage the edge was built
@@ -187,7 +187,7 @@ Two consequences, both deliberate:
 writes it at `1` unconditionally. Its whole claim is the practitioner's tie: the
 filing answered this opposing authority on this concept. The practitioner made
 that tie personally, which is what conventions §4's `1` means. No re-read of the authority could check a claim about the filing, so it
-never enters the verify-law backlog, and it never crosses to the pool
+never enters the verify-edges backlog, and it never crosses to the pool
 ([`../operations/push-state.md`](../operations/push-state.md)).
 
 ### Stamping after an edge pass

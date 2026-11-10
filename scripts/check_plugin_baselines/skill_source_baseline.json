@@ -34,7 +34,7 @@
     ".claude/skills/legal-memo-extractor/references/output-contract.md": 1,
     ".claude/skills/legal-memo-extractor/scripts/extract_memo_index.py": 1,
     ".claude/skills/matter-data/operations/initialize.md": 9,
-    ".claude/skills/matter-data/operations/verify-law.md": 1,
+    ".claude/skills/matter-data/operations/verify-edges.md": 1,
     ".claude/skills/matter-data/references/design-decisions.md": 3,
     ".claude/skills/matter-data/references/scripts.md": 1,
     ".claude/skills/matter-data/references/scripts/lint_comparative_gloss.py": 1,

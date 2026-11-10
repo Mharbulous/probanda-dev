@@ -1,6 +1,6 @@
 """resolve_authority_source.py — find a stored authority's own file and give it as a PDF (MODULE + CLI).
 
-Read-only. The executable form of operations/verify-law.md §2's locating rule:
+Read-only. The executable form of operations/verify-edges.md §2's locating rule:
 
   1. Match law.authorities rows to the caller's citation: equal after collapsing whitespace and
      case; failing that, rows whose citation contains the neutral citation (e.g. "2026 BCCA 74")

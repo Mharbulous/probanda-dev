@@ -247,7 +247,7 @@ class MappingTests(unittest.TestCase):
         held = {h["key"] for h in summary["held_back"]}
         self.assertEqual(held, {"sol#89"})  # an answered edge is never held back
         for entry in summary["held_back"]:
-            self.assertIn("/verify-law", entry["reason"])
+            self.assertIn("/matter-data verify-edges", entry["reason"])
         self.assertEqual([d["key"] for d in summary["doubt"]], ["sol#90"])
 
     def test_a_dropped_row_is_skipped_and_reported_never_written(self):

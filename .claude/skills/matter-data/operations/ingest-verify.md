@@ -129,7 +129,7 @@ same-context verification is not verification
   `VERIFICATION_MODE = targeted_reverification` plus the exact pending target ids
   for a backlog/second pass.
 
-**Dispatch a path the verifier can open.** Its only tool reads its own session filesystem — it cannot list a directory, and in a bridged session it cannot see host files at all. Supply the explicit path of every file it must read, and for a PDF its page manifest by [`ingest-extract.md`](ingest-extract.md)'s Universal rules (design decision #71), each PNG named individually rather than the render directory. In a bridged session, stage it first by [`verify-law.md`](verify-law.md) §2.
+**Dispatch a path the verifier can open.** Its only tool reads its own session filesystem — it cannot list a directory, and in a bridged session it cannot see host files at all. Supply the explicit path of every file it must read, and for a PDF its page manifest by [`ingest-extract.md`](ingest-extract.md)'s Universal rules (design decision #71), each PNG named individually rather than the render directory. In a bridged session, stage it first by [`verify-edges.md`](verify-edges.md) §2.
 
 **A verifier that is unavailable — never substitute another agent — that fails, or that returns malformed JSON leaves this source's rows, stamp and marker untouched** and does not halt the run: continue to the next source and report the failure. A failed pass is never recorded as a verification.
 
@@ -246,7 +246,7 @@ sweep unit. Process one authority at a time.
 
 ### D1 — Resolve the authority document
 
-Resolve the document exactly per [`operations/verify-law.md` §2](verify-law.md):
+Resolve the document exactly per [`operations/verify-edges.md` §2](verify-edges.md):
 accept the recorded path only on a sha256 match, fall back to a matter-tree hash
 search when the path is stale, and report/escalate `source_unresolvable` when
 neither arm succeeds. Apply that section's RTF-conversion rule by reference; do not

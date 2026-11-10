@@ -1,5 +1,5 @@
 """Tests for resolve_authority_source.py, the read-only authority-file resolver the drafting
-runtime spawns for a scrutiny review (operations/verify-law.md §2, design-decisions.md #61).
+runtime spawns for a scrutiny review (operations/verify-edges.md §2, design-decisions.md #61).
 
 Each fixture is a temp matter tree with a `6. LAW` folder and a matter-data folder holding a
 law.sqlite built from the canonical schema.sql. The Word conversion test calls Microsoft Word and
