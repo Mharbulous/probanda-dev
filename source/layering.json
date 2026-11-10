@@ -55,7 +55,6 @@
     {"file": ".claude/skills/matter-data/references/scripts/submission_law_bridge.py", "target": "legal-research", "why": "mention", "note": "A code comment."},
     {"file": ".claude/skills/matter-data/shared/verification-protocol.md", "target": "legal-research", "why": "mention", "note": "Says who may have verified a document before."},
     {"file": ".claude/skills/ingest/SKILL.md", "target": "legal-research", "why": "caller"},
-    {"file": ".claude/skills/ingest/SKILL.md", "target": "litigation-fact-extractor", "why": "signpost"},
     {"file": ".claude/skills/ingest/SKILL.md", "target": "draft", "why": "conditional", "note": "Step 7 hands a letter the firm sent to /draft's delivery check only when litigator is installed. Without it, matter-data checks the letter itself."},
     {"file": "source/lawyer/agents/delivery-checker.md", "target": "draft", "why": "caller", "note": "Dispatched by /draft, and `draft` is also a field of its input."},
     {"file": ".claude/skills/housekeeping/references/compose-and-rows.md", "target": "draft", "why": "mention", "note": "`draft` here is a row outcome (move to 0. DRAFT), not the skill."},

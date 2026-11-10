@@ -31,7 +31,8 @@
         "suggestion",
         "task-prioritization",
         "TLDR",
-        "verify-bc-lawyer"
+        "verify-bc-lawyer",
+        "litigation-fact-extractor"
       ],
       "agents": [
         "compare-pages",
@@ -126,7 +127,6 @@
         "drafting-data",
         "e-file",
         "job-planning",
-        "litigation-fact-extractor",
         "narrator",
         "polish-substance",
         "prepare",

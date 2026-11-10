@@ -6,9 +6,9 @@ Probanda is a set of Claude Cowork plugins for lawyers in any jurisdiction.
 
 | Plugin | Purpose | Skills |
 |---|---|---|
-| `lawyer` | The core plugin, with skills for any lawyer. Every other plugin requires it. | `proof-read` checks legal writing for spelling, grammar and tone. `TLDR` summarizes the session for someone who has read none of it. `dyu` restates your request and waits for you to confirm it before acting. |
+| `lawyer` | The core plugin, with skills for any lawyer. Every other plugin requires it. | `proof-read` checks legal writing for spelling, grammar and tone. `TLDR` summarizes the session for someone who has read none of it. `dyu` restates your request and waits for you to confirm it before acting. `litigation-fact-extractor` presents the facts in litigation documents for review, citing the source of each. |
 | `researcher` | What the law is. | `legal-citation` sets out a case or statute citation, with its pinpoint, as an italicized block quote. |
-| `litigator` | Court work on a matter. | `litigation-fact-extractor` presents the facts in litigation documents for review, citing the source of each. |
+| `litigator` | Court work on a matter. | None yet. |
 | `solicitor` | Reserved for solicitor's work. | None yet. |
 
 ## Install
