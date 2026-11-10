@@ -3,7 +3,8 @@
   This diagram's tag gives the commit it was checked against and when it was last updated.
   To update it: re-read the sources at the new commit, correct the chart if needed,
   then change both data- attributes and the visible stamp.
-  PLANNED: this shows the plugin layout after the billing plugin is added. The current
+  PLANNED: this shows the plugin layout after the billing plugin is added, with each plugin's
+  entry skills boxed by data pool (the placement in Planned/Data-Pool-Map.html). The current
   layout is docs/diagrams/Built/Progressive-Context-Tree.html.
 -->
 <html lang="en">
@@ -44,11 +45,11 @@ pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap 
 <body>
 <main>
   <figure class="diagram" id="planned-progressive-context-tree"
-          data-based-on-commit="7f30d975a21646a1595a31ed56661bbbc2d9af2a"
-          data-updated="2026-11-10T00:33:00-07:00">
+          data-based-on-commit="72046f1df2d3a5a962dd9eb596834e262d0e0c5f"
+          data-updated="2026-11-10T00:44:00-07:00">
     <figcaption>
-      <h1>Planned: Probanda's main entry points, by plugin, after the billing plugin is added</h1>
-      <p class="stamp">Planned, not built · Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/7f30d975a21646a1595a31ed56661bbbc2d9af2a"><code>7f30d975</code></a> on main · Last updated 2026-11-10 00:33 -07:00 · Current layout: <a href="../Built/Progressive-Context-Tree.html">Built/Progressive-Context-Tree.html</a></p>
+      <h1>Planned: Probanda's main entry points, by plugin and data pool, after the billing plugin is added</h1>
+      <p class="stamp">Planned, not built · Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/72046f1df2d3a5a962dd9eb596834e262d0e0c5f"><code>72046f1d</code></a> on main · Last updated 2026-11-10 00:44 -07:00 · Current layout: <a href="../Built/Progressive-Context-Tree.html">Built/Progressive-Context-Tree.html</a></p>
     </figcaption>
     <div class="legend" aria-label="Colour key">
       <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer plugin skill</span>
@@ -57,6 +58,7 @@ pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap 
       <span><i style="background:#e3eefb;border-color:#2563a8"></i>billing plugin skill</span>
       <span><i style="background:#efe8fb;border-color:#6b46b0"></i>file-manager plugin skill</span>
       <span><i style="background:#e3eefb;border-color:#2563a8;border-style:dashed;border-width:3px"></i>skill this plan moves</span>
+      <span><i style="background:#f8f9fb;border-color:#8a94a0;border-style:dashed"></i>data pool: the skills inside write it, or mainly read it</span>
       <span><i style="background:#ffffff;border-color:#8a94a0"></i>plugin with no lawyer entry skills</span>
       <span><i style="background:#f1f2f4;border-color:#8a94a0;border-style:dashed"></i>plugin this plan retires</span>
     </div>
@@ -79,59 +81,99 @@ flowchart LR
     P_DEV["developer plugin<br/>maintainer-only"]
     P_TE["tokeneconomizer plugin<br/>no skills"]
 
-    EA["/executive-assistant<br/>the morning briefing"]
-    TP["/task-prioritization<br/>the ranked to-do list"]
-    CR["/calendar-reminders<br/>what the calendar says is unfinished"]
-    FRP["/file-review-prep<br/>brief me on a matter"]
-    FD["/find-document<br/>show me a document or email"]
-    ING["/ingest<br/>add a document to the case data"]
-    MST["/matter-status-tracking<br/>where each file stands"]
-    PRF["/proof-read<br/>improve a piece of legal writing"]
-    CD["/compare-documents<br/>what changed between two PDFs"]
-    PRC["/precedents<br/>make or find a standard form"]
-    RT["/retainer-tracking<br/>trust and retainer balances"]
-    DE["/deduping-email<br/>remove duplicate emails"]
-    CC["/call-contact<br/>call someone in your contacts"]
-    VBL["/verify-bc-lawyer<br/>is this person a BC lawyer?"]
-    PS["/probanda-setup<br/>set Probanda up on this device"]
-    SG["/suggestion<br/>send an idea or complaint"]
-    RU["/rule-update<br/>a court rule has changed"]
+    subgraph LAW_PRACT["Practice records"]
+        EA["/executive-assistant<br/>the morning briefing"]
+        TP["/task-prioritization<br/>the ranked to-do list"]
+        MST["/matter-status-tracking<br/>where each file stands"]
+        CC["/call-contact<br/>call someone in your contacts"]
+        VBL["/verify-bc-lawyer<br/>is this person a BC lawyer?"]
+        PS["/probanda-setup<br/>set Probanda up on this device"]
+    end
+    subgraph LAW_TRUST["Trust accounting"]
+        RT["/retainer-tracking<br/>trust and retainer balances"]
+    end
+    subgraph LAW_EVENTS["Events"]
+        CR["/calendar-reminders<br/>what the calendar says is unfinished"]
+    end
+    subgraph LAW_EVID["Evidence"]
+        ING["/ingest<br/>add a document to the case data"]
+    end
+    subgraph LAW_COURT["Court record"]
+        CD["/compare-documents<br/>what changed between two PDFs"]
+    end
+    subgraph LAW_WPROD["Work product"]
+        FRP["/file-review-prep<br/>brief me on a matter"]
+    end
+    subgraph LAW_DRAFTS["Drafts"]
+        PRF["/proof-read<br/>improve a piece of legal writing"]
+    end
+    subgraph LAW_KNOW["Know-how"]
+        PRC["/precedents<br/>make or find a standard form"]
+        RU["/rule-update<br/>a court rule has changed"]
+    end
+    subgraph LAW_FILES["Every pool's folders"]
+        FD["/find-document<br/>show me a document or email"]
+    end
+    subgraph LAW_PROB["Probanda's own records"]
+        SG["/suggestion<br/>send an idea or complaint"]
+    end
+    subgraph LAW_NONE["No data pool"]
+        DE["/deduping-email<br/>remove duplicate emails"]
+    end
 
-    LR["/legal-research<br/>what the law is"]
-    CB["/case-brief<br/>summarize one decision"]
-    VL["/verify-law<br/>check a quote, pinpoint or citation"]
-    PT["/probanda-troubleshooting<br/>a tool fails or misbehaves"]
-    LME["/legal-memo-extractor<br/>index the questions in AI research memos"]
+    subgraph RES_LAW["The law"]
+        LR["/legal-research<br/>what the law is"]
+        CB["/case-brief<br/>summarize one decision"]
+        VL["/verify-law<br/>check a quote, pinpoint or citation"]
+        LME["/legal-memo-extractor<br/>index the questions in AI research memos"]
+    end
+    subgraph RES_PROB["Probanda's own records"]
+        PT["/probanda-troubleshooting<br/>a tool fails or misbehaves"]
+    end
 
-    WK["/work<br/>a matter's Work Board and its jobs"]
-    DR["/draft<br/>draft or revise a letter, memo or filing"]
-    PR["/prepare<br/>open a BCSC application and its jobs"]
-    PB["/publish<br/>turn a draft into a court form"]
-    AS["/assemble<br/>bind documents into one PDF"]
-    EF["/e-file<br/>file through the court portal"]
-    ATF["/apply-to-facts<br/>what the law means for this matter"]
-    CAL["/calculate<br/>interest and bill-of-costs figures"]
-    LFE["/litigation-fact-extractor<br/>review facts extracted from case documents"]
+    subgraph LIT_DRAFTS["Drafts"]
+        WK["/work<br/>a matter's Work Board and its jobs"]
+        DR["/draft<br/>draft or revise a letter, memo or filing"]
+        PR["/prepare<br/>open a BCSC application and its jobs"]
+        PB["/publish<br/>turn a draft into a court form"]
+        AS["/assemble<br/>bind documents into one PDF"]
+    end
+    subgraph LIT_COURT["Court record"]
+        EF["/e-file<br/>file through the court portal"]
+    end
+    subgraph LIT_WPROD["Work product"]
+        ATF["/apply-to-facts<br/>what the law means for this matter"]
+        CAL["/calculate<br/>interest and bill-of-costs figures"]
+    end
+    subgraph LIT_EVID["Evidence"]
+        LFE["/litigation-fact-extractor<br/>review facts extracted from case documents"]
+    end
 
-    HK["/housekeeping<br/>name and file a matter's loose files"]
-    RA["/route-accounting<br/>file loose bookkeeping files"]
+    subgraph FM_FILES["Every pool's folders"]
+        HK["/housekeeping<br/>name and file a matter's loose files"]
+        RA["/route-accounting<br/>file loose bookkeeping files"]
+    end
 
-    TC["/timecamping<br/>correct a day's TimeCamp entries<br/>moved from timekeeper"]
-    TBD["/triage-billing-dates<br/>which days to look at before billing<br/>moved from timekeeper"]
-    TED["/time-entry-drafting<br/>draft the day's time entries<br/>moved from timekeeper"]
-    BC["/bill-client<br/>bill a matter from the last invoice<br/>moved from lawyer"]
-    II["/issue-invoice<br/>record a signed invoice<br/>moved from lawyer"]
-    IR["/invoice-reviewing<br/>check a draft invoice<br/>moved from lawyer"]
-    WIP["/wip-tracker<br/>unbilled work in progress<br/>moved from lawyer"]
-    AR["/ar-follow-up<br/>chase what clients owe<br/>moved from lawyer"]
-    IT["/invoice-tracking<br/>import past invoices<br/>moved from lawyer"]
+    subgraph TB_BILL["Billing"]
+        BC["/bill-client<br/>bill a matter from the last invoice<br/>moved from lawyer"]
+        II["/issue-invoice<br/>record a signed invoice<br/>moved from lawyer"]
+        IR["/invoice-reviewing<br/>check a draft invoice<br/>moved from lawyer"]
+        WIP["/wip-tracker<br/>unbilled work in progress<br/>moved from lawyer"]
+        AR["/ar-follow-up<br/>chase what clients owe<br/>moved from lawyer"]
+        IT["/invoice-tracking<br/>import past invoices<br/>moved from lawyer"]
+        TED["/time-entry-drafting<br/>draft the day's time entries<br/>moved from timekeeper"]
+    end
+    subgraph TB_TIME["Timekeeping records"]
+        TC["/timecamping<br/>correct a day's TimeCamp entries<br/>moved from timekeeper"]
+        TBD["/triage-billing-dates<br/>which days to look at before billing<br/>moved from timekeeper"]
+    end
 
     MKT --> P_LAW & P_RES & P_LIT & P_SOL & P_FM & P_TB & P_TK & P_DEV & P_TE
-    P_LAW --> EA & TP & CR & FRP & FD & ING & MST & PRF & CD & PRC & RT & DE & CC & VBL & PS & SG & RU
-    P_RES --> LR & CB & VL & PT & LME
+    P_LAW --> EA & TP & MST & CC & VBL & PS & RT & CR & ING & CD & FRP & PRF & PRC & RU & FD & SG & DE
+    P_RES --> LR & CB & VL & LME & PT
     P_LIT --> WK & DR & PR & PB & AS & EF & ATF & CAL & LFE
     P_FM --> HK & RA
-    P_TB --> TC & TBD & TED & BC & II & IR & WIP & AR & IT
+    P_TB --> BC & II & IR & WIP & AR & IT & TED & TC & TBD
 
     %% Layout spacers: invisible, so a plugin with no skills gets its own row and no line crosses it.
     S_SOL[" "]
@@ -160,6 +202,8 @@ flowchart LR
     class P_TB tb
     class TC,TBD,TED,BC,II,IR,WIP,AR,IT moved
     class P_FM,HK,RA fm
+    classDef pool fill:#f8f9fb,stroke:#8a94a0,stroke-dasharray:3 3,color:#55616f
+    class LAW_PRACT,LAW_TRUST,LAW_EVENTS,LAW_EVID,LAW_COURT,LAW_WPROD,LAW_DRAFTS,LAW_KNOW,LAW_FILES,LAW_PROB,LAW_NONE,RES_LAW,RES_PROB,LIT_DRAFTS,LIT_COURT,LIT_WPROD,LIT_EVID,FM_FILES,TB_BILL,TB_TIME pool
     class MKT root
     class P_SOL,P_DEV,P_TE empty
     class P_TK retired
@@ -171,13 +215,13 @@ flowchart LR
 </pre>
     </div>
 
-    <p class="sources">The new plugin's name is <code>billing</code>, displayed as "Billing". timekeeper is retired: it ships no skills once everything has moved to billing, and is later removed from the marketplace. developer is maintainer-only and has no lawyer entry skills. What moves to billing: every skill timekeeper ships today, its TimeCamp server (key <code>timecamp</code>) and its hooks; <code>bill-client</code>, <code>issue-invoice</code>, <code>invoice-reviewing</code> and <code>wip-tracker</code> from lawyer, which today reach into timekeeper through written exceptions in <code>source/layering.json</code>; and <code>ar-follow-up</code> and <code>invoice-tracking</code> from lawyer, which nothing in lawyer needs in order to run. Timekeeper's skills that only other skills run (<code>build-timeline</code>, <code>time-sorting</code>, <code>vet-billable-time</code>, <code>timecamping-data</code>, <code>time-pipeline-data</code>) move too but are not entry points, so they are not drawn. What the move costs, counted per file as <code>check_layering.py</code> counts: it clears 7 of the 9 rulings the four lawyer billing skills hold today (<code>bill-client</code> to <code>housekeeping</code> and <code>issue-invoice</code> to <code>legal-research</code> stay), and lawyer files that still name a moved skill need new mention rulings, about 13 in all: 5 for <code>invoice-tracking</code> (three practice-data files, probanda-setup, retainer-tracking's vision), 3 for <code>ar-follow-up</code> (three vision files), 4 for <code>issue-invoice</code> (draft's <code>letters.md</code> in litigator, practice-data, the delivery-checker agent, and <code>shared/procedural-history.md</code>, which the check does not scan) and 1 for <code>wip-tracker</code>. The move also renames the TimeCamp tools from <code>mcp__plugin_timekeeper_timecamp__*</code> to <code>mcp__plugin_billing_timecamp__*</code>: the skills and tests that name them, and the two hooks that hard-code the <code>timekeeper:</code> prefix (<code>ceremony-gate.py</code>, <code>screenshot-reader-gate.py</code>), change in the same commit. The saved TimeCamp login is kept outside the plugin's data folder, so it survives. Retiring timekeeper is a one-way door; the reversible alternative, a <code>billing</code> plugin that requires timekeeper, was weighed and not chosen, because there are no users yet and <code>bill-client</code> already cannot run without timekeeper. What stays: <code>retainer-tracking</code> stays in lawyer, because <code>executive-assistant</code> and <code>task-prioritization</code> rank every to-do by its trust balances. litigator's <code>calculate</code> stays: its bill of costs is a court costs claim, not the firm's billing. The survey found no other billing skill in researcher, litigator or file-manager. Left out of every plugin as before: skills only other skills call, add-ons typed inside a session, and every <code>developer</code> skill. Sources: <code>source/assignment.json</code>, <code>.claude-plugin/marketplace.json</code>, <code>source/layering.json</code> and each skill's <code>SKILL.md</code>.</p>
+    <p class="sources">Each dashed box is a data pool: a database, folders of files, or both. A skill sits in the pool it writes, or, if it writes nothing, the pool it mainly reads. This is a target layout, not today's. So far the plan settles only billing: billing and timekeeping records each sit whole under the billing plugin. Six pools are still boxed under two plugins, because no move has been decided for them: evidence, the court record, work product and drafts (lawyer and litigator), every pool's folders (lawyer and file-manager) and Probanda's own records (lawyer and researcher). The placement of every skill, including those not drawn here, and the scope each pool belongs to are in <a href="Data-Pool-Map.html">Data-Pool-Map.html</a>. The new plugin's name is <code>billing</code>, displayed as "Billing". timekeeper is retired: it ships no skills once everything has moved to billing, and is later removed from the marketplace. developer is maintainer-only and has no lawyer entry skills. What moves to billing: every skill timekeeper ships today, its TimeCamp server (key <code>timecamp</code>) and its hooks; <code>bill-client</code>, <code>issue-invoice</code>, <code>invoice-reviewing</code> and <code>wip-tracker</code> from lawyer, which today reach into timekeeper through written exceptions in <code>source/layering.json</code>; and <code>ar-follow-up</code> and <code>invoice-tracking</code> from lawyer, which nothing in lawyer needs in order to run. Timekeeper's skills that only other skills run (<code>build-timeline</code>, <code>time-sorting</code>, <code>vet-billable-time</code>, <code>timecamping-data</code>, <code>time-pipeline-data</code>) move too but are not entry points, so they are not drawn. What the move costs, counted per file as <code>check_layering.py</code> counts: it clears 7 of the 9 rulings the four lawyer billing skills hold today (<code>bill-client</code> to <code>housekeeping</code> and <code>issue-invoice</code> to <code>legal-research</code> stay), and lawyer files that still name a moved skill need new mention rulings, about 13 in all: 5 for <code>invoice-tracking</code> (three practice-data files, probanda-setup, retainer-tracking's vision), 3 for <code>ar-follow-up</code> (three vision files), 4 for <code>issue-invoice</code> (draft's <code>letters.md</code> in litigator, practice-data, the delivery-checker agent, and <code>shared/procedural-history.md</code>, which the check does not scan) and 1 for <code>wip-tracker</code>. The move also renames the TimeCamp tools from <code>mcp__plugin_timekeeper_timecamp__*</code> to <code>mcp__plugin_billing_timecamp__*</code>: the skills and tests that name them, and the two hooks that hard-code the <code>timekeeper:</code> prefix (<code>ceremony-gate.py</code>, <code>screenshot-reader-gate.py</code>), change in the same commit. The saved TimeCamp login is kept outside the plugin's data folder, so it survives. Retiring timekeeper is a one-way door; the reversible alternative, a <code>billing</code> plugin that requires timekeeper, was weighed and not chosen, because there are no users yet and <code>bill-client</code> already cannot run without timekeeper. What stays: <code>retainer-tracking</code> stays in lawyer, because <code>executive-assistant</code> and <code>task-prioritization</code> rank every to-do by its trust balances. litigator's <code>calculate</code> stays: its bill of costs is a court costs claim, not the firm's billing. The survey found no other billing skill in researcher, litigator or file-manager. Left out of every plugin as before: skills only other skills call, add-ons typed inside a session, and every <code>developer</code> skill. Sources: <code>source/assignment.json</code>, <code>.claude-plugin/marketplace.json</code>, <code>source/layering.json</code> and each skill's <code>SKILL.md</code>.</p>
   </figure>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
 <script>
   mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: "neutral",
-    flowchart: { nodeSpacing: 18, rankSpacing: 90, curve: "linear", useMaxWidth: false, htmlLabels: true }, themeVariables: { fontFamily: "Segoe UI, system-ui, sans-serif", fontSize: "16px" } });
+    flowchart: { nodeSpacing: 18, rankSpacing: 90, curve: "linear", subGraphTitleMargin: { top: 4, bottom: 10 }, useMaxWidth: false, htmlLabels: true }, themeVariables: { fontFamily: "Segoe UI, system-ui, sans-serif", fontSize: "16px" } });
   mermaid.run({ querySelector: "pre.mermaid" });
 </script>
 </body>
