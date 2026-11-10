@@ -1,4 +1,4 @@
-# Time review page and growing candidate list
+# Time review page, growing candidate list and parallel day review
 
 Decided by the practitioner on 2026-11-10, in an interview about improving `/bill-client`. This is a spec, not a plan: it states what to build and the decisions behind it, and leaves the build order to the plan. The current process is drawn in `docs/diagrams/Built/Client billing.html` (checked against `72c1eb07`).
 
@@ -82,10 +82,34 @@ Only flagged blocks need the practitioner's action before the bill is made. Unfl
 - **Lost saves.** On resume, check each listed date against its evidence rows. A date missing rows is searched again for that date alone, and the practitioner is told. Separately, find and fix the cause of the evidence save lost on 2026-11-04 (rerun audit).
 - **The status wording stays.** A resume says the list was extended and what was added. It never calls Step 6 done, kept or saved (`/bill-client` "The status").
 
+## Part 3: days reviewed in parallel by a day-reviewer agent
+
+### Why
+
+The day review runs in the main session, one date after another, and stops each day to ask the practitioner about unclear blocks, so a bill with many candidate dates is slow. Under Part 1 those questions become flags, so nothing needs the practitioner mid-review. The review stays whole-day (`/timecamping` VISION.md, "Why the unit of review is a whole day, never a matter").
+
+### The pipeline
+
+1. **Gather, in one place.** One step fetches every candidate date's evidence in turn, driven by a script wherever the order is fixed, and each day passes the seven-source gate (`/timecamping` Step 3). Writes to the time-review store and calls to TimeCamp stay here, never in parallel, to avoid lock and rate-limit failures.
+2. **Pick the screenshots, by script.** For each stretch: the first, a middle and the last capture, and each capture where the window title changes. This is interim. The choice belongs in the SyncoPaid app at capture time, which knows how long a window was open, which files were recently active, and which captures are plainly personal or empty. That is work in the SyncoPaid repo.
+3. **Read the screenshots, with Haiku 5.5 only.** `billing:screenshot-reader` instances in parallel. Each capture's description is saved with its capture id (Part 1, "save the screenshot readings").
+4. **Summarize the other raw evidence with code or cheaper models.** File metadata, mail, window activity and other raw items are reduced to rows by a script where possible, else by Sonnet or Haiku. The day reviewer never reads documents or file metadata itself.
+5. **Judge each day, in parallel.** One day-reviewer agent per date, up to the session's concurrent-subagent limit (20 by default), works from that day's assembled table: blocks, evidence rows and screenshot descriptions.
+
+### The day-reviewer agent
+
+- A custom agent in the billing plugin, on Opus 5.5 at high effort. Its job is the judgment: each block's matter, and its description in standard firm billing style ("Draft…; consider…; correspondence with…").
+- It preloads `/timecamping`'s know-how (the inference reference and presumptions), so the agent and the human-in-the-loop review read one source (CLAUDE.md, "Skills and agents").
+- It holds no TimeCamp write tool. It writes the day's blocks, flags and evidence links to a holding area through a tool, as the ingest extractors stage their results, and returns only a status line, for example `2026-10-02: 14 blocks, 3 flagged, 1 source missing`, with an `end:` line. The page reads the rows from the store; the timesheet never passes through the main session.
+- Evidence is stored as rows linked to a block, each labelled with its source, never one column per source, so a new source needs no schema change.
+- **Doubt.** When a block is unclear, it first asks the screenshot reader specific questions about named captures ("What name appears in the document's heading?"), and each answer is saved with its capture. Only when those answers seem doubtful or unreliable does it open a capture itself, sparingly. A block still unclear after that is flagged for the practitioner.
+- Opening a capture itself requires loosening `source/billing/hooks/screenshot-reader-gate.py` for this agent alone. That hook enforces the rule that only the reader views screenshots (commit `99659a15`), so the builder states what will no longer be enforced and gets the practitioner's instruction for the change.
+
 ## Open points
 
 - What the page does in Cowork, where screenshots can be read only on the PC.
 - How the page gets the screenshot images: decrypted PNGs kept for the page, or decrypted when shown. Decrypted copies of screen captures are Client Information and stay on the PC.
 - The table changes in the time-review store (a "merged into" or "split from" link, readings, fingerprints, candidate-date rows) must be checked against Commandment 5: no table, column or file per tag type or link role.
 - How the page's records reach `/vet-billable-time`'s tie-out and `invoice_lines.json`, which today come from `vetted.json`.
+- Presumptions count confirmations across days ("third occurrence", `/timecamping` Step 6). Days judged in parallel cannot see each other's confirmations, so when presumption offers are computed needs deciding.
 - Not yet discussed: the practitioner's other aims, more automated descriptions and transparency beyond the page.
