@@ -1,17 +1,19 @@
-// The Cast of Characters board's model (Cast of Characters spec 4.2 to 4.6): one pure join of a
-// matter's case data (case/cast-of-characters.ts) and its practice-data matter roles, with their
-// contacts and affiliations, into four tabs of sections of cards. Side is derived, never stored.
-// Nothing here reads a store or writes anything; cast-page.ts renders the model.
+// The Characters board's model (Cast of Characters spec 4.2 to 4.6): one pure join of a matter's
+// case data (case/cast-of-characters.ts) and its practice-data matter roles, with their contacts
+// and affiliations, into flat tabs of cards and one block per proceeding. Each proceeding has one
+// badge colour. Nothing here reads a store or writes anything; cast-page.ts renders the model.
 
 import type { CastAlias, CastCaseData, CastCounts, CastParty, CastSource } from "../case/cast-of-characters.js";
 import type { Row } from "../practice/items.js";
 
-export type Side = "P" | "D" | "N";
 export type Flag = "unc" | "gap" | "conflict" | "priv";
 
 export const FLAG_LABELS: Record<Flag, string> = {
   unc: "Unconfirmed", gap: "Missing details", conflict: "Conflicting details", priv: "Privileged source",
 };
+
+/** How many badge colours the page has; proceedings past that reuse them in turn. */
+export const PROCEEDING_COLOURS = 6;
 
 export interface Detail {
   label: string;
@@ -24,15 +26,16 @@ export interface Detail {
 }
 
 export interface Pill { text: string; kind?: "warn" | "priv" }
+/** A proceeding badge, a role in it, or whose witness: drawn in that proceeding's colour. */
+export interface Badge { text: string; colour: number }
 
 export interface Entry {
   key: string;
   code: string | null;
   name: string;
-  side: Side;
+  badges: Badge[];
   pills: Pill[];
   flags: Flag[];
-  former: boolean;
   proposed: boolean;
   email: string | null;
   phone: string | null;
@@ -46,18 +49,19 @@ export interface Entry {
   counts: CastCounts | null;
   notes: string[];
   actions: { label: string; instruction: string }[];
-  search: string;
   /** Which missing contact details flag the entry: either one (a witness, reached directly), both, or none (reached through counsel or the registry). */
   reach: "either" | "both" | "none";
 }
 
-export interface Section { title: string; entries: Entry[] }
-export interface Tab { id: "svc" | "lit" | "wit" | "dec"; label: string; sections: Section[] }
+/** The page's tabs in order; Proceedings draws `CastModel.proceedings`, the others their entries. */
+export interface Tab { id: "cli" | "svc" | "wit" | "pro" | "pub"; label: string; entries: Entry[] }
+
+/** One proceeding on the Proceedings tab: its style and the parties' names by role, nothing else. */
+export interface ProceedingBlock { badge: Badge; style: string; sides: { label: string; names: string[] }[] }
 
 export interface CastModel {
   tabs: Tab[];
-  /** The matter's own labels for the two sides, such as Plaintiffs or Petitioners. */
-  sideLabels: { P: string; D: string };
+  proceedings: ProceedingBlock[];
   serviceEmails: string;
   serviceTable: string;
   notes: string[];
@@ -70,8 +74,6 @@ export interface CastInput {
   contacts: Row[];
   /** Every contact's name by id, to name an affiliation's other side. */
   contactNames: Map<string, string>;
-  /** contact_checks' parties_without_role for this matter: the party ids. */
-  partiesWithoutRole: number[];
   today: string;
 }
 
@@ -89,7 +91,7 @@ const str = (value: unknown): string | null => (typeof value === "string" && val
 const list = (value: unknown): string[] => (Array.isArray(value) ? value.filter((v): v is string => typeof v === "string" && v.trim() !== "") : []);
 const num = (value: unknown): number | null => (typeof value === "number" ? value : null);
 
-/** Case-, accent- and punctuation-insensitive, as search and resolve_participant fold. */
+/** Case-, accent- and punctuation-insensitive, as resolve_participant folds. */
 export function fold(text: string): string {
   return text.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/['’-]/g, "").replace(/[^\p{L}\p{N}@.]+/gu, " ").trim();
 }
@@ -100,7 +102,7 @@ function title(role: string): string {
 }
 
 function plural(label: string): string {
-  return label.endsWith("s") ? label : `${label}s`;
+  return label.endsWith("s") ? label : label.endsWith("y") ? `${label.slice(0, -1)}ies` : `${label}s`;
 }
 
 function addressText(value: unknown): string | null {
@@ -135,6 +137,23 @@ export function buildCastModel(input: CastInput): CastModel {
   const sources = new Map<number, CastSource>((caseData?.sources ?? []).map((s) => [s.source_id, s]));
   const partyById = new Map(parties.map((p) => [p.party_id, p]));
 
+  // ---- Proceedings: one colour each, in case-data order ----
+  const procIds = [...new Set([...(caseData?.proceedings ?? []).map((p) => p.proceeding_id), ...parties.flatMap((p) => p.proceedings.map((x) => x.proceeding_id))])];
+  const procById = new Map((caseData?.proceedings ?? []).map((p) => [p.proceeding_id, p]));
+  const colourOf = (id: number) => Math.max(0, procIds.indexOf(id)) % PROCEEDING_COLOURS;
+  const procBadge = (id: number): Badge => ({ text: str(procById.get(id)?.file_number) ?? `Proceeding ${procIds.indexOf(id) + 1}`, colour: colourOf(id) });
+  const dedupe = (badges: Badge[]) => badges.filter((b, i) => badges.findIndex((x) => x.text === b.text && x.colour === b.colour) === i);
+  /** A proceeding badge and a role badge for each proceeding the party is in, or only those `only` names. */
+  const partyBadges = (party: CastParty, only?: number[]): Badge[] =>
+    party.proceedings.filter((pr) => !only?.length || only.includes(pr.proceeding_id))
+      .flatMap((pr) => [procBadge(pr.proceeding_id), { text: title(pr.role), colour: colourOf(pr.proceeding_id) }]);
+  /** Whose person this is: the party's name in the colour of `proceedingId`, else the party's first proceeding. */
+  const whoseBadge = (prefix: string, partyId: number | null, proceedingId?: number): Badge[] => {
+    const party = partyId === null ? undefined : partyById.get(partyId);
+    if (!party) return [];
+    return [{ text: `${prefix} ${party.name}`, colour: colourOf(proceedingId ?? party.proceedings[0]?.proceeding_id ?? -1) }];
+  };
+
   const ties: Tie[] = input.contacts.flatMap((row) => {
     const contact = contactOf(row);
     return contact.roles.map((role) => ({ contact, role }));
@@ -143,24 +162,8 @@ export function buildCastModel(input: CastInput): CastModel {
   const proposed = (role: Row) => role.status === "proposed";
   const used = new Set<Tie>();
   const tiesFor = (pred: (tie: Tie) => boolean) => ties.filter(pred);
-
-  // The matter's own labels for the two sides, from the proceeding roles in use.
-  const labelFor = (side: "P" | "D") => {
-    const pool = side === "P" ? P_ROLES : D_ROLES;
-    const counts = new Map<string, number>();
-    for (const p of parties) for (const pr of p.proceedings) if (pool.includes(pr.role)) counts.set(pr.role, (counts.get(pr.role) ?? 0) + 1);
-    const best = [...counts].sort((a, b) => b[1] - a[1] || pool.indexOf(a[0]) - pool.indexOf(b[0]))[0]?.[0];
-    return plural(title(best ?? (side === "P" ? "plaintiff" : "defendant")));
-  };
-  const sideLabel = { P: labelFor("P"), D: labelFor("D") };
-  const partySide = (party: CastParty | undefined): Side => {
-    const role = party?.proceedings[0]?.role;
-    return role && P_ROLES.includes(role) ? "P" : role && D_ROLES.includes(role) ? "D" : "N";
-  };
-  const sideOfParty = (id: number | null) => (id === null ? "N" : partySide(partyById.get(id)));
   const clientTies = tiesFor(({ role }) => role.role === "client" && !ended(role));
   const clientPartyIds = new Set(clientTies.map(({ role }) => num(role.case_party_id)).filter((id): id is number => id !== null));
-  const clientSide: Side = [...clientPartyIds].map(sideOfParty).find((s) => s !== "N") ?? "P";
 
   const sourceOf = (role: Row): Pick<Detail, "source" | "sourcePath" | "privileged"> => {
     const cited = num(role.from_source_id) !== null ? sources.get(num(role.from_source_id) as number) : undefined;
@@ -173,7 +176,6 @@ export function buildCastModel(input: CastInput): CastModel {
     reject: (name: string, role: Row) => `${name} is not a character on ${input.mattNum}: end matter role ${role.id} with a note saying so.`,
     merge: (name: string, contact: Contact) => `Merge the contact ${name} (${contact.id}) on ${input.mattNum} into the existing contact I name: `,
     gap: (name: string) => `Find and record ${name}'s phone and email for ${input.mattNum}.`,
-    noRole: (name: string, id: number) => `Record the contact and matter role for the party ${name} (case_party_id ${id}) on ${input.mattNum}.`,
     noticeOfChange: (party: string, record: string, contact: string) =>
       `Was a notice of change filed for ${party} on ${input.mattNum}? Counsel of record gives ${record}; the contact gives ${contact}.`,
   };
@@ -210,12 +212,13 @@ export function buildCastModel(input: CastInput): CastModel {
     ["Email", "Phone"].some((label) => new Set(details.filter((d) => d.label.startsWith(label) && d.value).map((d) => fold(d.value as string).replace(/\s/g, ""))).size > 1);
 
   const codeOf = (aliases: CastAlias[]) => aliases.find((a) => a.kind === "file_code")?.text ?? null;
-  const entry = (fields: Partial<Entry> & Pick<Entry, "key" | "name" | "side">): Entry => {
+  const entry = (fields: Partial<Entry> & Pick<Entry, "key" | "name">): Entry => {
     const e: Entry = {
-      code: null, pills: [], flags: [], former: false, proposed: false, email: null, phone: null, address: null,
+      code: null, badges: [], pills: [], flags: [], proposed: false, email: null, phone: null, address: null,
       aliases: [], contact: [], service: [], counsel: [], related: [], appearances: [], counts: null, notes: [], actions: [],
-      search: "", reach: "both", ...fields,
+      reach: "both", ...fields,
     };
+    e.badges = dedupe(e.badges);
     e.email = first(e.contact, "Email");
     e.phone = first(e.contact, "Phone");
     e.address = first(e.contact, "Address");
@@ -230,8 +233,6 @@ export function buildCastModel(input: CastInput): CastModel {
     for (const flag of e.flags) if (flag !== "gap" && !e.pills.some((p) => p.text === FLAG_LABELS[flag])) {
       e.pills.push({ text: FLAG_LABELS[flag], kind: flag === "priv" ? "priv" : "warn" });
     }
-    e.search = fold([e.name, e.code, ...e.aliases, ...e.pills.map((p) => p.text), ...e.contact.map((d) => d.value),
-      ...e.service.map((d) => d.value), ...e.counsel.map((d) => d.value), ...e.related].filter(Boolean).join(" "));
     return e;
   };
   const proposedActions = (name: string, tie: Tie) => [
@@ -240,7 +241,6 @@ export function buildCastModel(input: CastInput): CastModel {
     { label: "Merge with…", instruction: instruction.merge(name, tie.contact) },
   ];
   const tieState = (tie: Tie | undefined) => ({
-    former: tie ? ended(tie.role) : false,
     proposed: tie ? proposed(tie.role) : false,
     flags: tie && proposed(tie.role) ? (["unc"] as Flag[]) : [],
   });
@@ -270,9 +270,9 @@ export function buildCastModel(input: CastInput): CastModel {
   };
   for (const tie of ties) if (tie.role.role === "adjuster") used.add(tie);
 
-  // ---- Service List: one card per counsel of record, one per self-represented party ----
-  const svc: Record<"P" | "D" | "N", Entry[]> = { P: [], D: [], N: [] };
-  const counselGroups = new Map<string, { name: string; parties: CastParty[]; record: CastParty["counsel_by_proceeding"][number]; aliases: CastAlias[] }>();
+  // ---- Service List: one card per current counsel of record, one per self-represented party ----
+  const svc: Entry[] = [];
+  const counselGroups = new Map<string, { name: string; acts: { party: CastParty; proceedings: number[] }[]; record: CastParty["counsel_by_proceeding"][number]; aliases: CastAlias[] }>();
   const counselOf = new Map<number, string>();
   for (const party of parties) {
     const named = party.counsel_by_proceeding.filter((c) => str(c.lawyer_name));
@@ -282,15 +282,17 @@ export function buildCastModel(input: CastInput): CastModel {
     }
     for (const record of named) {
       const key = fold(record.lawyer_name as string);
-      const group = counselGroups.get(key) ?? { name: record.lawyer_name as string, parties: [], record, aliases: [] };
-      if (!group.parties.includes(party)) group.parties.push(party);
+      const group = counselGroups.get(key) ?? { name: record.lawyer_name as string, acts: [], record, aliases: [] };
+      const act = group.acts.find((a) => a.party === party) ?? group.acts[group.acts.push({ party, proceedings: [] }) - 1];
+      if (record.proceeding_id !== 0) act.proceedings.push(record.proceeding_id);
       group.aliases.push(...party.counsel_aliases);
       counselGroups.set(key, group);
       counselOf.set(party.party_id, `${record.lawyer_name}${record.lawyer_firm ? `, ${record.lawyer_firm}` : ""} (Service List)`);
     }
   }
   for (const group of counselGroups.values()) {
-    const partyIds = group.parties.map((p) => p.party_id);
+    const groupParties = group.acts.map((a) => a.party);
+    const partyIds = groupParties.map((p) => p.party_id);
     const tie = tiesFor(({ role, contact }) => COUNSEL_ROLES.includes(String(role.role)) && !ended(role) &&
       partyIds.includes(num(role.case_party_id) ?? -1) && fold(contact.name) === fold(group.name))[0];
     if (tie) used.add(tie);
@@ -301,19 +303,19 @@ export function buildCastModel(input: CastInput): CastModel {
       ...(group.record.address ? [{ label: "Address for service", value: group.record.address, source: `Counsel of record${filed}` }] : []),
     ];
     const contact = ensure(contactDetails(tie, record), "Address for service");
-    const side = partySide(group.parties[0]);
     const flags: Flag[] = [];
     const actions: Entry["actions"] = [];
     if (tie && conflicting(contact)) {
       flags.push("conflict");
       const recorded = [group.record.lawyer_email, group.record.lawyer_phone].filter(Boolean).join(", ");
       const other = [...tie.contact.emails, ...tie.contact.phones].join(", ");
-      actions.push({ label: "Conflicting details", instruction: instruction.noticeOfChange(group.parties.map((p) => p.name).join(", "), recorded, other) });
+      actions.push({ label: "Conflicting details", instruction: instruction.noticeOfChange(groupParties.map((p) => p.name).join(", "), recorded, other) });
     }
-    svc[side].push(entry({
-      key: `counsel-${fold(group.name)}`, name: group.name, side, code: codeOf(group.aliases),
+    svc.push(entry({
+      key: `counsel-${fold(group.name)}`, name: group.name, code: codeOf(group.aliases),
+      badges: group.acts.flatMap((a) => partyBadges(a.party, a.proceedings)),
       aliases: group.aliases.filter((a) => a.kind === "spelling").map((a) => a.text),
-      pills: [{ text: "Counsel of record" }, ...group.parties.map((p) => ({ text: `For: ${p.name}` }))],
+      pills: [{ text: "Counsel of record" }, ...groupParties.map((p) => ({ text: `For: ${p.name}` }))],
       flags, actions, contact,
       service: [
         ...(group.record.lawyer_firm ? [{ label: "Firm", value: group.record.lawyer_firm }] : []),
@@ -321,18 +323,6 @@ export function buildCastModel(input: CastInput): CastModel {
         ...(group.record.lawyer_email ? [{ label: "Email for service", value: group.record.lawyer_email }] : []),
       ],
       notes: tie?.contact.note ? [tie.contact.note] : [],
-    }));
-  }
-  // Former counsel: ended counsel roles, shown only with Show former.
-  for (const tie of tiesFor(({ role }) => COUNSEL_ROLES.includes(String(role.role)) && ended(role))) {
-    used.add(tie);
-    const party = partyById.get(num(tie.role.case_party_id) ?? -1);
-    const side = partySide(party);
-    svc[side].push(entry({
-      key: `former-${tie.role.id}`, name: tie.contact.name, side, former: true,
-      pills: [{ text: "Former counsel of record" }, ...(party ? [{ text: `For: ${party.name}` }] : []), { text: `Replaced ${tie.role.to}` }],
-      contact: ensure(contactDetails(tie, []), "Address for service"),
-      aliases: tie.contact.otherNames,
     }));
   }
   const partyTie = (party: CastParty) =>
@@ -345,39 +335,31 @@ export function buildCastModel(input: CastInput): CastModel {
   for (const party of parties) {
     if (counselOf.has(party.party_id)) continue;
     const tie = partyTie(party);
-    const side = partySide(party);
     const flags: Flag[] = [];
     if (!party.address) flags.push("gap");
-    svc[side].push(entry({
-      key: `self-${party.party_id}`, name: party.name, side, code: codeOf(party.aliases),
+    svc.push(entry({
+      key: `self-${party.party_id}`, name: party.name, code: codeOf(party.aliases), badges: partyBadges(party),
       pills: [{ text: "Self-represented" }], flags,
       contact: ensure(contactDetails(tie, partyBase(party, "Address for service")), "Address for service"),
       aliases: party.aliases.filter((a) => a.kind === "spelling").map((a) => a.text),
     }));
   }
 
-  // ---- Litigants: every party ----
-  const lit: Record<"P" | "D" | "N", Entry[]> = { P: [], D: [], N: [] };
-  for (const party of parties) {
+  // ---- Client(s): each party the firm acts for ----
+  const cli: Entry[] = [];
+  for (const party of parties.filter((p) => clientPartyIds.has(p.party_id))) {
     const tie = partyTie(party);
     if (tie) used.add(tie);
-    const side = partySide(party);
-    const roles = [...new Set(party.proceedings.map((p) => title(p.role)))];
     const flags: Flag[] = [];
-    const actions: Entry["actions"] = [];
-    if (input.partiesWithoutRole.includes(party.party_id)) {
-      flags.push("gap");
-      actions.push({ label: "No matter role", instruction: instruction.noRole(party.name, party.party_id) });
-    }
-    if (!counselOf.has(party.party_id) && !party.address && !flags.includes("gap")) flags.push("gap");
+    if (!counselOf.has(party.party_id) && !party.address) flags.push("gap");
     const otherCounsel = tiesFor(({ role }) => role.role === "client_other_counsel" &&
-      (num(role.for_case_party_id) === party.party_id || (num(role.for_case_party_id) === null && clientPartyIds.has(party.party_id))));
+      (num(role.for_case_party_id) === party.party_id || num(role.for_case_party_id) === null));
     otherCounsel.forEach((t) => used.add(t));
     const titles = (tie?.contact.affiliations ?? []).filter((a) => a.person_id === tie?.contact.id).map((a) => str(a.title)).filter((t): t is string => t !== null);
-    lit[side].push(entry({
-      key: `party-${party.party_id}`, name: party.name, side, code: codeOf(party.aliases),
-      pills: [...roles.map((text) => ({ text })), ...(clientPartyIds.has(party.party_id) ? [{ text: "Client" }] : []), ...titles.map((text) => ({ text }))],
-      flags: [...tieState(tie).flags, ...flags], actions, proposed: tieState(tie).proposed, former: false,
+    cli.push(entry({
+      key: `party-${party.party_id}`, name: party.name, code: codeOf(party.aliases), badges: partyBadges(party),
+      pills: titles.map((text) => ({ text })),
+      flags: [...tieState(tie).flags, ...flags], proposed: tieState(tie).proposed,
       reach: counselOf.has(party.party_id) ? "none" : "both",
       aliases: [...party.aliases.filter((a) => a.kind === "spelling").map((a) => a.text), ...(tie?.contact.otherNames ?? [])],
       contact: ensure(contactDetails(tie, partyBase(party, "Address"))),
@@ -391,21 +373,19 @@ export function buildCastModel(input: CastInput): CastModel {
     }));
   }
 
-  // ---- Witnesses: fact witnesses by calling side, experts, investigators by engaging side ----
-  const wit: Record<"P" | "D" | "N" | "X", Entry[]> = { P: [], D: [], N: [], X: [] };
+  // ---- Witnesses: fact witnesses, experts and investigators, each badged with whose they are ----
+  const wit: Entry[] = [];
   const witnessTieKinds = ["witness", "expert"];
   for (const w of witnesses) {
     const tie = tiesFor(({ role }) => witnessTieKinds.includes(String(role.role)) && num(role.case_witness_id) === w.witness_id)[0];
     if (tie) used.add(tie);
     const expert = w.witness_type === "expert";
-    const caller = w.proceedings.find((p) => p.called_by_party_id !== null)?.called_by_party_id ?? null;
-    const side = sideOfParty(expert ? w.retained_by_party_id : caller);
+    const called = w.proceedings.find((p) => p.called_by_party_id !== null);
     const state = tieState(tie);
-    const pills: Pill[] = expert
-      ? [{ text: side === "N" ? "Expert" : `${side === "P" ? sideLabel.P : sideLabel.D}' expert` }, ...(w.field_of_expertise ? [{ text: w.field_of_expertise }] : [])]
-      : [{ text: "Witness" }];
-    (expert ? wit.X : wit[side]).push(entry({
-      key: `witness-${w.witness_id}`, name: w.name, side, code: codeOf(w.aliases), pills, ...state, reach: "either",
+    wit.push(entry({
+      key: `witness-${w.witness_id}`, name: w.name, code: codeOf(w.aliases), ...state, reach: "either",
+      badges: expert ? whoseBadge("Retained by", w.retained_by_party_id) : whoseBadge("Called by", called?.called_by_party_id ?? null, called?.proceeding_id),
+      pills: expert ? [{ text: "Expert" }, ...(w.field_of_expertise ? [{ text: w.field_of_expertise }] : [])] : [{ text: "Witness" }],
       aliases: [...w.aliases.filter((a) => a.kind === "spelling").map((a) => a.text), ...(tie?.contact.otherNames ?? [])],
       contact: ensure(contactDetails(tie, []), "Address for service"),
       counts: w.counts, notes: tie?.contact.note ? [tie.contact.note] : [],
@@ -413,15 +393,15 @@ export function buildCastModel(input: CastInput): CastModel {
     }));
   }
 
-  // ---- Public Bodies: tribunal members and court staff under Court, public bodies after ----
-  const court: Entry[] = [];
-  const bodies: Entry[] = [];
+  // ---- Public Bodies: tribunal members, court staff and public bodies ----
+  const pub: Entry[] = [];
   for (const m of tribunal) {
     const tie = tiesFor(({ role }) => role.role === "court_staff" && num(role.case_tribunal_member_id) === m.tribunal_member_id)[0];
     if (tie) used.add(tie);
     const state = tieState(tie);
-    court.push(entry({
-      key: `tribunal-${m.tribunal_member_id}`, name: m.name, side: "N", code: codeOf(m.aliases), ...state, reach: "none",
+    pub.push(entry({
+      key: `tribunal-${m.tribunal_member_id}`, name: m.name, code: codeOf(m.aliases), ...state, reach: "none",
+      badges: m.proceeding_id === null ? [] : [procBadge(m.proceeding_id)],
       pills: [m.tribunal_body, m.capacity].filter((t): t is string => Boolean(t)).map((text) => ({ text })),
       aliases: m.aliases.filter((a) => a.kind === "spelling").map((a) => a.text),
       contact: ensure(contactDetails(tie, []), "Address for service"),
@@ -431,68 +411,62 @@ export function buildCastModel(input: CastInput): CastModel {
     }));
   }
 
-  // ---- Contact-only entries: a role with no case-data participant behind it ----
+  // ---- Contact-only entries: a current role with no case-data participant behind it ----
   for (const tie of ties) {
-    if (used.has(tie)) continue;
+    if (used.has(tie) || ended(tie.role)) continue;
     const kind = String(tie.role.role);
-    const forParty = num(tie.role.for_case_party_id);
-    const side: Side =
-      kind === "client_other_counsel" || kind === "client_representative" ? clientSide :
-      kind === "insurer" || kind === "investigator" ? sideOfParty(forParty) :
-      kind === "client" ? clientSide :
-      kind === "opposing_party" ? (clientSide === "P" ? "D" : "P") :
-      "N";
     const state = tieState(tie);
-    const make = (pills: Pill[], reach: Entry["reach"] = "both") => entry({
-      key: `role-${tie.role.id}`, name: tie.contact.name, side, ...state, pills, reach, aliases: tie.contact.otherNames,
-      contact: ensure(contactDetails(tie, []), kind === "client" || kind === "opposing_party" ? "Address" : "Address for service"),
+    const make = (pills: Pill[], reach: Entry["reach"] = "both", badges: Badge[] = []) => entry({
+      key: `role-${tie.role.id}`, name: tie.contact.name, ...state, badges, pills, reach, aliases: tie.contact.otherNames,
+      contact: ensure(contactDetails(tie, []), kind === "client" ? "Address" : "Address for service"),
       related: affiliationLines(tie.contact), notes: tie.contact.note ? [tie.contact.note] : [],
       actions: state.proposed ? proposedActions(tie.contact.name, tie) : [],
     });
     const label = ROLE_LABELS[kind] ?? title(kind);
-    if (kind === "witness" || kind === "investigator") (side === "N" ? wit.N : wit[side]).push(make([{ text: label }], "either"));
-    else if (kind === "expert") wit.X.push(make([{ text: label }], "either"));
-    else if (kind === "court_staff") court.push(make([{ text: label }]));
-    else if (kind === "public_body") bodies.push(make([{ text: label }]));
-    else if (LITIGANT_ROLES.includes(kind)) lit[side].push(make([{ text: label }]));
-    else if (kind === "client_other_counsel") {
-      // With no party to sit under, other counsel shows on the client's card when there is one.
-      const client = lit[clientSide].find((e) => e.pills.some((p) => p.text === "Client"));
-      if (client) {
-        client.counsel.push({ label: "Other counsel", value: `${tie.contact.name}. Not on the Service List.`, ...sourceOf(tie.role) });
-        if (tie.role.privileged_source === true && !client.flags.includes("priv")) { client.flags.push("priv"); client.pills.push({ text: FLAG_LABELS.priv, kind: "priv" }); }
-        client.search = fold(`${client.search} ${tie.contact.name}`);
-      }
+    if (kind === "witness" || kind === "investigator" || kind === "expert") {
+      wit.push(make([{ text: label }], "either", whoseBadge("For", num(tie.role.for_case_party_id))));
+    } else if (kind === "court_staff" || kind === "public_body") pub.push(make([{ text: label }]));
+    else if (kind === "client") cli.push(make([]));
+    else if (kind === "client_other_counsel" && cli.length) {
+      // Other counsel for no client party shows on the first client card.
+      const client = cli[0];
+      client.counsel.push({ label: "Other counsel", value: `${tie.contact.name}. Not on the Service List.`, ...sourceOf(tie.role) });
     }
   }
-  // A party card's other counsel may carry the privileged mark after its entry was built.
-  for (const e of Object.values(lit).flat()) {
+  // A client card's other counsel may carry the privileged mark after its entry was built.
+  for (const e of cli) {
     if (e.counsel.some((d) => d.privileged) && !e.flags.includes("priv")) { e.flags.push("priv"); e.pills.push({ text: FLAG_LABELS.priv, kind: "priv" }); }
   }
 
-  const byName = (a: Entry, b: Entry) => a.name.localeCompare(b.name, "en", { sensitivity: "base" });
-  const section = (t: string, entries: Entry[]): Section => ({ title: t, entries: [...entries].sort(byName) });
-  const neutralParties = (rec: Record<"P" | "D" | "N", Entry[]>, label: string) => (rec.N.length ? [section(label, rec.N)] : []);
+  // ---- Proceedings: the style and the parties' names by role, nothing else ----
+  const rank = (role: string) => (P_ROLES.includes(role) ? P_ROLES.indexOf(role) : D_ROLES.includes(role) ? 10 + D_ROLES.indexOf(role) : 20);
+  const proceedings: ProceedingBlock[] = procIds.map((id) => {
+    const byRole = new Map<string, string[]>();
+    for (const party of parties) for (const pr of party.proceedings) {
+      if (pr.proceeding_id === id && !byRole.get(pr.role)?.includes(party.name)) byRole.set(pr.role, [...(byRole.get(pr.role) ?? []), party.name]);
+    }
+    const sides = [...byRole].sort((a, b) => rank(a[0]) - rank(b[0])).map(([role, names]) => ({ label: plural(title(role)), names }));
+    const badge = procBadge(id);
+    const style = str(procById.get(id)?.style_of_cause) ??
+      (sides.length > 1 ? `${sides[0].names.join(", ")} v. ${sides[1].names.join(", ")}` : sides[0]?.names.join(", ") ?? badge.text);
+    return { badge, style, sides };
+  });
 
+  const byName = (a: Entry, b: Entry) => a.name.localeCompare(b.name, "en", { sensitivity: "base" });
   const tabs: Tab[] = [
-    { id: "svc", label: "Service List", sections: [section(sideLabel.P, svc.P), section(sideLabel.D, svc.D), ...neutralParties(svc, "Other parties")] },
-    { id: "lit", label: "Litigants", sections: [section(sideLabel.P, lit.P), section(sideLabel.D, lit.D), ...neutralParties(lit, "Other parties")] },
-    {
-      id: "wit", label: "Witnesses", sections: [
-        section(`${sideLabel.P}' Witnesses`, wit.P), section(`${sideLabel.D}' Witnesses`, wit.D),
-        section("Expert Witnesses", wit.X), ...(wit.N.length ? [section("Other Witnesses", wit.N)] : []),
-      ],
-    },
-    { id: "dec", label: "Public Bodies", sections: [section("Court", court), section("Enforcement & Public Bodies", bodies)] },
+    { id: "cli", label: "Client(s)", entries: cli.sort(byName) },
+    { id: "svc", label: "Service List", entries: svc.sort(byName) },
+    { id: "wit", label: "Witnesses", entries: wit.sort(byName) },
+    { id: "pro", label: "Proceedings", entries: [] },
+    { id: "pub", label: "Public Bodies", entries: pub.sort(byName) },
   ];
 
   // Service List copies: current counsel and self-represented parties, never a privileged detail.
-  const current = tabs[0].sections.flatMap((s) => s.entries).filter((e) => !e.former);
   const serviceEmail = (e: Entry) => e.contact.find((d) => d.label === "Email" && d.value && !d.privileged)?.value ?? null;
-  const serviceEmails = [...new Set(current.map(serviceEmail).filter((v): v is string => v !== null))].join("; ");
+  const serviceEmails = [...new Set(svc.map(serviceEmail).filter((v): v is string => v !== null))].join("; ");
   const serviceTable = [
     ["For", "Counsel or party", "Firm", "Email", "Phone", "Address for service"].join("\t"),
-    ...current.map((e) => [
+    ...svc.map((e) => [
       e.pills.filter((p) => p.text.startsWith("For: ")).map((p) => p.text.slice(5)).join(", ") || e.name,
       e.name, e.service.find((d) => d.label === "Firm")?.value ?? "",
       serviceEmail(e) ?? "", e.contact.find((d) => d.label === "Phone" && !d.privileged)?.value ?? "",
@@ -500,18 +474,17 @@ export function buildCastModel(input: CastInput): CastModel {
     ].join("\t")),
   ].join("\n");
 
-  return { tabs, sideLabels: sideLabel, serviceEmails, serviceTable, notes };
+  return { tabs, proceedings, serviceEmails, serviceTable, notes };
 }
 
-/** Counts per tab, and how many entries carry a flag, for the render tool's reply. */
+/** Entries per tab (proceedings on Proceedings), and how many entries carry a flag, for the render tool's reply. */
 export function castCounts(model: CastModel): { tabs: Record<string, number>; flagged: Record<string, number> } {
   const tabs: Record<string, number> = {};
   const flagged: Record<string, number> = { unconfirmed: 0, missing_details: 0, conflicting_details: 0, privileged_source: 0 };
   const names: Record<Flag, string> = { unc: "unconfirmed", gap: "missing_details", conflict: "conflicting_details", priv: "privileged_source" };
   for (const tab of model.tabs) {
-    const entries = tab.sections.flatMap((s) => s.entries).filter((e) => !e.former);
-    tabs[tab.label] = entries.length;
-    for (const e of entries) for (const f of e.flags) flagged[names[f]]++;
+    tabs[tab.label] = tab.id === "pro" ? model.proceedings.length : tab.entries.length;
+    for (const e of tab.entries) for (const f of e.flags) flagged[names[f]]++;
   }
   return { tabs, flagged };
 }

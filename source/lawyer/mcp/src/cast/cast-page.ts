@@ -1,8 +1,8 @@
-// The Cast of Characters page (Cast of Characters spec 4): the model from cast-data.ts rendered to
-// full markup here, every value escaped, so the page is complete in a file preview that runs no
-// script. Tabs, cards and Show former work through radio inputs and :has (the mockup's CSS); the
-// page's script only adds search, the filters, Esc, the remembered tab and copying. Unlike the
-// other view pages it embeds no data line: there is nothing for a script to draw.
+// The Characters page (Cast of Characters spec 4): the model from cast-data.ts rendered to full
+// markup here, every value escaped, so the page is complete in a file preview that runs no script.
+// Tabs and cards work through radio inputs and :has (the mockup's CSS); the page's script only adds
+// Esc, the remembered tab and copying. Unlike the other view pages it embeds no data line: there is
+// nothing for a script to draw.
 
 import { pathToFileURL } from "node:url";
 
@@ -14,8 +14,9 @@ import castHtml from "../templates/view-pages/cast-of-characters.html.js";
 import castJs from "../templates/view-pages/cast-of-characters.js.js";
 import viewFolderCss from "../templates/view-pages/view-folder.css.js";
 import viewHeadHtml from "../templates/view-pages/view-head.html.js";
-import { FLAG_LABELS, type CastModel, type Detail, type Entry, type Flag } from "./cast-data.js";
+import { FLAG_LABELS, type Badge, type CastModel, type Detail, type Entry, type ProceedingBlock } from "./cast-data.js";
 
+/** The page's file and preview name; the page itself is titled Characters. */
 export const CAST_PAGE_NAME = "Cast of Characters";
 export const CAST_FILE = `${CAST_PAGE_NAME}.html`;
 
@@ -50,9 +51,11 @@ function summary(e: Entry): string {
   return bits.join(`<span class="sep">·</span>`);
 }
 
+const badge = (b: Badge) => `<span class="pb c${b.colour}">${esc(b.text)}</span>`;
+
 function card(e: Entry, id: string): string {
-  const cls = ["card", e.proposed ? "unconfirmed" : "", e.former ? "former" : ""].filter(Boolean).join(" ");
-  const pills = e.pills.map((p) => `<span class="pill${p.kind ? ` ${p.kind}` : ""}">${esc(p.text)}</span>`).join("");
+  const cls = e.proposed ? "card unconfirmed" : "card";
+  const pills = e.badges.map(badge).join("") + e.pills.map((p) => `<span class="pill${p.kind ? ` ${p.kind}` : ""}">${esc(p.text)}</span>`).join("");
   const related = e.related.length
     ? `<h3>Related</h3><div class="rows">${e.related.map((r) => `<span class="k">·</span><span class="v">${esc(r)}</span>`).join("")}</div>`
     : "";
@@ -60,9 +63,9 @@ function card(e: Entry, id: string): string {
     ? `<h3>In the case data</h3><div class="rows"><span class="k">Facts</span><span class="v">${e.counts.facts}</span><span class="k">Documents</span><span class="v">${e.counts.documents}</span></div>`
     : "";
   const actions = e.actions.length
-    ? `<div class="actions">${e.actions.map((a) => copyButton(a.label === "Missing details" || a.label === "Conflicting details" || a.label === "No matter role" ? `Copy instruction: ${a.label}` : a.label, a.instruction)).join("")}</div>`
+    ? `<div class="actions">${e.actions.map((a) => copyButton(a.label === "Missing details" || a.label === "Conflicting details" ? `Copy instruction: ${a.label}` : a.label, a.instruction)).join("")}</div>`
     : "";
-  return `<div class="${cls}" data-side="${e.side}" data-flags="${e.flags.join(" ")}" data-search="${esc(e.search)}">
+  return `<div class="${cls}">
   <input type="radio" name="open" class="opener" id="${id}">
   <label class="head" for="${id}">
     <span class="r1">${e.code ? `<span class="code">${esc(e.code)}</span>` : ""}<span class="name">${esc(e.name)}</span><span class="pills">${pills}</span></span>
@@ -73,20 +76,21 @@ function card(e: Entry, id: string): string {
 </div>`;
 }
 
+function proceeding(p: ProceedingBlock): string {
+  const sides = p.sides.map((s) => `<span class="k">${esc(s.label)}</span><span class="v">${esc(s.names.join(", "))}</span>`).join("");
+  return `<div class="proc"><div class="r1">${badge(p.badge)}<span class="name">${esc(p.style)}</span></div><div class="rows">${sides}</div></div>`;
+}
+
 /** The page's whole file; `composed` is a preview's template in place of the page's own. */
 export function renderCastPage(model: CastModel, meta: CastMeta, composed: ComposedTemplate = CAST_PAGE): string {
   const metaRow = [["Matter", meta.matter], ["Client", meta.client], ["Rev", meta.revision === null ? "" : String(meta.revision)], ["Rendered", meta.rendered]]
     .filter(([, v]) => v !== "").map(([k, v]) => `<span data-k="${esc(k)}">${esc(v)}</span>`).join("");
-  const flagOptions = (Object.keys(FLAG_LABELS) as Flag[]).map((f) => `<option value="${f}">${FLAG_LABELS[f]}</option>`).join("");
   const views = model.tabs.map((tab) => {
-    const sections = tab.sections.map((s, si) => {
-      const shown = s.entries.filter((e) => !e.former).length;
-      return `<section><h2>${esc(s.title)} <span class="badge">${shown}</span></h2><div class="list">${s.entries.map((e, ei) => card(e, `o-${tab.id}${si}-${ei}`)).join("")}<div class="none"${shown ? " hidden" : ""}>None.</div></div></section>`;
-    }).join("");
+    const items = tab.id === "pro" ? model.proceedings.map(proceeding) : tab.entries.map((e, i) => card(e, `o-${tab.id}-${i}`));
     const tools = tab.id === "svc"
       ? `<div class="actions listtools">${copyButton("Copy all service emails", model.serviceEmails)}${copyButton("Copy service list as table", model.serviceTable)}</div>`
       : "";
-    return `<div class="view" data-v="${tab.id}">${sections}${tools}</div>`;
+    return `<div class="view" data-v="${tab.id}"><div class="list">${items.join("")}<div class="none"${items.length ? " hidden" : ""}>None.</div></div>${tools}</div>`;
   }).join("");
   const radios = model.tabs.map((t, i) => `<input type="radio" name="tab" class="tabr" id="t-${t.id}"${i === 0 ? " checked" : ""}>`).join("");
   const labels = model.tabs.map((t) => `<label class="tab" for="t-${t.id}">${esc(t.label)}</label>`).join("");
@@ -94,17 +98,11 @@ export function renderCastPage(model: CastModel, meta: CastMeta, composed: Compo
   const body = `<main class="page">
   ${radios}<input type="radio" name="open" id="o-none" checked>
   <header>
-    <h1>${CAST_PAGE_NAME}</h1>
+    <h1>Characters</h1>
     <div class="meta">${metaRow}</div>
   </header>
   <div class="tabs">${labels}</div>
-  <div class="panel">
-    <div class="filters">
-      <label>Side <select id="side"><option value="">All sides</option><option value="P">${esc(model.sideLabels.P)}</option><option value="D">${esc(model.sideLabels.D)}</option><option value="N">Neutral</option></select></label>
-      <label>Flags <select id="flag"><option value="">All entries</option>${flagOptions}</select></label>
-      <label><input type="checkbox" id="former"> Show former</label>
-    </div>
-    <input type="search" id="q" placeholder="Search names, aliases, file codes, firms">${notices}
+  <div class="panel">${notices}
     ${views}
   </div>
 </main>`;

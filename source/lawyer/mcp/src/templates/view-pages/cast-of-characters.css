@@ -1,4 +1,4 @@
-/* Cast of Characters (spec 4.3 to 4.6, mockup 2026-11-06). Tabs, the open card and Show former work in CSS alone,
+/* Characters (spec 4.3 to 4.6, mockup 2026-11-06). Tabs and the open card work in CSS alone,
    through radio inputs and :has, so the page is complete in a preview that runs no script. */
 .page{--panel:#d0e5da;--panel-line:#93b8a6;--tab:#a9c9b9;--tab-line:#86ad9b;--tab-ink:#3b5a4f;--card-line:#2f6f64;
 --c-title:#0f5257;--c-head:#1d5e4d;--c-rule:#1d5e4d;--c-badge:#b8782c;--c-warn:#9a5b00;--c-warnbg:#fff4dc;--c-priv:#7a2e6b;--c-privbg:#f6e6f2;--c-sub:#59625f;--c-ink:#24302d;
@@ -6,20 +6,20 @@ max-width:840px;margin:0 auto}
 .tabr,.opener,#o-none{position:absolute;opacity:0;pointer-events:none}
 .page .tabs{display:flex;gap:2px;margin:24px 0 0 12px;padding:0;position:relative;z-index:1;flex-wrap:wrap;align-items:flex-end}
 .tab{font:600 13px var(--sans-heading,"Segoe UI",sans-serif);color:var(--tab-ink);background:linear-gradient(#b9d5c6,var(--tab));border:1px solid var(--tab-line);border-bottom:none;border-radius:9px 9px 0 0;padding:6px 14px 5px;cursor:pointer;position:relative;top:1px}
-.page:has(#t-svc:checked) label[for="t-svc"],.page:has(#t-lit:checked) label[for="t-lit"],
-.page:has(#t-wit:checked) label[for="t-wit"],.page:has(#t-dec:checked) label[for="t-dec"]{background:var(--panel);color:var(--c-head);border-color:var(--panel-line);font-weight:700;padding-top:8px;margin-top:-2px}
-.page:has(#t-svc:checked) .view[data-v="svc"],.page:has(#t-lit:checked) .view[data-v="lit"],
-.page:has(#t-wit:checked) .view[data-v="wit"],.page:has(#t-dec:checked) .view[data-v="dec"]{display:block}
+.page:has(#t-cli:checked) label[for="t-cli"],.page:has(#t-svc:checked) label[for="t-svc"],.page:has(#t-wit:checked) label[for="t-wit"],
+.page:has(#t-pro:checked) label[for="t-pro"],.page:has(#t-pub:checked) label[for="t-pub"]{background:var(--panel);color:var(--c-head);border-color:var(--panel-line);font-weight:700;padding-top:8px;margin-top:-2px}
+.page:has(#t-cli:checked) .view[data-v="cli"],.page:has(#t-svc:checked) .view[data-v="svc"],.page:has(#t-wit:checked) .view[data-v="wit"],
+.page:has(#t-pro:checked) .view[data-v="pro"],.page:has(#t-pub:checked) .view[data-v="pub"]{display:block}
 .panel{background:var(--panel);border:1px solid var(--panel-line);border-radius:0 10px 10px 10px;padding:18px 18px 22px;min-height:300px;color:var(--c-ink)}
-.filters{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
-.filters label{color:var(--c-title);font-size:13px;display:flex;align-items:center;gap:8px}
-.panel select,.panel input[type=search]{font:inherit;font-size:13px;color:var(--c-ink);background:#fff;border:1px solid #b7c9c1;border-radius:5px;padding:5px 8px}
-.panel select{min-width:180px}.panel input[type=search]{width:100%;max-width:360px;margin-top:10px}
 .view{display:none}
-.view section{background:none;border-radius:0;padding:0}
-.view h2{font-family:var(--sans-heading,"Segoe UI",sans-serif);color:var(--c-head);font-size:22px;font-weight:600;margin:26px 0 0;padding-bottom:8px;border-bottom:2px solid var(--c-rule);display:flex;align-items:center;gap:10px}
-.badge{font:11px var(--mono);background:var(--c-badge);color:#2a1a05;border-radius:10px;padding:1px 7px}
-.list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.list{display:flex;flex-direction:column;gap:8px}
+/* one colour per proceeding: its proceeding badge, the roles in it and whose witness */
+.pb{font:11px var(--mono);border:1px solid;border-radius:9px;padding:0 7px;white-space:nowrap;flex:none}
+.c0{background:#fde2ec;border-color:#c2416f;color:#8a1f48}.c1{background:#fff3c4;border-color:#b38600;color:#6e5200}
+.c2{background:#dcebfb;border-color:#3a74b5;color:#1f4a7a}.c3{background:#ddf3e2;border-color:#3f8f55;color:#245a33}
+.c4{background:#ece2f7;border-color:#7a52a8;color:#4f2f78}.c5{background:#ffe5d2;border-color:#c3651f;color:#80400f}
+.proc{background:#fff;border:2px solid var(--card-line);border-radius:10px;padding:8px 14px}
+.proc .r1{white-space:normal;flex-wrap:wrap;margin-bottom:6px}
 .none{background:#fff;border:1px dashed #6f9b8c;border-radius:8px;padding:12px 14px;font-size:13px}
 .none[hidden]{display:none}
 .notice{margin:12px 0 0;font-size:13px;padding:8px 12px;border-radius:6px;background:var(--c-warnbg);color:var(--c-warn)}
@@ -39,14 +39,10 @@ max-width:840px;margin:0 auto}
 .r2 .sep{color:#b5c4be;margin:0 6px}.gap,.missing{color:var(--c-warn);font-style:italic}
 .x{display:none;position:absolute;top:12px;right:14px;font:12px var(--mono);border:1px solid var(--card-line);background:#fff;color:var(--c-head);border-radius:9px;padding:1px 10px;cursor:pointer}
 .detail{display:none;margin-top:10px}
-/* one card open: hide every other card, heading, empty box and the filter row */
+/* one card open: hide every other card, the empty box and the list tools */
 .view:has(.opener:checked) .card:not(:has(.opener:checked)),
-.view:has(.opener:checked) section:not(:has(.opener:checked)),
-.view:has(.opener:checked) h2,
 .view:has(.opener:checked) .none,
-.view:has(.opener:checked) .listtools,
-.page:has(.opener:checked) .filters,
-.page:has(.opener:checked) input[type=search]{display:none}
+.view:has(.opener:checked) .listtools{display:none}
 .view:has(.opener:checked) .list{margin-top:4px}
 .card:has(.opener:checked){padding:14px 18px 18px}
 .card:has(.opener:checked) .head{cursor:default}
@@ -65,6 +61,3 @@ max-width:840px;margin:0 auto}
 .actions{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap}
 .actions button{font:11px var(--mono);border:1px solid var(--card-line);background:#fff;color:var(--c-head);border-radius:9px;padding:1px 8px;cursor:pointer}
 .aka{color:var(--c-sub);font-size:12.5px;margin-top:2px}
-.hidebyfilter{display:none!important}
-.card.former{opacity:.55}
-.page:not(:has(#former:checked)) .card.former{display:none}

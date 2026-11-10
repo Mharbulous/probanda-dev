@@ -1,4 +1,4 @@
-// Reads a matter's Cast of Characters from both stores and writes `<matter>\0. DRAFT\Cast of
+// Reads a matter's Characters board from both stores and writes `<matter>\0. DRAFT\Cast of
 // Characters.html` (Cast of Characters spec 4.1). The page is written by
 // practice_data__render_cast_of_characters and at session entry (open_session), with the
 // view-page marker and the overwrite guard every matter page has; the old-page sweep keeps it.
@@ -38,10 +38,7 @@ export async function readCastModel(store: PracticeStore, matterRoot: string, ma
   } catch (err) {
     caseData = { status: "unavailable", reason: (err as Error).message };
   }
-  // contact_checks' parties_without_role for this matter: a party no role's case_party_id names.
-  const tied = new Set(contacts.flatMap((c) => (c.roles as Record<string, unknown>[])).map((role) => String(role.case_party_id)));
-  const partiesWithoutRole = caseData.status === "ok" ? caseData.parties.map((p) => p.party_id).filter((id) => !tied.has(String(id))) : [];
-  return { model: buildCastModel({ mattNum, caseData, contacts, contactNames, partiesWithoutRole, today: today() }), client };
+  return { model: buildCastModel({ mattNum, caseData, contacts, contactNames, today: today() }), client };
 }
 
 export interface CastWritten {

@@ -1,7 +1,8 @@
 // Cast of Characters spec 7: the test matter T512, with a party with counsel, a self-represented
 // party, a witness with a contact, an expert, a client_other_counsel contact recorded from an email,
-// a proposed role, a tribunal member, a public body and an ended role. Every name is invented. The
-// model is asserted, never the page: no test reads a page (shared/html-pages.md).
+// a proposed role, a tribunal member, a public body, an ended role, and a second proceeding in which
+// the client and Grace Liu swap roles. Every name is invented. The model is asserted, never the
+// page: no test reads a page (shared/html-pages.md).
 
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -19,12 +20,13 @@ const contacts = await import("../build/tools/practice/contacts.js");
 const { readCastModel, render_cast_of_characters } = await import("../build/cast/cast-write.js");
 
 const SEED = `
-INSERT INTO proceedings (proceeding_id, court, file_number) VALUES (1, 'BCSC', 'S-000512');
+INSERT INTO proceedings (proceeding_id, court, file_number) VALUES (1, 'BCSC', 'S-000512'), (2, 'BCSC', 'S-000777');
 INSERT INTO parties (party_id, name, party_type, lawyer_name, lawyer_firm, lawyer_email, lawyer_phone, address, service_address_filed_date)
 VALUES (1, 'Alan Wei Park', 'individual', 'Pat Counsel', 'Example Law LLP', 'pat@examplelaw.example', '604-555-0100', '900-555 Sample St, Vancouver BC', '2026-03-01'),
        (2, 'Grace Liu', 'individual', 'Sample Counsel B', 'Sample Law Corp.', 'counsel.b@example.com', '604-555-0177', '400-222 Sample Ave, Vancouver BC', '2026-04-01'),
        (3, 'The Owners, Strata Plan EPS0000', 'other', NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO proceeding_parties (proceeding_id, party_id, role) VALUES (1, 1, 'plaintiff'), (1, 2, 'defendant'), (1, 3, 'defendant');
+INSERT INTO proceeding_parties (proceeding_id, party_id, role) VALUES (1, 1, 'plaintiff'), (1, 2, 'defendant'), (1, 3, 'defendant'),
+       (2, 2, 'plaintiff'), (2, 1, 'defendant');
 INSERT INTO witnesses (witness_id, name, witness_type, field_of_expertise, retained_by_party_id)
 VALUES (1, 'Jordan Kim', 'fact', NULL, NULL), (2, 'Dr. Sample Air-Quality', 'expert', 'Air quality', 1);
 INSERT INTO proceeding_witnesses (proceeding_id, witness_id, called_by_party_id) VALUES (1, 1, 1);
@@ -84,70 +86,70 @@ async function t512(t) {
   return { store, matterRoot, proposedRole };
 }
 
-const entries = (model, tab) => model.tabs.find((x) => x.id === tab).sections.map((s) => [s.title, s.entries.map((e) => e.name)]);
-const find = (model, tab, name) => model.tabs.find((x) => x.id === tab).sections.flatMap((s) => s.entries).find((e) => e.name === name);
+const entries = (model, tab) => model.tabs.find((x) => x.id === tab).entries.map((e) => e.name);
+const find = (model, tab, name) => model.tabs.find((x) => x.id === tab).entries.find((e) => e.name === name);
+const badges = (e) => e.badges.map((b) => `${b.text} c${b.colour}`);
 
-test("T512: each entry is on the right tab, section and side, with its flags, related people and copy instructions", async (t) => {
+test("T512: each entry is on the right flat tab, with its proceeding badges, flags, related people and copy instructions", async (t) => {
   const { store, matterRoot, proposedRole } = await t512(t);
   const { model, client } = await readCastModel(store, matterRoot, "T512");
   assert.equal(client, "Maple Grove Dental Inc.");
-  assert.deepEqual(model.tabs.map((x) => x.label), ["Service List", "Litigants", "Witnesses", "Public Bodies"]);
+  assert.deepEqual(model.tabs.map((x) => x.label), ["Client(s)", "Service List", "Witnesses", "Proceedings", "Public Bodies"]);
   assert.deepEqual(model.notes, []);
 
-  assert.deepEqual(entries(model, "svc"), [
-    ["Plaintiffs", ["Pat Counsel"]],
-    ["Defendants", ["Sample Counsel B", "Sample Counsel E", "The Owners, Strata Plan EPS0000"]],
-  ]);
-  const counselB = find(model, "svc", "Sample Counsel B");
-  assert.equal(counselB.code, "CounselB");
-  assert.deepEqual(counselB.flags, ["conflict"], "the contact's phone differs from counsel of record");
-  assert.match(counselB.actions[0].instruction, /^Was a notice of change filed for Grace Liu on T512\?/);
-  const former = find(model, "svc", "Sample Counsel E");
-  assert.equal(former.former, true, "the ended counsel role is a former entry");
-  const strataSvc = find(model, "svc", "The Owners, Strata Plan EPS0000");
-  assert.deepEqual([strataSvc.pills[0].text, strataSvc.flags], ["Self-represented", ["gap"]]);
-  assert.equal(model.serviceEmails, "pat@examplelaw.example; counsel.b@example.com; council@strata.example");
-  assert.match(model.serviceTable.split("\n")[0], /^For\tCounsel or party\tFirm/);
-
-  assert.deepEqual(entries(model, "lit"), [
-    ["Plaintiffs", ["Alan Wei Park"]],
-    ["Defendants", ["Grace Liu", "The Owners, Strata Plan EPS0000"]],
-  ]);
-  const parkCard = find(model, "lit", "Alan Wei Park");
-  assert.deepEqual(parkCard.pills.map((p) => p.text), ["Plaintiff", "Client", "Director", "Privileged source"]);
+  // Client(s): the firm's client only, with a proceeding and a role badge per proceeding, each pair in one colour.
+  assert.deepEqual(entries(model, "cli"), ["Alan Wei Park"]);
+  const parkCard = find(model, "cli", "Alan Wei Park");
+  assert.deepEqual(badges(parkCard), ["S-000512 c0", "Plaintiff c0", "S-000777 c1", "Defendant c1"], "plaintiff in one proceeding, defendant in the other");
+  assert.deepEqual(parkCard.pills.map((p) => p.text), ["Director", "Privileged source"]);
   assert.deepEqual(parkCard.flags, ["priv"], "the other counsel came from a client email");
   assert.equal(parkCard.counsel[0].value, "Pat Counsel, Example Law LLP (Service List)");
   assert.match(parkCard.counsel[1].value, /^Sam Defender, sam@defender\.example\. Not on the Service List\.$/);
   assert.deepEqual([parkCard.counsel[1].source, parkCard.counsel[1].privileged], ["Client email, 2026-11-02, Peace bond", true]);
   assert.deepEqual(parkCard.related, ["Director of Maple Grove Dental Inc."]);
   assert.deepEqual(parkCard.notes, ["Proposed peace bond: no contact with Bo Lin."]);
-  assert.ok(parkCard.search.includes("parka") && parkCard.search.includes("wei park"), "search holds the file code and the alias");
-  assert.deepEqual(find(model, "lit", "Grace Liu").flags, [], "a represented party is reached through counsel");
-  assert.deepEqual(find(model, "lit", "The Owners, Strata Plan EPS0000").related, ["Insurer: Sample Mutual · adjuster Sample Adjuster"]);
 
-  assert.deepEqual(entries(model, "wit"), [
-    ["Plaintiffs' Witnesses", ["Jordan Kim", "Sample Investigations Ltd."]],
-    ["Defendants' Witnesses", []],
-    ["Expert Witnesses", ["Dr. Sample Air-Quality"]],
-  ]);
+  // Service List: one flat list of current counsel and self-represented parties; the ended counsel is gone.
+  assert.deepEqual(entries(model, "svc"), ["Pat Counsel", "Sample Counsel B", "The Owners, Strata Plan EPS0000"]);
+  assert.deepEqual(badges(find(model, "svc", "Pat Counsel")), ["S-000512 c0", "Plaintiff c0", "S-000777 c1", "Defendant c1"]);
+  const counselB = find(model, "svc", "Sample Counsel B");
+  assert.equal(counselB.code, "CounselB");
+  assert.deepEqual(badges(counselB), ["S-000512 c0", "Defendant c0", "S-000777 c1", "Plaintiff c1"]);
+  assert.deepEqual(counselB.flags, ["conflict"], "the contact's phone differs from counsel of record");
+  assert.match(counselB.actions[0].instruction, /^Was a notice of change filed for Grace Liu on T512\?/);
+  const strataSvc = find(model, "svc", "The Owners, Strata Plan EPS0000");
+  assert.deepEqual([strataSvc.pills[0].text, strataSvc.flags, badges(strataSvc)], ["Self-represented", ["gap"], ["S-000512 c0", "Defendant c0"]]);
+  assert.equal(model.serviceEmails, "pat@examplelaw.example; counsel.b@example.com; council@strata.example");
+  assert.match(model.serviceTable.split("\n")[0], /^For\tCounsel or party\tFirm/);
+
+  // Witnesses: one flat list, each badged with whose witness it is.
+  assert.deepEqual(entries(model, "wit"), ["Dr. Sample Air-Quality", "Jordan Kim", "Sample Investigations Ltd."]);
   const kimCard = find(model, "wit", "Jordan Kim");
-  assert.deepEqual([kimCard.code, kimCard.flags, kimCard.email], ["KimJ", ["gap"], "jordan@mapleexample.example"]);
+  assert.deepEqual([kimCard.code, kimCard.flags, kimCard.email, badges(kimCard)], ["KimJ", ["gap"], "jordan@mapleexample.example", ["Called by Alan Wei Park c0"]]);
   const piCard = find(model, "wit", "Sample Investigations Ltd.");
-  assert.deepEqual([piCard.proposed, piCard.side, piCard.flags], [true, "P", ["unc", "gap"]]);
+  assert.deepEqual([piCard.proposed, piCard.flags, badges(piCard)], [true, ["unc", "gap"], ["For Alan Wei Park c0"]]);
   assert.deepEqual(piCard.actions.map((a) => a.label), ["Confirm", "Not a character", "Merge with…", "Missing details"]);
   assert.equal(piCard.actions[0].instruction, `Confirm Sample Investigations Ltd. as Private investigator on T512 (matter role ${proposedRole.id}).`);
-  assert.deepEqual(find(model, "wit", "Dr. Sample Air-Quality").pills.map((p) => p.text), ["Plaintiffs' expert", "Air quality"]);
+  const expertCard = find(model, "wit", "Dr. Sample Air-Quality");
+  assert.deepEqual([expertCard.pills.map((p) => p.text), badges(expertCard)], [["Expert", "Air quality"], ["Retained by Alan Wei Park c0"]]);
 
-  assert.deepEqual(entries(model, "dec"), [
-    ["Court", ["Justice Sample"]],
-    ["Enforcement & Public Bodies", ["City Community Bylaws", "Richmond RCMP"]],
+  // Proceedings: one block per proceeding, names only, by side; the same person in both.
+  assert.deepEqual(model.proceedings, [
+    { badge: { text: "S-000512", colour: 0 }, style: "Alan Wei Park v. Grace Liu, The Owners, Strata Plan EPS0000",
+      sides: [{ label: "Plaintiffs", names: ["Alan Wei Park"] }, { label: "Defendants", names: ["Grace Liu", "The Owners, Strata Plan EPS0000"] }] },
+    { badge: { text: "S-000777", colour: 1 }, style: "Grace Liu v. Alan Wei Park",
+      sides: [{ label: "Plaintiffs", names: ["Grace Liu"] }, { label: "Defendants", names: ["Alan Wei Park"] }] },
   ]);
-  const judge = find(model, "dec", "Justice Sample");
-  assert.deepEqual([judge.side, judge.flags, judge.appearances[0].value], ["N", [], "Consent injunction order, 2026-08-31"]);
-  assert.equal(find(model, "dec", "City Community Bylaws").former, true, "an ended public-body role is a former entry");
 
-  const all = model.tabs.flatMap((x) => x.sections.flatMap((s) => s.entries)).map((e) => e.name);
-  for (const hidden of ["Sam Defender", "Sample Mutual", "Sample Adjuster"]) assert.ok(!all.includes(hidden), `${hidden} is not a card of its own`);
+  // Public Bodies: one flat list; the ended public-body role is gone.
+  assert.deepEqual(entries(model, "pub"), ["Justice Sample", "Richmond RCMP"]);
+  const judge = find(model, "pub", "Justice Sample");
+  assert.deepEqual([judge.flags, judge.appearances[0].value, badges(judge)], [[], "Consent injunction order, 2026-08-31", ["S-000512 c0"]]);
+
+  const all = model.tabs.flatMap((x) => x.entries).map((e) => e.name);
+  for (const hidden of ["Sam Defender", "Sample Mutual", "Sample Adjuster", "Sample Counsel E", "City Community Bylaws"]) {
+    assert.ok(!all.includes(hidden), `${hidden} is not a card of its own`);
+  }
 });
 
 test("T512: the render tool writes the page beside Loose Threads, returns counts only, and refuses a file it did not write", async (t) => {
@@ -156,8 +158,8 @@ test("T512: the render tool writes the page beside Loose Threads, returns counts
   assert.equal(out.cast_of_characters_path, join(matterRoot, "0. DRAFT", "Cast of Characters.html"));
   assert.ok(existsSync(out.cast_of_characters_path));
   assert.deepEqual(Object.keys(out), ["cast_of_characters_path", "counts"]);
-  assert.deepEqual(out.counts.tabs, { "Service List": 3, Litigants: 3, Witnesses: 3, "Public Bodies": 2 });
-  assert.deepEqual(out.counts.flagged, { unconfirmed: 1, missing_details: 4, conflicting_details: 1, privileged_source: 1 });
+  assert.deepEqual(out.counts.tabs, { "Client(s)": 1, "Service List": 3, Witnesses: 3, Proceedings: 2, "Public Bodies": 2 });
+  assert.deepEqual(out.counts.flagged, { unconfirmed: 1, missing_details: 3, conflicting_details: 1, privileged_source: 1 });
   const again = await render_cast_of_characters(store, { matt_num: "T512", matter_root: matterRoot });
   assert.equal(again.cast_of_characters_path, out.cast_of_characters_path, "its own page is overwritten");
 

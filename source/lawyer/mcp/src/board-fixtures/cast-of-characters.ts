@@ -1,5 +1,6 @@
-// The Cast of Characters page's fixture: the fictional test matter T512 of the 2026-11-06 mockup,
-// drawn through buildCastModel as a real page is. Every name is invented.
+// The Characters page's fixture: the fictional test matter T512 of the 2026-11-06 mockup, with a
+// second proceeding in which the parties' roles are reversed, drawn through buildCastModel as a
+// real page is. Every name is invented.
 
 import { buildCastModel } from "../cast/cast-data.js";
 import type { CastMeta } from "../cast/cast-page.js";
@@ -11,16 +12,18 @@ export const CAST_FIXTURE: { meta: CastMeta; model: ReturnType<typeof buildCastM
   model: buildCastModel({
     mattNum: "T512",
     today: "2026-11-06",
-    partiesWithoutRole: [],
     contactNames: new Map([["c1", "Alan Wei Park"], ["c2", "Maple Grove Dental Inc."]]),
     caseData: {
       status: "ok",
-      proceedings: [{ proceeding_id: 1, court: "BCSC", registry: "Vancouver", file_number: "S-000000", style_of_cause: null, status: "active" }],
+      proceedings: [
+        { proceeding_id: 1, court: "BCSC", registry: "Vancouver", file_number: "S-000000", style_of_cause: null, status: "active" },
+        { proceeding_id: 2, court: "BCSC", registry: "Vancouver", file_number: "S-000777", style_of_cause: null, status: "active" },
+      ],
       parties: [
         {
           party_id: 1, name: "Alan Wei Park", party_type: "individual", lawyer_name: "Pat Counsel", lawyer_firm: "Example Law LLP",
           lawyer_email: "pat@examplelaw.example", lawyer_phone: "604-555-0100", address: "900-555 Sample St, Vancouver BC", contact_info: null,
-          service_address_filed_date: "2026-03-01", replaced_representative: null, proceedings: [{ proceeding_id: 1, role: "plaintiff" }],
+          service_address_filed_date: "2026-03-01", replaced_representative: null, proceedings: [{ proceeding_id: 1, role: "plaintiff" }, { proceeding_id: 2, role: "defendant" }],
           counsel_by_proceeding: [{ proceeding_id: 1, lawyer_name: "Pat Counsel", lawyer_firm: "Example Law LLP", lawyer_email: "pat@examplelaw.example", lawyer_phone: "604-555-0100", address: "900-555 Sample St, Vancouver BC", service_address_filed_date: "2026-03-01" }],
           aliases: [{ text: "ParkA", kind: "file_code" }, { text: "Wei Park", kind: "spelling" }], counsel_aliases: [{ text: "CounselP", kind: "file_code" }],
           counts: { facts: 12, documents: 31 },
@@ -28,7 +31,7 @@ export const CAST_FIXTURE: { meta: CastMeta; model: ReturnType<typeof buildCastM
         {
           party_id: 2, name: "Bo Lin", party_type: "individual", lawyer_name: "Sample Counsel A", lawyer_firm: "Sample LLP",
           lawyer_email: "counsel.a@example.com", lawyer_phone: "604-555-0171", address: "300-111 Sample St, Vancouver BC", contact_info: null,
-          service_address_filed_date: null, replaced_representative: null, proceedings: [{ proceeding_id: 1, role: "defendant" }],
+          service_address_filed_date: null, replaced_representative: null, proceedings: [{ proceeding_id: 1, role: "defendant" }, { proceeding_id: 2, role: "plaintiff" }],
           counsel_by_proceeding: [{ proceeding_id: 1, lawyer_name: "Sample Counsel A", lawyer_firm: "Sample LLP", lawyer_email: "counsel.a@example.com", lawyer_phone: "604-555-0171", address: "300-111 Sample St, Vancouver BC", service_address_filed_date: null }],
           aliases: [{ text: "LinB", kind: "file_code" }], counsel_aliases: [], counts: { facts: 9, documents: 11 },
         },
