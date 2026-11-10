@@ -103,7 +103,7 @@ Source-specific reconciliation and assignment context:
 | `corrections:{YYYY-MM-DD}` | JSON array of correction objects | User edits that survive re-sorts |
 | `sort:latest` | Sort metadata JSON | Last sort summary |
 
-Note: the project tree is synced through the timekeeper plugin's `timecamp` connector, which holds the TimeCamp API token itself (Step 1).
+Note: the project tree is synced through the billing plugin's `timecamp` connector, which holds the TimeCamp API token itself (Step 1).
 
 ### Day Object Schema
 
@@ -195,7 +195,7 @@ Before assigning activities, ensure the project tree is loaded. Check:
 
 ``time-pipeline-data`` `get` — `namespace: "timesort"`, `key: "projects:synced_at"`
 
-If found and fresh, also `get` `projects:lookup` and check one entry for `parent_id` (the shape trigger under **When to sync** below). If not found, stale (> 24 hours), or in the old shape, sync the tree through the `timecamp` connector, calling each tool under whichever of `mcp__plugin_timekeeper_timecamp__<name>` and `mcp__remote-devices__plugin_timekeeper_timecamp__<name>` this host grants. Call its `status` first: if it reports the API unusable, stop and tell the practitioner its reason. Never open the TimeCamp web app as a substitute. Then call its `tasks` with no `query` to fetch every active Project and Task.
+If found and fresh, also `get` `projects:lookup` and check one entry for `parent_id` (the shape trigger under **When to sync** below). If not found, stale (> 24 hours), or in the old shape, sync the tree through the `timecamp` connector, calling each tool under whichever of `mcp__plugin_billing_timecamp__<name>` and `mcp__remote-devices__plugin_billing_timecamp__<name>` this host grants. Call its `status` first: if it reports the API unusable, stop and tell the practitioner its reason. Never open the TimeCamp web app as a substitute. Then call its `tasks` with no `query` to fetch every active Project and Task.
 
 The connector keeps the mandatory trailing slash on `/tasks/`. Confirmed live 2026-09-24 (#940): HTTP 200, 487 entries (Projects and Tasks together).
 

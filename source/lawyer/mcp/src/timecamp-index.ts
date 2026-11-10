@@ -1,7 +1,7 @@
-// The timekeeper plugin's `timecamp` server: the TimeCamp API connector
+// The billing plugin's `timecamp` server: the TimeCamp API connector
 // (docs/Specs/2026-10-15_timecamp-api-connector-spec.md). A third entry point
 // in this package, bundled by scripts/bundle.mjs to
-// source/timekeeper/timecamp-mcp/dist/timecamp-mcp.js. It imports nothing from
+// source/billing/timecamp-mcp/dist/timecamp-mcp.js. It imports nothing from
 // the data server's stores, so the bundle holds none of their schema text.
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";

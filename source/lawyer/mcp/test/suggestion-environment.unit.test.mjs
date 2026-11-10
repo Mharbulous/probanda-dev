@@ -61,6 +61,7 @@ test("the facts name each plugin, installed or not, with its version, and no use
     ["litigator", false, null],
     ["solicitor", false, null],
     ["file-manager", true, null],
+    ["billing", false, null],
     ["timekeeper", false, null],
     ["developer", true, "0.1.29"],
   ]);
@@ -112,14 +113,14 @@ test("tool names reduce to Probanda's own and a count of the rest", () => {
     "mcp__plugin_lawyer_data__preferences__read",
     "mcp__plugin_lawyer_data__preferences__read",
     "mcp__plugin_file-manager_files__file_ops__move",
-    "mcp__plugin_timekeeper_timecamp__entries",
+    "mcp__plugin_billing_timecamp__entries",
     "mcp__plugin_lawyer_nosuchserver__x",
     "Write",
   ]);
   assert.deepEqual(probanda.map((t) => [t.plugin, t.server, t.tool]), [
     ["lawyer", "data", "preferences__read"],
     ["file-manager", "files", "file_ops__move"],
-    ["timekeeper", "timecamp", "entries"],
+    ["billing", "timecamp", "entries"],
   ]);
   assert.equal(others, 2);
 });

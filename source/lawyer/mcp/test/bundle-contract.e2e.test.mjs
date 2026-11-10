@@ -22,7 +22,7 @@ const MCP_ROOT = resolve(HERE, "..");
 const REPO_ROOT = resolve(MCP_ROOT, "..", "..", "..");
 const LITIGATION_BUNDLE = join(MCP_ROOT, "dist", "litigation-mcp.js");
 const FILE_MANAGER_BUNDLE = join(REPO_ROOT, "source", "file-manager", "files-mcp", "dist", "file-manager-mcp.js");
-const TIMECAMP_BUNDLE = join(REPO_ROOT, "source", "timekeeper", "timecamp-mcp", "dist", "timecamp-mcp.js");
+const TIMECAMP_BUNDLE = join(REPO_ROOT, "source", "billing", "timecamp-mcp", "dist", "timecamp-mcp.js");
 const CONTACTS_BUNDLE = join(
   REPO_ROOT, "source", "lawyer", "contacts-calendars-email-mcp", "dist", "contacts-calendars-email-mcp.js"
 );

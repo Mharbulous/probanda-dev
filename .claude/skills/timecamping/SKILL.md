@@ -175,7 +175,7 @@ rests on a stretch SyncoPaid covers, pick at least the first, a middle and
 the last capture, and more wherever the window title moves between matters.
 A stretch whose captures carry no OCR text is where the image matters most.
 Decrypt them as `reference/SyncoPaidCaptures.md` says, and have them viewed
-only by `timekeeper:screenshot-reader`, up to 5 per dispatch, passing no
+only by `billing:screenshot-reader`, up to 5 per dispatch, passing no
 model or effort. A failed decrypt is disclosed in the ceremony.
 Record the viewed capture ids in the proposal's evidence record. A proposal
 resting on a covered stretch without them is not ready to commit.

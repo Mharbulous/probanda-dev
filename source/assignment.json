@@ -193,6 +193,15 @@
       "requires": [
         "lawyer"
       ],
+      "skills": [],
+      "agents": [],
+      "hooks": {},
+      "servers": []
+    },
+    "billing": {
+      "requires": [
+        "lawyer"
+      ],
       "skills": [
         "build-timeline",
         "triage-billing-dates",
@@ -207,8 +216,8 @@
         "screenshot-reader"
       ],
       "hooks": {
-        "ceremony-gate": "source/timekeeper/hooks/ceremony-gate.py",
-        "screenshot-reader-gate": "source/timekeeper/hooks/screenshot-reader-gate.py"
+        "ceremony-gate": "source/billing/hooks/ceremony-gate.py",
+        "screenshot-reader-gate": "source/billing/hooks/screenshot-reader-gate.py"
       },
       "servers": [
         "timecamp"

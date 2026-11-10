@@ -16,7 +16,7 @@ sys.path[:0] = [str(p) for p in (HERE.parents[1] / "skills" / "shared" / "script
                                  HERE.parents[3] / ".claude" / "skills" / "shared" / "scripts") if p.is_dir()]
 import hook_io  # noqa: E402
 
-PROBANDA = ("lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper", "developer")
+PROBANDA = ("lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing", "timekeeper", "developer")
 REASON = (
     "Refused: that file is part of the installed Probanda plugin, a read-only synced copy, "
     "so an edit there does not persist. Do not look for or edit the plugin's source either. "

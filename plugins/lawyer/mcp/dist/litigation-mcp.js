@@ -1,4 +1,4 @@
-// build-stamp: 263563546713
+// build-stamp: 64dd9a4bd4ae
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75111,7 +75111,7 @@ function pluginManifest(installRoot) {
     return { name: null, version: null };
   }
 }
-var SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper"];
+var SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing", "timekeeper"];
 function siblingInstalls(installRoot = INSTALL_ROOT, names = SIBLING_PLUGINS) {
   if (installSkillsRoot(installRoot) === void 0) return [];
   const own = resolve(installRoot);
@@ -75211,7 +75211,7 @@ function rosterLine(installRoot, segment, plugin) {
   }
   const siblings = siblingInstalls(installRoot).map((sibling) => `${sibling.name} ${sibling.version ?? "(no version)"}`);
   const folder = segment ? `"${segment}"` : "this path's folder";
-  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") + (plugin ? `The "${plugin}" plugin ships ${folder}. Install it, or update it, in the desktop app, then fully restart.` : `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`);
+  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager or billing) was found installed beside this one. ") + (plugin ? `The "${plugin}" plugin ships ${folder}. Install it, or update it, in the desktop app, then fully restart.` : `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`);
 }
 function caseDataMigrateScriptsDir(env, installRoot) {
   return migrateScriptsDir("matter-data", env, installRoot);
@@ -75224,7 +75224,7 @@ function submissionDataMigrateScriptsDir(env, installRoot) {
 }
 var MIGRATE_SKILL_PLUGIN = {
   "matter-data": "lawyer",
-  "timecamping-data": "timekeeper",
+  "timecamping-data": "billing",
   "drafting-data": "litigator"
 };
 function migrateScriptsDir(skill, env, installRoot) {
@@ -75261,7 +75261,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "263563546713";
+var BUILD_STAMP = false ? null : "64dd9a4bd4ae";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -77805,7 +77805,7 @@ function timePipelineToolDefinitions() {
   return [
     {
       name: timePipelinePrefixed("get"),
-      description: "Read one value from the time-pipeline key-value store by (namespace, key). Returns { value: null } when the key is absent. Only the /time-pipeline-data skill may call this tool -- you satisfy that by invoking it (Skill: timekeeper:time-pipeline-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "Read one value from the time-pipeline key-value store by (namespace, key). Returns { value: null } when the key is absent. Only the /time-pipeline-data skill may call this tool -- you satisfy that by invoking it (Skill: billing:time-pipeline-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: objectSchema([
         { name: "namespace", type: "str" },
         { name: "key", type: "str" }
@@ -77949,7 +77949,7 @@ function timecampingToolDefinitions() {
   return [
     {
       name: timecampingPrefixed("query"),
-      description: "Run a read-only SELECT/WITH/PRAGMA statement against the timecamping database (a single, fixed, per-practitioner file -- no matter_root/db_path parameter). Only the /timecamping-data skill may call this tool -- you satisfy that by invoking it (Skill: timekeeper:timecamping-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "Run a read-only SELECT/WITH/PRAGMA statement against the timecamping database (a single, fixed, per-practitioner file -- no matter_root/db_path parameter). Only the /timecamping-data skill may call this tool -- you satisfy that by invoking it (Skill: billing:timecamping-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77963,7 +77963,7 @@ function timecampingToolDefinitions() {
     },
     {
       name: timecampingPrefixed("execute"),
-      description: "Run a write SQL script against the timecamping database in a single transaction. A non-success result (error, rejection, timeout, no response) does not prove the script did not commit -- a rejection or give-up after dispatch never reaches the backend at all. Re-read what the script targeted with timecamping_data__query before any further write or retry -- see /timecamping-data's Operation Routing table. Only the /timecamping-data skill may call this tool -- you satisfy that by invoking it (Skill: timekeeper:timecamping-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "Run a write SQL script against the timecamping database in a single transaction. A non-success result (error, rejection, timeout, no response) does not prove the script did not commit -- a rejection or give-up after dispatch never reaches the backend at all. Re-read what the script targeted with timecamping_data__query before any further write or retry -- see /timecamping-data's Operation Routing table. Only the /timecamping-data skill may call this tool -- you satisfy that by invoking it (Skill: billing:timecamping-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: objectSchema([
         { name: "sql_script", type: "str" }
       ], ["sql_script"]),
@@ -77971,7 +77971,7 @@ function timecampingToolDefinitions() {
     },
     {
       name: timecampingPrefixed("bulk_upsert"),
-      description: 'Upsert a whole file of rows into the timecamping database in a single transaction. `path` is an absolute path to a JSONL file on this machine, one JSON object per line: {"table":...,"key":[...],"row":{...}}. `row` maps column names to JSON scalars (null, boolean, number or string; a nested object or array is rejected), and `key` lists the row\'s columns that form the table\'s unique key. Each line inserts its row, or on a conflict over `key` updates the row\'s other columns in place, so a re-run keeps every row\'s id. The server reads the file itself, so the rows never pass through tool arguments. A missing file, a malformed line, an invalid identifier, a nested value or a SQLite error aborts the whole call before the commit and names the line number; nothing partial is written. Returns { lines, rows: { <table>: <count> } }. A non-success result (error, rejection, timeout, no response) does not prove the file did not commit -- a rejection or give-up after dispatch never reaches the backend at all. Re-read what the file targeted with timecamping_data__query before any further write or retry -- see /timecamping-data\'s Operation Routing table. Only the /timecamping-data skill may call this tool -- you satisfy that by invoking it (Skill: timekeeper:timecamping-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.',
+      description: 'Upsert a whole file of rows into the timecamping database in a single transaction. `path` is an absolute path to a JSONL file on this machine, one JSON object per line: {"table":...,"key":[...],"row":{...}}. `row` maps column names to JSON scalars (null, boolean, number or string; a nested object or array is rejected), and `key` lists the row\'s columns that form the table\'s unique key. Each line inserts its row, or on a conflict over `key` updates the row\'s other columns in place, so a re-run keeps every row\'s id. The server reads the file itself, so the rows never pass through tool arguments. A missing file, a malformed line, an invalid identifier, a nested value or a SQLite error aborts the whole call before the commit and names the line number; nothing partial is written. Returns { lines, rows: { <table>: <count> } }. A non-success result (error, rejection, timeout, no response) does not prove the file did not commit -- a rejection or give-up after dispatch never reaches the backend at all. Re-read what the file targeted with timecamping_data__query before any further write or retry -- see /timecamping-data\'s Operation Routing table. Only the /timecamping-data skill may call this tool -- you satisfy that by invoking it (Skill: billing:timecamping-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.',
       inputSchema: objectSchema([
         { name: "path", type: "str" }
       ], ["path"]),
@@ -77979,7 +77979,7 @@ function timecampingToolDefinitions() {
     },
     {
       name: timecampingPrefixed("calls"),
-      description: "The phone calls in a local date range, every outcome and duration, matched to contacts on the last 10 digits of their numbers. `from` and `to` are YYYY-MM-DD. `matter` (a matter number, file number or matter id) returns only the calls with that matter's role-holding contacts and with `numbers`, numbers in any format; without `matter` every call in the range returns, or only those with `numbers` when given. Returns { calls: [{ date, time, direction, duration_seconds, action_result, number, contact_name, contacts: [{ contact_id, name, role, matt_num }] }], contacts_without_phone, numbers_searched, uncovered_dates }. `direction` is null on a call from the older files, which do not record it. `contact_name` is the carrier's. `contacts_without_phone` are the matter's contacts with no number to search. `uncovered_dates` are the dates in the range that no imported archive covers, so no call found there proves nothing. Reads only what `.claude/skills/timecamping-data/scripts/import_calls.py` has loaded. Only the /timecamping-data skill may call this tool -- you satisfy that by invoking it (Skill: timekeeper:timecamping-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "The phone calls in a local date range, every outcome and duration, matched to contacts on the last 10 digits of their numbers. `from` and `to` are YYYY-MM-DD. `matter` (a matter number, file number or matter id) returns only the calls with that matter's role-holding contacts and with `numbers`, numbers in any format; without `matter` every call in the range returns, or only those with `numbers` when given. Returns { calls: [{ date, time, direction, duration_seconds, action_result, number, contact_name, contacts: [{ contact_id, name, role, matt_num }] }], contacts_without_phone, numbers_searched, uncovered_dates }. `direction` is null on a call from the older files, which do not record it. `contact_name` is the carrier's. `contacts_without_phone` are the matter's contacts with no number to search. `uncovered_dates` are the dates in the range that no imported archive covers, so no call found there proves nothing. Reads only what `.claude/skills/timecamping-data/scripts/import_calls.py` has loaded. Only the /timecamping-data skill may call this tool -- you satisfy that by invoking it (Skill: billing:timecamping-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77995,7 +77995,7 @@ function timecampingToolDefinitions() {
     },
     {
       name: timecampingPrefixed("migrate"),
-      description: "Apply every pending schema migration hop to the timecamping database, in order, creating it fresh if it doesn't exist yet. Takes no parameters -- the database path is resolved server-side. This is the only tool that bypasses the schema-version guard, and the only one that may create or upgrade the database's schema. Only the /timecamping-data skill may call this tool -- invoke it (Skill: timekeeper:timecamping-data) and follow the operation it routes you to.",
+      description: "Apply every pending schema migration hop to the timecamping database, in order, creating it fresh if it doesn't exist yet. Takes no parameters -- the database path is resolved server-side. This is the only tool that bypasses the schema-version guard, and the only one that may create or upgrade the database's schema. Only the /timecamping-data skill may call this tool -- invoke it (Skill: billing:timecamping-data) and follow the operation it routes you to.",
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       annotations: { destructiveHint: true, openWorldHint: false }
     }
@@ -80878,7 +80878,7 @@ function suggestionToolDefinitions() {
     },
     {
       name: "suggestion_card__environment_facts",
-      description: "The technical details about Probanda on this computer that a suggestion carries: each Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager, timekeeper, developer), installed or not, with its version; for each installed one, when tool_names is given, which of its tools this session sees and which expected ones are missing (missing is null for a server whose tools this plugin does not know); every other tool as a count only; the host (Cowork or Code, read from how this session's Probanda tool names are written; unknown when none is given); and the operating system. Pass tool_names: every tool name this session sees, exactly as written, Probanda's and every other. It holds no user name, host name or path. Returns {plugins: [{plugin, installed, version, servers?: [{server, visible, missing}]}], other_tools, host, os: {platform, release, arch}}.",
+      description: "The technical details about Probanda on this computer that a suggestion carries: each Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager, billing, timekeeper, developer), installed or not, with its version; for each installed one, when tool_names is given, which of its tools this session sees and which expected ones are missing (missing is null for a server whose tools this plugin does not know); every other tool as a count only; the host (Cowork or Code, read from how this session's Probanda tool names are written; unknown when none is given); and the operating system. Pass tool_names: every tool name this session sees, exactly as written, Probanda's and every other. It holds no user name, host name or path. Returns {plugins: [{plugin, installed, version, servers?: [{server, visible, missing}]}], other_tools, host, os: {platform, release, arch}}.",
       inputSchema: {
         type: "object",
         properties: {
@@ -123832,14 +123832,15 @@ function timecampToolDefinitions() {
 }
 
 // src/suggestions/environment.ts
-var PROBANDA_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper", "developer"];
+var PROBANDA_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing", "timekeeper", "developer"];
 var SERVERS = {
   lawyer: ["data", "contacts-calendars-email"],
   researcher: ["canlii", "commons"],
   litigator: [],
   solicitor: [],
   "file-manager": ["files"],
-  timekeeper: ["timecamp"],
+  billing: ["timecamp"],
+  timekeeper: [],
   developer: []
 };
 function expectedTools(plugin, server) {
@@ -123847,7 +123848,7 @@ function expectedTools(plugin, server) {
   if (plugin === "lawyer" && server === "data") return names(buildToolDefinitions());
   if (plugin === "lawyer" && server === "contacts-calendars-email") return names(buildContactsCalendarsEmailToolDefinitions());
   if (plugin === "file-manager" && server === "files") return names(buildFileManagerToolDefinitions());
-  if (plugin === "timekeeper" && server === "timecamp") return names(timecampToolDefinitions());
+  if (plugin === "billing" && server === "timecamp") return names(timecampToolDefinitions());
   return null;
 }
 var PROBANDA_TOOL = new RegExp(`^mcp__(?:(.+)__)?plugin_(${PROBANDA_PLUGINS.join("|")})_([a-z0-9-]+)__([a-z0-9_]+)$`);

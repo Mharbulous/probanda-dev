@@ -15,12 +15,12 @@ import fake_repo
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "scripts" / "build_plugin.py"
 SOURCE = REPO / "source"
-PLUGINS = ("lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper", "developer",
+PLUGINS = ("lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper", "billing", "developer",
            "tokeneconomizer")
 BUNDLES = {"lawyer": ("contacts-calendars-email-mcp/dist/contacts-calendars-email-mcp.js", "mcp/dist/litigation-mcp.js"),
            "researcher": ("canlii-mcp/dist/canlii-mcp.js", "commons-mcp/dist/legal-commons-mcp.js"),
            "file-manager": ("files-mcp/dist/file-manager-mcp.js",),
-           "timekeeper": ("timecamp-mcp/dist/timecamp-mcp.js",)}
+           "billing": ("timecamp-mcp/dist/timecamp-mcp.js",)}
 
 
 def build(*args):

@@ -41,7 +41,13 @@
       "name": "timekeeper",
       "source": "./plugins/timekeeper",
       "author": {"name": "Probanda Legal (experimental)", "url": "https://github.com/Probanda-app"},
-      "description": "Optional. Automated time tracking: gathers the evidence of a day's work, sorts it to client matters, corrects TimeCamp and drafts time entries. Billing stays in lawyer. Requires lawyer. Install lawyer first, then timekeeper."
+      "description": "Retired: replaced by billing, and ships nothing. Install billing, then remove timekeeper."
+    },
+    {
+      "name": "billing",
+      "source": "./plugins/billing",
+      "author": {"name": "Probanda Legal (experimental)", "url": "https://github.com/Probanda-app"},
+      "description": "Optional. Time tracking and billing: gathers the evidence of a day's work, sorts it to client matters, corrects TimeCamp and drafts time entries. Requires lawyer. Install lawyer first, then billing."
     },
     {
       "name": "developer",

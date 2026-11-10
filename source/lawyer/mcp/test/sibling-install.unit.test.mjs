@@ -141,7 +141,7 @@ test("a folder named and manifested probanda is ignored", (t) => {
   assert.deepEqual(siblingInstalls(s.own), []);
   const err = errorOf(() => served(s.own, "verify-law/SKILL.md"));
   assert.equal(err.code, "skills_root_missing");
-  assert.match(err.message, /No other Probanda plugin \(lawyer, researcher, litigator, solicitor, file-manager or timekeeper\) was found installed beside this one/);
+  assert.match(err.message, /No other Probanda plugin \(lawyer, researcher, litigator, solicitor, file-manager or billing\) was found installed beside this one/);
 });
 
 test("a sibling with no skills/shared/ is ignored", (t) => {

@@ -1,4 +1,4 @@
-// The TimeCamp API client of the timekeeper plugin's `timecamp` server
+// The TimeCamp API client of the billing plugin's `timecamp` server
 // (docs/Specs/2026-10-15_timecamp-api-connector-spec.md). It runs on the
 // practitioner's computer and talks only to www.timecamp.com.
 //

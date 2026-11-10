@@ -1,4 +1,4 @@
-// The tools of the timekeeper plugin's `timecamp` server
+// The tools of the billing plugin's `timecamp` server
 // (docs/Specs/2026-10-15_timecamp-api-connector-spec.md): configure_credential
 // and status, four reads (tasks, entries, activities) and update_entry, the one
 // write, which is the call /timecamping already made for an approved

@@ -80,7 +80,7 @@ When the practitioner invokes invoice-reviewing for a matter (or a set of matter
 Call `time-entries` for the matter. If it returns `{rows: []}`, stop immediately:
 
 > "No time entries found for [matter]. Nothing to review. If entries exist in your practice
-> management system, import them, or run time-entry-drafting if the timekeeper plugin is
+> management system, import them, or run time-entry-drafting if the billing plugin is
 > installed, before reviewing."
 
 Do not run any other checks.

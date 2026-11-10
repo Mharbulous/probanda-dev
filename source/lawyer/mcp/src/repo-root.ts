@@ -247,7 +247,7 @@ export function pluginManifest(installRoot: string): { name: string | null; vers
 
 /** The only plugins whose installs may serve skill source beside this one, in lookup order. Any other
  *  manifest name is ignored, so a stale `probanda` left beside them can never serve a file. */
-const SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper"];
+const SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing", "timekeeper"];
 
 export interface SiblingInstall {
   /** The manifest `name`, never the folder name: a host may name the folder `plugin_<id>`. */
@@ -420,7 +420,7 @@ function rosterLine(installRoot: string, segment: string, plugin?: string): stri
     `${folder} is not among them. ` +
     (siblings.length
       ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. `
-      : "No other Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") +
+      : "No other Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager or billing) was found installed beside this one. ") +
     (plugin
       ? `The "${plugin}" plugin ships ${folder}. Install it, or update it, in the desktop app, then fully restart.`
       : `The plugin that holds ${folder} is not installed on this PC's copy of the plugins ` +
@@ -471,7 +471,7 @@ export function submissionDataMigrateScriptsDir(env?: NodeJS.ProcessEnv, install
 /** The plugin source/assignment.json gives each skill that owns a migrate_engine.py. */
 const MIGRATE_SKILL_PLUGIN: Record<string, string> = {
   "matter-data": "lawyer",
-  "timecamping-data": "timekeeper",
+  "timecamping-data": "billing",
   "drafting-data": "litigator",
 };
 

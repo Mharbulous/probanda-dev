@@ -40,7 +40,7 @@ For each supported source the user selected, run its setup sub-procedure. These 
 
 ### 2a: TimeCamp Setup
 
-1. Check the connector: call the timekeeper plugin's `timecamp` connector's `status`. Its tools are named without their prefix: call each under whichever of `mcp__plugin_timekeeper_timecamp__<name>` and `mcp__remote-devices__plugin_timekeeper_timecamp__<name>` this host grants. It holds the TimeCamp API token itself, and no skill reads, stores or passes it.
+1. Check the connector: call the billing plugin's `timecamp` connector's `status`. Its tools are named without their prefix: call each under whichever of `mcp__plugin_billing_timecamp__<name>` and `mcp__remote-devices__plugin_billing_timecamp__<name>` this host grants. It holds the TimeCamp API token itself, and no skill reads, stores or passes it.
 2. If it reports `usable: true`, confirm: *"TimeCamp is already connected as {user}. Want to keep using that token, or replace it?"*
 3. If no token is set, or the practitioner wants to replace it, call the connector's `configure_credential` and send the practitioner the link it returns: *"I need your TimeCamp API token to fetch your computer activities. Paste it on this page, not in chat: {link}. You can find it at: TimeCamp > click your avatar > Profile Settings > scroll to the bottom for 'Your programming API token'."*
 4. When they say it is done, call `status` again. The page has already checked the token with TimeCamp before saving it.

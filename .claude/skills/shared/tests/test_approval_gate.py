@@ -363,7 +363,7 @@ UNGATED = [
     "mcp__plugin_lawyer_contacts-calendars-email__mail__list_headers",
     "mcp__plugin_lawyer_contacts-calendars-email__mail__save_message",
     "mcp__plugin_lawyer_contacts-calendars-email__mail__move_messages",
-    "mcp__plugin_timekeeper_timecamp__update_entry", "mcp__remote-devices__plugin_timekeeper_timecamp__update_entry",
+    "mcp__plugin_billing_timecamp__update_entry", "mcp__remote-devices__plugin_billing_timecamp__update_entry",
 ]
 
 

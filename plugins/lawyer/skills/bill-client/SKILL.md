@@ -131,7 +131,7 @@ Invoke the `practice-data` skill's `invoice-data` operation for the matter numbe
 
 Write each numbered item's row in the bill record as it finishes.
 
-This step needs the timekeeper plugin. If no timekeeper skill is in your skill list, tell the practitioner that the time work needs the timekeeper plugin installed, and stop. Never tally time from the TimeCamp web app: a figure that did not come from the connector is not used.
+This step needs the billing plugin. If no billing skill is in your skill list, tell the practitioner that the time work needs the billing plugin installed, and stop. Never tally time from the TimeCamp web app: a figure that did not come from the connector is not used.
 
 1. **Candidate dates.** Invoke `/triage-billing-dates` for the matter, giving it the last invoice's facts from Step 4 or its row, so the PDF is read once.
 2. **Judge the days.** **In Cowork, stop here,** before `/timecamping` starts. In Cowork (this host grants the data tools as `mcp__remote-devices__plugin_lawyer_data__<name>`), a day's review cannot finish, because SyncoPaid's screen captures can be read only on the PC. Tell the practitioner so, that the candidate list is saved, and how to carry on: open a Code-tab session in the desktop app, in the matter's folder, and type `/bill-client`. Do not retry or probe in Cowork. Everywhere else, invoke `/timecamping` with the candidate list. It works the Strong and Medium dates, strongest first, and every change it makes to TimeCamp waits for the practitioner's approval.

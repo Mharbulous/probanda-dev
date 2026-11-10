@@ -101,7 +101,7 @@ skill is the only one that creates a to-do, and a drafting session hands its to-
 1. Identify the to-do by description or ID
 2. Ask for actual time spent (optional — feeds billing and estimate calibration)
 3. Invoke ``practice-data`` `complete-task` with the to-do's ID and actual hours
-4. Confirm completion; when the timekeeper plugin is installed, tell the practitioner they can run `/time-entry-drafting` for the day the work was done (without it, say nothing about time entries)
+4. Confirm completion; when the billing plugin is installed, tell the practitioner they can run `/time-entry-drafting` for the day the work was done (without it, say nothing about time entries)
 
 ### 4. Send retainer replenishment notice
 

@@ -14,7 +14,7 @@ export function timePipelineToolDefinitions(): ToolDefinition[] {
     {
       name: timePipelinePrefixed("get"),
       description:
-        "Read one value from the time-pipeline key-value store by (namespace, key). Returns { value: null } when the key is absent. Only the /time-pipeline-data skill may call this tool -- you satisfy that by invoking it (Skill: timekeeper:time-pipeline-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+        "Read one value from the time-pipeline key-value store by (namespace, key). Returns { value: null } when the key is absent. Only the /time-pipeline-data skill may call this tool -- you satisfy that by invoking it (Skill: billing:time-pipeline-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: objectSchema([
         { name: "namespace", type: "str" },
         { name: "key", type: "str" },

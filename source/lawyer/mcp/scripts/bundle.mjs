@@ -12,9 +12,9 @@ const outfile = resolve(root, "dist", "litigation-mcp.js");
 // same source, serving only the file_ops__* and housekeeping__* tools
 // (src/file-manager-index.ts, docs/Plans/2026-10-14_file-admin-plugin.md).
 const fileManagerOutfile = resolve(root, "..", "..", "file-manager", "files-mcp", "dist", "file-manager-mcp.js");
-// The timekeeper plugin's `timecamp` server: a third entry point, serving only the
+// The billing plugin's `timecamp` server: a third entry point, serving only the
 // TimeCamp API tools (src/timecamp-index.ts, docs/Specs/2026-10-15_timecamp-api-connector-spec.md).
-const timecampOutfile = resolve(root, "..", "..", "timekeeper", "timecamp-mcp", "dist", "timecamp-mcp.js");
+const timecampOutfile = resolve(root, "..", "..", "billing", "timecamp-mcp", "dist", "timecamp-mcp.js");
 // The lawyer plugin's `contacts-calendars-email` server: a fourth entry point, serving only the
 // mail, calendar and contacts tools (src/contacts-calendars-email-index.ts).
 const contactsCalendarsEmailOutfile = resolve(

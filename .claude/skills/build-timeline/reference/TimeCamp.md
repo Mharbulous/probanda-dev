@@ -16,10 +16,10 @@ This skill aligns with TimeCamp's own concepts:
 
 ## The TimeCamp connector
 
-TimeCamp is read only through the timekeeper plugin's `timecamp` connector, a
+TimeCamp is read only through the billing plugin's `timecamp` connector, a
 local server. Its tools are named without their prefix. Call each under
-whichever of `mcp__plugin_timekeeper_timecamp__<name>` and
-`mcp__remote-devices__plugin_timekeeper_timecamp__<name>` this host grants. It holds the
+whichever of `mcp__plugin_billing_timecamp__<name>` and
+`mcp__remote-devices__plugin_billing_timecamp__<name>` this host grants. It holds the
 API token itself: no skill reads, stores or passes the token.
 
 **Hard rule.** Before fetching, call the connector's `status`. If it reports

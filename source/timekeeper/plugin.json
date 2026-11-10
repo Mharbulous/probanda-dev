@@ -1,8 +1,8 @@
 {
   "name": "timekeeper",
   "displayName": "Timekeeper",
-  "version": "0.8.12",
-  "description": "Optional Probanda plugin for British Columbia lawyers that tracks time automatically: it gathers the evidence of a day's work (TimeCamp, phone logs, calendars, sent mail, screen activity), sorts it to client matters, corrects TimeCamp and drafts time entries. Billing, invoices and trust stay in the lawyer plugin. Requires the lawyer plugin: install lawyer first.",
+  "version": "0.9.0",
+  "description": "Retired. Its skills, agent, hooks and TimeCamp server moved to the billing plugin, which replaces it. It ships nothing. Install billing instead, then remove this plugin.",
   "author": {
     "name": "Probanda Legal",
     "url": "https://github.com/Probanda-app"
@@ -15,38 +15,5 @@
       "marketplace": "Probanda_Legal_experimental",
       "version": "^0.26.0"
     }
-  ],
-  "mcpServers": "./.mcp.json",
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "^AskUserQuestion$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PLUGIN_ROOT}/hooks/ceremony-gate.py"
-            ],
-            "timeout": 10,
-            "statusMessage": "Time-block question gate"
-          }
-        ]
-      },
-      {
-        "matcher": "^(Read|Agent|Task)$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PLUGIN_ROOT}/hooks/screenshot-reader-gate.py"
-            ],
-            "timeout": 10,
-            "statusMessage": "Screenshot reader gate"
-          }
-        ]
-      }
-    ]
-  }
+  ]
 }

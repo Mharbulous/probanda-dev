@@ -6,7 +6,7 @@
 // What this server sees by itself: the plugin installs beside its own (siblingInstalls, the same
 // lookup that serves skill source, on every install layout), their manifests' versions, the tools of
 // the servers this package builds (lawyer's data and contacts-calendars-email servers, file-manager's
-// files server, timekeeper's timecamp server), and the operating system it runs on. What only the
+// files server, billing's timecamp server), and the operating system it runs on. What only the
 // session sees is which tools it was given, so the calling skill passes its tool names in, and this
 // code reduces them to Probanda's own tool names and a count of the rest. The host is read from those
 // names too: in Cowork, Probanda's tools reach the session bridged, under a prefix
@@ -28,7 +28,7 @@ import {
 } from "../schema-gen.js";
 import { timecampToolDefinitions } from "../timecamp/tools.js";
 
-export const PROBANDA_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper", "developer"] as const;
+export const PROBANDA_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing", "timekeeper", "developer"] as const;
 export type ProbandaPlugin = (typeof PROBANDA_PLUGINS)[number];
 
 /** Each plugin's MCP server keys (CLAUDE.md, Permanent names). */
@@ -38,7 +38,8 @@ export const SERVERS: Record<ProbandaPlugin, readonly string[]> = {
   litigator: [],
   solicitor: [],
   "file-manager": ["files"],
-  timekeeper: ["timecamp"],
+  billing: ["timecamp"],
+  timekeeper: [],
   developer: [],
 };
 
@@ -48,7 +49,7 @@ export function expectedTools(plugin: ProbandaPlugin, server: string): string[] 
   if (plugin === "lawyer" && server === "data") return names(buildToolDefinitions());
   if (plugin === "lawyer" && server === "contacts-calendars-email") return names(buildContactsCalendarsEmailToolDefinitions());
   if (plugin === "file-manager" && server === "files") return names(buildFileManagerToolDefinitions());
-  if (plugin === "timekeeper" && server === "timecamp") return names(timecampToolDefinitions());
+  if (plugin === "billing" && server === "timecamp") return names(timecampToolDefinitions());
   return null;
 }
 

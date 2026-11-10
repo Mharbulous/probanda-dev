@@ -20,7 +20,7 @@ Turn a matter's TimeCamp entries since the last bill into lines the practitioner
 
 Working files go in `<matter-data folder>\vet-billable-time\`, and the two reports in the matter's draft folder's `BILLING` subfolder, resolved as `shared/workspace-output-rule.md` says. Create only the `BILLING` leaf if it is absent.
 
-Connector tools are named without their prefix. Call each under whichever of `mcp__plugin_timekeeper_timecamp__<name>` and `mcp__remote-devices__plugin_timekeeper_timecamp__<name>` this host grants. This skill never calls `update_entry`: a change of matter or note goes back to `/timecamping`.
+Connector tools are named without their prefix. Call each under whichever of `mcp__plugin_billing_timecamp__<name>` and `mcp__remote-devices__plugin_billing_timecamp__<name>` this host grants. This skill never calls `update_entry`: a change of matter or note goes back to `/timecamping`.
 
 ## Steps
 

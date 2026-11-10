@@ -1,4 +1,4 @@
-// build-stamp: ed234031acad
+// build-stamp: 5b4cbc4e017f
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -17121,7 +17121,7 @@ function pluginManifest(installRoot) {
     return { name: null, version: null };
   }
 }
-var SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper"];
+var SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing", "timekeeper"];
 function siblingInstalls(installRoot = INSTALL_ROOT, names = SIBLING_PLUGINS) {
   if (installSkillsRoot(installRoot) === void 0) return [];
   const own = resolve2(installRoot);
@@ -17221,14 +17221,14 @@ function rosterLine(installRoot, segment, plugin) {
   }
   const siblings = siblingInstalls(installRoot).map((sibling) => `${sibling.name} ${sibling.version ?? "(no version)"}`);
   const folder = segment ? `"${segment}"` : "this path's folder";
-  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") + (plugin ? `The "${plugin}" plugin ships ${folder}. Install it, or update it, in the desktop app, then fully restart.` : `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`);
+  return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager or billing) was found installed beside this one. ") + (plugin ? `The "${plugin}" plugin ships ${folder}. Install it, or update it, in the desktop app, then fully restart.` : `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`);
 }
 function caseDataMigrateScriptsDir(env, installRoot) {
   return migrateScriptsDir("matter-data", env, installRoot);
 }
 var MIGRATE_SKILL_PLUGIN = {
   "matter-data": "lawyer",
-  "timecamping-data": "timekeeper",
+  "timecamping-data": "billing",
   "drafting-data": "litigator"
 };
 function migrateScriptsDir(skill, env, installRoot) {
@@ -24602,7 +24602,7 @@ import { existsSync as existsSync15, realpathSync as realpathSync10, statSync as
 import { win32 as pathWin3216 } from "node:path";
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "ed234031acad";
+var BUILD_STAMP = false ? null : "5b4cbc4e017f";
 
 // src/local-page/durable.ts
 import { closeSync as closeSync4, fsyncSync as fsyncSync2, openSync as openSync4, writeSync as writeSync2 } from "node:fs";
