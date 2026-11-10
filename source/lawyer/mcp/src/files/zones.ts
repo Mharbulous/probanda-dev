@@ -22,7 +22,7 @@ export type ZonePurpose = "read" | "scan" | "write" | "move-from" | "move-to" | 
 const FIREWALL = /^(privileged|disclosed)$/i;
 const TRASH = /^trash$/i;
 const CASE_DATA = /^0\. case data$/i;
-/** The matter's draft folder: `0. DRAFT*`, whatever follows the word (.claude/skills/AGENTS.md). */
+/** The matter's draft folder: `0. DRAFT*`, whatever follows the word (source/skills/shared/workspace-output-rule.md). */
 const DRAFT_FOLDER = /^0\. DRAFT/i;
 const FOLDERS_0_AND_1 = /^[01]\./;
 

@@ -1,8 +1,8 @@
 // The /housekeeping run directory (housekeeping redesign spec §B8.1).
 //
 // Every file of a run lives in `<matter-data folder>\housekeeping\<run-id>\`, the matter-data folder
-// being the one the matter's probanda.json names (.claude/skills/AGENTS.md "Workspace output
-// rule"). It must already exist; `housekeeping` beneath it is created on demand. This server
+// being the one the matter's probanda.json names (source/skills/shared/workspace-output-rule.md
+// "Workspace output rule"). It must already exist; `housekeeping` beneath it is created on demand. This server
 // writes every file of a run: the session cannot write into the matter-data folder in the
 // linked-device topology. The confinement is a realpath equality, not a prefix test: the run
 // directory's canonical path must be exactly the canonical matter-data folder, `housekeeping` and

@@ -534,9 +534,9 @@ class TestShippedTreePurity(FixtureTest):
 
         hits, _ = self.fixture.purity()
         self.assertEqual(sorted(hits), [
-            "matter_code hits over baseline in source/skills/shared/conventions.md: 2 (baseline 0)",
             "matter_code hits over baseline in source/litigator/agents/helper.md: 1 (baseline 0)",
             "matter_code hits over baseline in source/litigator/mcp/test/fixtures/rule-overlay/r.json: 1 (baseline 0)",
+            "matter_code hits over baseline in source/skills/shared/conventions.md: 2 (baseline 0)",
         ])
         for code in ("L1234", "L5678", "L9999", "L4321"):
             self.assertFalse(any(code in h for h in hits))
@@ -594,6 +594,10 @@ class TestPublicSkill(FixtureTest):
     def test_skill_in_both_places_fails(self):
         self.fixture.write("source/skills/beta/SKILL.md", skill_md("beta", "A private copy."))
         self.assertOnlyFails("shipped-tree-purity", "skill in both public/ and source/skills/: beta")
+
+    def test_skill_folder_in_claude_skills_fails(self):
+        self.fixture.write(".claude/skills/alpha/SKILL.md", skill_md("alpha", "A project-skill copy."))
+        self.assertOnlyFails("shipped-tree-purity", "skill folder in .claude/skills/ (the source is source/skills/): alpha")
 
     def test_overlong_public_description_fails(self):
         self.fixture.write(self.PUBLIC + "beta/SKILL.md", skill_md("beta", "x" * 1100))

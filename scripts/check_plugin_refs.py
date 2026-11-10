@@ -149,7 +149,7 @@ def reference_hit_verdict(hits, known):
 
 
 def check_no_absolute_repo_paths(repo, plugin):
-    needle = os.path.join(repo, ".claude")
+    needle = os.path.join(repo, "source")
     abs_hits = []
     for s in skill_names(repo, plugin):
         if not os.path.isfile(skill_md(repo, s)):
