@@ -10,14 +10,18 @@ terms:
   - Assign
   - Attachment
   - Authority
+  - Auto-assigned
   - Badge
   - Bare Row
   - Basis
+  - Block
   - Bundle (application)
   - Bundle (ingest)
+  - Candidate date
   - Case brief
   - Cause of Action Concept
   - Clause
+  - Clear (day)
   - Client account
   - Close as superseded
   - Completion criteria
@@ -33,6 +37,9 @@ terms:
   - Court Rule
   - Criterion
   - Current package
+  - Date claim
+  - Day reviewer
+  - Day snapshot
   - Dead key
   - Defence
   - Delete (file)
@@ -57,6 +64,7 @@ terms:
   - Filing-ready declaration
   - Final review
   - Fingerprint
+  - Flagged
   - Form-bound writing
   - Free-form writing
   - General Job
@@ -65,6 +73,7 @@ terms:
   - Issue
   - Item
   - Job
+  - Judged
   - Lawyer account
   - Leading document
   - Legal Citation
@@ -112,6 +121,7 @@ terms:
   - Qualified admission
   - Ratio decidendi
   - Rationale
+  - Reading
   - Recommendation
   - Record
   - Recovery
@@ -143,6 +153,7 @@ terms:
   - Tender (adduce)
   - Test
   - Theorized Fact
+  - Time review page
   - To-do
   - Treatment
   - Tribunal member
@@ -202,6 +213,10 @@ _Avoid_: annexure, appendix (fine in a specific document's own vocabulary, not a
 **Authority**:
 Reusable legal material with zero client data: case law, legislation, regulations, treatises. Authorities live outside any matter and are shared across matters.
 
+**Auto-assigned**:
+The state of a **Block** whose matter and description the day review settled from the evidence without doubt. It carries no flag, the practitioner has not acted on it, and it is never shown as approved.
+_Avoid_: approved (the practitioner's own act); silent commit.
+
 **Badge**:
 The status a practitioner sees for a **Suggestion** they sent, under Past suggestions. Probanda's Cloud computes it from the suggestion's own status (submitted, under review or withdrawn) and each **Item**'s (undecided, approved, declined or implemented), and nothing else computes it. There are six:
 - **Submitted**: sent, and triage has not opened it yet.
@@ -228,6 +243,10 @@ _Avoid_: billing run, session (a bill in progress outlives both); draft invoice 
 The dates a bill in progress covers: from the day after the last billed date through the day before the bill date. Work done on the bill date waits for the next bill, so no day is billed in part. The period keeps widening until the practitioner says the draft is ready for signature.
 _Avoid_: unbilled window; a period that runs to today.
 
+**Block**:
+A continuous span of one day's time given to exactly one matter, or to one non-billable code, with a start, an end and one invoice description. It is the unit the practitioner reviews and the unit a bill's time is built from. A day's blocks never overlap, so no minute goes to two matters.
+_Avoid_: entry (a record in the time tracker, which a block may or may not match); line (an invoice line, which may sum several blocks).
+
 **Bundle (application)**:
 An application as a whole: the lead Writing, its supporting documents, and the surrounding work of the availability letter, filing and service, and the application book. No stored record. Every bundle-level job is scoped to the lead Writing, whose Work Board and completion-criteria card are the tracker. Not **Bundle (ingest)**.
 _Avoid_: package (the assembled files the gate reads); application book (one product within it).
@@ -242,6 +261,10 @@ The general body of law describing a cause of action (a kind of Legal Concept), 
 **Clause**:
 One self-contained statement of law. It can be read alone, with no pronoun or reference pointing outside it. The unit that is embedded and compared. There are four clause types. **Element**, **Exception** and **Factor** are a proposition's conditions, and a **Rationale** explains a proposition. A clause takes its type from the proposition that uses it. The clause a proposition entails is that proposition's **Consequence**. One clause may be an element of one proposition and the consequence of another.
 _Avoid_: clause for a numbered provision of a contract or statute (say provision, or contract clause); statement (taken by **Statement of fact** and **Statement of law**). The drafting database's `clauses` table is a frozen code name for a clause of a Writing, not this sense.
+
+**Clear (day)**:
+A day on which no **Flagged** block remains, across all matters. Acting on one block never clears another. A day stops being clear when one of its time entries changes after the day was **Judged**.
+_Avoid_: done; reviewed; approved day.
 
 **Client account**:
 The billing record for a client: the practice-data `client` item, with its client number, lawyers and account label. Not who the client is: that is each **Contact** holding a **Matter role** tagged `client` on the matter, so joint clients are one account with two client roles.
@@ -300,6 +323,18 @@ _Avoid_: checkbox (nothing ticks it); requirement; the pre-filing checks (the ga
 **Current package**:
 A package for which at least one gate step records a pre-filing check run at the database's current revision. The only sense in which the render knows a package exists.
 _Avoid_: package built; assembled (no record of either exists).
+
+**Date claim**:
+One run's hold on a date while it reviews that date, so that no second run reviews it at the same time. It refuses a second claimant, and it lapses after a set time, so a run that dies never holds the date for good.
+_Avoid_: lock; assignment.
+
+**Day reviewer**:
+Whoever judges one whole day from its assembled evidence: the day's **Blocks**, each block's matter and description, and a flag wherever doubt remains. It proposes only, and changes neither the time tracker nor a bill.
+_Avoid_: vetter; timekeeper.
+
+**Day snapshot**:
+The record of a day's time entries as they stood when the day was **Judged**, kept so that a later change to any of them is found.
+_Avoid_: **Fingerprint** (a Suggestion's).
 
 **Dead key**:
 A `ticket_proposals` key whose Proposal no longer derives from the render's inventory, meaning the marker no longer fires on that row.
@@ -393,6 +428,10 @@ _Avoid_: approval (the record, not the act); sign-off; verification (🔬, the r
 What identifies a **Suggestion** Probanda noticed: the plugin, its version, the skill, and the kind of observation (a tool error, a refusal, a missing tool, repeated calls, or one step using many tokens). On the practitioner's computer it keeps a card from being raised again for the same plugin, skill and kind for 30 days after one was dismissed, sent or left unanswered, and for as long as the plugin is still at the version that card was built under. At triage, an issue whose suggestion has the same fingerprint and matching items as one awaiting the maintainer is decided with it: a view over separate records, which are never merged. A suggestion the practitioner started has none.
 _Avoid_: hash; signature; merge (the records stay separate).
 
+**Flagged**:
+The state of a **Block** when doubt remains about its matter, or about what goes on the bill, and the day review could not resolve it. A flagged block needs the practitioner's action before its time is billed.
+_Avoid_: pending; ceremony (the question in chat that a flag replaces); **Doubt** (a reason to distrust a statement of fact or law).
+
 **Form-bound writing**:
 Legal writing for which the venue publishes the form document itself, with fixed fields and wording: a BCSC Form 32, a Small Claims Form 2, the BCCA respondent's factum. A venue that prescribes only structure (parts, headings, numbering, caption, page limit, required statements) does not make a writing form-bound. Drafting it takes a specialist skill for that form; when none exists, the gap is reported, and the writing is drafted as an Unstructured Writing, its fixed wording copied from a saved copy of the published form.
 _Avoid_: court form (names the filed artifact, not the kind of writing); template (also means a firm precedent); bespoke (the rendering path, not the kind of writing).
@@ -424,6 +463,10 @@ _Avoid_: pain (a suggestion has one pain point and its items); ticket; change re
 One unit of session work for `/draft`, shown on the Work Board as a job card — either drafting/research work scoped to a Writing, a **Standalone Work Board** or a proceeding (`kind = 'work'`), or the work of outlining further jobs (`kind = 'charting'`). Every card is a job: there is no job/to-do split. Stored, and always rendered on the Work Board — never on any advocacy document. Always belongs to a proceeding, never to the matter alone, including a pre-filing proceeding. A session refers to one as "Job #6", never bare "#6". File names and prose say job (`drafting-data/references/jobs.md`, `draft/references/job-session.md`). Database and code identifiers are unchanged: the `tickets` table and every `ticket_*` table and `ticket_id` column, the `#ticket-N` anchors on the board, the `board_data` key `tickets` and the Goal card's `tickets` criterion id.
 _Avoid_: ticket (reserved for development tasks such as GitHub issues and Wayfinder tickets, and for database identifiers); task (collides with software usage — the design's own deliberate choice); assignment (it implies a transfer of responsibility); to-do (a practice-registry row, see **To-do**).
 
+**Judged**:
+The state of a date once the day review has given every **Block** on it a matter and a description, flagged or not. A date is judged once for every matter, never once per bill. Judged is not **Clear (day)**: flagged blocks may remain.
+_Avoid_: reviewed; done.
+
 **Lawyer account**:
 One currently practising lawyer's identity with Probanda, matched to that lawyer's law-society directory record. It is **provisional** from the match until the lawyer proves they are the person in that record, then **verified**, and **suspended** while the directory shows them not practising. It owns the lawyer's keys, one for each device, and every shared service (the legal commons, the Suggestion Box, the troubleshooting store) accepts only a key that belongs to a live account. A firm's lawyers each have their own account, and all of them work in their practice's one tenant.
 _Avoid_: user (also means anyone using the plugin, including staff); install key (one device's key, owned by the account); tenant (the practice, not the person).
@@ -438,6 +481,10 @@ A reported case or statute citation (e.g. a neutral citation or statute chapter 
 **Legal Concept**:
 A named body of law as case data stores it: a cause of action, doctrine, test, defence or remedy. Legal concepts are reusable law, not tied to any matter. The kind `test` is a frozen code value for a body of law known by a test's name, not a **Test**.
 _Avoid_: Legal Theory (avoid the term entirely; use "Legal Concept" for general law or "Asserted Cause of Action" for the case-specific instance — "Legal Theory" conflates the two and adds no precision).
+
+**Candidate date**:
+A date in a **Billing period** that shows some sign of work on the matter, rated Strong, Medium or Weak by the evidence for it. The candidate dates decide which days are reviewed for a bill, never what is billed.
+_Avoid_: billable date; work date.
 
 **Case brief**:
 A one-page structured summary of one decision, kept in the matter's `6. LAW` folder: the case, the facts that matter, the procedural history, the issues, the holding on each issue, the ratio decidendi, any obiter dicta and the disposition. It is usually asked for because a submission relies on the case. A case brief is always of someone else's case, read to compare it with the working matter, so there is never a brief of a decision in the working matter's own litigation. Like a **Legal memo**, it names nothing of the working matter: why the case matters to the matter belongs in the Writing that relies on it.
@@ -626,6 +673,10 @@ _Avoid_: ratio for "the court's own words" (obiter is also the court's own words
 A clause that states why a proposition exists: its purpose, basis or justification. The way to tell one: it is the "because" that justifies the proposition, and it is not a statement of the rule. It helps a decision maker understand the proposition, and decide when and how to exercise a discretion the proposition grants. It states no outcome and no condition, so it never decides whether the consequence follows and never counts when two propositions are compared. It attaches to a proposition, with the principle that states it, and one rationale may be shared by several propositions. It is kept, never discarded.
 _Avoid_: rationale for a condition (an **Element**, **Exception** or **Factor**); a rationale attached to a single condition or to a consequence (it attaches to a proposition, and its own words name what it explains); **Ratio decidendi**.
 
+**Reading**:
+What the screenshot reader reported seeing in one screen capture, or its answer to a later question about that capture. It is kept with the capture, so no capture is looked at twice for the same thing. A reading says what is on screen, never a matter or a billing judgment.
+_Avoid_: OCR text; description (a block's invoice description).
+
 **Recommendation**:
 An answer formed from information already within reach — the repository, the matter's files, tool results, the conversation — without sending a separate agent off to research the point.
 _Avoid_: hunch (understates it); advice (overstates it — no independent research yet).
@@ -755,6 +806,10 @@ _Avoid_: limb (an alternative limb is a test of its own; a cumulative limb is an
 
 **Theorized Fact**:
 A fact **theorized for the purpose of investigation** — a fact the case theory needs but that no source yet evidences. It cannot be derived from anything (theorizing is an act, not an inference), so it is recorded; but it is **not a party position** (no stance is on any record) and **not a posture** (nothing exists to derive one from). What it *is* is **provenance**: the fact's source is the case theory itself, modelled as a well-known placeholder source (one *Theory of the case* work-product source per application, created lazily). A theorized fact is precisely a fact whose only provenance is that theory placeholder and whose evidence is empty — the trial-prep gap described under **Provenance**, at the earliest stage, where "not yet evidenced" is the expected pre-affidavit state, not a defect. It is privileged work product, so its `main.facts` row is a **Bare Row**: the wording lives on the privileged side only. It graduates when a non-privileged source states the same Fact, so the row takes that source's own Statement of Fact, and real evidence then lands: an ordinary evidence link makes it an ordinary evidenced fact, and it stops being theorized **by construction** — no "evidenced" marker exists or is needed. The theory provenance stays as the history of how the fact entered. The only other exit is **Dismissed**.
+
+**Time review page**:
+The page on which the practitioner audits a day's **Blocks**, each with its evidence, and approves, corrects, writes off, splits or merges them.
+_Avoid_: timesheet; dashboard; board.
 
 **To-do**:
 One row of the practitioner's task registry (`/task-prioritization`), client, admin or professional work, larger than a job. A to-do is one outcome the practitioner would cross off. The work toward it is jobs on its Writing's Work Board, never further to-dos. "To-do" is its visible name everywhere. It may carry a BF (bring-forward) date, the date its work should start and never time remaining, and a deadline, which drafting sessions never see. It may point to one Writing or pre-filing proceeding of its own matter, and it holds no jobs. A Writing has at most one open to-do within its matter. A to-do entered in error or merged into another is `withdrawn`: kept, never open and never completed. Internal names are unchanged: the `practice_tasks` table, the `/task-prioritization` skill and the task tools.
