@@ -11,7 +11,7 @@
 --   18:    v6.4 case brief query
 --   19:    v6.6 authority treatment chain
 --   20-21: v7.0 B2 gap-closure reads (criteria_facts, privileged_sources)
---   05c:   v7.1 edge-verification backlog (operations/verify-edges.md)
+--   05c:   v7.1 edge-verification backlog (operations/verify-law.md)
 --   05d:   v8.0 targeted corrected-row re-verification backlog
 --   22:    v7.4 theorized-fact placeholders (operations/theorize-fact.md)
 --   23-24: v7.8 witnesses and privileged client instructions
@@ -432,7 +432,7 @@ ORDER BY table_name, row_id;
 -- @query_05c_edge_verification_backlog
 -- v7.1: law-side edges awaiting the edge verifier (verified = 0), grouped by the
 -- authority document that settles them — the verifier's batch unit is one document
--- (operations/verify-edges.md). Edges at verified = 2 are the LAWYER's queue (05b),
+-- (operations/verify-law.md). Edges at verified = 2 are the LAWYER's queue (05b),
 -- not the verifier's, and are excluded here: only a human clears an escalation.
 -- Kept separate from 05a because an edge's key is (concept_id, authority_id) and
 -- does not fit 05a's single row_id shape.

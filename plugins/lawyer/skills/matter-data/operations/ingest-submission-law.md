@@ -230,7 +230,7 @@ State, in this order:
 
 1. **Counts** — concepts, authorities, edges, oral treatments written.
 2. **Held back** — every edge that landed at `verified = 0`, named by its concept.
-   The remedy is **[`verify-law.md`](verify-law.md)**; the concept stays out of
+   The remedy is **[`verify-edges.md`](verify-edges.md)**; the concept stays out of
    the push queue until its edges are verified, and that is correct, not a
    defect. Never offer to flip them.
 3. **Doubt escalations** — every edge at `verified = 2`, with the recorded doubt.

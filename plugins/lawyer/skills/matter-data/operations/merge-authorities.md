@@ -15,7 +15,7 @@ The merge script runs **locally** (E1). In E2/Cowork, **halt** and report that a
 - **Never** merges trial/appeal or successive decisions in one litigation (they are separate rows by design, design-decisions.md #16). Hard stops **B1/B2/B3/B3b/B9 are non-overridable** — the script rejects such pairs and this operation relays the rejection; it does not second-guess them.
 - **Never** merges an `oral_reasons` row, in either direction (**B9**, v8.5). An oral-reasons authority is a pointer to an unreported bench decision whose only identifier is a synthetic `Oral reasons, <court> <file number>, <judge>, <date>` citation carrying no style of cause. The citation-normalization rules that drive B1/B2 cannot tell two of them apart, and folding one into a reported decision would assert that a transcript-free pointer and a reported judgment are the same document. Upgrading an oral-reasons row when a transcript is later obtained is a separate flow, deliberately deferred (design-decisions.md #46) — it is not a merge.
 - **Never** corrects law-side *text* — that is [`amend-law.md`](amend-law.md). Merge only backfills empty fields, unions citations, folds colliding edges, and re-points references.
-- **Never** touches the pool or calls any `legal_commons__*` tool. Two *different* `cloud_authority_id`s are recorded in the surviving row's notes and flagged for a **separate human-initiated** commons merge (Decision 10; dormant while all cloud IDs are NULL).
+- **Never** touches the shared pool or calls any of its tools. Two *different* `cloud_authority_id`s are recorded in the surviving row's notes and flagged for a **separate human-initiated** commons merge (Decision 10; dormant while all cloud IDs are NULL).
 
 ## 1. Gather
 

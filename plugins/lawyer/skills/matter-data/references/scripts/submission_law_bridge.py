@@ -282,7 +282,7 @@ def build_plan(payload, ingested_on):
         if verified == 0:
             plan['held_back'].append({
                 'key': key, 'concept': seen_assertions[akey]['name'],
-                'reason': 'edge lands at verified = 0; remedy is /verify-law'})
+                'reason': 'edge lands at verified = 0; remedy is /matter-data verify-edges'})
         plan['edges'].append({
             'key': key, 'assertion_key': akey, 'authority_key': aukey,
             'relationship': relationship,

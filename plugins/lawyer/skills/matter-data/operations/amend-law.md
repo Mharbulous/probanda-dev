@@ -18,7 +18,7 @@ This operation is the **only** sanctioned path that *corrects* law-side text. It
 - **Never** modifies `relationship`, `treatment`, `treated_by_authority_id`, `criterion_order`, `requirement_type`, `concept_id`, `determined_by_concept_id`, or any PK column. Treatment semantics are decision #16's; structure is ingest's.
 - **Never** inserts or deletes rows (ingest and [`review.md`](review.md) own those). To retire a wrong edge, reject it (`verified = -1`) — the row is retained.
 - **Never** writes `cloud_principle_id` / `pushed_at` / `pushed_source_hash` ([`push-state.md`](push-state.md) owns those). It only **reports** the derived push-state consequence.
-- **Never** writes the pool or calls any `legal_commons__*` tool.
+- **Never** writes the shared pool or calls any of its tools.
 - **Never** sets `human_reviewed` — that column is facts/positions only (decision #18), and does not exist law-side.
 
 ## 1. Input
