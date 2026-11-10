@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<!--
+  This diagram's tag gives the commit it was checked against and when it was last updated.
+  To update it: re-read the sources at the new commit, correct the chart if needed,
+  then change both data- attributes and the visible stamp.
+  PLANNED: client billing as it will run once
+  docs/Specs/2026-11-10_client-billing-time-review-redesign-spec.md is built.
+  The current process is docs/diagrams/Built/Client billing.html.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Client billing destination</title>
+<style>
+/* Single light theme by choice: the diagram's colours carry meaning and stay fixed. */
+:root {
+  color-scheme: light;
+  --ink: #1d2733;
+  --muted: #55616f;
+  --paper: #f8f9fb;
+  --rule: #d5dbe3;
+  --body: "Segoe UI", system-ui, sans-serif;
+  --mono: Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--body); }
+main { max-width: 1500px; margin: 0 auto; padding: 28px 20px 48px; display: grid; gap: 20px; }
+h1 { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 600; text-wrap: balance; }
+h2 { margin: 12px 0 0; font-size: 20px; line-height: 1.3; font-weight: 600; }
+code { font: 500 0.92em var(--mono); }
+figure { margin: 0; display: grid; gap: 12px; }
+figcaption { display: grid; gap: 4px; }
+.stamp { font-size: 14px; color: var(--muted); margin: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 15px; height: 15px; border: 2px solid; border-radius: 3px; display: inline-block; }
+.legend b { width: 26px; height: 0; border-top: 2px solid var(--muted); display: inline-block; }
+.legend b.dashed { border-top-style: dashed; }
+.panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.panel { background: #fff; border: 1px solid var(--rule); border-radius: 6px; padding: 14px 18px; }
+.panel h3 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+.panel ul { margin: 0; padding-left: 20px; font-size: 14px; }
+.panel li { margin: 3px 0; }
+.chart { overflow-x: auto; background: #fff; border: 1px solid var(--rule); border-radius: 6px; padding: 16px; }
+pre.mermaid { margin: 0; font-family: var(--body); }
+pre.mermaid svg { display: block; margin: 0 auto; }
+/* Mermaid caps each label at 200 px and wraps inside words; labels here break only at <br/>. */
+pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap !important; }
+.sources { font-size: 13px; color: var(--muted); margin: 0; }
+</style>
+</head>
+<body>
+<main>
+  <figure class="diagram" id="client-billing-destination"
+          data-based-on-commit="7de2bedb8f025d30d75a1231c635fbf9afc5e0a7"
+          data-updated="2026-11-10T15:01:00-07:00">
+    <figcaption>
+      <h1>How Probanda will bill a client, once the time review redesign is built</h1>
+      <p class="stamp">Planned, from the spec at commit <a href="https://github.com/Mharbulous/probanda-dev/commit/7de2bedb8f025d30d75a1231c635fbf9afc5e0a7"><code>7de2bedb</code></a> on main · Last updated 2026-11-10 15:01 -07:00</p>
+    </figcaption>
+
+    <div class="panels">
+      <div class="panel">
+        <h3>Goals</h3>
+        <ul>
+          <li><b>Defensible:</b> every billed minute opens to the evidence behind it (stage 5)</li>
+          <li><b>Transparent:</b> an approval means you looked; auto-assigned blocks say so (stage 5)</li>
+          <li><b>Your attention on the hard cases:</b> you act only on flagged blocks (stages 4, 5)</li>
+          <li><b>Fast:</b> up to 10 days judged at once, no questions mid-review (stage 4)</li>
+          <li><b>Work accumulates:</b> the list grows, readings and judged days are reused (stages 2, 3, 4)</li>
+          <li><b>Safe in parallel:</b> claims, one writer, refused stale saves, reversible merges (stages 1, 4, 5)</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Constraints</h3>
+        <ul>
+          <li><b>Token cost:</b> code where possible, Haiku for screenshots, Opus only to judge</li>
+          <li>A model reads each raw item at most once; results are saved</li>
+          <li>The page is a template filled from the database, never drawn by a model</li>
+          <li>The whole day is reviewed, never one matter</li>
+          <li>Agents propose; you decide; the lawyer's signature is final</li>
+          <li>No one-way doors before issue; client data stays on your PC</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>What changes from today</h3>
+        <ul>
+          <li>One review page replaces the day review and line vetting in chat</li>
+          <li>The candidate list grows across runs instead of being rebuilt</li>
+          <li>Evidence is gathered first, then days are judged in parallel by day-reviewer agents</li>
+          <li>Each date has one shared status, so two bills never judge it twice</li>
+          <li>Screenshot readings are saved and reused</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="legend" aria-label="Colour key">
+      <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer plugin skill</span>
+      <span><i style="background:#e3eefb;border-color:#2563a8"></i>billing plugin skill</span>
+      <span><i style="background:#efe8fb;border-color:#6b46b0"></i>file-manager plugin skill</span>
+      <span><i style="background:#eef1f5;border-color:#5b6675;border-style:double;border-width:3px"></i>Custom agent (model named)</span>
+      <span><i style="background:#f1f8e9;border-color:#558b2f;border-style:dashed"></i>Script: code, no model</span>
+      <span><i style="background:#fbe4ec;border-color:#b03060;border-radius:8px"></i>👤 You act here</span>
+      <span><i style="background:#fff8c5;border-color:#8a6d00"></i>Hard check: refuses until it passes</span>
+      <span><i style="background:#ffffff;border-color:#8a94a0"></i>Step or question</span>
+      <span><i style="background:#e0f2f1;border-color:#00796b;border-radius:7px/4px"></i>Saved record</span>
+      <span><i style="background:#e2f3e6;border-color:#2f7d46"></i>Finished result</span>
+      <span><i style="background:#fff;border-color:#55616f;border-style:dashed;border-radius:8px"></i>Click to jump to another stage</span>
+      <span><b></b>next step</span>
+      <span><b class="dashed"></b>loops back, optional, or looks something up</span>
+    </div>
+
+    <h2 id="start">1. Find where the last bill ended</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    GO(["👤 You type /bill-client<br/>in the matter's folder"])
+    BC["/bill-client<br/>the orchestrator: the only writer<br/>of this bill's record"]
+    REC[("Bill record<br/>this bill's saved progress")]
+    SAVE{{"Save refused if the record<br/>changed since it was read"}}
+    LIVE{"Is a bill for this matter<br/>already in progress?"}
+    SAME{"Is the last invoice<br/>still the same file?"}
+    NEW["Find and read the newest signed invoice:<br/>file names checked, /housekeeping if needed,<br/>firm records compared"]
+    PD["/practice-data<br/>past invoices"]
+    O2(["to 2. Candidate dates"])
+
+    GO --> BC
+    BC <-.-> REC
+    REC -.- SAVE
+    BC --> LIVE
+    LIVE -->|"yes"| SAME
+    LIVE -->|"no"| NEW
+    SAME -->|"yes: keep it"| O2
+    SAME -->|"no"| NEW
+    PD <-.-> NEW
+    NEW --> O2
+
+    classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
+    classDef tk fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
+    classDef gate fill:#fff8c5,stroke:#8a6d00,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class PD lawyer
+    class BC tk
+    class GO human
+    class SAVE gate
+    class LIVE,SAME,NEW step
+    class REC store
+    class O2 link
+    click O2 href "#dates"
+</pre>
+    </div>
+
+    <h2 id="dates">2. Candidate dates: grow the saved list</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    I2(["from 1"])
+    TBD["/triage-billing-dates"]
+    HAVE{"Is there a saved list<br/>for this bill?"}
+    FULL["Search every source<br/>since the last invoice"]
+    INC["Search only the days after the<br/>last covered date, plus the leads<br/>left open last time"]
+    CHK{{"Does every listed date<br/>still have its evidence?"}}
+    REDO["Search that date again<br/>and tell you"]
+    FP{{"Has TimeCamp changed on a judged day<br/>since its fingerprint was saved?"}}
+    REFLAG["Flag only the entries<br/>that changed; the day is<br/>no longer clear"]
+    LIST[("Candidate dates in the database<br/>each with strength, when found,<br/>and links to its evidence")]
+    MD["Candidate dates file in BILLING,<br/>written from the database for you to read"]
+    O3(["to 3. Gather the evidence"])
+
+    I2 --> TBD
+    TBD --> HAVE
+    HAVE -->|"no"| FULL
+    HAVE -->|"yes"| CHK
+    CHK -->|"a date is missing rows"| REDO
+    CHK --> FP
+    FP -->|"yes"| REFLAG
+    FP --> INC
+    REDO --> INC
+    FULL --> LIST
+    INC -->|"keeps every saved date,<br/>adds new ones"| LIST
+    LIST --> MD
+    LIST --> O3
+
+    classDef tk fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef gate fill:#fff8c5,stroke:#8a6d00,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef script fill:#f1f8e9,stroke:#558b2f,stroke-dasharray:5 3,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class TBD tk
+    class CHK,FP gate
+    class HAVE,FULL,INC,REDO,REFLAG step
+    class LIST store
+    class MD script
+    class I2,O3 link
+    click I2 href "#start"
+    click O3 href "#gather"
+</pre>
+    </div>
+
+    <h2 id="gather">3. Gather the evidence, in one place</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    I3(["from 2"])
+    CW{"Running in Cowork?"}
+    STOPC["Stop: screenshots can be<br/>read only on your PC"]
+    LOOP["For each candidate date in turn,<br/>strongest first, not yet judged"]
+    FETCH["Fetch the day's 7 sources<br/>/build-timeline and /timecamping,<br/>one date at a time, never in parallel"]
+    GATE{{"Have all 7 sources<br/>reported for this day?"}}
+    SKIP["Skip the day and say<br/>which sources are missing"]
+    PICK["Pick screenshots to read:<br/>first, middle, last of each stretch,<br/>and every window-title change"]
+    SYNC["Later: SyncoPaid picks them<br/>at capture time"]
+    HR[["screenshot-reader agents · Haiku 5.5<br/>in parallel, describe each capture"]]
+    SUM["Reduce mail, calls, document metadata<br/>and window activity to evidence rows"]
+    SUMM[["Sonnet or Haiku, only where<br/>a script cannot do it"]]
+    DB[("Time-review database<br/>evidence rows, each labelled by source,<br/>and a saved reading for each capture")]
+    O4(["to 4. Judge the days"])
+
+    I3 --> CW
+    CW -->|"yes"| STOPC
+    CW -->|"no"| LOOP
+    LOOP --> FETCH
+    FETCH --> GATE
+    GATE -->|"no"| SKIP
+    SKIP -.->|"next date"| LOOP
+    GATE -->|"yes"| PICK
+    SYNC -.->|"replaces"| PICK
+    PICK --> HR
+    GATE -->|"yes"| SUM
+    SUM -.-> SUMM
+    HR --> DB
+    SUM --> DB
+    DB -.->|"next date"| LOOP
+    DB --> O4
+
+    classDef tk fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef agent fill:#eef1f5,stroke:#5b6675,stroke-width:3px,color:#1d2733
+    classDef gate fill:#fff8c5,stroke:#8a6d00,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef script fill:#f1f8e9,stroke:#558b2f,stroke-dasharray:5 3,color:#1d2733
+    classDef future fill:#ffffff,stroke:#8a94a0,stroke-dasharray:2 2,color:#55616f
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class FETCH tk
+    class HR,SUMM agent
+    class GATE gate
+    class CW,STOPC,LOOP,SKIP step
+    class PICK,SUM script
+    class SYNC future
+    class DB store
+    class I3,O4 link
+    click I3 href "#dates"
+    click O4 href "#judge"
+</pre>
+    </div>
+
+    <h2 id="judge">4. Judge the days, up to 10 at once</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    I4(["from 3"])
+    ORCH["/bill-client orchestrator<br/>hands out dates, candidate dates first,<br/>at most 10 day reviewers at once"]
+    STAT[("Date status, shared by every matter<br/>not started · in progress · judged · clear")]
+    CLAIM{{"Claim the date:<br/>refused if another run holds it.<br/>A claim expires if its run dies"}}
+    OTHER["Already judged for another matter:<br/>reuse it, never judge it again"]
+    BUSY["Claimed by another bill:<br/>move on, use it when finished"]
+    DR[["day-reviewer agent · Opus 5.5, high effort<br/>one per date, reads the assembled day:<br/>blocks, evidence rows, screenshot readings"]]
+    JUDGE["Give each block a matter and a<br/>description in firm billing style"]
+    DOUBT{"Is a block unclear?"}
+    ASK[["Ask the screenshot reader<br/>a specific question · Haiku 5.5"]]
+    STILL{"Do the answers seem<br/>doubtful or unreliable?"}
+    LOOK["Open that capture itself,<br/>sparingly"]
+    FLAG["Flag the block<br/>for your review"]
+    HOLD[("Holding area: the day's blocks,<br/>flags and evidence links.<br/>No TimeCamp write tool")]
+    RET["Return one line, e.g.<br/>2026-10-02: 14 blocks, 3 flagged"]
+    RCHK(["👤 Ask for a full re-check<br/>of a date or a bill"])
+    CMP["A fresh day reviewer judges again<br/>and flags differences;<br/>nothing stored is overwritten"]
+    O5(["to 5. Review on the page"])
+
+    I4 --> ORCH
+    ORCH --> CLAIM
+    STAT <-.-> CLAIM
+    CLAIM -->|"judged already"| OTHER
+    CLAIM -->|"held by another bill"| BUSY
+    CLAIM -->|"claimed"| DR
+    DR --> JUDGE
+    JUDGE --> DOUBT
+    DOUBT -->|"yes"| ASK
+    ASK --> STILL
+    STILL -->|"yes"| LOOK
+    STILL -->|"no: resolved"| HOLD
+    LOOK -->|"still unclear"| FLAG
+    LOOK -->|"resolved"| HOLD
+    DOUBT -->|"no"| HOLD
+    FLAG --> HOLD
+    HOLD --> RET
+    RET -->|"date marked judged"| STAT
+    RET -.->|"next date"| ORCH
+    RCHK -.-> CMP
+    CMP -.-> HOLD
+    ORCH -->|"all dates judged"| O5
+
+    classDef tk fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef agent fill:#eef1f5,stroke:#5b6675,stroke-width:3px,color:#1d2733
+    classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
+    classDef gate fill:#fff8c5,stroke:#8a6d00,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class ORCH tk
+    class DR,ASK agent
+    class RCHK human
+    class CLAIM gate
+    class OTHER,BUSY,JUDGE,DOUBT,STILL,LOOK,FLAG,RET,CMP step
+    class STAT,HOLD store
+    class I4,O5 link
+    click I4 href "#gather"
+    click O5 href "#review"
+</pre>
+    </div>
+
+    <h2 id="review">5. Review on the page</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    I5(["from 4"])
+    TPL["Fill the review template<br/>from the database"]
+    PAGE["Review page, opened from a file card<br/>on your PC. Filters: date, matter.<br/>Buttons: Previous, Next, Next flagged"]
+    CARD["Each block's card: client and matter,<br/>description, times, a slideshow of every<br/>screenshot with its reading, and its evidence"]
+    WAIT["A session waits on the page<br/>while you review"]
+    ACT(["👤 On any block:<br/>Approve · Correct · Write off<br/>Split · Merge · Unmerge"])
+    TC{{"Write the change to TimeCamp at once,<br/>then read it back to confirm"}}
+    TCAMP[("TimeCamp")]
+    SPL["Split: redraft both halves<br/>from the saved readings,<br/>no new look at any image"]
+    MRG["Merge: join descriptions with a semicolon.<br/>Originals kept, so unmerge works<br/>until the invoice is issued"]
+    REC[("Approvals, corrections,<br/>write-offs, merges and splits")]
+    CLEAR{"Every flagged block on this day,<br/>across all matters, dealt with?"}
+    DAY["The day is clear"]
+    O6(["to 6. Make the invoice"])
+
+    I5 --> TPL
+    TPL --> PAGE
+    PAGE --> CARD
+    PAGE -.- WAIT
+    CARD --> ACT
+    ACT -->|"matter or description changed"| TC
+    TC --> TCAMP
+    ACT -->|"split"| SPL
+    ACT -->|"merge or unmerge"| MRG
+    SPL -->|"halves come back flagged"| REC
+    MRG --> REC
+    ACT --> REC
+    REC -.->|"page refreshes"| TPL
+    REC --> CLEAR
+    CLEAR -->|"yes"| DAY
+    CLEAR -->|"no: Next flagged"| CARD
+    DAY -->|"only flagged blocks need you;<br/>the rest go on as auto-assigned"| O6
+
+    classDef script fill:#f1f8e9,stroke:#558b2f,stroke-dasharray:5 3,color:#1d2733
+    classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
+    classDef gate fill:#fff8c5,stroke:#8a6d00,stroke-width:2px,color:#1d2733
+    classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class TPL,MRG script
+    class ACT human
+    class TC gate
+    class PAGE,CARD,WAIT,SPL,CLEAR,DAY step
+    class TCAMP,REC store
+    class I5,O6 link
+    click I5 href "#judge"
+    click O6 href "#invoice"
+</pre>
+    </div>
+
+    <h2 id="invoice">6. Make, sign and issue the invoice</h2>
+    <div class="chart">
+<pre class="mermaid">
+flowchart TD
+    I6(["from 5"])
+    TIE{{"Tie out the time:<br/>every line backed by evidence,<br/>totals match TimeCamp"}}
+    REN{{"Fill in the invoice:<br/>recompute every amount,<br/>refuse anything that doesn't add up"}}
+    DRAFT[("Draft invoice, marked DRAFT,<br/>listing every line")]
+    HY(["👤 You say it is ready to sign,<br/>and give the bill number"])
+    SIGN(["👤 The lawyer signs it:<br/>the final approval of every line"])
+    II["/issue-invoice<br/>records it and locks its support"]
+    DONE[("Invoice issued and locked.<br/>Merges and splits become final")]
+
+    I6 --> TIE
+    TIE --> REN
+    REN --> DRAFT
+    DRAFT --> HY
+    HY --> SIGN
+    SIGN --> II
+    II --> DONE
+
+    classDef tk fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef human fill:#fbe4ec,stroke:#b03060,stroke-width:2px,color:#1d2733
+    classDef gate fill:#fff8c5,stroke:#8a6d00,stroke-width:2px,color:#1d2733
+    classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
+    classDef done fill:#e2f3e6,stroke:#2f7d46,color:#1d2733
+    classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
+    class II tk
+    class HY,SIGN human
+    class TIE,REN gate
+    class DRAFT store
+    class DONE done
+    class I6 link
+    click I6 href "#review"
+</pre>
+    </div>
+
+    <p class="sources">Planned from <a href="../../Specs/2026-11-10_client-billing-time-review-redesign-spec.md">the client billing redesign spec</a>. Today's process: <a href="../Built/Client%20billing.html">Built/Client billing.html</a>. Stage 6 keeps today's invoice steps (chart, template, taxes, disbursements) as drawn there; how the page's records feed the tie-out is an open point in the spec.</p>
+  </figure>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: "neutral",
+    flowchart: { nodeSpacing: 40, rankSpacing: 55, useMaxWidth: false, htmlLabels: true }, themeVariables: { fontFamily: "Segoe UI, system-ui, sans-serif", fontSize: "16px" } });
+  mermaid.run({ querySelector: "pre.mermaid" });
+</script>
+</body>
+</html>
