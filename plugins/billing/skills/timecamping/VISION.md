@@ -26,6 +26,17 @@ Three contradictory wrong conclusions from partial views; one nearly self-eviden
 
 An LLM will always infer from whatever it is handed. Telling it to wait is unreliable; the fix is controlling what it gets handed and when. So the pipeline's first stages are deterministic plumbing with no inference surface at all — enumerate every source, populate every source's table in full, splice everything into one consolidated time table — and only then does the model see anything. It cannot infer from a partial view because it never sees one.
 
+## Why the unit of review is a whole day, never a matter
+
+The same principle sets the unit of review: one day, every block in it, for every client, judged together. A review that walks one matter's entries is another partial view, and it fails in four ways (Brahm, 2026-11-10):
+
+- **The same time billed to two clients.** Each block of a day goes to exactly one matter only when the whole day is classified at once. Reviewed matter by matter, two reviews can each claim the same half hour, and a bill that charges two clients for one stretch of time cannot be defended.
+- **Time on the wrong matter is never found.** An entry put on the wrong matter does not appear in a review of the right one, and it looks plausible in a review of the wrong one. Only the whole day shows it.
+- **The day explains its own blocks.** A few screenshots and a note are often unreadable alone. The morning's call, the document opened at noon or the email answered after lunch is often what tells what a later stretch was. The whole day is the context.
+- **The day narrows the choice.** On any one day only a handful of matters are active. Seeing them all turns "which of every matter in the practice?" into "which of these four or five?", and forces a decision for every block instead of leaving gaps between matters.
+
+So `/bill-client` hands `/timecamping` dates, never a matter's entries alone: each date is reviewed whole, and the bill takes its matter's share. A view filtered to one matter is only a view; it never changes what is reviewed.
+
 ## The corollary: ceremonies must be rare and non-repetitive
 
 Human review is the scarcest resource in the pipeline, and it fails in a specific way: ceremonies that repeat for the same resolvable situation breed complacency — the human starts clicking Approve without reading. So review is confidence-gated, not default:
