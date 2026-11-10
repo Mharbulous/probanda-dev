@@ -45,11 +45,11 @@ pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap 
 <body>
 <main>
   <figure class="diagram" id="planned-progressive-context-tree"
-          data-based-on-commit="72046f1df2d3a5a962dd9eb596834e262d0e0c5f"
-          data-updated="2026-11-10T00:44:00-07:00">
+          data-based-on-commit="7f68a2faf52f85753d831023a0c164e557a8eeb0"
+          data-updated="2026-11-10T01:00:00-07:00">
     <figcaption>
       <h1>Planned: Probanda's main entry points, by plugin and data pool, after the billing plugin is added</h1>
-      <p class="stamp">Planned, not built · Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/72046f1df2d3a5a962dd9eb596834e262d0e0c5f"><code>72046f1d</code></a> on main · Last updated 2026-11-10 00:44 -07:00 · Current layout: <a href="../Built/Progressive-Context-Tree.html">Built/Progressive-Context-Tree.html</a></p>
+      <p class="stamp">Planned, not built · Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/7f68a2faf52f85753d831023a0c164e557a8eeb0"><code>7f68a2fa</code></a> on main · Last updated 2026-11-10 01:00 -07:00 · Current layout: <a href="../Built/Progressive-Context-Tree.html">Built/Progressive-Context-Tree.html</a></p>
     </figcaption>
     <div class="legend" aria-label="Colour key">
       <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer plugin skill</span>
@@ -57,7 +57,7 @@ pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap 
       <span><i style="background:#f8e3dc;border-color:#9c3d22"></i>litigator plugin skill</span>
       <span><i style="background:#e3eefb;border-color:#2563a8"></i>billing plugin skill</span>
       <span><i style="background:#efe8fb;border-color:#6b46b0"></i>file-manager plugin skill</span>
-      <span><i style="background:#e3eefb;border-color:#2563a8;border-style:dashed;border-width:3px"></i>skill this plan moves</span>
+      <span><i style="background:#e3eefb;border-color:#2563a8;border-style:dashed;border-width:3px"></i>skill this plan moves: dashed border, in its new plugin's colour</span>
       <span><i style="background:#f8f9fb;border-color:#8a94a0;border-style:dashed"></i>data pool: the skills inside write it, or mainly read it</span>
       <span><i style="background:#ffffff;border-color:#8a94a0"></i>plugin with no lawyer entry skills</span>
       <span><i style="background:#f1f2f4;border-color:#8a94a0;border-style:dashed"></i>plugin this plan retires</span>
@@ -97,28 +97,23 @@ flowchart LR
     end
     subgraph LAW_EVID["Evidence"]
         ING["/ingest<br/>add a document to the case data"]
-    end
-    subgraph LAW_COURT["Court record"]
-        CD["/compare-documents<br/>what changed between two PDFs"]
-    end
-    subgraph LAW_WPROD["Work product"]
-        FRP["/file-review-prep<br/>brief me on a matter"]
-    end
-    subgraph LAW_DRAFTS["Drafts"]
-        PRF["/proof-read<br/>improve a piece of legal writing"]
+        LFE["/litigation-fact-extractor<br/>review facts extracted from case documents<br/>moved from litigator"]
     end
     subgraph LAW_KNOW["Know-how"]
         PRC["/precedents<br/>make or find a standard form"]
         RU["/rule-update<br/>a court rule has changed"]
     end
-    subgraph LAW_FILES["Every pool's folders"]
+    subgraph LAW_READS["Reads across pools, writes none"]
         FD["/find-document<br/>show me a document or email"]
+        FRP["/file-review-prep<br/>brief me on a matter"]
+    end
+    subgraph LAW_NONE["No data pool"]
+        PRF["/proof-read<br/>improve a piece of legal writing"]
+        CD["/compare-documents<br/>what changed between two PDFs"]
+        DE["/deduping-email<br/>remove duplicate emails"]
     end
     subgraph LAW_PROB["Probanda's own records"]
         SG["/suggestion<br/>send an idea or complaint"]
-    end
-    subgraph LAW_NONE["No data pool"]
-        DE["/deduping-email<br/>remove duplicate emails"]
     end
 
     subgraph RES_LAW["The law"]
@@ -145,9 +140,6 @@ flowchart LR
         ATF["/apply-to-facts<br/>what the law means for this matter"]
         CAL["/calculate<br/>interest and bill-of-costs figures"]
     end
-    subgraph LIT_EVID["Evidence"]
-        LFE["/litigation-fact-extractor<br/>review facts extracted from case documents"]
-    end
 
     subgraph FM_FILES["Every pool's folders"]
         HK["/housekeeping<br/>name and file a matter's loose files"]
@@ -169,9 +161,9 @@ flowchart LR
     end
 
     MKT --> P_LAW & P_RES & P_LIT & P_SOL & P_FM & P_TB & P_TK & P_DEV & P_TE
-    P_LAW --> EA & TP & MST & CC & VBL & PS & RT & CR & ING & CD & FRP & PRF & PRC & RU & FD & SG & DE
+    P_LAW --> EA & TP & MST & CC & VBL & PS & RT & CR & ING & LFE & PRC & RU & FD & FRP & PRF & CD & DE & SG
     P_RES --> LR & CB & VL & LME & PT
-    P_LIT --> WK & DR & PR & PB & AS & EF & ATF & CAL & LFE
+    P_LIT --> WK & DR & PR & PB & AS & EF & ATF & CAL
     P_FM --> HK & RA
     P_TB --> BC & II & IR & WIP & AR & IT & TED & TC & TBD
 
@@ -198,12 +190,14 @@ flowchart LR
     classDef retired fill:#f1f2f4,stroke:#8a94a0,stroke-dasharray:4 3,color:#55616f
     class P_LAW,EA,TP,CR,FRP,FD,ING,MST,PRF,CD,PRC,RT,DE,CC,VBL,PS,SG,RU lawyer
     class P_RES,LR,CB,VL,PT,LME researcher
-    class P_LIT,WK,DR,PR,PB,AS,EF,ATF,CAL,LFE litigator
+    class P_LIT,WK,DR,PR,PB,AS,EF,ATF,CAL litigator
     class P_TB tb
     class TC,TBD,TED,BC,II,IR,WIP,AR,IT moved
+    classDef movedlaw fill:#fdf0d5,stroke:#b7791f,stroke-width:3px,stroke-dasharray:6 3,color:#1d2733
+    class LFE movedlaw
     class P_FM,HK,RA fm
     classDef pool fill:#f8f9fb,stroke:#8a94a0,stroke-dasharray:3 3,color:#55616f
-    class LAW_PRACT,LAW_TRUST,LAW_EVENTS,LAW_EVID,LAW_COURT,LAW_WPROD,LAW_DRAFTS,LAW_KNOW,LAW_FILES,LAW_PROB,LAW_NONE,RES_LAW,RES_PROB,LIT_DRAFTS,LIT_COURT,LIT_WPROD,LIT_EVID,FM_FILES,TB_BILL,TB_TIME pool
+    class LAW_PRACT,LAW_TRUST,LAW_EVENTS,LAW_EVID,LAW_KNOW,LAW_READS,LAW_NONE,LAW_PROB,RES_LAW,RES_PROB,LIT_DRAFTS,LIT_COURT,LIT_WPROD,FM_FILES,TB_BILL,TB_TIME pool
     class MKT root
     class P_SOL,P_DEV,P_TE empty
     class P_TK retired
@@ -215,7 +209,7 @@ flowchart LR
 </pre>
     </div>
 
-    <p class="sources">Each dashed box is a data pool: a database, folders of files, or both. A skill sits in the pool it writes, or, if it writes nothing, the pool it mainly reads. This is a target layout, not today's. So far the plan settles only billing: billing and timekeeping records each sit whole under the billing plugin. Six pools are still boxed under two plugins, because no move has been decided for them: evidence, the court record, work product and drafts (lawyer and litigator), every pool's folders (lawyer and file-manager) and Probanda's own records (lawyer and researcher). The placement of every skill, including those not drawn here, and the scope each pool belongs to are in <a href="Data-Pool-Map.html">Data-Pool-Map.html</a>. The new plugin's name is <code>billing</code>, displayed as "Billing". timekeeper is retired: it ships no skills once everything has moved to billing, and is later removed from the marketplace. developer is maintainer-only and has no lawyer entry skills. What moves to billing: every skill timekeeper ships today, its TimeCamp server (key <code>timecamp</code>) and its hooks; <code>bill-client</code>, <code>issue-invoice</code>, <code>invoice-reviewing</code> and <code>wip-tracker</code> from lawyer, which today reach into timekeeper through written exceptions in <code>source/layering.json</code>; and <code>ar-follow-up</code> and <code>invoice-tracking</code> from lawyer, which nothing in lawyer needs in order to run. Timekeeper's skills that only other skills run (<code>build-timeline</code>, <code>time-sorting</code>, <code>vet-billable-time</code>, <code>timecamping-data</code>, <code>time-pipeline-data</code>) move too but are not entry points, so they are not drawn. What the move costs, counted per file as <code>check_layering.py</code> counts: it clears 7 of the 9 rulings the four lawyer billing skills hold today (<code>bill-client</code> to <code>housekeeping</code> and <code>issue-invoice</code> to <code>legal-research</code> stay), and lawyer files that still name a moved skill need new mention rulings, about 13 in all: 5 for <code>invoice-tracking</code> (three practice-data files, probanda-setup, retainer-tracking's vision), 3 for <code>ar-follow-up</code> (three vision files), 4 for <code>issue-invoice</code> (draft's <code>letters.md</code> in litigator, practice-data, the delivery-checker agent, and <code>shared/procedural-history.md</code>, which the check does not scan) and 1 for <code>wip-tracker</code>. The move also renames the TimeCamp tools from <code>mcp__plugin_timekeeper_timecamp__*</code> to <code>mcp__plugin_billing_timecamp__*</code>: the skills and tests that name them, and the two hooks that hard-code the <code>timekeeper:</code> prefix (<code>ceremony-gate.py</code>, <code>screenshot-reader-gate.py</code>), change in the same commit. The saved TimeCamp login is kept outside the plugin's data folder, so it survives. Retiring timekeeper is a one-way door; the reversible alternative, a <code>billing</code> plugin that requires timekeeper, was weighed and not chosen, because there are no users yet and <code>bill-client</code> already cannot run without timekeeper. What stays: <code>retainer-tracking</code> stays in lawyer, because <code>executive-assistant</code> and <code>task-prioritization</code> rank every to-do by its trust balances. litigator's <code>calculate</code> stays: its bill of costs is a court costs claim, not the firm's billing. The survey found no other billing skill in researcher, litigator or file-manager. Left out of every plugin as before: skills only other skills call, add-ons typed inside a session, and every <code>developer</code> skill. Sources: <code>source/assignment.json</code>, <code>.claude-plugin/marketplace.json</code>, <code>source/layering.json</code> and each skill's <code>SKILL.md</code>.</p>
+    <p class="sources">Each dashed box is a data pool: a database, folders of files, or both. A skill sits in the pool it writes, or, if it writes nothing, the pool it mainly reads. This is a target layout, not today's. Every client data pool now sits under one plugin. Each candidate move was costed by replaying <code>scripts/check_layering.py</code> against the changed assignment and counting upward (file, target) pairs: 125 today, 130 after the billing move. One more skill moves: <code>litigation-fact-extractor</code> goes from litigator to lawyer, where the rest of the evidence pool is, which clears one ruling and adds none. Four skills stay in lawyer and are reclassified, because they write no pool and use no pool's store: <code>find-document</code> and <code>file-review-prep</code> read across pools, and <code>proof-read</code> and <code>compare-documents</code> work only on the documents they are handed. Moving them would cost more or would take a general skill out of the base plugin: <code>find-document</code> to file-manager adds 5 pairs, <code>compare-documents</code> to litigator adds 1, and <code>proof-read</code> names nothing in litigator. One split stays: Probanda's own records are held in Probanda's Cloud, not on the user's machine, and reached through researcher's server. Moving <code>suggestion</code> to researcher adds 9 pairs, and moving <code>probanda-troubleshooting</code> to lawyer adds 4. The placement of every skill, including those not drawn here, and the scope each pool belongs to are in <a href="Data-Pool-Map.html">Data-Pool-Map.html</a>. The new plugin's name is <code>billing</code>, displayed as "Billing". timekeeper is retired: it ships no skills once everything has moved to billing, and is later removed from the marketplace. developer is maintainer-only and has no lawyer entry skills. What moves to billing: every skill timekeeper ships today, its TimeCamp server (key <code>timecamp</code>) and its hooks; <code>bill-client</code>, <code>issue-invoice</code>, <code>invoice-reviewing</code> and <code>wip-tracker</code> from lawyer, which today reach into timekeeper through written exceptions in <code>source/layering.json</code>; and <code>ar-follow-up</code> and <code>invoice-tracking</code> from lawyer, which nothing in lawyer needs in order to run. Timekeeper's skills that only other skills run (<code>build-timeline</code>, <code>time-sorting</code>, <code>vet-billable-time</code>, <code>timecamping-data</code>, <code>time-pipeline-data</code>) move too but are not entry points, so they are not drawn. What the move costs, counted per file as <code>check_layering.py</code> counts: it clears 7 of the 9 rulings the four lawyer billing skills hold today (<code>bill-client</code> to <code>housekeeping</code> and <code>issue-invoice</code> to <code>legal-research</code> stay), and lawyer files that still name a moved skill need new mention rulings, about 13 in all: 5 for <code>invoice-tracking</code> (three practice-data files, probanda-setup, retainer-tracking's vision), 3 for <code>ar-follow-up</code> (three vision files), 4 for <code>issue-invoice</code> (draft's <code>letters.md</code> in litigator, practice-data, the delivery-checker agent, and <code>shared/procedural-history.md</code>, which the check does not scan) and 1 for <code>wip-tracker</code>. The move also renames the TimeCamp tools from <code>mcp__plugin_timekeeper_timecamp__*</code> to <code>mcp__plugin_billing_timecamp__*</code>: the skills and tests that name them, and the two hooks that hard-code the <code>timekeeper:</code> prefix (<code>ceremony-gate.py</code>, <code>screenshot-reader-gate.py</code>), change in the same commit. The saved TimeCamp login is kept outside the plugin's data folder, so it survives. Retiring timekeeper is a one-way door; the reversible alternative, a <code>billing</code> plugin that requires timekeeper, was weighed and not chosen, because there are no users yet and <code>bill-client</code> already cannot run without timekeeper. What stays: <code>retainer-tracking</code> stays in lawyer, because <code>executive-assistant</code> and <code>task-prioritization</code> rank every to-do by its trust balances. litigator's <code>calculate</code> stays: its bill of costs is a court costs claim, not the firm's billing. The survey found no other billing skill in researcher, litigator or file-manager. Left out of every plugin as before: skills only other skills call, add-ons typed inside a session, and every <code>developer</code> skill. Sources: <code>source/assignment.json</code>, <code>.claude-plugin/marketplace.json</code>, <code>source/layering.json</code> and each skill's <code>SKILL.md</code>.</p>
   </figure>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>

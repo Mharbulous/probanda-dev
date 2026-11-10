@@ -44,11 +44,11 @@ pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap 
 <body>
 <main>
   <figure class="diagram" id="planned-data-pool-map"
-          data-based-on-commit="e784d3639e67ea825cf0002d4696bc058fffd297"
-          data-updated="2026-11-10T00:25:00-07:00">
+          data-based-on-commit="7f68a2faf52f85753d831023a0c164e557a8eeb0"
+          data-updated="2026-11-10T01:00:00-07:00">
     <figcaption>
       <h1>Planned: every Probanda skill, by the data pool it writes</h1>
-      <p class="stamp">Planned, not built · Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/e784d3639e67ea825cf0002d4696bc058fffd297"><code>e784d363</code></a> on main · Last updated 2026-11-10 00:25 -07:00</p>
+      <p class="stamp">Planned, not built · Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/7f68a2faf52f85753d831023a0c164e557a8eeb0"><code>7f68a2fa</code></a> on main · Last updated 2026-11-10 01:00 -07:00</p>
     </figcaption>
     <div class="legend" aria-label="Colour key: each skill's plugin today">
       <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer</span>
@@ -70,7 +70,7 @@ flowchart TB
         direction TB
         subgraph PRIV["Privileged communications"]
             direction TB
-            PRIV_x["no skill writes it:<br/>mail is read as a source"]
+            PRIV_x["written by matter-data,<br/>which is placed under Evidence"]
         end
         subgraph CORR["Correspondence with others"]
             direction TB
@@ -89,16 +89,12 @@ flowchart TB
         subgraph COURT["Court record"]
             direction TB
             n_e_file["e-file"]
-            n_compare_documents["compare-documents"]
-            n_e_file ~~~ n_compare_documents
         end
         subgraph WPROD["Work product"]
             direction TB
             n_apply_to_facts["apply-to-facts"]
             n_calculate["calculate"]
-            n_file_review_prep["file-review-prep"]
             n_apply_to_facts ~~~ n_calculate
-            n_calculate ~~~ n_file_review_prep
         end
         subgraph DRAFTS["Drafts"]
             direction TB
@@ -111,7 +107,6 @@ flowchart TB
             n_narrator["narrator"]
             n_bcsc_legal_basis["bcsc-legal-basis"]
             n_polish_substance["polish-substance"]
-            n_proof_read["proof-read"]
             n_publish["publish"]
             n_assemble["assemble"]
             n_drafting_data ~~~ n_draft
@@ -122,8 +117,7 @@ flowchart TB
             n_solver ~~~ n_narrator
             n_narrator ~~~ n_bcsc_legal_basis
             n_bcsc_legal_basis ~~~ n_polish_substance
-            n_polish_substance ~~~ n_proof_read
-            n_proof_read ~~~ n_publish
+            n_polish_substance ~~~ n_publish
             n_publish ~~~ n_assemble
         end
         subgraph EVENTS["Events"]
@@ -232,12 +226,16 @@ flowchart TB
             n_file_apply["file-apply"]
             n_file_sorting["file-sorting"]
             n_safe_file_deletion["safe-file-deletion"]
-            n_find_document["find-document"]
             n_housekeeping ~~~ n_route_accounting
             n_route_accounting ~~~ n_file_apply
             n_file_apply ~~~ n_file_sorting
             n_file_sorting ~~~ n_safe_file_deletion
-            n_safe_file_deletion ~~~ n_find_document
+        end
+        subgraph READS["Reads across pools, writes none"]
+            direction TB
+            n_find_document["find-document"]
+            n_file_review_prep["file-review-prep"]
+            n_find_document ~~~ n_file_review_prep
         end
         subgraph PROB["Probanda's own records"]
             direction TB
@@ -251,6 +249,8 @@ flowchart TB
         end
         subgraph NONE["No data pool"]
             direction TB
+            n_proof_read["proof-read"]
+            n_compare_documents["compare-documents"]
             n_dyu["dyu"]
             n_TLDR["TLDR"]
             n_reflect["reflect"]
@@ -260,6 +260,8 @@ flowchart TB
             n_fix_this["fix-this"]
             n_hitl_triage["hitl-triage"]
             n_streamline_skill["streamline-skill"]
+            n_proof_read ~~~ n_compare_documents
+            n_compare_documents ~~~ n_dyu
             n_dyu ~~~ n_TLDR
             n_TLDR ~~~ n_reflect
             n_reflect ~~~ n_show_me
@@ -279,7 +281,7 @@ flowchart TB
     classDef dev fill:#eceef1,stroke:#55616f,color:#1d2733
     classDef placeholder fill:#ffffff,stroke:#8a94a0,stroke-dasharray:4 3,color:#55616f
     class PRIV_x,CORR_x placeholder
-    class n_matter_data,n_ingest,n_ingest_orchestrator,n_compare_documents,n_file_review_prep,n_proof_read,n_calendar_reminders,n_practice_data,n_probanda_setup,n_task_prioritization,n_executive_assistant,n_matter_status_tracking,n_call_contact,n_verify_bc_lawyer,n_bill_client,n_issue_invoice,n_invoice_reviewing,n_invoice_tracking,n_wip_tracker,n_ar_follow_up,n_retainer_tracking,n_localize,n_precedents,n_rule_update,n_file_naming,n_safe_file_deletion,n_find_document,n_suggestion,n_dyu,n_TLDR,n_reflect,n_show_me,n_deduping_email lawyer
+    class n_matter_data,n_ingest,n_ingest_orchestrator,n_calendar_reminders,n_practice_data,n_probanda_setup,n_task_prioritization,n_executive_assistant,n_matter_status_tracking,n_call_contact,n_verify_bc_lawyer,n_bill_client,n_issue_invoice,n_invoice_reviewing,n_invoice_tracking,n_wip_tracker,n_ar_follow_up,n_retainer_tracking,n_localize,n_precedents,n_rule_update,n_file_naming,n_safe_file_deletion,n_find_document,n_file_review_prep,n_suggestion,n_proof_read,n_compare_documents,n_dyu,n_TLDR,n_reflect,n_show_me,n_deduping_email lawyer
     class n_litigation_fact_extractor,n_e_file,n_apply_to_facts,n_calculate,n_drafting_data,n_draft,n_work,n_prepare,n_job_planning,n_solver,n_narrator,n_bcsc_legal_basis,n_polish_substance,n_publish,n_assemble,n_rule_migrate litigator
     class n_vet_billable_time,n_time_entry_drafting,n_timecamping_data,n_time_pipeline_data,n_build_timeline,n_time_sorting,n_timecamping,n_triage_billing_dates tk
     class n_legal_commons,n_legal_research,n_case_brief,n_verify_law,n_legal_memo_extractor,n_legal_citation,n_review_proposition,n_probanda_troubleshooting researcher
@@ -288,7 +290,7 @@ flowchart TB
 </pre>
     </div>
 
-    <p class="sources">A data pool is a database (most are SQLite), folders of files, or both: evidence, for example, is the matter's records of who produced what and the produced documents themselves. Each skill sits under the pool it writes. A skill that writes nothing sits under the pool it mainly reads: <code>executive-assistant</code>, <code>file-review-prep</code>, <code>wip-tracker</code>, <code>ar-follow-up</code>, <code>calendar-reminders</code>, <code>find-document</code> and most of researcher are placed this way. Box colours show each skill's plugin today, before the billing plan. Where the stores differ from the pools: the <code>matter-data</code> store writes evidence, the court record (procedural history) and the law (a matter's stored authorities); the <code>practice-data</code> store holds practice records, billing, trust accounting and events (anchors and deadlines). Deadlines are written by the <code>docket-clerk</code> agent, which is not a skill, so the events pool shows only <code>calendar-reminders</code>. Privileged communications and correspondence with others live in the mailbox, which skills read as a source and no skill writes. The file-manager skills under "Every pool's folders" name, file, move and trash files in whichever pool's folders they belong to, so they cut across pools by design; <code>find-document</code> reads them. Probanda's own records are its suggestion box and troubleshooting store. Sources: <code>source/assignment.json</code>, each skill's <code>SKILL.md</code> and the data-server tools its files name. The placement of read-only skills is a judgment, not a check.</p>
+    <p class="sources">A data pool is a database (most are SQLite), folders of files, or both: evidence, for example, is the matter's records of who produced what and the produced documents themselves. Each skill sits under the pool it writes. A skill that writes nothing sits under the pool it mainly reads: <code>executive-assistant</code>, <code>wip-tracker</code>, <code>ar-follow-up</code>, <code>calendar-reminders</code> and most of researcher are placed this way. A skill that reads several pools and writes none (<code>find-document</code>, <code>file-review-prep</code>) is not forced into one, and a skill that works only on the documents it is handed (<code>proof-read</code>, <code>compare-documents</code>) has no data pool. Box colours show each skill's plugin today, before the billing plan. Where the stores differ from the pools: the <code>matter-data</code> store is three files per matter (<code>main.sqlite</code> for evidence and the court record, <code>law.sqlite</code> for the matter's stored authorities, <code>privileged.sqlite</code> for client instructions), all written by the one <code>matter-data</code> skill; the <code>practice-data</code> store holds practice records, billing, trust accounting and events (anchors and deadlines). Deadlines are written by the <code>docket-clerk</code> agent, which is not a skill, so the events pool shows only <code>calendar-reminders</code>. Correspondence with others lives in the mailbox, which skills read as a source and no skill writes. The file-manager skills under "Every pool's folders" name, file, move and trash files in whichever pool's folders they belong to, so they cut across pools by design. Probanda's own records are its suggestion box and troubleshooting store. Sources: <code>source/assignment.json</code>, each skill's <code>SKILL.md</code> and the data-server tools its files name. The placement of read-only skills is a judgment, not a check.</p>
   </figure>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
