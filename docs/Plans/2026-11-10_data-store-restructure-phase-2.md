@@ -12,23 +12,30 @@ The session is done when every row of the table below reads "none" in its gap co
 
 ## Where each pool is stored today
 
-Surveyed on 2026-11-10 at commit `b37348d7`. Check each row against the source before relying on it. Paths under `src/` are under `source/lawyer/mcp/src/`.
+Surveyed on 2026-11-10 at commit `b37348d7`, and checked against the data server's source and the legacy schemas at commit `9f553b7c`, after Phase 1 landed. Paths under `src/` are under `source/lawyer/mcp/src/`.
 
 | Pool | Store today | Scope of the store | Shape | Gap |
 |---|---|---|---|---|
-| The law | `law.sqlite` | per matter | typed tables (legacy) | none in placement |
-| Privileged communications | `privileged.sqlite` | per matter | typed tables (legacy) | none in placement |
-| Evidence | `main.sqlite` | per matter | typed tables (legacy) | shares a file with the court record and work product |
-| Court record | `main.sqlite`, plus `ProceduralHistory.md` in the matter folder | per matter | typed tables and one file | shares a file with evidence |
+| The law | `law.sqlite`: 5 tables (authorities, their treatments, concepts, criteria) | per matter | typed tables (legacy) | none in placement |
+| Privileged communications | `privileged.sqlite`: 3 tables (privileged sources, fact provenance, client instructions) | per matter | typed tables (legacy) | none in placement |
+| Evidence | `main.sqlite` (sources, facts, admissions, evidence links, source references) | per matter | typed tables (legacy) | shares a file with the court record and work product |
+| Court record | `main.sqlite` (proceedings, parties of record, positions, relief, sought orders) | per matter | typed tables (legacy) | shares a file with evidence |
 | Work product | `main.sqlite` (issues, causes of action, criteria applied to facts) | per matter | typed tables (legacy) | shares a file with evidence |
-| Drafts | `submission.sqlite` | per matter | about 70 typed tables (legacy) | also holds the rules engine's session state |
+| Drafts | `submission.sqlite`; and `loose_threads.db` beside it (`src/loose-threads/`, ADR 0018) | per matter | 70 typed tables (legacy); generic | `submission.sqlite` also holds the rules engine's session state (`src/files/rules-position.ts` writes the position to the matter's drafting database) |
 | Correspondence with others | none: the mailbox only | | | no store, by design so far |
-| Events | `practice.db`, kinds `anchor`, `anchor_source`, `deadline` | per practice | generic items | a per-matter pool in a practice-wide store |
-| Practice records | `practice.db` | per practice | generic items | shares a file with four other pools |
+| Events | `ProceduralHistory.md` in the matter folder (past events, `src/case/procedural-history.ts`); `practice.db`, kinds `anchor`, `anchor_source`, `deadline` | per matter; per practice | one file; generic items | split across two stores, and the deadlines sit in a practice-wide store |
+| Practice records | `practice.db`, kinds `client`, `matter`, `matter_role`, `contact`, `affiliation`, `task`, `signal` | per practice | generic items | shares a file with four other pools |
 | Billing | `practice.db`, kinds `time_entry`, `invoice`, `invoice_line`, `payment`, `rate`, `adjustment`; and `time_pipeline.db`, namespaces `bill` and `tedraft` | per practice; per practitioner | generic | split across two stores, one of them the timekeeping store |
 | Trust accounting | `practice.db`: fields `regular_trust`, `term_trust`, `last_trust_date` on each `matter` item, and kind `retainer_notice` | per practice | generic | no ledger: balances are fields on a practice record |
 | Know-how | `practice.db` kinds `calendar_day`, `calendar_year`, `rule_overlay`; the knowledge overlay folder `_practice\knowledge\`; each skill's shipped `references/` | per practice | generic items and files | court calendar days and the rule overlay sit in the practice store |
 | Timekeeping records | `timecamping.db` and `time_pipeline.db` (namespaces `timeline`, `timesort`, `evidence`) | per practitioner | 12 typed tables (legacy); generic | two stores for one pool |
+
+What the table does not show:
+
+- `main.sqlite` also holds data that no pool names: the matter's cast (`parties`, `witnesses`, `tribunal_members`, `participant_aliases` and their links to proceedings), the `matter_metadata` row, and `housekeeping_reviews`, the record of which files file-manager's review has seen. A split of `main.sqlite` (decision 6) has to place each of them.
+- The practice board shows rows of kind `event` and `todo`, but `src/tools/practice/practice-board.ts` builds them from anchors, deadlines and tasks. They are not stored kinds.
+- `time_pipeline.db`'s own header comment (`src/time-pipeline/backend.ts`) still names only `timeline`, `timesort` and `tedraft`. The `/time-pipeline-data` skill's namespace table is the full list: those three, plus `evidence` and `bill`.
+- Three more stores are generic files that the framework places in no pool. `_practice\quirks\quirks.json` (`src/quirks/tools.ts`) holds practice quirks: rules and facts about how this practice works, which read as know-how. `_practice\preferences\<person>.json` (`src/preferences/tools.ts`) holds each person's preferences. `suggestions\suggestions.json` beside `probanda.json` (`src/suggestions/store.ts`) holds every suggestion this device sent or held, which is Account Information and stays outside `0. CASE DATA`.
 
 Two facts shape everything below:
 
