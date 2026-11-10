@@ -28,9 +28,8 @@ def build(*args):
 
 
 def copy_repo(repo):
-    """Copy what a build reads into `repo`: the skills, the plugin sources and the public skills."""
+    """Copy what a build reads into `repo`: source/ (the skills and the plugin sources) and the public skills."""
     skip = shutil.ignore_patterns("tests", "test", "src", "build", "__pycache__", "node_modules")
-    shutil.copytree(REPO / "source" / "skills", repo / "source" / "skills", ignore=skip)
     shutil.copytree(SOURCE, repo / "source", ignore=skip)
     # A hook of the lawyer plugin runs a script in a public skill.
     shutil.copytree(REPO / "public" / "plugins", repo / "public" / "plugins", ignore=skip)

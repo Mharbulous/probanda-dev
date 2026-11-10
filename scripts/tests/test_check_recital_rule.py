@@ -70,9 +70,9 @@ class RecitalRuleMirrorTest(unittest.TestCase):
         skills = sorted({rel.split("/")[0] for rel in check_plugin_agents.RECITAL_RULE_SKILL_MIRRORS} - {"shared"})
         plugin = {"name": "litigator", "source": "source/litigator", "skills": skills, "agents": list(self.AGENTS)}
         mirrors = check_plugin_agents.recital_rule_mirrors(plugin)
-        self.assertEqual([m for m in mirrors if not m.startswith(".claude/")],
+        self.assertEqual([m for m in mirrors if not m.startswith("source/skills/")],
                          [f"source/litigator/agents/{n}.md" for n in self.AGENTS])
-        self.assertEqual([m for m in mirrors if m.startswith(".claude/")],
+        self.assertEqual([m for m in mirrors if m.startswith("source/skills/")],
                          [f"source/skills/{rel}" for rel in check_plugin_agents.RECITAL_RULE_SKILL_MIRRORS])
 
     def test_a_plugin_checks_only_the_mirrors_it_ships_and_always_the_shared_one(self):

@@ -150,7 +150,7 @@ def scan(repo, plugins):
     for plugin, spec in plugins.items():
         for hook, script in spec["hooks"].items():
             parts = Path(script).parts
-            if parts[0] == "source":
+            if parts[0] == "source" and parts[1] != "skills":   # the plugin's own source/<plugin>/
                 continue
             folder = parts[parts.index("skills") + 1] if "skills" in parts else None
             if folder and folder != "shared" and skill_owner.get(folder) != plugin:
