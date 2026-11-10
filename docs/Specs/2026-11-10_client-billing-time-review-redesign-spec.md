@@ -2,6 +2,10 @@
 
 Decided by the practitioner on 2026-11-10, in an interview reviewing `/bill-client` (billing plugin). This is a spec, not a plan: it states what to build, why, the limits it must respect and what done looks like, and leaves the build order to the plan. The current process is drawn in `docs/diagrams/Built/Client billing.html` (checked against `72c1eb07`). Why the review works a whole day at a time, never one matter, is recorded in `source/skills/timecamping/VISION.md`.
 
+## How to read this spec
+
+The Goals and Success criteria say what must be achieved. Parts 1 to 4 are the design worked out in the interview: ideas that show the intent, not a straitjacket. A planner may find a better way to reach the goals, and should question any requirement here that looks wrong, bringing it to the practitioner, not following it blindly. The flexibility is in the planning. The process the plan produces is not flexible: it is decided in advance, down to the instructions each step follows, so cheap models can run it rigidly.
+
 ## Contents
 
 | Section | What it holds |
@@ -12,6 +16,7 @@ Decided by the practitioner on 2026-11-10, in an interview reviewing `/bill-clie
 | Part 2 | The candidate list that grows across runs |
 | Part 3 | Days reviewed in parallel by a day-reviewer agent |
 | Part 4 | Orchestration, so parallel reviews never overwrite each other |
+| Rename | /bill-client becomes /bill |
 | Success criteria | What done looks like |
 | Open points | What is still undecided |
 
@@ -25,6 +30,8 @@ The requests share one pattern. Billing moves from a long chat in which the AI w
 4. **Speed.** A bill with many candidate dates finishes in a fraction of today's time, because days are judged in parallel and the review never stops mid-day to wait for an answer.
 5. **Work accumulates instead of being thrown away.** The candidate list, the screenshot readings and each day's judgment are saved once and built on. A repeated run becomes more complete, not a repeat.
 6. **Safe under parallel work.** Several sessions or agents can work at once without overwriting each other, and a mistake can be undone up to the point the bill becomes final.
+7. **Token efficiency.** A bill costs as few tokens as it can while staying robust and reliable.
+8. **Cheap models run it.** Most of the process runs on Sonnet and Haiku, following instructions planned in advance and written to be followed rigidly. Strong models are kept for the few judgments that need them, such as the day reviewer's.
 
 ## Constraints
 
@@ -159,6 +166,10 @@ The timecamping database's write lock (`source/lawyer/mcp/src/timecamping/lock.t
 - **The bill record has one writer.** Day reviewers never write it. The orchestrator does, and a save is refused when the record changed since it was read.
 - **Re-checking a judged date.** Every time, the fingerprint check (Part 2). On request only, for one date or a whole bill, a fresh day reviewer judges the day again in compare mode: where its result differs from the stored one, the block is flagged, and nothing stored is overwritten.
 
+## Rename: /bill-client becomes /bill
+
+The redesign renames the skill `bill-client` to `bill`, typed as `/bill` (`/billing:bill`). The name is free across the plugins. Every reference moves with it in the same change: the eight shipped files that name `/bill-client` today, `source/assignment.json`, the diagrams, and the scripts and tests under the skill's folder. Skill names are not on CLAUDE.md's permanent-name list, and no user has installed the plugins yet.
+
 ## Success criteria
 
 Done means each of these holds, each checked by a test or a recorded run, not by a model's report:
@@ -191,6 +202,10 @@ Done means each of these holds, each checked by a test or a recorded run, not by
 17. A TimeCamp change made after a day was judged comes back flagged on the next resume, and the rest of the day keeps its approvals.
 18. A listed date with missing evidence rows is detected on resume and searched again. The cause of the 2026-11-04 lost save is found and fixed.
 19. A full re-check on request flags differences and leaves every stored judgment unchanged.
+
+**Cheap, rigid execution**
+20. Every step except the day reviewer's judgment runs on Sonnet, Haiku or code, from instructions written before the run, and a run on a real bill completes on those models without a stronger model stepping in.
+21. `/bill` replaces `/bill-client`, and no shipped file names `/bill-client`.
 
 ## Open points
 
