@@ -12,7 +12,7 @@ The core Probanda plugin: firm records, time, billing, case data, deadlines, and
 
 `file-manager` is optional. It holds every Probanda tool that renames, moves, changes or deletes files on your computer that Probanda did not create (matter housekeeping, routing accounting files, applying approved renames), and it requires `lawyer`. Install it after `lawyer` if you want those tools. Without it, Probanda only reads or copies such files, and a step that would rename, move or trash one stops and says so. The host's own shell (`device_bash` in Cowork, Bash/PowerShell elsewhere) can still create and rename files in a connected folder. That access is outside any plugin's control. Disabling file-manager removes Probanda's file tools, not the host's.
 
-`billing` is optional. It holds automated time tracking (gathering a day's time evidence, sorting it to client matters, correcting TimeCamp and drafting time entries), and it requires `lawyer`. Install it after `lawyer` if you want those skills. It replaces `timekeeper`, which is retired and ships nothing.
+`billing` is optional. It holds automated time tracking (gathering a day's time evidence, sorting it to client matters, correcting TimeCamp and drafting time entries) and billing (bills, invoices, work in progress and receivables), and it requires `lawyer`. Install it after `lawyer` if you want those skills. It replaces `timekeeper`, which is retired and ships nothing.
 
 Install them in that order. Not every host installs a required plugin for you, and a plugin whose required plugin is missing loads with tools and agents absent.
 

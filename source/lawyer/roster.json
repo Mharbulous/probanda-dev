@@ -1,8 +1,4 @@
 {
-  "ar-follow-up": [],
-  "bill-client": [
-    "scripts"
-  ],
   "calendar-reminders": [
     "agents"
   ],
@@ -18,9 +14,6 @@
   "find-document": [],
   "ingest": [],
   "ingest-orchestrator": [],
-  "invoice-reviewing": [],
-  "issue-invoice": [],
-  "invoice-tracking": [],
   "localize": [],
   "matter-status-tracking": [],
   "practice-data": [],
@@ -46,6 +39,5 @@
   "task-prioritization": [],
   "verify-bc-lawyer": [
     "scripts"
-  ],
-  "wip-tracker": []
+  ]
 }

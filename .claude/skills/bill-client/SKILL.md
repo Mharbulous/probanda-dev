@@ -99,7 +99,7 @@ Before reading file names to find the last invoice, confirm housekeeping has alr
 1. List files in that folder, compute SHA-256 hashes (`sha256sum` in bash works fine).
 2. Invoke the `matter-data` skill's housekeeping-log operation in `lookup` mode with the list of `{file_name, file_hash}` pairs.
 3. If every non-conforming file already has a review row (matched by name or hash), housekeeping is up to date — no action needed.
-4. If there are files that fail the naming grammar (`file-naming/scripts/name_gate.py`, against `file-naming/references/code-registry.md`) **and** are not yet in the review log, stop and ask the practitioner to run `/housekeeping` on that one folder, then continue once they confirm it is done. `/housekeeping` ships in the `file-manager` plugin: if it is not available in this session, say that naming those files needs `file-manager` (or the practitioner renaming them by hand), and stop. Do not skip this — file names are how the next step finds the invoice.
+4. If there are files that fail the naming grammar (`/file-naming`'s name gate, against its code registry) **and** are not yet in the review log, stop and ask the practitioner to run `/housekeeping` on that one folder, then continue once they confirm it is done. `/housekeeping` ships in the `file-manager` plugin: if it is not available in this session, say that naming those files needs `file-manager` (or the practitioner renaming them by hand), and stop. Do not skip this — file names are how the next step finds the invoice.
 
 ## Step 3 — Find the most recently sent bill
 

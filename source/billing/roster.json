@@ -1,8 +1,14 @@
 {
+  "ar-follow-up": [],
+  "bill-client": [
+    "scripts"
+  ],
   "build-timeline": [
     "scripts"
   ],
-  "triage-billing-dates": [],
+  "invoice-reviewing": [],
+  "invoice-tracking": [],
+  "issue-invoice": [],
   "time-entry-drafting": [],
   "time-pipeline-data": [],
   "time-sorting": [],
@@ -10,7 +16,9 @@
   "timecamping-data": [
     "scripts"
   ],
+  "triage-billing-dates": [],
   "vet-billable-time": [
     "scripts"
-  ]
+  ],
+  "wip-tracker": []
 }

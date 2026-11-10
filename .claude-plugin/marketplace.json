@@ -47,7 +47,7 @@
       "name": "billing",
       "source": "./plugins/billing",
       "author": {"name": "Probanda Legal (experimental)", "url": "https://github.com/Probanda-app"},
-      "description": "Optional. Time tracking and billing: gathers the evidence of a day's work, sorts it to client matters, corrects TimeCamp and drafts time entries. Requires lawyer. Install lawyer first, then billing."
+      "description": "Optional. Time tracking and billing: gathers the evidence of a day's work, sorts it to client matters, corrects TimeCamp, drafts time entries, bills matters, records and reviews invoices, and follows up what clients owe. Requires lawyer. Install lawyer first, then billing."
     },
     {
       "name": "developer",

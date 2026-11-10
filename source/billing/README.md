@@ -1,8 +1,8 @@
 # billing
 
-The optional Probanda plugin for time tracking and billing. It holds `/triage-billing-dates` (narrowing one matter to the dates worth reviewing before a bill), `/build-timeline` (gathering a day's raw time evidence), `/time-sorting` (sorting that evidence to client matters), `/timecamping` (correcting TimeCamp from the evidence), `/time-entry-drafting` (drafting time entries from a sorted day), `/vet-billable-time` (confirming each billable line against its evidence, for a bill), and the two stores' gatekeepers, `/timecamping-data` and `/time-pipeline-data`. It also ships the `timecamp` server, which holds the TimeCamp login.
+The optional Probanda plugin for time tracking and billing. It holds `/triage-billing-dates` (narrowing one matter to the dates worth reviewing before a bill), `/build-timeline` (gathering a day's raw time evidence), `/time-sorting` (sorting that evidence to client matters), `/timecamping` (correcting TimeCamp from the evidence), `/time-entry-drafting` (drafting time entries from a sorted day), `/vet-billable-time` (confirming each billable line against its evidence, for a bill), and the two stores' gatekeepers, `/timecamping-data` and `/time-pipeline-data`. For billing it holds `/bill-client` (billing a matter from its last invoice), `/issue-invoice` (recording a signed invoice), `/invoice-reviewing` (checking a draft invoice), `/wip-tracker` (unbilled work in progress), `/ar-follow-up` (chasing what clients owe) and `/invoice-tracking` (importing past invoices). It also ships the `timecamp` server, which holds the TimeCamp login.
 
-The tools `time_pipeline__*` and `timecamping_data__*` are still served by the `data` server that `lawyer` ships, so these skills call `mcp__plugin_lawyer_data__...`. The data stays where it was, in the practitioner's `_practice` folder.
+The tools `time_pipeline__*`, `timecamping_data__*` and the billing tools of `practice_data__*` are still served by the `data` server that `lawyer` ships, so these skills call `mcp__plugin_lawyer_data__...`. The data stays where it was, in the practitioner's `_practice` folder.
 
 ## What to install, and in what order
 

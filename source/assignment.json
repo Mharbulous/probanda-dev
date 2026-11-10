@@ -5,8 +5,6 @@
     "lawyer": {
       "requires": [],
       "skills": [
-        "ar-follow-up",
-        "bill-client",
         "calendar-reminders",
         "call-contact",
         "compare-documents",
@@ -19,9 +17,6 @@
         "find-document",
         "ingest",
         "ingest-orchestrator",
-        "invoice-reviewing",
-        "issue-invoice",
-        "invoice-tracking",
         "localize",
         "matter-status-tracking",
         "practice-data",
@@ -36,8 +31,7 @@
         "suggestion",
         "task-prioritization",
         "TLDR",
-        "verify-bc-lawyer",
-        "wip-tracker"
+        "verify-bc-lawyer"
       ],
       "agents": [
         "compare-pages",
@@ -210,7 +204,13 @@
         "time-sorting",
         "timecamping",
         "timecamping-data",
-        "vet-billable-time"
+        "vet-billable-time",
+        "bill-client",
+        "issue-invoice",
+        "invoice-reviewing",
+        "wip-tracker",
+        "ar-follow-up",
+        "invoice-tracking"
       ],
       "agents": [
         "screenshot-reader"

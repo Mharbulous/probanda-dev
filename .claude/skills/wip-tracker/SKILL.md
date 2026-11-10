@@ -211,7 +211,7 @@ directly.
 - **Substituting `issue_date` silently for `date_to`.** Always note in output that the cutoff is based on invoice issue date, which is a proxy.
 - **Computing headroom without a rate.** Hours minus dollars is meaningless. When no rate is available, report hours and trust balance separately — do not attempt to compare them.
 - **Caching or storing WIP totals.** WIP is always computed on demand from time entries and invoices. Storing a pre-computed value creates a stale-data risk with no performance benefit at sole-practitioner scale.
-- **Defining schema or CREATE TABLE.** Schema belongs to `practice-data/SKILL.md`.
+- **Defining schema or CREATE TABLE.** Schema belongs to `/practice-data`.
 - **Querying upstream CSVs directly.** All data enters through the practice database import workflows. Never parse accounting CSVs.
 - **Recommending when to bill or what to write off.** This skill reports the numbers; the practitioner decides what to do with them.
 - **Rounding or truncating hours.** Report time entries at the precision stored in the database. The practitioner's rounding policy (if any) is applied at billing time, not at WIP reporting time.
