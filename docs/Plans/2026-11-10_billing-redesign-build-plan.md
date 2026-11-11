@@ -271,6 +271,26 @@ Stop and ask the practitioner before: adding or changing a ruling in `source/lay
 - **Practitioner.** Runs the review on the page. This slice touches real client data, so it starts only on the practitioner's word.
 - **Model.** Sonnet orchestrates.
 
+## Baseline
+
+Measured on 2026-11-10 by `python scripts/measure_bill_run.py`, from the measured run's main transcript and its one subagent transcript (slice 1, "Run under way"). Build: billing 0.3.0, run with `/billing:bill-client`. Sample: 2 dates, judged and then stopped. Slice 13 replays the same 2 dates and compares per date.
+
+| Measure | Main session | Subagent | Total |
+|---|---|---|---|
+| Messages | 67 | 7 | 74 |
+| Tokens in | 21,322,289 | 1,040,525 | 22,362,814 |
+| of which fresh input | 134 | 14 | 148 |
+| of which cache writes | 707,075 | 198,975 | 906,050 |
+| of which cache reads | 20,615,080 | 841,536 | 21,456,616 |
+| Tokens out | 109,332 | 13,148 | 122,480 |
+
+By model, across the run: Sonnet 5.5 took 21,656,743 tokens in and 119,315 out. Opus 5.5 answered part of the main session, with 706,071 tokens in and 3,165 out. The subagent ran on Sonnet 5.5 only. Slice 13 reports the same split, for criterion 20.
+
+- Subagents: 1 (one `Agent` call in the main session).
+- Questions asked of the practitioner: 1 (one `AskUserQuestion`, no `wrap_up` with a question). A question asked in plain text is not counted.
+- Messages the practitioner typed: 10.
+- Minutes from the first message to the last: 110.8. This spans the whole session, not the slice 1 marker (every date judged), which the script does not detect. Slice 13 measures the same span.
+
 ## Deferred
 
 - **Screenshot choice at capture time.** The spec places it in the SyncoPaid repo. Slice 6's script is the interim.
