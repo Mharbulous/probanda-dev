@@ -259,6 +259,8 @@ Slice 8 built: billing 0.4.6, commit 82298b21.
 - **Bump.** `billing` patch.
 - **Model.** Sonnet.
 
+Slice 9 built: billing 0.4.7, commit 69667e4b.
+
 ### Slice 10: the fingerprint
 
 - **Changes.** When a day is judged, its `review_date` record saves a fingerprint of the day's TimeCamp entries (id, start, end, task, note). On resume, the session passes each judged day's current entries to a compare tool. A changed, added or removed entry returns its block to flagged, or adds a flagged block, and the day is no longer clear. Other blocks keep their approvals.
