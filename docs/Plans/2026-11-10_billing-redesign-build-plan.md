@@ -268,6 +268,8 @@ Slice 9 built: billing 0.4.7, commit 69667e4b.
 - **Bump.** `billing` patch.
 - **Model.** Sonnet.
 
+Slice 10 built: billing 0.4.8, commit 718ca5e7.
+
 ### Slice 11: `/bill` runs on the pipeline
 
 - **Changes.** `/bill` Step 6 calls gather, pick, read, judge and the page in place of the in-chat day review and line vetting. Only flagged blocks need action before the draft. A script exports the blocks to the shape `tie_out.py` reads, and `line_map.json` gains each line's block id, so an invoice line opens its block on the page. A date judged in chat before this slice has no blocks, so the orchestrator has it judged once more to build them. The in-chat `/timecamping` review remains for work outside a bill and reads the same know-how. Redraw `docs/diagrams/Built/Client billing.html` and `Client billing process.md`.
