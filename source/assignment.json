@@ -196,7 +196,7 @@
         "timecamping",
         "timecamping-data",
         "vet-billable-time",
-        "bill-client",
+        "bill",
         "issue-invoice",
         "invoice-reviewing",
         "wip-tracker",

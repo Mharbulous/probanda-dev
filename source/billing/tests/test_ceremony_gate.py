@@ -42,7 +42,7 @@ def test_refused_after_timecamping_opens(tmp_path, record):
 
 
 def test_allowed_in_other_sessions(tmp_path):
-    assert decision(tmp_path, [skill_call("bill-client"), slash("lawyer:show-me")]) is None
+    assert decision(tmp_path, [skill_call("bill"), slash("lawyer:show-me")]) is None
 
 
 def test_subagent_skill_call_does_not_count(tmp_path):

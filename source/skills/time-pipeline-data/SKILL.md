@@ -110,10 +110,10 @@ workflow legitimately needs to read it — e.g. time-sorting reads `timeline`):
 | `timesort` | time-sorting | Classified day objects, project tree, corrections |
 | `tedraft` | time-entry-drafting | Draft entries, UTBMS metadata, description patterns |
 | `evidence` | timecamping-data, whose table names each family's writer | Billing evidence with no table of its own |
-| `bill` | bill-client | A bill in progress: its state and each step's completion |
+| `bill` | bill | A bill in progress: its state and each step's completion |
 | `item` | the `review_date__*` tools, for `review_date:` keys | Timekeeping records, key `<kind>:<native id>`, with `kind` a field of the value. Today only reviewed dates |
 
-`bill-client` and `issue-invoice` call the `time_pipeline__*` tools directly for `bill` instead of invoking this skill (ruled on #250). They use `set`, `get` and `list` only.
+`bill` and `issue-invoice` call the `time_pipeline__*` tools directly for `bill` instead of invoking this skill (ruled on #250). They use `set`, `get` and `list` only.
 
 ## Conventions
 

@@ -113,7 +113,7 @@ export async function wip_hours(
   let target: string | null = null;
   if (args.matt_num || args.matter_id) target = requireMatter(items, args).id;
 
-  // An explicit cutoff_date (e.g. bill-client's PDF-derived exact date)
+  // An explicit cutoff_date (e.g. /bill's PDF-derived exact date)
   // overrides uniformly for every matter, one cutoff reported for every row.
   // Omitting it derives each matter's OWN cutoff from its own invoices
   // (Step 2, 2026-08-26): date_to + 1 day when a matter's invoice states it,

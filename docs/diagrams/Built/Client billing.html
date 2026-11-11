@@ -45,11 +45,11 @@ pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap 
 <body>
 <main>
   <figure class="diagram" id="client-billing"
-          data-based-on-commit="72c1eb077e1c824ef05869eabde5998763fa3953"
-          data-updated="2026-11-10T12:57:00-07:00">
+          data-based-on-commit="f308fe7aa0021be0cce367c9b940923bb842d2a9"
+          data-updated="2026-11-10T23:29:00-07:00">
     <figcaption>
       <h1>How Probanda bills a client, from the last invoice to the signed one</h1>
-      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/72c1eb077e1c824ef05869eabde5998763fa3953"><code>72c1eb07</code></a> on main · Last updated 2026-11-10 12:57 -07:00</p>
+      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/f308fe7aa0021be0cce367c9b940923bb842d2a9"><code>f308fe7a</code></a> on main · Last updated 2026-11-10 23:29 -07:00</p>
     </figcaption>
     <div class="legend" aria-label="Colour key">
       <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer plugin skill</span>
@@ -70,17 +70,15 @@ pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap 
     <div class="chart">
 <pre class="mermaid">
 flowchart TD
-    GO(["👤 You type /bill-client<br/>in the matter's folder"])
-    BC["/bill-client<br/>runs every billing step in order<br/>and remembers how far it got"]
+    GO(["👤 You type /bill<br/>in the matter's folder"])
+    BC["/bill<br/>runs every billing step in order<br/>and remembers how far it got"]
     MD["/matter-data<br/>looks up this matter's<br/>client number"]
     REC[("Bill record<br/>this bill's saved progress,<br/>so any session can pick it up")]
     LIVE{"Is a bill for this matter<br/>already in progress?"}
     RES["Re-check the last invoice:<br/>is it the same file?<br/>is there a newer one?"]
-    NAMES{"Any badly named files<br/>in the client folder<br/>not yet reviewed?"}
-    HK(["👤 You run /housekeeping<br/>to fix the file names"])
-    HKS["/housekeeping<br/>renames files to<br/>the firm's naming rules"]
-    HKA[["housekeeping-reader reads each file<br/>housekeeping-namer suggests a name"]]
-    LAST["Find the newest signed invoice,<br/>now that file names can be trusted"]
+    NAMES["Look up the last invoice<br/>in the firm's records, then check<br/>the client folder for a newer signed one"]
+    ASK(["👤 Which file is the last<br/>signed invoice? Asked only<br/>when it is still unclear"])
+    LAST["Take the last signed invoice:<br/>the recorded one, or a newer one<br/>found in the folder"]
     READ["Open that invoice and read<br/>the last date it charged time for,<br/>and the hours on each date"]
     PD["/practice-data<br/>the firm's records<br/>of past invoices"]
     AGREE{{"Do the firm's records match<br/>the invoices in the folder?<br/>If not, open each one to confirm<br/>its signature and number"}}
@@ -102,11 +100,10 @@ flowchart TD
     RES -->|"nothing changed:<br/>skip ahead"| O1
     RES -->|"something changed"| NAMES
     LIVE -->|"no: start a new bill"| NAMES
-    NAMES -->|"yes: the bill waits<br/>until they are fixed"| HK
-    HK --> HKS
-    HKS --> HKA
-    HKS -.->|"you say it is done:<br/>the bill carries on"| NAMES
-    NAMES -->|"no"| LAST
+    PD -.->|"the recorded invoices"| NAMES
+    NAMES --> LAST
+    LAST -->|"still unclear"| ASK
+    ASK --> READ
     LAST --> READ
     LAST -->|"a bill under way, but this is<br/>not the invoice it started from"| SO
     READ --> AGREE
@@ -125,9 +122,7 @@ flowchart TD
     classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
     class MD,PD lawyer
     class BC tk
-    class HKS fm
-    class HKA agent
-    class GO,HK,REOPEN,SO human
+    class GO,ASK,REOPEN,SO human
     class AGREE gate
     class LIVE,RES,NAMES,LAST,READ,WAIT,STOP1 step
     class REC store
@@ -412,7 +407,7 @@ flowchart TD
 </pre>
     </div>
 
-    <p class="sources">Full account: <a href="../Planned/Client billing process.md">Client billing process.md</a>. Sources: the <code>bill-client</code>, <code>issue-invoice</code>, <code>triage-billing-dates</code>, <code>timecamping</code>, <code>timecamping-data</code>, <code>vet-billable-time</code> and <code>build-timeline</code> skills and their scripts.</p>
+    <p class="sources">Full account: <a href="../Planned/Client billing process.md">Client billing process.md</a>. Sources: the <code>bill</code>, <code>issue-invoice</code>, <code>triage-billing-dates</code>, <code>timecamping</code>, <code>timecamping-data</code>, <code>vet-billable-time</code> and <code>build-timeline</code> skills and their scripts.</p>
   </figure>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>

@@ -1,6 +1,6 @@
 ---
 name: timecamping
-description: Use for "correct my TimeCamp entries", "categorize today's amber entries", "fix my time tracking for {date}", "what unbilled time is on {date}", reviewing or correcting TimeCamp assignments, or working a matter's candidate dates for /bill-client. Does not classify raw activity into a first cut (/time-sorting), bill (/bill-client) or create a time entry.
+description: Use for "correct my TimeCamp entries", "categorize today's amber entries", "fix my time tracking for {date}", "what unbilled time is on {date}", reviewing or correcting TimeCamp assignments, or working a matter's candidate dates for /bill. Does not classify raw activity into a first cut (/time-sorting), bill (/bill) or create a time entry.
 dependencies:
   - timecamping-data        # timecamping.db: source tables, the assembly gate, proposals, determinations, presumptions
   - build-timeline           # delegated ingestion for TimeCamp computer-activity, Telus, Google Calendar, iCloud calendar and sent-mail rows
@@ -17,9 +17,9 @@ dependencies:
 | Scope | Deciding whether a request falls inside this skill |
 | Workflow | Every run: Steps 0 to 7. Step 2 reads `reference/sources.md`, Steps 4 and 5 `reference/inference.md`, Step 6's presumptions `reference/presumptions.md` |
 | Queries | The practitioner asks one of the listed questions. A Backfill reads `reference/backfill.md` |
-| A candidate list | `/bill-client` opened this skill, or the practitioner gave a matter's candidate-dates file |
+| A candidate list | `/bill` opened this skill, or the practitioner gave a matter's candidate-dates file |
 
-This skill deliberately carries no `disable-model-invocation` line: `/bill-client` opens it through the Skill tool, which refuses a skill carrying that line. It is a stated exception. Do not add the line back. It never starts a correction unasked: the bill starts only when the practitioner types it, and nothing is written to TimeCamp until the practitioner says to commit (Step 7).
+This skill deliberately carries no `disable-model-invocation` line: `/bill` opens it through the Skill tool, which refuses a skill carrying that line. It is a stated exception. Do not add the line back. It never starts a correction unasked: the bill starts only when the practitioner types it, and nothing is written to TimeCamp until the practitioner says to commit (Step 7).
 
 # Timecamping
 
@@ -264,7 +264,7 @@ unconfirmed one stays listed.
 Given a matter's candidate-dates file, run Steps 0 to 7 once per date, in this order: Strong, then Medium, each oldest first. Then offer the Weak dates once as a group, and work them only on a yes. A date marked `Staff` alone is not worked, because this skill judges only the practitioner's own time.
 
 - **Recheck the matter's own entries.** This run reviews the entries already on the matter's task as well as the default queue. Being opened with a candidate list is the practitioner-directed recheck `reference/TimeCampEntries.md` describes.
-- **Holder.** `/bill-client` passes its bill id as the holder. A candidate-list run with no bill uses `timecamping:<UTC stamp>`, made once at the start. The `review_date__*` tools are on this plugin's `timekeeping` server, under whichever of `mcp__plugin_billing_timekeeping__<name>` and `mcp__remote-devices__plugin_billing_timekeeping__<name>` this host grants.
+- **Holder.** `/bill` passes its bill id as the holder. A candidate-list run with no bill uses `timecamping:<UTC stamp>`, made once at the start. The `review_date__*` tools are on this plugin's `timekeeping` server, under whichever of `mcp__plugin_billing_timekeeping__<name>` and `mcp__remote-devices__plugin_billing_timekeeping__<name>` this host grants.
 - **For each date, in the list's existing order:**
   1. Call `review_date__claim` with the date and the holder.
      - `judged`: do not review the date. Add it to the "already judged" list with `judged_by`. Go to the next date.

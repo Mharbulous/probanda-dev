@@ -22,7 +22,7 @@ def load(skill, name):
 
 
 tie_out = load("vet-billable-time", "tie_out")
-freeze_invoice = load("bill-client", "freeze_invoice")
+freeze_invoice = load("bill", "freeze_invoice")
 defend_line = load("practice-data", "defend_line")
 
 CANDIDATES = """| Date or range | Strength | Lawyer or Staff | Flags | Evidence, with local times |

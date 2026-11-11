@@ -35,7 +35,7 @@ The same principle sets the unit of review: one day, every block in it, for ever
 - **The day explains its own blocks.** A few screenshots and a note are often unreadable alone. The morning's call, the document opened at noon or the email answered after lunch is often what tells what a later stretch was. The whole day is the context.
 - **The day narrows the choice.** On any one day only a handful of matters are active. Seeing them all turns "which of every matter in the practice?" into "which of these four or five?", and forces a decision for every block instead of leaving gaps between matters.
 
-So `/bill-client` hands `/timecamping` dates, never a matter's entries alone: each date is reviewed whole, and the bill takes its matter's share. A view filtered to one matter is only a view; it never changes what is reviewed.
+So `/bill` hands `/timecamping` dates, never a matter's entries alone: each date is reviewed whole, and the bill takes its matter's share. A view filtered to one matter is only a view; it never changes what is reviewed.
 
 ## The corollary: ceremonies must be rare and non-repetitive
 

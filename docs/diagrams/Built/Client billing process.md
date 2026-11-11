@@ -1,12 +1,12 @@
-# How Probanda bills a client: the `/bill-client` process
+# How Probanda bills a client: the `/bill` process
 
-Based on commit `c9154155` on `main` of probanda-dev (lawyer 0.25.10, timekeeper 0.8.8), 2026-11-06. Screenshot review updated against commit `a0ac8923` plus the `timekeeper:screenshot-reader` change, 2026-11-06. The installed copies on this PC (lawyer 0.25.5, timekeeper 0.8.5) have the same skill text apart from version comments.
+Based on commit `c9154155` on `main` of probanda-dev (lawyer 0.25.10, timekeeper 0.8.8), 2026-11-06. Screenshot review updated against commit `a0ac8923` plus the `timekeeper:screenshot-reader` change, 2026-11-06. The installed copies on this PC (lawyer 0.25.5, timekeeper 0.8.5) have the same skill text apart from version comments. Steps 2 and 3 and the skill's name (`/bill`, formerly `/bill-client`) updated against commit `f308fe7a`, 2026-11-10.
 
 This is the prose for a planned diagram. It describes the process as built, not as it might be improved.
 
 ## 1. What the process promises
 
-`/bill-client` takes one matter from its last signed invoice to a new invoice ready for the lawyer's signature. It sends nothing, issues nothing, records no invoice before signature and moves no trust money. `/issue-invoice` does the recording, after the lawyer signs.
+`/bill` takes one matter from its last signed invoice to a new invoice ready for the lawyer's signature. It sends nothing, issues nothing, records no invoice before signature and moves no trust money. `/issue-invoice` does the recording, after the lawyer signs.
 
 The promise about completeness is narrower than "every minute is billed". It is that every **day with an indicator of work** since the last invoice is either:
 - billed, from evidence or an approved estimate, or
@@ -21,12 +21,11 @@ A script, not the model, refuses to produce invoice lines until that is true (se
 
 | Plugin | Skill | Role in billing |
 |---|---|---|
-| lawyer | `/bill-client` | The conductor. Runs Steps 1 to 9 in order, keeps the bill record, renders the invoice. Typed by the practitioner. |
-| lawyer | `/matter-data` | Supplies the client number (profile) and the housekeeping review log. |
+| lawyer | `/bill` | The conductor. Runs Steps 1 to 9 in order, keeps the bill record, renders the invoice. Typed by the practitioner. |
+| lawyer | `/matter-data` | Supplies the client number (profile). |
 | lawyer | `/practice-data` | Invoice history, invoice import, firm profile (template, letterhead, style, billing settings), rates, trust balance, time-entry records. |
 | lawyer | `/show-me` | The presentation rules for every question asked of the practitioner: one decision per question, the actual evidence shown. |
 | lawyer | `/issue-invoice` | After signature: freezes the record, issues the invoice, ends the bill. |
-| file-manager | `/housekeeping` | Only if the solicitor-client folder has unreviewed, badly named files. The practitioner runs it. |
 | timekeeper | `/triage-billing-dates` | Builds the candidate dates list. |
 | timekeeper | `/timecamping` | Reviews each candidate date's whole day, corrects TimeCamp, and lists possible unbilled time. |
 | timekeeper | `/build-timeline` | Fetches each day's raw evidence for `/timecamping`. |
@@ -40,11 +39,10 @@ A script, not the model, refuses to produce invoice lines until that is true (se
 |---|---|---|
 | A background helper on Sonnet (general-purpose, no custom type) | `/triage-billing-dates`, Phase 2 | Scans the range's TimeCamp computer activity for the matter's keywords and returns matching stretches. Reads only. |
 | `timekeeper:screenshot-reader` (Haiku 5.5, effort high, fixed in its file) | `/timecamping` Step 5 and `/triage-billing-dates`, Phase 2 | Views up to 5 decrypted screenshots of one stretch and reports what each shows: on screen, identifiers, unchanged or not, unreadable parts. Holds only `Read`, and a hook lets it open only `.png` files in a `syncopaid-screens` folder and refuses a dispatch that sets its model or effort. Judges no matter and no billing. |
-| `file-manager:housekeeping-reader` and `housekeeping-namer` | `/housekeeping`, only when Step 2 sends the practitioner there | Read page 1 of each file and propose names. |
 | `lawyer:scrivener` | `/issue-invoice` Step 4 | Writes the body of the trust-transfer email to accounting. |
 | `lawyer:delivery-checker` | `/issue-invoice`, "When it went out" | Checks whether the invoice was sent and delivered before anyone asks. |
 
-Every screenshot a model reads goes to `timekeeper:screenshot-reader`. Apart from it, `/bill-client`, `/timecamping` and `/vet-billable-time` dispatch no custom agent.
+Every screenshot a model reads goes to `timekeeper:screenshot-reader`. Apart from it, `/bill`, `/timecamping` and `/vet-billable-time` dispatch no custom agent.
 
 ### Data stores
 
@@ -52,7 +50,7 @@ Every screenshot a model reads goes to `timekeeper:screenshot-reader`. Apart fro
 |---|---|
 | The bill record (time-pipeline store, namespace `bill`) | Where each bill stands: its state, its last signed invoice, one row per finished step. A fresh session resumes from it. |
 | The time-review database (`timecamping.db`, one per practitioner) | Each day's evidence from seven sources, the fetch log the gate reads, proposals, and the practitioner's answers. |
-| The review-date records (time-pipeline store, namespace `item`, one per date) | Which dates have been reviewed, and which a run holds now. `/bill-client` exports the judged ones to `<matter-data folder>\timecamping\judged-dates.export.jsonl` for the tie-out. |
+| The review-date records (time-pipeline store, namespace `item`, one per date) | Which dates have been reviewed, and which a run holds now. `/bill` exports the judged ones to `<matter-data folder>\timecamping\judged-dates.export.jsonl` for the tie-out. |
 | The practice database | Invoices, rates, time entries, firm profile, trust. |
 | TimeCamp | The system of record for time entries. Each entry has exactly one task. |
 
@@ -60,21 +58,21 @@ Every screenshot a model reads goes to `timekeeper:screenshot-reader`. Apart fro
 
 ### Step 1: Identify the matter
 
-`/bill-client` takes the matter number from the folder name and the client number from `/matter-data`'s profile. A matter never set up is set up first. Then it reads the bill record. A bill already under way is resumed (see "Resuming" below). Otherwise a new bill starts.
+`/bill` takes the matter number from the folder name and the client number from `/matter-data`'s profile. A matter never set up is set up first. Then it reads the bill record. A bill already under way is resumed (see "Resuming" below). Otherwise a new bill starts.
 
-### Step 2: Check the file names
+### Step 2: Look up the last invoice in the records
 
-The last invoice is found by its file name, so names must be trustworthy. `/bill-client` hashes every file in `2. SOLICITOR CLIENT` and asks `/matter-data`'s housekeeping log which badly named files have already been reviewed.
-
-**Human:** if any badly named file is unreviewed, the bill stops until the practitioner runs `/housekeeping` on that folder.
+`/bill` reads the matter's recorded invoices from `/practice-data` first, because file names are not trusted on their own. It then hashes every file in `2. SOLICITOR CLIENT` and notes any signed invoice newer than the latest recorded one.
 
 ### Step 3: Find the last invoice
 
-With the names checked, the latest `YYYY-MM-DD INV#nnnnn ... signed.pdf` is the most recently sent bill.
+The latest recorded invoice is the most recently sent bill, unless the records hold none or the folder holds a newer signed invoice. Then the newest invoice in the folder is read and verified as Steps 4 and 5 do.
+
+**Human:** only when it is still unclear which file is the last signed invoice, the practitioner is asked that one question.
 
 ### Step 4: Read the last billed date
 
-`/bill-client` reads the invoice PDF itself, scanned pages from images. It reads the exact latest date with billed time from the bar chart or itemized list, never rounding to the invoice date. It records each billed date with its hours. An invoice with no service dates uses its invoice date, and the practitioner is told that is an assumption.
+`/bill` reads the invoice PDF itself, scanned pages from images. It reads the exact latest date with billed time from the bar chart or itemized list, never rounding to the invoice date. It records each billed date with its hours. An invoice with no service dates uses its invoice date, and the practitioner is told that is an assumption.
 
 ### Step 5: Cross-check the records
 
@@ -214,8 +212,8 @@ These are facts about the current build, not proposals.
 
 | Where | What the practitioner does |
 |---|---|
-| Start | Types `/bill-client`. Chooses which bill to continue, if two are live. |
-| Step 2 | Runs `/housekeeping` if told to. |
+| Start | Types `/bill`. Chooses which bill to continue, if two are live. |
+| Step 3 | Says which file is the last signed invoice, only if asked. |
 | Step 6.1 | Approves saving a new phone number to a contact. |
 | Step 6.2 | Pastes approval for a replacing evidence write. Answers each day's questions. Says "commit". Gives a yes per TimeCamp change. Accepts or declines the Weak dates. |
 | Step 6.3 | Enters uncovered time by hand, or leaves it for an estimate. |
@@ -228,4 +226,4 @@ These are facts about the current build, not proposals.
 
 ## Sources
 
-`plugins/lawyer/skills/bill-client/SKILL.md` and its `scripts/` (`render_invoice.py`, `collect_disbursements.py`, `freeze_invoice.py`, `build_invoice_template.py`) and `references/chart.md`; `plugins/lawyer/skills/issue-invoice/SKILL.md`; `plugins/timekeeper/skills/triage-billing-dates/SKILL.md`; `plugins/timekeeper/skills/timecamping/SKILL.md` and `reference/inference.md`; `plugins/timekeeper/skills/timecamping-data/SKILL.md`; `plugins/timekeeper/skills/vet-billable-time/SKILL.md` and `scripts/tie_out.py`; `plugins/timekeeper/skills/build-timeline/SKILL.md` (Step 4); `plugins/timekeeper/skills/time-pipeline-data/SKILL.md` (Bulk apply). The L145 figures come from read-only queries of the time-review database on 2026-11-06.
+`plugins/lawyer/skills/bill/SKILL.md` and its `scripts/` (`render_invoice.py`, `collect_disbursements.py`, `freeze_invoice.py`, `build_invoice_template.py`) and `references/chart.md`; `plugins/lawyer/skills/issue-invoice/SKILL.md`; `plugins/timekeeper/skills/triage-billing-dates/SKILL.md`; `plugins/timekeeper/skills/timecamping/SKILL.md` and `reference/inference.md`; `plugins/timekeeper/skills/timecamping-data/SKILL.md`; `plugins/timekeeper/skills/vet-billable-time/SKILL.md` and `scripts/tie_out.py`; `plugins/timekeeper/skills/build-timeline/SKILL.md` (Step 4); `plugins/timekeeper/skills/time-pipeline-data/SKILL.md` (Bulk apply). The L145 figures come from read-only queries of the time-review database on 2026-11-06.
