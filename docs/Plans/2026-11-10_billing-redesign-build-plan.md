@@ -227,6 +227,8 @@ Decided by the practitioner on 2026-11-10 (question 7). `/bill-client` Step 2 st
 - **Practitioner.** Nothing.
 - **Model.** Sonnet builds. The agent's body is drafted with the prompt-engineering rules and reviewed once by a stronger model, because it is the one judgment prompt in the pipeline.
 
+Slice 6 built: billing 0.4.4, commit cc58f7ed.
+
 ### Slice 7: the review page, read-only
 
 - **Changes.** A fixed HTML template under `source/skills/timecamping/`, filled by the `timekeeping` server from the store and served by the local-page listener, as `/housekeeping`'s approval page is. Cards show matter, description, times, state and evidence rows, with the screenshot slideshow and each saved reading. Navigation: date picker, matter filter, Previous, Next, Next flagged. Two tools: serve the page and return its file card, and wait for a click. No action buttons yet.
