@@ -238,6 +238,8 @@ Slice 6 built: billing 0.4.4, commit cc58f7ed.
 - **Practitioner.** Answers question 3. After release, can open a judged day's page to look.
 - **Model.** Sonnet. The practitioner sees a mock-up of one card before the template is fixed.
 
+Slice 7 built: billing 0.4.5, commit 9687aa7c.
+
 ### Slice 8: Approve, Correct and Write off
 
 - **Changes.** The three buttons write through the listener to the block: the act, who, when and, for a write-off, the reason. A block records an approval only from a click on that block. The waiting session then writes a changed matter or description to TimeCamp with `update_entry`, re-reads the entry, and saves "saved to TimeCamp" or the error to the block. A staff entry's TimeCamp note is left alone. A day reads as clear when it is judged and no block on it is flagged.
