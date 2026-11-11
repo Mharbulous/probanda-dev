@@ -189,11 +189,11 @@ Stop and ask the practitioner before: adding or changing a ruling in `source/lay
 
 - **Changes.** A new tool family on `billing`'s `timekeeping` server, over `time_pipeline.db`:
   - a save for a day's `day_evidence` rows (the gather step's output),
-  - a stage tool that takes one day's blocks from a reviewer and refuses a day another holder has claimed,
+  - a stage tool that takes one day's blocks from a reviewer and refuses a day another holder has claimed, and refuses a day whose `day_evidence` record is not saved with every source through the gate, so no block is ever judged on part of the evidence,
   - a read of one day.
   - Each staged block states the basis of its matter and of its description as values from a fixed list drawn from the spec's "What is flagged". Code, not the model, sets the block flagged or auto-assigned from those values. A reviewer cannot stage an unflagged block that states a doubt.
 - **Files.** New `source/lawyer/mcp/src/time-review/` (records, flag rules, tools), `src/schema/`, `timekeeping-dispatch.ts`, tests in `source/lawyer/mcp/test/`, `source/skills/time-pipeline-data/SKILL.md`.
-- **Tests.** One fixture per flag case in the spec, each producing a flag, and one where the evidence names the matter producing none (criterion 3). A second stage of a judged day is refused. The bundle contract test lists the new tools.
+- **Tests.** One fixture per flag case in the spec, each producing a flag, and one where the evidence names the matter producing none (criterion 3). A second stage of a judged day is refused. A stage for a day with no saved evidence, or with a source short of the gate, is refused. The bundle contract test lists the new tools.
 - **Bump.** `billing` patch: new tools, nothing uses them yet.
 - **Practitioner.** Answers questions 2 and 6 before the slice starts, because a tool family name is permanent.
 - **Model.** Sonnet. The fixed list of basis values is written into this slice's ticket before the build, by the planner, from `timecamping/SKILL.md:194-205` and `vet-billable-time/SKILL.md` Steps 5 and 6.
