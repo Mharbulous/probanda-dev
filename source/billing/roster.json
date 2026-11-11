@@ -12,7 +12,9 @@
   "time-entry-drafting": [],
   "time-pipeline-data": [],
   "time-sorting": [],
-  "timecamping": [],
+  "timecamping": [
+    "scripts"
+  ],
   "timecamping-data": [
     "scripts"
   ],

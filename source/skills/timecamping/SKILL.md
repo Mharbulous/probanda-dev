@@ -174,9 +174,14 @@ and window titles are never enough to propose a block. For every block that
 rests on a stretch SyncoPaid covers, pick at least the first, a middle and
 the last capture, and more wherever the window title moves between matters.
 A stretch whose captures carry no OCR text is where the image matters most.
-Decrypt them as `reference/SyncoPaidCaptures.md` says, and have them viewed
-only by `billing:screenshot-reader`, up to 5 per dispatch, passing no
-model or effort. A failed decrypt is disclosed in the ceremony.
+`scripts/screenshot_pick.py pick --captures <the stretch's captures>` makes
+the pick: the first, a middle and the last capture, and each capture where the
+window title changes, grouped 5 to a dispatch. Decrypt them as
+`reference/SyncoPaidCaptures.md` says. The reader looks first:
+`billing:screenshot-reader` views them, up to 5 per dispatch, passing no
+model or effort. `billing:day-reviewer` opens an image itself only after the
+reader's answers leave a doubt about a block. A failed decrypt is disclosed in
+the ceremony.
 
 **Look up before you dispatch, save after.** A capture is read once. Before
 decrypting or dispatching, call `time_pipeline__get` with namespace `item` and
@@ -298,6 +303,20 @@ Given a matter's candidate-dates file, run Steps 0 to 7 once per date, in this o
 - **Calls in window titles.** For each match in `<matter-data folder>\triage-billing-dates\phone-matches.json` on this date, save a `call_window` row to `/timecamping-data`'s evidence store and cite it in the block's evidence chain. A match off the matter's task or with no entry is direct evidence of a call on the matter: propose it as a block on the matter, for a ceremony. A title that is only a number names no matter by itself, so the service list is what ties it.
 - **What the practitioner says.** Save a statement about a date or matter that the evidence does not hold ("I know I called the client that day") verbatim as a `statement` row, with when it was said, and cite it. Save a ruling that a window pattern is never billable as a `marker` row: the pattern, the ruling verbatim and when. A pattern holds no client content.
 - **At the end,** return the Possible unbilled time list across all the dates, the "already judged" list, and each date left without a mark and why.
+
+### Parallel mode
+
+Not called by `/bill` yet. It judges a candidate list's dates with `billing:day-reviewer` agents and puts no question to the practitioner. A date's blocks are staged by its reviewer through `time_review__stage_day`, and a question about one waits for the page that shows the staged day.
+
+1. **Order.** Export the matter's `candidate_date` records (`time_pipeline__export`, namespace `item`, prefix `candidate_date:<matter>:`) and call `review_date__status` for the dates. Run `scripts/day_plan.py order --records <export> --status <status reply>`. Its `order` is the days to review, strongest candidate first, then earliest. A day it lists under `judged` is read from the stored blocks. A day under `held` is skipped now and asked for again, with `review_date__claim`, once the holder has judged it.
+2. **Gather, one date at a time.** For each day in `order`, in order, call `review_date__claim` (holder as above) and keep the token. Run `/build-timeline` for that one date, through the seven-source gate. Then call `time_review__save_evidence` with every source's outcome and the day's rows. A day whose gate does not pass is released with `review_date__release` and reported.
+3. **Pick and read screenshots.** For each stretch of the day that SyncoPaid covers, run Step 5's pick and have `billing:screenshot-reader` read it, saving each reading as Step 5 says. Write the day's readings to a file for the reviewer.
+4. **Dispatch.** Start at most 10 `billing:day-reviewer` agents at once, in the background, one per claimed and gathered day. The brief names the date, the token, the paths of `reference/inference.md` and `reference/presumptions.md`, the readings file, and the standing presumptions approved when the run began. Run `scripts/day_plan.py next --order <plan> --in-flight <dates running> --done <dates returned> --limit 10` each time a reviewer returns, and start the days it names.
+5. **Renew** each running day's claim with `review_date__renew` when its reviewer is dispatched and every 20 minutes after.
+6. **Judge.** A reviewer's first line is `status: staged ...` when its blocks are staged. Then call `review_date__judge` with the date and its token. Any other status is reported for that date with no judge call: `held`, `judged` or `claim_lost` mean another run has the day, and `evidence_missing`, `evidence_short` or `failed` release the claim.
+7. **Presumptions.** A reviewer applies the presumptions approved at the start of the run and offers none. Counting confirmations and offering a new presumption wait until every day is judged, run in date order over the stored blocks. That count is not built yet, so a new presumption is not offered in this mode.
+
+Two bills that share dates judge each date once: the second finds it `judged` or `held` at the claim, and the staged blocks it reads are the first bill's.
 
 ## Queries
 

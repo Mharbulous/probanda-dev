@@ -552,3 +552,82 @@ test("export creates the file's parent directory", (t) => {
   assert.deepEqual(timePipelineExport("timeline", "activity:telus:", out, f.env), { items: 1, path: out });
   assert.deepEqual(exportedLines(out), [{ op: "set", key: "activity:telus:a", value: "1" }]);
 });
+
+// --- slice 6: the guards on delete, bulk_apply and export ------------------
+
+
+/** A day with saved evidence and one staged block, put in place the way the time_review__* tools do. */
+async function stagedDay(t, f) {
+  const { timeReviewSaveEvidence, timeReviewStageDay } = await import("../build/time-review/tools.js");
+  const { reviewDateClaim } = await import("../build/time-pipeline/review-date.js");
+  const { GATE_SOURCES } = await import("../build/time-review/sources.js");
+  const seams = { env: f.env };
+  assert.equal(timeReviewSaveEvidence("2030-01-02", GATE_SOURCES.map((source) => ({ source, status: "fetched" })), [{ source: "gcal_events", id: "e1" }], seams).status, "saved");
+  const { token } = reviewDateClaim("2030-01-02", "test:bill-1", seams);
+  const block = { start: "09:00", end: "09:30", matter: "Synthetic Matter A", description: "Synthetic work", matter_basis: "evidence_names_matter", bill_basis: [], evidence: [{ source: "gcal_events", ref: "e1" }] };
+  assert.equal(timeReviewStageDay("2030-01-02", token, [block], seams).status, "staged");
+  return ["day_evidence:2030-01-02", "block:2030-01-02:001"];
+}
+
+test("delete, bulk_apply and export refuse a day_evidence: or block: key in namespace item, and change nothing", async (t) => {
+  const f = fixture(t);
+  const keys = await stagedDay(t, f);
+  const before = keys.map((key) => getWithHash("item", key, f.env).sha256);
+  assert.ok(before.every(Boolean));
+  for (const [i, key] of keys.entries()) {
+    // Naming what it read does not help: the record belongs to the time_review__* tools.
+    assert.throws(() => timePipelineDelete("item", key, f.env, before[i]), refusedWith("protected_key"));
+    assert.throws(() => timePipelineDelete("item", key, f.env), refusedWith("protected_key"));
+    for (const lines of [[{ op: "set", key, value: "{}" }], [{ op: "delete", key }]]) {
+      assert.throws(() => timePipelineBulkApply("item", jsonl(t, lines), { preview: true }, f.env), refusedWith("protected_key"));
+    }
+  }
+  for (const prefix of ["day_evidence:", "block:"]) {
+    assert.throws(() => timePipelineBulkApply("item", jsonl(t, [{ op: "delete_prefix", prefix }]), { preview: true }, f.env), refusedWith("protected_key"));
+  }
+  for (const prefix of ["", "day_evidence:", "block:"]) {
+    assert.throws(() => timePipelineExport("item", prefix, join(f.root, "out.jsonl"), f.env), refusedWith("protected_key"));
+  }
+  assert.equal(existsSync(join(f.root, "out.jsonl")), false);
+  assert.deepEqual(keys.map((key) => getWithHash("item", key, f.env).sha256), before);
+  // The same keys in another namespace are not protected, and another kind in item is unaffected.
+  assert.deepEqual(timePipelineDelete("timesort", keys[0], f.env), { ok: true, deleted: false });
+  setWithExpectation("item", "reading:1", "{}", { expect_absent: true }, f.env);
+  assert.equal(timePipelineExport("item", "reading:", join(f.root, "ok.jsonl"), f.env).items, 1);
+});
+
+test("in namespaces bill and item a delete naming nothing is refused with expectation_required, and a named one lands only if unchanged", (t) => {
+  const f = fixture(t);
+  for (const namespace of ["bill", "item"]) {
+    setWithExpectation(namespace, "x:1", "v1", { expect_absent: true }, f.env);
+    assert.throws(() => timePipelineDelete(namespace, "x:1", f.env), refusedWith("expectation_required"));
+    assert.equal(getWithHash(namespace, "x:1", f.env).value, "v1");
+    // A delete naming a value that is no longer the stored one is stale.
+    assert.throws(() => timePipelineDelete(namespace, "x:1", f.env, sha256("other")), refusedWith("stale_write"));
+    assert.equal(getWithHash(namespace, "x:1", f.env).value, "v1");
+    assert.deepEqual(timePipelineDelete(namespace, "x:1", f.env, sha256("v1")), { ok: true, deleted: true });
+    assert.equal(getWithHash(namespace, "x:1", f.env).value, null);
+    // A key already gone cannot be deleted by naming a value that was read earlier.
+    assert.throws(() => timePipelineDelete(namespace, "x:1", f.env, sha256("v1")), refusedWith("stale_write"));
+  }
+  // Elsewhere a delete needs no expectation, and may name one.
+  setWithExpectation("timesort", "day:1", "a", {}, f.env);
+  assert.deepEqual(timePipelineDelete("timesort", "day:1", f.env, sha256("a")), { ok: true, deleted: true });
+});
+
+test("the tool schema takes expect_sha256 on delete, and a delete naming nothing is refused in bill", async (t) => {
+  const f = fixture(t);
+  const saved = { ...process.env };
+  Object.assign(process.env, f.env);
+  t.after(() => { for (const k of Object.keys(f.env)) { if (saved[k] === undefined) delete process.env[k]; else process.env[k] = saved[k]; } });
+  setWithExpectation("bill", "L1:b1", "v1", { expect_absent: true }, f.env);
+  await assert.rejects(() => callTimekeepingTool("time_pipeline__delete", { namespace: "bill", key: "L1:b1" }), refusedWith("expectation_required"));
+  assert.deepEqual(await callTimekeepingTool("time_pipeline__delete", { namespace: "bill", key: "L1:b1", expect_sha256: sha256("v1") }), { ok: true, deleted: true });
+});
+
+test("bulk_apply in bill and item already names what it read: a call with neither preview nor expect is refused", (t) => {
+  const f = fixture(t);
+  for (const namespace of ["bill", "item"]) {
+    assert.throws(() => timePipelineBulkApply(namespace, jsonl(t, [{ op: "set", key: "x:1", value: "v" }]), {}, f.env), /preview or expect/);
+  }
+});

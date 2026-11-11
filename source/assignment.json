@@ -204,7 +204,8 @@
         "invoice-tracking"
       ],
       "agents": [
-        "screenshot-reader"
+        "screenshot-reader",
+        "day-reviewer"
       ],
       "hooks": {
         "ceremony-gate": "source/billing/hooks/ceremony-gate.py",

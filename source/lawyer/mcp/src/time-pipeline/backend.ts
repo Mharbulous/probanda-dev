@@ -26,7 +26,7 @@ import { createHash } from "node:crypto";
 import { join } from "node:path";
 
 import { DataServerError, ValidationError } from "../errors.js";
-import { type BulkApplyExpect, isKvRead, type KvOp, type KvRequest, runKv } from "../kv/backend.js";
+import { type BulkApplyExpect, isKvRead, type KvCheck, type KvOp, type KvRequest, type KvWrite, runKv } from "../kv/backend.js";
 import { resolveCaseDataRoot } from "../practice/matter-data-root.js";
 import { EXECUTE_TIMEOUT_MS, pythonTimeoutMs, READ_TIMEOUT_MS, WRITE_TIMEOUT_MS } from "../python-timeout.js";
 
@@ -91,13 +91,16 @@ export const TIME_REVIEW_PREFIXES = ["day_evidence:", "block:"] as const;
 /** Namespaces where a save must name what it read: two runs share these records. */
 const CONDITIONAL_NAMESPACES = new Set(["bill", "item"]);
 
-function denyPrefix(namespace: string): string | undefined {
-  return namespace === REVIEW_DATE_NAMESPACE ? REVIEW_DATE_PREFIX : undefined;
+/** Keys only a dedicated tool family writes: a generic tool touching one is refused with `protected_key`. */
+function denyPrefixes(namespace: string): string[] {
+  return namespace === REVIEW_DATE_NAMESPACE ? [REVIEW_DATE_PREFIX, ...TIME_REVIEW_PREFIXES] : [];
 }
 
 function protectedKeyError(tool: string, keys: string[]): DataServerError {
+  const dayOrBlock = keys.some((key) => TIME_REVIEW_PREFIXES.some((prefix) => key.startsWith(prefix)));
+  const what = dayOrBlock ? "a day-evidence or block record, which only the time_review__* tools write" : "a review-date record, which only the review_date__* tools change or export";
   return new DataServerError(
-    `${tool}: ${keys.join(", ")} ${keys.length === 1 ? "is a review-date record" : "are review-date records"}, which only the review_date__* tools change or export; nothing was written`,
+    `${tool}: ${keys.join(", ")} ${keys.length === 1 ? "is" : "are"} ${what}; nothing was written`,
     "protected_key"
   );
 }
@@ -143,13 +146,7 @@ export function timePipelineSet(
   expectation: SaveExpectation = {},
   env: NodeJS.ProcessEnv = process.env
 ): { ok: true; sha256: string } {
-  if (namespace === REVIEW_DATE_NAMESPACE && key.startsWith(REVIEW_DATE_PREFIX)) throw protectedKeyError("time_pipeline__set", [key]);
-  if (namespace === REVIEW_DATE_NAMESPACE && TIME_REVIEW_PREFIXES.some((prefix) => key.startsWith(prefix))) {
-    throw new DataServerError(
-      `time_pipeline__set: ${key} is a day-evidence or block record, which only the time_review__* tools write; nothing was written`,
-      "protected_key"
-    );
-  }
+  if (denyPrefixes(namespace).some((prefix) => key.startsWith(prefix))) throw protectedKeyError("time_pipeline__set", [key]);
   const { expect_sha256, expect_absent } = expectation;
   if (expect_sha256 !== undefined && expect_absent !== undefined) {
     throw new ValidationError("time_pipeline__set takes expect_sha256 or expect_absent, not both");
@@ -188,15 +185,51 @@ export function timePipelineList(
   return { items: items.map((item) => ({ ...item, sha256: valueSha256(item.value) })) };
 }
 
+/** Delete one key. In namespaces `bill` and `item` it must name what it read (`expect_sha256`, the
+ * hash a read returned): a delete naming nothing is refused with `expectation_required`, a changed
+ * value with `stale_write`, a key the dedicated tool families own with `protected_key` (checked first). */
 export function timePipelineDelete(
   namespace: string,
   key: string,
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
+  expect_sha256?: string
 ): { ok: true; deleted: boolean } {
+  const tool = "time_pipeline__delete";
+  if (denyPrefixes(namespace).some((prefix) => key.startsWith(prefix))) throw protectedKeyError(tool, [key]);
+  if (expect_sha256 === undefined && CONDITIONAL_NAMESPACES.has(namespace)) {
+    throw new DataServerError(
+      `${tool}: a delete in namespace ${namespace} must name what it read: expect_sha256 from the read; nothing was deleted`,
+      "expectation_required"
+    );
+  }
   const db_path = resolveTimePipelineDbPath(env);
-  const reply = runHelper({ op: "delete", db_path, namespace, key, deny_prefix: denyPrefix(namespace) }, env);
-  refuseDenied("time_pipeline__delete", reply);
+  if (expect_sha256 === undefined) {
+    const reply = runHelper({ op: "delete", db_path, namespace, key, deny_prefixes: denyPrefixes(namespace) }, env);
+    refuseDenied(tool, reply);
+    return reply as { ok: true; deleted: boolean };
+  }
+  const reply = runHelper({ op: "delete_if", db_path, namespace, key, expect_sha256, deny_prefixes: denyPrefixes(namespace) }, env);
+  refuseDenied(tool, reply);
+  if ("stale" in reply) {
+    throw new DataServerError(
+      `${tool}: ${namespace}/${key} changed since it was read, or is absent; nothing was deleted. Read it again with time_pipeline__get and delete with the new sha256`,
+      "stale_write"
+    );
+  }
   return reply as { ok: true; deleted: boolean };
+}
+
+/** Writes across keys in one transaction, landing only if every check still holds. For the tool
+ * families that own a record kind (time_review__*), which no generic tool may write. `stale` when a
+ * check failed; nothing was written then. */
+export function timePipelineApplyIf(
+  checks: KvCheck[],
+  writes: KvWrite[],
+  env: NodeJS.ProcessEnv = process.env
+): { ok: true } | { stale: true } {
+  const db_path = resolveTimePipelineDbPath(env);
+  const reply = runHelper({ op: "apply_if", db_path, checks, writes }, env);
+  return "stale" in reply ? { stale: true } : { ok: true };
 }
 
 // Bulk writes arrive as a host-local JSONL file rather than as tool arguments:
@@ -216,7 +249,7 @@ export function timePipelineBulkApply(
     throw new ValidationError("time_pipeline__bulk_apply takes preview or expect, not both and not neither");
   }
   const db_path = resolveTimePipelineDbPath(env);
-  const reply = runHelper({ op: "bulk_apply", db_path, namespace, path, expect: mode.expect, deny_prefix: denyPrefix(namespace) }, env);
+  const reply = runHelper({ op: "bulk_apply", db_path, namespace, path, expect: mode.expect, deny_prefixes: denyPrefixes(namespace) }, env);
   refuseDenied("time_pipeline__bulk_apply", reply);
   return reply as unknown as BulkApplyCounts;
 }
@@ -232,7 +265,7 @@ export function timePipelineExport(
   env: NodeJS.ProcessEnv = process.env
 ): { items: number; path: string } {
   const db_path = resolveTimePipelineDbPath(env);
-  const reply = runHelper({ op: "export", db_path, namespace, prefix: prefix ?? "", path, deny_prefix: denyPrefix(namespace) }, env);
+  const reply = runHelper({ op: "export", db_path, namespace, prefix: prefix ?? "", path, deny_prefixes: denyPrefixes(namespace) }, env);
   refuseDenied("time_pipeline__export", reply);
   return reply as { items: number; path: string };
 }

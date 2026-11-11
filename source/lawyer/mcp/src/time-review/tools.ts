@@ -2,14 +2,15 @@
 // evidence, stage a reviewer's blocks for the day, read the day back. Code decides every block's
 // flags and state (flags.ts); the reviewer states only the bases.
 
-import { ValidationError } from "../errors.js";
-import { timePipelineDelete, timePipelineList } from "../time-pipeline/backend.js";
+import { DataServerError, ValidationError } from "../errors.js";
+import type { KvCheck, KvWrite } from "../kv/backend.js";
+import { REVIEW_DATE_PREFIX, timePipelineApplyIf, timePipelineGet, timePipelineList } from "../time-pipeline/backend.js";
 import {
   type ReviewDateSeams,
   reviewDateJudgment,
   reviewDateStageGate,
 } from "../time-pipeline/review-date.js";
-import { checkBillBasis, checkMatterBasis, decideFlags } from "./flags.js";
+import { checkBillBasis, checkMatterBasis, decideFlags, MATTER_BASIS } from "./flags.js";
 import {
   BLOCK_PREFIX,
   type BlockRecord,
@@ -22,6 +23,7 @@ import {
   dayEvidenceKey,
   envOf,
   nowOf,
+  NAMESPACE as ITEM,
   putRecord,
   readDayEvidence,
   sourcesShort,
@@ -30,6 +32,7 @@ import { GATE_SOURCES, type GateSource } from "./sources.js";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_BLOCKS = 999;
+const STAGE_ATTEMPTS = 5;
 
 function checkDate(tool: string, date: unknown): string {
   if (typeof date !== "string" || !DATE.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
@@ -126,6 +129,11 @@ function checkBlock(tool: string, index: number, raw: unknown): NewBlock {
     if (!isObject(entry)) throw new ValidationError(`${elabel} must be {source, ref}`);
     return { source: checkSource(elabel, entry.source), ref: nonEmpty(elabel, "ref", entry.ref) };
   });
+  if (!MATTER_BASIS[matter_basis] && evidence.length === 0) {
+    throw new ValidationError(
+      `${label}: matter_basis ${matter_basis} says the evidence carries the matter, so evidence must list at least one {source, ref}; state no_evidence if there is none`
+    );
+  }
   return {
     start: nonEmpty(label, "start", raw.start),
     end: nonEmpty(label, "end", raw.end),
@@ -140,7 +148,9 @@ function checkBlock(tool: string, index: number, raw: unknown): NewBlock {
 
 /** Stage one day's blocks for the run holding `token`. Refused, writing nothing, when the day is
  * judged, another run holds its claim, the run holds none, the day has no saved evidence, or any
- * gate source is short in it. Staging again before the day is judged replaces the day's blocks. */
+ * gate source is short in it. Staging again before the day is judged replaces the day's blocks.
+ * The check and every write are one transaction, so a claim that is lost or a day that is judged
+ * between the check and the write leaves nothing behind. */
 export function timeReviewStageDay(
   dateIn: unknown,
   token: unknown,
@@ -154,31 +164,46 @@ export function timeReviewStageDay(
   if (blocksIn.length > MAX_BLOCKS) throw new ValidationError(`${tool}: at most ${MAX_BLOCKS} blocks a day`);
   const checked = blocksIn.map((raw, i) => checkBlock(tool, i, raw));
 
-  const gate = reviewDateStageGate(date, token, seams);
-  if (!gate.ok) {
-    const { ok: _ok, ...refusal } = gate;
-    return { ...refusal, date };
-  }
-  const evidence = readDayEvidence(date, seams);
-  if (evidence === null) return { status: "evidence_missing", date };
-  const short = sourcesShort(evidence);
-  if (short.length > 0) return { status: "evidence_short", date, short };
+  // The claim check and the writes are one transaction: the writes land only if the review-date
+  // record (the claim, the judged mark) and the day's evidence are still the ones this call read. A
+  // run that loses that race reads and decides again.
+  const env = envOf(seams);
+  for (let attempt = 0; attempt < STAGE_ATTEMPTS; attempt += 1) {
+    const gate = reviewDateStageGate(date, token, seams);
+    if (!gate.ok) {
+      const { ok: _ok, record_sha256: _sha, ...refusal } = gate;
+      return { ...refusal, date };
+    }
+    const read = timePipelineGet(ITEM, dayEvidenceKey(date), env);
+    if (read.value === null) return { status: "evidence_missing", date };
+    const short = sourcesShort(JSON.parse(read.value) as DayEvidenceRecord);
+    if (short.length > 0) return { status: "evidence_short", date, short };
 
-  const staged_at = nowOf(seams).toISOString();
-  const written = checked.map((fields, i): BlockRecord => ({
-    kind: "block",
-    id: blockId(date, i),
-    date,
-    ...fields,
-    links: [],
-    staged_at,
-  }));
-  for (const block of written) putRecord(tool, blockKey(block.id), block, seams);
-  const keep = new Set(written.map((b) => blockKey(b.id)));
-  for (const item of timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date}:`, envOf(seams)).items) {
-    if (!keep.has(item.key)) timePipelineDelete(NAMESPACE, item.key, envOf(seams));
+    const staged_at = nowOf(seams).toISOString();
+    const written = checked.map((fields, i): BlockRecord => ({
+      kind: "block",
+      id: blockId(date, i),
+      date,
+      ...fields,
+      links: [],
+      staged_at,
+    }));
+    const keep = new Set(written.map((b) => blockKey(b.id)));
+    const existing = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date}:`, env).items;
+    const checks: KvCheck[] = [
+      { namespace: NAMESPACE, key: REVIEW_DATE_PREFIX + date, ...(gate.record_sha256 === null ? { expect_absent: true } : { expect_sha256: gate.record_sha256 }) },
+      { namespace: NAMESPACE, key: dayEvidenceKey(date), expect_sha256: read.sha256 as string },
+      // A block written meanwhile by another call to this tool is a change this call did not read.
+      ...existing.map((item): KvCheck => ({ namespace: NAMESPACE, key: item.key, expect_sha256: item.sha256 })),
+    ];
+    const writes: KvWrite[] = [
+      ...written.map((block): KvWrite => ({ op: "set", namespace: NAMESPACE, key: blockKey(block.id), value: JSON.stringify(block) })),
+      ...existing.filter((item) => !keep.has(item.key)).map((item): KvWrite => ({ op: "delete", namespace: NAMESPACE, key: item.key })),
+    ];
+    if ("stale" in timePipelineApplyIf(checks, writes, env)) continue;
+    return { status: "staged", date, blocks: written.map((b) => ({ id: b.id, state: b.state, flags: b.flags })) };
   }
-  return { status: "staged", date, blocks: written.map((b) => ({ id: b.id, state: b.state, flags: b.flags })) };
+  throw new DataServerError(`${tool}: ${date} changed ${STAGE_ATTEMPTS} times while this call was staging; nothing was written. Try again`, "contended");
 }
 
 /** The day's saved evidence (or null) and its staged blocks, in order. Writes nothing. */

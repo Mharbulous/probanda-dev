@@ -34,7 +34,9 @@ const tools = [
     (args) => timePipelineSet(args.namespace, args.key, args.value, { expect_sha256: args.expect_sha256, expect_absent: args.expect_absent })
   ),
   defineTool<{ namespace: string; prefix?: string }>("time_pipeline__list", (args) => timePipelineList(args.namespace, args.prefix)),
-  defineTool<{ namespace: string; key: string }>("time_pipeline__delete", (args) => timePipelineDelete(args.namespace, args.key)),
+  defineTool<{ namespace: string; key: string; expect_sha256?: string }>("time_pipeline__delete", (args) =>
+    timePipelineDelete(args.namespace, args.key, process.env, args.expect_sha256)
+  ),
   defineTool<{ namespace: string; path: string; preview?: boolean; expect?: BulkApplyExpect }>("time_pipeline__bulk_apply", (args) =>
     timePipelineBulkApply(args.namespace, args.path, args)
   ),

@@ -1,4 +1,4 @@
-// build-stamp: 31f7e304cff1
+// build-stamp: 23fc472cc811
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75267,7 +75267,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "31f7e304cff1";
+var BUILD_STAMP = false ? null : "23fc472cc811";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -76222,8 +76222,51 @@ def sha256_text(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def denied(deny_prefix, key):
-    return bool(deny_prefix) and key.startswith(deny_prefix)
+def denied(deny, key):
+    return bool(deny) and key.startswith(tuple(deny))
+
+
+def apply_if(con, checks, writes):
+    """All of the writes (sets and deletes, any namespace) land in ONE transaction, and only if every
+    check still holds: a check names (namespace, key) and either expect_sha256 (the stored value
+    still hashes to it) or expect_absent. BEGIN IMMEDIATE takes the write lock before the first read,
+    so no other process changes a checked key between the compare and the writes. A failed check
+    rolls everything back and replies {stale: true}."""
+    con.execute("BEGIN IMMEDIATE")
+    for check in checks:
+        row = con.execute(
+            "SELECT value FROM kv_store WHERE namespace = ? AND key = ?", (check["namespace"], check["key"])
+        ).fetchone()
+        if check.get("expect_absent"):
+            stale = row is not None
+        else:
+            stale = row is None or sha256_text(row[0]) != check.get("expect_sha256")
+        if stale:
+            con.rollback()
+            return {"stale": True}
+    counts = {"sets": 0, "deletes": 0}
+    for entry in writes:
+        if entry["op"] == "set":
+            con.execute(UPSERT, (entry["namespace"], entry["key"], entry["value"], now_iso()))
+            counts["sets"] += 1
+        elif entry["op"] == "delete":
+            con.execute("DELETE FROM kv_store WHERE namespace = ? AND key = ?", (entry["namespace"], entry["key"]))
+            counts["deletes"] += 1
+        else:
+            con.rollback()
+            raise SystemExit("unknown write op: %r" % entry["op"])
+    con.commit()
+    return {"ok": True, **counts}
+
+
+def delete_if(con, namespace, key, expect_sha256):
+    """Delete a key only if its stored value still hashes to expect_sha256, in one transaction."""
+    result = apply_if(
+        con,
+        [{"namespace": namespace, "key": key, "expect_sha256": expect_sha256}],
+        [{"op": "delete", "namespace": namespace, "key": key}],
+    )
+    return {"stale": True} if result.get("stale") else {"ok": True, "deleted": True}
 
 
 def set_if(con, namespace, key, value, expect_sha256, expect_absent):
@@ -76247,7 +76290,7 @@ def set_if(con, namespace, key, value, expect_sha256, expect_absent):
     return {"ok": True, "sha256": sha256_text(value)}
 
 
-def bulk_apply(con, namespace, path, expect, deny_prefix=""):
+def bulk_apply(con, namespace, path, expect, deny=()):
     """Apply a whole JSONL file of writes to one namespace in ONE transaction.
     Reading the file here rather than through tool arguments is what makes a
     58k-row import possible; one transaction is what makes it one process
@@ -76305,7 +76348,7 @@ def bulk_apply(con, namespace, path, expect, deny_prefix=""):
     after = namespace_rows(con, namespace)
     touched = sorted(
         key for key in set(before) | set(after)
-        if denied(deny_prefix, key) and before.get(key) != after.get(key)
+        if denied(deny, key) and before.get(key) != after.get(key)
     )
     if touched:
         con.rollback()
@@ -76325,16 +76368,16 @@ def bulk_apply(con, namespace, path, expect, deny_prefix=""):
     return {**counts, **effect, "applied": expect is not None}
 
 
-def export(con, namespace, prefix, path, deny_prefix=""):
+def export(con, namespace, prefix, path, deny=()):
     """The read twin of bulk_apply: write every key under prefix to a JSONL
     file of bulk_apply "set" lines, sorted by key, so an export re-applies as
     it stands. The rows go to a file the caller named, never back through tool
-    output. A key under deny_prefix refuses the export before the file is opened."""
+    output. A key under a deny prefix refuses the export before the file is opened."""
     rows = con.execute(
         "SELECT key, value FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\' ORDER BY key",
         (namespace, escape_like(prefix) + "%"),
     ).fetchall()
-    touched = [key for key, _ in rows if denied(deny_prefix, key)]
+    touched = [key for key, _ in rows if denied(deny, key)]
     if touched:
         return {"denied": touched}
     parent = os.path.dirname(os.path.abspath(path))
@@ -76390,6 +76433,8 @@ def main():
             return dump(con, req["namespaces"])
         if op == "apply":
             return apply(con, req["writes"])
+        if op == "apply_if":
+            return apply_if(con, req["checks"], req["writes"])
         namespace = req["namespace"]
         if op == "get":
             row = con.execute(
@@ -76413,9 +76458,13 @@ def main():
                 (namespace, escape_like(prefix) + "%"),
             ).fetchall()
             return {"items": [{"key": k, "value": v} for k, v in rows]}
-        deny_prefix = req.get("deny_prefix") or ""
+        deny = req.get("deny_prefixes") or ([req["deny_prefix"]] if req.get("deny_prefix") else [])
+        if op == "delete_if":
+            if denied(deny, req["key"]):
+                return {"denied": [req["key"]]}
+            return delete_if(con, namespace, req["key"], req["expect_sha256"])
         if op == "delete":
-            if denied(deny_prefix, req["key"]):
+            if denied(deny, req["key"]):
                 return {"denied": [req["key"]]}
             cur = con.execute(
                 "DELETE FROM kv_store WHERE namespace = ? AND key = ?",
@@ -76424,9 +76473,9 @@ def main():
             con.commit()
             return {"ok": True, "deleted": cur.rowcount > 0}
         if op == "bulk_apply":
-            return bulk_apply(con, namespace, req["path"], req.get("expect"), deny_prefix)
+            return bulk_apply(con, namespace, req["path"], req.get("expect"), deny)
         if op == "export":
-            return export(con, namespace, req.get("prefix") or "", req["path"], deny_prefix)
+            return export(con, namespace, req.get("prefix") or "", req["path"], deny)
         raise SystemExit("unknown op: %s" % op)
     finally:
         con.close()

@@ -1,4 +1,4 @@
-// build-stamp: 7cf7d5d48212
+// build-stamp: 344ff46fc753
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15520,15 +15520,16 @@ function timePipelineToolDefinitions() {
     },
     {
       name: timePipelinePrefixed("delete"),
-      description: "Delete one (namespace, key) entry from the time-pipeline key-value store. Returns { ok: true, deleted: false } when the key was already absent. A key starting review_date: in namespace item is refused. Only the /time-pipeline-data skill may call this tool.",
+      description: "Delete one (namespace, key) entry from the time-pipeline key-value store. Returns { ok: true, deleted: false } when the key was already absent. Pass expect_sha256 (the sha256 a read returned for the key): the delete is then refused with stale_write, and nothing deleted, when the stored value is no longer the one read. In namespaces bill and item a delete without it is refused with expectation_required. A key starting review_date:, day_evidence: or block: in namespace item is refused with protected_key: only the review_date__* and time_review__* tools change those. Only the /time-pipeline-data skill may call this tool.",
       inputSchema: objectSchema([
         { name: "namespace", type: "str" },
-        { name: "key", type: "str" }
+        { name: "key", type: "str" },
+        { name: "expect_sha256", type: "str" }
       ], ["namespace", "key"])
     },
     {
       name: timePipelinePrefixed("bulk_apply"),
-      description: 'Apply a whole file of writes to one namespace of the time-pipeline key-value store, in a single transaction. `path` is an absolute path to a JSONL file on this machine -- one JSON object per line, applied in file order. Four line types: {"op":"set","key":...,"value":...} stores one value verbatim; {"op":"delete","key":...} removes one key; {"op":"delete_prefix","prefix":...} removes every key in the namespace starting with that prefix, matched literally; {"op":"merge","key":...,"add":[...],"drop_prefix":...} treats the value as a JSON array of strings, drops every element starting with `drop_prefix`, appends the elements of `add` not already present, and deletes the key if nothing remains. The server reads the file itself, so a bulk import never passes through tool arguments. A missing file, a malformed line, an unknown op, or a merge target that is not a JSON array of strings aborts the whole call before the commit and names the line number -- nothing partial is written. A file that would change a key starting review_date: in namespace item is refused the same way. Call it twice: first with preview true, which writes nothing and returns { lines, sets, deletes, merges, deleted_by_prefix, added, replaced, removed, file_sha256, applied: false }; then with expect holding that added, replaced, removed and file_sha256, which commits only if they still match the file and the store, and otherwise writes nothing. Only the /time-pipeline-data skill may call this tool -- see time_pipeline__get for how a caller from another skill\'s workflow satisfies that.',
+      description: 'Apply a whole file of writes to one namespace of the time-pipeline key-value store, in a single transaction. `path` is an absolute path to a JSONL file on this machine -- one JSON object per line, applied in file order. Four line types: {"op":"set","key":...,"value":...} stores one value verbatim; {"op":"delete","key":...} removes one key; {"op":"delete_prefix","prefix":...} removes every key in the namespace starting with that prefix, matched literally; {"op":"merge","key":...,"add":[...],"drop_prefix":...} treats the value as a JSON array of strings, drops every element starting with `drop_prefix`, appends the elements of `add` not already present, and deletes the key if nothing remains. The server reads the file itself, so a bulk import never passes through tool arguments. A missing file, a malformed line, an unknown op, or a merge target that is not a JSON array of strings aborts the whole call before the commit and names the line number -- nothing partial is written. A file that would change a key starting review_date:, day_evidence: or block: in namespace item is refused the same way (protected_key). Call it twice: first with preview true, which writes nothing and returns { lines, sets, deletes, merges, deleted_by_prefix, added, replaced, removed, file_sha256, applied: false }; then with expect holding that added, replaced, removed and file_sha256, which commits only if they still match the file and the store, and otherwise writes nothing. Only the /time-pipeline-data skill may call this tool -- see time_pipeline__get for how a caller from another skill\'s workflow satisfies that.',
       inputSchema: objectSchema([
         { name: "namespace", type: "str" },
         { name: "path", type: "str" },
@@ -15539,7 +15540,7 @@ function timePipelineToolDefinitions() {
     },
     {
       name: timePipelinePrefixed("export"),
-      description: 'Write every (key, value) pair in one namespace of the time-pipeline key-value store whose key starts with `prefix` (matched literally; omit it or pass an empty string for the whole namespace) to a JSONL file, sorted by key. `path` is an absolute path on this machine; the server creates its parent directory and overwrites any file already there. Each line is a time_pipeline__bulk_apply set line, {"op":"set","key":...,"value":...}, so an export re-applies as it stands. The rows go to the file, never through tool output. Returns { items, path }. In namespace item, a prefix that reaches a key starting review_date: is refused: review_date__export writes those. Only the /time-pipeline-data skill may call this tool -- see time_pipeline__get for how a caller from another skill\'s workflow satisfies that.',
+      description: 'Write every (key, value) pair in one namespace of the time-pipeline key-value store whose key starts with `prefix` (matched literally; omit it or pass an empty string for the whole namespace) to a JSONL file, sorted by key. `path` is an absolute path on this machine; the server creates its parent directory and overwrites any file already there. Each line is a time_pipeline__bulk_apply set line, {"op":"set","key":...,"value":...}, so an export re-applies as it stands. The rows go to the file, never through tool output. Returns { items, path }. In namespace item, a prefix that reaches a key starting review_date:, day_evidence: or block: is refused with protected_key: review_date__export writes the first, and time_review__read_day returns the others. Only the /time-pipeline-data skill may call this tool -- see time_pipeline__get for how a caller from another skill\'s workflow satisfies that.',
       inputSchema: objectSchema([
         { name: "namespace", type: "str" },
         { name: "prefix", type: "str" },
@@ -16131,8 +16132,51 @@ def sha256_text(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def denied(deny_prefix, key):
-    return bool(deny_prefix) and key.startswith(deny_prefix)
+def denied(deny, key):
+    return bool(deny) and key.startswith(tuple(deny))
+
+
+def apply_if(con, checks, writes):
+    """All of the writes (sets and deletes, any namespace) land in ONE transaction, and only if every
+    check still holds: a check names (namespace, key) and either expect_sha256 (the stored value
+    still hashes to it) or expect_absent. BEGIN IMMEDIATE takes the write lock before the first read,
+    so no other process changes a checked key between the compare and the writes. A failed check
+    rolls everything back and replies {stale: true}."""
+    con.execute("BEGIN IMMEDIATE")
+    for check in checks:
+        row = con.execute(
+            "SELECT value FROM kv_store WHERE namespace = ? AND key = ?", (check["namespace"], check["key"])
+        ).fetchone()
+        if check.get("expect_absent"):
+            stale = row is not None
+        else:
+            stale = row is None or sha256_text(row[0]) != check.get("expect_sha256")
+        if stale:
+            con.rollback()
+            return {"stale": True}
+    counts = {"sets": 0, "deletes": 0}
+    for entry in writes:
+        if entry["op"] == "set":
+            con.execute(UPSERT, (entry["namespace"], entry["key"], entry["value"], now_iso()))
+            counts["sets"] += 1
+        elif entry["op"] == "delete":
+            con.execute("DELETE FROM kv_store WHERE namespace = ? AND key = ?", (entry["namespace"], entry["key"]))
+            counts["deletes"] += 1
+        else:
+            con.rollback()
+            raise SystemExit("unknown write op: %r" % entry["op"])
+    con.commit()
+    return {"ok": True, **counts}
+
+
+def delete_if(con, namespace, key, expect_sha256):
+    """Delete a key only if its stored value still hashes to expect_sha256, in one transaction."""
+    result = apply_if(
+        con,
+        [{"namespace": namespace, "key": key, "expect_sha256": expect_sha256}],
+        [{"op": "delete", "namespace": namespace, "key": key}],
+    )
+    return {"stale": True} if result.get("stale") else {"ok": True, "deleted": True}
 
 
 def set_if(con, namespace, key, value, expect_sha256, expect_absent):
@@ -16156,7 +16200,7 @@ def set_if(con, namespace, key, value, expect_sha256, expect_absent):
     return {"ok": True, "sha256": sha256_text(value)}
 
 
-def bulk_apply(con, namespace, path, expect, deny_prefix=""):
+def bulk_apply(con, namespace, path, expect, deny=()):
     """Apply a whole JSONL file of writes to one namespace in ONE transaction.
     Reading the file here rather than through tool arguments is what makes a
     58k-row import possible; one transaction is what makes it one process
@@ -16214,7 +16258,7 @@ def bulk_apply(con, namespace, path, expect, deny_prefix=""):
     after = namespace_rows(con, namespace)
     touched = sorted(
         key for key in set(before) | set(after)
-        if denied(deny_prefix, key) and before.get(key) != after.get(key)
+        if denied(deny, key) and before.get(key) != after.get(key)
     )
     if touched:
         con.rollback()
@@ -16234,16 +16278,16 @@ def bulk_apply(con, namespace, path, expect, deny_prefix=""):
     return {**counts, **effect, "applied": expect is not None}
 
 
-def export(con, namespace, prefix, path, deny_prefix=""):
+def export(con, namespace, prefix, path, deny=()):
     """The read twin of bulk_apply: write every key under prefix to a JSONL
     file of bulk_apply "set" lines, sorted by key, so an export re-applies as
     it stands. The rows go to a file the caller named, never back through tool
-    output. A key under deny_prefix refuses the export before the file is opened."""
+    output. A key under a deny prefix refuses the export before the file is opened."""
     rows = con.execute(
         "SELECT key, value FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\' ORDER BY key",
         (namespace, escape_like(prefix) + "%"),
     ).fetchall()
-    touched = [key for key, _ in rows if denied(deny_prefix, key)]
+    touched = [key for key, _ in rows if denied(deny, key)]
     if touched:
         return {"denied": touched}
     parent = os.path.dirname(os.path.abspath(path))
@@ -16299,6 +16343,8 @@ def main():
             return dump(con, req["namespaces"])
         if op == "apply":
             return apply(con, req["writes"])
+        if op == "apply_if":
+            return apply_if(con, req["checks"], req["writes"])
         namespace = req["namespace"]
         if op == "get":
             row = con.execute(
@@ -16322,9 +16368,13 @@ def main():
                 (namespace, escape_like(prefix) + "%"),
             ).fetchall()
             return {"items": [{"key": k, "value": v} for k, v in rows]}
-        deny_prefix = req.get("deny_prefix") or ""
+        deny = req.get("deny_prefixes") or ([req["deny_prefix"]] if req.get("deny_prefix") else [])
+        if op == "delete_if":
+            if denied(deny, req["key"]):
+                return {"denied": [req["key"]]}
+            return delete_if(con, namespace, req["key"], req["expect_sha256"])
         if op == "delete":
-            if denied(deny_prefix, req["key"]):
+            if denied(deny, req["key"]):
                 return {"denied": [req["key"]]}
             cur = con.execute(
                 "DELETE FROM kv_store WHERE namespace = ? AND key = ?",
@@ -16333,9 +16383,9 @@ def main():
             con.commit()
             return {"ok": True, "deleted": cur.rowcount > 0}
         if op == "bulk_apply":
-            return bulk_apply(con, namespace, req["path"], req.get("expect"), deny_prefix)
+            return bulk_apply(con, namespace, req["path"], req.get("expect"), deny)
         if op == "export":
-            return export(con, namespace, req.get("prefix") or "", req["path"], deny_prefix)
+            return export(con, namespace, req.get("prefix") or "", req["path"], deny)
         raise SystemExit("unknown op: %s" % op)
     finally:
         con.close()
@@ -16480,12 +16530,14 @@ var REVIEW_DATE_NAMESPACE = "item";
 var REVIEW_DATE_PREFIX = "review_date:";
 var TIME_REVIEW_PREFIXES = ["day_evidence:", "block:"];
 var CONDITIONAL_NAMESPACES = /* @__PURE__ */ new Set(["bill", "item"]);
-function denyPrefix(namespace) {
-  return namespace === REVIEW_DATE_NAMESPACE ? REVIEW_DATE_PREFIX : void 0;
+function denyPrefixes(namespace) {
+  return namespace === REVIEW_DATE_NAMESPACE ? [REVIEW_DATE_PREFIX, ...TIME_REVIEW_PREFIXES] : [];
 }
 function protectedKeyError(tool, keys) {
+  const dayOrBlock = keys.some((key) => TIME_REVIEW_PREFIXES.some((prefix) => key.startsWith(prefix)));
+  const what = dayOrBlock ? "a day-evidence or block record, which only the time_review__* tools write" : "a review-date record, which only the review_date__* tools change or export";
   return new DataServerError(
-    `${tool}: ${keys.join(", ")} ${keys.length === 1 ? "is a review-date record" : "are review-date records"}, which only the review_date__* tools change or export; nothing was written`,
+    `${tool}: ${keys.join(", ")} ${keys.length === 1 ? "is" : "are"} ${what}; nothing was written`,
     "protected_key"
   );
 }
@@ -16502,13 +16554,7 @@ function timePipelineWriteIf(namespace, key, value, expectation, env = process.e
   return runHelper({ op: "set_if", db_path, namespace, key, value, ...expectation }, env);
 }
 function timePipelineSet(namespace, key, value, expectation = {}, env = process.env) {
-  if (namespace === REVIEW_DATE_NAMESPACE && key.startsWith(REVIEW_DATE_PREFIX)) throw protectedKeyError("time_pipeline__set", [key]);
-  if (namespace === REVIEW_DATE_NAMESPACE && TIME_REVIEW_PREFIXES.some((prefix) => key.startsWith(prefix))) {
-    throw new DataServerError(
-      `time_pipeline__set: ${key} is a day-evidence or block record, which only the time_review__* tools write; nothing was written`,
-      "protected_key"
-    );
-  }
+  if (denyPrefixes(namespace).some((prefix) => key.startsWith(prefix))) throw protectedKeyError("time_pipeline__set", [key]);
   const { expect_sha256, expect_absent } = expectation;
   if (expect_sha256 !== void 0 && expect_absent !== void 0) {
     throw new ValidationError("time_pipeline__set takes expect_sha256 or expect_absent, not both");
@@ -16539,24 +16585,48 @@ function timePipelineList(namespace, prefix, env = process.env) {
   const { items } = runHelper({ op: "list", db_path, namespace, prefix: prefix ?? "" }, env);
   return { items: items.map((item) => ({ ...item, sha256: valueSha256(item.value) })) };
 }
-function timePipelineDelete(namespace, key, env = process.env) {
+function timePipelineDelete(namespace, key, env = process.env, expect_sha256) {
+  const tool = "time_pipeline__delete";
+  if (denyPrefixes(namespace).some((prefix) => key.startsWith(prefix))) throw protectedKeyError(tool, [key]);
+  if (expect_sha256 === void 0 && CONDITIONAL_NAMESPACES.has(namespace)) {
+    throw new DataServerError(
+      `${tool}: a delete in namespace ${namespace} must name what it read: expect_sha256 from the read; nothing was deleted`,
+      "expectation_required"
+    );
+  }
   const db_path = resolveTimePipelineDbPath(env);
-  const reply = runHelper({ op: "delete", db_path, namespace, key, deny_prefix: denyPrefix(namespace) }, env);
-  refuseDenied("time_pipeline__delete", reply);
+  if (expect_sha256 === void 0) {
+    const reply2 = runHelper({ op: "delete", db_path, namespace, key, deny_prefixes: denyPrefixes(namespace) }, env);
+    refuseDenied(tool, reply2);
+    return reply2;
+  }
+  const reply = runHelper({ op: "delete_if", db_path, namespace, key, expect_sha256, deny_prefixes: denyPrefixes(namespace) }, env);
+  refuseDenied(tool, reply);
+  if ("stale" in reply) {
+    throw new DataServerError(
+      `${tool}: ${namespace}/${key} changed since it was read, or is absent; nothing was deleted. Read it again with time_pipeline__get and delete with the new sha256`,
+      "stale_write"
+    );
+  }
   return reply;
+}
+function timePipelineApplyIf(checks, writes, env = process.env) {
+  const db_path = resolveTimePipelineDbPath(env);
+  const reply = runHelper({ op: "apply_if", db_path, checks, writes }, env);
+  return "stale" in reply ? { stale: true } : { ok: true };
 }
 function timePipelineBulkApply(namespace, path, mode, env = process.env) {
   if (mode.preview === true === (mode.expect !== void 0)) {
     throw new ValidationError("time_pipeline__bulk_apply takes preview or expect, not both and not neither");
   }
   const db_path = resolveTimePipelineDbPath(env);
-  const reply = runHelper({ op: "bulk_apply", db_path, namespace, path, expect: mode.expect, deny_prefix: denyPrefix(namespace) }, env);
+  const reply = runHelper({ op: "bulk_apply", db_path, namespace, path, expect: mode.expect, deny_prefixes: denyPrefixes(namespace) }, env);
   refuseDenied("time_pipeline__bulk_apply", reply);
   return reply;
 }
 function timePipelineExport(namespace, prefix, path, env = process.env) {
   const db_path = resolveTimePipelineDbPath(env);
-  const reply = runHelper({ op: "export", db_path, namespace, prefix: prefix ?? "", path, deny_prefix: denyPrefix(namespace) }, env);
+  const reply = runHelper({ op: "export", db_path, namespace, prefix: prefix ?? "", path, deny_prefixes: denyPrefixes(namespace) }, env);
   refuseDenied("time_pipeline__export", reply);
   return reply;
 }
@@ -16669,9 +16739,10 @@ function reviewDateStatus(dates, seams = {}) {
 }
 function reviewDateStageGate(dateIn, token, seams = {}) {
   const date3 = checkDate("time_review__stage_day", dateIn);
-  const current = read(date3, seams)?.record ?? null;
+  const stored = read(date3, seams);
+  const current = stored?.record ?? null;
   if (current?.judged_at) return { ok: false, status: "judged", judged_at: current.judged_at, judged_by: current.judged_by };
-  if (ownClaim(current, token)) return { ok: true };
+  if (ownClaim(current, token)) return { ok: true, record_sha256: stored?.sha256 ?? null };
   if (current && isLive(current.claim, nowOf(seams))) {
     return { ok: false, status: "held", holder: current.claim.holder, expires_at: current.claim.expires_at };
   }
@@ -16769,6 +16840,7 @@ function putRecord(tool, key, value, seams) {
 // src/time-review/tools.ts
 var DATE2 = /^\d{4}-\d{2}-\d{2}$/;
 var MAX_BLOCKS = 999;
+var STAGE_ATTEMPTS = 5;
 function checkDate2(tool, date3) {
   if (typeof date3 !== "string" || !DATE2.test(date3) || Number.isNaN(Date.parse(`${date3}T00:00:00Z`))) {
     throw new ValidationError(`${tool}: ${JSON.stringify(date3)} is not a date as YYYY-MM-DD`);
@@ -16835,6 +16907,11 @@ function checkBlock(tool, index, raw) {
     if (!isObject2(entry)) throw new ValidationError(`${elabel} must be {source, ref}`);
     return { source: checkSource(elabel, entry.source), ref: nonEmpty(elabel, "ref", entry.ref) };
   });
+  if (!MATTER_BASIS[matter_basis] && evidence.length === 0) {
+    throw new ValidationError(
+      `${label}: matter_basis ${matter_basis} says the evidence carries the matter, so evidence must list at least one {source, ref}; state no_evidence if there is none`
+    );
+  }
   return {
     start: nonEmpty(label, "start", raw.start),
     end: nonEmpty(label, "end", raw.end),
@@ -16853,30 +16930,42 @@ function timeReviewStageDay(dateIn, token, blocksIn, seams = {}) {
   if (!Array.isArray(blocksIn)) throw new ValidationError(`${tool}: blocks must be a list`);
   if (blocksIn.length > MAX_BLOCKS) throw new ValidationError(`${tool}: at most ${MAX_BLOCKS} blocks a day`);
   const checked = blocksIn.map((raw, i) => checkBlock(tool, i, raw));
-  const gate = reviewDateStageGate(date3, token, seams);
-  if (!gate.ok) {
-    const { ok: _ok, ...refusal } = gate;
-    return { ...refusal, date: date3 };
+  const env = envOf2(seams);
+  for (let attempt = 0; attempt < STAGE_ATTEMPTS; attempt += 1) {
+    const gate = reviewDateStageGate(date3, token, seams);
+    if (!gate.ok) {
+      const { ok: _ok, record_sha256: _sha, ...refusal } = gate;
+      return { ...refusal, date: date3 };
+    }
+    const read2 = timePipelineGet(NAMESPACE, dayEvidenceKey(date3), env);
+    if (read2.value === null) return { status: "evidence_missing", date: date3 };
+    const short = sourcesShort(JSON.parse(read2.value));
+    if (short.length > 0) return { status: "evidence_short", date: date3, short };
+    const staged_at = nowOf2(seams).toISOString();
+    const written = checked.map((fields, i) => ({
+      kind: "block",
+      id: blockId(date3, i),
+      date: date3,
+      ...fields,
+      links: [],
+      staged_at
+    }));
+    const keep = new Set(written.map((b) => blockKey(b.id)));
+    const existing = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, env).items;
+    const checks = [
+      { namespace: NAMESPACE, key: REVIEW_DATE_PREFIX + date3, ...gate.record_sha256 === null ? { expect_absent: true } : { expect_sha256: gate.record_sha256 } },
+      { namespace: NAMESPACE, key: dayEvidenceKey(date3), expect_sha256: read2.sha256 },
+      // A block written meanwhile by another call to this tool is a change this call did not read.
+      ...existing.map((item) => ({ namespace: NAMESPACE, key: item.key, expect_sha256: item.sha256 }))
+    ];
+    const writes = [
+      ...written.map((block) => ({ op: "set", namespace: NAMESPACE, key: blockKey(block.id), value: JSON.stringify(block) })),
+      ...existing.filter((item) => !keep.has(item.key)).map((item) => ({ op: "delete", namespace: NAMESPACE, key: item.key }))
+    ];
+    if ("stale" in timePipelineApplyIf(checks, writes, env)) continue;
+    return { status: "staged", date: date3, blocks: written.map((b) => ({ id: b.id, state: b.state, flags: b.flags })) };
   }
-  const evidence = readDayEvidence(date3, seams);
-  if (evidence === null) return { status: "evidence_missing", date: date3 };
-  const short = sourcesShort(evidence);
-  if (short.length > 0) return { status: "evidence_short", date: date3, short };
-  const staged_at = nowOf2(seams).toISOString();
-  const written = checked.map((fields, i) => ({
-    kind: "block",
-    id: blockId(date3, i),
-    date: date3,
-    ...fields,
-    links: [],
-    staged_at
-  }));
-  for (const block of written) putRecord(tool, blockKey(block.id), block, seams);
-  const keep = new Set(written.map((b) => blockKey(b.id)));
-  for (const item of timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, envOf2(seams)).items) {
-    if (!keep.has(item.key)) timePipelineDelete(NAMESPACE, item.key, envOf2(seams));
-  }
-  return { status: "staged", date: date3, blocks: written.map((b) => ({ id: b.id, state: b.state, flags: b.flags })) };
+  throw new DataServerError(`${tool}: ${date3} changed ${STAGE_ATTEMPTS} times while this call was staging; nothing was written. Try again`, "contended");
 }
 function timeReviewReadDay(dateIn, seams = {}) {
   const date3 = checkDate2("time_review__read_day", dateIn);
@@ -16896,7 +16985,10 @@ var tools = [
     (args) => timePipelineSet(args.namespace, args.key, args.value, { expect_sha256: args.expect_sha256, expect_absent: args.expect_absent })
   ),
   defineTool("time_pipeline__list", (args) => timePipelineList(args.namespace, args.prefix)),
-  defineTool("time_pipeline__delete", (args) => timePipelineDelete(args.namespace, args.key)),
+  defineTool(
+    "time_pipeline__delete",
+    (args) => timePipelineDelete(args.namespace, args.key, process.env, args.expect_sha256)
+  ),
   defineTool(
     "time_pipeline__bulk_apply",
     (args) => timePipelineBulkApply(args.namespace, args.path, args)

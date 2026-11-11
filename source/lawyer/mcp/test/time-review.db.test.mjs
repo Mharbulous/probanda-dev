@@ -247,3 +247,90 @@ test("the generic store tools cannot write a block or day_evidence record", asyn
     );
   }
 });
+
+// --- slice 6 ----------------------------------------------------------------
+
+for (const value of Object.keys(MATTER_BASIS).filter((v) => !MATTER_BASIS[v])) {
+  test(`matter_basis ${value} with an empty evidence list is refused, and nothing is staged`, (t) => {
+    const f = ready(t);
+    assert.throws(
+      () => timeReviewStageDay(DAY, f.token, [block({ matter_basis: value, evidence: [] })], f.seams),
+      /evidence must list at least one/
+    );
+    assert.deepEqual(timeReviewReadDay(DAY, f.seams).blocks, []);
+  });
+}
+
+test("a flagged basis may have an empty evidence list: no_evidence is the honest value for it", (t) => {
+  const f = ready(t);
+  const result = timeReviewStageDay(DAY, f.token, [block({ matter_basis: "no_evidence", bill_basis: ["no_evidence"], evidence: [] })], f.seams);
+  assert.equal(result.status, "staged");
+  assert.equal(result.blocks[0].state, "flagged");
+});
+
+test("the claim check and the writes are one transaction: a day judged between them leaves no block behind", (t) => {
+  const f = ready(t);
+  // The clock is read after the claim check and before the write; judge the day there.
+  let judgedInBetween = false;
+  const racing = {
+    env: f.env,
+    now: () => {
+      if (!judgedInBetween) {
+        judgedInBetween = true;
+        assert.equal(reviewDateJudge(DAY, f.token, f.seams).status, "judged");
+      }
+      return new Date();
+    },
+  };
+  const result = timeReviewStageDay(DAY, f.token, [block(), block({ start: "10:00", end: "10:30" })], racing);
+  assert.equal(judgedInBetween, true);
+  assert.equal(result.status, "judged");
+  assert.deepEqual(timeReviewReadDay(DAY, f.seams).blocks, []);
+});
+
+test("a claim lost between the check and the write leaves the earlier staging as it was", (t) => {
+  const f = ready(t);
+  assert.equal(timeReviewStageDay(DAY, f.token, [block()], f.seams).status, "staged");
+  let released = false;
+  const racing = {
+    env: f.env,
+    now: () => {
+      if (!released) {
+        released = true;
+        reviewDateRelease(DAY, f.token, f.seams);
+      }
+      return new Date();
+    },
+  };
+  const result = timeReviewStageDay(DAY, f.token, [block({ matter_basis: "no_evidence" }), block()], racing);
+  assert.deepEqual(result, { status: "claim_lost", date: DAY });
+  const blocks = timeReviewReadDay(DAY, f.seams).blocks;
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0].state, "auto_assigned");
+});
+
+test("two bills sharing dates: each date is claimed and staged once, and no block is duplicated", (t) => {
+  const f = fixture(t);
+  const dates = ["2030-02-01", "2030-02-02", "2030-02-03"];
+  for (const date of dates) timeReviewSaveEvidence(date, allSources(), rows, f.seams);
+  // Bill A claims every date; bill B asks for the same dates and holds none of them.
+  const claimsA = dates.map((date) => reviewDateClaim(date, "test:bill-A", f.seams));
+  const claimsB = dates.map((date) => reviewDateClaim(date, "test:bill-B", f.seams));
+  assert.deepEqual(claimsA.map((c) => c.status), ["claimed", "claimed", "claimed"]);
+  assert.deepEqual(claimsB.map((c) => [c.status, c.holder]), dates.map(() => ["held", "test:bill-A"]));
+  // B cannot stage on a held date, whatever token it makes up.
+  assert.equal(timeReviewStageDay(dates[0], "b-has-no-token", [block()], f.seams).status, "held");
+  dates.forEach((date, i) => {
+    assert.equal(timeReviewStageDay(date, claimsA[i].token, [block(), block({ start: "10:00", end: "10:30" })], f.seams).status, "staged");
+    assert.equal(reviewDateJudge(date, claimsA[i].token, f.seams).status, "judged");
+  });
+  // Once A has judged them, B finds each judged by A and stages nothing.
+  dates.forEach((date, i) => {
+    const again = reviewDateClaim(date, "test:bill-B", f.seams);
+    assert.equal(again.status, "judged");
+    assert.equal(again.judged_by, "test:bill-A");
+    assert.equal(timeReviewStageDay(date, claimsA[i].token, [block()], f.seams).status, "judged");
+    const stored = timeReviewReadDay(date, f.seams).blocks;
+    assert.deepEqual(stored.map((b) => b.id), [`${date}:001`, `${date}:002`]);
+  });
+});

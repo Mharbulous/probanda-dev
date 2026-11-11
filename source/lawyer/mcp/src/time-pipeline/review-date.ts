@@ -201,20 +201,21 @@ export function reviewDateStatus(dates: unknown, seams: ReviewDateSeams = {}): {
 }
 
 export type StageGate =
-  | { ok: true }
-  | { ok: false; status: "judged"; judged_at: string; judged_by: string | null }
-  | { ok: false; status: "held"; holder: string; expires_at: string }
-  | { ok: false; status: "claim_lost" };
+  | { ok: true; record_sha256: string | null }
+  | { ok: false; record_sha256?: undefined; status: "judged"; judged_at: string; judged_by: string | null }
+  | { ok: false; record_sha256?: undefined; status: "held"; holder: string; expires_at: string }
+  | { ok: false; record_sha256?: undefined; status: "claim_lost" };
 
 /** Whether the run holding `token` may put blocks on `date` (time_review__stage_day). Writes
- * nothing. A judged date is refused first. The token's own claim passes even after it lapsed, as
+ * nothing. An `ok` answer carries the hash of the record it read, which the write names. A judged date is refused first. The token's own claim passes even after it lapsed, as
  * judge does, if no other run has claimed the date since. A live claim of another run is `held`;
  * no claim at all, or a lapsed one that is not this token's, is `claim_lost`. */
 export function reviewDateStageGate(dateIn: unknown, token: string, seams: ReviewDateSeams = {}): StageGate {
   const date = checkDate("time_review__stage_day", dateIn);
-  const current = read(date, seams)?.record ?? null;
+  const stored = read(date, seams);
+  const current = stored?.record ?? null;
   if (current?.judged_at) return { ok: false, status: "judged", judged_at: current.judged_at, judged_by: current.judged_by };
-  if (ownClaim(current, token)) return { ok: true };
+  if (ownClaim(current, token)) return { ok: true, record_sha256: stored?.sha256 ?? null };
   if (current && isLive(current.claim, nowOf(seams))) {
     return { ok: false, status: "held", holder: current.claim.holder, expires_at: current.claim.expires_at };
   }
