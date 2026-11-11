@@ -35,6 +35,8 @@ class Agent(unittest.TestCase):
             "mcp__plugin_billing_timekeeping__time_review__stage_day",
             "mcp__remote-devices__plugin_billing_timekeeping__time_review__read_day",
             "mcp__remote-devices__plugin_billing_timekeeping__time_review__stage_day",
+            "mcp__plugin_billing_timekeeping__time_review__recheck_day",
+            "mcp__remote-devices__plugin_billing_timekeeping__time_review__recheck_day",
             "Read",
         ]))
 
@@ -89,6 +91,26 @@ class ParallelMode(unittest.TestCase):
         self.assertRegex(step5, r"(?s)day-reviewer.*only after\s+the\s+reader's answers leave a doubt")
         self.assertNotIn("only by `billing:screenshot-reader`", step5)
         self.assertIn("scripts/screenshot_pick.py", step5)
+
+
+class Recheck(unittest.TestCase):
+    def setUp(self):
+        text = SKILL.read_text(encoding="utf-8")
+        self.section = text[text.index("**Re-check on request.**"):text.index("### The review page")]
+
+    def test_skill_dispatches_compare_mode_and_overwrites_nothing(self):
+        for needle in ("mode: compare", "time_review__recheck_day", "day_recheck", "Nothing stored is overwritten", "not judged"):
+            self.assertIn(needle, self.section)
+
+    def test_agent_has_a_compare_mode_that_never_reads_stored_blocks(self):
+        agent = AGENT.read_text(encoding="utf-8")
+        mode = agent[agent.index("## Compare mode"):agent.index("## Stops")]
+        self.assertIn("time_review__recheck_day", mode)
+        self.assertIn("Never look at `blocks`", mode)
+
+    def test_tool_is_documented_in_the_data_skill(self):
+        data = (SOURCE / "skills" / "time-pipeline-data" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("`time_review__recheck_day`", data)
 
 
 class Roster(unittest.TestCase):

@@ -135,6 +135,44 @@ export function timeReviewToolDefinitions(): ToolDefinition[] {
       },
     },
     {
+      name: "time_review__recheck_day",
+      description:
+        "Compare mode: save a fresh reviewer's blocks for a JUDGED day as a day_recheck record, and flag each stored block it disagrees with. Pass `blocks` as time_review__stage_day takes them (start, end, matter, description, matter_basis, bill_basis, evidence), judged from the day's evidence alone. No claim token is needed and the stored blocks are never replaced: a stored block with no fresh block of the same start and end, or whose matter the fresh block names differently, goes back to flagged (flag `recheck:times_differ` or `recheck:matter_differs`; its approval is kept on the block as superseded_review), and its matter, description and times are left as they were. A block the fresh judgment agrees with is not touched. Returns { status: \"agreed\" | \"differs\", recheck, differing, flagged, unmatched, clear } (`unmatched` lists indexes of fresh blocks no stored block covers; they are kept in the record only), or { status: \"not_judged\" | \"no_blocks\" | \"evidence_missing\" } writing nothing. Writes nothing to TimeCamp." + ROUTE,
+      inputSchema: {
+        type: "object",
+        properties: {
+          date: { type: "string" },
+          blocks: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                start: { type: "string" },
+                end: { type: "string" },
+                matter: { type: "string" },
+                description: { type: "string" },
+                matter_basis: { type: "string", enum: Object.keys(MATTER_BASIS) },
+                bill_basis: { type: "array", items: { type: "string", enum: [...BILL_BASIS] } },
+                evidence: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: { source: SOURCE, ref: { type: "string" } },
+                    required: ["source", "ref"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["start", "end", "matter", "description", "matter_basis", "bill_basis", "evidence"],
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ["date", "blocks"],
+        additionalProperties: false,
+      },
+    },
+    {
       name: "time_review__redraft",
       description:
         "Save the redrafted matter and description of one half made by a split on the page, and end its pending redraft. Draft both halves from the day's stored evidence and the saved screenshot readings that `time_review__read_day` returns (`evidence`, `readings`): never open, view or dispatch a reader for any image. Refused for a block with no redraft waiting. The half stays flagged: only a click on the page approves it. Nothing is written to TimeCamp." + ROUTE,

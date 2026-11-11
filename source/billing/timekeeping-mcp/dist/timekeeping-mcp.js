@@ -1,4 +1,4 @@
-// build-stamp: a82cd284d41c
+// build-stamp: 629e8447fea7
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -6643,10 +6643,10 @@ var require_formats = __commonJS({
     function isLeapYear(year) {
       return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
     }
-    var DATE4 = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
+    var DATE5 = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
     var DAYS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
     function date3(str) {
-      const matches = DATE4.exec(str);
+      const matches = DATE5.exec(str);
       if (!matches)
         return false;
       const year = +matches[1];
@@ -15806,6 +15806,43 @@ function timeReviewToolDefinitions() {
       }
     },
     {
+      name: "time_review__recheck_day",
+      description: 'Compare mode: save a fresh reviewer\'s blocks for a JUDGED day as a day_recheck record, and flag each stored block it disagrees with. Pass `blocks` as time_review__stage_day takes them (start, end, matter, description, matter_basis, bill_basis, evidence), judged from the day\'s evidence alone. No claim token is needed and the stored blocks are never replaced: a stored block with no fresh block of the same start and end, or whose matter the fresh block names differently, goes back to flagged (flag `recheck:times_differ` or `recheck:matter_differs`; its approval is kept on the block as superseded_review), and its matter, description and times are left as they were. A block the fresh judgment agrees with is not touched. Returns { status: "agreed" | "differs", recheck, differing, flagged, unmatched, clear } (`unmatched` lists indexes of fresh blocks no stored block covers; they are kept in the record only), or { status: "not_judged" | "no_blocks" | "evidence_missing" } writing nothing. Writes nothing to TimeCamp.' + ROUTE2,
+      inputSchema: {
+        type: "object",
+        properties: {
+          date: { type: "string" },
+          blocks: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                start: { type: "string" },
+                end: { type: "string" },
+                matter: { type: "string" },
+                description: { type: "string" },
+                matter_basis: { type: "string", enum: Object.keys(MATTER_BASIS) },
+                bill_basis: { type: "array", items: { type: "string", enum: [...BILL_BASIS] } },
+                evidence: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: { source: SOURCE, ref: { type: "string" } },
+                    required: ["source", "ref"],
+                    additionalProperties: false
+                  }
+                }
+              },
+              required: ["start", "end", "matter", "description", "matter_basis", "bill_basis", "evidence"],
+              additionalProperties: false
+            }
+          }
+        },
+        required: ["date", "blocks"],
+        additionalProperties: false
+      }
+    },
+    {
       name: "time_review__redraft",
       description: "Save the redrafted matter and description of one half made by a split on the page, and end its pending redraft. Draft both halves from the day's stored evidence and the saved screenshot readings that `time_review__read_day` returns (`evidence`, `readings`): never open, view or dispatch a reader for any image. Refused for a block with no redraft waiting. The half stays flagged: only a click on the page approves it. Nothing is written to TimeCamp." + ROUTE2,
       inputSchema: {
@@ -16613,7 +16650,7 @@ function valueSha256(value) {
 }
 var REVIEW_DATE_NAMESPACE = "item";
 var REVIEW_DATE_PREFIX = "review_date:";
-var TIME_REVIEW_PREFIXES = ["day_evidence:", "block:"];
+var TIME_REVIEW_PREFIXES = ["day_evidence:", "block:", "day_recheck:"];
 var CONDITIONAL_NAMESPACES = /* @__PURE__ */ new Set(["bill", "item"]);
 function denyPrefixes(namespace) {
   return namespace === REVIEW_DATE_NAMESPACE ? [REVIEW_DATE_PREFIX, ...TIME_REVIEW_PREFIXES] : [];
@@ -16835,9 +16872,9 @@ function timeReviewCompareDay(dateIn, entriesIn, seams = {}) {
     const touched = /* @__PURE__ */ new Map();
     const uncited = [];
     for (const [id, reason] of reasons) {
-      const live = blocks.filter(({ block }) => block.state !== "merged" && block.state !== "split" && cites(block, id));
-      if (live.length === 0) uncited.push(id);
-      for (const { block } of live) {
+      const live2 = blocks.filter(({ block }) => block.state !== "merged" && block.state !== "split" && cites(block, id));
+      if (live2.length === 0) uncited.push(id);
+      for (const { block } of live2) {
         const next2 = touched.get(block.id) ?? { ...block };
         if (next2.review) {
           next2.superseded_review = next2.review;
@@ -17214,25 +17251,433 @@ function timeReviewExportBlocks(fromIn, toIn, outPath, seams = {}) {
   return { path, days: days.length, blocks: days.reduce((n, d) => n + d.blocks.length, 0), sha256: valueSha256(text3) };
 }
 
+// src/time-review/templates/review.css.ts
+var review_css_default = ':root { --ink: #1d2733; --muted: #5b6776; --line: #d5dbe3; --bg: #f5f7fa; --card: #ffffff; --flag: #b3261e; --ok: #1e6b3a; --accent: #1f4e8c; }\n* { box-sizing: border-box; }\nbody { margin: 0; font: 15px/1.45 system-ui, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); }\nheader { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--line); }\nheader h1 { font-size: 16px; margin: 0 12px 0 0; }\nheader label { color: var(--muted); font-size: 13px; }\nselect, button { font: inherit; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); }\nbutton { cursor: pointer; }\nbutton:hover { border-color: var(--accent); }\n#nav-note { color: var(--flag); font-size: 13px; }\nmain { max-width: 880px; margin: 16px auto; padding: 0 16px; }\n.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }\n.card[hidden], .shot[hidden] { display: none; }\n.top { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; justify-content: space-between; }\n.matter { font-weight: 600; font-size: 17px; }\n.state { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); }\n.state-flagged { color: var(--flag); border-color: var(--flag); }\n.state-auto_assigned, .state-approved { color: var(--ok); border-color: var(--ok); }\n.state-corrected { color: var(--accent); border-color: var(--accent); }\n.state-written_off { color: var(--muted); border-color: var(--muted); }\n.day-clear { font-size: 13px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); color: var(--muted); }\n.day-clear.is-clear { color: var(--ok); border-color: var(--ok); }\n.acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }\n.acts .act-approve { border-color: var(--ok); color: var(--ok); }\n.acts .act-writeoff-open { color: var(--muted); }\n.edit { display: grid; gap: 6px; max-width: 560px; margin: 8px 0; padding: 10px; border: 1px solid var(--line); border-radius: 8px; }\n.edit[hidden] { display: none; }\n.edit label { font-size: 13px; color: var(--muted); }\n.edit input, .edit textarea, .edit select { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; width: 100%; }\n.edit .edit-buttons { display: flex; gap: 8px; }\n.review-text, .tc-text, .act-note { margin: 4px 0; font-size: 13px; color: var(--muted); }\n.tc-text.tc-saved { color: var(--ok); }\n.tc-text.tc-error, .act-note { color: var(--flag); }\n.times { color: var(--muted); }\n.desc { margin: 10px 0; white-space: pre-wrap; }\n.flags { margin: 0 0 10px; padding-left: 18px; color: var(--flag); }\nh2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 16px 0 6px; }\n.rows { width: 100%; border-collapse: collapse; font-size: 13px; }\n.rows td, .rows th { text-align: left; vertical-align: top; padding: 4px 8px; border-top: 1px solid var(--line); }\n.rows th { width: 11em; font-weight: 600; color: var(--muted); }\n.shots { border: 1px solid var(--line); border-radius: 8px; padding: 10px; }\n.shot img { max-width: 100%; border: 1px solid var(--line); border-radius: 4px; }\n.shot .reading { font-size: 13px; margin-top: 6px; }\n.shot-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }\n.none { color: var(--muted); font-style: italic; }';
+
+// src/time-review/templates/review.html.ts
+var review_html_default = '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Time review</title>\n<style>\n{{CSS}}\n</style>\n</head>\n<body>\n<header>\n<h1>Time review</h1>\n<label for="date-picker">Date</label>\n<select id="date-picker">{{DATES}}</select>\n<label for="matter-filter">Matter</label>\n<select id="matter-filter">{{MATTERS}}</select>\n<button id="prev" type="button">Previous</button>\n<button id="next" type="button">Next</button>\n<button id="next-flagged" type="button">Next flagged</button>\n<span id="day-clear" class="day-clear" role="status"></span>\n<span id="nav-note" role="status"></span>\n</header>\n<main>\n{{CARDS}}\n</main>\n<script type="application/json" id="review-index">{{INDEX}}</script>\n<script type="application/json" id="review-clear">{{CLEAR}}</script>\n<script>\n{{JS}}\n</script>\n</body>\n</html>';
+
+// src/time-review/templates/review.js.ts
+var review_js_default = '// The time review page\'s script (build plan slices 7 to 9). It steps through the cards the server\n// rendered, filters them, swaps screenshots, and posts the Approve, Correct, Write off, Split, Merge\n// and Undo clicks to the page\'s own listener, which saves them to the blocks. It draws nothing from a model.\n// nextId is pure, so a test can load this file and call it.\n\n/** The id of the item the step reaches from `currentId`, or null. `items` is in time order, each\n * { id, date, matter, flagged }. Only items that pass the filter count: a matter ("" is all) and,\n * when `flaggedOnly`, the flagged ones. `currentId` need not pass the filter. `step` is 1 or -1. */\nfunction nextId(items, currentId, matter, flaggedOnly, step) {\n  var at = -1;\n  for (var i = 0; i < items.length; i += 1) {\n    if (items[i].id === currentId) at = i;\n  }\n  var pass = function (item) {\n    return (matter === "" || item.matter === matter) && (!flaggedOnly || item.flagged);\n  };\n  if (step > 0) {\n    for (var j = at + 1; j < items.length; j += 1) if (pass(items[j])) return items[j].id;\n  } else {\n    for (var k = (at < 0 ? items.length : at) - 1; k >= 0; k -= 1) if (pass(items[k])) return items[k].id;\n  }\n  return null;\n}\n\n/** The id of the next item after `currentId` on the same day that is still live (not kept behind a\n * split or merge), or null. The server checks the two are next to each other and of one matter. */\nfunction nextLive(items, currentId) {\n  var at = -1;\n  for (var i = 0; i < items.length; i += 1) if (items[i].id === currentId) at = i;\n  if (at < 0) return null;\n  for (var j = at + 1; j < items.length; j += 1) {\n    if (items[j].date !== items[at].date) return null;\n    if (items[j].live) return items[j].id;\n  }\n  return null;\n}\n\n/** The first item on `date` that passes the matter filter, or null. */\nfunction firstOnDate(items, date, matter) {\n  for (var i = 0; i < items.length; i += 1) {\n    if (items[i].date === date && (matter === "" || items[i].matter === matter)) return items[i].id;\n  }\n  return null;\n}\n\nif (typeof document !== "undefined") {\n  (function () {\n    var items = JSON.parse(document.getElementById("review-index").textContent);\n    var cards = {};\n    Array.prototype.forEach.call(document.querySelectorAll(".card"), function (el) {\n      cards[el.getAttribute("data-id")] = el;\n    });\n    var picker = document.getElementById("date-picker");\n    var filter = document.getElementById("matter-filter");\n    var note = document.getElementById("nav-note");\n    var clearBadge = document.getElementById("day-clear");\n    var clear = JSON.parse(document.getElementById("review-clear").textContent);\n    var base = location.pathname.replace(/\\/?$/, "/");\n    var current = null;\n\n    function showClear() {\n      var date = current === null ? picker.value : cards[current].getAttribute("data-date");\n      var isClear = clear[date] === true;\n      clearBadge.textContent = isClear ? "This day is clear" : "This day is not clear";\n      clearBadge.className = isClear ? "day-clear is-clear" : "day-clear";\n    }\n\n    function show(id) {\n      if (id === null) {\n        note.textContent = "No further block matches.";\n        return;\n      }\n      note.textContent = "";\n      if (current !== null) cards[current].hidden = true;\n      current = id;\n      cards[id].hidden = false;\n      var date = cards[id].getAttribute("data-date");\n      if (picker.value !== date) picker.value = date;\n      slide(cards[id], 0);\n      showClear();\n      window.scrollTo(0, 0);\n    }\n\n    function find(card, cls) {\n      return card.querySelector("." + cls);\n    }\n\n    /** Posts one click. On success the page is reloaded at the same block, so it shows what was saved. */\n    function post(card, body, then) {\n      var message = find(card, "act-note");\n      message.textContent = "";\n      fetch(base + "click", { method: "POST", body: JSON.stringify(body) })\n        .then(function (res) {\n          return res.json().then(function (json) {\n            return { ok: res.ok, json: json };\n          });\n        })\n        .then(function (result) {\n          if (!result.ok) {\n            message.textContent = result.json.error || "The click was not saved.";\n            return;\n          }\n          then(result.json);\n        })\n        .catch(function () {\n          message.textContent = "The click could not be sent. Is the session still open?";\n        });\n    }\n\n    function reloadAt(id) {\n      location.hash = id;\n      location.reload();\n    }\n\n    /** Refreshes what the session writes after a click (the TimeCamp line) and each day\'s clear mark. */\n    function refresh() {\n      fetch(base + "state")\n        .then(function (res) {\n          return res.ok ? res.json() : null;\n        })\n        .then(function (state) {\n          if (!state) return;\n          Object.keys(state.blocks).forEach(function (id) {\n            var card = cards[id];\n            if (!card) return;\n            var line = find(card, "tc-text");\n            line.textContent = state.blocks[id].timecamp_text;\n            line.className = "tc-text " + state.blocks[id].timecamp_class;\n          });\n          clear = state.clear;\n          showClear();\n        })\n        .catch(function () {});\n    }\n\n    function slide(card, delta) {\n      var shots = card.querySelectorAll(".shot");\n      if (shots.length === 0) return;\n      var at = 0;\n      for (var i = 0; i < shots.length; i += 1) if (!shots[i].hidden) at = i;\n      var to = Math.max(0, Math.min(shots.length - 1, at + delta));\n      for (var j = 0; j < shots.length; j += 1) shots[j].hidden = j !== to;\n      var counter = card.querySelector(".shot-count");\n      if (counter) counter.textContent = to + 1 + " of " + shots.length;\n    }\n\n    function matter() {\n      return filter.value;\n    }\n\n    document.getElementById("prev").addEventListener("click", function () {\n      show(nextId(items, current, matter(), false, -1));\n    });\n    document.getElementById("next").addEventListener("click", function () {\n      show(nextId(items, current, matter(), false, 1));\n    });\n    document.getElementById("next-flagged").addEventListener("click", function () {\n      show(nextId(items, current, matter(), true, 1));\n    });\n    picker.addEventListener("change", function () {\n      show(firstOnDate(items, picker.value, matter()));\n    });\n    filter.addEventListener("change", function () {\n      var onFilter = current !== null && (matter() === "" || cards[current].getAttribute("data-matter") === matter());\n      if (!onFilter) show(firstOnDate(items, picker.value, matter()) || nextId(items, null, matter(), false, 1));\n    });\n    Array.prototype.forEach.call(document.querySelectorAll(".shot-prev"), function (b) {\n      b.addEventListener("click", function () {\n        slide(b.closest(".card"), -1);\n      });\n    });\n    Array.prototype.forEach.call(document.querySelectorAll(".shot-next"), function (b) {\n      b.addEventListener("click", function () {\n        slide(b.closest(".card"), 1);\n      });\n    });\n    document.addEventListener("keydown", function (event) {\n      var tag = event.target.tagName;\n      if (current === null || tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;\n      if (event.key === "ArrowLeft") slide(cards[current], -1);\n      if (event.key === "ArrowRight") slide(cards[current], 1);\n    });\n\n    Object.keys(cards).forEach(function (id) {\n      var card = cards[id];\n      var correct = find(card, "edit-correct");\n      var writeoff = find(card, "edit-writeoff");\n      find(card, "act-approve").addEventListener("click", function () {\n        post(card, { act: "approve", block: id }, function () {\n          reloadAt(id);\n        });\n      });\n      find(card, "act-correct-open").addEventListener("click", function () {\n        writeoff.hidden = true;\n        correct.hidden = !correct.hidden;\n      });\n      find(card, "act-writeoff-open").addEventListener("click", function () {\n        correct.hidden = true;\n        writeoff.hidden = !writeoff.hidden;\n      });\n      find(card, "correct-cancel").addEventListener("click", function () {\n        correct.hidden = true;\n      });\n      find(card, "writeoff-cancel").addEventListener("click", function () {\n        writeoff.hidden = true;\n      });\n      find(card, "correct-save").addEventListener("click", function () {\n        post(\n          card,\n          {\n            act: "correct",\n            block: id,\n            matter: find(card, "f-matter").value,\n            description: find(card, "f-description").value,\n            start: find(card, "f-start").value,\n            end: find(card, "f-end").value,\n          },\n          function () {\n            reloadAt(id);\n          }\n        );\n      });\n      find(card, "writeoff-save").addEventListener("click", function () {\n        post(card, { act: "write_off", block: id, reason: find(card, "f-reason").value }, function () {\n          reloadAt(id);\n        });\n      });\n      // Split, merge and undo change the blocks themselves; the page then opens the block they made or restored.\n      var splitButton = find(card, "act-split");\n      if (splitButton) {\n        splitButton.addEventListener("click", function () {\n          var shots = card.querySelectorAll(".shot");\n          var capture = null;\n          for (var i = 0; i < shots.length; i += 1) if (!shots[i].hidden) capture = shots[i].getAttribute("data-capture");\n          if (capture === null) return;\n          post(card, { act: "split", block: id, capture: capture }, function (json) {\n            reloadAt(json.block || id);\n          });\n        });\n      }\n      find(card, "act-merge").addEventListener("click", function () {\n        var next = nextLive(items, id);\n        if (next === null) {\n          find(card, "act-note").textContent = "There is no block after this one to merge with.";\n          return;\n        }\n        post(card, { act: "merge", blocks: [id, next] }, function (json) {\n          reloadAt(json.block || id);\n        });\n      });\n      find(card, "act-undo").addEventListener("click", function () {\n        post(card, { act: "undo", block: id }, function (json) {\n          reloadAt(json.block || id);\n        });\n      });\n    });\n\n    var wanted = decodeURIComponent(location.hash.replace(/^#/, ""));\n    if (items.length > 0) show(cards[wanted] ? wanted : items[0].id);\n    setInterval(refresh, 3000);\n  })();\n}';
+
+// src/time-review/page.ts
+var SHOT_SOURCE = "syncopaid_captures";
+var ID_FIELDS = ["id", "native_id", "capture_id", "entry_id"];
+var MAX_FIELDS = 8;
+var MAX_VALUE = 200;
+function loadReviewModel(seams = {}) {
+  const env = seams.env ?? process.env;
+  const blocks = timePipelineList(NAMESPACE, BLOCK_PREFIX, env).items.map((item) => JSON.parse(item.value)).sort(byTime);
+  const evidence = {};
+  for (const date3 of new Set(blocks.map((b) => b.date))) evidence[date3] = readDayEvidence(date3, seams);
+  const readings = {};
+  for (const block of blocks) {
+    for (const ref of block.evidence) {
+      if (ref.source !== SHOT_SOURCE) continue;
+      const id = captureId(evidence[block.date], ref.ref);
+      if (id in readings) continue;
+      const { value } = timePipelineGet(NAMESPACE, `capture_reading:${id}`, env);
+      readings[id] = value === null ? void 0 : JSON.parse(value);
+    }
+  }
+  const clear = {};
+  for (const date3 of new Set(blocks.map((b) => b.date))) clear[date3] = dayIsClear(date3, blocks, seams);
+  return { blocks, evidence, readings, clear };
+}
+function reviewText(block) {
+  const r = block.review;
+  if (!r) return "";
+  if (r.act === "approved") return `Approved by ${r.by} at ${r.at}.`;
+  if (r.act === "corrected") return `Corrected by ${r.by} at ${r.at}. Was: ${r.before?.matter ?? ""}, ${r.before?.start ?? ""} to ${r.before?.end ?? ""}, ${r.before?.description ?? ""}`;
+  return `Written off by ${r.by} at ${r.at}. Reason: ${r.reason ?? ""}`;
+}
+function timecampLine(block) {
+  const t = block.timecamp;
+  if (!t) return { text: "", cls: "" };
+  switch (t.status) {
+    case "saved":
+      return { text: "Saved to TimeCamp.", cls: "tc-saved" };
+    case "unchanged":
+      return { text: "TimeCamp already held this matter and description.", cls: "tc-saved" };
+    case "staff_left_alone":
+      return { text: "Staff entry: its TimeCamp note was left as the staff member wrote it.", cls: "" };
+    case "error":
+      return { text: `TimeCamp error: ${t.message ?? "the write did not go through"}`, cls: "tc-error" };
+    default:
+      return { text: "Waiting for the session to write this to TimeCamp.", cls: "" };
+  }
+}
+function byTime(a, b) {
+  if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+  const x = startValue(a.start);
+  const y = startValue(b.start);
+  if (x !== y && Number.isFinite(x - y)) return x - y;
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+function startValue(text3) {
+  const clock = /^(\d{1,2}):(\d{2})$/.exec(text3);
+  if (clock) return Number(clock[1]) * 60 + Number(clock[2]);
+  const instant = Date.parse(text3);
+  return Number.isFinite(instant) ? instant : Number.POSITIVE_INFINITY;
+}
+var escapeHtml = (text3) => text3.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+function rowFor(day, source, ref) {
+  const row = day?.rows.find((r) => r.source === source && ID_FIELDS.some((f) => r[f] !== void 0 && String(r[f]) === ref));
+  return row ?? null;
+}
+function captureId(day, ref) {
+  const row = rowFor(day, SHOT_SOURCE, ref);
+  return row && typeof row.capture_id === "string" && row.capture_id !== "" ? row.capture_id : ref;
+}
+function shortText(value) {
+  const text3 = typeof value === "string" ? value : JSON.stringify(value);
+  return text3.length > MAX_VALUE ? `${text3.slice(0, MAX_VALUE)}\u2026` : text3;
+}
+function fieldRows(row) {
+  const fields = Object.entries(row).filter(([name, value]) => name !== "source" && value !== null && value !== void 0 && value !== "").slice(0, MAX_FIELDS);
+  return fields.map(([name, value]) => `<tr><th>${escapeHtml(name)}</th><td>${escapeHtml(shortText(value))}</td></tr>`).join("");
+}
+function minutesBetween(start2, end) {
+  const clock = /^(\d{1,2}):(\d{2})$/;
+  const a = clock.exec(start2);
+  const b = clock.exec(end);
+  if (a && b) {
+    const span2 = Number(b[1]) * 60 + Number(b[2]) - (Number(a[1]) * 60 + Number(a[2]));
+    return span2 >= 0 ? span2 : null;
+  }
+  const span = (Date.parse(end) - Date.parse(start2)) / 6e4;
+  return Number.isFinite(span) && span >= 0 ? Math.round(span) : null;
+}
+var label = (token) => token.replace(/_/g, " ");
+function readingHtml(reading) {
+  if (!reading) return `<p class="reading none">No saved reading.</p>`;
+  const parts = Object.entries(reading.reading ?? {}).map(([name, value]) => `<tr><th>${escapeHtml(label(name))}</th><td>${escapeHtml(shortText(value))}</td></tr>`).join("");
+  const answers = (reading.answers ?? []).map((a) => `<tr><th>answer</th><td>${escapeHtml(shortText(a))}</td></tr>`).join("");
+  return `<table class="rows reading">${parts}${answers}</table>`;
+}
+function cardHtml(block, model, imgBase, matters) {
+  const day = model.evidence[block.date];
+  const minutes = minutesBetween(block.start, block.end);
+  const shots = [];
+  const rows = [];
+  for (const ref of block.evidence) {
+    const row = rowFor(day, ref.source, ref.ref);
+    if (ref.source === SHOT_SOURCE) {
+      const id = captureId(day, ref.ref);
+      const image2 = imgBase === null ? "" : `<img src="${escapeHtml(imgBase)}${encodeURIComponent(id)}" alt="Screenshot ${escapeHtml(id)}" loading="lazy">`;
+      shots.push(`<div class="shot" data-capture="${escapeHtml(id)}" hidden><div>${image2}</div>${readingHtml(model.readings[id])}</div>`);
+    } else {
+      rows.push(
+        `<h3 class="src">${escapeHtml(label(ref.source))}: ${escapeHtml(ref.ref)}</h3>` + (row ? `<table class="rows">${fieldRows(row)}</table>` : `<p class="none">This row is not in the day's saved evidence.</p>`)
+      );
+    }
+  }
+  const slideshow = shots.length === 0 ? "" : `<h2>Screenshots</h2><div class="shots"><div class="shot-bar"><button type="button" class="shot-prev">&larr;</button><span class="shot-count"></span><button type="button" class="shot-next">&rarr;</button>${block.state === "merged" || block.state === "split" ? "" : `<button type="button" class="act-split">Split here</button>`}</div>${shots.join("")}</div>`;
+  const evidence = rows.length === 0 && shots.length === 0 ? `<p class="none">No evidence is cited for this block.</p>` : rows.join("");
+  const flags = block.flags.length === 0 ? "" : `<ul class="flags">${block.flags.map((f) => `<li>${escapeHtml(label(f))}</li>`).join("")}</ul>`;
+  const duration3 = minutes === null ? "" : ` (${minutes} min)`;
+  const links = block.links.length === 0 ? "" : `<p class="times">${block.links.map((l) => `${escapeHtml(label(l.role))} ${escapeHtml(l.block)}`).join("; ")}</p>`;
+  const tc = timecampLine(block);
+  return `<article class="card" data-id="${escapeHtml(block.id)}" data-date="${escapeHtml(block.date)}" data-matter="${escapeHtml(block.matter)}" hidden><div class="top"><span class="matter">${escapeHtml(block.matter)}</span><span class="state state-${escapeHtml(block.state)}">${escapeHtml(label(block.state))}</span></div><div class="times">${escapeHtml(block.date)} ${escapeHtml(block.start)} to ${escapeHtml(block.end)}${duration3}</div><p class="desc">${escapeHtml(block.description)}</p>${flags}${links}` + actionsHtml(block, matters, undoable(block, model.blocks)) + `<p class="review-text">${escapeHtml(reviewText(block))}</p><p class="tc-text ${tc.cls}">${escapeHtml(tc.text)}</p><h2>Evidence</h2>${evidence}${slideshow}</article>`;
+}
+function undoable(block, all) {
+  if (block.state === "merged" || block.state === "split") return true;
+  if (block.links.some((l) => l.role === "split_from")) return true;
+  return all.some((o) => o.links.some((l) => l.role === "merged_into" && l.block === block.id));
+}
+function undoLabel(block) {
+  const split = block.state === "split" || block.links.some((l) => l.role === "split_from");
+  return split ? "Unsplit" : "Unmerge";
+}
+function actionsHtml(block, matters, undo) {
+  const options = (matters.includes(block.matter) ? matters : [block.matter, ...matters]).map((m) => `<option value="${escapeHtml(m)}"${m === block.matter ? " selected" : ""}>${escapeHtml(m)}</option>`).join("");
+  const off = block.state === "merged" || block.state === "split" ? " disabled" : "";
+  return `<div class="acts"><button type="button" class="act-approve"${off}>Approve</button><button type="button" class="act-correct-open"${off}>Correct</button><button type="button" class="act-writeoff-open"${off}>Write off</button><button type="button" class="act-merge"${off}>Merge with next</button><button type="button" class="act-undo"${undo ? "" : " disabled"}>${escapeHtml(undoLabel(block))}</button></div><div class="edit edit-correct" hidden><label>Matter<select class="f-matter">${options}</select></label><label>Description<textarea class="f-description" rows="3">${escapeHtml(block.description)}</textarea></label><label>Start<input class="f-start" type="text" value="${escapeHtml(block.start)}"></label><label>End<input class="f-end" type="text" value="${escapeHtml(block.end)}"></label><div class="edit-buttons"><button type="button" class="correct-save">Save correction</button><button type="button" class="correct-cancel">Cancel</button></div></div><div class="edit edit-writeoff" hidden><label>Reason<input class="f-reason" type="text" maxlength="200"></label><div class="edit-buttons"><button type="button" class="writeoff-save">Write off this block</button><button type="button" class="writeoff-cancel">Cancel</button></div></div><p class="act-note" role="status"></p>`;
+}
+function fill(template, parts) {
+  return template.replace(/\{\{([A-Z]+)\}\}/g, (_all, name) => parts[name] ?? "");
+}
+var scriptJson = (value) => JSON.stringify(value).replace(/</g, "\\u003c").replace(new RegExp(String.fromCharCode(8232), "g"), "\\u2028").replace(new RegExp(String.fromCharCode(8233), "g"), "\\u2029");
+function renderReviewPage(model, imgBase) {
+  const dates = [...new Set(model.blocks.map((b) => b.date))];
+  const matters = [...new Set(model.blocks.map((b) => b.matter))].sort();
+  const index = model.blocks.map((b) => ({ id: b.id, date: b.date, matter: b.matter, flagged: b.state === "flagged", live: b.state !== "merged" && b.state !== "split" }));
+  const cards = model.blocks.length === 0 ? `<p class="none">No day has staged blocks yet.</p>` : model.blocks.map((b) => cardHtml(b, model, imgBase, matters)).join("\n");
+  return fill(review_html_default, {
+    CSS: review_css_default,
+    JS: review_js_default,
+    DATES: dates.map((d) => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join(""),
+    MATTERS: [`<option value="">All matters</option>`, ...matters.map((m) => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`)].join(""),
+    CARDS: cards,
+    INDEX: scriptJson(index),
+    CLEAR: scriptJson(model.clear)
+  });
+}
+
+// src/time-review/tools.ts
+var DATE3 = /^\d{4}-\d{2}-\d{2}$/;
+var BLOCK_ID = /^\d{4}-\d{2}-\d{2}:\d{3}$/;
+var MAX_BLOCKS = 999;
+var STAGE_ATTEMPTS = 5;
+function checkDate3(tool, date3) {
+  if (typeof date3 !== "string" || !DATE3.test(date3) || Number.isNaN(Date.parse(`${date3}T00:00:00Z`))) {
+    throw new ValidationError(`${tool}: ${JSON.stringify(date3)} is not a date as YYYY-MM-DD`);
+  }
+  return date3;
+}
+function isObject2(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function checkSource(label2, value) {
+  if (typeof value !== "string" || !GATE_SOURCES.includes(value)) {
+    throw new ValidationError(`${label2}: source must be one of ${GATE_SOURCES.join(", ")}`);
+  }
+  return value;
+}
+function nonEmpty(label2, field, value) {
+  if (typeof value !== "string" || value.trim() === "") throw new ValidationError(`${label2}: ${field} must be a non-empty string`);
+  return value;
+}
+function timeReviewSaveEvidence(dateIn, sourcesIn, rowsIn, seams = {}) {
+  const tool = "time_review__save_evidence";
+  const date3 = checkDate3(tool, dateIn);
+  if (!Array.isArray(sourcesIn)) throw new ValidationError(`${tool}: sources must be a list of {source, status}`);
+  if (!Array.isArray(rowsIn)) throw new ValidationError(`${tool}: rows must be a list of evidence rows`);
+  const sources = [];
+  sourcesIn.forEach((entry, i) => {
+    const label2 = `${tool} sources[${i}]`;
+    if (!isObject2(entry)) throw new ValidationError(`${label2} must be {source, status}`);
+    const source = checkSource(label2, entry.source);
+    if (sources.some((s) => s.source === source)) throw new ValidationError(`${label2}: ${source} is listed twice`);
+    sources.push({ source, status: nonEmpty(label2, "status", entry.status) });
+  });
+  const rows = rowsIn.map((row, i) => {
+    const label2 = `${tool} rows[${i}]`;
+    if (!isObject2(row)) throw new ValidationError(`${label2} must be an object naming its source`);
+    const source = checkSource(label2, row.source);
+    if (!sources.some((s) => s.source === source)) {
+      throw new ValidationError(`${label2}: ${source} has a row but is not listed in sources`);
+    }
+    return { ...row, source };
+  });
+  const judged = reviewDateJudgment(date3, seams);
+  if (judged) return { status: "judged", date: date3, ...judged };
+  const record2 = { kind: "day_evidence", date: date3, saved_at: nowOf(seams).toISOString(), sources, rows };
+  const sha256 = putRecord(tool, dayEvidenceKey(date3), record2, seams);
+  const short = sourcesShort(record2);
+  return { status: "saved", date: date3, sha256, complete: short.length === 0, short };
+}
+var BLOCK_FIELDS = ["start", "end", "matter", "description", "matter_basis", "bill_basis", "evidence"];
+function checkBlock(tool, index, raw) {
+  const label2 = `${tool} blocks[${index}]`;
+  if (!isObject2(raw)) throw new ValidationError(`${label2} must be an object`);
+  for (const field of Object.keys(raw)) {
+    if (!BLOCK_FIELDS.includes(field)) {
+      const why = field === "flags" || field === "state" ? "code sets flags and state from the bases" : "not a block field";
+      throw new ValidationError(`${label2}: ${field} is ${why}; allowed: ${BLOCK_FIELDS.join(", ")}`);
+    }
+  }
+  const matter_basis = checkMatterBasis(label2, raw.matter_basis);
+  const bill_basis = checkBillBasis(label2, raw.bill_basis);
+  if (!Array.isArray(raw.evidence)) throw new ValidationError(`${label2}: evidence must be a list of {source, ref}`);
+  const evidence = raw.evidence.map((entry, i) => {
+    const elabel = `${label2} evidence[${i}]`;
+    if (!isObject2(entry)) throw new ValidationError(`${elabel} must be {source, ref}`);
+    return { source: checkSource(elabel, entry.source), ref: nonEmpty(elabel, "ref", entry.ref) };
+  });
+  if (!MATTER_BASIS[matter_basis] && evidence.length === 0) {
+    throw new ValidationError(
+      `${label2}: matter_basis ${matter_basis} says the evidence carries the matter, so evidence must list at least one {source, ref}; state no_evidence if there is none`
+    );
+  }
+  return {
+    start: nonEmpty(label2, "start", raw.start),
+    end: nonEmpty(label2, "end", raw.end),
+    matter: nonEmpty(label2, "matter", raw.matter),
+    description: nonEmpty(label2, "description", raw.description),
+    matter_basis,
+    bill_basis,
+    ...decideFlags(matter_basis, bill_basis),
+    evidence
+  };
+}
+function timeReviewStageDay(dateIn, token, blocksIn, seams = {}) {
+  const tool = "time_review__stage_day";
+  const date3 = checkDate3(tool, dateIn);
+  if (typeof token !== "string" || token === "") throw new ValidationError(`${tool}: token must be the claim token review_date__claim gave`);
+  if (!Array.isArray(blocksIn)) throw new ValidationError(`${tool}: blocks must be a list`);
+  if (blocksIn.length > MAX_BLOCKS) throw new ValidationError(`${tool}: at most ${MAX_BLOCKS} blocks a day`);
+  const checked = blocksIn.map((raw, i) => checkBlock(tool, i, raw));
+  const env = envOf(seams);
+  for (let attempt = 0; attempt < STAGE_ATTEMPTS; attempt += 1) {
+    const gate = reviewDateStageGate(date3, token, seams);
+    if (!gate.ok) {
+      const { ok: _ok, record_sha256: _sha, ...refusal } = gate;
+      return { ...refusal, date: date3 };
+    }
+    const read2 = timePipelineGet(NAMESPACE, dayEvidenceKey(date3), env);
+    if (read2.value === null) return { status: "evidence_missing", date: date3 };
+    const short = sourcesShort(JSON.parse(read2.value));
+    if (short.length > 0) return { status: "evidence_short", date: date3, short };
+    const staged_at = nowOf(seams).toISOString();
+    const written = checked.map((fields, i) => ({
+      kind: "block",
+      id: blockId(date3, i),
+      date: date3,
+      ...fields,
+      links: [],
+      staged_at
+    }));
+    const keep = new Set(written.map((b) => blockKey(b.id)));
+    const existing = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, env).items;
+    const checks = [
+      { namespace: NAMESPACE, key: REVIEW_DATE_PREFIX + date3, ...gate.record_sha256 === null ? { expect_absent: true } : { expect_sha256: gate.record_sha256 } },
+      { namespace: NAMESPACE, key: dayEvidenceKey(date3), expect_sha256: read2.sha256 },
+      // A block written meanwhile by another call to this tool is a change this call did not read.
+      ...existing.map((item) => ({ namespace: NAMESPACE, key: item.key, expect_sha256: item.sha256 }))
+    ];
+    const writes = [
+      ...written.map((block) => ({ op: "set", namespace: NAMESPACE, key: blockKey(block.id), value: JSON.stringify(block) })),
+      ...existing.filter((item) => !keep.has(item.key)).map((item) => ({ op: "delete", namespace: NAMESPACE, key: item.key }))
+    ];
+    if ("stale" in timePipelineApplyIf(checks, writes, env)) continue;
+    return { status: "staged", date: date3, blocks: written.map((b) => ({ id: b.id, state: b.state, flags: b.flags })) };
+  }
+  throw new DataServerError(`${tool}: ${date3} changed ${STAGE_ATTEMPTS} times while this call was staging; nothing was written. Try again`, "contended");
+}
+function timeReviewReadDay(dateIn, seams = {}) {
+  const date3 = checkDate3("time_review__read_day", dateIn);
+  const env = envOf(seams);
+  const { items } = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, env);
+  const blocks = items.map((item) => JSON.parse(item.value));
+  const evidence = readDayEvidence(date3, seams);
+  const readings = {};
+  for (const block of blocks) {
+    for (const ref of block.evidence) {
+      if (ref.source !== "syncopaid_captures") continue;
+      const id = captureId(evidence, ref.ref);
+      if (id in readings) continue;
+      const { value } = timePipelineGet(NAMESPACE, `capture_reading:${id}`, env);
+      readings[id] = value === null ? null : JSON.parse(value);
+    }
+  }
+  return { date: date3, clear: dayIsClear(date3, blocks, seams), evidence, blocks, readings };
+}
+function timeReviewRecordTimecamp(blockIn, statusIn, messageIn, seams = {}, entryIn) {
+  const tool = "time_review__record_timecamp";
+  if (typeof blockIn !== "string" || !BLOCK_ID.test(blockIn)) throw new ValidationError(`${tool}: block must be a block id as YYYY-MM-DD:nnn`);
+  if (typeof statusIn !== "string") throw new ValidationError(`${tool}: status must be text`);
+  if (messageIn !== void 0 && typeof messageIn !== "string") throw new ValidationError(`${tool}: message must be text`);
+  try {
+    if (entryIn !== void 0) normalizeEntry(`${tool} entry`, entryIn);
+    const saved = recordTimecamp(blockIn, statusIn, messageIn, seams);
+    if (entryIn !== void 0 && (statusIn === "saved" || statusIn === "unchanged")) acceptEntry(blockIn.slice(0, 10), entryIn, seams);
+    return { block: blockIn, timecamp: saved.timecamp };
+  } catch (err) {
+    if (err instanceof ValidationError) throw new ValidationError(`${tool}: ${err.message}`);
+    throw err;
+  }
+}
+
+// src/time-review/recheck.ts
+var DAY_RECHECK_PREFIX = "day_recheck:";
+var ATTEMPTS3 = 5;
+var DATE4 = /^\d{4}-\d{2}-\d{2}$/;
+var MAX_BLOCKS2 = 999;
+var recheckKey = (id) => DAY_RECHECK_PREFIX + id;
+var live = (b) => b.state !== "merged" && b.state !== "split";
+function differences(stored, fresh) {
+  const used = /* @__PURE__ */ new Set();
+  const differing = [];
+  for (const block of stored.filter(live)) {
+    const sameTimes = fresh.findIndex((f) => f.start === block.start && f.end === block.end);
+    if (sameTimes >= 0) {
+      used.add(sameTimes);
+      if (fresh[sameTimes].matter !== block.matter) differing.push({ block: block.id, reasons: ["matter_differs"] });
+    } else {
+      differing.push({ block: block.id, reasons: ["times_differ"] });
+    }
+  }
+  const unmatched = fresh.map((_, i) => i).filter((i) => !used.has(i));
+  return { differing, unmatched };
+}
+function timeReviewRecheckDay(dateIn, blocksIn, seams = {}) {
+  const tool = "time_review__recheck_day";
+  if (typeof dateIn !== "string" || !DATE4.test(dateIn) || Number.isNaN(Date.parse(`${dateIn}T00:00:00Z`))) {
+    throw new ValidationError(`${tool}: ${JSON.stringify(dateIn)} is not a date as YYYY-MM-DD`);
+  }
+  const date3 = dateIn;
+  if (!Array.isArray(blocksIn)) throw new ValidationError(`${tool}: blocks must be a list`);
+  if (blocksIn.length > MAX_BLOCKS2) throw new ValidationError(`${tool}: at most ${MAX_BLOCKS2} blocks a day`);
+  const fresh = blocksIn.map((raw, i) => checkBlock(tool, i, raw));
+  const env = envOf(seams);
+  for (let attempt = 0; attempt < ATTEMPTS3; attempt += 1) {
+    if (!reviewDateJudgment(date3, seams)) return { status: "not_judged", date: date3 };
+    const evidence = timePipelineGet(NAMESPACE, dayEvidenceKey(date3), env);
+    if (evidence.value === null) return { status: "evidence_missing", date: date3 };
+    const listed = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, env).items;
+    if (listed.length === 0) return { status: "no_blocks", date: date3 };
+    const stored = listed.map((item) => JSON.parse(item.value));
+    const record2 = timePipelineGet(NAMESPACE, REVIEW_DATE_PREFIX + date3, env);
+    const { differing, unmatched } = differences(stored, fresh);
+    const priorRechecks = timePipelineList(NAMESPACE, `${DAY_RECHECK_PREFIX}${date3}:`, env).items;
+    const next = Math.max(0, ...priorRechecks.map((item) => Number(item.key.slice(-3)) || 0)) + 1;
+    const id = `${date3}:${String(next).padStart(3, "0")}`;
+    const now = nowOf(seams).toISOString();
+    const saved = { kind: "day_recheck", id, date: date3, rechecked_at: now, blocks: fresh, differences: differing, unmatched };
+    const writes = [{ op: "set", namespace: NAMESPACE, key: recheckKey(id), value: JSON.stringify(saved) }];
+    const flagged = [];
+    const after = new Map(stored.map((b) => [b.id, b]));
+    for (const diff of differing) {
+      const block = { ...after.get(diff.block) };
+      if (block.review) {
+        block.superseded_review = block.review;
+        delete block.review;
+        delete block.timecamp;
+      }
+      block.state = "flagged";
+      for (const reason of diff.reasons) {
+        const flag = `recheck:${reason}`;
+        if (!block.flags.includes(flag)) block.flags = [...block.flags, flag];
+      }
+      after.set(block.id, block);
+      flagged.push(block.id);
+      writes.push({ op: "set", namespace: NAMESPACE, key: blockKey(block.id), value: JSON.stringify(block) });
+    }
+    const checks = [
+      { namespace: NAMESPACE, key: REVIEW_DATE_PREFIX + date3, expect_sha256: record2.sha256 },
+      { namespace: NAMESPACE, key: dayEvidenceKey(date3), expect_sha256: evidence.sha256 },
+      ...listed.map((item) => ({ namespace: NAMESPACE, key: item.key, expect_sha256: item.sha256 })),
+      { namespace: NAMESPACE, key: recheckKey(id), expect_absent: true },
+      ...priorRechecks.map((item) => ({ namespace: NAMESPACE, key: item.key, expect_sha256: item.sha256 }))
+    ];
+    if ("stale" in timePipelineApplyIf(checks, writes, env)) continue;
+    const clear = dayIsClear(date3, [...after.values()], seams);
+    if (differing.length === 0) return { status: "agreed", date: date3, recheck: id, unmatched, clear };
+    return { status: "differs", date: date3, recheck: id, differing, flagged, unmatched, clear };
+  }
+  throw new DataServerError(`${tool}: ${date3} changed ${ATTEMPTS3} times while this call was comparing; nothing was written. Try again`, "contended");
+}
+
 // src/time-review/restructure.ts
 var ROLE_SPLIT_FROM = "split_from";
 var ROLE_MERGED_INTO = "merged_into";
 var FLAG_REDRAFT = "split:redraft_pending";
 var FLAG_MERGED = "merge:new_block";
-var ATTEMPTS3 = 5;
+var ATTEMPTS4 = 5;
 var SHOT = "syncopaid_captures";
-var ID_FIELDS = ["id", "native_id", "capture_id", "entry_id"];
+var ID_FIELDS2 = ["id", "native_id", "capture_id", "entry_id"];
 var TIME_FIELDS = ["captured_at", "native_id", "id"];
 var MAX_MERGE = 20;
 var MAX_TEXT2 = 2e3;
 var MAX_SHORT2 = 200;
 var CLOCK = /^(\d{1,2}):(\d{2})$/;
-var BLOCK_ID = /^\d{4}-\d{2}-\d{2}:\d{3}$/;
+var BLOCK_ID2 = /^\d{4}-\d{2}-\d{2}:\d{3}$/;
 var RESTRUCTURED = ["merged", "split"];
 var isRestructured = (b) => RESTRUCTURED.includes(b.state);
 var linkTo = (b, role) => b.links.find((l) => l.role === role)?.block;
 function checkId(label2, value) {
-  if (typeof value !== "string" || !BLOCK_ID.test(value)) throw new ValidationError(`${label2} must be a block id as YYYY-MM-DD:nnn`);
+  if (typeof value !== "string" || !BLOCK_ID2.test(value)) throw new ValidationError(`${label2} must be a block id as YYYY-MM-DD:nnn`);
   return value;
 }
 function unique(list) {
@@ -17240,7 +17685,7 @@ function unique(list) {
 }
 function commit(tool, date3, seams, plan) {
   const env = envOf(seams);
-  for (let attempt = 0; attempt < ATTEMPTS3; attempt += 1) {
+  for (let attempt = 0; attempt < ATTEMPTS4; attempt += 1) {
     const items = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, env).items;
     const blocks = items.map((item) => JSON.parse(item.value));
     const { save, remove: remove2, result } = plan(blocks);
@@ -17255,7 +17700,7 @@ function commit(tool, date3, seams, plan) {
     ];
     if (!("stale" in timePipelineApplyIf(checks, writes, env))) return result;
   }
-  throw new DataServerError(`${tool}: ${date3} changed ${ATTEMPTS3} times while this call was saving; nothing was written. Try again`, "contended");
+  throw new DataServerError(`${tool}: ${date3} changed ${ATTEMPTS4} times while this call was saving; nothing was written. Try again`, "contended");
 }
 function find(blocks, id) {
   const found = blocks.find((b) => b.id === id);
@@ -17294,7 +17739,7 @@ function shotRow(day, ref) {
     const at = day.rows[Number(ref)];
     if (at && at.source === SHOT) return at;
   }
-  return day.rows.find((r) => r.source === SHOT && ID_FIELDS.some((f) => r[f] !== void 0 && String(r[f]) === ref)) ?? null;
+  return day.rows.find((r) => r.source === SHOT && ID_FIELDS2.some((f) => r[f] !== void 0 && String(r[f]) === ref)) ?? null;
 }
 function shotInstant(day, ref) {
   const row = shotRow(day, ref);
@@ -17419,10 +17864,10 @@ function mergeBlocks(idsIn, seams = {}) {
       if (b.state === "written_off") throw new ValidationError(`Block ${b.id} is written off and cannot be merged`);
     }
     if (unique(picked.map((b) => b.matter)).length !== 1) throw new ValidationError("A merge joins blocks of one matter only");
-    const live = blocks.filter((b) => !isRestructured(b)).sort(byStart);
-    const at_ = picked.map((b) => live.indexOf(b)).sort((x, y) => x - y);
+    const live2 = blocks.filter((b) => !isRestructured(b)).sort(byStart);
+    const at_ = picked.map((b) => live2.indexOf(b)).sort((x, y) => x - y);
     if (at_.some((pos, i) => i > 0 && pos !== at_[i - 1] + 1)) throw new ValidationError("A merge joins blocks that are next to each other");
-    const ordered = at_.map((pos) => live[pos]);
+    const ordered = at_.map((pos) => live2[pos]);
     const matter_basis = (ordered.find((b) => MATTER_BASIS[b.matter_basis]) ?? ordered[0]).matter_basis;
     const bill_basis = unique(ordered.flatMap((b) => b.bill_basis));
     const evidence = ordered.flatMap((b) => b.evidence).filter((e, i, all) => all.findIndex((o) => o.source === e.source && o.ref === e.ref) === i);
@@ -17534,7 +17979,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "a82cd284d41c";
+var BUILD_STAMP = false ? null : "629e8447fea7";
 
 // src/local-page/links.ts
 import { mkdirSync as mkdirSync5, readdirSync as readdirSync4, readFileSync as readFileSync5, renameSync, statSync as statSync2, unlinkSync as unlinkSync3, writeFileSync as writeFileSync5 } from "node:fs";
@@ -17879,169 +18324,6 @@ async function waitFor(check, options) {
   }
 }
 
-// src/time-review/templates/review.css.ts
-var review_css_default = ':root { --ink: #1d2733; --muted: #5b6776; --line: #d5dbe3; --bg: #f5f7fa; --card: #ffffff; --flag: #b3261e; --ok: #1e6b3a; --accent: #1f4e8c; }\n* { box-sizing: border-box; }\nbody { margin: 0; font: 15px/1.45 system-ui, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); }\nheader { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--line); }\nheader h1 { font-size: 16px; margin: 0 12px 0 0; }\nheader label { color: var(--muted); font-size: 13px; }\nselect, button { font: inherit; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); }\nbutton { cursor: pointer; }\nbutton:hover { border-color: var(--accent); }\n#nav-note { color: var(--flag); font-size: 13px; }\nmain { max-width: 880px; margin: 16px auto; padding: 0 16px; }\n.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }\n.card[hidden], .shot[hidden] { display: none; }\n.top { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; justify-content: space-between; }\n.matter { font-weight: 600; font-size: 17px; }\n.state { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); }\n.state-flagged { color: var(--flag); border-color: var(--flag); }\n.state-auto_assigned, .state-approved { color: var(--ok); border-color: var(--ok); }\n.state-corrected { color: var(--accent); border-color: var(--accent); }\n.state-written_off { color: var(--muted); border-color: var(--muted); }\n.day-clear { font-size: 13px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); color: var(--muted); }\n.day-clear.is-clear { color: var(--ok); border-color: var(--ok); }\n.acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }\n.acts .act-approve { border-color: var(--ok); color: var(--ok); }\n.acts .act-writeoff-open { color: var(--muted); }\n.edit { display: grid; gap: 6px; max-width: 560px; margin: 8px 0; padding: 10px; border: 1px solid var(--line); border-radius: 8px; }\n.edit[hidden] { display: none; }\n.edit label { font-size: 13px; color: var(--muted); }\n.edit input, .edit textarea, .edit select { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; width: 100%; }\n.edit .edit-buttons { display: flex; gap: 8px; }\n.review-text, .tc-text, .act-note { margin: 4px 0; font-size: 13px; color: var(--muted); }\n.tc-text.tc-saved { color: var(--ok); }\n.tc-text.tc-error, .act-note { color: var(--flag); }\n.times { color: var(--muted); }\n.desc { margin: 10px 0; white-space: pre-wrap; }\n.flags { margin: 0 0 10px; padding-left: 18px; color: var(--flag); }\nh2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 16px 0 6px; }\n.rows { width: 100%; border-collapse: collapse; font-size: 13px; }\n.rows td, .rows th { text-align: left; vertical-align: top; padding: 4px 8px; border-top: 1px solid var(--line); }\n.rows th { width: 11em; font-weight: 600; color: var(--muted); }\n.shots { border: 1px solid var(--line); border-radius: 8px; padding: 10px; }\n.shot img { max-width: 100%; border: 1px solid var(--line); border-radius: 4px; }\n.shot .reading { font-size: 13px; margin-top: 6px; }\n.shot-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }\n.none { color: var(--muted); font-style: italic; }';
-
-// src/time-review/templates/review.html.ts
-var review_html_default = '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Time review</title>\n<style>\n{{CSS}}\n</style>\n</head>\n<body>\n<header>\n<h1>Time review</h1>\n<label for="date-picker">Date</label>\n<select id="date-picker">{{DATES}}</select>\n<label for="matter-filter">Matter</label>\n<select id="matter-filter">{{MATTERS}}</select>\n<button id="prev" type="button">Previous</button>\n<button id="next" type="button">Next</button>\n<button id="next-flagged" type="button">Next flagged</button>\n<span id="day-clear" class="day-clear" role="status"></span>\n<span id="nav-note" role="status"></span>\n</header>\n<main>\n{{CARDS}}\n</main>\n<script type="application/json" id="review-index">{{INDEX}}</script>\n<script type="application/json" id="review-clear">{{CLEAR}}</script>\n<script>\n{{JS}}\n</script>\n</body>\n</html>';
-
-// src/time-review/templates/review.js.ts
-var review_js_default = '// The time review page\'s script (build plan slices 7 to 9). It steps through the cards the server\n// rendered, filters them, swaps screenshots, and posts the Approve, Correct, Write off, Split, Merge\n// and Undo clicks to the page\'s own listener, which saves them to the blocks. It draws nothing from a model.\n// nextId is pure, so a test can load this file and call it.\n\n/** The id of the item the step reaches from `currentId`, or null. `items` is in time order, each\n * { id, date, matter, flagged }. Only items that pass the filter count: a matter ("" is all) and,\n * when `flaggedOnly`, the flagged ones. `currentId` need not pass the filter. `step` is 1 or -1. */\nfunction nextId(items, currentId, matter, flaggedOnly, step) {\n  var at = -1;\n  for (var i = 0; i < items.length; i += 1) {\n    if (items[i].id === currentId) at = i;\n  }\n  var pass = function (item) {\n    return (matter === "" || item.matter === matter) && (!flaggedOnly || item.flagged);\n  };\n  if (step > 0) {\n    for (var j = at + 1; j < items.length; j += 1) if (pass(items[j])) return items[j].id;\n  } else {\n    for (var k = (at < 0 ? items.length : at) - 1; k >= 0; k -= 1) if (pass(items[k])) return items[k].id;\n  }\n  return null;\n}\n\n/** The id of the next item after `currentId` on the same day that is still live (not kept behind a\n * split or merge), or null. The server checks the two are next to each other and of one matter. */\nfunction nextLive(items, currentId) {\n  var at = -1;\n  for (var i = 0; i < items.length; i += 1) if (items[i].id === currentId) at = i;\n  if (at < 0) return null;\n  for (var j = at + 1; j < items.length; j += 1) {\n    if (items[j].date !== items[at].date) return null;\n    if (items[j].live) return items[j].id;\n  }\n  return null;\n}\n\n/** The first item on `date` that passes the matter filter, or null. */\nfunction firstOnDate(items, date, matter) {\n  for (var i = 0; i < items.length; i += 1) {\n    if (items[i].date === date && (matter === "" || items[i].matter === matter)) return items[i].id;\n  }\n  return null;\n}\n\nif (typeof document !== "undefined") {\n  (function () {\n    var items = JSON.parse(document.getElementById("review-index").textContent);\n    var cards = {};\n    Array.prototype.forEach.call(document.querySelectorAll(".card"), function (el) {\n      cards[el.getAttribute("data-id")] = el;\n    });\n    var picker = document.getElementById("date-picker");\n    var filter = document.getElementById("matter-filter");\n    var note = document.getElementById("nav-note");\n    var clearBadge = document.getElementById("day-clear");\n    var clear = JSON.parse(document.getElementById("review-clear").textContent);\n    var base = location.pathname.replace(/\\/?$/, "/");\n    var current = null;\n\n    function showClear() {\n      var date = current === null ? picker.value : cards[current].getAttribute("data-date");\n      var isClear = clear[date] === true;\n      clearBadge.textContent = isClear ? "This day is clear" : "This day is not clear";\n      clearBadge.className = isClear ? "day-clear is-clear" : "day-clear";\n    }\n\n    function show(id) {\n      if (id === null) {\n        note.textContent = "No further block matches.";\n        return;\n      }\n      note.textContent = "";\n      if (current !== null) cards[current].hidden = true;\n      current = id;\n      cards[id].hidden = false;\n      var date = cards[id].getAttribute("data-date");\n      if (picker.value !== date) picker.value = date;\n      slide(cards[id], 0);\n      showClear();\n      window.scrollTo(0, 0);\n    }\n\n    function find(card, cls) {\n      return card.querySelector("." + cls);\n    }\n\n    /** Posts one click. On success the page is reloaded at the same block, so it shows what was saved. */\n    function post(card, body, then) {\n      var message = find(card, "act-note");\n      message.textContent = "";\n      fetch(base + "click", { method: "POST", body: JSON.stringify(body) })\n        .then(function (res) {\n          return res.json().then(function (json) {\n            return { ok: res.ok, json: json };\n          });\n        })\n        .then(function (result) {\n          if (!result.ok) {\n            message.textContent = result.json.error || "The click was not saved.";\n            return;\n          }\n          then(result.json);\n        })\n        .catch(function () {\n          message.textContent = "The click could not be sent. Is the session still open?";\n        });\n    }\n\n    function reloadAt(id) {\n      location.hash = id;\n      location.reload();\n    }\n\n    /** Refreshes what the session writes after a click (the TimeCamp line) and each day\'s clear mark. */\n    function refresh() {\n      fetch(base + "state")\n        .then(function (res) {\n          return res.ok ? res.json() : null;\n        })\n        .then(function (state) {\n          if (!state) return;\n          Object.keys(state.blocks).forEach(function (id) {\n            var card = cards[id];\n            if (!card) return;\n            var line = find(card, "tc-text");\n            line.textContent = state.blocks[id].timecamp_text;\n            line.className = "tc-text " + state.blocks[id].timecamp_class;\n          });\n          clear = state.clear;\n          showClear();\n        })\n        .catch(function () {});\n    }\n\n    function slide(card, delta) {\n      var shots = card.querySelectorAll(".shot");\n      if (shots.length === 0) return;\n      var at = 0;\n      for (var i = 0; i < shots.length; i += 1) if (!shots[i].hidden) at = i;\n      var to = Math.max(0, Math.min(shots.length - 1, at + delta));\n      for (var j = 0; j < shots.length; j += 1) shots[j].hidden = j !== to;\n      var counter = card.querySelector(".shot-count");\n      if (counter) counter.textContent = to + 1 + " of " + shots.length;\n    }\n\n    function matter() {\n      return filter.value;\n    }\n\n    document.getElementById("prev").addEventListener("click", function () {\n      show(nextId(items, current, matter(), false, -1));\n    });\n    document.getElementById("next").addEventListener("click", function () {\n      show(nextId(items, current, matter(), false, 1));\n    });\n    document.getElementById("next-flagged").addEventListener("click", function () {\n      show(nextId(items, current, matter(), true, 1));\n    });\n    picker.addEventListener("change", function () {\n      show(firstOnDate(items, picker.value, matter()));\n    });\n    filter.addEventListener("change", function () {\n      var onFilter = current !== null && (matter() === "" || cards[current].getAttribute("data-matter") === matter());\n      if (!onFilter) show(firstOnDate(items, picker.value, matter()) || nextId(items, null, matter(), false, 1));\n    });\n    Array.prototype.forEach.call(document.querySelectorAll(".shot-prev"), function (b) {\n      b.addEventListener("click", function () {\n        slide(b.closest(".card"), -1);\n      });\n    });\n    Array.prototype.forEach.call(document.querySelectorAll(".shot-next"), function (b) {\n      b.addEventListener("click", function () {\n        slide(b.closest(".card"), 1);\n      });\n    });\n    document.addEventListener("keydown", function (event) {\n      var tag = event.target.tagName;\n      if (current === null || tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;\n      if (event.key === "ArrowLeft") slide(cards[current], -1);\n      if (event.key === "ArrowRight") slide(cards[current], 1);\n    });\n\n    Object.keys(cards).forEach(function (id) {\n      var card = cards[id];\n      var correct = find(card, "edit-correct");\n      var writeoff = find(card, "edit-writeoff");\n      find(card, "act-approve").addEventListener("click", function () {\n        post(card, { act: "approve", block: id }, function () {\n          reloadAt(id);\n        });\n      });\n      find(card, "act-correct-open").addEventListener("click", function () {\n        writeoff.hidden = true;\n        correct.hidden = !correct.hidden;\n      });\n      find(card, "act-writeoff-open").addEventListener("click", function () {\n        correct.hidden = true;\n        writeoff.hidden = !writeoff.hidden;\n      });\n      find(card, "correct-cancel").addEventListener("click", function () {\n        correct.hidden = true;\n      });\n      find(card, "writeoff-cancel").addEventListener("click", function () {\n        writeoff.hidden = true;\n      });\n      find(card, "correct-save").addEventListener("click", function () {\n        post(\n          card,\n          {\n            act: "correct",\n            block: id,\n            matter: find(card, "f-matter").value,\n            description: find(card, "f-description").value,\n            start: find(card, "f-start").value,\n            end: find(card, "f-end").value,\n          },\n          function () {\n            reloadAt(id);\n          }\n        );\n      });\n      find(card, "writeoff-save").addEventListener("click", function () {\n        post(card, { act: "write_off", block: id, reason: find(card, "f-reason").value }, function () {\n          reloadAt(id);\n        });\n      });\n      // Split, merge and undo change the blocks themselves; the page then opens the block they made or restored.\n      var splitButton = find(card, "act-split");\n      if (splitButton) {\n        splitButton.addEventListener("click", function () {\n          var shots = card.querySelectorAll(".shot");\n          var capture = null;\n          for (var i = 0; i < shots.length; i += 1) if (!shots[i].hidden) capture = shots[i].getAttribute("data-capture");\n          if (capture === null) return;\n          post(card, { act: "split", block: id, capture: capture }, function (json) {\n            reloadAt(json.block || id);\n          });\n        });\n      }\n      find(card, "act-merge").addEventListener("click", function () {\n        var next = nextLive(items, id);\n        if (next === null) {\n          find(card, "act-note").textContent = "There is no block after this one to merge with.";\n          return;\n        }\n        post(card, { act: "merge", blocks: [id, next] }, function (json) {\n          reloadAt(json.block || id);\n        });\n      });\n      find(card, "act-undo").addEventListener("click", function () {\n        post(card, { act: "undo", block: id }, function (json) {\n          reloadAt(json.block || id);\n        });\n      });\n    });\n\n    var wanted = decodeURIComponent(location.hash.replace(/^#/, ""));\n    if (items.length > 0) show(cards[wanted] ? wanted : items[0].id);\n    setInterval(refresh, 3000);\n  })();\n}';
-
-// src/time-review/page.ts
-var SHOT_SOURCE = "syncopaid_captures";
-var ID_FIELDS2 = ["id", "native_id", "capture_id", "entry_id"];
-var MAX_FIELDS = 8;
-var MAX_VALUE = 200;
-function loadReviewModel(seams = {}) {
-  const env = seams.env ?? process.env;
-  const blocks = timePipelineList(NAMESPACE, BLOCK_PREFIX, env).items.map((item) => JSON.parse(item.value)).sort(byTime);
-  const evidence = {};
-  for (const date3 of new Set(blocks.map((b) => b.date))) evidence[date3] = readDayEvidence(date3, seams);
-  const readings = {};
-  for (const block of blocks) {
-    for (const ref of block.evidence) {
-      if (ref.source !== SHOT_SOURCE) continue;
-      const id = captureId(evidence[block.date], ref.ref);
-      if (id in readings) continue;
-      const { value } = timePipelineGet(NAMESPACE, `capture_reading:${id}`, env);
-      readings[id] = value === null ? void 0 : JSON.parse(value);
-    }
-  }
-  const clear = {};
-  for (const date3 of new Set(blocks.map((b) => b.date))) clear[date3] = dayIsClear(date3, blocks, seams);
-  return { blocks, evidence, readings, clear };
-}
-function reviewText(block) {
-  const r = block.review;
-  if (!r) return "";
-  if (r.act === "approved") return `Approved by ${r.by} at ${r.at}.`;
-  if (r.act === "corrected") return `Corrected by ${r.by} at ${r.at}. Was: ${r.before?.matter ?? ""}, ${r.before?.start ?? ""} to ${r.before?.end ?? ""}, ${r.before?.description ?? ""}`;
-  return `Written off by ${r.by} at ${r.at}. Reason: ${r.reason ?? ""}`;
-}
-function timecampLine(block) {
-  const t = block.timecamp;
-  if (!t) return { text: "", cls: "" };
-  switch (t.status) {
-    case "saved":
-      return { text: "Saved to TimeCamp.", cls: "tc-saved" };
-    case "unchanged":
-      return { text: "TimeCamp already held this matter and description.", cls: "tc-saved" };
-    case "staff_left_alone":
-      return { text: "Staff entry: its TimeCamp note was left as the staff member wrote it.", cls: "" };
-    case "error":
-      return { text: `TimeCamp error: ${t.message ?? "the write did not go through"}`, cls: "tc-error" };
-    default:
-      return { text: "Waiting for the session to write this to TimeCamp.", cls: "" };
-  }
-}
-function byTime(a, b) {
-  if (a.date !== b.date) return a.date < b.date ? -1 : 1;
-  const x = startValue(a.start);
-  const y = startValue(b.start);
-  if (x !== y && Number.isFinite(x - y)) return x - y;
-  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
-}
-function startValue(text3) {
-  const clock = /^(\d{1,2}):(\d{2})$/.exec(text3);
-  if (clock) return Number(clock[1]) * 60 + Number(clock[2]);
-  const instant = Date.parse(text3);
-  return Number.isFinite(instant) ? instant : Number.POSITIVE_INFINITY;
-}
-var escapeHtml = (text3) => text3.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-function rowFor(day, source, ref) {
-  const row = day?.rows.find((r) => r.source === source && ID_FIELDS2.some((f) => r[f] !== void 0 && String(r[f]) === ref));
-  return row ?? null;
-}
-function captureId(day, ref) {
-  const row = rowFor(day, SHOT_SOURCE, ref);
-  return row && typeof row.capture_id === "string" && row.capture_id !== "" ? row.capture_id : ref;
-}
-function shortText(value) {
-  const text3 = typeof value === "string" ? value : JSON.stringify(value);
-  return text3.length > MAX_VALUE ? `${text3.slice(0, MAX_VALUE)}\u2026` : text3;
-}
-function fieldRows(row) {
-  const fields = Object.entries(row).filter(([name, value]) => name !== "source" && value !== null && value !== void 0 && value !== "").slice(0, MAX_FIELDS);
-  return fields.map(([name, value]) => `<tr><th>${escapeHtml(name)}</th><td>${escapeHtml(shortText(value))}</td></tr>`).join("");
-}
-function minutesBetween(start2, end) {
-  const clock = /^(\d{1,2}):(\d{2})$/;
-  const a = clock.exec(start2);
-  const b = clock.exec(end);
-  if (a && b) {
-    const span2 = Number(b[1]) * 60 + Number(b[2]) - (Number(a[1]) * 60 + Number(a[2]));
-    return span2 >= 0 ? span2 : null;
-  }
-  const span = (Date.parse(end) - Date.parse(start2)) / 6e4;
-  return Number.isFinite(span) && span >= 0 ? Math.round(span) : null;
-}
-var label = (token) => token.replace(/_/g, " ");
-function readingHtml(reading) {
-  if (!reading) return `<p class="reading none">No saved reading.</p>`;
-  const parts = Object.entries(reading.reading ?? {}).map(([name, value]) => `<tr><th>${escapeHtml(label(name))}</th><td>${escapeHtml(shortText(value))}</td></tr>`).join("");
-  const answers = (reading.answers ?? []).map((a) => `<tr><th>answer</th><td>${escapeHtml(shortText(a))}</td></tr>`).join("");
-  return `<table class="rows reading">${parts}${answers}</table>`;
-}
-function cardHtml(block, model, imgBase, matters) {
-  const day = model.evidence[block.date];
-  const minutes = minutesBetween(block.start, block.end);
-  const shots = [];
-  const rows = [];
-  for (const ref of block.evidence) {
-    const row = rowFor(day, ref.source, ref.ref);
-    if (ref.source === SHOT_SOURCE) {
-      const id = captureId(day, ref.ref);
-      const image2 = imgBase === null ? "" : `<img src="${escapeHtml(imgBase)}${encodeURIComponent(id)}" alt="Screenshot ${escapeHtml(id)}" loading="lazy">`;
-      shots.push(`<div class="shot" data-capture="${escapeHtml(id)}" hidden><div>${image2}</div>${readingHtml(model.readings[id])}</div>`);
-    } else {
-      rows.push(
-        `<h3 class="src">${escapeHtml(label(ref.source))}: ${escapeHtml(ref.ref)}</h3>` + (row ? `<table class="rows">${fieldRows(row)}</table>` : `<p class="none">This row is not in the day's saved evidence.</p>`)
-      );
-    }
-  }
-  const slideshow = shots.length === 0 ? "" : `<h2>Screenshots</h2><div class="shots"><div class="shot-bar"><button type="button" class="shot-prev">&larr;</button><span class="shot-count"></span><button type="button" class="shot-next">&rarr;</button>${block.state === "merged" || block.state === "split" ? "" : `<button type="button" class="act-split">Split here</button>`}</div>${shots.join("")}</div>`;
-  const evidence = rows.length === 0 && shots.length === 0 ? `<p class="none">No evidence is cited for this block.</p>` : rows.join("");
-  const flags = block.flags.length === 0 ? "" : `<ul class="flags">${block.flags.map((f) => `<li>${escapeHtml(label(f))}</li>`).join("")}</ul>`;
-  const duration3 = minutes === null ? "" : ` (${minutes} min)`;
-  const links = block.links.length === 0 ? "" : `<p class="times">${block.links.map((l) => `${escapeHtml(label(l.role))} ${escapeHtml(l.block)}`).join("; ")}</p>`;
-  const tc = timecampLine(block);
-  return `<article class="card" data-id="${escapeHtml(block.id)}" data-date="${escapeHtml(block.date)}" data-matter="${escapeHtml(block.matter)}" hidden><div class="top"><span class="matter">${escapeHtml(block.matter)}</span><span class="state state-${escapeHtml(block.state)}">${escapeHtml(label(block.state))}</span></div><div class="times">${escapeHtml(block.date)} ${escapeHtml(block.start)} to ${escapeHtml(block.end)}${duration3}</div><p class="desc">${escapeHtml(block.description)}</p>${flags}${links}` + actionsHtml(block, matters, undoable(block, model.blocks)) + `<p class="review-text">${escapeHtml(reviewText(block))}</p><p class="tc-text ${tc.cls}">${escapeHtml(tc.text)}</p><h2>Evidence</h2>${evidence}${slideshow}</article>`;
-}
-function undoable(block, all) {
-  if (block.state === "merged" || block.state === "split") return true;
-  if (block.links.some((l) => l.role === "split_from")) return true;
-  return all.some((o) => o.links.some((l) => l.role === "merged_into" && l.block === block.id));
-}
-function undoLabel(block) {
-  const split = block.state === "split" || block.links.some((l) => l.role === "split_from");
-  return split ? "Unsplit" : "Unmerge";
-}
-function actionsHtml(block, matters, undo) {
-  const options = (matters.includes(block.matter) ? matters : [block.matter, ...matters]).map((m) => `<option value="${escapeHtml(m)}"${m === block.matter ? " selected" : ""}>${escapeHtml(m)}</option>`).join("");
-  const off = block.state === "merged" || block.state === "split" ? " disabled" : "";
-  return `<div class="acts"><button type="button" class="act-approve"${off}>Approve</button><button type="button" class="act-correct-open"${off}>Correct</button><button type="button" class="act-writeoff-open"${off}>Write off</button><button type="button" class="act-merge"${off}>Merge with next</button><button type="button" class="act-undo"${undo ? "" : " disabled"}>${escapeHtml(undoLabel(block))}</button></div><div class="edit edit-correct" hidden><label>Matter<select class="f-matter">${options}</select></label><label>Description<textarea class="f-description" rows="3">${escapeHtml(block.description)}</textarea></label><label>Start<input class="f-start" type="text" value="${escapeHtml(block.start)}"></label><label>End<input class="f-end" type="text" value="${escapeHtml(block.end)}"></label><div class="edit-buttons"><button type="button" class="correct-save">Save correction</button><button type="button" class="correct-cancel">Cancel</button></div></div><div class="edit edit-writeoff" hidden><label>Reason<input class="f-reason" type="text" maxlength="200"></label><div class="edit-buttons"><button type="button" class="writeoff-save">Write off this block</button><button type="button" class="writeoff-cancel">Cancel</button></div></div><p class="act-note" role="status"></p>`;
-}
-function fill(template, parts) {
-  return template.replace(/\{\{([A-Z]+)\}\}/g, (_all, name) => parts[name] ?? "");
-}
-var scriptJson = (value) => JSON.stringify(value).replace(/</g, "\\u003c").replace(new RegExp(String.fromCharCode(8232), "g"), "\\u2028").replace(new RegExp(String.fromCharCode(8233), "g"), "\\u2029");
-function renderReviewPage(model, imgBase) {
-  const dates = [...new Set(model.blocks.map((b) => b.date))];
-  const matters = [...new Set(model.blocks.map((b) => b.matter))].sort();
-  const index = model.blocks.map((b) => ({ id: b.id, date: b.date, matter: b.matter, flagged: b.state === "flagged", live: b.state !== "merged" && b.state !== "split" }));
-  const cards = model.blocks.length === 0 ? `<p class="none">No day has staged blocks yet.</p>` : model.blocks.map((b) => cardHtml(b, model, imgBase, matters)).join("\n");
-  return fill(review_html_default, {
-    CSS: review_css_default,
-    JS: review_js_default,
-    DATES: dates.map((d) => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join(""),
-    MATTERS: [`<option value="">All matters</option>`, ...matters.map((m) => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`)].join(""),
-    CARDS: cards,
-    INDEX: scriptJson(index),
-    CLEAR: scriptJson(model.clear)
-  });
-}
-
 // src/time-review/server.ts
 var KIND = "time-review";
 var CLICK_PREFIX = "page_click:";
@@ -18247,171 +18529,6 @@ async function waitClick(env = process.env) {
   return "value" in outcome ? outcome.value : { status: "pending", waited_ms: outcome.waited_ms };
 }
 
-// src/time-review/tools.ts
-var DATE3 = /^\d{4}-\d{2}-\d{2}$/;
-var BLOCK_ID2 = /^\d{4}-\d{2}-\d{2}:\d{3}$/;
-var MAX_BLOCKS = 999;
-var STAGE_ATTEMPTS = 5;
-function checkDate3(tool, date3) {
-  if (typeof date3 !== "string" || !DATE3.test(date3) || Number.isNaN(Date.parse(`${date3}T00:00:00Z`))) {
-    throw new ValidationError(`${tool}: ${JSON.stringify(date3)} is not a date as YYYY-MM-DD`);
-  }
-  return date3;
-}
-function isObject2(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-function checkSource(label2, value) {
-  if (typeof value !== "string" || !GATE_SOURCES.includes(value)) {
-    throw new ValidationError(`${label2}: source must be one of ${GATE_SOURCES.join(", ")}`);
-  }
-  return value;
-}
-function nonEmpty(label2, field, value) {
-  if (typeof value !== "string" || value.trim() === "") throw new ValidationError(`${label2}: ${field} must be a non-empty string`);
-  return value;
-}
-function timeReviewSaveEvidence(dateIn, sourcesIn, rowsIn, seams = {}) {
-  const tool = "time_review__save_evidence";
-  const date3 = checkDate3(tool, dateIn);
-  if (!Array.isArray(sourcesIn)) throw new ValidationError(`${tool}: sources must be a list of {source, status}`);
-  if (!Array.isArray(rowsIn)) throw new ValidationError(`${tool}: rows must be a list of evidence rows`);
-  const sources = [];
-  sourcesIn.forEach((entry, i) => {
-    const label2 = `${tool} sources[${i}]`;
-    if (!isObject2(entry)) throw new ValidationError(`${label2} must be {source, status}`);
-    const source = checkSource(label2, entry.source);
-    if (sources.some((s) => s.source === source)) throw new ValidationError(`${label2}: ${source} is listed twice`);
-    sources.push({ source, status: nonEmpty(label2, "status", entry.status) });
-  });
-  const rows = rowsIn.map((row, i) => {
-    const label2 = `${tool} rows[${i}]`;
-    if (!isObject2(row)) throw new ValidationError(`${label2} must be an object naming its source`);
-    const source = checkSource(label2, row.source);
-    if (!sources.some((s) => s.source === source)) {
-      throw new ValidationError(`${label2}: ${source} has a row but is not listed in sources`);
-    }
-    return { ...row, source };
-  });
-  const judged = reviewDateJudgment(date3, seams);
-  if (judged) return { status: "judged", date: date3, ...judged };
-  const record2 = { kind: "day_evidence", date: date3, saved_at: nowOf(seams).toISOString(), sources, rows };
-  const sha256 = putRecord(tool, dayEvidenceKey(date3), record2, seams);
-  const short = sourcesShort(record2);
-  return { status: "saved", date: date3, sha256, complete: short.length === 0, short };
-}
-var BLOCK_FIELDS = ["start", "end", "matter", "description", "matter_basis", "bill_basis", "evidence"];
-function checkBlock(tool, index, raw) {
-  const label2 = `${tool} blocks[${index}]`;
-  if (!isObject2(raw)) throw new ValidationError(`${label2} must be an object`);
-  for (const field of Object.keys(raw)) {
-    if (!BLOCK_FIELDS.includes(field)) {
-      const why = field === "flags" || field === "state" ? "code sets flags and state from the bases" : "not a block field";
-      throw new ValidationError(`${label2}: ${field} is ${why}; allowed: ${BLOCK_FIELDS.join(", ")}`);
-    }
-  }
-  const matter_basis = checkMatterBasis(label2, raw.matter_basis);
-  const bill_basis = checkBillBasis(label2, raw.bill_basis);
-  if (!Array.isArray(raw.evidence)) throw new ValidationError(`${label2}: evidence must be a list of {source, ref}`);
-  const evidence = raw.evidence.map((entry, i) => {
-    const elabel = `${label2} evidence[${i}]`;
-    if (!isObject2(entry)) throw new ValidationError(`${elabel} must be {source, ref}`);
-    return { source: checkSource(elabel, entry.source), ref: nonEmpty(elabel, "ref", entry.ref) };
-  });
-  if (!MATTER_BASIS[matter_basis] && evidence.length === 0) {
-    throw new ValidationError(
-      `${label2}: matter_basis ${matter_basis} says the evidence carries the matter, so evidence must list at least one {source, ref}; state no_evidence if there is none`
-    );
-  }
-  return {
-    start: nonEmpty(label2, "start", raw.start),
-    end: nonEmpty(label2, "end", raw.end),
-    matter: nonEmpty(label2, "matter", raw.matter),
-    description: nonEmpty(label2, "description", raw.description),
-    matter_basis,
-    bill_basis,
-    ...decideFlags(matter_basis, bill_basis),
-    evidence
-  };
-}
-function timeReviewStageDay(dateIn, token, blocksIn, seams = {}) {
-  const tool = "time_review__stage_day";
-  const date3 = checkDate3(tool, dateIn);
-  if (typeof token !== "string" || token === "") throw new ValidationError(`${tool}: token must be the claim token review_date__claim gave`);
-  if (!Array.isArray(blocksIn)) throw new ValidationError(`${tool}: blocks must be a list`);
-  if (blocksIn.length > MAX_BLOCKS) throw new ValidationError(`${tool}: at most ${MAX_BLOCKS} blocks a day`);
-  const checked = blocksIn.map((raw, i) => checkBlock(tool, i, raw));
-  const env = envOf(seams);
-  for (let attempt = 0; attempt < STAGE_ATTEMPTS; attempt += 1) {
-    const gate = reviewDateStageGate(date3, token, seams);
-    if (!gate.ok) {
-      const { ok: _ok, record_sha256: _sha, ...refusal } = gate;
-      return { ...refusal, date: date3 };
-    }
-    const read2 = timePipelineGet(NAMESPACE, dayEvidenceKey(date3), env);
-    if (read2.value === null) return { status: "evidence_missing", date: date3 };
-    const short = sourcesShort(JSON.parse(read2.value));
-    if (short.length > 0) return { status: "evidence_short", date: date3, short };
-    const staged_at = nowOf(seams).toISOString();
-    const written = checked.map((fields, i) => ({
-      kind: "block",
-      id: blockId(date3, i),
-      date: date3,
-      ...fields,
-      links: [],
-      staged_at
-    }));
-    const keep = new Set(written.map((b) => blockKey(b.id)));
-    const existing = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, env).items;
-    const checks = [
-      { namespace: NAMESPACE, key: REVIEW_DATE_PREFIX + date3, ...gate.record_sha256 === null ? { expect_absent: true } : { expect_sha256: gate.record_sha256 } },
-      { namespace: NAMESPACE, key: dayEvidenceKey(date3), expect_sha256: read2.sha256 },
-      // A block written meanwhile by another call to this tool is a change this call did not read.
-      ...existing.map((item) => ({ namespace: NAMESPACE, key: item.key, expect_sha256: item.sha256 }))
-    ];
-    const writes = [
-      ...written.map((block) => ({ op: "set", namespace: NAMESPACE, key: blockKey(block.id), value: JSON.stringify(block) })),
-      ...existing.filter((item) => !keep.has(item.key)).map((item) => ({ op: "delete", namespace: NAMESPACE, key: item.key }))
-    ];
-    if ("stale" in timePipelineApplyIf(checks, writes, env)) continue;
-    return { status: "staged", date: date3, blocks: written.map((b) => ({ id: b.id, state: b.state, flags: b.flags })) };
-  }
-  throw new DataServerError(`${tool}: ${date3} changed ${STAGE_ATTEMPTS} times while this call was staging; nothing was written. Try again`, "contended");
-}
-function timeReviewReadDay(dateIn, seams = {}) {
-  const date3 = checkDate3("time_review__read_day", dateIn);
-  const env = envOf(seams);
-  const { items } = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, env);
-  const blocks = items.map((item) => JSON.parse(item.value));
-  const evidence = readDayEvidence(date3, seams);
-  const readings = {};
-  for (const block of blocks) {
-    for (const ref of block.evidence) {
-      if (ref.source !== "syncopaid_captures") continue;
-      const id = captureId(evidence, ref.ref);
-      if (id in readings) continue;
-      const { value } = timePipelineGet(NAMESPACE, `capture_reading:${id}`, env);
-      readings[id] = value === null ? null : JSON.parse(value);
-    }
-  }
-  return { date: date3, clear: dayIsClear(date3, blocks, seams), evidence, blocks, readings };
-}
-function timeReviewRecordTimecamp(blockIn, statusIn, messageIn, seams = {}, entryIn) {
-  const tool = "time_review__record_timecamp";
-  if (typeof blockIn !== "string" || !BLOCK_ID2.test(blockIn)) throw new ValidationError(`${tool}: block must be a block id as YYYY-MM-DD:nnn`);
-  if (typeof statusIn !== "string") throw new ValidationError(`${tool}: status must be text`);
-  if (messageIn !== void 0 && typeof messageIn !== "string") throw new ValidationError(`${tool}: message must be text`);
-  try {
-    if (entryIn !== void 0) normalizeEntry(`${tool} entry`, entryIn);
-    const saved = recordTimecamp(blockIn, statusIn, messageIn, seams);
-    if (entryIn !== void 0 && (statusIn === "saved" || statusIn === "unchanged")) acceptEntry(blockIn.slice(0, 10), entryIn, seams);
-    return { block: blockIn, timecamp: saved.timecamp };
-  } catch (err) {
-    if (err instanceof ValidationError) throw new ValidationError(`${tool}: ${err.message}`);
-    throw err;
-  }
-}
-
 // src/timekeeping-dispatch.ts
 var tools = [
   defineTool("time_pipeline__get", (args) => timePipelineGet(args.namespace, args.key)),
@@ -18462,6 +18579,7 @@ var tools = [
     (args) => timeReviewRecordTimecamp(args.block, args.status, args.message, {}, args.entry)
   ),
   defineTool("time_review__compare_day", (args) => timeReviewCompareDay(args.date, args.entries)),
+  defineTool("time_review__recheck_day", (args) => timeReviewRecheckDay(args.date, args.blocks)),
   defineTool("time_review__redraft", (args) => {
     const saved = redraftBlock(args.block, args.matter, args.description);
     return { block: saved.id, state: saved.state, flags: saved.flags, redraft: saved.redraft };

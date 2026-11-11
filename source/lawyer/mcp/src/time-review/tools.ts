@@ -114,9 +114,9 @@ export type StageDayResult =
 
 const BLOCK_FIELDS = ["start", "end", "matter", "description", "matter_basis", "bill_basis", "evidence"];
 
-type NewBlock = Omit<BlockRecord, "kind" | "id" | "date" | "links" | "staged_at">;
+export type NewBlock =Omit<BlockRecord, "kind" | "id" | "date" | "links" | "staged_at">;
 
-function checkBlock(tool: string, index: number, raw: unknown): NewBlock {
+export function checkBlock(tool: string, index: number, raw: unknown): NewBlock {
   const label = `${tool} blocks[${index}]`;
   if (!isObject(raw)) throw new ValidationError(`${label} must be an object`);
   for (const field of Object.keys(raw)) {

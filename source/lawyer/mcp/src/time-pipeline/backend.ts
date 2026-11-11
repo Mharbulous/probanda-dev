@@ -87,7 +87,7 @@ export const REVIEW_DATE_NAMESPACE = "item";
 export const REVIEW_DATE_PREFIX = "review_date:";
 /** Day-evidence and block records (time-review/) live under these prefixes in namespace `item`.
  * Only the time_review__* tools write them, so a reviewer cannot save a block with its own flags. */
-export const TIME_REVIEW_PREFIXES = ["day_evidence:", "block:"] as const;
+export const TIME_REVIEW_PREFIXES = ["day_evidence:", "block:", "day_recheck:"] as const;
 /** Namespaces where a save must name what it read: two runs share these records. */
 const CONDITIONAL_NAMESPACES = new Set(["bill", "item"]);
 

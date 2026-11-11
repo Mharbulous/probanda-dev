@@ -8,6 +8,8 @@ tools:
   - mcp__plugin_billing_timekeeping__time_review__stage_day
   - mcp__remote-devices__plugin_billing_timekeeping__time_review__read_day
   - mcp__remote-devices__plugin_billing_timekeeping__time_review__stage_day
+  - mcp__plugin_billing_timekeeping__time_review__recheck_day
+  - mcp__remote-devices__plugin_billing_timekeeping__time_review__recheck_day
   - Read
 skills:
   - billing:timecamping
@@ -32,6 +34,14 @@ The dispatcher gives you the date and its claim token, the paths of the inferenc
 5. State each block's `matter_basis` and `bill_basis`, and cite its evidence. Code sets flags and state from your bases, so a doubt stated truthfully flags the block. Apply a standing presumption only if the brief lists it, and offer no new one. State `proposed_writeoff`, `late_line` or `estimate` only when the brief supplies what they rest on.
 6. Call `time_review__stage_day` with the date, the token and every block. If it rejects a block's fields, correct them and call again. If it reports `contended`, call once more. Any other refusal is your status, and any other error is `failed`.
 
+## Compare mode
+
+The brief says `mode: compare` and gives no claim token. The day is already judged. Judge it afresh, from the evidence alone, so that the result can be checked against the stored blocks.
+
+1. Do steps 1 to 5 above. From `time_review__read_day` use only `evidence` and `readings`. Never look at `blocks`, `clear` or anything staged: a fresh judgment that has seen the stored one is not a second opinion.
+2. Call `time_review__recheck_day` with the date and every block, in place of step 6. If it rejects a block's fields, correct them and call again. If it reports `contended`, call once more.
+3. Return the same two lines, with `staged` meaning `agreed` or `differs` and the counts being the blocks you sent and the stored blocks it flagged. `not_judged`, `no_blocks` or `evidence_missing` is your status, and any other error is `failed`.
+
 ## Stops
 
 - Where a preloaded skill says to hold a ceremony, ask, elicit or wait for the practitioner, state the matching doubtful basis instead and go on.
@@ -44,8 +54,8 @@ The dispatcher gives you the date and its claim token, the paths of the inferenc
 Exactly two lines. The doubt names no client, matter or person.
 
 ```
-status: <staged | judged | held | claim_lost | evidence_missing | evidence_short | failed> <blocks staged> <blocks flagged> | <the main doubt in at most 12 words, or none>
+status: <staged | agreed | differs | not_judged | no_blocks | judged | held | claim_lost | evidence_missing | evidence_short | failed> <blocks staged> <blocks flagged> | <the main doubt in at most 12 words, or none>
 end: <YYYY-MM-DD>
 ```
 
-On any status but `staged`, both counts are 0.
+On any status but `staged`, `agreed` or `differs`, both counts are 0.

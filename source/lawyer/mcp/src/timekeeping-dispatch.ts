@@ -25,6 +25,7 @@ import {
 } from "./time-pipeline/review-date.js";
 import { timeReviewCompareDay } from "./time-review/fingerprint.js";
 import { timeReviewExportBlocks } from "./time-review/export.js";
+import { timeReviewRecheckDay } from "./time-review/recheck.js";
 import { markIssued, redraftBlock } from "./time-review/restructure.js";
 import { serveReviewPage, waitClick } from "./time-review/server.js";
 import { timeReviewReadDay, timeReviewRecordTimecamp, timeReviewSaveEvidence, timeReviewStageDay } from "./time-review/tools.js";
@@ -75,6 +76,7 @@ const tools = [
     timeReviewRecordTimecamp(args.block, args.status, args.message, {}, args.entry)
   ),
   defineTool<{ date: string; entries: unknown[] }>("time_review__compare_day", (args) => timeReviewCompareDay(args.date, args.entries)),
+  defineTool<{ date: string; blocks: unknown[] }>("time_review__recheck_day", (args) => timeReviewRecheckDay(args.date, args.blocks)),
   defineTool<{ block: string; matter: string; description: string }>("time_review__redraft", (args) => {
     const saved = redraftBlock(args.block, args.matter, args.description);
     return { block: saved.id, state: saved.state, flags: saved.flags, redraft: saved.redraft };
