@@ -10,6 +10,7 @@ import {
   reviewDateJudgment,
   reviewDateStageGate,
 } from "../time-pipeline/review-date.js";
+import { dayIsClear, recordTimecamp } from "./act.js";
 import { checkBillBasis, checkMatterBasis, decideFlags, MATTER_BASIS } from "./flags.js";
 import {
   BLOCK_PREFIX,
@@ -31,6 +32,7 @@ import {
 import { GATE_SOURCES, type GateSource } from "./sources.js";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const BLOCK_ID = /^\d{4}-\d{2}-\d{2}:\d{3}$/;
 const MAX_BLOCKS = 999;
 const STAGE_ATTEMPTS = 5;
 
@@ -206,16 +208,34 @@ export function timeReviewStageDay(
   throw new DataServerError(`${tool}: ${date} changed ${STAGE_ATTEMPTS} times while this call was staging; nothing was written. Try again`, "contended");
 }
 
-/** The day's saved evidence (or null) and its staged blocks, in order. Writes nothing. */
+/** The day's saved evidence (or null), its staged blocks in order and whether the day is clear
+ * (judged, with no flagged block). Writes nothing. */
 export function timeReviewReadDay(
   dateIn: unknown,
   seams: ReviewDateSeams = {}
-): { date: string; evidence: DayEvidenceRecord | null; blocks: BlockRecord[] } {
+): { date: string; clear: boolean; evidence: DayEvidenceRecord | null; blocks: BlockRecord[] } {
   const date = checkDate("time_review__read_day", dateIn);
   const { items } = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date}:`, envOf(seams));
-  return {
-    date,
-    evidence: readDayEvidence(date, seams),
-    blocks: items.map((item) => JSON.parse(item.value) as BlockRecord),
-  };
+  const blocks = items.map((item) => JSON.parse(item.value) as BlockRecord);
+  return { date, clear: dayIsClear(date, blocks, seams), evidence: readDayEvidence(date, seams), blocks };
+}
+
+/** Save how the session's write of a block's matter or description to TimeCamp went, read back. */
+export function timeReviewRecordTimecamp(
+  blockIn: unknown,
+  statusIn: unknown,
+  messageIn: unknown,
+  seams: ReviewDateSeams = {}
+): { block: string; timecamp: BlockRecord["timecamp"] } {
+  const tool = "time_review__record_timecamp";
+  if (typeof blockIn !== "string" || !BLOCK_ID.test(blockIn)) throw new ValidationError(`${tool}: block must be a block id as YYYY-MM-DD:nnn`);
+  if (typeof statusIn !== "string") throw new ValidationError(`${tool}: status must be text`);
+  if (messageIn !== undefined && typeof messageIn !== "string") throw new ValidationError(`${tool}: message must be text`);
+  try {
+    const saved = recordTimecamp(blockIn, statusIn, messageIn, seams);
+    return { block: blockIn, timecamp: saved.timecamp };
+  } catch (err) {
+    if (err instanceof ValidationError) throw new ValidationError(`${tool}: ${err.message}`);
+    throw err;
+  }
 }

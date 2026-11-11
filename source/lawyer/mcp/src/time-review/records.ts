@@ -37,6 +37,24 @@ export interface EvidenceRef {
   ref: string;
 }
 
+/** What a click on the block recorded: the act, who, when and, for a write-off, the reason. */
+export interface BlockReview {
+  act: "approved" | "corrected" | "written_off";
+  by: string;
+  at: string;
+  reason?: string;
+  /** The fields a correction replaced, as they were. */
+  before?: Pick<BlockRecord, "matter" | "description" | "start" | "end">;
+}
+
+/** How the write to TimeCamp after an approval or correction went (time_review__record_timecamp).
+ * `pending` is set by the click and replaced by the waiting session. */
+export interface TimecampResult {
+  status: "pending" | "saved" | "unchanged" | "staff_left_alone" | "error";
+  message?: string;
+  at: string;
+}
+
 export interface BlockRecord {
   kind: "block";
   id: string;
@@ -52,6 +70,8 @@ export interface BlockRecord {
   evidence: EvidenceRef[];
   links: { role: string; block: string }[];
   staged_at: string;
+  review?: BlockReview;
+  timecamp?: TimecampResult;
 }
 
 export const dayEvidenceKey = (date: string): string => DAY_EVIDENCE_PREFIX + date;

@@ -1,8 +1,10 @@
 // The time review page (build plan slice 7): a fixed template filled from the store. No model draws,
 // lays out or reads it, and building it opens no image: a screenshot is an <img> whose file the
-// page listener serves when the browser asks (server.ts). Read-only: no action buttons yet.
+// page listener serves when the browser asks (server.ts). The Approve, Correct and Write off buttons
+// post to the listener, which saves the act to the block (act.ts); building the page writes nothing.
 
 import { timePipelineGet, timePipelineList } from "../time-pipeline/backend.js";
+import { dayIsClear } from "./act.js";
 import { BLOCK_PREFIX, type BlockRecord, type DayEvidenceRecord, NAMESPACE, readDayEvidence } from "./records.js";
 import type { ReviewDateSeams } from "../time-pipeline/review-date.js";
 import CSS from "./templates/review.css.js";
@@ -19,6 +21,8 @@ export interface ReviewModel {
   blocks: BlockRecord[];
   evidence: Record<string, DayEvidenceRecord | null>;
   readings: Record<string, CaptureReading | undefined>;
+  /** Per date: judged, with no flagged block. */
+  clear: Record<string, boolean>;
 }
 
 const SHOT_SOURCE = "syncopaid_captures";
@@ -43,7 +47,36 @@ export function loadReviewModel(seams: ReviewDateSeams = {}): ReviewModel {
       readings[id] = value === null ? undefined : (JSON.parse(value) as CaptureReading);
     }
   }
-  return { blocks, evidence, readings };
+  const clear: ReviewModel["clear"] = {};
+  for (const date of new Set(blocks.map((b) => b.date))) clear[date] = dayIsClear(date, blocks, seams);
+  return { blocks, evidence, readings, clear };
+}
+
+/** The line a card shows for what the click recorded, or "". */
+export function reviewText(block: BlockRecord): string {
+  const r = block.review;
+  if (!r) return "";
+  if (r.act === "approved") return `Approved by ${r.by} at ${r.at}.`;
+  if (r.act === "corrected") return `Corrected by ${r.by} at ${r.at}. Was: ${r.before?.matter ?? ""}, ${r.before?.start ?? ""} to ${r.before?.end ?? ""}, ${r.before?.description ?? ""}`;
+  return `Written off by ${r.by} at ${r.at}. Reason: ${r.reason ?? ""}`;
+}
+
+/** The line a card shows for the TimeCamp write, with the class that colours it. */
+export function timecampLine(block: BlockRecord): { text: string; cls: string } {
+  const t = block.timecamp;
+  if (!t) return { text: "", cls: "" };
+  switch (t.status) {
+    case "saved":
+      return { text: "Saved to TimeCamp.", cls: "tc-saved" };
+    case "unchanged":
+      return { text: "TimeCamp already held this matter and description.", cls: "tc-saved" };
+    case "staff_left_alone":
+      return { text: "Staff entry: its TimeCamp note was left as the staff member wrote it.", cls: "" };
+    case "error":
+      return { text: `TimeCamp error: ${t.message ?? "the write did not go through"}`, cls: "tc-error" };
+    default:
+      return { text: "Waiting for the session to write this to TimeCamp.", cls: "" };
+  }
 }
 
 function byTime(a: BlockRecord, b: BlockRecord): number {
@@ -101,7 +134,7 @@ function readingHtml(reading: CaptureReading | undefined): string {
   return `<table class="rows reading">${parts}${answers}</table>`;
 }
 
-function cardHtml(block: BlockRecord, model: ReviewModel, imgBase: string | null): string {
+function cardHtml(block: BlockRecord, model: ReviewModel, imgBase: string | null, matters: string[]): string {
   const day = model.evidence[block.date];
   const minutes = minutesBetween(block.start, block.end);
   const shots: string[] = [];
@@ -127,12 +160,39 @@ function cardHtml(block: BlockRecord, model: ReviewModel, imgBase: string | null
   const flags = block.flags.length === 0 ? "" : `<ul class="flags">${block.flags.map((f) => `<li>${escapeHtml(label(f))}</li>`).join("")}</ul>`;
   const duration = minutes === null ? "" : ` (${minutes} min)`;
   const links = block.links.length === 0 ? "" : `<p class="times">${block.links.map((l) => `${escapeHtml(label(l.role))} ${escapeHtml(l.block)}`).join("; ")}</p>`;
+  const tc = timecampLine(block);
   return (
     `<article class="card" data-id="${escapeHtml(block.id)}" data-date="${escapeHtml(block.date)}" data-matter="${escapeHtml(block.matter)}" hidden>` +
     `<div class="top"><span class="matter">${escapeHtml(block.matter)}</span><span class="state state-${escapeHtml(block.state)}">${escapeHtml(label(block.state))}</span></div>` +
     `<div class="times">${escapeHtml(block.date)} ${escapeHtml(block.start)} to ${escapeHtml(block.end)}${duration}</div>` +
     `<p class="desc">${escapeHtml(block.description)}</p>${flags}${links}` +
+    actionsHtml(block, matters) +
+    `<p class="review-text">${escapeHtml(reviewText(block))}</p>` +
+    `<p class="tc-text ${tc.cls}">${escapeHtml(tc.text)}</p>` +
     `<h2>Evidence</h2>${evidence}${slideshow}</article>`
+  );
+}
+
+/** The three buttons and the two small forms they open. The forms are plain elements, never
+ * <form>s: the page's policy forbids form submission, and the script posts the click itself. */
+function actionsHtml(block: BlockRecord, matters: string[]): string {
+  const options = (matters.includes(block.matter) ? matters : [block.matter, ...matters])
+    .map((m) => `<option value="${escapeHtml(m)}"${m === block.matter ? " selected" : ""}>${escapeHtml(m)}</option>`)
+    .join("");
+  return (
+    `<div class="acts"><button type="button" class="act-approve">Approve</button>` +
+    `<button type="button" class="act-correct-open">Correct</button>` +
+    `<button type="button" class="act-writeoff-open">Write off</button></div>` +
+    `<div class="edit edit-correct" hidden>` +
+    `<label>Matter<select class="f-matter">${options}</select></label>` +
+    `<label>Description<textarea class="f-description" rows="3">${escapeHtml(block.description)}</textarea></label>` +
+    `<label>Start<input class="f-start" type="text" value="${escapeHtml(block.start)}"></label>` +
+    `<label>End<input class="f-end" type="text" value="${escapeHtml(block.end)}"></label>` +
+    `<div class="edit-buttons"><button type="button" class="correct-save">Save correction</button><button type="button" class="correct-cancel">Cancel</button></div></div>` +
+    `<div class="edit edit-writeoff" hidden>` +
+    `<label>Reason<input class="f-reason" type="text" maxlength="200"></label>` +
+    `<div class="edit-buttons"><button type="button" class="writeoff-save">Write off this block</button><button type="button" class="writeoff-cancel">Cancel</button></div></div>` +
+    `<p class="act-note" role="status"></p>`
   );
 }
 
@@ -154,7 +214,7 @@ export function renderReviewPage(model: ReviewModel, imgBase: string | null): st
   const dates = [...new Set(model.blocks.map((b) => b.date))];
   const matters = [...new Set(model.blocks.map((b) => b.matter))].sort();
   const index = model.blocks.map((b) => ({ id: b.id, date: b.date, matter: b.matter, flagged: b.state === "flagged" }));
-  const cards = model.blocks.length === 0 ? `<p class="none">No day has staged blocks yet.</p>` : model.blocks.map((b) => cardHtml(b, model, imgBase)).join("\n");
+  const cards = model.blocks.length === 0 ? `<p class="none">No day has staged blocks yet.</p>` : model.blocks.map((b) => cardHtml(b, model, imgBase, matters)).join("\n");
   return fill(HTML, {
     CSS,
     JS,
@@ -162,5 +222,6 @@ export function renderReviewPage(model: ReviewModel, imgBase: string | null): st
     MATTERS: [`<option value="">All matters</option>`, ...matters.map((m) => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`)].join(""),
     CARDS: cards,
     INDEX: scriptJson(index),
+    CLEAR: scriptJson(model.clear),
   });
 }

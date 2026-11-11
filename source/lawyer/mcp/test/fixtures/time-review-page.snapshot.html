@@ -23,6 +23,21 @@ main { max-width: 880px; margin: 16px auto; padding: 0 16px; }
 .state { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); }
 .state-flagged { color: var(--flag); border-color: var(--flag); }
 .state-auto_assigned, .state-approved { color: var(--ok); border-color: var(--ok); }
+.state-corrected { color: var(--accent); border-color: var(--accent); }
+.state-written_off { color: var(--muted); border-color: var(--muted); }
+.day-clear { font-size: 13px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); color: var(--muted); }
+.day-clear.is-clear { color: var(--ok); border-color: var(--ok); }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+.acts .act-approve { border-color: var(--ok); color: var(--ok); }
+.acts .act-writeoff-open { color: var(--muted); }
+.edit { display: grid; gap: 6px; max-width: 560px; margin: 8px 0; padding: 10px; border: 1px solid var(--line); border-radius: 8px; }
+.edit[hidden] { display: none; }
+.edit label { font-size: 13px; color: var(--muted); }
+.edit input, .edit textarea, .edit select { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; width: 100%; }
+.edit .edit-buttons { display: flex; gap: 8px; }
+.review-text, .tc-text, .act-note { margin: 4px 0; font-size: 13px; color: var(--muted); }
+.tc-text.tc-saved { color: var(--ok); }
+.tc-text.tc-error, .act-note { color: var(--flag); }
 .times { color: var(--muted); }
 .desc { margin: 10px 0; white-space: pre-wrap; }
 .flags { margin: 0 0 10px; padding-left: 18px; color: var(--flag); }
@@ -47,19 +62,22 @@ h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: v
 <button id="prev" type="button">Previous</button>
 <button id="next" type="button">Next</button>
 <button id="next-flagged" type="button">Next flagged</button>
+<span id="day-clear" class="day-clear" role="status"></span>
 <span id="nav-note" role="status"></span>
 </header>
 <main>
-<article class="card" data-id="2030-01-02:001" data-date="2030-01-02" data-matter="Synthetic Matter A" hidden><div class="top"><span class="matter">Synthetic Matter A</span><span class="state state-auto_assigned">auto assigned</span></div><div class="times">2030-01-02 09:00 to 09:30 (30 min)</div><p class="desc">Synthetic work</p><h2>Evidence</h2><h3 class="src">gcal events: e1</h3><table class="rows"><tr><th>id</th><td>e1</td></tr><tr><th>summary</th><td>Synthetic call with &lt;b&gt;Mr Example&lt;/b&gt;</td></tr><tr><th>start</th><td>09:00</td></tr></table></article>
-<article class="card" data-id="2030-01-02:002" data-date="2030-01-02" data-matter="Synthetic Matter B" hidden><div class="top"><span class="matter">Synthetic Matter B</span><span class="state state-flagged">flagged</span></div><div class="times">2030-01-02 09:30 to 10:15 (45 min)</div><p class="desc">Inferred &lt;script&gt;alert(1)&lt;/script&gt; work</p><ul class="flags"><li>matter:indirect only</li><li>bill:description inferred</li></ul><h2>Evidence</h2><h3 class="src">gcal events: e9</h3><p class="none">This row is not in the day's saved evidence.</p><h2>Screenshots</h2><div class="shots"><div class="shot-bar"><button type="button" class="shot-prev">&larr;</button><span class="shot-count"></span><button type="button" class="shot-next">&rarr;</button></div><div class="shot" hidden><div><img src="/t/ID/img/cap-0001" alt="Screenshot cap-0001" loading="lazy"></div><table class="rows reading"><tr><th>on screen</th><td>A synthetic letter draft</td></tr><tr><th>identifiers</th><td>[]</td></tr><tr><th>unchanged</th><td>false</td></tr><tr><th>unreadable</th><td>false</td></tr><tr><th>answer</th><td>{&quot;asked&quot;:&quot;Which file?&quot;,&quot;answer&quot;:&quot;A synthetic file&quot;}</td></tr></table></div></div></article>
-<article class="card" data-id="2030-01-02:003" data-date="2030-01-02" data-matter="Synthetic Matter A" hidden><div class="top"><span class="matter">Synthetic Matter A</span><span class="state state-flagged">flagged</span></div><div class="times">2030-01-02 10:15 to 11:00 (45 min)</div><p class="desc">More work</p><ul class="flags"><li>matter:no evidence</li><li>bill:no evidence</li></ul><h2>Evidence</h2><p class="none">No evidence is cited for this block.</p></article>
-<article class="card" data-id="2030-01-03:001" data-date="2030-01-03" data-matter="Synthetic Matter B" hidden><div class="top"><span class="matter">Synthetic Matter B</span><span class="state state-flagged">flagged</span></div><div class="times">2030-01-03 13:00 to 13:30 (30 min)</div><p class="desc">Synthetic work</p><ul class="flags"><li>matter:no evidence</li></ul><h2>Evidence</h2><p class="none">No evidence is cited for this block.</p></article>
-<article class="card" data-id="2030-01-03:002" data-date="2030-01-03" data-matter="Synthetic Matter A" hidden><div class="top"><span class="matter">Synthetic Matter A</span><span class="state state-auto_assigned">auto assigned</span></div><div class="times">2030-01-03 14:00 to 14:10 (10 min)</div><p class="desc">Synthetic work</p><h2>Evidence</h2><h3 class="src">gcal events: e2</h3><table class="rows"><tr><th>id</th><td>e2</td></tr><tr><th>summary</th><td>Another synthetic call</td></tr></table></article>
+<article class="card" data-id="2030-01-02:001" data-date="2030-01-02" data-matter="Synthetic Matter A" hidden><div class="top"><span class="matter">Synthetic Matter A</span><span class="state state-auto_assigned">auto assigned</span></div><div class="times">2030-01-02 09:00 to 09:30 (30 min)</div><p class="desc">Synthetic work</p><div class="acts"><button type="button" class="act-approve">Approve</button><button type="button" class="act-correct-open">Correct</button><button type="button" class="act-writeoff-open">Write off</button></div><div class="edit edit-correct" hidden><label>Matter<select class="f-matter"><option value="Synthetic Matter A" selected>Synthetic Matter A</option><option value="Synthetic Matter B">Synthetic Matter B</option></select></label><label>Description<textarea class="f-description" rows="3">Synthetic work</textarea></label><label>Start<input class="f-start" type="text" value="09:00"></label><label>End<input class="f-end" type="text" value="09:30"></label><div class="edit-buttons"><button type="button" class="correct-save">Save correction</button><button type="button" class="correct-cancel">Cancel</button></div></div><div class="edit edit-writeoff" hidden><label>Reason<input class="f-reason" type="text" maxlength="200"></label><div class="edit-buttons"><button type="button" class="writeoff-save">Write off this block</button><button type="button" class="writeoff-cancel">Cancel</button></div></div><p class="act-note" role="status"></p><p class="review-text"></p><p class="tc-text "></p><h2>Evidence</h2><h3 class="src">gcal events: e1</h3><table class="rows"><tr><th>id</th><td>e1</td></tr><tr><th>summary</th><td>Synthetic call with &lt;b&gt;Mr Example&lt;/b&gt;</td></tr><tr><th>start</th><td>09:00</td></tr></table></article>
+<article class="card" data-id="2030-01-02:002" data-date="2030-01-02" data-matter="Synthetic Matter B" hidden><div class="top"><span class="matter">Synthetic Matter B</span><span class="state state-flagged">flagged</span></div><div class="times">2030-01-02 09:30 to 10:15 (45 min)</div><p class="desc">Inferred &lt;script&gt;alert(1)&lt;/script&gt; work</p><ul class="flags"><li>matter:indirect only</li><li>bill:description inferred</li></ul><div class="acts"><button type="button" class="act-approve">Approve</button><button type="button" class="act-correct-open">Correct</button><button type="button" class="act-writeoff-open">Write off</button></div><div class="edit edit-correct" hidden><label>Matter<select class="f-matter"><option value="Synthetic Matter A">Synthetic Matter A</option><option value="Synthetic Matter B" selected>Synthetic Matter B</option></select></label><label>Description<textarea class="f-description" rows="3">Inferred &lt;script&gt;alert(1)&lt;/script&gt; work</textarea></label><label>Start<input class="f-start" type="text" value="09:30"></label><label>End<input class="f-end" type="text" value="10:15"></label><div class="edit-buttons"><button type="button" class="correct-save">Save correction</button><button type="button" class="correct-cancel">Cancel</button></div></div><div class="edit edit-writeoff" hidden><label>Reason<input class="f-reason" type="text" maxlength="200"></label><div class="edit-buttons"><button type="button" class="writeoff-save">Write off this block</button><button type="button" class="writeoff-cancel">Cancel</button></div></div><p class="act-note" role="status"></p><p class="review-text"></p><p class="tc-text "></p><h2>Evidence</h2><h3 class="src">gcal events: e9</h3><p class="none">This row is not in the day's saved evidence.</p><h2>Screenshots</h2><div class="shots"><div class="shot-bar"><button type="button" class="shot-prev">&larr;</button><span class="shot-count"></span><button type="button" class="shot-next">&rarr;</button></div><div class="shot" hidden><div><img src="/t/ID/img/cap-0001" alt="Screenshot cap-0001" loading="lazy"></div><table class="rows reading"><tr><th>on screen</th><td>A synthetic letter draft</td></tr><tr><th>identifiers</th><td>[]</td></tr><tr><th>unchanged</th><td>false</td></tr><tr><th>unreadable</th><td>false</td></tr><tr><th>answer</th><td>{&quot;asked&quot;:&quot;Which file?&quot;,&quot;answer&quot;:&quot;A synthetic file&quot;}</td></tr></table></div></div></article>
+<article class="card" data-id="2030-01-02:003" data-date="2030-01-02" data-matter="Synthetic Matter A" hidden><div class="top"><span class="matter">Synthetic Matter A</span><span class="state state-flagged">flagged</span></div><div class="times">2030-01-02 10:15 to 11:00 (45 min)</div><p class="desc">More work</p><ul class="flags"><li>matter:no evidence</li><li>bill:no evidence</li></ul><div class="acts"><button type="button" class="act-approve">Approve</button><button type="button" class="act-correct-open">Correct</button><button type="button" class="act-writeoff-open">Write off</button></div><div class="edit edit-correct" hidden><label>Matter<select class="f-matter"><option value="Synthetic Matter A" selected>Synthetic Matter A</option><option value="Synthetic Matter B">Synthetic Matter B</option></select></label><label>Description<textarea class="f-description" rows="3">More work</textarea></label><label>Start<input class="f-start" type="text" value="10:15"></label><label>End<input class="f-end" type="text" value="11:00"></label><div class="edit-buttons"><button type="button" class="correct-save">Save correction</button><button type="button" class="correct-cancel">Cancel</button></div></div><div class="edit edit-writeoff" hidden><label>Reason<input class="f-reason" type="text" maxlength="200"></label><div class="edit-buttons"><button type="button" class="writeoff-save">Write off this block</button><button type="button" class="writeoff-cancel">Cancel</button></div></div><p class="act-note" role="status"></p><p class="review-text"></p><p class="tc-text "></p><h2>Evidence</h2><p class="none">No evidence is cited for this block.</p></article>
+<article class="card" data-id="2030-01-03:001" data-date="2030-01-03" data-matter="Synthetic Matter B" hidden><div class="top"><span class="matter">Synthetic Matter B</span><span class="state state-flagged">flagged</span></div><div class="times">2030-01-03 13:00 to 13:30 (30 min)</div><p class="desc">Synthetic work</p><ul class="flags"><li>matter:no evidence</li></ul><div class="acts"><button type="button" class="act-approve">Approve</button><button type="button" class="act-correct-open">Correct</button><button type="button" class="act-writeoff-open">Write off</button></div><div class="edit edit-correct" hidden><label>Matter<select class="f-matter"><option value="Synthetic Matter A">Synthetic Matter A</option><option value="Synthetic Matter B" selected>Synthetic Matter B</option></select></label><label>Description<textarea class="f-description" rows="3">Synthetic work</textarea></label><label>Start<input class="f-start" type="text" value="13:00"></label><label>End<input class="f-end" type="text" value="13:30"></label><div class="edit-buttons"><button type="button" class="correct-save">Save correction</button><button type="button" class="correct-cancel">Cancel</button></div></div><div class="edit edit-writeoff" hidden><label>Reason<input class="f-reason" type="text" maxlength="200"></label><div class="edit-buttons"><button type="button" class="writeoff-save">Write off this block</button><button type="button" class="writeoff-cancel">Cancel</button></div></div><p class="act-note" role="status"></p><p class="review-text"></p><p class="tc-text "></p><h2>Evidence</h2><p class="none">No evidence is cited for this block.</p></article>
+<article class="card" data-id="2030-01-03:002" data-date="2030-01-03" data-matter="Synthetic Matter A" hidden><div class="top"><span class="matter">Synthetic Matter A</span><span class="state state-auto_assigned">auto assigned</span></div><div class="times">2030-01-03 14:00 to 14:10 (10 min)</div><p class="desc">Synthetic work</p><div class="acts"><button type="button" class="act-approve">Approve</button><button type="button" class="act-correct-open">Correct</button><button type="button" class="act-writeoff-open">Write off</button></div><div class="edit edit-correct" hidden><label>Matter<select class="f-matter"><option value="Synthetic Matter A" selected>Synthetic Matter A</option><option value="Synthetic Matter B">Synthetic Matter B</option></select></label><label>Description<textarea class="f-description" rows="3">Synthetic work</textarea></label><label>Start<input class="f-start" type="text" value="14:00"></label><label>End<input class="f-end" type="text" value="14:10"></label><div class="edit-buttons"><button type="button" class="correct-save">Save correction</button><button type="button" class="correct-cancel">Cancel</button></div></div><div class="edit edit-writeoff" hidden><label>Reason<input class="f-reason" type="text" maxlength="200"></label><div class="edit-buttons"><button type="button" class="writeoff-save">Write off this block</button><button type="button" class="writeoff-cancel">Cancel</button></div></div><p class="act-note" role="status"></p><p class="review-text"></p><p class="tc-text "></p><h2>Evidence</h2><h3 class="src">gcal events: e2</h3><table class="rows"><tr><th>id</th><td>e2</td></tr><tr><th>summary</th><td>Another synthetic call</td></tr></table></article>
 </main>
 <script type="application/json" id="review-index">[{"id":"2030-01-02:001","date":"2030-01-02","matter":"Synthetic Matter A","flagged":false},{"id":"2030-01-02:002","date":"2030-01-02","matter":"Synthetic Matter B","flagged":true},{"id":"2030-01-02:003","date":"2030-01-02","matter":"Synthetic Matter A","flagged":true},{"id":"2030-01-03:001","date":"2030-01-03","matter":"Synthetic Matter B","flagged":true},{"id":"2030-01-03:002","date":"2030-01-03","matter":"Synthetic Matter A","flagged":false}]</script>
+<script type="application/json" id="review-clear">{"2030-01-02":false,"2030-01-03":false}</script>
 <script>
-// The time review page's script (build plan slice 7). The page is read-only: it steps through the
-// cards the server rendered, filters them and swaps screenshots. It draws nothing from a model.
+// The time review page's script (build plan slices 7 and 8). It steps through the cards the server
+// rendered, filters them, swaps screenshots, and posts the Approve, Correct and Write off clicks to
+// the page's own listener, which saves the act to the block. It draws nothing from a model.
 // nextId is pure, so a test can load this file and call it.
 
 /** The id of the item the step reaches from `currentId`, or null. `items` is in time order, each
@@ -99,7 +117,17 @@ if (typeof document !== "undefined") {
     var picker = document.getElementById("date-picker");
     var filter = document.getElementById("matter-filter");
     var note = document.getElementById("nav-note");
+    var clearBadge = document.getElementById("day-clear");
+    var clear = JSON.parse(document.getElementById("review-clear").textContent);
+    var base = location.pathname.replace(/\/?$/, "/");
     var current = null;
+
+    function showClear() {
+      var date = current === null ? picker.value : cards[current].getAttribute("data-date");
+      var isClear = clear[date] === true;
+      clearBadge.textContent = isClear ? "This day is clear" : "This day is not clear";
+      clearBadge.className = isClear ? "day-clear is-clear" : "day-clear";
+    }
 
     function show(id) {
       if (id === null) {
@@ -113,7 +141,60 @@ if (typeof document !== "undefined") {
       var date = cards[id].getAttribute("data-date");
       if (picker.value !== date) picker.value = date;
       slide(cards[id], 0);
+      showClear();
       window.scrollTo(0, 0);
+    }
+
+    function find(card, cls) {
+      return card.querySelector("." + cls);
+    }
+
+    /** Posts one click. On success the page is reloaded at the same block, so it shows what was saved. */
+    function post(card, body, then) {
+      var message = find(card, "act-note");
+      message.textContent = "";
+      fetch(base + "click", { method: "POST", body: JSON.stringify(body) })
+        .then(function (res) {
+          return res.json().then(function (json) {
+            return { ok: res.ok, json: json };
+          });
+        })
+        .then(function (result) {
+          if (!result.ok) {
+            message.textContent = result.json.error || "The click was not saved.";
+            return;
+          }
+          then();
+        })
+        .catch(function () {
+          message.textContent = "The click could not be sent. Is the session still open?";
+        });
+    }
+
+    function reloadAt(id) {
+      location.hash = id;
+      location.reload();
+    }
+
+    /** Refreshes what the session writes after a click (the TimeCamp line) and each day's clear mark. */
+    function refresh() {
+      fetch(base + "state")
+        .then(function (res) {
+          return res.ok ? res.json() : null;
+        })
+        .then(function (state) {
+          if (!state) return;
+          Object.keys(state.blocks).forEach(function (id) {
+            var card = cards[id];
+            if (!card) return;
+            var line = find(card, "tc-text");
+            line.textContent = state.blocks[id].timecamp_text;
+            line.className = "tc-text " + state.blocks[id].timecamp_class;
+          });
+          clear = state.clear;
+          showClear();
+        })
+        .catch(function () {});
     }
 
     function slide(card, delta) {
@@ -158,12 +239,61 @@ if (typeof document !== "undefined") {
       });
     });
     document.addEventListener("keydown", function (event) {
-      if (current === null || event.target.tagName === "SELECT") return;
+      var tag = event.target.tagName;
+      if (current === null || tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;
       if (event.key === "ArrowLeft") slide(cards[current], -1);
       if (event.key === "ArrowRight") slide(cards[current], 1);
     });
 
-    if (items.length > 0) show(items[0].id);
+    Object.keys(cards).forEach(function (id) {
+      var card = cards[id];
+      var correct = find(card, "edit-correct");
+      var writeoff = find(card, "edit-writeoff");
+      find(card, "act-approve").addEventListener("click", function () {
+        post(card, { act: "approve", block: id }, function () {
+          reloadAt(id);
+        });
+      });
+      find(card, "act-correct-open").addEventListener("click", function () {
+        writeoff.hidden = true;
+        correct.hidden = !correct.hidden;
+      });
+      find(card, "act-writeoff-open").addEventListener("click", function () {
+        correct.hidden = true;
+        writeoff.hidden = !writeoff.hidden;
+      });
+      find(card, "correct-cancel").addEventListener("click", function () {
+        correct.hidden = true;
+      });
+      find(card, "writeoff-cancel").addEventListener("click", function () {
+        writeoff.hidden = true;
+      });
+      find(card, "correct-save").addEventListener("click", function () {
+        post(
+          card,
+          {
+            act: "correct",
+            block: id,
+            matter: find(card, "f-matter").value,
+            description: find(card, "f-description").value,
+            start: find(card, "f-start").value,
+            end: find(card, "f-end").value,
+          },
+          function () {
+            reloadAt(id);
+          }
+        );
+      });
+      find(card, "writeoff-save").addEventListener("click", function () {
+        post(card, { act: "write_off", block: id, reason: find(card, "f-reason").value }, function () {
+          reloadAt(id);
+        });
+      });
+    });
+
+    var wanted = decodeURIComponent(location.hash.replace(/^#/, ""));
+    if (items.length > 0) show(cards[wanted] ? wanted : items[0].id);
+    setInterval(refresh, 3000);
   })();
 }
 </script>

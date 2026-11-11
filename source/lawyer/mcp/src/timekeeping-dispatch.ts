@@ -23,7 +23,7 @@ import {
   reviewDateStatus,
 } from "./time-pipeline/review-date.js";
 import { serveReviewPage, waitClick } from "./time-review/server.js";
-import { timeReviewReadDay, timeReviewSaveEvidence, timeReviewStageDay } from "./time-review/tools.js";
+import { timeReviewReadDay, timeReviewRecordTimecamp, timeReviewSaveEvidence, timeReviewStageDay } from "./time-review/tools.js";
 
 type DateToken = { date: string; token: string };
 
@@ -66,6 +66,9 @@ const tools = [
   defineTool<{ date: string }>("time_review__read_day", (args) => timeReviewReadDay(args.date)),
   defineTool<{ screens_dir?: string }>("time_review__serve_page", (args) => serveReviewPage(args.screens_dir)),
   defineTool<Record<string, never>>("time_review__wait_click", () => waitClick()),
+  defineTool<{ block: string; status: string; message?: string }>("time_review__record_timecamp", (args) =>
+    timeReviewRecordTimecamp(args.block, args.status, args.message)
+  ),
 ];
 
 const server = dispatchFrom(buildTimekeepingToolDefinitions, tools);

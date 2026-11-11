@@ -1,4 +1,4 @@
-"""The review page's skill text (build plan slice 7): the two tools, the PC-only stop, and no mock-up of actions."""
+"""The review page's skill text (build plan slices 7 and 8): the tools, the PC-only stop, and the wait loop's TimeCamp write."""
 import re
 import unittest
 from pathlib import Path
@@ -43,9 +43,20 @@ class ReviewPage(unittest.TestCase):
             self.assertIn(tool, DATA)
             self.assertIn(f'name: "{tool}"', SCHEMA)
 
-    def test_no_action_buttons_are_promised(self):
+    def test_the_wait_loop_writes_a_click_to_timecamp_and_reports_it(self):
         page = section(TIMECAMPING, "The review page")
-        self.assertRegex(page, r"no action buttons yet")
+        for text in ("Approve, Correct and Write off", "update_entry", "time_review__record_timecamp",
+                     "staff_left_alone", "re-fetch the date", "saved to its block by the page itself"):
+            self.assertIn(text, page)
+        self.assertRegex(page, r"A staff entry's TimeCamp note is the staff member's: do not write it")
+
+    def test_a_clear_day_is_judged_with_no_flagged_block(self):
+        page = section(TIMECAMPING, "The review page")
+        self.assertRegex(page, r"judged and no block on it is flagged")
+
+    def test_the_record_tool_is_listed_and_defined(self):
+        self.assertIn("time_review__record_timecamp", DATA)
+        self.assertIn('name: "time_review__record_timecamp"', SCHEMA)
 
 
 if __name__ == "__main__":

@@ -75,7 +75,7 @@ export function timeReviewToolDefinitions(): ToolDefinition[] {
     {
       name: "time_review__read_day",
       description:
-        "Read one day: { date, evidence, blocks }. `evidence` is the saved day_evidence record, or null; `blocks` are the staged block records in order, each with its flags and state. Writes nothing." + ROUTE,
+        "Read one day: { date, clear, evidence, blocks }. `clear` is true when the date is judged and no block on it is flagged. `evidence` is the saved day_evidence record, or null; `blocks` are the staged block records in order, each with its flags and state. Writes nothing." + ROUTE,
       inputSchema: {
         type: "object",
         properties: { date: { type: "string" } },
@@ -87,7 +87,7 @@ export function timeReviewToolDefinitions(): ToolDefinition[] {
     {
       name: "time_review__serve_page",
       description:
-        "Serve the time review page: a fixed page built from the stored blocks, day evidence and saved screenshot readings, with no model drawing it. It shows each block as a card (matter, description, times, state, flags, evidence rows, the screenshot slideshow with each saved reading) and has a date picker, a matter filter, Previous, Next and Next flagged. It is read-only. `screens_dir` is the absolute path of the `syncopaid-screens` folder holding the decrypted PNGs; leave it out and the cards show no images. Returns { url, screenshots, blocks }: give the practitioner the url to open in Chrome on this PC. Serving drops every earlier page and any unread click. Does not open or read an image." + ROUTE,
+        "Serve the time review page: a fixed page built from the stored blocks, day evidence and saved screenshot readings, with no model drawing it. It shows each block as a card (matter, description, times, state, flags, evidence rows, the screenshot slideshow with each saved reading) and has a date picker, a matter filter, Previous, Next and Next flagged, and on every card the Approve, Correct and Write off buttons, which save the act to the block through the page's own listener. `screens_dir` is the absolute path of the `syncopaid-screens` folder holding the decrypted PNGs; leave it out and the cards show no images. Returns { url, screenshots, blocks }: give the practitioner the url to open in Chrome on this PC. Serving drops every earlier page and any unread click. Does not open or read an image." + ROUTE,
       inputSchema: {
         type: "object",
         properties: { screens_dir: { type: "string" } },
@@ -97,8 +97,23 @@ export function timeReviewToolDefinitions(): ToolDefinition[] {
     {
       name: "time_review__wait_click",
       description:
-        "Wait for a click on the served time review page. Returns { status: \"clicked\", act, block, clicked_at } for the oldest unread click (and marks it read), or { status: \"pending\", waited_ms } when about 45 seconds pass with none: call it again. The page has no action buttons yet, so no click arrives until a later release adds them." + ROUTE,
+        "Wait for a click on the served time review page. Returns { status: \"clicked\", act, block, clicked_at } for the oldest unread click (and marks it read), or { status: \"pending\", waited_ms } when about 45 seconds pass with none: call it again. The page's Approve, Correct and Write off buttons have already saved the act to the block when the click arrives here (`act` is approve, correct or write_off, `block` the block id). Read the block with time_review__read_day. After an approve or a correct, write a changed matter or description to TimeCamp, read the entry back and report the outcome with time_review__record_timecamp." + ROUTE,
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    },
+    {
+      name: "time_review__record_timecamp",
+      description:
+        "Save, on one block, how its write to TimeCamp went after the practitioner approved or corrected it on the page: `saved` (written and the read-back matched), `unchanged` (TimeCamp already held the block's matter and description), `staff_left_alone` (a staff entry: its TimeCamp note is the staff member's and is never changed) or `error` (the write failed or the read-back did not match; `message` is required and shows on the card). Refused for a block no click has approved or corrected. It cannot approve a block, change its state or edit its fields: only a click on the page does that." + ROUTE,
+      inputSchema: {
+        type: "object",
+        properties: {
+          block: { type: "string" },
+          status: { type: "string", enum: ["saved", "unchanged", "staff_left_alone", "error"] },
+          message: { type: "string" },
+        },
+        required: ["block", "status"],
+        additionalProperties: false,
+      },
     },
   ];
 }

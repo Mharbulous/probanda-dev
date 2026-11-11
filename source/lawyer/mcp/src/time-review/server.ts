@@ -13,8 +13,10 @@
 // (the CLI that decrypts writes its own output file, so decrypting on request would add a copy).
 //
 // A click is a POST to /t/<id>/click, saved as a `page_click:` record in the store (the same store
-// every process reads), and time_review__wait_click returns the oldest. Slice 7 has no action
-// buttons, so nothing on the page posts one yet.
+// every process reads), and time_review__wait_click returns the oldest. A click whose act is
+// approve, correct or write_off and that names a block is first saved to that block (act.ts): that
+// click is the only way a block records an act. GET /t/<id>/state gives the page the lines the
+// session writes afterwards (the TimeCamp result) and each day's clear mark.
 
 import { randomBytes } from "node:crypto";
 import { existsSync, realpathSync, statSync } from "node:fs";
@@ -30,7 +32,8 @@ import { waitFor } from "../local-page/wait.js";
 import { pythonTimeoutMs } from "../python-timeout.js";
 import { pluginVersion } from "../repo-root.js";
 import { timePipelineDelete, timePipelineList, timePipelineWriteIf } from "../time-pipeline/backend.js";
-import { loadReviewModel, renderReviewPage } from "./page.js";
+import { type ActFields, applyAct, isAct } from "./act.js";
+import { loadReviewModel, renderReviewPage, timecampLine } from "./page.js";
 import { NAMESPACE } from "./records.js";
 
 const KIND = "time-review";
@@ -39,7 +42,7 @@ const SCREENS_FOLDER = "syncopaid-screens";
 const IMAGE_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
 const ACT = /^[a-z_]{1,40}$/;
 const BLOCK = /^\d{4}-\d{2}-\d{2}:\d{3}$/;
-const MAX_BODY = 4 * 1024;
+const MAX_BODY = 8 * 1024;
 const REPLY = { csp: STRICT_CSP };
 
 export const WAIT_TIMEOUT_MS = 45_000;
@@ -76,6 +79,7 @@ export function startReviewPages(env: NodeJS.ProcessEnv = process.env, options: 
         routes: [
           { method: "GET", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/?$/, handle: (_req, res, m) => withTarget(m[1], env, res, (t) => page(t, m[1], env, res)) },
           { method: "GET", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/img\/([^/]+)\/?$/, handle: (_req, res, m) => withTarget(m[1], env, res, (t) => image(t, decodeId(m[2]), res)) },
+          { method: "GET", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/state\/?$/, handle: (_req, res, m) => withTarget(m[1], env, res, () => state(res, env)) },
           { method: "POST", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/click\/?$/, handle: (req, res, m) => withTarget(m[1], env, res, () => click(m[1], req, res, env)) },
         ],
         env,
@@ -199,8 +203,18 @@ function image(target: Target, captureId: string, res: ServerResponse): void {
   sendFile(res, real, pathWin32.basename(real), "image/png");
 }
 
+function state(res: ServerResponse, env: NodeJS.ProcessEnv): void {
+  const model = loadReviewModel({ env });
+  const blocks: Record<string, { timecamp_text: string; timecamp_class: string }> = {};
+  for (const b of model.blocks) {
+    const line = timecampLine(b);
+    blocks[b.id] = { timecamp_text: line.text, timecamp_class: line.cls };
+  }
+  json(res, 200, { blocks, clear: model.clear }, REPLY);
+}
+
 async function click(id: string, req: IncomingMessage, res: ServerResponse, env: NodeJS.ProcessEnv): Promise<void> {
-  let body: { act?: unknown; block?: unknown };
+  let body: ActFields & { act?: unknown; block?: unknown };
   try {
     body = JSON.parse(await readBody(req, MAX_BODY)) as typeof body;
   } catch (err) {
@@ -212,11 +226,21 @@ async function click(id: string, req: IncomingMessage, res: ServerResponse, env:
   if (body.block !== undefined && (typeof body.block !== "string" || !BLOCK.test(body.block))) {
     return json(res, 400, { error: "The click names a block that is not a block id." }, REPLY);
   }
+  if (isAct(body.act)) {
+    // An act is saved to the block the click names, before the session is told of it.
+    if (typeof body.block !== "string") return json(res, 400, { error: "This act needs a block." }, REPLY);
+    try {
+      applyAct(body.act, body.block, body, { env });
+    } catch (err) {
+      if (err instanceof ValidationError) return json(res, 400, { error: err.message }, REPLY);
+      return json(res, 500, { error: `The act could not be saved: ${(err as Error).message}` }, REPLY);
+    }
+  }
   const clicked_at = new Date().toISOString();
   const key = `${CLICK_PREFIX}${clicked_at}:${randomBytes(4).toString("hex")}`;
   const record = { kind: "page_click", link: id, act: body.act, block: body.block ?? null, clicked_at };
   const saved = timePipelineWriteIf(NAMESPACE, key, JSON.stringify(record), { expect_absent: true }, env);
-  if ("stale" in saved) return json(res, 409, { error: "The click could not be saved. Try again." }, REPLY);
+  if ("stale" in saved) return json(res, 409, { error: "The click could not be saved to tell the session. Click again." }, REPLY);
   json(res, 200, { ok: true }, REPLY);
 }
 

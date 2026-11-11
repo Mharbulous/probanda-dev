@@ -168,8 +168,9 @@ test("the template is the same script the page carries, and the page has the con
   const page = renderReviewPage(loadReviewModel(f.seams), null);
   assert.ok(page.includes(REVIEW_JS));
   for (const id of ["date-picker", "matter-filter", "prev", "next", "next-flagged"]) assert.ok(page.includes(`id="${id}"`), id);
-  // Read-only: no action buttons yet.
-  assert.ok(!/Approve|Write off|Correct|Split|Merge/.test(page.replace(REVIEW_JS, "")));
+  // Slice 8 adds Approve, Correct and Write off; Split and Merge wait for slice 9.
+  for (const label of ["Approve", "Correct", "Write off"]) assert.ok(page.replace(REVIEW_JS, "").includes(`>${label}</button>`), label);
+  assert.ok(!/Split|Merge/.test(page.replace(REVIEW_JS, "")));
 });
 
 test("building the page calls no model and reads no file", () => {

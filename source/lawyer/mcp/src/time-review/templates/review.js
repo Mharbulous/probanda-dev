@@ -1,5 +1,6 @@
-// The time review page's script (build plan slice 7). The page is read-only: it steps through the
-// cards the server rendered, filters them and swaps screenshots. It draws nothing from a model.
+// The time review page's script (build plan slices 7 and 8). It steps through the cards the server
+// rendered, filters them, swaps screenshots, and posts the Approve, Correct and Write off clicks to
+// the page's own listener, which saves the act to the block. It draws nothing from a model.
 // nextId is pure, so a test can load this file and call it.
 
 /** The id of the item the step reaches from `currentId`, or null. `items` is in time order, each
@@ -39,7 +40,17 @@ if (typeof document !== "undefined") {
     var picker = document.getElementById("date-picker");
     var filter = document.getElementById("matter-filter");
     var note = document.getElementById("nav-note");
+    var clearBadge = document.getElementById("day-clear");
+    var clear = JSON.parse(document.getElementById("review-clear").textContent);
+    var base = location.pathname.replace(/\/?$/, "/");
     var current = null;
+
+    function showClear() {
+      var date = current === null ? picker.value : cards[current].getAttribute("data-date");
+      var isClear = clear[date] === true;
+      clearBadge.textContent = isClear ? "This day is clear" : "This day is not clear";
+      clearBadge.className = isClear ? "day-clear is-clear" : "day-clear";
+    }
 
     function show(id) {
       if (id === null) {
@@ -53,7 +64,60 @@ if (typeof document !== "undefined") {
       var date = cards[id].getAttribute("data-date");
       if (picker.value !== date) picker.value = date;
       slide(cards[id], 0);
+      showClear();
       window.scrollTo(0, 0);
+    }
+
+    function find(card, cls) {
+      return card.querySelector("." + cls);
+    }
+
+    /** Posts one click. On success the page is reloaded at the same block, so it shows what was saved. */
+    function post(card, body, then) {
+      var message = find(card, "act-note");
+      message.textContent = "";
+      fetch(base + "click", { method: "POST", body: JSON.stringify(body) })
+        .then(function (res) {
+          return res.json().then(function (json) {
+            return { ok: res.ok, json: json };
+          });
+        })
+        .then(function (result) {
+          if (!result.ok) {
+            message.textContent = result.json.error || "The click was not saved.";
+            return;
+          }
+          then();
+        })
+        .catch(function () {
+          message.textContent = "The click could not be sent. Is the session still open?";
+        });
+    }
+
+    function reloadAt(id) {
+      location.hash = id;
+      location.reload();
+    }
+
+    /** Refreshes what the session writes after a click (the TimeCamp line) and each day's clear mark. */
+    function refresh() {
+      fetch(base + "state")
+        .then(function (res) {
+          return res.ok ? res.json() : null;
+        })
+        .then(function (state) {
+          if (!state) return;
+          Object.keys(state.blocks).forEach(function (id) {
+            var card = cards[id];
+            if (!card) return;
+            var line = find(card, "tc-text");
+            line.textContent = state.blocks[id].timecamp_text;
+            line.className = "tc-text " + state.blocks[id].timecamp_class;
+          });
+          clear = state.clear;
+          showClear();
+        })
+        .catch(function () {});
     }
 
     function slide(card, delta) {
@@ -98,11 +162,60 @@ if (typeof document !== "undefined") {
       });
     });
     document.addEventListener("keydown", function (event) {
-      if (current === null || event.target.tagName === "SELECT") return;
+      var tag = event.target.tagName;
+      if (current === null || tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;
       if (event.key === "ArrowLeft") slide(cards[current], -1);
       if (event.key === "ArrowRight") slide(cards[current], 1);
     });
 
-    if (items.length > 0) show(items[0].id);
+    Object.keys(cards).forEach(function (id) {
+      var card = cards[id];
+      var correct = find(card, "edit-correct");
+      var writeoff = find(card, "edit-writeoff");
+      find(card, "act-approve").addEventListener("click", function () {
+        post(card, { act: "approve", block: id }, function () {
+          reloadAt(id);
+        });
+      });
+      find(card, "act-correct-open").addEventListener("click", function () {
+        writeoff.hidden = true;
+        correct.hidden = !correct.hidden;
+      });
+      find(card, "act-writeoff-open").addEventListener("click", function () {
+        correct.hidden = true;
+        writeoff.hidden = !writeoff.hidden;
+      });
+      find(card, "correct-cancel").addEventListener("click", function () {
+        correct.hidden = true;
+      });
+      find(card, "writeoff-cancel").addEventListener("click", function () {
+        writeoff.hidden = true;
+      });
+      find(card, "correct-save").addEventListener("click", function () {
+        post(
+          card,
+          {
+            act: "correct",
+            block: id,
+            matter: find(card, "f-matter").value,
+            description: find(card, "f-description").value,
+            start: find(card, "f-start").value,
+            end: find(card, "f-end").value,
+          },
+          function () {
+            reloadAt(id);
+          }
+        );
+      });
+      find(card, "writeoff-save").addEventListener("click", function () {
+        post(card, { act: "write_off", block: id, reason: find(card, "f-reason").value }, function () {
+          reloadAt(id);
+        });
+      });
+    });
+
+    var wanted = decodeURIComponent(location.hash.replace(/^#/, ""));
+    if (items.length > 0) show(cards[wanted] ? wanted : items[0].id);
+    setInterval(refresh, 3000);
   })();
 }

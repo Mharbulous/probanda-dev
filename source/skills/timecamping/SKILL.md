@@ -320,11 +320,17 @@ Two bills that share dates judge each date once: the second finds it `judged` or
 
 ### The review page
 
-Not called by `/bill` yet. A fixed page shows every staged block from the store, with no model drawing it: each card holds the matter, the description, the times, the state and flags, the evidence rows, the screenshot slideshow and each saved reading. It has a date picker, a matter filter, Previous, Next and Next flagged (which honours the matter filter). It is read-only: it has no action buttons yet.
+Not called by `/bill` yet. The `timecamp` connector's tools are under whichever of `mcp__plugin_billing_timecamp__<name>` and `mcp__remote-devices__plugin_billing_timecamp__<name>` this host grants. A fixed page shows every staged block from the store, with no model drawing it: each card holds the matter, the description, the times, the state and flags, the evidence rows, the screenshot slideshow and each saved reading. It has a date picker, a matter filter, Previous, Next and Next flagged (which honours the matter filter), and on every card the Approve, Correct and Write off buttons. A click on one is saved to its block by the page itself before you hear of it: the act, who, when and, for a write-off, the reason. A block records an approval from nothing else, so never record or imply one yourself. A day reads as clear (`clear` in `time_review__read_day`) when it is judged and no block on it is flagged.
 
 - **PC only.** The page is served from the PC and shows screenshots from the `syncopaid-screens` folder. In Cowork, stop where the run stops today and say that the page is served on the PC only; do not try to serve it.
 - **Serve.** Call `time_review__serve_page` with `screens_dir`, the absolute path of the `syncopaid-screens` folder the screenshot reader reads from (leave it out and the cards show no images). Give the practitioner the `url` to open in Chrome. Serving drops every earlier page. Never open, read or describe the page or an image on it: the page is for the practitioner's eyes (`shared/html-pages.md`).
-- **Wait.** `time_review__wait_click` returns the oldest click on the page, or `pending` after about 45 seconds, when you call it again. No click arrives until a later release adds the action buttons.
+- **Wait.** `time_review__wait_click` returns the oldest click on the page, or `pending` after about 45 seconds, when you call it again. Keep calling it while the practitioner reviews. For a click whose `act` is `approve` or `correct`, in order:
+  1. Read the block with `time_review__read_day` (its `date` is the first ten characters of the block id). Use the block's saved matter and description.
+  2. A staff entry's TimeCamp note is the staff member's: do not write it. Call `time_review__record_timecamp` with the block and `staff_left_alone`, and go on. A block counts as staff when its `bill_basis` holds `staff_inferred` or the TimeCamp row its evidence cites belongs to a user other than the practitioner.
+  3. Otherwise fetch the block's TimeCamp entry with the connector's `entries`. If its `task_id` and `description` already equal the block's matter's `task_id` and description, record `unchanged`. If the entry is `locked` = `"1"`, or the matter does not resolve to exactly one `task_id`, or the block cites no TimeCamp entry, record `error` with that reason.
+  4. Otherwise run Step 7's write, for this one entry: call the connector's `status` (if it reports the API unusable, record `error` with its reason and send nothing), then `update_entry`, then re-fetch the date with `entries` and compare `task_id` and `description` with what was sent. Record `saved` when they match. A non-200 or a re-read that does not match is recorded as `error` with what came back, and never retried on its own.
+  5. For `write_off` there is no TimeCamp write: go on.
+  A click that names no block, or an act you do not know, is ignored.
 
 ## Queries
 

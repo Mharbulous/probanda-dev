@@ -1,7 +1,7 @@
 {
   "name": "billing",
   "displayName": "Billing",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "description": "Optional Probanda plugin for British Columbia lawyers that tracks time and bills it: it gathers the evidence of a day's work (TimeCamp, phone logs, calendars, sent mail, screen activity), sorts it to client matters, corrects TimeCamp, drafts time entries, bills matters and follows up invoices. Trust stays in the lawyer plugin. Requires the lawyer plugin: install lawyer first.",
   "author": {
     "name": "Probanda Legal",
