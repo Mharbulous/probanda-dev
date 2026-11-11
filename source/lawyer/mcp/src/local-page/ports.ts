@@ -7,9 +7,9 @@ import { existsSync, readFileSync } from "node:fs";
 
 import { configPath } from "../config-path.js";
 
-export type PageBundle = "lawyer" | "file-manager";
+export type PageBundle = "lawyer" | "file-manager" | "timekeeping";
 
-export const DEFAULT_PAGE_PORTS: Record<PageBundle, number> = { lawyer: 47615, "file-manager": 47616 };
+export const DEFAULT_PAGE_PORTS: Record<PageBundle, number> = { lawyer: 47615, "file-manager": 47616, timekeeping: 47617 };
 
 /** A probanda.json port setting that is not a port. `code` names the setting. */
 export class PagePortError extends Error {

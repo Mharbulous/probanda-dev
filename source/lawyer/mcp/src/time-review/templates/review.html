@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Time review</title>
+<style>
+{{CSS}}
+</style>
+</head>
+<body>
+<header>
+<h1>Time review</h1>
+<label for="date-picker">Date</label>
+<select id="date-picker">{{DATES}}</select>
+<label for="matter-filter">Matter</label>
+<select id="matter-filter">{{MATTERS}}</select>
+<button id="prev" type="button">Previous</button>
+<button id="next" type="button">Next</button>
+<button id="next-flagged" type="button">Next flagged</button>
+<span id="nav-note" role="status"></span>
+</header>
+<main>
+{{CARDS}}
+</main>
+<script type="application/json" id="review-index">{{INDEX}}</script>
+<script>
+{{JS}}
+</script>
+</body>
+</html>

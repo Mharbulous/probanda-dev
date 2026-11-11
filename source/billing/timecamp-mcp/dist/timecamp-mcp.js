@@ -1,4 +1,4 @@
-// build-stamp: 6c54976c04eb
+// build-stamp: 1eb7f61930a2
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15858,14 +15858,14 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "6c54976c04eb";
+var BUILD_STAMP = false ? null : "1eb7f61930a2";
 
 // src/local-page/listener.ts
 import { createServer, get } from "node:http";
 
 // src/local-page/ports.ts
 import { existsSync as existsSync3, readFileSync as readFileSync2 } from "node:fs";
-var DEFAULT_PAGE_PORTS = { lawyer: 47615, "file-manager": 47616 };
+var DEFAULT_PAGE_PORTS = { lawyer: 47615, "file-manager": 47616, timekeeping: 47617 };
 var PagePortError = class extends Error {
   constructor(message, code) {
     super(message);

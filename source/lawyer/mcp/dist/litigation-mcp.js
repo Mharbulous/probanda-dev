@@ -1,4 +1,4 @@
-// build-stamp: 23fc472cc811
+// build-stamp: c94f58f17234
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75267,7 +75267,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "23fc472cc811";
+var BUILD_STAMP = false ? null : "c94f58f17234";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -96920,7 +96920,7 @@ import { dirname as dirname17, join as join28 } from "node:path";
 
 // src/local-page/ports.ts
 import { existsSync as existsSync28, readFileSync as readFileSync27 } from "node:fs";
-var DEFAULT_PAGE_PORTS = { lawyer: 47615, "file-manager": 47616 };
+var DEFAULT_PAGE_PORTS = { lawyer: 47615, "file-manager": 47616, timekeeping: 47617 };
 var PagePortError = class extends Error {
   constructor(message, code) {
     super(message);

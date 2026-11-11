@@ -84,5 +84,21 @@ export function timeReviewToolDefinitions(): ToolDefinition[] {
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
+    {
+      name: "time_review__serve_page",
+      description:
+        "Serve the time review page: a fixed page built from the stored blocks, day evidence and saved screenshot readings, with no model drawing it. It shows each block as a card (matter, description, times, state, flags, evidence rows, the screenshot slideshow with each saved reading) and has a date picker, a matter filter, Previous, Next and Next flagged. It is read-only. `screens_dir` is the absolute path of the `syncopaid-screens` folder holding the decrypted PNGs; leave it out and the cards show no images. Returns { url, screenshots, blocks }: give the practitioner the url to open in Chrome on this PC. Serving drops every earlier page and any unread click. Does not open or read an image." + ROUTE,
+      inputSchema: {
+        type: "object",
+        properties: { screens_dir: { type: "string" } },
+        additionalProperties: false,
+      },
+    },
+    {
+      name: "time_review__wait_click",
+      description:
+        "Wait for a click on the served time review page. Returns { status: \"clicked\", act, block, clicked_at } for the oldest unread click (and marks it read), or { status: \"pending\", waited_ms } when about 45 seconds pass with none: call it again. The page has no action buttons yet, so no click arrives until a later release adds them." + ROUTE,
+      inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    },
   ];
 }

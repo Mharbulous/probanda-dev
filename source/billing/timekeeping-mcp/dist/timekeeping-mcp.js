@@ -1,4 +1,4 @@
-// build-stamp: 344ff46fc753
+// build-stamp: 4afcd867c50b
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -448,9 +448,9 @@ var require_codegen = __commonJS({
       }
     };
     var Label = class extends Node {
-      constructor(label) {
+      constructor(label2) {
         super();
-        this.label = label;
+        this.label = label2;
         this.names = {};
       }
       render({ _n }) {
@@ -458,14 +458,14 @@ var require_codegen = __commonJS({
       }
     };
     var Break = class extends Node {
-      constructor(label) {
+      constructor(label2) {
         super();
-        this.label = label;
+        this.label = label2;
         this.names = {};
       }
       render({ _n }) {
-        const label = this.label ? ` ${this.label}` : "";
-        return `break${label};` + _n;
+        const label2 = this.label ? ` ${this.label}` : "";
+        return `break${label2};` + _n;
       }
     };
     var Throw = class extends Node {
@@ -877,12 +877,12 @@ var require_codegen = __commonJS({
         return this._endBlockNode(For);
       }
       // `label` statement
-      label(label) {
-        return this._leafNode(new Label(label));
+      label(label2) {
+        return this._leafNode(new Label(label2));
       }
       // `break` statement
-      break(label) {
-        return this._leafNode(new Break(label));
+      break(label2) {
+        return this._leafNode(new Break(label2));
       }
       // `return` statement
       return(value) {
@@ -2980,7 +2980,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve2.call(this, root, ref);
+      let _sch = resolve3.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a3 = root.localRefs) === null || _a3 === void 0 ? void 0 : _a3[ref];
         const { schemaId } = this.opts;
@@ -3007,7 +3007,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve2(root, ref) {
+    function resolve3(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3638,7 +3638,7 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve2(baseURI, relativeURI, options) {
+    function resolve3(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
@@ -3896,7 +3896,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve: resolve2,
+      resolve: resolve3,
       resolveComponent,
       equal,
       serialize,
@@ -4311,7 +4311,7 @@ var require_core = __commonJS({
       errorsText(errors = this.errors, { separator = ", ", dataVar = "data" } = {}) {
         if (!errors || errors.length === 0)
           return "No errors";
-        return errors.map((e) => `${dataVar}${e.instancePath} ${e.message}`).reduce((text, msg) => text + separator + msg);
+        return errors.map((e) => `${dataVar}${e.instancePath} ${e.message}`).reduce((text2, msg) => text2 + separator + msg);
       }
       $dataMetaSchema(metaSchema, keywordsJsonPointers) {
         const rules = this.RULES.all;
@@ -10830,29 +10830,29 @@ var formatMap = {
   // do not set
 };
 var stringProcessor = (schema, ctx, _json, _params) => {
-  const json = _json;
-  json.type = "string";
+  const json2 = _json;
+  json2.type = "string";
   const { minimum, maximum, format, patterns, contentEncoding } = schema._zod.bag;
   if (typeof minimum === "number")
-    json.minLength = minimum;
+    json2.minLength = minimum;
   if (typeof maximum === "number")
-    json.maxLength = maximum;
+    json2.maxLength = maximum;
   if (format) {
-    json.format = formatMap[format] ?? format;
-    if (json.format === "")
-      delete json.format;
+    json2.format = formatMap[format] ?? format;
+    if (json2.format === "")
+      delete json2.format;
     if (format === "time") {
-      delete json.format;
+      delete json2.format;
     }
   }
   if (contentEncoding)
-    json.contentEncoding = contentEncoding;
+    json2.contentEncoding = contentEncoding;
   if (patterns && patterns.size > 0) {
     const regexes = [...patterns];
     if (regexes.length === 1)
-      json.pattern = regexes[0].source;
+      json2.pattern = regexes[0].source;
     else if (regexes.length > 1) {
-      json.allOf = [
+      json2.allOf = [
         ...regexes.map((regex) => ({
           ...ctx.target === "draft-07" || ctx.target === "draft-04" || ctx.target === "openapi-3.0" ? { type: "string" } : {},
           pattern: regex.source
@@ -10862,65 +10862,65 @@ var stringProcessor = (schema, ctx, _json, _params) => {
   }
 };
 var numberProcessor = (schema, ctx, _json, _params) => {
-  const json = _json;
+  const json2 = _json;
   const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
   if (typeof format === "string" && format.includes("int"))
-    json.type = "integer";
+    json2.type = "integer";
   else
-    json.type = "number";
+    json2.type = "number";
   const exMin = typeof exclusiveMinimum === "number" && exclusiveMinimum >= (minimum ?? Number.NEGATIVE_INFINITY);
   const exMax = typeof exclusiveMaximum === "number" && exclusiveMaximum <= (maximum ?? Number.POSITIVE_INFINITY);
   const legacy = ctx.target === "draft-04" || ctx.target === "openapi-3.0";
   if (exMin) {
     if (legacy) {
-      json.minimum = exclusiveMinimum;
-      json.exclusiveMinimum = true;
+      json2.minimum = exclusiveMinimum;
+      json2.exclusiveMinimum = true;
     } else {
-      json.exclusiveMinimum = exclusiveMinimum;
+      json2.exclusiveMinimum = exclusiveMinimum;
     }
   } else if (typeof minimum === "number") {
-    json.minimum = minimum;
+    json2.minimum = minimum;
   }
   if (exMax) {
     if (legacy) {
-      json.maximum = exclusiveMaximum;
-      json.exclusiveMaximum = true;
+      json2.maximum = exclusiveMaximum;
+      json2.exclusiveMaximum = true;
     } else {
-      json.exclusiveMaximum = exclusiveMaximum;
+      json2.exclusiveMaximum = exclusiveMaximum;
     }
   } else if (typeof maximum === "number") {
-    json.maximum = maximum;
+    json2.maximum = maximum;
   }
   if (typeof multipleOf === "number")
-    json.multipleOf = multipleOf;
+    json2.multipleOf = multipleOf;
 };
-var booleanProcessor = (_schema, _ctx, json, _params) => {
-  json.type = "boolean";
+var booleanProcessor = (_schema, _ctx, json2, _params) => {
+  json2.type = "boolean";
 };
-var nullProcessor = (_schema, ctx, json, _params) => {
+var nullProcessor = (_schema, ctx, json2, _params) => {
   if (ctx.target === "openapi-3.0") {
-    json.type = "string";
-    json.nullable = true;
-    json.enum = [null];
+    json2.type = "string";
+    json2.nullable = true;
+    json2.enum = [null];
   } else {
-    json.type = "null";
+    json2.type = "null";
   }
 };
-var neverProcessor = (_schema, _ctx, json, _params) => {
-  json.not = {};
+var neverProcessor = (_schema, _ctx, json2, _params) => {
+  json2.not = {};
 };
 var unknownProcessor = (_schema, _ctx, _json, _params) => {
 };
-var enumProcessor = (schema, _ctx, json, _params) => {
+var enumProcessor = (schema, _ctx, json2, _params) => {
   const def = schema._zod.def;
   const values = getEnumValues(def.entries);
   if (values.every((v) => typeof v === "number"))
-    json.type = "number";
+    json2.type = "number";
   if (values.every((v) => typeof v === "string"))
-    json.type = "string";
-  json.enum = values;
+    json2.type = "string";
+  json2.enum = values;
 };
-var literalProcessor = (schema, ctx, json, _params) => {
+var literalProcessor = (schema, ctx, json2, _params) => {
   const def = schema._zod.def;
   const vals = [];
   for (const val of def.values) {
@@ -10942,22 +10942,22 @@ var literalProcessor = (schema, ctx, json, _params) => {
   if (vals.length === 0) {
   } else if (vals.length === 1) {
     const val = vals[0];
-    json.type = val === null ? "null" : typeof val;
+    json2.type = val === null ? "null" : typeof val;
     if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
-      json.enum = [val];
+      json2.enum = [val];
     } else {
-      json.const = val;
+      json2.const = val;
     }
   } else {
     if (vals.every((v) => typeof v === "number"))
-      json.type = "number";
+      json2.type = "number";
     if (vals.every((v) => typeof v === "string"))
-      json.type = "string";
+      json2.type = "string";
     if (vals.every((v) => typeof v === "boolean"))
-      json.type = "boolean";
+      json2.type = "boolean";
     if (vals.every((v) => v === null))
-      json.type = "null";
-    json.enum = vals;
+      json2.type = "null";
+    json2.enum = vals;
   }
 };
 var customProcessor = (_schema, ctx, _json, _params) => {
@@ -10971,27 +10971,27 @@ var transformProcessor = (_schema, ctx, _json, _params) => {
   }
 };
 var arrayProcessor = (schema, ctx, _json, params) => {
-  const json = _json;
+  const json2 = _json;
   const def = schema._zod.def;
   const { minimum, maximum } = schema._zod.bag;
   if (typeof minimum === "number")
-    json.minItems = minimum;
+    json2.minItems = minimum;
   if (typeof maximum === "number")
-    json.maxItems = maximum;
-  json.type = "array";
-  json.items = process2(def.element, ctx, {
+    json2.maxItems = maximum;
+  json2.type = "array";
+  json2.items = process2(def.element, ctx, {
     ...params,
     path: [...params.path, "items"]
   });
 };
 var objectProcessor = (schema, ctx, _json, params) => {
-  const json = _json;
+  const json2 = _json;
   const def = schema._zod.def;
-  json.type = "object";
-  json.properties = {};
+  json2.type = "object";
+  json2.properties = {};
   const shape = def.shape;
   for (const key in shape) {
-    json.properties[key] = process2(shape[key], ctx, {
+    json2.properties[key] = process2(shape[key], ctx, {
       ...params,
       path: [...params.path, "properties", key]
     });
@@ -11006,21 +11006,21 @@ var objectProcessor = (schema, ctx, _json, params) => {
     }
   }));
   if (requiredKeys.size > 0) {
-    json.required = Array.from(requiredKeys);
+    json2.required = Array.from(requiredKeys);
   }
   if (def.catchall?._zod.def.type === "never") {
-    json.additionalProperties = false;
+    json2.additionalProperties = false;
   } else if (!def.catchall) {
     if (ctx.io === "output")
-      json.additionalProperties = false;
+      json2.additionalProperties = false;
   } else if (def.catchall) {
-    json.additionalProperties = process2(def.catchall, ctx, {
+    json2.additionalProperties = process2(def.catchall, ctx, {
       ...params,
       path: [...params.path, "additionalProperties"]
     });
   }
 };
-var unionProcessor = (schema, ctx, json, params) => {
+var unionProcessor = (schema, ctx, json2, params) => {
   const def = schema._zod.def;
   const isExclusive = def.inclusive === false;
   const options = def.options.map((x, i) => process2(x, ctx, {
@@ -11028,12 +11028,12 @@ var unionProcessor = (schema, ctx, json, params) => {
     path: [...params.path, isExclusive ? "oneOf" : "anyOf", i]
   }));
   if (isExclusive) {
-    json.oneOf = options;
+    json2.oneOf = options;
   } else {
-    json.anyOf = options;
+    json2.anyOf = options;
   }
 };
-var intersectionProcessor = (schema, ctx, json, params) => {
+var intersectionProcessor = (schema, ctx, json2, params) => {
   const def = schema._zod.def;
   const a = process2(def.left, ctx, {
     ...params,
@@ -11048,12 +11048,12 @@ var intersectionProcessor = (schema, ctx, json, params) => {
     ...isSimpleIntersection(a) ? a.allOf : [a],
     ...isSimpleIntersection(b) ? b.allOf : [b]
   ];
-  json.allOf = allOf;
+  json2.allOf = allOf;
 };
 var recordProcessor = (schema, ctx, _json, params) => {
-  const json = _json;
+  const json2 = _json;
   const def = schema._zod.def;
-  json.type = "object";
+  json2.type = "object";
   const keyType = def.keyType;
   const keyBag = keyType._zod.bag;
   const patterns = keyBag?.patterns;
@@ -11062,18 +11062,18 @@ var recordProcessor = (schema, ctx, _json, params) => {
       ...params,
       path: [...params.path, "patternProperties", "*"]
     });
-    json.patternProperties = {};
+    json2.patternProperties = {};
     for (const pattern of patterns) {
-      json.patternProperties[pattern.source] = valueSchema;
+      json2.patternProperties[pattern.source] = valueSchema;
     }
   } else {
     if (ctx.target === "draft-07" || ctx.target === "draft-2020-12") {
-      json.propertyNames = process2(def.keyType, ctx, {
+      json2.propertyNames = process2(def.keyType, ctx, {
         ...params,
         path: [...params.path, "propertyNames"]
       });
     }
-    json.additionalProperties = process2(def.valueType, ctx, {
+    json2.additionalProperties = process2(def.valueType, ctx, {
       ...params,
       path: [...params.path, "additionalProperties"]
     });
@@ -11082,19 +11082,19 @@ var recordProcessor = (schema, ctx, _json, params) => {
   if (keyValues) {
     const validKeyValues = [...keyValues].filter((v) => typeof v === "string" || typeof v === "number");
     if (validKeyValues.length > 0) {
-      json.required = validKeyValues;
+      json2.required = validKeyValues;
     }
   }
 };
-var nullableProcessor = (schema, ctx, json, params) => {
+var nullableProcessor = (schema, ctx, json2, params) => {
   const def = schema._zod.def;
   const inner = process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   if (ctx.target === "openapi-3.0") {
     seen.ref = def.innerType;
-    json.nullable = true;
+    json2.nullable = true;
   } else {
-    json.anyOf = [inner, { type: "null" }];
+    json2.anyOf = [inner, { type: "null" }];
   }
 };
 var nonoptionalProcessor = (schema, ctx, _json, params) => {
@@ -11103,22 +11103,22 @@ var nonoptionalProcessor = (schema, ctx, _json, params) => {
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
 };
-var defaultProcessor = (schema, ctx, json, params) => {
+var defaultProcessor = (schema, ctx, json2, params) => {
   const def = schema._zod.def;
   process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
-  json.default = JSON.parse(JSON.stringify(def.defaultValue));
+  json2.default = JSON.parse(JSON.stringify(def.defaultValue));
 };
-var prefaultProcessor = (schema, ctx, json, params) => {
+var prefaultProcessor = (schema, ctx, json2, params) => {
   const def = schema._zod.def;
   process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
   if (ctx.io === "input")
-    json._prefault = JSON.parse(JSON.stringify(def.defaultValue));
+    json2._prefault = JSON.parse(JSON.stringify(def.defaultValue));
 };
-var catchProcessor = (schema, ctx, json, params) => {
+var catchProcessor = (schema, ctx, json2, params) => {
   const def = schema._zod.def;
   process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
@@ -11129,7 +11129,7 @@ var catchProcessor = (schema, ctx, json, params) => {
   } catch {
     throw new Error("Dynamic catch values are not supported in JSON Schema");
   }
-  json.default = catchValue;
+  json2.default = catchValue;
 };
 var pipeProcessor = (schema, ctx, _json, params) => {
   const def = schema._zod.def;
@@ -11139,12 +11139,12 @@ var pipeProcessor = (schema, ctx, _json, params) => {
   const seen = ctx.seen.get(schema);
   seen.ref = innerType;
 };
-var readonlyProcessor = (schema, ctx, json, params) => {
+var readonlyProcessor = (schema, ctx, json2, params) => {
   const def = schema._zod.def;
   process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
-  json.readOnly = true;
+  json2.readOnly = true;
 };
 var optionalProcessor = (schema, ctx, _json, params) => {
   const def = schema._zod.def;
@@ -11480,7 +11480,7 @@ var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
 var _ZodString = /* @__PURE__ */ $constructor("_ZodString", (inst, def) => {
   $ZodString.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => stringProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => stringProcessor(inst, ctx, json2, params);
   const bag = inst._zod.bag;
   inst.format = bag.format ?? null;
   inst.minLength = bag.minimum ?? null;
@@ -11650,7 +11650,7 @@ var ZodJWT = /* @__PURE__ */ $constructor("ZodJWT", (inst, def) => {
 var ZodNumber = /* @__PURE__ */ $constructor("ZodNumber", (inst, def) => {
   $ZodNumber.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => numberProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => numberProcessor(inst, ctx, json2, params);
   _installLazyMethods(inst, "ZodNumber", {
     gt(value, params) {
       return this.check(_gt(value, params));
@@ -11718,7 +11718,7 @@ function int(params) {
 var ZodBoolean = /* @__PURE__ */ $constructor("ZodBoolean", (inst, def) => {
   $ZodBoolean.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => booleanProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => booleanProcessor(inst, ctx, json2, params);
 });
 function boolean2(params) {
   return _boolean(ZodBoolean, params);
@@ -11726,7 +11726,7 @@ function boolean2(params) {
 var ZodNull = /* @__PURE__ */ $constructor("ZodNull", (inst, def) => {
   $ZodNull.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => nullProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => nullProcessor(inst, ctx, json2, params);
 });
 function _null3(params) {
   return _null2(ZodNull, params);
@@ -11734,7 +11734,7 @@ function _null3(params) {
 var ZodUnknown = /* @__PURE__ */ $constructor("ZodUnknown", (inst, def) => {
   $ZodUnknown.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => unknownProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => unknownProcessor(inst, ctx, json2, params);
 });
 function unknown() {
   return _unknown(ZodUnknown);
@@ -11742,7 +11742,7 @@ function unknown() {
 var ZodNever = /* @__PURE__ */ $constructor("ZodNever", (inst, def) => {
   $ZodNever.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => neverProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => neverProcessor(inst, ctx, json2, params);
 });
 function never(params) {
   return _never(ZodNever, params);
@@ -11750,7 +11750,7 @@ function never(params) {
 var ZodArray = /* @__PURE__ */ $constructor("ZodArray", (inst, def) => {
   $ZodArray.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => arrayProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => arrayProcessor(inst, ctx, json2, params);
   inst.element = def.element;
   _installLazyMethods(inst, "ZodArray", {
     min(n, params) {
@@ -11776,7 +11776,7 @@ function array(element, params) {
 var ZodObject = /* @__PURE__ */ $constructor("ZodObject", (inst, def) => {
   $ZodObjectJIT.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => objectProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => objectProcessor(inst, ctx, json2, params);
   util_exports.defineLazy(inst, "shape", () => {
     return def.shape;
   });
@@ -11841,7 +11841,7 @@ function looseObject(shape, params) {
 var ZodUnion = /* @__PURE__ */ $constructor("ZodUnion", (inst, def) => {
   $ZodUnion.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => unionProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => unionProcessor(inst, ctx, json2, params);
   inst.options = def.options;
 });
 function union(options, params) {
@@ -11866,7 +11866,7 @@ function discriminatedUnion(discriminator, options, params) {
 var ZodIntersection = /* @__PURE__ */ $constructor("ZodIntersection", (inst, def) => {
   $ZodIntersection.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => intersectionProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => intersectionProcessor(inst, ctx, json2, params);
 });
 function intersection(left, right) {
   return new ZodIntersection({
@@ -11878,7 +11878,7 @@ function intersection(left, right) {
 var ZodRecord = /* @__PURE__ */ $constructor("ZodRecord", (inst, def) => {
   $ZodRecord.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => recordProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => recordProcessor(inst, ctx, json2, params);
   inst.keyType = def.keyType;
   inst.valueType = def.valueType;
 });
@@ -11901,7 +11901,7 @@ function record(keyType, valueType, params) {
 var ZodEnum = /* @__PURE__ */ $constructor("ZodEnum", (inst, def) => {
   $ZodEnum.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => enumProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => enumProcessor(inst, ctx, json2, params);
   inst.enum = def.entries;
   inst.options = Object.values(def.entries);
   const keys = new Set(Object.keys(def.entries));
@@ -11947,7 +11947,7 @@ function _enum(values, params) {
 var ZodLiteral = /* @__PURE__ */ $constructor("ZodLiteral", (inst, def) => {
   $ZodLiteral.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => literalProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => literalProcessor(inst, ctx, json2, params);
   inst.values = new Set(def.values);
   Object.defineProperty(inst, "value", {
     get() {
@@ -11968,7 +11968,7 @@ function literal(value, params) {
 var ZodTransform = /* @__PURE__ */ $constructor("ZodTransform", (inst, def) => {
   $ZodTransform.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => transformProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => transformProcessor(inst, ctx, json2, params);
   inst._zod.parse = (payload, _ctx) => {
     if (_ctx.direction === "backward") {
       throw new $ZodEncodeError(inst.constructor.name);
@@ -12008,7 +12008,7 @@ function transform(fn) {
 var ZodOptional = /* @__PURE__ */ $constructor("ZodOptional", (inst, def) => {
   $ZodOptional.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => optionalProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => optionalProcessor(inst, ctx, json2, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function optional(innerType) {
@@ -12020,7 +12020,7 @@ function optional(innerType) {
 var ZodExactOptional = /* @__PURE__ */ $constructor("ZodExactOptional", (inst, def) => {
   $ZodExactOptional.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => optionalProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => optionalProcessor(inst, ctx, json2, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function exactOptional(innerType) {
@@ -12032,7 +12032,7 @@ function exactOptional(innerType) {
 var ZodNullable = /* @__PURE__ */ $constructor("ZodNullable", (inst, def) => {
   $ZodNullable.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => nullableProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => nullableProcessor(inst, ctx, json2, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function nullable(innerType) {
@@ -12044,7 +12044,7 @@ function nullable(innerType) {
 var ZodDefault = /* @__PURE__ */ $constructor("ZodDefault", (inst, def) => {
   $ZodDefault.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => defaultProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => defaultProcessor(inst, ctx, json2, params);
   inst.unwrap = () => inst._zod.def.innerType;
   inst.removeDefault = inst.unwrap;
 });
@@ -12060,7 +12060,7 @@ function _default(innerType, defaultValue) {
 var ZodPrefault = /* @__PURE__ */ $constructor("ZodPrefault", (inst, def) => {
   $ZodPrefault.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => prefaultProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => prefaultProcessor(inst, ctx, json2, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function prefault(innerType, defaultValue) {
@@ -12075,7 +12075,7 @@ function prefault(innerType, defaultValue) {
 var ZodNonOptional = /* @__PURE__ */ $constructor("ZodNonOptional", (inst, def) => {
   $ZodNonOptional.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => nonoptionalProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => nonoptionalProcessor(inst, ctx, json2, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function nonoptional(innerType, params) {
@@ -12088,7 +12088,7 @@ function nonoptional(innerType, params) {
 var ZodCatch = /* @__PURE__ */ $constructor("ZodCatch", (inst, def) => {
   $ZodCatch.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => catchProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => catchProcessor(inst, ctx, json2, params);
   inst.unwrap = () => inst._zod.def.innerType;
   inst.removeCatch = inst.unwrap;
 });
@@ -12102,7 +12102,7 @@ function _catch(innerType, catchValue) {
 var ZodPipe = /* @__PURE__ */ $constructor("ZodPipe", (inst, def) => {
   $ZodPipe.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => pipeProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => pipeProcessor(inst, ctx, json2, params);
   inst.in = def.in;
   inst.out = def.out;
 });
@@ -12121,7 +12121,7 @@ var ZodPreprocess = /* @__PURE__ */ $constructor("ZodPreprocess", (inst, def) =>
 var ZodReadonly = /* @__PURE__ */ $constructor("ZodReadonly", (inst, def) => {
   $ZodReadonly.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => readonlyProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => readonlyProcessor(inst, ctx, json2, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function readonly(innerType) {
@@ -12133,7 +12133,7 @@ function readonly(innerType) {
 var ZodCustom = /* @__PURE__ */ $constructor("ZodCustom", (inst, def) => {
   $ZodCustom.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => customProcessor(inst, ctx, json, params);
+  inst._zod.processJSONSchema = (ctx, json2, params) => customProcessor(inst, ctx, json2, params);
 });
 function custom(fn, _params) {
   return _custom(ZodCustom, fn ?? (() => true), _params);
@@ -14203,7 +14203,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve2) => setTimeout(resolve2, pollInterval));
+        await new Promise((resolve3) => setTimeout(resolve3, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error2) {
@@ -14220,7 +14220,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve2, reject) => {
+    return new Promise((resolve3, reject) => {
       const earlyReject = (error2) => {
         reject(error2);
       };
@@ -14298,7 +14298,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve2(parseResult.data);
+            resolve3(parseResult.data);
           }
         } catch (error2) {
           reject(error2);
@@ -14559,12 +14559,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve2, reject) => {
+    return new Promise((resolve3, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve2, interval);
+      const timeoutId = setTimeout(resolve3, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -15434,12 +15434,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve2) => {
-      const json = serializeMessage(message);
-      if (this._stdout.write(json)) {
-        resolve2();
+    return new Promise((resolve3) => {
+      const json2 = serializeMessage(message);
+      if (this._stdout.write(json2)) {
+        resolve3();
       } else {
-        this._stdout.once("drain", resolve2);
+        this._stdout.once("drain", resolve3);
       }
     });
   }
@@ -15639,18 +15639,18 @@ var BILL_BASIS = [
   "estimate",
   "late_line"
 ];
-function checkMatterBasis(label, value) {
+function checkMatterBasis(label2, value) {
   if (typeof value !== "string" || !Object.hasOwn(MATTER_BASIS, value)) {
-    throw new ValidationError(`${label}: matter_basis must be one of ${Object.keys(MATTER_BASIS).join(", ")}`);
+    throw new ValidationError(`${label2}: matter_basis must be one of ${Object.keys(MATTER_BASIS).join(", ")}`);
   }
   return value;
 }
-function checkBillBasis(label, value) {
-  if (!Array.isArray(value)) throw new ValidationError(`${label}: bill_basis must be a list (empty when there is no doubt)`);
+function checkBillBasis(label2, value) {
+  if (!Array.isArray(value)) throw new ValidationError(`${label2}: bill_basis must be a list (empty when there is no doubt)`);
   const seen = /* @__PURE__ */ new Set();
   for (const entry of value) {
     if (typeof entry !== "string" || !BILL_BASIS.includes(entry)) {
-      throw new ValidationError(`${label}: bill_basis values must be among ${BILL_BASIS.join(", ")}`);
+      throw new ValidationError(`${label2}: bill_basis values must be among ${BILL_BASIS.join(", ")}`);
     }
     seen.add(entry);
   }
@@ -15750,6 +15750,20 @@ function timeReviewToolDefinitions() {
         additionalProperties: false
       },
       annotations: { readOnlyHint: true, openWorldHint: false }
+    },
+    {
+      name: "time_review__serve_page",
+      description: "Serve the time review page: a fixed page built from the stored blocks, day evidence and saved screenshot readings, with no model drawing it. It shows each block as a card (matter, description, times, state, flags, evidence rows, the screenshot slideshow with each saved reading) and has a date picker, a matter filter, Previous, Next and Next flagged. It is read-only. `screens_dir` is the absolute path of the `syncopaid-screens` folder holding the decrypted PNGs; leave it out and the cards show no images. Returns { url, screenshots, blocks }: give the practitioner the url to open in Chrome on this PC. Serving drops every earlier page and any unread click. Does not open or read an image." + ROUTE2,
+      inputSchema: {
+        type: "object",
+        properties: { screens_dir: { type: "string" } },
+        additionalProperties: false
+      }
+    },
+    {
+      name: "time_review__wait_click",
+      description: 'Wait for a click on the served time review page. Returns { status: "clicked", act, block, clicked_at } for the oldest unread click (and marks it read), or { status: "pending", waited_ms } when about 45 seconds pass with none: call it again. The page has no action buttons yet, so no click arrives until a later release adds them.' + ROUTE2,
+      inputSchema: { type: "object", properties: {}, additionalProperties: false }
     }
   ];
 }
@@ -15789,42 +15803,42 @@ function validateToolInput(tool, input) {
   }
   return output;
 }
-function refuseUnknown(label, value, properties) {
+function refuseUnknown(label2, value, properties) {
   for (const key of Object.keys(value)) {
     if (!Object.hasOwn(properties, key)) {
-      throw new ValidationError(`${label} received unknown field "${key}" (allowed: ${Object.keys(properties).join(", ")})`);
+      throw new ValidationError(`${label2} received unknown field "${key}" (allowed: ${Object.keys(properties).join(", ")})`);
     }
   }
 }
-function checkValue(label, value, schema, nullAllowed = true) {
+function checkValue(label2, value, schema, nullAllowed = true) {
   if (!schema || value === null && nullAllowed) return;
   if (schema["x-encrypted"] && typeof value !== "string") {
-    throw new ValidationError(`${label} is encrypted and must be a string`);
+    throw new ValidationError(`${label2} is encrypted and must be a string`);
   }
-  checkType(label, value, schema.type);
+  checkType(label2, value, schema.type);
   if (schema.enum && !schema.enum.includes(value)) {
-    throw new ValidationError(`${label} must be one of: ${schema.enum.join(", ")}`);
+    throw new ValidationError(`${label2} must be one of: ${schema.enum.join(", ")}`);
   }
   if (typeof value === "string" && schema.pattern !== void 0 && !new RegExp(schema.pattern).test(value)) {
-    throw new ValidationError(`${label} must match ${schema.pattern}`);
+    throw new ValidationError(`${label2} must match ${schema.pattern}`);
   }
   if (typeof value === "number") {
-    if (schema.minimum !== void 0 && value < schema.minimum) throw new ValidationError(`${label} must be at least ${schema.minimum}`);
-    if (schema.maximum !== void 0 && value > schema.maximum) throw new ValidationError(`${label} must be at most ${schema.maximum}`);
+    if (schema.minimum !== void 0 && value < schema.minimum) throw new ValidationError(`${label2} must be at least ${schema.minimum}`);
+    if (schema.maximum !== void 0 && value > schema.maximum) throw new ValidationError(`${label2} must be at most ${schema.maximum}`);
   }
   if (Array.isArray(value) && schema.items) {
     value.forEach((item, index) => {
-      if (schema.items.type === "string" && typeof item !== "string") throw new ValidationError(`${label} must be an array of strings`);
-      checkValue(`${label}[${index}]`, item, schema.items, false);
+      if (schema.items.type === "string" && typeof item !== "string") throw new ValidationError(`${label2} must be an array of strings`);
+      checkValue(`${label2}[${index}]`, item, schema.items, false);
     });
   }
   if (isPlainObject3(value)) {
-    if (schema.additionalProperties === false) refuseUnknown(label, value, schema.properties ?? {});
+    if (schema.additionalProperties === false) refuseUnknown(label2, value, schema.properties ?? {});
     for (const required2 of schema.required ?? []) {
-      if (value[required2] === void 0) throw new ValidationError(`${label}.${required2} is required`);
+      if (value[required2] === void 0) throw new ValidationError(`${label2}.${required2} is required`);
     }
     for (const [key, field] of Object.entries(value)) {
-      if (field !== void 0) checkValue(`${label}.${key}`, field, schema.properties?.[key]);
+      if (field !== void 0) checkValue(`${label2}.${key}`, field, schema.properties?.[key]);
     }
   }
 }
@@ -15837,11 +15851,11 @@ var TYPE_CHECKS = {
   array: [Array.isArray, "an array"],
   null: [(value) => value === null, "null"]
 };
-function checkType(label, value, type) {
+function checkType(label2, value, type) {
   if (type === void 0) return;
   const types = Array.isArray(type) ? type : [type];
   if (!types.some((name) => TYPE_CHECKS[name][0](value))) {
-    throw new ValidationError(`${label} must be ${types.map((name) => TYPE_CHECKS[name][1]).join(" or ")}`);
+    throw new ValidationError(`${label2} must be ${types.map((name) => TYPE_CHECKS[name][1]).join(" or ")}`);
   }
 }
 function isPlainObject3(value) {
@@ -15977,7 +15991,7 @@ import { tmpdir as tmpdir2 } from "node:os";
 import { join as join2 } from "node:path";
 var pythonStarts = { count: 0 };
 function runPythonDriver(opts) {
-  const { label, driver, payload, env, timeoutMs, extraEnv, timeoutAdvice, stagingDescription } = opts;
+  const { label: label2, driver, payload, env, timeoutMs, extraEnv, timeoutAdvice, stagingDescription } = opts;
   const candidates = [env.COCLERK_PYTHON, "python", "python3"].filter(Boolean);
   let lastErr = "";
   const tag = randomBytes(8).toString("hex");
@@ -16001,24 +16015,24 @@ function runPythonDriver(opts) {
       if (code === "ENOENT") continue;
       if (code === "ETIMEDOUT") {
         throw new PythonTimeoutError(
-          `${label} (${py}) did not finish within ${timeoutMs}ms and was killed.` + (timeoutAdvice ? ` ${timeoutAdvice}` : "") + removeKilledStaging(tag, stagingDescription)
+          `${label2} (${py}) did not finish within ${timeoutMs}ms and was killed.` + (timeoutAdvice ? ` ${timeoutAdvice}` : "") + removeKilledStaging(tag, stagingDescription)
         );
       }
-      throw new DataServerError(`${label} failed (${py}): ${res.error.message}`);
+      throw new DataServerError(`${label2} failed (${py}): ${res.error.message}`);
     }
     if (res.status !== 0) {
-      throw new DataServerError(`${label} (${py}) exited ${res.status}: ${(res.stderr || "").trim()}`);
+      throw new DataServerError(`${label2} (${py}) exited ${res.status}: ${(res.stderr || "").trim()}`);
     }
     try {
       return JSON.parse(res.stdout);
     } catch (err) {
       throw new DataServerError(
-        `${label} (${py}) produced unparseable output: ${err.message}. Output began: ${JSON.stringify(res.stdout.slice(0, 200))}`
+        `${label2} (${py}) produced unparseable output: ${err.message}. Output began: ${JSON.stringify(res.stdout.slice(0, 200))}`
       );
     }
   }
   throw new DataServerError(
-    `No Python interpreter found for the ${label} (tried ${candidates.join(", ")}). Install Python 3 or set COCLERK_PYTHON. Last error: ${lastErr}`
+    `No Python interpreter found for the ${label2} (tried ${candidates.join(", ")}). Install Python 3 or set COCLERK_PYTHON. Last error: ${lastErr}`
   );
 }
 function removeKilledStaging(tag, description = "staging copy of the database") {
@@ -16439,7 +16453,7 @@ function migrate(env) {
   const target = join3(folder, CONFIG_FILE);
   if (existsSync2(target)) return;
   const legacyFolder = join3(roaming(env), LEGACY_CONFIG_FOLDER);
-  const source = [CONFIG_FILE, LEGACY_CONFIG_FILE].map((file) => join3(legacyFolder, file)).find((path) => existsSync2(path));
+  const source = [CONFIG_FILE, LEGACY_CONFIG_FILE].map((file2) => join3(legacyFolder, file2)).find((path) => existsSync2(path));
   if (!source) return;
   try {
     mkdirSync(folder, { recursive: true });
@@ -16761,11 +16775,11 @@ function reviewDateExport(fromIn, toIn, outPath, seams = {}) {
   const to = checkDate("review_date__export", toIn);
   if (from > to) throw new ValidationError(`review_date__export: from ${from} is after to ${to}`);
   const lines = [...judgedOrClaimed(seams).values()].filter((r) => r.judged_at && r.date >= from && r.date <= to).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0).map((r) => JSON.stringify({ date: r.date, judged_at: r.judged_at }) + "\n");
-  const text = lines.join("");
+  const text2 = lines.join("");
   const path = resolve(outPath);
   mkdirSync2(dirname(path), { recursive: true });
-  writeFileSync2(path, text, "utf-8");
-  return { path, count: lines.length, sha256: valueSha256(text) };
+  writeFileSync2(path, text2, "utf-8");
+  return { path, count: lines.length, sha256: valueSha256(text2) };
 }
 function reviewDateImportFile(path, judgedBy, dryRun, seams = {}) {
   if (judgedBy.trim() === "") throw new ValidationError("review_date__import_file: judged_by must name who judged the dates");
@@ -16803,6 +16817,382 @@ function reviewDateImportFile(path, judgedBy, dryRun, seams = {}) {
   return { dry_run: false, added: written, skipped: skipped.sort() };
 }
 
+// src/time-review/server.ts
+import { randomBytes as randomBytes3 } from "node:crypto";
+import { existsSync as existsSync8, realpathSync, statSync as statSync3 } from "node:fs";
+import { win32 as pathWin32 } from "node:path";
+
+// src/repo-root.ts
+import { existsSync as existsSync5, readFileSync as readFileSync3, readdirSync as readdirSync3, statSync } from "node:fs";
+import { basename, dirname as dirname2, join as join5, resolve as resolve2 } from "node:path";
+import { fileURLToPath } from "node:url";
+var CHECKOUT_LAYOUTS = [
+  { skills: join5("source", "skills"), marker: join5("source", "lawyer", "mcp") },
+  { skills: join5(".claude", "skills"), marker: join5(".claude", "skills", "plugin-packager") }
+];
+var SELF_DIR = dirname2(fileURLToPath(import.meta.url));
+var INSTALL_ROOT = resolve2(SELF_DIR, "..", "..");
+function pluginVersion(installRoot = INSTALL_ROOT) {
+  return pluginManifest(installRoot).version;
+}
+function pluginManifest(installRoot) {
+  try {
+    const manifest = JSON.parse(readFileSync3(join5(installRoot, ".claude-plugin", "plugin.json"), "utf-8"));
+    return {
+      name: typeof manifest?.name === "string" ? manifest.name : null,
+      version: typeof manifest?.version === "string" ? manifest.version : null
+    };
+  } catch {
+    return { name: null, version: null };
+  }
+}
+
+// src/build-stamp.ts
+var BUILD_STAMP = false ? null : "4afcd867c50b";
+
+// src/local-page/links.ts
+import { mkdirSync as mkdirSync4, readdirSync as readdirSync4, readFileSync as readFileSync5, renameSync, statSync as statSync2, unlinkSync as unlinkSync3, writeFileSync as writeFileSync4 } from "node:fs";
+import { dirname as dirname4, join as join7 } from "node:path";
+
+// src/local-page/token.ts
+import { createHmac, randomBytes as randomBytes2, timingSafeEqual } from "node:crypto";
+import { existsSync as existsSync6, linkSync as linkSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync4, unlinkSync as unlinkSync2, writeFileSync as writeFileSync3 } from "node:fs";
+import { dirname as dirname3, join as join6 } from "node:path";
+var SECRET_FILE = "page-api.secret";
+var SECRET_BYTES = 32;
+function secretPath(env) {
+  return join6(dirname3(configPath(env)), SECRET_FILE);
+}
+function deviceSecret(env) {
+  const path = secretPath(env);
+  if (!existsSync6(path)) {
+    mkdirSync3(dirname3(path), { recursive: true });
+    const temp = `${path}.${process.pid}.${randomBytes2(6).toString("hex")}.tmp`;
+    writeFileSync3(temp, randomBytes2(SECRET_BYTES), { flag: "wx" });
+    try {
+      linkSync2(temp, path);
+    } catch (err) {
+      if (err.code !== "EEXIST") throw err;
+    } finally {
+      unlinkSync2(temp);
+    }
+  }
+  const secret = readFileSync4(path);
+  if (secret.length !== SECRET_BYTES) throw new Error(`${path} holds ${secret.length} bytes, not ${SECRET_BYTES}; delete it and re-render the page`);
+  return secret;
+}
+function deviceHmac(message, env) {
+  return createHmac("sha256", deviceSecret(env)).update(message).digest();
+}
+function sameText(given, expected) {
+  const a = Buffer.from(given, "utf-8");
+  const b = Buffer.from(expected, "utf-8");
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+// src/local-page/links.ts
+var LINKS_DIR = "page-links";
+var ID_RE = /^[A-Za-z0-9_-]{32}$/;
+var MAX_AGE_MS = 30 * 24 * 3600 * 1e3;
+function linksDir(env) {
+  return join7(dirname4(configPath(env)), LINKS_DIR);
+}
+function linkId(kind, target, env) {
+  return deviceHmac(`link
+${kind}
+${target}`, env).subarray(0, 24).toString("base64url");
+}
+function deviceLink(kind, target, env) {
+  const id = linkId(kind, target, env);
+  const dir = linksDir(env);
+  mkdirSync4(dir, { recursive: true });
+  const record2 = { kind, target, created_at: (/* @__PURE__ */ new Date()).toISOString() };
+  const path = join7(dir, `${id}.json`);
+  const temp = `${path}.${process.pid}.tmp`;
+  writeFileSync4(temp, JSON.stringify(record2));
+  renameSync(temp, path);
+  return id;
+}
+function readRecord(path) {
+  try {
+    const record2 = JSON.parse(readFileSync5(path, "utf-8"));
+    return typeof record2?.kind === "string" && typeof record2.target === "string" ? record2 : null;
+  } catch {
+    return null;
+  }
+}
+function resolveLink(kind, id, env) {
+  if (!ID_RE.test(id)) return null;
+  const record2 = readRecord(join7(linksDir(env), `${id}.json`));
+  if (!record2 || record2.kind !== kind) return null;
+  return sameText(id, linkId(kind, record2.target, env)) ? record2.target : null;
+}
+function recordPaths(env) {
+  const dir = linksDir(env);
+  try {
+    return readdirSync4(dir).filter((name) => name.endsWith(".json")).map((name) => join7(dir, name));
+  } catch (err) {
+    if (err.code === "ENOENT") return [];
+    throw err;
+  }
+}
+function remove(path) {
+  try {
+    unlinkSync3(path);
+  } catch (err) {
+    if (err.code !== "ENOENT") throw err;
+  }
+}
+function dropLinks(kind, match, env) {
+  for (const path of recordPaths(env)) {
+    const record2 = readRecord(path);
+    if (record2?.kind === kind && match(record2.target)) remove(path);
+  }
+}
+function sweepLinks(env, now = Date.now()) {
+  for (const path of recordPaths(env)) {
+    let written;
+    try {
+      written = statSync2(path).mtimeMs;
+    } catch {
+      continue;
+    }
+    if (now - written > MAX_AGE_MS) remove(path);
+  }
+}
+
+// src/local-page/listener.ts
+import { createServer, get } from "node:http";
+
+// src/local-page/ports.ts
+import { existsSync as existsSync7, readFileSync as readFileSync6 } from "node:fs";
+var DEFAULT_PAGE_PORTS = { lawyer: 47615, "file-manager": 47616, timekeeping: 47617 };
+var PagePortError = class extends Error {
+  constructor(message, code) {
+    super(message);
+    this.code = code;
+  }
+  code;
+};
+var isPort = (value) => typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 65535;
+function pagePort(bundle, env) {
+  const path = configPath(env);
+  if (!existsSync7(path)) return DEFAULT_PAGE_PORTS[bundle];
+  const config2 = JSON.parse(readFileSync6(path, "utf-8"));
+  const ports = config2?.page_ports;
+  if (ports !== void 0 && ports !== null) {
+    if (typeof ports !== "object" || Array.isArray(ports)) {
+      throw new PagePortError(`${path}: page_ports must be an object mapping a plugin to its port, got ${JSON.stringify(ports)}`, "invalid_page_ports");
+    }
+    const value = ports[bundle];
+    if (value !== void 0 && value !== null) {
+      if (!isPort(value)) throw new PagePortError(`${path}: page_ports.${bundle} must be a whole number from 1 to 65535, got ${JSON.stringify(value)}`, "invalid_page_ports");
+      return value;
+    }
+  }
+  if (bundle === "lawyer") {
+    const value = config2?.page_api_port;
+    if (value !== void 0 && value !== null) {
+      if (!isPort(value)) throw new PagePortError(`${path}: page_api_port must be a whole number from 1 to 65535, got ${JSON.stringify(value)}`, "invalid_page_api_port");
+      return value;
+    }
+  }
+  return DEFAULT_PAGE_PORTS[bundle];
+}
+
+// src/local-page/reply.ts
+import { createReadStream } from "node:fs";
+var STRICT_CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+var BodyTooLarge = class extends Error {
+  status = 413;
+  constructor() {
+    super("the request is too large");
+  }
+};
+function readBody(req, max) {
+  return new Promise((resolve3, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on("data", (chunk) => {
+      size += chunk.length;
+      if (size > max) {
+        reject(new BodyTooLarge());
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on("end", () => resolve3(Buffer.concat(chunks).toString("utf-8")));
+    req.on("error", reject);
+  });
+}
+function corsHeaders(req) {
+  return {
+    ...req.headers.origin === "null" ? { "Access-Control-Allow-Origin": "null" } : {},
+    "Access-Control-Allow-Private-Network": "true",
+    Vary: "Origin"
+  };
+}
+function headers(type, options) {
+  return {
+    ...options.cors ? corsHeaders(options.cors) : {},
+    "Content-Type": type,
+    ...options.csp ? { "Content-Security-Policy": options.csp } : {},
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "no-store",
+    "Referrer-Policy": "no-referrer"
+  };
+}
+function send(res, status, type, body, options = {}) {
+  res.writeHead(status, headers(type, options));
+  res.end(body);
+}
+function json(res, status, body, options = {}) {
+  send(res, status, "application/json; charset=utf-8", JSON.stringify(body), options);
+}
+function html(res, status, body, options = {}) {
+  send(res, status, "text/html; charset=utf-8", body, options);
+}
+function text(res, status, body, options = {}) {
+  send(res, status, "text/plain; charset=utf-8", body, options);
+}
+function file(res, path, name, type) {
+  res.writeHead(200, {
+    "Content-Type": type ?? "application/octet-stream",
+    "Content-Disposition": `${type ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(name)}`,
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "no-store"
+  });
+  createReadStream(path).on("error", () => res.destroy()).pipe(res);
+}
+
+// src/local-page/listener.ts
+var RETRY_MS = 3e3;
+async function startPageListener(options) {
+  const fixed = options.port === "fixed";
+  const wanted = fixed ? pagePort(options.bundle, options.env) : 0;
+  const log = options.log ?? ((line) => console.error(line));
+  const retryMs = options.retryMs ?? RETRY_MS;
+  const tag = options.logTag ?? `[${options.bundle} pages]`;
+  let held = false;
+  let stopped = false;
+  let warnedBusy = false;
+  let failure = null;
+  let retry;
+  const server2 = createServer((req, res) => {
+    route(req, res, options).catch((err) => {
+      if (!res.headersSent) json(res, 500, { error: err instanceof Error ? err.message : String(err) }, options.cors ? { cors: req } : {});
+      else res.destroy();
+    });
+  });
+  server2.on("connection", (socket) => socket.unref());
+  server2.keepAliveTimeout = 0;
+  server2.on("listening", () => {
+    held = true;
+    server2.unref();
+  });
+  const first = await new Promise((resolve3) => {
+    server2.once("listening", () => resolve3(null));
+    server2.once("error", (err) => resolve3(err));
+    server2.listen(wanted, "127.0.0.1");
+  });
+  if (first && !fixed) throw first;
+  server2.on("error", (err) => onError(err));
+  if (first) onError(first);
+  function onError(err) {
+    if (stopped) return;
+    if (err.code === "EADDRINUSE" && !held) {
+      if (!warnedBusy) log(`${tag} port ${wanted} busy, retrying`);
+      warnedBusy = true;
+      retry = setTimeout(() => {
+        if (!stopped) server2.listen(wanted, "127.0.0.1");
+      }, retryMs);
+      retry.unref();
+      return;
+    }
+    failure = err;
+    log(`${tag} listener off: ${err.message}`);
+  }
+  return {
+    port: fixed ? wanted : server2.address().port,
+    holding: () => held && server2.listening,
+    failure: () => failure,
+    close: () => {
+      stopped = true;
+      if (retry) clearTimeout(retry);
+      if (!server2.listening) return Promise.resolve();
+      server2.closeAllConnections();
+      return new Promise((resolve3) => server2.close(() => resolve3()));
+    }
+  };
+}
+function probeHolder(port, bundle, timeoutMs = 1e3) {
+  return new Promise((resolve3) => {
+    const req = get({ host: "127.0.0.1", port, path: "/health", timeout: timeoutMs, agent: false }, (res) => {
+      let body = "";
+      res.setEncoding("utf-8");
+      res.on("data", (chunk) => body += chunk);
+      res.on("end", () => resolve3(holderFrom(res.statusCode, body, bundle)));
+      res.on("error", (err) => resolve3({ kind: "other", reason: err.message }));
+    });
+    req.on("timeout", () => req.destroy(new Error(`no answer within ${timeoutMs} ms`)));
+    req.on("error", (err) => resolve3(err.code === "ECONNREFUSED" ? { kind: "none" } : { kind: "other", reason: err.message }));
+  });
+}
+function holderFrom(status, body, bundle) {
+  if (status !== 200) return { kind: "other", reason: `/health answered ${status}` };
+  let h;
+  try {
+    h = JSON.parse(body);
+  } catch {
+    return { kind: "other", reason: "/health is not JSON" };
+  }
+  const stringOrNull = (v) => v === null || typeof v === "string";
+  if (h?.bundle !== bundle || !stringOrNull(h.build_stamp) || !stringOrNull(h.plugin_version)) {
+    return { kind: "other", reason: `/health does not describe a ${bundle} page listener` };
+  }
+  return { kind: "probanda", build_stamp: h.build_stamp, plugin_version: h.plugin_version };
+}
+async function route(req, res, options) {
+  const url = new URL(req.url ?? "/", "http://127.0.0.1");
+  const fail = (status, message) => options.cors ? json(res, status, { error: message }, { cors: req }) : text(res, status, message);
+  if (options.cors && req.method === "OPTIONS") {
+    res.writeHead(204, { ...corsHeaders(req), "Access-Control-Allow-Methods": "GET, POST", "Access-Control-Allow-Headers": "Content-Type" });
+    res.end();
+    return;
+  }
+  if (url.pathname === "/health") {
+    if (req.method !== "GET") return fail(405, "Method not allowed");
+    const kinds = [...new Set(options.routes.map((r) => r.kind))];
+    const body = options.health ? options.health() : { bundle: options.bundle, pid: process.pid, ...options.about, kinds };
+    return json(res, 200, body, options.cors ? { cors: req } : {});
+  }
+  let pathMatched = false;
+  for (const r of options.routes) {
+    const match = r.path.exec(url.pathname);
+    if (!match) continue;
+    pathMatched = true;
+    if (r.method === "*" || req.method === r.method) return r.handle(req, res, match, url);
+  }
+  if (pathMatched) return fail(405, "Method not allowed");
+  fail(404, "Not found");
+}
+
+// src/local-page/wait.ts
+var timerSleep = (ms) => new Promise((resolve3) => setTimeout(resolve3, ms));
+async function waitFor(check, options) {
+  const sleep = options.sleep ?? timerSleep;
+  const now = options.now ?? Date.now;
+  const started = now();
+  for (; ; ) {
+    const value = await check();
+    if (value !== void 0) return { value };
+    const waited = now() - started;
+    if (waited >= options.budgetMs) return { pending: true, waited_ms: waited };
+    await sleep(Math.min(options.pollMs, options.budgetMs - waited));
+  }
+}
+
 // src/time-review/records.ts
 var NAMESPACE = REVIEW_DATE_NAMESPACE;
 var DAY_EVIDENCE_PREFIX = "day_evidence:";
@@ -16837,6 +17227,279 @@ function putRecord(tool, key, value, seams) {
   throw new DataServerError(`${tool}: ${key} changed ${attempts} times while this call was writing; try again`, "contended");
 }
 
+// src/time-review/templates/review.css.ts
+var review_css_default = ':root { --ink: #1d2733; --muted: #5b6776; --line: #d5dbe3; --bg: #f5f7fa; --card: #ffffff; --flag: #b3261e; --ok: #1e6b3a; --accent: #1f4e8c; }\n* { box-sizing: border-box; }\nbody { margin: 0; font: 15px/1.45 system-ui, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); }\nheader { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--line); }\nheader h1 { font-size: 16px; margin: 0 12px 0 0; }\nheader label { color: var(--muted); font-size: 13px; }\nselect, button { font: inherit; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); }\nbutton { cursor: pointer; }\nbutton:hover { border-color: var(--accent); }\n#nav-note { color: var(--flag); font-size: 13px; }\nmain { max-width: 880px; margin: 16px auto; padding: 0 16px; }\n.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }\n.card[hidden], .shot[hidden] { display: none; }\n.top { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; justify-content: space-between; }\n.matter { font-weight: 600; font-size: 17px; }\n.state { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); }\n.state-flagged { color: var(--flag); border-color: var(--flag); }\n.state-auto_assigned, .state-approved { color: var(--ok); border-color: var(--ok); }\n.times { color: var(--muted); }\n.desc { margin: 10px 0; white-space: pre-wrap; }\n.flags { margin: 0 0 10px; padding-left: 18px; color: var(--flag); }\nh2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 16px 0 6px; }\n.rows { width: 100%; border-collapse: collapse; font-size: 13px; }\n.rows td, .rows th { text-align: left; vertical-align: top; padding: 4px 8px; border-top: 1px solid var(--line); }\n.rows th { width: 11em; font-weight: 600; color: var(--muted); }\n.shots { border: 1px solid var(--line); border-radius: 8px; padding: 10px; }\n.shot img { max-width: 100%; border: 1px solid var(--line); border-radius: 4px; }\n.shot .reading { font-size: 13px; margin-top: 6px; }\n.shot-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }\n.none { color: var(--muted); font-style: italic; }';
+
+// src/time-review/templates/review.html.ts
+var review_html_default = '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Time review</title>\n<style>\n{{CSS}}\n</style>\n</head>\n<body>\n<header>\n<h1>Time review</h1>\n<label for="date-picker">Date</label>\n<select id="date-picker">{{DATES}}</select>\n<label for="matter-filter">Matter</label>\n<select id="matter-filter">{{MATTERS}}</select>\n<button id="prev" type="button">Previous</button>\n<button id="next" type="button">Next</button>\n<button id="next-flagged" type="button">Next flagged</button>\n<span id="nav-note" role="status"></span>\n</header>\n<main>\n{{CARDS}}\n</main>\n<script type="application/json" id="review-index">{{INDEX}}</script>\n<script>\n{{JS}}\n</script>\n</body>\n</html>';
+
+// src/time-review/templates/review.js.ts
+var review_js_default = '// The time review page\'s script (build plan slice 7). The page is read-only: it steps through the\n// cards the server rendered, filters them and swaps screenshots. It draws nothing from a model.\n// nextId is pure, so a test can load this file and call it.\n\n/** The id of the item the step reaches from `currentId`, or null. `items` is in time order, each\n * { id, date, matter, flagged }. Only items that pass the filter count: a matter ("" is all) and,\n * when `flaggedOnly`, the flagged ones. `currentId` need not pass the filter. `step` is 1 or -1. */\nfunction nextId(items, currentId, matter, flaggedOnly, step) {\n  var at = -1;\n  for (var i = 0; i < items.length; i += 1) {\n    if (items[i].id === currentId) at = i;\n  }\n  var pass = function (item) {\n    return (matter === "" || item.matter === matter) && (!flaggedOnly || item.flagged);\n  };\n  if (step > 0) {\n    for (var j = at + 1; j < items.length; j += 1) if (pass(items[j])) return items[j].id;\n  } else {\n    for (var k = (at < 0 ? items.length : at) - 1; k >= 0; k -= 1) if (pass(items[k])) return items[k].id;\n  }\n  return null;\n}\n\n/** The first item on `date` that passes the matter filter, or null. */\nfunction firstOnDate(items, date, matter) {\n  for (var i = 0; i < items.length; i += 1) {\n    if (items[i].date === date && (matter === "" || items[i].matter === matter)) return items[i].id;\n  }\n  return null;\n}\n\nif (typeof document !== "undefined") {\n  (function () {\n    var items = JSON.parse(document.getElementById("review-index").textContent);\n    var cards = {};\n    Array.prototype.forEach.call(document.querySelectorAll(".card"), function (el) {\n      cards[el.getAttribute("data-id")] = el;\n    });\n    var picker = document.getElementById("date-picker");\n    var filter = document.getElementById("matter-filter");\n    var note = document.getElementById("nav-note");\n    var current = null;\n\n    function show(id) {\n      if (id === null) {\n        note.textContent = "No further block matches.";\n        return;\n      }\n      note.textContent = "";\n      if (current !== null) cards[current].hidden = true;\n      current = id;\n      cards[id].hidden = false;\n      var date = cards[id].getAttribute("data-date");\n      if (picker.value !== date) picker.value = date;\n      slide(cards[id], 0);\n      window.scrollTo(0, 0);\n    }\n\n    function slide(card, delta) {\n      var shots = card.querySelectorAll(".shot");\n      if (shots.length === 0) return;\n      var at = 0;\n      for (var i = 0; i < shots.length; i += 1) if (!shots[i].hidden) at = i;\n      var to = Math.max(0, Math.min(shots.length - 1, at + delta));\n      for (var j = 0; j < shots.length; j += 1) shots[j].hidden = j !== to;\n      var counter = card.querySelector(".shot-count");\n      if (counter) counter.textContent = to + 1 + " of " + shots.length;\n    }\n\n    function matter() {\n      return filter.value;\n    }\n\n    document.getElementById("prev").addEventListener("click", function () {\n      show(nextId(items, current, matter(), false, -1));\n    });\n    document.getElementById("next").addEventListener("click", function () {\n      show(nextId(items, current, matter(), false, 1));\n    });\n    document.getElementById("next-flagged").addEventListener("click", function () {\n      show(nextId(items, current, matter(), true, 1));\n    });\n    picker.addEventListener("change", function () {\n      show(firstOnDate(items, picker.value, matter()));\n    });\n    filter.addEventListener("change", function () {\n      var onFilter = current !== null && (matter() === "" || cards[current].getAttribute("data-matter") === matter());\n      if (!onFilter) show(firstOnDate(items, picker.value, matter()) || nextId(items, null, matter(), false, 1));\n    });\n    Array.prototype.forEach.call(document.querySelectorAll(".shot-prev"), function (b) {\n      b.addEventListener("click", function () {\n        slide(b.closest(".card"), -1);\n      });\n    });\n    Array.prototype.forEach.call(document.querySelectorAll(".shot-next"), function (b) {\n      b.addEventListener("click", function () {\n        slide(b.closest(".card"), 1);\n      });\n    });\n    document.addEventListener("keydown", function (event) {\n      if (current === null || event.target.tagName === "SELECT") return;\n      if (event.key === "ArrowLeft") slide(cards[current], -1);\n      if (event.key === "ArrowRight") slide(cards[current], 1);\n    });\n\n    if (items.length > 0) show(items[0].id);\n  })();\n}';
+
+// src/time-review/page.ts
+var SHOT_SOURCE = "syncopaid_captures";
+var ID_FIELDS = ["id", "native_id", "capture_id", "entry_id"];
+var MAX_FIELDS = 8;
+var MAX_VALUE = 200;
+function loadReviewModel(seams = {}) {
+  const env = seams.env ?? process.env;
+  const blocks = timePipelineList(NAMESPACE, BLOCK_PREFIX, env).items.map((item) => JSON.parse(item.value)).sort(byTime);
+  const evidence = {};
+  for (const date3 of new Set(blocks.map((b) => b.date))) evidence[date3] = readDayEvidence(date3, seams);
+  const readings = {};
+  for (const block of blocks) {
+    for (const ref of block.evidence) {
+      if (ref.source !== SHOT_SOURCE) continue;
+      const id = captureId(evidence[block.date], ref.ref);
+      if (id in readings) continue;
+      const { value } = timePipelineGet(NAMESPACE, `capture_reading:${id}`, env);
+      readings[id] = value === null ? void 0 : JSON.parse(value);
+    }
+  }
+  return { blocks, evidence, readings };
+}
+function byTime(a, b) {
+  return a.date === b.date ? a.id < b.id ? -1 : a.id > b.id ? 1 : 0 : a.date < b.date ? -1 : 1;
+}
+var escapeHtml = (text2) => text2.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+function rowFor(day, source, ref) {
+  const row = day?.rows.find((r) => r.source === source && ID_FIELDS.some((f) => r[f] !== void 0 && String(r[f]) === ref));
+  return row ?? null;
+}
+function captureId(day, ref) {
+  const row = rowFor(day, SHOT_SOURCE, ref);
+  return row && typeof row.capture_id === "string" && row.capture_id !== "" ? row.capture_id : ref;
+}
+function shortText(value) {
+  const text2 = typeof value === "string" ? value : JSON.stringify(value);
+  return text2.length > MAX_VALUE ? `${text2.slice(0, MAX_VALUE)}\u2026` : text2;
+}
+function fieldRows(row) {
+  const fields = Object.entries(row).filter(([name, value]) => name !== "source" && value !== null && value !== void 0 && value !== "").slice(0, MAX_FIELDS);
+  return fields.map(([name, value]) => `<tr><th>${escapeHtml(name)}</th><td>${escapeHtml(shortText(value))}</td></tr>`).join("");
+}
+function minutesBetween(start2, end) {
+  const clock = /^(\d{1,2}):(\d{2})$/;
+  const a = clock.exec(start2);
+  const b = clock.exec(end);
+  if (a && b) {
+    const span2 = Number(b[1]) * 60 + Number(b[2]) - (Number(a[1]) * 60 + Number(a[2]));
+    return span2 >= 0 ? span2 : null;
+  }
+  const span = (Date.parse(end) - Date.parse(start2)) / 6e4;
+  return Number.isFinite(span) && span >= 0 ? Math.round(span) : null;
+}
+var label = (token) => token.replace(/_/g, " ");
+function readingHtml(reading) {
+  if (!reading) return `<p class="reading none">No saved reading.</p>`;
+  const parts = Object.entries(reading.reading ?? {}).map(([name, value]) => `<tr><th>${escapeHtml(label(name))}</th><td>${escapeHtml(shortText(value))}</td></tr>`).join("");
+  const answers = (reading.answers ?? []).map((a) => `<tr><th>answer</th><td>${escapeHtml(shortText(a))}</td></tr>`).join("");
+  return `<table class="rows reading">${parts}${answers}</table>`;
+}
+function cardHtml(block, model, imgBase) {
+  const day = model.evidence[block.date];
+  const minutes = minutesBetween(block.start, block.end);
+  const shots = [];
+  const rows = [];
+  for (const ref of block.evidence) {
+    const row = rowFor(day, ref.source, ref.ref);
+    if (ref.source === SHOT_SOURCE) {
+      const id = captureId(day, ref.ref);
+      const image2 = imgBase === null ? "" : `<img src="${escapeHtml(imgBase)}${encodeURIComponent(id)}" alt="Screenshot ${escapeHtml(id)}" loading="lazy">`;
+      shots.push(`<div class="shot" hidden><div>${image2}</div>${readingHtml(model.readings[id])}</div>`);
+    } else {
+      rows.push(
+        `<h3 class="src">${escapeHtml(label(ref.source))}: ${escapeHtml(ref.ref)}</h3>` + (row ? `<table class="rows">${fieldRows(row)}</table>` : `<p class="none">This row is not in the day's saved evidence.</p>`)
+      );
+    }
+  }
+  const slideshow = shots.length === 0 ? "" : `<h2>Screenshots</h2><div class="shots"><div class="shot-bar"><button type="button" class="shot-prev">&larr;</button><span class="shot-count"></span><button type="button" class="shot-next">&rarr;</button></div>${shots.join("")}</div>`;
+  const evidence = rows.length === 0 && shots.length === 0 ? `<p class="none">No evidence is cited for this block.</p>` : rows.join("");
+  const flags = block.flags.length === 0 ? "" : `<ul class="flags">${block.flags.map((f) => `<li>${escapeHtml(label(f))}</li>`).join("")}</ul>`;
+  const duration3 = minutes === null ? "" : ` (${minutes} min)`;
+  const links = block.links.length === 0 ? "" : `<p class="times">${block.links.map((l) => `${escapeHtml(label(l.role))} ${escapeHtml(l.block)}`).join("; ")}</p>`;
+  return `<article class="card" data-id="${escapeHtml(block.id)}" data-date="${escapeHtml(block.date)}" data-matter="${escapeHtml(block.matter)}" hidden><div class="top"><span class="matter">${escapeHtml(block.matter)}</span><span class="state state-${escapeHtml(block.state)}">${escapeHtml(label(block.state))}</span></div><div class="times">${escapeHtml(block.date)} ${escapeHtml(block.start)} to ${escapeHtml(block.end)}${duration3}</div><p class="desc">${escapeHtml(block.description)}</p>${flags}${links}<h2>Evidence</h2>${evidence}${slideshow}</article>`;
+}
+function fill(template, parts) {
+  return template.replace(/\{\{([A-Z]+)\}\}/g, (_all, name) => parts[name] ?? "");
+}
+var scriptJson = (value) => JSON.stringify(value).replace(/</g, "\\u003c").replace(new RegExp(String.fromCharCode(8232), "g"), "\\u2028").replace(new RegExp(String.fromCharCode(8233), "g"), "\\u2029");
+function renderReviewPage(model, imgBase) {
+  const dates = [...new Set(model.blocks.map((b) => b.date))];
+  const matters = [...new Set(model.blocks.map((b) => b.matter))].sort();
+  const index = model.blocks.map((b) => ({ id: b.id, date: b.date, matter: b.matter, flagged: b.state === "flagged" }));
+  const cards = model.blocks.length === 0 ? `<p class="none">No day has staged blocks yet.</p>` : model.blocks.map((b) => cardHtml(b, model, imgBase)).join("\n");
+  return fill(review_html_default, {
+    CSS: review_css_default,
+    JS: review_js_default,
+    DATES: dates.map((d) => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join(""),
+    MATTERS: [`<option value="">All matters</option>`, ...matters.map((m) => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`)].join(""),
+    CARDS: cards,
+    INDEX: scriptJson(index)
+  });
+}
+
+// src/time-review/server.ts
+var KIND = "time-review";
+var CLICK_PREFIX = "page_click:";
+var SCREENS_FOLDER = "syncopaid-screens";
+var IMAGE_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
+var ACT = /^[a-z_]{1,40}$/;
+var BLOCK = /^\d{4}-\d{2}-\d{2}:\d{3}$/;
+var MAX_BODY = 4 * 1024;
+var REPLY = { csp: STRICT_CSP };
+var WAIT_TIMEOUT_MS = 45e3;
+var POLL_MS = 1e3;
+var listener;
+function startReviewPages(env = process.env, options = {}) {
+  if (!listener) {
+    const starting = (async () => {
+      sweepLinks(env);
+      return startPageListener({
+        bundle: "timekeeping",
+        port: "fixed",
+        routes: [
+          { method: "GET", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/?$/, handle: (_req, res, m) => withTarget(m[1], env, res, (t) => page(t, m[1], env, res)) },
+          { method: "GET", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/img\/([^/]+)\/?$/, handle: (_req, res, m) => withTarget(m[1], env, res, (t) => image(t, decodeId(m[2]), res)) },
+          { method: "POST", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/click\/?$/, handle: (req, res, m) => withTarget(m[1], env, res, () => click(m[1], req, res, env)) }
+        ],
+        env,
+        about: { build_stamp: BUILD_STAMP, plugin_version: pluginVersion() },
+        log: options.log,
+        retryMs: options.retryMs
+      });
+    })();
+    listener = starting;
+    starting.catch(() => {
+      if (listener === starting) listener = void 0;
+    });
+  }
+  return listener;
+}
+function checkScreensDir(raw) {
+  if (raw === void 0 || raw === null || raw === "") return null;
+  if (typeof raw !== "string" || !pathWin32.isAbsolute(raw)) {
+    throw new ValidationError("time_review__serve_page: screens_dir must be the absolute path of the syncopaid-screens folder");
+  }
+  const real = existsSync8(raw) && statSync3(raw).isDirectory() ? realpathSync.native(raw) : null;
+  if (real === null || pathWin32.basename(real).toLowerCase() !== SCREENS_FOLDER) {
+    throw new ValidationError(`time_review__serve_page: screens_dir must be an existing folder named ${SCREENS_FOLDER}`);
+  }
+  return real;
+}
+async function serveReviewPage(screensDirIn, env = process.env) {
+  const screens = checkScreensDir(screensDirIn);
+  const pages = await startReviewPages(env);
+  const { port } = pages;
+  const failure = pages.holding() ? null : pages.failure();
+  if (failure) {
+    throw new DataServerError(
+      `the page listener cannot listen on port ${port} (${failure.message}); set another port for "timekeeping" under page_ports in probanda.json`,
+      "page_port_taken"
+    );
+  }
+  const warning = pages.holding() ? null : await holderWarning(port);
+  dropLinks(KIND, () => true, env);
+  clearClicks(env);
+  const target = { screens_dir: screens, serve: randomBytes3(9).toString("base64url") };
+  const id = deviceLink(KIND, JSON.stringify(target), env);
+  const served = { url: `http://127.0.0.1:${port}/t/${id}/`, screenshots: screens !== null, blocks: loadReviewModel({ env }).blocks.length };
+  return warning ? { ...served, warning } : served;
+}
+async function holderWarning(port) {
+  const holder = await probeHolder(port, "timekeeping");
+  if (holder.kind === "none") return null;
+  if (holder.kind === "other") {
+    throw new DataServerError(
+      `port ${port} is held by a program that is not a Probanda timekeeping page listener (${holder.reason}); set another port for "timekeeping" under page_ports in probanda.json`,
+      "page_port_taken"
+    );
+  }
+  return holder.build_stamp === BUILD_STAMP ? null : "older_holder";
+}
+function parseTarget(raw) {
+  if (raw === null) return null;
+  try {
+    const t = JSON.parse(raw);
+    return t !== null && typeof t === "object" && (t.screens_dir === null || typeof t.screens_dir === "string") ? t : null;
+  } catch {
+    return null;
+  }
+}
+function withTarget(id, env, res, then) {
+  const target = parseTarget(resolveLink(KIND, id, env));
+  if (target) return then(target);
+  html(res, 410, '<!doctype html><meta charset="utf-8"><title>Out of date</title><p>This page is out of date: a newer one has been served, or the link is more than 30 days old. Ask Claude for the page again.</p>', REPLY);
+}
+var decodeId = (raw) => {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return "";
+  }
+};
+function page(target, id, env, res) {
+  const model = loadReviewModel({ env });
+  html(res, 200, renderReviewPage(model, target.screens_dir === null ? null : `/t/${id}/img/`), REPLY);
+}
+function image(target, captureId2, res) {
+  if (target.screens_dir === null || !IMAGE_ID.test(captureId2)) return text(res, 404, "No such screenshot", REPLY);
+  let real;
+  try {
+    real = realpathSync.native(pathWin32.join(target.screens_dir, `${captureId2}.png`));
+    if (!statSync3(real).isFile()) throw new Error("not a file");
+  } catch {
+    return text(res, 404, "The screenshot is not in the folder", REPLY);
+  }
+  const inside = pathWin32.relative(target.screens_dir, real);
+  if (inside.startsWith("..") || pathWin32.isAbsolute(inside) || pathWin32.dirname(real).toLowerCase() !== target.screens_dir.toLowerCase()) {
+    return text(res, 403, "This file is not served", REPLY);
+  }
+  file(res, real, pathWin32.basename(real), "image/png");
+}
+async function click(id, req, res, env) {
+  let body;
+  try {
+    body = JSON.parse(await readBody(req, MAX_BODY));
+  } catch (err) {
+    return json(res, 400, { error: `The click could not be read: ${err.message}` }, REPLY);
+  }
+  if (typeof body !== "object" || body === null || typeof body.act !== "string" || !ACT.test(body.act)) {
+    return json(res, 400, { error: "The click names no act." }, REPLY);
+  }
+  if (body.block !== void 0 && (typeof body.block !== "string" || !BLOCK.test(body.block))) {
+    return json(res, 400, { error: "The click names a block that is not a block id." }, REPLY);
+  }
+  const clicked_at = (/* @__PURE__ */ new Date()).toISOString();
+  const key = `${CLICK_PREFIX}${clicked_at}:${randomBytes3(4).toString("hex")}`;
+  const record2 = { kind: "page_click", link: id, act: body.act, block: body.block ?? null, clicked_at };
+  const saved = timePipelineWriteIf(NAMESPACE, key, JSON.stringify(record2), { expect_absent: true }, env);
+  if ("stale" in saved) return json(res, 409, { error: "The click could not be saved. Try again." }, REPLY);
+  json(res, 200, { ok: true }, REPLY);
+}
+function clearClicks(env) {
+  for (const item of timePipelineList(NAMESPACE, CLICK_PREFIX, env).items) timePipelineDelete(NAMESPACE, item.key, env, item.sha256);
+}
+async function waitClick(env = process.env) {
+  const budget = pythonTimeoutMs(env, WAIT_TIMEOUT_MS, "COCLERK_TIME_REVIEW_WAIT_MS");
+  const outcome = await waitFor(
+    () => {
+      const [oldest] = timePipelineList(NAMESPACE, CLICK_PREFIX, env).items;
+      if (!oldest) return void 0;
+      try {
+        timePipelineDelete(NAMESPACE, oldest.key, env, oldest.sha256);
+      } catch (err) {
+        if (err instanceof DataServerError && err.code === "stale_write") return void 0;
+        throw err;
+      }
+      const record2 = JSON.parse(oldest.value);
+      return { status: "clicked", act: record2.act, block: record2.block, clicked_at: record2.clicked_at };
+    },
+    { budgetMs: budget, pollMs: POLL_MS }
+  );
+  return "value" in outcome ? outcome.value : { status: "pending", waited_ms: outcome.waited_ms };
+}
+
 // src/time-review/tools.ts
 var DATE2 = /^\d{4}-\d{2}-\d{2}$/;
 var MAX_BLOCKS = 999;
@@ -16850,14 +17513,14 @@ function checkDate2(tool, date3) {
 function isObject2(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
-function checkSource(label, value) {
+function checkSource(label2, value) {
   if (typeof value !== "string" || !GATE_SOURCES.includes(value)) {
-    throw new ValidationError(`${label}: source must be one of ${GATE_SOURCES.join(", ")}`);
+    throw new ValidationError(`${label2}: source must be one of ${GATE_SOURCES.join(", ")}`);
   }
   return value;
 }
-function nonEmpty(label, field, value) {
-  if (typeof value !== "string" || value.trim() === "") throw new ValidationError(`${label}: ${field} must be a non-empty string`);
+function nonEmpty(label2, field, value) {
+  if (typeof value !== "string" || value.trim() === "") throw new ValidationError(`${label2}: ${field} must be a non-empty string`);
   return value;
 }
 function timeReviewSaveEvidence(dateIn, sourcesIn, rowsIn, seams = {}) {
@@ -16867,18 +17530,18 @@ function timeReviewSaveEvidence(dateIn, sourcesIn, rowsIn, seams = {}) {
   if (!Array.isArray(rowsIn)) throw new ValidationError(`${tool}: rows must be a list of evidence rows`);
   const sources = [];
   sourcesIn.forEach((entry, i) => {
-    const label = `${tool} sources[${i}]`;
-    if (!isObject2(entry)) throw new ValidationError(`${label} must be {source, status}`);
-    const source = checkSource(label, entry.source);
-    if (sources.some((s) => s.source === source)) throw new ValidationError(`${label}: ${source} is listed twice`);
-    sources.push({ source, status: nonEmpty(label, "status", entry.status) });
+    const label2 = `${tool} sources[${i}]`;
+    if (!isObject2(entry)) throw new ValidationError(`${label2} must be {source, status}`);
+    const source = checkSource(label2, entry.source);
+    if (sources.some((s) => s.source === source)) throw new ValidationError(`${label2}: ${source} is listed twice`);
+    sources.push({ source, status: nonEmpty(label2, "status", entry.status) });
   });
   const rows = rowsIn.map((row, i) => {
-    const label = `${tool} rows[${i}]`;
-    if (!isObject2(row)) throw new ValidationError(`${label} must be an object naming its source`);
-    const source = checkSource(label, row.source);
+    const label2 = `${tool} rows[${i}]`;
+    if (!isObject2(row)) throw new ValidationError(`${label2} must be an object naming its source`);
+    const source = checkSource(label2, row.source);
     if (!sources.some((s) => s.source === source)) {
-      throw new ValidationError(`${label}: ${source} has a row but is not listed in sources`);
+      throw new ValidationError(`${label2}: ${source} has a row but is not listed in sources`);
     }
     return { ...row, source };
   });
@@ -16891,32 +17554,32 @@ function timeReviewSaveEvidence(dateIn, sourcesIn, rowsIn, seams = {}) {
 }
 var BLOCK_FIELDS = ["start", "end", "matter", "description", "matter_basis", "bill_basis", "evidence"];
 function checkBlock(tool, index, raw) {
-  const label = `${tool} blocks[${index}]`;
-  if (!isObject2(raw)) throw new ValidationError(`${label} must be an object`);
+  const label2 = `${tool} blocks[${index}]`;
+  if (!isObject2(raw)) throw new ValidationError(`${label2} must be an object`);
   for (const field of Object.keys(raw)) {
     if (!BLOCK_FIELDS.includes(field)) {
       const why = field === "flags" || field === "state" ? "code sets flags and state from the bases" : "not a block field";
-      throw new ValidationError(`${label}: ${field} is ${why}; allowed: ${BLOCK_FIELDS.join(", ")}`);
+      throw new ValidationError(`${label2}: ${field} is ${why}; allowed: ${BLOCK_FIELDS.join(", ")}`);
     }
   }
-  const matter_basis = checkMatterBasis(label, raw.matter_basis);
-  const bill_basis = checkBillBasis(label, raw.bill_basis);
-  if (!Array.isArray(raw.evidence)) throw new ValidationError(`${label}: evidence must be a list of {source, ref}`);
+  const matter_basis = checkMatterBasis(label2, raw.matter_basis);
+  const bill_basis = checkBillBasis(label2, raw.bill_basis);
+  if (!Array.isArray(raw.evidence)) throw new ValidationError(`${label2}: evidence must be a list of {source, ref}`);
   const evidence = raw.evidence.map((entry, i) => {
-    const elabel = `${label} evidence[${i}]`;
+    const elabel = `${label2} evidence[${i}]`;
     if (!isObject2(entry)) throw new ValidationError(`${elabel} must be {source, ref}`);
     return { source: checkSource(elabel, entry.source), ref: nonEmpty(elabel, "ref", entry.ref) };
   });
   if (!MATTER_BASIS[matter_basis] && evidence.length === 0) {
     throw new ValidationError(
-      `${label}: matter_basis ${matter_basis} says the evidence carries the matter, so evidence must list at least one {source, ref}; state no_evidence if there is none`
+      `${label2}: matter_basis ${matter_basis} says the evidence carries the matter, so evidence must list at least one {source, ref}; state no_evidence if there is none`
     );
   }
   return {
-    start: nonEmpty(label, "start", raw.start),
-    end: nonEmpty(label, "end", raw.end),
-    matter: nonEmpty(label, "matter", raw.matter),
-    description: nonEmpty(label, "description", raw.description),
+    start: nonEmpty(label2, "start", raw.start),
+    end: nonEmpty(label2, "end", raw.end),
+    matter: nonEmpty(label2, "matter", raw.matter),
+    description: nonEmpty(label2, "description", raw.description),
     matter_basis,
     bill_basis,
     ...decideFlags(matter_basis, bill_basis),
@@ -17018,7 +17681,9 @@ var tools = [
     "time_review__stage_day",
     (args) => timeReviewStageDay(args.date, args.token, args.blocks)
   ),
-  defineTool("time_review__read_day", (args) => timeReviewReadDay(args.date))
+  defineTool("time_review__read_day", (args) => timeReviewReadDay(args.date)),
+  defineTool("time_review__serve_page", (args) => serveReviewPage(args.screens_dir)),
+  defineTool("time_review__wait_click", () => waitClick())
 ];
 var server = dispatchFrom(buildTimekeepingToolDefinitions, tools);
 function dispatchTimekeepingTool(name, rawArgs) {
@@ -17039,6 +17704,7 @@ async function start() {
     async (request) => dispatchTimekeepingTool(request.params.name, request.params.arguments ?? {})
   );
   await server2.connect(new StdioServerTransport());
+  startReviewPages().catch((err) => console.error(`[timekeeping pages] listener off: ${err instanceof Error ? err.message : String(err)}`));
 }
 var isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {

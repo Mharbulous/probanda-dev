@@ -12,6 +12,7 @@ import { pathToFileURL } from "node:url";
 
 import { buildTimekeepingToolDefinitions } from "./schema-gen.js";
 import { dispatchTimekeepingTool } from "./timekeeping-dispatch.js";
+import { startReviewPages } from "./time-review/server.js";
 
 export async function start(): Promise<void> {
   const server = new Server(
@@ -28,6 +29,9 @@ export async function start(): Promise<void> {
   );
 
   await server.connect(new StdioServerTransport());
+  // Bind the review page's fixed port once connected, so a page served by an earlier process keeps
+  // working after a reconnect. A listener error is logged, never fatal.
+  startReviewPages().catch((err) => console.error(`[timekeeping pages] listener off: ${err instanceof Error ? err.message : String(err)}`));
 }
 
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;

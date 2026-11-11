@@ -20,12 +20,13 @@ const DATA_SERVER_INTERNALS = [
 
 // Each fixed-port page listener answers its own bundle's routes only (src/local-page/ports.ts).
 const HOUSEKEEPING_PAGES = /^src\/housekeeping\/server\.ts$/;
+const TIMEKEEPING_PAGES = /^src\/time-review\/server\.ts$/;
 const LAWYER_PAGES = [/^src\/page-api\/server\.ts$/, /^src\/suggestions\//];
 
 const DENIED = {
-  index: [/^src\/file_ops\/move/, HOUSEKEEPING_PAGES],
-  "file-manager-index": [...DATA_SERVER_INTERNALS, /^src\/schema\/(?!(?:file-ops|housekeeping|shared)\.ts$)/, ...LAWYER_PAGES],
-  "timecamp-index": [...DATA_SERVER_INTERNALS, HOUSEKEEPING_PAGES, ...LAWYER_PAGES],
+  index: [/^src\/file_ops\/move/, HOUSEKEEPING_PAGES, TIMEKEEPING_PAGES],
+  "file-manager-index": [...DATA_SERVER_INTERNALS, /^src\/schema\/(?!(?:file-ops|housekeeping|shared)\.ts$)/, ...LAWYER_PAGES, TIMEKEEPING_PAGES],
+  "timecamp-index": [...DATA_SERVER_INTERNALS, HOUSEKEEPING_PAGES, ...LAWYER_PAGES, TIMEKEEPING_PAGES],
   // Issue 284: billing's timekeeping server carries the kv store (src/kv/backend), which
   // DATA_SERVER_INTERNALS denies, so it lists the rest by hand. It names no TimeCamp, and no
   // practice store: it takes the case data root from src/practice/matter-data-root.ts.
@@ -39,7 +40,7 @@ const DENIED = {
     HOUSEKEEPING_PAGES,
     ...LAWYER_PAGES,
   ],
-  "contacts-calendars-email-index": [...DATA_SERVER_INTERNALS, HOUSEKEEPING_PAGES, ...LAWYER_PAGES],
+  "contacts-calendars-email-index": [...DATA_SERVER_INTERNALS, HOUSEKEEPING_PAGES, ...LAWYER_PAGES, TIMEKEEPING_PAGES],
 };
 
 /** The source modules with bytes in the entry's bundle. The metafile's top-level `inputs` also lists
@@ -65,4 +66,5 @@ test("the metafile names modules the way the deny-lists expect", () => {
   assert.ok(modulesIn("index").includes("src/case/backend.ts"));
   assert.ok(modulesIn("index").includes("src/page-api/server.ts"));
   assert.ok(modulesIn("file-manager-index").includes("src/housekeeping/server.ts"));
+  assert.ok(modulesIn("timekeeping-index").includes("src/time-review/server.ts"));
 });

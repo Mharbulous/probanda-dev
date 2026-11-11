@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Time review</title>
+<style>
+:root { --ink: #1d2733; --muted: #5b6776; --line: #d5dbe3; --bg: #f5f7fa; --card: #ffffff; --flag: #b3261e; --ok: #1e6b3a; --accent: #1f4e8c; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.45 system-ui, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); }
+header { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--line); }
+header h1 { font-size: 16px; margin: 0 12px 0 0; }
+header label { color: var(--muted); font-size: 13px; }
+select, button { font: inherit; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); }
+button { cursor: pointer; }
+button:hover { border-color: var(--accent); }
+#nav-note { color: var(--flag); font-size: 13px; }
+main { max-width: 880px; margin: 16px auto; padding: 0 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+.card[hidden], .shot[hidden] { display: none; }
+.top { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; justify-content: space-between; }
+.matter { font-weight: 600; font-size: 17px; }
+.state { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); }
+.state-flagged { color: var(--flag); border-color: var(--flag); }
+.state-auto_assigned, .state-approved { color: var(--ok); border-color: var(--ok); }
+.times { color: var(--muted); }
+.desc { margin: 10px 0; white-space: pre-wrap; }
+.flags { margin: 0 0 10px; padding-left: 18px; color: var(--flag); }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 16px 0 6px; }
+.rows { width: 100%; border-collapse: collapse; font-size: 13px; }
+.rows td, .rows th { text-align: left; vertical-align: top; padding: 4px 8px; border-top: 1px solid var(--line); }
+.rows th { width: 11em; font-weight: 600; color: var(--muted); }
+.shots { border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.shot img { max-width: 100%; border: 1px solid var(--line); border-radius: 4px; }
+.shot .reading { font-size: 13px; margin-top: 6px; }
+.shot-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.none { color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+<header>
+<h1>Time review</h1>
+<label for="date-picker">Date</label>
+<select id="date-picker"><option value="2030-01-02">2030-01-02</option><option value="2030-01-03">2030-01-03</option></select>
+<label for="matter-filter">Matter</label>
+<select id="matter-filter"><option value="">All matters</option><option value="Synthetic Matter A">Synthetic Matter A</option><option value="Synthetic Matter B">Synthetic Matter B</option></select>
+<button id="prev" type="button">Previous</button>
+<button id="next" type="button">Next</button>
+<button id="next-flagged" type="button">Next flagged</button>
+<span id="nav-note" role="status"></span>
+</header>
+<main>
+<article class="card" data-id="2030-01-02:001" data-date="2030-01-02" data-matter="Synthetic Matter A" hidden><div class="top"><span class="matter">Synthetic Matter A</span><span class="state state-auto_assigned">auto assigned</span></div><div class="times">2030-01-02 09:00 to 09:30 (30 min)</div><p class="desc">Synthetic work</p><h2>Evidence</h2><h3 class="src">gcal events: e1</h3><table class="rows"><tr><th>id</th><td>e1</td></tr><tr><th>summary</th><td>Synthetic call with &lt;b&gt;Mr Example&lt;/b&gt;</td></tr><tr><th>start</th><td>09:00</td></tr></table></article>
+<article class="card" data-id="2030-01-02:002" data-date="2030-01-02" data-matter="Synthetic Matter B" hidden><div class="top"><span class="matter">Synthetic Matter B</span><span class="state state-flagged">flagged</span></div><div class="times">2030-01-02 09:30 to 10:15 (45 min)</div><p class="desc">Inferred &lt;script&gt;alert(1)&lt;/script&gt; work</p><ul class="flags"><li>matter:indirect only</li><li>bill:description inferred</li></ul><h2>Evidence</h2><h3 class="src">gcal events: e9</h3><p class="none">This row is not in the day's saved evidence.</p><h2>Screenshots</h2><div class="shots"><div class="shot-bar"><button type="button" class="shot-prev">&larr;</button><span class="shot-count"></span><button type="button" class="shot-next">&rarr;</button></div><div class="shot" hidden><div><img src="/t/ID/img/cap-0001" alt="Screenshot cap-0001" loading="lazy"></div><table class="rows reading"><tr><th>on screen</th><td>A synthetic letter draft</td></tr><tr><th>identifiers</th><td>[]</td></tr><tr><th>unchanged</th><td>false</td></tr><tr><th>unreadable</th><td>false</td></tr><tr><th>answer</th><td>{&quot;asked&quot;:&quot;Which file?&quot;,&quot;answer&quot;:&quot;A synthetic file&quot;}</td></tr></table></div></div></article>
+<article class="card" data-id="2030-01-02:003" data-date="2030-01-02" data-matter="Synthetic Matter A" hidden><div class="top"><span class="matter">Synthetic Matter A</span><span class="state state-flagged">flagged</span></div><div class="times">2030-01-02 10:15 to 11:00 (45 min)</div><p class="desc">More work</p><ul class="flags"><li>matter:no evidence</li><li>bill:no evidence</li></ul><h2>Evidence</h2><p class="none">No evidence is cited for this block.</p></article>
+<article class="card" data-id="2030-01-03:001" data-date="2030-01-03" data-matter="Synthetic Matter B" hidden><div class="top"><span class="matter">Synthetic Matter B</span><span class="state state-flagged">flagged</span></div><div class="times">2030-01-03 13:00 to 13:30 (30 min)</div><p class="desc">Synthetic work</p><ul class="flags"><li>matter:no evidence</li></ul><h2>Evidence</h2><p class="none">No evidence is cited for this block.</p></article>
+<article class="card" data-id="2030-01-03:002" data-date="2030-01-03" data-matter="Synthetic Matter A" hidden><div class="top"><span class="matter">Synthetic Matter A</span><span class="state state-auto_assigned">auto assigned</span></div><div class="times">2030-01-03 14:00 to 14:10 (10 min)</div><p class="desc">Synthetic work</p><h2>Evidence</h2><h3 class="src">gcal events: e2</h3><table class="rows"><tr><th>id</th><td>e2</td></tr><tr><th>summary</th><td>Another synthetic call</td></tr></table></article>
+</main>
+<script type="application/json" id="review-index">[{"id":"2030-01-02:001","date":"2030-01-02","matter":"Synthetic Matter A","flagged":false},{"id":"2030-01-02:002","date":"2030-01-02","matter":"Synthetic Matter B","flagged":true},{"id":"2030-01-02:003","date":"2030-01-02","matter":"Synthetic Matter A","flagged":true},{"id":"2030-01-03:001","date":"2030-01-03","matter":"Synthetic Matter B","flagged":true},{"id":"2030-01-03:002","date":"2030-01-03","matter":"Synthetic Matter A","flagged":false}]</script>
+<script>
+// The time review page's script (build plan slice 7). The page is read-only: it steps through the
+// cards the server rendered, filters them and swaps screenshots. It draws nothing from a model.
+// nextId is pure, so a test can load this file and call it.
+
+/** The id of the item the step reaches from `currentId`, or null. `items` is in time order, each
+ * { id, date, matter, flagged }. Only items that pass the filter count: a matter ("" is all) and,
+ * when `flaggedOnly`, the flagged ones. `currentId` need not pass the filter. `step` is 1 or -1. */
+function nextId(items, currentId, matter, flaggedOnly, step) {
+  var at = -1;
+  for (var i = 0; i < items.length; i += 1) {
+    if (items[i].id === currentId) at = i;
+  }
+  var pass = function (item) {
+    return (matter === "" || item.matter === matter) && (!flaggedOnly || item.flagged);
+  };
+  if (step > 0) {
+    for (var j = at + 1; j < items.length; j += 1) if (pass(items[j])) return items[j].id;
+  } else {
+    for (var k = (at < 0 ? items.length : at) - 1; k >= 0; k -= 1) if (pass(items[k])) return items[k].id;
+  }
+  return null;
+}
+
+/** The first item on `date` that passes the matter filter, or null. */
+function firstOnDate(items, date, matter) {
+  for (var i = 0; i < items.length; i += 1) {
+    if (items[i].date === date && (matter === "" || items[i].matter === matter)) return items[i].id;
+  }
+  return null;
+}
+
+if (typeof document !== "undefined") {
+  (function () {
+    var items = JSON.parse(document.getElementById("review-index").textContent);
+    var cards = {};
+    Array.prototype.forEach.call(document.querySelectorAll(".card"), function (el) {
+      cards[el.getAttribute("data-id")] = el;
+    });
+    var picker = document.getElementById("date-picker");
+    var filter = document.getElementById("matter-filter");
+    var note = document.getElementById("nav-note");
+    var current = null;
+
+    function show(id) {
+      if (id === null) {
+        note.textContent = "No further block matches.";
+        return;
+      }
+      note.textContent = "";
+      if (current !== null) cards[current].hidden = true;
+      current = id;
+      cards[id].hidden = false;
+      var date = cards[id].getAttribute("data-date");
+      if (picker.value !== date) picker.value = date;
+      slide(cards[id], 0);
+      window.scrollTo(0, 0);
+    }
+
+    function slide(card, delta) {
+      var shots = card.querySelectorAll(".shot");
+      if (shots.length === 0) return;
+      var at = 0;
+      for (var i = 0; i < shots.length; i += 1) if (!shots[i].hidden) at = i;
+      var to = Math.max(0, Math.min(shots.length - 1, at + delta));
+      for (var j = 0; j < shots.length; j += 1) shots[j].hidden = j !== to;
+      var counter = card.querySelector(".shot-count");
+      if (counter) counter.textContent = to + 1 + " of " + shots.length;
+    }
+
+    function matter() {
+      return filter.value;
+    }
+
+    document.getElementById("prev").addEventListener("click", function () {
+      show(nextId(items, current, matter(), false, -1));
+    });
+    document.getElementById("next").addEventListener("click", function () {
+      show(nextId(items, current, matter(), false, 1));
+    });
+    document.getElementById("next-flagged").addEventListener("click", function () {
+      show(nextId(items, current, matter(), true, 1));
+    });
+    picker.addEventListener("change", function () {
+      show(firstOnDate(items, picker.value, matter()));
+    });
+    filter.addEventListener("change", function () {
+      var onFilter = current !== null && (matter() === "" || cards[current].getAttribute("data-matter") === matter());
+      if (!onFilter) show(firstOnDate(items, picker.value, matter()) || nextId(items, null, matter(), false, 1));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".shot-prev"), function (b) {
+      b.addEventListener("click", function () {
+        slide(b.closest(".card"), -1);
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".shot-next"), function (b) {
+      b.addEventListener("click", function () {
+        slide(b.closest(".card"), 1);
+      });
+    });
+    document.addEventListener("keydown", function (event) {
+      if (current === null || event.target.tagName === "SELECT") return;
+      if (event.key === "ArrowLeft") slide(cards[current], -1);
+      if (event.key === "ArrowRight") slide(cards[current], 1);
+    });
+
+    if (items.length > 0) show(items[0].id);
+  })();
+}
+</script>
+</body>
+</html>

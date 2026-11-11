@@ -9,7 +9,7 @@ dependencies:
   - time-sorting             # first-run handoff; reuses its TimeCamp task-tree sync rather than refetching
 ---
 
-<!-- billing v0.4.4 -->
+<!-- billing v0.4.5 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). `${CLAUDE_SKILL_DIR}` is the directory holding this SKILL.md, even where it shows unsubstituted: never search for it or guess. Read references and shared files from there with the Read tool, a whole file or an offset and limit, never with a shell command, the litigation data server's skill-source tool or a folder-access request; scripts and templates the text declares are executed and read from there too. Before each fresh read (a file not already in context), list only `${CLAUDE_SKILL_DIR}/../../..` (the folder holding this plugin's folder). If it holds this plugin's folder name, with any `~g<N>` suffix removed, plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if `${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session: take the highest `~g<N>` copy and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, authors or requests a screenshot of one, but may present one to a human user to view, staging it first where presenting needs that, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -321,6 +321,14 @@ Not called by `/bill` yet. It judges a candidate list's dates with `billing:day-
 7. **Presumptions.** A reviewer applies the presumptions approved at the start of the run and offers none. Counting confirmations and offering a new presumption wait until every day is judged, run in date order over the stored blocks. That count is not built yet, so a new presumption is not offered in this mode.
 
 Two bills that share dates judge each date once: the second finds it `judged` or `held` at the claim, and the staged blocks it reads are the first bill's.
+
+### The review page
+
+Not called by `/bill` yet. A fixed page shows every staged block from the store, with no model drawing it: each card holds the matter, the description, the times, the state and flags, the evidence rows, the screenshot slideshow and each saved reading. It has a date picker, a matter filter, Previous, Next and Next flagged (which honours the matter filter). It is read-only: it has no action buttons yet.
+
+- **PC only.** The page is served from the PC and shows screenshots from the `syncopaid-screens` folder. In Cowork, stop where the run stops today and say that the page is served on the PC only; do not try to serve it.
+- **Serve.** Call `time_review__serve_page` with `screens_dir`, the absolute path of the `syncopaid-screens` folder the screenshot reader reads from (leave it out and the cards show no images). Give the practitioner the `url` to open in Chrome. Serving drops every earlier page. Never open, read or describe the page or an image on it: the page is for the practitioner's eyes (`shared/html-pages.md`).
+- **Wait.** `time_review__wait_click` returns the oldest click on the page, or `pending` after about 45 seconds, when you call it again. No click arrives until a later release adds the action buttons.
 
 ## Queries
 

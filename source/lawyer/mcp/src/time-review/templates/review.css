@@ -1,0 +1,30 @@
+:root { --ink: #1d2733; --muted: #5b6776; --line: #d5dbe3; --bg: #f5f7fa; --card: #ffffff; --flag: #b3261e; --ok: #1e6b3a; --accent: #1f4e8c; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.45 system-ui, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); }
+header { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--line); }
+header h1 { font-size: 16px; margin: 0 12px 0 0; }
+header label { color: var(--muted); font-size: 13px; }
+select, button { font: inherit; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); }
+button { cursor: pointer; }
+button:hover { border-color: var(--accent); }
+#nav-note { color: var(--flag); font-size: 13px; }
+main { max-width: 880px; margin: 16px auto; padding: 0 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+.card[hidden], .shot[hidden] { display: none; }
+.top { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; justify-content: space-between; }
+.matter { font-weight: 600; font-size: 17px; }
+.state { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); }
+.state-flagged { color: var(--flag); border-color: var(--flag); }
+.state-auto_assigned, .state-approved { color: var(--ok); border-color: var(--ok); }
+.times { color: var(--muted); }
+.desc { margin: 10px 0; white-space: pre-wrap; }
+.flags { margin: 0 0 10px; padding-left: 18px; color: var(--flag); }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 16px 0 6px; }
+.rows { width: 100%; border-collapse: collapse; font-size: 13px; }
+.rows td, .rows th { text-align: left; vertical-align: top; padding: 4px 8px; border-top: 1px solid var(--line); }
+.rows th { width: 11em; font-weight: 600; color: var(--muted); }
+.shots { border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.shot img { max-width: 100%; border: 1px solid var(--line); border-radius: 4px; }
+.shot .reading { font-size: 13px; margin-top: 6px; }
+.shot-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.none { color: var(--muted); font-style: italic; }

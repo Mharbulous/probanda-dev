@@ -17,7 +17,7 @@ import { extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "..", "..");
-export const TEMPLATE_ROOTS = ["src/templates", "src/housekeeping/templates"].map((r) => join(ROOT, r));
+export const TEMPLATE_ROOTS = ["src/templates", "src/housekeeping/templates", "src/time-review/templates"].map((r) => join(ROOT, r));
 
 const GUARDS = {
   ".html": [],

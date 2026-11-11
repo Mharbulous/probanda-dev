@@ -1,4 +1,4 @@
-// build-stamp: 389ab0b8c1ba
+// build-stamp: 81376c2be07b
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -24608,7 +24608,7 @@ import { existsSync as existsSync15, realpathSync as realpathSync10, statSync as
 import { win32 as pathWin3216 } from "node:path";
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "389ab0b8c1ba";
+var BUILD_STAMP = false ? null : "81376c2be07b";
 
 // src/local-page/durable.ts
 import { closeSync as closeSync4, fsyncSync as fsyncSync2, openSync as openSync4, writeSync as writeSync2 } from "node:fs";
@@ -24738,7 +24738,7 @@ import { createServer, get } from "node:http";
 
 // src/local-page/ports.ts
 import { existsSync as existsSync14, readFileSync as readFileSync10 } from "node:fs";
-var DEFAULT_PAGE_PORTS = { lawyer: 47615, "file-manager": 47616 };
+var DEFAULT_PAGE_PORTS = { lawyer: 47615, "file-manager": 47616, timekeeping: 47617 };
 var PagePortError = class extends Error {
   constructor(message, code) {
     super(message);

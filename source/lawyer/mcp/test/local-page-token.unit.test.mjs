@@ -57,6 +57,7 @@ test("the lawyer port is page_ports.lawyer, else page_api_port, else 47615; file
       assert.equal(pagePort("lawyer", d.env), lawyer, JSON.stringify(config));
       assert.equal(token.pageApiPort(d.env), lawyer, JSON.stringify(config));
       assert.equal(pagePort("file-manager", d.env), fileManager, JSON.stringify(config));
+      assert.equal(pagePort("timekeeping", d.env), 47617, JSON.stringify(config));
     } finally {
       d.cleanup();
     }

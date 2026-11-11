@@ -318,6 +318,14 @@ Not called by `/bill` yet. It judges a candidate list's dates with `billing:day-
 
 Two bills that share dates judge each date once: the second finds it `judged` or `held` at the claim, and the staged blocks it reads are the first bill's.
 
+### The review page
+
+Not called by `/bill` yet. A fixed page shows every staged block from the store, with no model drawing it: each card holds the matter, the description, the times, the state and flags, the evidence rows, the screenshot slideshow and each saved reading. It has a date picker, a matter filter, Previous, Next and Next flagged (which honours the matter filter). It is read-only: it has no action buttons yet.
+
+- **PC only.** The page is served from the PC and shows screenshots from the `syncopaid-screens` folder. In Cowork, stop where the run stops today and say that the page is served on the PC only; do not try to serve it.
+- **Serve.** Call `time_review__serve_page` with `screens_dir`, the absolute path of the `syncopaid-screens` folder the screenshot reader reads from (leave it out and the cards show no images). Give the practitioner the `url` to open in Chrome. Serving drops every earlier page. Never open, read or describe the page or an image on it: the page is for the practitioner's eyes (`shared/html-pages.md`).
+- **Wait.** `time_review__wait_click` returns the oldest click on the page, or `pending` after about 45 seconds, when you call it again. No click arrives until a later release adds the action buttons.
+
 ## Queries
 
 | Question | How to answer |

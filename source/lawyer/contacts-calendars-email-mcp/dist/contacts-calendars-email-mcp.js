@@ -1,4 +1,4 @@
-// build-stamp: 95bce3aabf6f
+// build-stamp: 8b1b15e6ef35
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -119581,14 +119581,14 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "95bce3aabf6f";
+var BUILD_STAMP = false ? null : "8b1b15e6ef35";
 
 // src/local-page/listener.ts
 import { createServer, get } from "node:http";
 
 // src/local-page/ports.ts
 import { existsSync as existsSync3, readFileSync as readFileSync4 } from "node:fs";
-var DEFAULT_PAGE_PORTS = { lawyer: 47615, "file-manager": 47616 };
+var DEFAULT_PAGE_PORTS = { lawyer: 47615, "file-manager": 47616, timekeeping: 47617 };
 var PagePortError = class extends Error {
   constructor(message, code) {
     super(message);
