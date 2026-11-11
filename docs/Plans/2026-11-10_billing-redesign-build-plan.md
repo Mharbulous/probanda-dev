@@ -8,7 +8,7 @@ The spec is `docs/Specs/2026-11-10_client-billing-time-review-redesign-spec.md`.
 
 The practitioner decided on 2026-11-10 to move billing from a long chat to a pipeline that stores an evidenced record of every block of time, which the practitioner audits on a fixed page. The spec says what to build and leaves the order to a plan. Without an order, pieces land as stray changes: a `/bill-client` to `/bill` rename was started alone and abandoned, and its leftover now fails two checks on `main`.
 
-This plan orders the work into 14 slices. Each slice is released alone with `/release` and leaves `main` passing every check. Each is written so a Sonnet or Haiku session can run it from its instructions (spec Goal 8).
+This plan orders the work into 15 slices (0, 1, 1b and 2 to 13). Each slice is released alone with `/release` and leaves `main` passing every check. Each is written so a Sonnet or Haiku session can run it from its instructions (spec Goal 8).
 
 ## What the survey found
 
@@ -146,19 +146,32 @@ Stop and ask the practitioner before: adding or changing a ruling in `source/lay
 - **Run under way.** The practitioner started the baseline run on 2026-11-10 with `/billing:bill-client` (billing 0.3.0), the session running on Sonnet 5.5. The matter is the practitioner's choice and is recorded outside this repository. The first part ran in Cowork, refreshed the candidate list (55 dates: 23 Strong, 8 Medium, 24 Weak) and stopped at Step 6.2, before any date was judged, as Cowork does today. Both stores were then copied, byte for byte, into a `baseline-2026-11-10` folder beside them, after the list was refreshed and before any date was judged or any TimeCamp entry corrected. Slice 13 replays from that copy. The measured run is the continuation in a Code-tab session on the PC. Its earlier judgments were redone, not reused, so both runs do the same work. A full run proved too costly in the practitioner's attention, so on 2026-11-10 the practitioner limited the baseline to a sample of two dates, judged and then stopped. The matter and the two dates are in a note in the copy's folder, not here. Slice 13 replays exactly those two dates, and both runs are compared per date. Slice 13 runs its orchestrator on Sonnet 5.5 too, so the model is the same in both measurements.
 - **Model.** Sonnet writes the script. Haiku runs it.
 
+### Slice 1b: find the last invoice from the practice records, not file names
+
+Decided by the practitioner on 2026-11-10 (question 7). `/bill-client` Step 2 stops the bill and asks the practitioner to run `/housekeeping`, a `file-manager` skill, so that Step 3 can find the last invoice by sorting file names. The practice records already hold every invoice `/issue-invoice` issued, and Step 5 already distrusts file names. So the bill finds the last invoice from the records first, `billing` stops naming `file-manager`, and one stop that needs the practitioner goes.
+
+- **Changes.**
+  - `source/skills/bill-client/SKILL.md` Steps 2 to 5 and their rows in the step table. Keep the step numbers, so bill-record rows and the resume rule ("Steps 2 to 5") still match. The new order: look up the matter's last invoice with the `practice-data` skill's `invoice-data` operation, and read that PDF as Step 4 does. Only when the records hold no invoice for the matter, or the folder holds a signed invoice newer than the latest recorded one, list the invoice files in `2. SOLICITOR CLIENT`, read the newest as Step 4 does, verify and record it as Step 5 does. When it still cannot tell which file is the last signed invoice, ask the practitioner that one question. Remove every mention of `/housekeeping`, the housekeeping-log lookup and `file-manager` from the skill.
+  - Delete the ruling at `source/layering.json:63` (`source/skills/bill-client/SKILL.md` → `housekeeping`). The practitioner approved this deletion on 2026-11-10. Add or change no other ruling.
+- **Files.** `source/skills/bill-client/SKILL.md`, `source/layering.json`, a test in `source/skills/bill-client/tests/`, and any other file under `source/skills/bill-client/` that names the old Step 2.
+- **Tests.** A new test that fails if any file under `source/skills/bill-client/` names `housekeeping` or `file-manager`. `check_layering.py` exits 0 with one fewer ruling and no stale ruling. The skill's existing tests pass. The standard checks.
+- **Bump.** `billing` patch: a bill under way resumes as before, and no tool or input changes.
+- **Practitioner.** Nothing more.
+- **Model.** Sonnet.
+
 ### Slice 2: rename `/bill-client` to `/bill`
 
 - **Changes, all in one commit.**
   - Move the folder `source/skills/bill-client/` to `source/skills/bill/` and set `name: "bill"` in its `SKILL.md`.
   - `source/assignment.json:199` and `source/billing/roster.json:3`.
-  - The seven references that break a check or test: `source/skills/issue-invoice/SKILL.md:19` (the path to `freeze_invoice.py`), `source/skills/time-pipeline-data/SKILL.md:113` with the regex in `tests/test_bill_record_wiring.py:15`, `test_bill_record_wiring.py` (its `text("bill-client")` reads), `test_defensible_invoice.py:25`, `scripts/check_plugin_baselines/skill_source_baseline.json:20`, and the ruling path in `source/layering.json:63`.
+  - The references that break a check or test: `source/skills/issue-invoice/SKILL.md:19` (the path to `freeze_invoice.py`), `source/skills/time-pipeline-data/SKILL.md:113` with the regex in `tests/test_bill_record_wiring.py:15`, `test_bill_record_wiring.py` (its `text("bill-client")` reads), `test_defensible_invoice.py:25` and `scripts/check_plugin_baselines/skill_source_baseline.json:20`. The ruling that named this skill in `source/layering.json` is gone after slice 1b, so the rename touches no ruling. Run `check_layering.py` first: if any ruling still names `source/skills/bill-client/`, stop and ask the practitioner.
   - Prose in the other shipped files: `issue-invoice`, `timecamping` (`SKILL.md` and `VISION.md`), `triage-billing-dates`, `vet-billable-time`, `time-pipeline-data`, `source/billing/README.md`, the two files under the skill's `references/`, and the comment at `source/lawyer/mcp/src/tools/practice/reads.ts:116`.
   - One new sentence in the skill: a resumed bill keeps the working folder its record names.
   - The diagrams: `docs/diagrams/Built/Client billing.html`, `Client billing process.md`, both `Progressive-Context-Tree.html` files, `Destinations/Client_billing.html` and `Destinations/Data-Pool-Map.html`, each with its commit tag updated. Older plans and specs keep the old name, because they record history.
   - `CLAUDE.md` if it names the skill.
 - **Tests.** A new test in `source/skills/bill/tests/` that fails if any file under `source/skills/` or `source/billing/` holds the text `bill-client`, apart from the one working-folder sentence. The 103 existing tests of the skill pass from the new folder. The standard checks.
 - **Bump.** `billing` minor, 0.3.0 to 0.4.0, because a command the practitioner types stops working. `lawyer` patch only if the comment change alters its bundle.
-- **Practitioner.** Approves the path change in `source/layering.json` before the slice starts (question 7). After release, types `/billing:bill`.
+- **Practitioner.** After release, types `/billing:bill`. Slice 1b lands first.
 - **Model.** Haiku for the search and replace, Sonnet for the new test and the diagrams.
 
 ### Slice 3: save the screenshot readings
@@ -314,4 +327,4 @@ Each is asked alone, with a worked example of every option and a "do nothing" op
 4. **Claim length (slice 6).** Recommended: keep the built 60 minutes, not the spec's example of 2 hours.
 5. **Criterion 18 (slice 4).** The cause of the 2026-11-04 loss cannot be found, because no log exists. Is closing every open cause, plus a detector, accepted as meeting it?
 6. **Commandment 5 (slice 5).** Confirm the record shapes under "Where each store change lands".
-7. **`source/layering.json` (slice 2).** Approve changing the existing ruling's path from `source/skills/bill-client/SKILL.md` to `source/skills/bill/SKILL.md`, with its content unchanged.
+7. **`source/layering.json` (slice 2).** Approve changing the existing ruling's path from `source/skills/bill-client/SKILL.md` to `source/skills/bill/SKILL.md`, with its content unchanged. **Decided 2026-11-10: neither.** The skill's only use of `file-manager` was finding the last invoice by file name, so slice 1b finds it from the practice records instead and deletes the ruling, which the practitioner approved.
