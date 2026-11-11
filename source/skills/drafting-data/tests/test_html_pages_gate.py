@@ -256,7 +256,7 @@ class GateTest(unittest.TestCase):
         result = call("Read", {"file_path": PAGE_PATHS[0]})
         self.assertNotIn("COCLERK_HTML_DEV", result.stdout)
         self.assertNotIn("__", result.stdout)
-        settings = Path(__file__).resolve().parents[3] / "settings.json"
+        settings = Path(__file__).resolve().parents[4] / ".claude" / "settings.json"
         env = json.loads(settings.read_text(encoding="utf-8")).get("env", {})
         self.assertEqual(env.get("COCLERK_HTML_DEV"), "1")
 
