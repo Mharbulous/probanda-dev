@@ -1,4 +1,4 @@
-// build-stamp: 83787ab4ccd3
+// build-stamp: 7cf7d5d48212
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -6643,10 +6643,10 @@ var require_formats = __commonJS({
     function isLeapYear(year) {
       return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
     }
-    var DATE2 = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
+    var DATE3 = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
     var DAYS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
     function date3(str) {
-      const matches = DATE2.exec(str);
+      const matches = DATE3.exec(str);
       if (!matches)
         return false;
       const year = +matches[1];
@@ -8940,13 +8940,13 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
     }
     return propValues;
   });
-  const isObject2 = isObject;
+  const isObject3 = isObject;
   const catchall = def.catchall;
   let value;
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject2(input)) {
+    if (!isObject3(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -9073,7 +9073,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
     return (payload, ctx) => fn(shape, payload, ctx);
   };
   let fastpass;
-  const isObject2 = isObject;
+  const isObject3 = isObject;
   const jit = !globalConfig.jitless;
   const allowsEval2 = allowsEval;
   const fastEnabled = jit && allowsEval2.value;
@@ -9082,7 +9082,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject2(input)) {
+    if (!isObject3(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -15619,6 +15619,140 @@ function reviewDateToolDefinitions() {
   ];
 }
 
+// src/time-review/flags.ts
+var MATTER_BASIS = {
+  evidence_names_matter: false,
+  presumption: false,
+  presumption_covers_conflict: false,
+  identifier_leap_uncovered: true,
+  indirect_only: true,
+  conflict_uncovered: true,
+  no_evidence: true
+};
+var BILL_BASIS = [
+  "description_inferred",
+  "duration_unbounded",
+  "no_evidence",
+  "staff_inferred",
+  "proposed_writeoff",
+  "estimate",
+  "late_line"
+];
+function checkMatterBasis(label, value) {
+  if (typeof value !== "string" || !Object.hasOwn(MATTER_BASIS, value)) {
+    throw new ValidationError(`${label}: matter_basis must be one of ${Object.keys(MATTER_BASIS).join(", ")}`);
+  }
+  return value;
+}
+function checkBillBasis(label, value) {
+  if (!Array.isArray(value)) throw new ValidationError(`${label}: bill_basis must be a list (empty when there is no doubt)`);
+  const seen = /* @__PURE__ */ new Set();
+  for (const entry of value) {
+    if (typeof entry !== "string" || !BILL_BASIS.includes(entry)) {
+      throw new ValidationError(`${label}: bill_basis values must be among ${BILL_BASIS.join(", ")}`);
+    }
+    seen.add(entry);
+  }
+  return [...seen];
+}
+function decideFlags(matterBasis, billBasis) {
+  const flags = [];
+  if (MATTER_BASIS[matterBasis]) flags.push(`matter:${matterBasis}`);
+  for (const value of billBasis) flags.push(`bill:${value}`);
+  return { flags, state: flags.length === 0 ? "auto_assigned" : "flagged" };
+}
+
+// src/time-review/sources.ts
+var GATE_SOURCES = [
+  "timecamp_time_entries",
+  "timecamp_computer_activities",
+  "syncopaid_captures",
+  "telus_calls",
+  "gcal_events",
+  "icloud_events",
+  "sent_mail"
+];
+var TERMINAL_STATUSES = ["fetched", "empty", "skipped"];
+
+// src/schema/time-review.ts
+var ROUTE2 = " Only the /time-pipeline-data skill may call this tool -- see time_pipeline__get for how a caller from another skill's workflow satisfies that.";
+function timeReviewToolDefinitions() {
+  const SOURCE = { type: "string", enum: [...GATE_SOURCES] };
+  return [
+    {
+      name: "time_review__save_evidence",
+      description: 'Save one day\'s evidence as a day_evidence record (replacing any earlier save for the date). `sources` says what the gather step got from each of the assembly gate\'s seven sources: { source, status }, status being the fetch status filed for it (fetched, empty and skipped count as an outcome; anything else leaves the source short). `rows` are the day\'s evidence rows, each naming its `source`, which must be listed in `sources`. Returns { status: "saved", sha256, complete, short } -- short lists the sources with no outcome -- or { status: "judged", judged_at, judged_by } when the date is already judged, which writes nothing.' + ROUTE2,
+      inputSchema: {
+        type: "object",
+        properties: {
+          date: { type: "string" },
+          sources: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { source: SOURCE, status: { type: "string" } },
+              required: ["source", "status"],
+              additionalProperties: false
+            }
+          },
+          rows: { type: "array", items: { type: "object", properties: { source: SOURCE }, required: ["source"] } }
+        },
+        required: ["date", "sources", "rows"],
+        additionalProperties: false
+      }
+    },
+    {
+      name: "time_review__stage_day",
+      description: "Stage one day's reviewed blocks, holding the claim `token` that review_date__claim gave for the date. For each block state its start, end, matter, description, the basis of the matter (`matter_basis`, one value), what goes on the bill (`bill_basis`, a list that is empty when nothing is in doubt) and its evidence ({ source, ref }). Code sets the block's `flags` and `state` (flagged or auto_assigned) from the bases: you cannot pass either, and a block that states any doubtful value is always flagged. Staging again before the date is judged replaces the date's blocks. Returns { status: \"staged\", blocks: [{ id, state, flags }] }, or a refusal that writes nothing: judged, held (another run holds the claim), claim_lost (this token holds none), evidence_missing (no day_evidence saved for the date), evidence_short (a gate source has no outcome in it; `short` names them)." + ROUTE2,
+      inputSchema: {
+        type: "object",
+        properties: {
+          date: { type: "string" },
+          token: { type: "string" },
+          blocks: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                start: { type: "string" },
+                end: { type: "string" },
+                matter: { type: "string" },
+                description: { type: "string" },
+                matter_basis: { type: "string", enum: Object.keys(MATTER_BASIS) },
+                bill_basis: { type: "array", items: { type: "string", enum: [...BILL_BASIS] } },
+                evidence: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: { source: SOURCE, ref: { type: "string" } },
+                    required: ["source", "ref"],
+                    additionalProperties: false
+                  }
+                }
+              },
+              required: ["start", "end", "matter", "description", "matter_basis", "bill_basis", "evidence"],
+              additionalProperties: false
+            }
+          }
+        },
+        required: ["date", "token", "blocks"],
+        additionalProperties: false
+      }
+    },
+    {
+      name: "time_review__read_day",
+      description: "Read one day: { date, evidence, blocks }. `evidence` is the saved day_evidence record, or null; `blocks` are the staged block records in order, each with its flags and state. Writes nothing." + ROUTE2,
+      inputSchema: {
+        type: "object",
+        properties: { date: { type: "string" } },
+        required: ["date"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false }
+    }
+  ];
+}
+
 // src/knowledge/venues-kinds.ts
 var STAMP_KEYS = ["plugin_version", "shipped_from"];
 var VENUE_ROW_KEYS = ["code", "name", "aliases", "source", "ref", "recorded", ...STAMP_KEYS];
@@ -15628,7 +15762,8 @@ var KIND_ROW_KEYS = ["file", "name", "aliases", "recipient", ...STAMP_KEYS];
 function buildTimekeepingToolDefinitions() {
   return [
     ...timePipelineToolDefinitions(),
-    ...reviewDateToolDefinitions()
+    ...reviewDateToolDefinitions(),
+    ...timeReviewToolDefinitions()
   ];
 }
 
@@ -16343,6 +16478,7 @@ function valueSha256(value) {
 }
 var REVIEW_DATE_NAMESPACE = "item";
 var REVIEW_DATE_PREFIX = "review_date:";
+var TIME_REVIEW_PREFIXES = ["day_evidence:", "block:"];
 var CONDITIONAL_NAMESPACES = /* @__PURE__ */ new Set(["bill", "item"]);
 function denyPrefix(namespace) {
   return namespace === REVIEW_DATE_NAMESPACE ? REVIEW_DATE_PREFIX : void 0;
@@ -16367,6 +16503,12 @@ function timePipelineWriteIf(namespace, key, value, expectation, env = process.e
 }
 function timePipelineSet(namespace, key, value, expectation = {}, env = process.env) {
   if (namespace === REVIEW_DATE_NAMESPACE && key.startsWith(REVIEW_DATE_PREFIX)) throw protectedKeyError("time_pipeline__set", [key]);
+  if (namespace === REVIEW_DATE_NAMESPACE && TIME_REVIEW_PREFIXES.some((prefix) => key.startsWith(prefix))) {
+    throw new DataServerError(
+      `time_pipeline__set: ${key} is a day-evidence or block record, which only the time_review__* tools write; nothing was written`,
+      "protected_key"
+    );
+  }
   const { expect_sha256, expect_absent } = expectation;
   if (expect_sha256 !== void 0 && expect_absent !== void 0) {
     throw new ValidationError("time_pipeline__set takes expect_sha256 or expect_absent, not both");
@@ -16525,6 +16667,20 @@ function reviewDateStatus(dates, seams = {}) {
   const now = nowOf(seams);
   return { dates: checked.map((date3) => statusOf(date3, records.get(date3) ?? null, now)) };
 }
+function reviewDateStageGate(dateIn, token, seams = {}) {
+  const date3 = checkDate("time_review__stage_day", dateIn);
+  const current = read(date3, seams)?.record ?? null;
+  if (current?.judged_at) return { ok: false, status: "judged", judged_at: current.judged_at, judged_by: current.judged_by };
+  if (ownClaim(current, token)) return { ok: true };
+  if (current && isLive(current.claim, nowOf(seams))) {
+    return { ok: false, status: "held", holder: current.claim.holder, expires_at: current.claim.expires_at };
+  }
+  return { ok: false, status: "claim_lost" };
+}
+function reviewDateJudgment(date3, seams = {}) {
+  const current = read(date3, seams)?.record ?? null;
+  return current?.judged_at ? { judged_at: current.judged_at, judged_by: current.judged_by } : null;
+}
 function judgedOrClaimed(seams) {
   const { items } = timePipelineList(REVIEW_DATE_NAMESPACE, REVIEW_DATE_PREFIX, envOf(seams));
   return new Map(items.map((item) => [item.key.slice(REVIEW_DATE_PREFIX.length), JSON.parse(item.value)]));
@@ -16576,6 +16732,162 @@ function reviewDateImportFile(path, judgedBy, dryRun, seams = {}) {
   return { dry_run: false, added: written, skipped: skipped.sort() };
 }
 
+// src/time-review/records.ts
+var NAMESPACE = REVIEW_DATE_NAMESPACE;
+var DAY_EVIDENCE_PREFIX = "day_evidence:";
+var BLOCK_PREFIX = "block:";
+var dayEvidenceKey = (date3) => DAY_EVIDENCE_PREFIX + date3;
+var blockId = (date3, index) => `${date3}:${String(index + 1).padStart(3, "0")}`;
+var blockKey = (id) => BLOCK_PREFIX + id;
+function envOf2(seams) {
+  return seams.env ?? process.env;
+}
+function nowOf2(seams) {
+  return seams.now ? seams.now() : /* @__PURE__ */ new Date();
+}
+function sourcesShort(record2) {
+  const done = new Set(
+    record2.sources.filter((s) => TERMINAL_STATUSES.includes(s.status)).map((s) => s.source)
+  );
+  return GATE_SOURCES.filter((source) => !done.has(source));
+}
+function readDayEvidence(date3, seams) {
+  const { value } = timePipelineGet(NAMESPACE, dayEvidenceKey(date3), envOf2(seams));
+  return value === null ? null : JSON.parse(value);
+}
+function putRecord(tool, key, value, seams) {
+  const attempts = 5;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const current = timePipelineGet(NAMESPACE, key, envOf2(seams));
+    const expectation = current.sha256 === null ? { expect_absent: true } : { expect_sha256: current.sha256 };
+    const reply = timePipelineWriteIf(NAMESPACE, key, JSON.stringify(value), expectation, envOf2(seams));
+    if (!("stale" in reply)) return reply.sha256;
+  }
+  throw new DataServerError(`${tool}: ${key} changed ${attempts} times while this call was writing; try again`, "contended");
+}
+
+// src/time-review/tools.ts
+var DATE2 = /^\d{4}-\d{2}-\d{2}$/;
+var MAX_BLOCKS = 999;
+function checkDate2(tool, date3) {
+  if (typeof date3 !== "string" || !DATE2.test(date3) || Number.isNaN(Date.parse(`${date3}T00:00:00Z`))) {
+    throw new ValidationError(`${tool}: ${JSON.stringify(date3)} is not a date as YYYY-MM-DD`);
+  }
+  return date3;
+}
+function isObject2(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function checkSource(label, value) {
+  if (typeof value !== "string" || !GATE_SOURCES.includes(value)) {
+    throw new ValidationError(`${label}: source must be one of ${GATE_SOURCES.join(", ")}`);
+  }
+  return value;
+}
+function nonEmpty(label, field, value) {
+  if (typeof value !== "string" || value.trim() === "") throw new ValidationError(`${label}: ${field} must be a non-empty string`);
+  return value;
+}
+function timeReviewSaveEvidence(dateIn, sourcesIn, rowsIn, seams = {}) {
+  const tool = "time_review__save_evidence";
+  const date3 = checkDate2(tool, dateIn);
+  if (!Array.isArray(sourcesIn)) throw new ValidationError(`${tool}: sources must be a list of {source, status}`);
+  if (!Array.isArray(rowsIn)) throw new ValidationError(`${tool}: rows must be a list of evidence rows`);
+  const sources = [];
+  sourcesIn.forEach((entry, i) => {
+    const label = `${tool} sources[${i}]`;
+    if (!isObject2(entry)) throw new ValidationError(`${label} must be {source, status}`);
+    const source = checkSource(label, entry.source);
+    if (sources.some((s) => s.source === source)) throw new ValidationError(`${label}: ${source} is listed twice`);
+    sources.push({ source, status: nonEmpty(label, "status", entry.status) });
+  });
+  const rows = rowsIn.map((row, i) => {
+    const label = `${tool} rows[${i}]`;
+    if (!isObject2(row)) throw new ValidationError(`${label} must be an object naming its source`);
+    const source = checkSource(label, row.source);
+    if (!sources.some((s) => s.source === source)) {
+      throw new ValidationError(`${label}: ${source} has a row but is not listed in sources`);
+    }
+    return { ...row, source };
+  });
+  const judged = reviewDateJudgment(date3, seams);
+  if (judged) return { status: "judged", date: date3, ...judged };
+  const record2 = { kind: "day_evidence", date: date3, saved_at: nowOf2(seams).toISOString(), sources, rows };
+  const sha256 = putRecord(tool, dayEvidenceKey(date3), record2, seams);
+  const short = sourcesShort(record2);
+  return { status: "saved", date: date3, sha256, complete: short.length === 0, short };
+}
+var BLOCK_FIELDS = ["start", "end", "matter", "description", "matter_basis", "bill_basis", "evidence"];
+function checkBlock(tool, index, raw) {
+  const label = `${tool} blocks[${index}]`;
+  if (!isObject2(raw)) throw new ValidationError(`${label} must be an object`);
+  for (const field of Object.keys(raw)) {
+    if (!BLOCK_FIELDS.includes(field)) {
+      const why = field === "flags" || field === "state" ? "code sets flags and state from the bases" : "not a block field";
+      throw new ValidationError(`${label}: ${field} is ${why}; allowed: ${BLOCK_FIELDS.join(", ")}`);
+    }
+  }
+  const matter_basis = checkMatterBasis(label, raw.matter_basis);
+  const bill_basis = checkBillBasis(label, raw.bill_basis);
+  if (!Array.isArray(raw.evidence)) throw new ValidationError(`${label}: evidence must be a list of {source, ref}`);
+  const evidence = raw.evidence.map((entry, i) => {
+    const elabel = `${label} evidence[${i}]`;
+    if (!isObject2(entry)) throw new ValidationError(`${elabel} must be {source, ref}`);
+    return { source: checkSource(elabel, entry.source), ref: nonEmpty(elabel, "ref", entry.ref) };
+  });
+  return {
+    start: nonEmpty(label, "start", raw.start),
+    end: nonEmpty(label, "end", raw.end),
+    matter: nonEmpty(label, "matter", raw.matter),
+    description: nonEmpty(label, "description", raw.description),
+    matter_basis,
+    bill_basis,
+    ...decideFlags(matter_basis, bill_basis),
+    evidence
+  };
+}
+function timeReviewStageDay(dateIn, token, blocksIn, seams = {}) {
+  const tool = "time_review__stage_day";
+  const date3 = checkDate2(tool, dateIn);
+  if (typeof token !== "string" || token === "") throw new ValidationError(`${tool}: token must be the claim token review_date__claim gave`);
+  if (!Array.isArray(blocksIn)) throw new ValidationError(`${tool}: blocks must be a list`);
+  if (blocksIn.length > MAX_BLOCKS) throw new ValidationError(`${tool}: at most ${MAX_BLOCKS} blocks a day`);
+  const checked = blocksIn.map((raw, i) => checkBlock(tool, i, raw));
+  const gate = reviewDateStageGate(date3, token, seams);
+  if (!gate.ok) {
+    const { ok: _ok, ...refusal } = gate;
+    return { ...refusal, date: date3 };
+  }
+  const evidence = readDayEvidence(date3, seams);
+  if (evidence === null) return { status: "evidence_missing", date: date3 };
+  const short = sourcesShort(evidence);
+  if (short.length > 0) return { status: "evidence_short", date: date3, short };
+  const staged_at = nowOf2(seams).toISOString();
+  const written = checked.map((fields, i) => ({
+    kind: "block",
+    id: blockId(date3, i),
+    date: date3,
+    ...fields,
+    links: [],
+    staged_at
+  }));
+  for (const block of written) putRecord(tool, blockKey(block.id), block, seams);
+  const keep = new Set(written.map((b) => blockKey(b.id)));
+  for (const item of timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, envOf2(seams)).items) {
+    if (!keep.has(item.key)) timePipelineDelete(NAMESPACE, item.key, envOf2(seams));
+  }
+  return { status: "staged", date: date3, blocks: written.map((b) => ({ id: b.id, state: b.state, flags: b.flags })) };
+}
+function timeReviewReadDay(dateIn, seams = {}) {
+  const date3 = checkDate2("time_review__read_day", dateIn);
+  const { items } = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, envOf2(seams));
+  return {
+    date: date3,
+    evidence: readDayEvidence(date3, seams),
+    blocks: items.map((item) => JSON.parse(item.value))
+  };
+}
+
 // src/timekeeping-dispatch.ts
 var tools = [
   defineTool("time_pipeline__get", (args) => timePipelineGet(args.namespace, args.key)),
@@ -16605,7 +16917,16 @@ var tools = [
   defineTool(
     "review_date__import_file",
     (args) => reviewDateImportFile(args.path, args.judged_by, args.dry_run)
-  )
+  ),
+  defineTool(
+    "time_review__save_evidence",
+    (args) => timeReviewSaveEvidence(args.date, args.sources, args.rows)
+  ),
+  defineTool(
+    "time_review__stage_day",
+    (args) => timeReviewStageDay(args.date, args.token, args.blocks)
+  ),
+  defineTool("time_review__read_day", (args) => timeReviewReadDay(args.date))
 ];
 var server = dispatchFrom(buildTimekeepingToolDefinitions, tools);
 function dispatchTimekeepingTool(name, rawArgs) {

@@ -85,6 +85,9 @@ export function valueSha256(value: string): string {
  * review_date__* tools write them, so a claim cannot be bypassed through the generic tools. */
 export const REVIEW_DATE_NAMESPACE = "item";
 export const REVIEW_DATE_PREFIX = "review_date:";
+/** Day-evidence and block records (time-review/) live under these prefixes in namespace `item`.
+ * Only the time_review__* tools write them, so a reviewer cannot save a block with its own flags. */
+export const TIME_REVIEW_PREFIXES = ["day_evidence:", "block:"] as const;
 /** Namespaces where a save must name what it read: two runs share these records. */
 const CONDITIONAL_NAMESPACES = new Set(["bill", "item"]);
 
@@ -141,6 +144,12 @@ export function timePipelineSet(
   env: NodeJS.ProcessEnv = process.env
 ): { ok: true; sha256: string } {
   if (namespace === REVIEW_DATE_NAMESPACE && key.startsWith(REVIEW_DATE_PREFIX)) throw protectedKeyError("time_pipeline__set", [key]);
+  if (namespace === REVIEW_DATE_NAMESPACE && TIME_REVIEW_PREFIXES.some((prefix) => key.startsWith(prefix))) {
+    throw new DataServerError(
+      `time_pipeline__set: ${key} is a day-evidence or block record, which only the time_review__* tools write; nothing was written`,
+      "protected_key"
+    );
+  }
   const { expect_sha256, expect_absent } = expectation;
   if (expect_sha256 !== undefined && expect_absent !== undefined) {
     throw new ValidationError("time_pipeline__set takes expect_sha256 or expect_absent, not both");

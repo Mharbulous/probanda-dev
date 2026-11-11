@@ -1,5 +1,6 @@
 // Dispatch for the billing plugin's `timekeeping` server (src/timekeeping-index.ts): the
-// time_pipeline__* store tools and the review_date__* records (issue 284), and nothing else.
+// time_pipeline__* store tools, the review_date__* records (issue 284) and the time_review__* day
+// records (build plan slice 5), and nothing else.
 // Kept apart from dispatch.ts so the `timekeeping` bundle holds only the modules these tools use.
 import type { BulkApplyExpect } from "./kv/backend.js";
 import { buildTimekeepingToolDefinitions } from "./schema-gen.js";
@@ -21,6 +22,7 @@ import {
   reviewDateRenew,
   reviewDateStatus,
 } from "./time-pipeline/review-date.js";
+import { timeReviewReadDay, timeReviewSaveEvidence, timeReviewStageDay } from "./time-review/tools.js";
 
 type DateToken = { date: string; token: string };
 
@@ -51,6 +53,14 @@ const tools = [
   defineTool<{ path: string; judged_by: string; dry_run: boolean }>("review_date__import_file", (args) =>
     reviewDateImportFile(args.path, args.judged_by, args.dry_run)
   ),
+
+  defineTool<{ date: string; sources: unknown[]; rows: unknown[] }>("time_review__save_evidence", (args) =>
+    timeReviewSaveEvidence(args.date, args.sources, args.rows)
+  ),
+  defineTool<{ date: string; token: string; blocks: unknown[] }>("time_review__stage_day", (args) =>
+    timeReviewStageDay(args.date, args.token, args.blocks)
+  ),
+  defineTool<{ date: string }>("time_review__read_day", (args) => timeReviewReadDay(args.date)),
 ];
 
 const server = dispatchFrom(buildTimekeepingToolDefinitions, tools);

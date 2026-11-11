@@ -2,6 +2,7 @@ import { practiceToolDefinitions } from "./schema/practice.js";
 import { caseDataToolDefinitions } from "./schema/case-data.js";
 import { timePipelineToolDefinitions } from "./schema/time-pipeline.js";
 import { reviewDateToolDefinitions } from "./schema/review-date.js";
+import { timeReviewToolDefinitions } from "./schema/time-review.js";
 import { looseThreadsToolDefinitions } from "./schema/loose-threads.js";
 import { timecampingToolDefinitions } from "./schema/timecamping.js";
 import { fileToolDefinitions } from "./schema/file.js";
@@ -79,5 +80,6 @@ export function buildTimekeepingToolDefinitions(): ToolDefinition[] {
   return [
     ...timePipelineToolDefinitions(),
     ...reviewDateToolDefinitions(),
+    ...timeReviewToolDefinitions(),
   ];
 }

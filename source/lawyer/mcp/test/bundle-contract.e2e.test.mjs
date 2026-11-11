@@ -234,6 +234,10 @@ test("the dist-only timekeeping bundle completes an MCP handshake and registers 
   await withDistOnlyServer({ ...process.env, COCLERK_REPO_ROOT: REPO_ROOT }, async (client) => {
     const { tools } = await client.listTools();
     assert.equal(tools.length, buildTimekeepingToolDefinitions().length);
+    const names = tools.map((tool) => tool.name);
+    for (const name of ["time_review__save_evidence", "time_review__stage_day", "time_review__read_day"]) {
+      assert.ok(names.includes(name), `${name} is listed`);
+    }
   }, TIMEKEEPING_BUNDLE);
 });
 
