@@ -20,7 +20,7 @@ PLUGINS = ("lawyer", "researcher", "litigator", "solicitor", "file-manager", "bi
 BUNDLES = {"lawyer": ("contacts-calendars-email-mcp/dist/contacts-calendars-email-mcp.js", "mcp/dist/litigation-mcp.js"),
            "researcher": ("canlii-mcp/dist/canlii-mcp.js", "commons-mcp/dist/legal-commons-mcp.js"),
            "file-manager": ("files-mcp/dist/file-manager-mcp.js",),
-           "billing": ("timecamp-mcp/dist/timecamp-mcp.js",)}
+           "billing": ("timecamp-mcp/dist/timecamp-mcp.js", "timekeeping-mcp/dist/timekeeping-mcp.js")}
 
 
 def build(*args):
