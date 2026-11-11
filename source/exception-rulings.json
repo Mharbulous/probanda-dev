@@ -70,5 +70,22 @@
         "content_sha256": "b81ae95f8ca996a12de3c6d2cd3d49b275ddce8faa4e7a28fec1ee55bce2055b"
       }
     ]
+  }, 
+  {
+    "store": "time-pipeline",
+    "hop": "timekeeping bundle (issue 284)",
+    "date": "2026-11-10",
+    "ruling": "Brahm, 2026-11-10: the kv_store table and index lines of source/lawyer/mcp/src/kv/backend.ts may also ship in billing's timekeeping bundle (ticket 278).",
+    "problems": [
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "39fd05b8f79036432a7d0510149b662b3ef9ed8b81f195a758a28be6ac280be1"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "2c10e1159637d61cc3169aabc7ff197543c3271c513b2bf1c59d046310658637"
+      }
+    ]
   }
+  
 ]
