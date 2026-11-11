@@ -279,6 +279,8 @@ Slice 10 built: billing 0.4.8, commit 718ca5e7.
 - **Practitioner.** After release, runs the next bill through the page.
 - **Model.** Sonnet.
 
+Slice 11 built: billing 0.5.0, commit b6c39e3c.
+
 ### Slice 12: re-check on request
 
 - **Changes.** For one date or a whole bill, a fresh day reviewer judges in compare mode. Its result is saved as a `day_recheck` record. Where it differs from the stored block, the block is flagged. No stored judgment is overwritten.
