@@ -143,6 +143,7 @@ Stop and ask the practitioner before: adding or changing a ruling in `source/lay
 - **Tests.** The script's unit test on a synthetic transcript.
 - **Bump.** None.
 - **Practitioner.** Answers question 1, then runs the bill. This slice touches real client data, so it starts only on the practitioner's word.
+- **Run under way.** The practitioner started the baseline run on 2026-11-10 with `/billing:bill-client` (billing 0.3.0), the session running on Sonnet 5.5. The matter is the practitioner's choice and is recorded outside this repository. The stores were not backed up before the run started. Slice 13 runs its orchestrator on Sonnet 5.5 too, so the model is the same in both measurements.
 - **Model.** Sonnet writes the script. Haiku runs it.
 
 ### Slice 2: rename `/bill-client` to `/bill`
