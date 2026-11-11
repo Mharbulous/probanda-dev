@@ -143,7 +143,7 @@ Stop and ask the practitioner before: adding or changing a ruling in `source/lay
 - **Tests.** The script's unit test on a synthetic transcript.
 - **Bump.** None.
 - **Practitioner.** Answers question 1, then runs the bill. This slice touches real client data, so it starts only on the practitioner's word.
-- **Run under way.** The practitioner started the baseline run on 2026-11-10 with `/billing:bill-client` (billing 0.3.0), the session running on Sonnet 5.5. The matter is the practitioner's choice and is recorded outside this repository. The stores were not backed up before the run started. Slice 13 runs its orchestrator on Sonnet 5.5 too, so the model is the same in both measurements.
+- **Run under way.** The practitioner started the baseline run on 2026-11-10 with `/billing:bill-client` (billing 0.3.0), the session running on Sonnet 5.5. The matter is the practitioner's choice and is recorded outside this repository. The first part ran in Cowork, refreshed the candidate list (55 dates: 23 Strong, 8 Medium, 24 Weak) and stopped at Step 6.2, before any date was judged, as Cowork does today. Both stores were then copied, byte for byte, into a `baseline-2026-11-10` folder beside them, after the list was refreshed and before any date was judged or any TimeCamp entry corrected. Slice 13 replays from that copy. The measured run is the continuation in a Code-tab session on the PC, from its first message to the marker. Slice 13 runs its orchestrator on Sonnet 5.5 too, so the model is the same in both measurements.
 - **Model.** Sonnet writes the script. Haiku runs it.
 
 ### Slice 2: rename `/bill-client` to `/bill`
