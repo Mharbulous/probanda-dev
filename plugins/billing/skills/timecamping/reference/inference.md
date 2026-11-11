@@ -53,7 +53,8 @@ carries):
 - **P6 — idle is data, not an activity**: zero input / an unchanged screen
   is a statement about the *computer*, never about the lawyer, who may be
   in a meeting, on a call, or in court. Disposition is always **t.b.d.**,
-  flagged for the practitioner — never silently included, excluded, or
+  shown to the practitioner with the date's coverage report and never asked
+  from memory beyond show-me rule 4 — never silently included, excluded, or
   labeled non-work. **t.b.d. is the default, not the terminus**: where a
   *different* source positively accounts for the stretch — a softphone window
   opening at its start, a booking whose subject the surrounding direct evidence

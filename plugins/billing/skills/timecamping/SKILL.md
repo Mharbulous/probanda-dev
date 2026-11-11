@@ -117,13 +117,9 @@ it, and only the script's one-line summary comes back. Follow
 `reference/sources.md` for the seven sources, the procedure and every
 source's exit statuses.
 
-**Name every `skipped` source in the run summary**, one line each with the
-reason of the exit taken, kept apart from any counts — for example
-`Google Calendar: skipped — disabled in the time-tracking registry`, or
-`Telus calls: skipped — no archive covers this date`. A registry-disabled `timecamp`
-entry yields two lines, one per TimeCamp source. These lines belong only to
-the end-of-run summary, never to this step's output, so a whole-day skip is
-visible without showing any per-source view early.
+**The end-of-run summary carries each date's coverage report** (Step 6),
+never this step's output, so a whole-day skip is visible without showing any
+per-source view early.
 
 **Produce no narrative output beyond fetch bookkeeping in this step** — no
 table of fetched rows, no per-source summary of what was found. This
@@ -228,14 +224,16 @@ against this grid:
 | Any conflict with no covering presumption | **Ceremony.** Disbelieving a source is always a hypothesis needing ratification. |
 | A conflict an approved presumption already covers (e.g. the same keyword-guess mistake happens every week) | **Silent commit** under the presumption. |
 | A conflict resolvable only by indirect evidence | **Ceremony, always** — same rule as the indirect-only row. |
-| No data from any source for the block | **One light elicitation** ("do you remember what you were doing?"); failing recall, write off as unidentifiable — no standing queue. |
+| No data from any source for the block | **Ceremony.** The block is **t.b.d.** (P6) until the practitioner answers, and is never written off without that answer. The question asks only for a decision on the data shown (show-me rule 4). |
 
 Silent commits are never hidden — they're still listed in the run summary,
 just without a blocking question. Each ceremony, a presumption offer
-included, is one decision that `Skill (show-me)` presents, with the block's
-screenshots and the blocks around it. A block with no screen captures shows
-Step 4's lines for it and the blocks around it, verbatim in a code block, and
-discloses the missing captures as a gap.
+included, is one decision that `Skill (show-me)` presents, opening with the
+date's coverage report and showing the block's screenshots and the blocks
+around it. Print the report once per date, after this run's Step 3 gate
+passes, with `/timecamping-data`'s `coverage_report.py`. A block with no
+screen captures shows Step 4's lines for it and the blocks around it,
+verbatim in a code block.
 
 ### Step 7: Write-back — dry-run by default
 
@@ -305,7 +303,7 @@ Given a matter's candidate-dates file, run Steps 0 to 7 once per date, in this o
 - **The run never appends to `judged-dates.jsonl`.** A session that loses its token (a crash) cannot renew, so its claim lapses within 60 minutes and the date becomes claimable again.
 - **No duplicate proposals.** Before writing a date's proposals on a re-run, read its live proposals. Keep one that has the same span and matter, whatever has been answered about it.
 - **Calls in window titles.** For each match in `<matter-data folder>\triage-billing-dates\phone-matches.json` on this date, save a `call_window` row to `/timecamping-data`'s evidence store and cite it in the block's evidence chain. A match off the matter's task or with no entry is direct evidence of a call on the matter: propose it as a block on the matter, for a ceremony. A title that is only a number names no matter by itself, so the service list is what ties it.
-- **What the practitioner says.** Save a statement about a date or matter that the evidence does not hold ("I know I called the client that day") verbatim as a `statement` row, with when it was said, and cite it. Save a ruling that a window pattern is never billable as a `marker` row: the pattern, the ruling verbatim and when. A pattern holds no client content.
+- **What the practitioner rules.** Save a ruling that a window pattern is never billable as a `marker` row: the pattern, the ruling verbatim and when. A pattern holds no client content.
 - **At the end,** return the Possible unbilled time list across all the dates, the "already judged" list, and each date left without a mark and why.
 
 ### Parallel mode

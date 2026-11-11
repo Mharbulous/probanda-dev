@@ -78,15 +78,11 @@ Show everything bearing on the decision, not only the narrowest window judged su
 
 When several files or passages are presented, the cited pinpoint comes first and the surrounding context second, each as its own file, with captions saying which is which (e.g. "1 cited paras 44-45", "2 context paras 42 and 47").
 
-### 4. Disclose missing data explicitly, per source
+### 4. Open with what is present, missing and unknowable
 
-When something that would help the decision isn't available, say so plainly: what's missing, from which specific source or system, and why. "Data unavailable" is not a disclosure. Name the actual gap:
+Before the question, state per source what was read, what is missing with its verified reason (rule 5), and what no source records. Never "data unavailable" or a bare "no screenshots". Where the calling skill has a script that prints this report, paste its output and write none of it by hand.
 
-```text
-Missing: [specific data/evidence]
-Source: [the specific system/file/table it would come from]
-Why unavailable: [the actual, verified reason — see rule 5]
-```
+A gap is never a reason to ask what the practitioner remembers of an event whose local date is more than 60 hours before now. Ask only what the presented data shows, and offer no "don't remember" answer. Within 60 hours a memory question says three things: it asks for memory without reminders, an unclear memory is not to be claimed, and the data can be shown instead.
 
 ### 5. Verify an absence firsthand — never inherit a missing-data claim
 
@@ -164,15 +160,15 @@ The file's text goes to the gatekeeper write as read from the file, never retype
 
 **Bad** (what actually happened in ticket #420): a table of OCR text summarizing two captures that fell exactly inside an 18-second window, asking the user to categorize the block — no images shown, no context outside the window, no verification that those were the only captures available.
 
-**Good**: send the two screenshot images inside the window under review first, captioned "1 under review: 14:02:03 and 14:02:21", then the captures immediately before and after it, captioned "2 context: the captures before and after the block". Disclose the gap in plain text before the question:
+**Good**: send the two screenshot images inside the window under review first, captioned "1 under review: 14:02:03 and 14:02:21", then the captures immediately before and after it, captioned "2 context: the captures before and after the block". State the coverage in plain text before the question:
 
 ```text
-Missing: any capture between 14:01:40 and 14:02:03
-Source: the capture store
-Why unavailable: checked the capture store directly this session, and nothing is there
+Present: the capture store, read this session, 4 captures between 14:01:00 and 14:03:00
+Missing: any capture between 14:01:40 and 14:02:03. Checked the capture store directly this session, and nothing is there
+Unknowable: what was on screen in that gap
 ```
 
-Then ask one plain-text question and end the turn: "This block runs 14:02:03–14:02:21. Category A or Category B?" No widget, no text after it, and the gap was disclosed before the question, not discovered by the user asking why something is missing.
+Then ask one plain-text question and end the turn: "This block runs 14:02:03–14:02:21. Category A or Category B?" No widget, no text after it, and the coverage was stated before the question, not discovered by the user asking why something is missing.
 
 ## Related patterns
 

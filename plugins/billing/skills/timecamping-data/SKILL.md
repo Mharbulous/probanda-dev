@@ -82,10 +82,10 @@ SELECT p.id AS proposal_id, p.status, p.proposed_matter_ref, p.proposed_descript
  ORDER BY p.start_ts;
 ```
 
-**The coverage read** gives `tie_out.py` the source log for a bill's dates. Pass this as `sql` with the same `params`, and write the rows to the file it is given as they come:
+**The coverage read** is the source log for a range of dates. Pass this as `sql` with the same `params`, and write the rows to a file as they come. `tie_out.py` takes the file for a bill's dates, and `python <this skill's scripts/coverage_report.py> --coverage <file> --date <D> [<D> ...]` prints each date's coverage report from it: the sources read, the sources missing with their recorded reason, and what no source records.
 
 ```sql
-SELECT source_name, local_date, status, error_detail, fetched_at FROM source_fetch_log WHERE local_date BETWEEN ? AND ?;
+SELECT source_name, local_date, status, row_count, error_detail, fetched_at FROM source_fetch_log WHERE local_date BETWEEN ? AND ?;
 ```
 
 ## The evidence store
@@ -99,7 +99,6 @@ Evidence with no table here lives in the `evidence` namespace of the time-pipeli
 | `filing` | `/triage-billing-dates` | Package id, submitted-by, submitted-at, document list, fees, receipt ids, file hash |
 | `received_mail` | `/triage-billing-dates` | Message-ID, received time, first evidence of opening, reply or forward time |
 | `call_window` | `/timecamping` | App, title digits, date, start, end, seconds, entry id, task id; an inferred call |
-| `statement` | `/timecamping` | The practitioner's words, when said, the date and matter they speak to |
 | `marker` | `/timecamping`, `/vet-billable-time` | The pattern, the ruling verbatim and when. No client content |
 | `estimate` | `/vet-billable-time` | Its basis rows, minutes, method, reason, who approved it and when |
 
