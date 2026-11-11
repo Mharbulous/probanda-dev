@@ -6,7 +6,7 @@ dependencies:
   - show-me           # every line presented for the practitioner's decision
 ---
 
-<!-- billing v0.4.8 -->
+<!-- billing v0.5.0 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). `${CLAUDE_SKILL_DIR}` is the directory holding this SKILL.md, even where it shows unsubstituted: never search for it or guess. Read references and shared files from there with the Read tool, a whole file or an offset and limit, never with a shell command, the litigation data server's skill-source tool or a folder-access request; scripts and templates the text declares are executed and read from there too. Before each fresh read (a file not already in context), list only `${CLAUDE_SKILL_DIR}/../../..` (the folder holding this plugin's folder). If it holds this plugin's folder name, with any `~g<N>` suffix removed, plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if `${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session: take the highest `~g<N>` copy and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, authors or requests a screenshot of one, but may present one to a human user to view, staging it first where presenting needs that, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -20,11 +20,20 @@ Turn a matter's TimeCamp entries since the last bill into lines the practitioner
 
 `scripts/tie_out.py` does all the billing arithmetic and every check. Never add, round or write off time yourself, and never state a total it did not print. Its docstring is the contract for its inputs. Run it with the host Python (`python`; if that is the WindowsApps stub, the interpreter `COCLERK_PYTHON` names). A failing check stops this skill: tell the practitioner what failed, in plain words, and fix the input only with their answer.
 
-**Inputs:** the matter, its candidate-dates file, the last billed date, the retainer PDF, and the judged dates file `/bill` exports from the review-date records at `<matter-data folder>\timecamping\judged-dates.export.jsonl`.
+**Inputs:** the matter, its candidate-dates file, the last billed date, the retainer PDF, and the judged dates file `/bill` exports from the review-date records at `<matter-data folder>\timecamping\judged-dates.export.jsonl`. When `/bill` also passes a blocks file (`<matter-data folder>\vet-billable-time\blocks.json`, from `time_review__export_blocks`), the days were judged on the review page: follow "From reviewed blocks" below instead of Steps 3, 5 and 6.
 
 Working files go in `<matter-data folder>\vet-billable-time\`, and the two reports in the matter's draft folder's `BILLING` subfolder, resolved as `shared/workspace-output-rule.md` says. Create only the `BILLING` leaf if it is absent.
 
 Connector tools are named without their prefix. Call each under whichever of `mcp__plugin_billing_timecamp__<name>` and `mcp__remote-devices__plugin_billing_timecamp__<name>` this host grants. This skill never calls `update_entry`: a change of matter or note goes back to `/timecamping`.
+
+## From reviewed blocks
+
+The practitioner has already answered every flagged block on the review page, so no line is shown again. Run Steps 1 and 2, then Step 4 for rates, initials and firm rules. Then:
+
+1. Run `scripts/blocks_export.py export` with `--blocks` the blocks file, `--entries` and each `--late-entries` file from Step 1, `--matter`, `--user` the practitioner's TimeCamp name, `--people` a file holding the Step 4 people, `--candidates` the candidate export, `--decided-by` the practitioner and `--out` `vetted.json` in the working folder. Its docstring is the contract. It refuses, writing nothing, while a day is not clear, an entry has no block, or a block of the matter rests on no entry and states no estimate. Report each problem it names in plain words, send the practitioner back to the page for a flagged block, and go no further. Never edit `vetted.json` to get past it.
+2. Add `gaps` the source log shows, then do Steps 7 to 9 as written. A non-billable window the page did not take off stays billed: the page, not this skill, rules on it.
+
+Every line and estimate carries the ids of its blocks, `tie_out.py` copies them to `line_map.json`, and `scripts/blocks_export.py lookup` names the blocks behind an invoice line, each as the page address fragment `#<block id>` that opens it.
 
 ## Steps
 
