@@ -264,7 +264,7 @@ Stop and ask the practitioner before: adding or changing a ruling in `source/lay
 
 ### Slice 13: measure again and prove the cheap-model run
 
-- **Changes.** None to source. Replay the slice 1 matter and period on the new build with `scripts/measure_bill_run.py`, by the method question 1 settles. Record the numbers beside the baseline. The run uses Sonnet and Haiku for every step but the day reviewer, and the record states whether a stronger model stepped in.
+- **Changes.** None to source. Replay the slice 1 matter and period on the new build with `scripts/measure_bill_run.py`, as a replay on restored copies of the two stores with TimeCamp writes off (question 1, decided 2026-11-10). Record the numbers beside the baseline. The run uses Sonnet and Haiku for every step but the day reviewer, and the record states whether a stronger model stepped in.
 - **Tests.** Criterion 12: fewer tokens than the baseline. Criterion 14: fewer minutes to a reviewable page. Criterion 20: the recorded run completes on those models.
 - **Bump.** None.
 - **Practitioner.** Runs the review on the page. This slice touches real client data, so it starts only on the practitioner's word.
@@ -287,7 +287,7 @@ Assumed, to be checked in the slice named: that the listener can decrypt a captu
 
 Each is asked alone, with a worked example of every option and a "do nothing" option, before the slice that needs it.
 
-1. **Baseline (slice 1).** Which matter and period is measured, and may the second measurement be a replay on restored copies of the two stores with TimeCamp writes off? Recommended: yes, a replay, because the real bill cannot be held unissued for the length of the build.
+1. **Baseline (slice 1).** Which matter and period is measured, and may the second measurement be a replay on restored copies of the two stores with TimeCamp writes off? Recommended: yes, a replay, because the real bill cannot be held unissued for the length of the build. **Decided 2026-11-10: a replay.** The matter and period are still to be named.
 2. **Tool family name (slice 5).** The new tools on the `timekeeping` server need a permanent family name. Recommended: `time_review__`.
 3. **Cowork (slice 7).** Recommended: the page is PC-only and `/bill` stops in Cowork where it stops today.
 4. **Claim length (slice 6).** Recommended: keep the built 60 minutes, not the spec's example of 2 hours.
