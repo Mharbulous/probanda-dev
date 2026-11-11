@@ -15,7 +15,7 @@ dependencies:
 |---|---|
 | Critical constraints | Always |
 | Scope | Deciding whether a request falls inside this skill |
-| Workflow | Every run: Steps 0 to 7. Step 2 reads `reference/sources.md`, Steps 4 and 5 `reference/inference.md`, Step 6's presumptions `reference/presumptions.md` |
+| Workflow | Every run: Steps 0 to 7. Step 2 reads `reference/sources.md`, Steps 4 and 5 and Step 6's no-data row `reference/inference.md`, Step 6's presumptions `reference/presumptions.md` |
 | Queries | The practitioner asks one of the listed questions. A Backfill reads `reference/backfill.md` |
 | A candidate list | `/bill` opened this skill, or the practitioner gave a matter's candidate-dates file |
 
@@ -220,7 +220,7 @@ against this grid:
 | Any conflict with no covering presumption | **Ceremony.** Disbelieving a source is always a hypothesis needing ratification. |
 | A conflict an approved presumption already covers (e.g. the same keyword-guess mistake happens every week) | **Silent commit** under the presumption. |
 | A conflict resolvable only by indirect evidence | **Ceremony, always** — same rule as the indirect-only row. |
-| No data from any source for the block | **Ceremony.** The block is **t.b.d.** (P6) until the practitioner answers, and is never written off without that answer. The question asks only for a decision on the data shown (show-me rule 4). |
+| No data from any source for the block | First the verified, narrowed search in `reference/inference.md`, Step 6: a no-data stretch. Anything it finds becomes a block on that evidence, ceremonied as its evidence requires. If it finds nothing: **Ceremony.** The block is **t.b.d.** (P6) until the practitioner answers, and is never written off without that answer. The question asks only for a decision on the data shown (show-me rule 4). |
 
 Silent commits are never hidden — they're still listed in the run summary,
 just without a blocking question. Each ceremony, a presumption offer

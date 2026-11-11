@@ -261,6 +261,46 @@ grouping, read the day's written-back and entered-by-hand spans through
 covered, so a re-run never flags it again, whether or not the re-fetched
 entries already show the hand-made entry.
 
+## Step 6: a no-data stretch
+
+A stretch with no line from any source may hide court, a site visit or a
+witness meeting, so it is searched before anything is concluded (the
+practitioner, 2026-11-11).
+
+1. **Verified, or not no data.** A stretch is no data only when every source
+   was read for the date: each is under PRESENT in the date's coverage
+   report. A source under MISSING (skipped, failed or not fetched) is not an
+   absence. Fetch it again through Step 2 if you can. While it stays MISSING,
+   the stretch is unread, never empty, and its ceremony names that source as
+   the reason the stretch is unknown.
+2. **Narrow by the day.** From Step 4's lines, take the files with any
+   activity that day, even a minute: a matter a line names or a TimeCamp
+   entry sits on. That is usually 3 or 4 files. Search only those, never the
+   whole practice.
+3. **Search those files** with `/triage-billing-dates` Phase 2's procedures,
+   limited to them and to these windows:
+   - *Calendars* (its Calendar bullet), for the date: court appearances and
+     appointments, including all-day events.
+   - *Mail, sent and received* (its Mail bullets, deduplicated, a truncated
+     search narrowed and run again), from 3 days before to 3 days after the
+     date: anything about a hearing, a site visit or a witness meeting.
+   - *Disbursements and receipts* (its Documents bullet, the receipts and
+     disbursements folders, dated the same way), and receipts in that mail,
+     for something at the stretch's time, such as courthouse parking.
+   Save each hit to the evidence store as Phase 3 of that skill saves a
+   row (`time_pipeline__set`, namespace `evidence`, key
+   `<family>:<native id>`), metadata only.
+4. **Something found** becomes a block resting on that evidence, cited in
+   its evidence chain. The evidence is indirect, so the block always takes a
+   ceremony, and the ceremony asks about the evidence shown, never about
+   memory (show-me rule 4: no memory question about an event more than 60
+   hours old).
+5. **Nothing found.** The stretch stays **t.b.d.** (P6), a ceremony on the
+   data shown, reported as SyncoPaid or TimeCamp not running because of a
+   technical glitch. It is never written off and never dropped without the
+   practitioner's answer (ruled by the practitioner, 2026-11-11). A stretch
+   left unread under item 1 is not reported as a glitch.
+
 ## Verifying against a fixture
 
 | Question | How to answer |
