@@ -288,6 +288,8 @@ Slice 11 built: billing 0.5.0, commit b6c39e3c.
 - **Bump.** `billing` patch.
 - **Model.** Sonnet.
 
+Slice 12 built: billing 0.5.1, commit b613d727.
+
 ### Slice 13: measure again and prove the cheap-model run
 
 - **Changes.** None to source. Replay the slice 1 matter and period on the new build with `scripts/measure_bill_run.py`, as a replay on restored copies of the two stores with TimeCamp writes off (question 1, decided 2026-11-10). Record the numbers beside the baseline. The run uses Sonnet and Haiku for every step but the day reviewer, and the record states whether a stronger model stepped in.
