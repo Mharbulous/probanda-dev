@@ -11,6 +11,7 @@ import {
   reviewDateStageGate,
 } from "../time-pipeline/review-date.js";
 import { dayIsClear, recordTimecamp } from "./act.js";
+import { acceptEntry, normalizeEntry } from "./fingerprint.js";
 import { captureId } from "./page.js";
 import { checkBillBasis, checkMatterBasis, decideFlags, MATTER_BASIS } from "./flags.js";
 import {
@@ -245,14 +246,19 @@ export function timeReviewRecordTimecamp(
   blockIn: unknown,
   statusIn: unknown,
   messageIn: unknown,
-  seams: ReviewDateSeams = {}
+  seams: ReviewDateSeams = {},
+  entryIn?: unknown
 ): { block: string; timecamp: BlockRecord["timecamp"] } {
   const tool = "time_review__record_timecamp";
   if (typeof blockIn !== "string" || !BLOCK_ID.test(blockIn)) throw new ValidationError(`${tool}: block must be a block id as YYYY-MM-DD:nnn`);
   if (typeof statusIn !== "string") throw new ValidationError(`${tool}: status must be text`);
   if (messageIn !== undefined && typeof messageIn !== "string") throw new ValidationError(`${tool}: message must be text`);
   try {
+    if (entryIn !== undefined) normalizeEntry(`${tool} entry`, entryIn);
     const saved = recordTimecamp(blockIn, statusIn, messageIn, seams);
+    // The entry as read back after the write is the practitioner's own change: the day's
+    // fingerprint takes it, so the next resume does not report it as a change.
+    if (entryIn !== undefined && (statusIn === "saved" || statusIn === "unchanged")) acceptEntry(blockIn.slice(0, 10), entryIn, seams);
     return { block: blockIn, timecamp: saved.timecamp };
   } catch (err) {
     if (err instanceof ValidationError) throw new ValidationError(`${tool}: ${err.message}`);

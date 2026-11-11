@@ -13,6 +13,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 import { DataServerError, ValidationError } from "../errors.js";
+import { fingerprintForJudge } from "../time-review/fingerprint.js";
 import {
   REVIEW_DATE_NAMESPACE,
   REVIEW_DATE_PREFIX,
@@ -162,8 +163,11 @@ export function reviewDateJudge(
     const claim = ownClaim(current, token);
     if (!claim || !current) return { result: { status: "claim_lost", date } };
     const judged_at = nowOf(seams).toISOString();
+    // The day's TimeCamp entries as judged, saved as one field of this record so an older copy
+    // reads and rewrites the record unchanged (time_review__compare_day reads it on resume).
+    const fingerprint = fingerprintForJudge(date, seams);
     return {
-      write: { ...current, judged_at, judged_by: claim.holder, claim: null },
+      write: { ...current, judged_at, judged_by: claim.holder, claim: null, ...(fingerprint ? { fingerprint } : {}) },
       result: { status: "judged", date, judged_at, judged_by: claim.holder },
     };
   });

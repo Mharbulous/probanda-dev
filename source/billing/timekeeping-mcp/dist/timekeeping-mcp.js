@@ -1,4 +1,4 @@
-// build-stamp: 7458ea9b9be6
+// build-stamp: 9035a7c84e98
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15679,6 +15679,13 @@ var TERMINAL_STATUSES = ["fetched", "empty", "skipped"];
 var ROUTE2 = " Only the /time-pipeline-data skill may call this tool -- see time_pipeline__get for how a caller from another skill's workflow satisfies that.";
 function timeReviewToolDefinitions() {
   const SOURCE = { type: "string", enum: [...GATE_SOURCES] };
+  const ENTRY = {
+    type: "object",
+    description: "A TimeCamp entry as read back: id, start, end, task and note.",
+    properties: { id: { type: "string" }, start: { type: "string" }, end: { type: "string" }, task: { type: "string" }, note: { type: "string" } },
+    required: ["id"],
+    additionalProperties: false
+  };
   return [
     {
       name: "time_review__save_evidence",
@@ -15767,15 +15774,26 @@ function timeReviewToolDefinitions() {
     },
     {
       name: "time_review__record_timecamp",
-      description: "Save, on one block, how its write to TimeCamp went after the practitioner approved or corrected it on the page: `saved` (written and the read-back matched), `unchanged` (TimeCamp already held the block's matter and description), `staff_left_alone` (a staff entry: its TimeCamp note is the staff member's and is never changed) or `error` (the write failed or the read-back did not match; `message` is required and shows on the card). Refused for a block no click has approved or corrected. It cannot approve a block, change its state or edit its fields: only a click on the page does that." + ROUTE2,
+      description: "Save, on one block, how its write to TimeCamp went after the practitioner approved or corrected it on the page: `saved` (written and the read-back matched), `unchanged` (TimeCamp already held the block's matter and description), `staff_left_alone` (a staff entry: its TimeCamp note is the staff member's and is never changed) or `error` (the write failed or the read-back did not match; `message` is required and shows on the card). Refused for a block no click has approved or corrected. It cannot approve a block, change its state or edit its fields: only a click on the page does that. After a `saved` or `unchanged` write, pass `entry`, the TimeCamp entry as read back ({ id, start, end, task, note }): the day's fingerprint takes it, so the practitioner's own correction is not reported as a change by time_review__compare_day." + ROUTE2,
       inputSchema: {
         type: "object",
         properties: {
           block: { type: "string" },
           status: { type: "string", enum: ["saved", "unchanged", "staff_left_alone", "error"] },
-          message: { type: "string" }
+          message: { type: "string" },
+          entry: ENTRY
         },
         required: ["block", "status"],
+        additionalProperties: false
+      }
+    },
+    {
+      name: "time_review__compare_day",
+      description: 'On resume, compare one judged day\'s current TimeCamp entries with the fingerprint saved when the day was judged. Pass `entries`: every TimeCamp entry the day now has, each { id, start, end, task, note }. A changed or removed entry sends the block that cites it back to flagged (its approval is kept on the block as superseded_review), and an added entry, or a changed or removed one no block cites, adds a flagged block; other blocks keep their approvals. The current entries then become the fingerprint, so a second compare reports nothing new. Returns { status: "changed", changed, added, removed, flagged, new_blocks, clear: false } (the day is no longer clear until each is judged again on the page), { status: "unchanged" }, { status: "not_judged" } or { status: "no_fingerprint" } (judged before fingerprints were saved: nothing is compared or changed). Writes no entry to TimeCamp.' + ROUTE2,
+      inputSchema: {
+        type: "object",
+        properties: { date: { type: "string" }, entries: { type: "array", items: ENTRY } },
+        required: ["date", "entries"],
         additionalProperties: false
       }
     },
@@ -16683,6 +16701,192 @@ function timePipelineExport(namespace, prefix, path, env = process.env) {
 import { randomUUID } from "node:crypto";
 import { existsSync as existsSync4, mkdirSync as mkdirSync2, readFileSync as readFileSync2, writeFileSync as writeFileSync2 } from "node:fs";
 import { dirname, resolve } from "node:path";
+
+// src/time-review/fingerprint.ts
+import { createHash as createHash3 } from "node:crypto";
+
+// src/time-review/records.ts
+var NAMESPACE = REVIEW_DATE_NAMESPACE;
+var DAY_EVIDENCE_PREFIX = "day_evidence:";
+var BLOCK_PREFIX = "block:";
+var dayEvidenceKey = (date3) => DAY_EVIDENCE_PREFIX + date3;
+var blockId = (date3, index) => `${date3}:${String(index + 1).padStart(3, "0")}`;
+var blockKey = (id) => BLOCK_PREFIX + id;
+function envOf(seams) {
+  return seams.env ?? process.env;
+}
+function nowOf(seams) {
+  return seams.now ? seams.now() : /* @__PURE__ */ new Date();
+}
+function sourcesShort(record2) {
+  const done = new Set(
+    record2.sources.filter((s) => TERMINAL_STATUSES.includes(s.status)).map((s) => s.source)
+  );
+  return GATE_SOURCES.filter((source) => !done.has(source));
+}
+function readDayEvidence(date3, seams) {
+  const { value } = timePipelineGet(NAMESPACE, dayEvidenceKey(date3), envOf(seams));
+  return value === null ? null : JSON.parse(value);
+}
+function putRecord(tool, key, value, seams) {
+  const attempts = 5;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const current = timePipelineGet(NAMESPACE, key, envOf(seams));
+    const expectation = current.sha256 === null ? { expect_absent: true } : { expect_sha256: current.sha256 };
+    const reply = timePipelineWriteIf(NAMESPACE, key, JSON.stringify(value), expectation, envOf(seams));
+    if (!("stale" in reply)) return reply.sha256;
+  }
+  throw new DataServerError(`${tool}: ${key} changed ${attempts} times while this call was writing; try again`, "contended");
+}
+
+// src/time-review/fingerprint.ts
+var ENTRY_SOURCE = "timecamp_time_entries";
+var ATTEMPTS = 5;
+var ALIASES = {
+  id: ["id", "native_id", "entry_id"],
+  start: ["start", "start_ts", "start_time"],
+  end: ["end", "end_ts", "end_time"],
+  task: ["task", "timecamp_task_id", "task_id"],
+  note: ["note", "description"]
+};
+function pick2(row, field) {
+  for (const name of ALIASES[field]) {
+    const value = row[name];
+    if (value !== void 0 && value !== null) return String(value);
+  }
+  return "";
+}
+function normalizeEntry(label2, row) {
+  if (typeof row !== "object" || row === null || Array.isArray(row)) throw new ValidationError(`${label2} must be an object`);
+  const raw = row;
+  const entry = { id: pick2(raw, "id"), start: pick2(raw, "start"), end: pick2(raw, "end"), task: pick2(raw, "task"), note: pick2(raw, "note") };
+  if (entry.id === "") throw new ValidationError(`${label2}: an entry needs an id (id, native_id or entry_id)`);
+  return entry;
+}
+var canon = (e) => JSON.stringify([e.id, e.start, e.end, e.task, e.note]);
+function fingerprintOf(entries, takenAt) {
+  const sorted = [...entries].sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const sha256 = createHash3("sha256").update(sorted.map(canon).join("\n")).digest("hex");
+  return { taken_at: takenAt, sha256, entries: sorted };
+}
+function fingerprintOfEvidence(evidenceValue, takenAt) {
+  if (evidenceValue === null) return null;
+  const day = JSON.parse(evidenceValue);
+  const entries = day.rows.filter((r) => r.source === ENTRY_SOURCE).map((r, i) => normalizeEntry(`day_evidence row ${i}`, r));
+  return fingerprintOf(entries, takenAt);
+}
+function fingerprintForJudge(date3, seams) {
+  const { value } = timePipelineGet(NAMESPACE, dayEvidenceKey(date3), envOf(seams));
+  return fingerprintOfEvidence(value, nowOf(seams).toISOString());
+}
+var cites = (b, id) => b.evidence.some((e) => e.source === ENTRY_SOURCE && e.ref === id);
+function timeReviewCompareDay(dateIn, entriesIn, seams = {}) {
+  const tool = "time_review__compare_day";
+  const date3 = typeof dateIn === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateIn) ? dateIn : null;
+  if (date3 === null) throw new ValidationError(`${tool}: ${JSON.stringify(dateIn)} is not a date as YYYY-MM-DD`);
+  if (!Array.isArray(entriesIn)) throw new ValidationError(`${tool}: entries must be the day's current TimeCamp entries, a list`);
+  const current = /* @__PURE__ */ new Map();
+  entriesIn.forEach((raw, i) => {
+    const entry = normalizeEntry(`${tool} entries[${i}]`, raw);
+    if (current.has(entry.id)) throw new ValidationError(`${tool}: entry ${entry.id} is listed twice`);
+    current.set(entry.id, entry);
+  });
+  const env = envOf(seams);
+  const key = REVIEW_DATE_PREFIX + date3;
+  for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
+    const read2 = timePipelineGet(REVIEW_DATE_NAMESPACE, key, env);
+    if (read2.value === null) return { status: "not_judged", date: date3 };
+    const record2 = JSON.parse(read2.value);
+    if (!record2.judged_at) return { status: "not_judged", date: date3 };
+    const before = record2.fingerprint;
+    if (!before) return { status: "no_fingerprint", date: date3 };
+    const was = new Map(before.entries.map((e) => [e.id, e]));
+    const changed = [...current.values()].filter((e) => was.has(e.id) && canon(was.get(e.id)) !== canon(e)).map((e) => e.id);
+    const added = [...current.keys()].filter((id) => !was.has(id));
+    const removed = [...was.keys()].filter((id) => !current.has(id));
+    if (changed.length + added.length + removed.length === 0) return { status: "unchanged", date: date3 };
+    const listed = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, env).items;
+    const blocks = listed.map((item) => ({ block: JSON.parse(item.value), sha256: item.sha256 }));
+    const now = nowOf(seams).toISOString();
+    const writes = [];
+    const flagged = /* @__PURE__ */ new Set();
+    const reasons = /* @__PURE__ */ new Map();
+    for (const id of changed) reasons.set(id, "recheck:entry_changed");
+    for (const id of removed) reasons.set(id, "recheck:entry_removed");
+    const touched = /* @__PURE__ */ new Map();
+    const uncited = [];
+    for (const [id, reason] of reasons) {
+      const live = blocks.filter(({ block }) => block.state !== "merged" && block.state !== "split" && cites(block, id));
+      if (live.length === 0) uncited.push(id);
+      for (const { block } of live) {
+        const next2 = touched.get(block.id) ?? { ...block };
+        if (next2.review) {
+          next2.superseded_review = next2.review;
+          delete next2.review;
+          delete next2.timecamp;
+        }
+        next2.state = "flagged";
+        if (!next2.flags.includes(reason)) next2.flags = [...next2.flags, reason];
+        touched.set(block.id, next2);
+        flagged.add(block.id);
+      }
+    }
+    for (const block of touched.values()) writes.push({ op: "set", namespace: NAMESPACE, key: blockKey(block.id), value: JSON.stringify(block) });
+    let index = Math.max(0, ...blocks.map(({ block }) => Number(block.id.slice(date3.length + 1)) || 0));
+    const newBlocks = [];
+    const addNew = (entry, reason) => {
+      const matter = decideFlags("no_evidence", []);
+      const made = {
+        kind: "block",
+        id: blockId(date3, index),
+        date: date3,
+        start: entry.start || "unknown",
+        end: entry.end || "unknown",
+        matter: "Unassigned",
+        description: entry.note || `TimeCamp entry ${entry.id}`,
+        matter_basis: "no_evidence",
+        bill_basis: [],
+        flags: [...matter.flags, reason],
+        state: "flagged",
+        evidence: [{ source: ENTRY_SOURCE, ref: entry.id }],
+        links: [],
+        staged_at: now
+      };
+      index += 1;
+      newBlocks.push(made.id);
+      writes.push({ op: "set", namespace: NAMESPACE, key: blockKey(made.id), value: JSON.stringify(made) });
+    };
+    for (const id of added) addNew(current.get(id), "recheck:entry_added");
+    for (const id of uncited) addNew(current.get(id) ?? was.get(id), reasons.get(id));
+    const next = fingerprintOf([...current.values()], now);
+    writes.push({ op: "set", namespace: NAMESPACE, key, value: JSON.stringify({ ...record2, fingerprint: next }) });
+    const checks = [
+      { namespace: NAMESPACE, key, expect_sha256: read2.sha256 },
+      ...listed.map((item) => ({ namespace: NAMESPACE, key: item.key, expect_sha256: item.sha256 }))
+    ];
+    if ("stale" in timePipelineApplyIf(checks, writes, env)) continue;
+    return { status: "changed", date: date3, changed, added, removed, flagged: [...flagged], new_blocks: newBlocks, clear: false };
+  }
+  throw new DataServerError(`${tool}: ${date3} changed ${ATTEMPTS} times while this call was comparing; nothing was written. Try again`, "contended");
+}
+function acceptEntry(dateIn, entryIn, seams = {}) {
+  const entry = normalizeEntry("time_review__record_timecamp entry", entryIn);
+  const env = envOf(seams);
+  const key = REVIEW_DATE_PREFIX + dateIn;
+  for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
+    const read2 = timePipelineGet(REVIEW_DATE_NAMESPACE, key, env);
+    if (read2.value === null) return;
+    const record2 = JSON.parse(read2.value);
+    if (!record2.fingerprint) return;
+    const entries = [...record2.fingerprint.entries.filter((e) => e.id !== entry.id), entry];
+    const fingerprint = fingerprintOf(entries, record2.fingerprint.taken_at);
+    const reply = timePipelineWriteIf(REVIEW_DATE_NAMESPACE, key, JSON.stringify({ ...record2, fingerprint }), { expect_sha256: read2.sha256 }, env);
+    if (!("stale" in reply)) return;
+  }
+  throw new DataServerError(`time_review__record_timecamp: ${dateIn} changed ${ATTEMPTS} times while the entry was being accepted; try again`, "contended");
+}
+
+// src/time-pipeline/review-date.ts
 var CLAIM_MS = 60 * 60 * 1e3;
 var MAX_ATTEMPTS = 5;
 var DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -16692,14 +16896,14 @@ function checkDate(tool, date3) {
   }
   return date3;
 }
-function nowOf(seams) {
+function nowOf2(seams) {
   return seams.now ? seams.now() : /* @__PURE__ */ new Date();
 }
-function envOf(seams) {
+function envOf2(seams) {
   return seams.env ?? process.env;
 }
 function read(date3, seams) {
-  const { value, sha256 } = timePipelineGet(REVIEW_DATE_NAMESPACE, REVIEW_DATE_PREFIX + date3, envOf(seams));
+  const { value, sha256 } = timePipelineGet(REVIEW_DATE_NAMESPACE, REVIEW_DATE_PREFIX + date3, envOf2(seams));
   if (value === null || sha256 === null) return null;
   return { record: JSON.parse(value), sha256 };
 }
@@ -16715,7 +16919,7 @@ function change(tool, date3, seams, decide) {
     const { write, result } = decide(current?.record ?? null);
     if (write === void 0) return result;
     const expectation = current ? { expect_sha256: current.sha256 } : { expect_absent: true };
-    const reply = timePipelineWriteIf(REVIEW_DATE_NAMESPACE, REVIEW_DATE_PREFIX + date3, JSON.stringify(write), expectation, envOf(seams));
+    const reply = timePipelineWriteIf(REVIEW_DATE_NAMESPACE, REVIEW_DATE_PREFIX + date3, JSON.stringify(write), expectation, envOf2(seams));
     if (!("stale" in reply)) return result;
   }
   throw new DataServerError(`${tool}: ${date3} changed ${MAX_ATTEMPTS} times while this call was deciding; nothing was written. Try again`, "contended");
@@ -16724,7 +16928,7 @@ function reviewDateClaim(dateIn, holder, seams = {}) {
   const date3 = checkDate("review_date__claim", dateIn);
   if (holder.trim() === "") throw new ValidationError("review_date__claim: holder must name the bill or the run");
   return change("review_date__claim", date3, seams, (current) => {
-    const now = nowOf(seams);
+    const now = nowOf2(seams);
     if (current?.judged_at) return { result: { status: "judged", date: date3, judged_at: current.judged_at, judged_by: current.judged_by } };
     if (current && isLive(current.claim, now)) {
       return { result: { status: "held", date: date3, holder: current.claim.holder, expires_at: current.claim.expires_at } };
@@ -16750,7 +16954,7 @@ function reviewDateRenew(dateIn, token, seams = {}) {
   return change("review_date__renew", date3, seams, (current) => {
     const claim = ownClaim(current, token);
     if (!claim || !current) return { result: { status: "claim_lost", date: date3 } };
-    const expires_at = new Date(nowOf(seams).getTime() + CLAIM_MS).toISOString();
+    const expires_at = new Date(nowOf2(seams).getTime() + CLAIM_MS).toISOString();
     return { write: { ...current, claim: { ...claim, expires_at } }, result: { status: "renewed", date: date3, expires_at } };
   });
 }
@@ -16759,9 +16963,10 @@ function reviewDateJudge(dateIn, token, seams = {}) {
   return change("review_date__judge", date3, seams, (current) => {
     const claim = ownClaim(current, token);
     if (!claim || !current) return { result: { status: "claim_lost", date: date3 } };
-    const judged_at = nowOf(seams).toISOString();
+    const judged_at = nowOf2(seams).toISOString();
+    const fingerprint = fingerprintForJudge(date3, seams);
     return {
-      write: { ...current, judged_at, judged_by: claim.holder, claim: null },
+      write: { ...current, judged_at, judged_by: claim.holder, claim: null, ...fingerprint ? { fingerprint } : {} },
       result: { status: "judged", date: date3, judged_at, judged_by: claim.holder }
     };
   });
@@ -16782,7 +16987,7 @@ function reviewDateStatus(dates, seams = {}) {
   if (!Array.isArray(dates)) throw new ValidationError("review_date__status: dates must be a list of YYYY-MM-DD dates");
   const checked = dates.map((d) => checkDate("review_date__status", d));
   const records = judgedOrClaimed(seams);
-  const now = nowOf(seams);
+  const now = nowOf2(seams);
   return { dates: checked.map((date3) => statusOf(date3, records.get(date3) ?? null, now)) };
 }
 function reviewDateStageGate(dateIn, token, seams = {}) {
@@ -16791,7 +16996,7 @@ function reviewDateStageGate(dateIn, token, seams = {}) {
   const current = stored?.record ?? null;
   if (current?.judged_at) return { ok: false, status: "judged", judged_at: current.judged_at, judged_by: current.judged_by };
   if (ownClaim(current, token)) return { ok: true, record_sha256: stored?.sha256 ?? null };
-  if (current && isLive(current.claim, nowOf(seams))) {
+  if (current && isLive(current.claim, nowOf2(seams))) {
     return { ok: false, status: "held", holder: current.claim.holder, expires_at: current.claim.expires_at };
   }
   return { ok: false, status: "claim_lost" };
@@ -16801,7 +17006,7 @@ function reviewDateJudgment(date3, seams = {}) {
   return current?.judged_at ? { judged_at: current.judged_at, judged_by: current.judged_by } : null;
 }
 function judgedOrClaimed(seams) {
-  const { items } = timePipelineList(REVIEW_DATE_NAMESPACE, REVIEW_DATE_PREFIX, envOf(seams));
+  const { items } = timePipelineList(REVIEW_DATE_NAMESPACE, REVIEW_DATE_PREFIX, envOf2(seams));
   return new Map(items.map((item) => [item.key.slice(REVIEW_DATE_PREFIX.length), JSON.parse(item.value)]));
 }
 function reviewDateExport(fromIn, toIn, outPath, seams = {}) {
@@ -16842,7 +17047,7 @@ function reviewDateImportFile(path, judgedBy, dryRun, seams = {}) {
   for (const date3 of added) {
     const marked = change("review_date__import_file", date3, seams, (current) => {
       if (current?.judged_at) return { result: false };
-      const judged_at = marks.get(date3) ?? nowOf(seams).toISOString();
+      const judged_at = marks.get(date3) ?? nowOf2(seams).toISOString();
       return { write: { ...current ?? blank(date3), judged_at, judged_by: judgedBy, claim: null }, result: true };
     });
     if (marked) written.push(date3);
@@ -16851,46 +17056,12 @@ function reviewDateImportFile(path, judgedBy, dryRun, seams = {}) {
   return { dry_run: false, added: written, skipped: skipped.sort() };
 }
 
-// src/time-review/records.ts
-var NAMESPACE = REVIEW_DATE_NAMESPACE;
-var DAY_EVIDENCE_PREFIX = "day_evidence:";
-var BLOCK_PREFIX = "block:";
-var dayEvidenceKey = (date3) => DAY_EVIDENCE_PREFIX + date3;
-var blockId = (date3, index) => `${date3}:${String(index + 1).padStart(3, "0")}`;
-var blockKey = (id) => BLOCK_PREFIX + id;
-function envOf2(seams) {
-  return seams.env ?? process.env;
-}
-function nowOf2(seams) {
-  return seams.now ? seams.now() : /* @__PURE__ */ new Date();
-}
-function sourcesShort(record2) {
-  const done = new Set(
-    record2.sources.filter((s) => TERMINAL_STATUSES.includes(s.status)).map((s) => s.source)
-  );
-  return GATE_SOURCES.filter((source) => !done.has(source));
-}
-function readDayEvidence(date3, seams) {
-  const { value } = timePipelineGet(NAMESPACE, dayEvidenceKey(date3), envOf2(seams));
-  return value === null ? null : JSON.parse(value);
-}
-function putRecord(tool, key, value, seams) {
-  const attempts = 5;
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
-    const current = timePipelineGet(NAMESPACE, key, envOf2(seams));
-    const expectation = current.sha256 === null ? { expect_absent: true } : { expect_sha256: current.sha256 };
-    const reply = timePipelineWriteIf(NAMESPACE, key, JSON.stringify(value), expectation, envOf2(seams));
-    if (!("stale" in reply)) return reply.sha256;
-  }
-  throw new DataServerError(`${tool}: ${key} changed ${attempts} times while this call was writing; try again`, "contended");
-}
-
 // src/time-review/restructure.ts
 var ROLE_SPLIT_FROM = "split_from";
 var ROLE_MERGED_INTO = "merged_into";
 var FLAG_REDRAFT = "split:redraft_pending";
 var FLAG_MERGED = "merge:new_block";
-var ATTEMPTS = 5;
+var ATTEMPTS2 = 5;
 var SHOT = "syncopaid_captures";
 var ID_FIELDS = ["id", "native_id", "capture_id", "entry_id"];
 var TIME_FIELDS = ["captured_at", "native_id", "id"];
@@ -16910,8 +17081,8 @@ function unique(list) {
   return [...new Set(list)];
 }
 function commit(tool, date3, seams, plan) {
-  const env = envOf2(seams);
-  for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
+  const env = envOf(seams);
+  for (let attempt = 0; attempt < ATTEMPTS2; attempt += 1) {
     const items = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, env).items;
     const blocks = items.map((item) => JSON.parse(item.value));
     const { save, remove: remove2, result } = plan(blocks);
@@ -16926,7 +17097,7 @@ function commit(tool, date3, seams, plan) {
     ];
     if (!("stale" in timePipelineApplyIf(checks, writes, env))) return result;
   }
-  throw new DataServerError(`${tool}: ${date3} changed ${ATTEMPTS} times while this call was saving; nothing was written. Try again`, "contended");
+  throw new DataServerError(`${tool}: ${date3} changed ${ATTEMPTS2} times while this call was saving; nothing was written. Try again`, "contended");
 }
 function find(blocks, id) {
   const found = blocks.find((b) => b.id === id);
@@ -16989,7 +17160,7 @@ function splitBlock(idIn, captureIn, seams = {}) {
   const capture = captureIn.trim();
   const date3 = id.slice(0, 10);
   const day = readDayEvidence(date3, seams);
-  const at = nowOf2(seams).toISOString();
+  const at = nowOf(seams).toISOString();
   return commit("split", date3, seams, (blocks) => {
     const b = find(blocks, id);
     refuseIssued(b);
@@ -17058,7 +17229,7 @@ function redraftBlock(idIn, matterIn, descriptionIn, seams = {}) {
   };
   const matter = text3("matter", matterIn, MAX_SHORT);
   const description = text3("description", descriptionIn, MAX_TEXT);
-  const at = nowOf2(seams).toISOString();
+  const at = nowOf(seams).toISOString();
   return commit(tool, id.slice(0, 10), seams, (blocks) => {
     const b = find(blocks, id);
     if (b.redraft?.status !== "pending") throw new ValidationError(`${tool}: block ${id} has no redraft waiting`);
@@ -17081,7 +17252,7 @@ function mergeBlocks(idsIn, seams = {}) {
   if (ids.length < 2) throw new ValidationError("A merge needs two different blocks");
   const date3 = ids[0].slice(0, 10);
   if (ids.some((id) => id.slice(0, 10) !== date3)) throw new ValidationError("A merge joins blocks of one day only");
-  const at = nowOf2(seams).toISOString();
+  const at = nowOf(seams).toISOString();
   return commit("merge", date3, seams, (blocks) => {
     const picked = ids.map((id) => find(blocks, id));
     for (const b of picked) {
@@ -17161,7 +17332,7 @@ function markIssued(idsIn, invoiceIn, seams = {}) {
     throw new ValidationError(`${tool}: invoice must be the invoice number as text`);
   }
   const invoice_number = invoiceIn.trim();
-  const at = nowOf2(seams).toISOString();
+  const at = nowOf(seams).toISOString();
   for (const date3 of unique(ids.map((id) => id.slice(0, 10)))) {
     commit(tool, date3, seams, (blocks) => {
       const save = ids.filter((id) => id.startsWith(date3)).map((id) => {
@@ -17205,7 +17376,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "7458ea9b9be6";
+var BUILD_STAMP = false ? null : "9035a7c84e98";
 
 // src/local-page/links.ts
 import { mkdirSync as mkdirSync4, readdirSync as readdirSync4, readFileSync as readFileSync5, renameSync, statSync as statSync2, unlinkSync as unlinkSync3, writeFileSync as writeFileSync4 } from "node:fs";
@@ -17554,7 +17725,7 @@ async function waitFor(check, options) {
 var ACTOR = "practitioner";
 var ACTS = ["approve", "correct", "write_off"];
 var isAct = (value) => ACTS.includes(value);
-var ATTEMPTS2 = 5;
+var ATTEMPTS3 = 5;
 var MAX_TEXT2 = 2e3;
 var MAX_SHORT2 = 200;
 function text2(label2, value, max) {
@@ -17563,8 +17734,8 @@ function text2(label2, value, max) {
   return value.trim();
 }
 function change2(id, seams, edit) {
-  const env = envOf2(seams);
-  for (let attempt = 0; attempt < ATTEMPTS2; attempt += 1) {
+  const env = envOf(seams);
+  for (let attempt = 0; attempt < ATTEMPTS3; attempt += 1) {
     const read2 = timePipelineGet(NAMESPACE, blockKey(id), env);
     if (read2.value === null) throw new ValidationError(`${id} is not a block`);
     const current = JSON.parse(read2.value);
@@ -17575,10 +17746,10 @@ function change2(id, seams, edit) {
     const saved = timePipelineWriteIf(NAMESPACE, blockKey(id), JSON.stringify(next), { expect_sha256: read2.sha256 }, env);
     if (!("stale" in saved)) return next;
   }
-  throw new DataServerError(`block ${id} changed ${ATTEMPTS2} times while it was being saved; nothing was written. Try again`, "contended");
+  throw new DataServerError(`block ${id} changed ${ATTEMPTS3} times while it was being saved; nothing was written. Try again`, "contended");
 }
 function applyAct(act, id, fields, seams = {}) {
-  const at = nowOf2(seams).toISOString();
+  const at = nowOf(seams).toISOString();
   const review = (extra) => ({ act: "approved", by: ACTOR, at, ...extra });
   if (act === "write_off") {
     const reason = text2("A write-off reason", fields.reason, MAX_SHORT2);
@@ -17615,7 +17786,7 @@ function recordTimecamp(id, status, message, seams = {}) {
     throw new ValidationError("status error needs the message TimeCamp or the re-read gave");
   }
   if (message !== void 0 && message.length > MAX_TEXT2) throw new ValidationError(`message is longer than ${MAX_TEXT2} characters`);
-  const at = nowOf2(seams).toISOString();
+  const at = nowOf(seams).toISOString();
   return change2(id, seams, (b) => {
     if (b.review?.act !== "approved" && b.review?.act !== "corrected") {
       throw new ValidationError(`block ${id} has no approval or correction to write to TimeCamp`);
@@ -18043,7 +18214,7 @@ function timeReviewSaveEvidence(dateIn, sourcesIn, rowsIn, seams = {}) {
   });
   const judged = reviewDateJudgment(date3, seams);
   if (judged) return { status: "judged", date: date3, ...judged };
-  const record2 = { kind: "day_evidence", date: date3, saved_at: nowOf2(seams).toISOString(), sources, rows };
+  const record2 = { kind: "day_evidence", date: date3, saved_at: nowOf(seams).toISOString(), sources, rows };
   const sha256 = putRecord(tool, dayEvidenceKey(date3), record2, seams);
   const short = sourcesShort(record2);
   return { status: "saved", date: date3, sha256, complete: short.length === 0, short };
@@ -18089,7 +18260,7 @@ function timeReviewStageDay(dateIn, token, blocksIn, seams = {}) {
   if (!Array.isArray(blocksIn)) throw new ValidationError(`${tool}: blocks must be a list`);
   if (blocksIn.length > MAX_BLOCKS) throw new ValidationError(`${tool}: at most ${MAX_BLOCKS} blocks a day`);
   const checked = blocksIn.map((raw, i) => checkBlock(tool, i, raw));
-  const env = envOf2(seams);
+  const env = envOf(seams);
   for (let attempt = 0; attempt < STAGE_ATTEMPTS; attempt += 1) {
     const gate = reviewDateStageGate(date3, token, seams);
     if (!gate.ok) {
@@ -18100,7 +18271,7 @@ function timeReviewStageDay(dateIn, token, blocksIn, seams = {}) {
     if (read2.value === null) return { status: "evidence_missing", date: date3 };
     const short = sourcesShort(JSON.parse(read2.value));
     if (short.length > 0) return { status: "evidence_short", date: date3, short };
-    const staged_at = nowOf2(seams).toISOString();
+    const staged_at = nowOf(seams).toISOString();
     const written = checked.map((fields, i) => ({
       kind: "block",
       id: blockId(date3, i),
@@ -18128,7 +18299,7 @@ function timeReviewStageDay(dateIn, token, blocksIn, seams = {}) {
 }
 function timeReviewReadDay(dateIn, seams = {}) {
   const date3 = checkDate2("time_review__read_day", dateIn);
-  const env = envOf2(seams);
+  const env = envOf(seams);
   const { items } = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, env);
   const blocks = items.map((item) => JSON.parse(item.value));
   const evidence = readDayEvidence(date3, seams);
@@ -18144,13 +18315,15 @@ function timeReviewReadDay(dateIn, seams = {}) {
   }
   return { date: date3, clear: dayIsClear(date3, blocks, seams), evidence, blocks, readings };
 }
-function timeReviewRecordTimecamp(blockIn, statusIn, messageIn, seams = {}) {
+function timeReviewRecordTimecamp(blockIn, statusIn, messageIn, seams = {}, entryIn) {
   const tool = "time_review__record_timecamp";
   if (typeof blockIn !== "string" || !BLOCK_ID2.test(blockIn)) throw new ValidationError(`${tool}: block must be a block id as YYYY-MM-DD:nnn`);
   if (typeof statusIn !== "string") throw new ValidationError(`${tool}: status must be text`);
   if (messageIn !== void 0 && typeof messageIn !== "string") throw new ValidationError(`${tool}: message must be text`);
   try {
+    if (entryIn !== void 0) normalizeEntry(`${tool} entry`, entryIn);
     const saved = recordTimecamp(blockIn, statusIn, messageIn, seams);
+    if (entryIn !== void 0 && (statusIn === "saved" || statusIn === "unchanged")) acceptEntry(blockIn.slice(0, 10), entryIn, seams);
     return { block: blockIn, timecamp: saved.timecamp };
   } catch (err) {
     if (err instanceof ValidationError) throw new ValidationError(`${tool}: ${err.message}`);
@@ -18204,8 +18377,9 @@ var tools = [
   defineTool("time_review__wait_click", () => waitClick()),
   defineTool(
     "time_review__record_timecamp",
-    (args) => timeReviewRecordTimecamp(args.block, args.status, args.message)
+    (args) => timeReviewRecordTimecamp(args.block, args.status, args.message, {}, args.entry)
   ),
+  defineTool("time_review__compare_day", (args) => timeReviewCompareDay(args.date, args.entries)),
   defineTool("time_review__redraft", (args) => {
     const saved = redraftBlock(args.block, args.matter, args.description);
     return { block: saved.id, state: saved.state, flags: saved.flags, redraft: saved.redraft };

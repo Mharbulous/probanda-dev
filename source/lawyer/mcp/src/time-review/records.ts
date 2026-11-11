@@ -71,6 +71,8 @@ export interface BlockRecord {
   links: { role: string; block: string }[];
   staged_at: string;
   review?: BlockReview;
+  /** The approval or correction a changed TimeCamp entry sent back to flagged (fingerprint.ts). */
+  superseded_review?: BlockReview;
   timecamp?: TimecampResult;
   /** A half made by a split: `pending` until the waiting session redrafts it from the evidence. */
   redraft?: { status: "pending" | "done"; at: string };

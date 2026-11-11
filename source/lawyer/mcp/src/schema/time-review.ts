@@ -9,6 +9,13 @@ const ROUTE =
 // the reviewer, sets a block's flags and state from the bases the reviewer states.
 export function timeReviewToolDefinitions(): ToolDefinition[] {
   const SOURCE = { type: "string", enum: [...GATE_SOURCES] };
+  const ENTRY = {
+    type: "object",
+    description: "A TimeCamp entry as read back: id, start, end, task and note.",
+    properties: { id: { type: "string" }, start: { type: "string" }, end: { type: "string" }, task: { type: "string" }, note: { type: "string" } },
+    required: ["id"],
+    additionalProperties: false,
+  };
   return [
     {
       name: "time_review__save_evidence",
@@ -103,15 +110,27 @@ export function timeReviewToolDefinitions(): ToolDefinition[] {
     {
       name: "time_review__record_timecamp",
       description:
-        "Save, on one block, how its write to TimeCamp went after the practitioner approved or corrected it on the page: `saved` (written and the read-back matched), `unchanged` (TimeCamp already held the block's matter and description), `staff_left_alone` (a staff entry: its TimeCamp note is the staff member's and is never changed) or `error` (the write failed or the read-back did not match; `message` is required and shows on the card). Refused for a block no click has approved or corrected. It cannot approve a block, change its state or edit its fields: only a click on the page does that." + ROUTE,
+        "Save, on one block, how its write to TimeCamp went after the practitioner approved or corrected it on the page: `saved` (written and the read-back matched), `unchanged` (TimeCamp already held the block's matter and description), `staff_left_alone` (a staff entry: its TimeCamp note is the staff member's and is never changed) or `error` (the write failed or the read-back did not match; `message` is required and shows on the card). Refused for a block no click has approved or corrected. It cannot approve a block, change its state or edit its fields: only a click on the page does that. After a `saved` or `unchanged` write, pass `entry`, the TimeCamp entry as read back ({ id, start, end, task, note }): the day's fingerprint takes it, so the practitioner's own correction is not reported as a change by time_review__compare_day." + ROUTE,
       inputSchema: {
         type: "object",
         properties: {
           block: { type: "string" },
           status: { type: "string", enum: ["saved", "unchanged", "staff_left_alone", "error"] },
           message: { type: "string" },
+          entry: ENTRY,
         },
         required: ["block", "status"],
+        additionalProperties: false,
+      },
+    },
+    {
+      name: "time_review__compare_day",
+      description:
+        "On resume, compare one judged day's current TimeCamp entries with the fingerprint saved when the day was judged. Pass `entries`: every TimeCamp entry the day now has, each { id, start, end, task, note }. A changed or removed entry sends the block that cites it back to flagged (its approval is kept on the block as superseded_review), and an added entry, or a changed or removed one no block cites, adds a flagged block; other blocks keep their approvals. The current entries then become the fingerprint, so a second compare reports nothing new. Returns { status: \"changed\", changed, added, removed, flagged, new_blocks, clear: false } (the day is no longer clear until each is judged again on the page), { status: \"unchanged\" }, { status: \"not_judged\" } or { status: \"no_fingerprint\" } (judged before fingerprints were saved: nothing is compared or changed). Writes no entry to TimeCamp." + ROUTE,
+      inputSchema: {
+        type: "object",
+        properties: { date: { type: "string" }, entries: { type: "array", items: ENTRY } },
+        required: ["date", "entries"],
         additionalProperties: false,
       },
     },
