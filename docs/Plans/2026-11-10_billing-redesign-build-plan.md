@@ -318,6 +318,20 @@ By model, across the run: Sonnet 5.5 took 21,656,743 tokens in and 119,315 out. 
 - Messages the practitioner typed: 10.
 - Minutes from the first message to the last: 110.8. This spans the whole session, not the slice 1 marker (every date judged), which the script does not detect. Slice 13 measures the same span.
 
+## Slice 13 measurement
+
+**Status 2026-11-11: blocked, not measured.** The replay stopped before the review page, so criteria 12, 14 and 20 have no result and none of them is recorded as failed.
+
+Setup, as run. Both baseline stores were restored by byte-for-byte copy (checked identical) into a scratch data root outside the synced folder, beside a copy of `practice.db`, the matter's invoice folder and the firm and knowledge folders. A scratch `probanda.json` named by `COCLERK_CONFIG_PATH` pointed the plugin at that root, and a deny rule on both TimeCamp `update_entry` tools kept TimeCamp writes off. The live stores were not touched. Installed build: billing 0.5.1, lawyer 0.29.3 (billing 0.3.0 was installed until the practitioner pressed "Check for updates").
+
+What the replay did. A Sonnet 5.5 session reached the end of Steps 1 to 5: the last invoice matched the file on disk and no newer signed invoice existed. It claimed date 1 and date 2, found all seven evidence sources finished for both in the scratch store, and released both claims when it stopped. It wrote nothing to TimeCamp.
+
+What blocked it. The day reviewers read a day only from evidence saved on the review store, and `time_review__save_evidence` replaces the whole day in one call that must carry every evidence row. Date 1 is about 133,000 characters (1,143 rows) and date 2 about 157,000 (1,335 rows), without about 246 standing contact lines. Most rows are TimeCamp computer-activity lines. No tool saves from a file, so the session would have had to retype each day by hand into one tool call. It did not shorten the rows, which would change what the reviewers see. This is a gap in the build, not a failure of the replay method.
+
+Not usable as a measurement. That session was started by an orchestrator, not by the practitioner typing `/billing:bill`, so its tokens and minutes are not comparable with the baseline, and no page was served. A fresh session started by the practitioner is expected to stop at the same step.
+
+Open decision for the practitioner, before slice 13 can be run: how a day's evidence reaches the review store without being retyped (for example a save from the stored rows or from a file), or how much computer-activity evidence may be left out.
+
 ## Deferred
 
 - **Screenshot choice at capture time.** The spec places it in the SyncoPaid repo. Slice 6's script is the interim.
