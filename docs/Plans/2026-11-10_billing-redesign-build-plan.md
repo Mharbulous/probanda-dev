@@ -250,6 +250,8 @@ Slice 7 built: billing 0.4.5, commit 9687aa7c.
 - **Practitioner.** Nothing, unless the gate question arises.
 - **Model.** Sonnet. The wait loop itself runs on Sonnet.
 
+Slice 8 built: billing 0.4.6, commit 82298b21.
+
 ### Slice 9: split, merge and their undo
 
 - **Changes.** Split at a chosen screenshot makes two new flagged blocks. The waiting session redrafts both from the stored evidence and readings. Merge joins descriptions with "; " by script and makes one new block. Originals are kept and linked by a `links` entry. Unmerge and unsplit restore the originals, flagged, and are refused once the time is on an issued invoice. TimeCamp is not touched.
