@@ -177,6 +177,23 @@ A stretch whose captures carry no OCR text is where the image matters most.
 Decrypt them as `reference/SyncoPaidCaptures.md` says, and have them viewed
 only by `billing:screenshot-reader`, up to 5 per dispatch, passing no
 model or effort. A failed decrypt is disclosed in the ceremony.
+
+**Look up before you dispatch, save after.** A capture is read once. Before
+decrypting or dispatching, call `time_pipeline__get` with namespace `item` and
+key `capture_reading:<capture id>` for each chosen capture, and use the saved
+reading of every capture that has one: skip it, send the reader only the
+captures with no record. The report's UNCHANGED line compares an image with the
+one before it in that dispatch's brief, and is saved as reported. After a reader reports, save each
+capture's block, as the reader reported it, with `time_pipeline__set`:
+namespace `item`, key `capture_reading:<capture id>`, `expect_absent: true`,
+value a JSON object `{"kind": "capture_reading", "capture_id", "read_at",
+"reading": {"on_screen", "identifiers", "unchanged", "unreadable"},
+"answers": []}`. A `stale_write` means another run saved that capture first:
+read it with `time_pipeline__get` and use that one. A later answer about a
+capture (the practitioner's, or a question the reading raised) is appended to
+that record's `answers` list: read it, add the answer, and save with
+`expect_sha256` from the read. The `reading` is never changed.
+
 Record the viewed capture ids in the proposal's evidence record. A proposal
 resting on a covered stretch without them is not ready to commit.
 

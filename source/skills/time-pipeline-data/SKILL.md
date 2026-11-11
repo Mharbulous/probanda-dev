@@ -111,7 +111,9 @@ workflow legitimately needs to read it — e.g. time-sorting reads `timeline`):
 | `tedraft` | time-entry-drafting | Draft entries, UTBMS metadata, description patterns |
 | `evidence` | timecamping-data, whose table names each family's writer | Billing evidence with no table of its own |
 | `bill` | bill | A bill in progress: its state and each step's completion |
-| `item` | the `review_date__*` tools, for `review_date:` keys | Timekeeping records, key `<kind>:<native id>`, with `kind` a field of the value. Today only reviewed dates |
+| `item` | the `review_date__*` tools, for `review_date:` keys | Timekeeping records, key `<kind>:<native id>`, with `kind` a field of the value. Kinds today: `review_date` (the `review_date__*` tools) and `capture_reading` (below) |
+
+A `capture_reading` record is a SyncoPaid capture's reading, saved so the capture is never sent to the screenshot reader twice. Key `capture_reading:<capture id>` in `item`, value `{"kind", "capture_id", "read_at", "reading": {"on_screen", "identifiers", "unchanged", "unreadable"}, "answers": []}`, `reading` as the reader reported it. `/timecamping` Step 5 and `/triage-billing-dates` Phase 2 look it up with `get`, save it with `set` and `expect_absent: true` (a second save is refused with `stale_write`), and append a later answer to `answers` with `set` and `expect_sha256`. The generic tools write it: no tool of its own.
 
 `bill` and `issue-invoice` call the `time_pipeline__*` tools directly for `bill` instead of invoking this skill (ruled on #250). They use `set`, `get` and `list` only.
 
