@@ -1,7 +1,7 @@
 // Time-pipeline key-value backend (Step 0 — port off the retired cowork-db Go
 // binary, decided 2026-08-26: planning/1. Design/2026-08-26_time-pipeline-store-design.md).
 //
-// Serves the `time_pipeline__get/set/list/delete` tool surface from a local
+// Serves the `time_pipeline__*` tool surface (billing's `timekeeping` server) from a local
 // SQLite database, reached through the host Python `sqlite3` module (the same
 // ratified exception the practice and matter-data backends use: shelling out to
 // host Python keeps the Node >=20 pin and adds no node:sqlite dependency or
@@ -22,11 +22,12 @@
 // (build-timeline, time-sorting, time-entry-drafting), matching the
 // matter_data__query/execute connection-discipline pattern.
 
+import { createHash } from "node:crypto";
 import { join } from "node:path";
 
-import { ValidationError } from "../errors.js";
+import { DataServerError, ValidationError } from "../errors.js";
 import { type BulkApplyExpect, isKvRead, type KvOp, type KvRequest, runKv } from "../kv/backend.js";
-import { resolveCaseDataRoot } from "../practice/backend.js";
+import { resolveCaseDataRoot } from "../practice/matter-data-root.js";
 import { EXECUTE_TIMEOUT_MS, pythonTimeoutMs, READ_TIMEOUT_MS, WRITE_TIMEOUT_MS } from "../python-timeout.js";
 
 // COCLERK_TIME_PIPELINE_DB_PATH is a full-path test override, mirroring
@@ -75,34 +76,107 @@ function runHelper(request: KvRequest, env: NodeJS.ProcessEnv): Record<string, u
   });
 }
 
+/** The SHA-256 of a stored value's UTF-8 text: what a read returns and a conditional save names. */
+export function valueSha256(value: string): string {
+  return createHash("sha256").update(value, "utf-8").digest("hex");
+}
+
+/** Review-date records (review-date.ts) live under this prefix in namespace `item`. Only the
+ * review_date__* tools write them, so a claim cannot be bypassed through the generic tools. */
+export const REVIEW_DATE_NAMESPACE = "item";
+export const REVIEW_DATE_PREFIX = "review_date:";
+/** Namespaces where a save must name what it read: two runs share these records. */
+const CONDITIONAL_NAMESPACES = new Set(["bill", "item"]);
+
+function denyPrefix(namespace: string): string | undefined {
+  return namespace === REVIEW_DATE_NAMESPACE ? REVIEW_DATE_PREFIX : undefined;
+}
+
+function protectedKeyError(tool: string, keys: string[]): DataServerError {
+  return new DataServerError(
+    `${tool}: ${keys.join(", ")} ${keys.length === 1 ? "is a review-date record" : "are review-date records"}, which only the review_date__* tools change or export; nothing was written`,
+    "protected_key"
+  );
+}
+
+function refuseDenied(tool: string, reply: Record<string, unknown>): void {
+  if (Array.isArray(reply.denied)) throw protectedKeyError(tool, reply.denied as string[]);
+}
+
 export function timePipelineGet(
   namespace: string,
   key: string,
   env: NodeJS.ProcessEnv = process.env
-): { value: string | null } {
+): { value: string | null; sha256: string | null } {
   const db_path = resolveTimePipelineDbPath(env);
-  return runHelper({ op: "get", db_path, namespace, key }, env) as { value: string | null };
+  const { value } = runHelper({ op: "get", db_path, namespace, key }, env) as { value: string | null };
+  return { value, sha256: value === null ? null : valueSha256(value) };
+}
+
+/** What a save names it read: the stored value's hash, or that the key was absent. */
+export interface SaveExpectation {
+  expect_sha256?: string;
+  expect_absent?: boolean;
+}
+
+/** A write that lands only if the stored value is still the one the caller read; else `stale: true`
+ * and nothing is written. The compare and the write are one transaction (kv/backend.ts set_if). */
+export function timePipelineWriteIf(
+  namespace: string,
+  key: string,
+  value: string,
+  expectation: SaveExpectation,
+  env: NodeJS.ProcessEnv = process.env
+): { ok: true; sha256: string } | { stale: true } {
+  const db_path = resolveTimePipelineDbPath(env);
+  return runHelper({ op: "set_if", db_path, namespace, key, value, ...expectation }, env) as
+    { ok: true; sha256: string } | { stale: true };
 }
 
 export function timePipelineSet(
   namespace: string,
   key: string,
   value: string,
+  expectation: SaveExpectation = {},
   env: NodeJS.ProcessEnv = process.env
-): { ok: true } {
-  const db_path = resolveTimePipelineDbPath(env);
-  return runHelper({ op: "set", db_path, namespace, key, value }, env) as { ok: true };
+): { ok: true; sha256: string } {
+  if (namespace === REVIEW_DATE_NAMESPACE && key.startsWith(REVIEW_DATE_PREFIX)) throw protectedKeyError("time_pipeline__set", [key]);
+  const { expect_sha256, expect_absent } = expectation;
+  if (expect_sha256 !== undefined && expect_absent !== undefined) {
+    throw new ValidationError("time_pipeline__set takes expect_sha256 or expect_absent, not both");
+  }
+  if (expect_absent === false) throw new ValidationError("time_pipeline__set: expect_absent can only be true");
+  if (expect_sha256 === undefined && expect_absent === undefined) {
+    if (CONDITIONAL_NAMESPACES.has(namespace)) {
+      throw new DataServerError(
+        `time_pipeline__set: a save in namespace ${namespace} must name what it read: expect_sha256 from the read, or expect_absent true for a new key; nothing was written`,
+        "expectation_required"
+      );
+    }
+    const db_path = resolveTimePipelineDbPath(env);
+    runHelper({ op: "set", db_path, namespace, key, value }, env);
+    return { ok: true, sha256: valueSha256(value) };
+  }
+  const reply = timePipelineWriteIf(namespace, key, value, { expect_sha256, expect_absent }, env);
+  if ("stale" in reply) {
+    throw new DataServerError(
+      `time_pipeline__set: ${namespace}/${key} changed since it was read; nothing was written. Read it again with time_pipeline__get, make the same change to what it returns, and save with the new sha256`,
+      "stale_write"
+    );
+  }
+  return reply;
 }
 
 export function timePipelineList(
   namespace: string,
   prefix: string | undefined,
   env: NodeJS.ProcessEnv = process.env
-): { items: { key: string; value: string }[] } {
+): { items: { key: string; value: string; sha256: string }[] } {
   const db_path = resolveTimePipelineDbPath(env);
-  return runHelper({ op: "list", db_path, namespace, prefix: prefix ?? "" }, env) as {
+  const { items } = runHelper({ op: "list", db_path, namespace, prefix: prefix ?? "" }, env) as {
     items: { key: string; value: string }[];
   };
+  return { items: items.map((item) => ({ ...item, sha256: valueSha256(item.value) })) };
 }
 
 export function timePipelineDelete(
@@ -111,7 +185,9 @@ export function timePipelineDelete(
   env: NodeJS.ProcessEnv = process.env
 ): { ok: true; deleted: boolean } {
   const db_path = resolveTimePipelineDbPath(env);
-  return runHelper({ op: "delete", db_path, namespace, key }, env) as { ok: true; deleted: boolean };
+  const reply = runHelper({ op: "delete", db_path, namespace, key, deny_prefix: denyPrefix(namespace) }, env);
+  refuseDenied("time_pipeline__delete", reply);
+  return reply as { ok: true; deleted: boolean };
 }
 
 // Bulk writes arrive as a host-local JSONL file rather than as tool arguments:
@@ -131,7 +207,9 @@ export function timePipelineBulkApply(
     throw new ValidationError("time_pipeline__bulk_apply takes preview or expect, not both and not neither");
   }
   const db_path = resolveTimePipelineDbPath(env);
-  return runHelper({ op: "bulk_apply", db_path, namespace, path, expect: mode.expect }, env) as unknown as BulkApplyCounts;
+  const reply = runHelper({ op: "bulk_apply", db_path, namespace, path, expect: mode.expect, deny_prefix: denyPrefix(namespace) }, env);
+  refuseDenied("time_pipeline__bulk_apply", reply);
+  return reply as unknown as BulkApplyCounts;
 }
 
 // The read twin of bulk_apply: a whole prefix (a source's full history can run
@@ -145,8 +223,7 @@ export function timePipelineExport(
   env: NodeJS.ProcessEnv = process.env
 ): { items: number; path: string } {
   const db_path = resolveTimePipelineDbPath(env);
-  return runHelper({ op: "export", db_path, namespace, prefix: prefix ?? "", path }, env) as {
-    items: number;
-    path: string;
-  };
+  const reply = runHelper({ op: "export", db_path, namespace, prefix: prefix ?? "", path, deny_prefix: denyPrefix(namespace) }, env);
+  refuseDenied("time_pipeline__export", reply);
+  return reply as { items: number; path: string };
 }

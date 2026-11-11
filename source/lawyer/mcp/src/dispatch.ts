@@ -21,14 +21,6 @@ import { proceduralHistoryAppend, type ProceduralHistoryAppendArgs } from "./cas
 import { relocateSource, type RelocateSourceRequest } from "./case/relocate-source.js";
 import { housekeepingLog, type HousekeepingLogRequest } from "./case/housekeeping-log.js";
 import { repointDocuments, type RepointDocumentsRequest } from "./submission/repoint-documents.js";
-import {
-  timePipelineGet,
-  timePipelineSet,
-  timePipelineList,
-  timePipelineDelete,
-  timePipelineBulkApply,
-  timePipelineExport,
-} from "./time-pipeline/backend.js";
 import { timecampingDataQuery, timecampingDataExecute, timecampingDataBulkUpsert } from "./timecamping/backend.js";
 import { timecampingCalls, type CallsArgs } from "./timecamping/calls.js";
 import { timecampingDataMigrate } from "./timecamping/migrate.js";
@@ -209,16 +201,6 @@ export const dataTools: Tool<DispatchContext>[] = [
     }
     return caseDataRelocate(args.matter_root, mode as RelocateMode);
   }),
-
-  defineTool("time_pipeline__get", (args: { namespace: string; key: string }) => timePipelineGet(args.namespace, args.key)),
-  defineTool("time_pipeline__set", (args: { namespace: string; key: string; value: string }) =>
-    timePipelineSet(args.namespace, args.key, args.value)),
-  defineTool("time_pipeline__list", (args: { namespace: string; prefix?: string }) => timePipelineList(args.namespace, args.prefix)),
-  defineTool("time_pipeline__delete", (args: { namespace: string; key: string }) => timePipelineDelete(args.namespace, args.key)),
-  defineTool("time_pipeline__bulk_apply", (args: { namespace: string; path: string } & Parameters<typeof timePipelineBulkApply>[2]) =>
-    timePipelineBulkApply(args.namespace, args.path, args)),
-  defineTool("time_pipeline__export", (args: { namespace: string; prefix?: string; path: string }) =>
-    timePipelineExport(args.namespace, args.prefix, args.path)),
 
   defineTool("timecamping_data__query", (args: { sql: string; params?: unknown[] }) => timecampingDataQuery(args.sql, args.params)),
   defineTool("timecamping_data__execute", (args: { sql_script: string }) => timecampingDataExecute(args.sql_script)),

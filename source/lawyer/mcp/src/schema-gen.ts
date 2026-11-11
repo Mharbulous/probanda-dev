@@ -1,6 +1,7 @@
 import { practiceToolDefinitions } from "./schema/practice.js";
 import { caseDataToolDefinitions } from "./schema/case-data.js";
 import { timePipelineToolDefinitions } from "./schema/time-pipeline.js";
+import { reviewDateToolDefinitions } from "./schema/review-date.js";
 import { looseThreadsToolDefinitions } from "./schema/loose-threads.js";
 import { timecampingToolDefinitions } from "./schema/timecamping.js";
 import { fileToolDefinitions } from "./schema/file.js";
@@ -43,7 +44,6 @@ export function buildToolDefinitions(): ToolDefinition[] {
   return [
     ...practiceToolDefinitions(),
     ...caseDataToolDefinitions(),
-    ...timePipelineToolDefinitions(),
     ...looseThreadsToolDefinitions(),
     ...timecampingToolDefinitions(),
     ...submissionDataToolDefinitions(),
@@ -70,5 +70,14 @@ export function buildFileManagerToolDefinitions(): ToolDefinition[] {
   return [
     ...fileOpsToolDefinitions(),
     ...housekeepingToolDefinitions(),
+  ];
+}
+
+// The billing plugin's `timekeeping` server: the time-pipeline store and the per-date review
+// records (issue 284). Nothing it serves names or needs TimeCamp.
+export function buildTimekeepingToolDefinitions(): ToolDefinition[] {
+  return [
+    ...timePipelineToolDefinitions(),
+    ...reviewDateToolDefinitions(),
   ];
 }

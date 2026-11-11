@@ -59,7 +59,7 @@ Each slice leaves `main` passing every check and is released on its own with `/r
 
 ## Out of scope
 
-- Any change to a database, a schema or a tool family: that is Phase 2. The `timecamping_data__*` and `time_pipeline__*` tools stay in lawyer's `data` server.
+- Any change to a database, a schema or a tool family: that is Phase 2. The `timecamping_data__*` and `time_pipeline__*` tools stay in lawyer's `data` server. (Since issue 284, `time_pipeline__*` is served by billing's `timekeeping` server.)
 - Any edit to `COMMANDMENTS.md`.
 - Moving any skill the planned tree does not mark as moved.
 

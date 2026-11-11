@@ -8,8 +8,9 @@ import test from "node:test";
 const { timecampingDataQuery, timecampingDataExecute, timecampingDataBulkUpsert } =
   await import("../build/timecamping/backend.js");
 const { timecampingDataMigrate } = await import("../build/timecamping/migrate.js");
-const { buildToolDefinitions } = await import("../build/schema-gen.js");
+const { buildToolDefinitions, buildTimekeepingToolDefinitions } = await import("../build/schema-gen.js");
 const { callTool } = await import("../build/dispatch.js");
+const { callTimekeepingTool } = await import("../build/timekeeping-dispatch.js");
 const { ValidationError } = await import("../build/errors.js");
 
 // Same fixture as timecamping.db.test.mjs: a scratch case_data_root with
@@ -291,13 +292,15 @@ test("a missing file fails clearly", async (t) => {
   );
 });
 
-test("both new tools are registered and validate their required arguments", async () => {
+test("both new tools are registered, each on its own server, and validate their required arguments", async () => {
   const names = buildToolDefinitions().map((d) => d.name);
-  assert.ok(names.includes("time_pipeline__export"));
+  // Issue 284: time_pipeline__export moved to billing's timekeeping server.
+  assert.ok(!names.includes("time_pipeline__export"));
+  assert.ok(buildTimekeepingToolDefinitions().map((d) => d.name).includes("time_pipeline__export"));
   assert.ok(names.includes("timecamping_data__bulk_upsert"));
 
   await assert.rejects(
-    callTool({}, "time_pipeline__export", { namespace: "timeline" }),
+    callTimekeepingTool("time_pipeline__export", { namespace: "timeline" }),
     (err) => err instanceof ValidationError && /time_pipeline__export\.path is required/.test(err.message)
   );
   await assert.rejects(

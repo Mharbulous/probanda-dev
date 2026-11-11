@@ -23,6 +23,7 @@ const REPO_ROOT = resolve(MCP_ROOT, "..", "..", "..");
 const LITIGATION_BUNDLE = join(MCP_ROOT, "dist", "litigation-mcp.js");
 const FILE_MANAGER_BUNDLE = join(REPO_ROOT, "source", "file-manager", "files-mcp", "dist", "file-manager-mcp.js");
 const TIMECAMP_BUNDLE = join(REPO_ROOT, "source", "billing", "timecamp-mcp", "dist", "timecamp-mcp.js");
+const TIMEKEEPING_BUNDLE = join(REPO_ROOT, "source", "billing", "timekeeping-mcp", "dist", "timekeeping-mcp.js");
 const CONTACTS_BUNDLE = join(
   REPO_ROOT, "source", "lawyer", "contacts-calendars-email-mcp", "dist", "contacts-calendars-email-mcp.js"
 );
@@ -38,6 +39,7 @@ const {
   buildToolDefinitions,
   buildFileManagerToolDefinitions,
   buildContactsCalendarsEmailToolDefinitions,
+  buildTimekeepingToolDefinitions,
 } = await import("../build/schema-gen.js");
 
 // Backslash-only for the drive form: `[A-Za-z]:[\\/]` would also match `p:/`
@@ -54,7 +56,7 @@ const STAMP_PLACEHOLDER = "__LITIGATION_BUILD_STAMP_PLACEHOLDER__";
 const STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 
 test("no tracked dist bundle contains an absolute host path or an unsubstituted define", () => {
-  for (const bundle of [LITIGATION_BUNDLE, FILE_MANAGER_BUNDLE, TIMECAMP_BUNDLE, CONTACTS_BUNDLE, CANLII_BUNDLE]) {
+  for (const bundle of [LITIGATION_BUNDLE, FILE_MANAGER_BUNDLE, TIMECAMP_BUNDLE, TIMEKEEPING_BUNDLE, CONTACTS_BUNDLE, CANLII_BUNDLE]) {
     const text = readFileSync(bundle, "utf-8");
     const hits = text.match(HOST_PATH) ?? [];
     assert.deepEqual(hits, [], `${bundle} bakes a host path: ${hits.join(", ")}`);
@@ -226,6 +228,13 @@ test("the dist-only timecamp bundle completes an MCP handshake and registers its
     const { tools } = await client.listTools();
     assert.ok(tools.length >= 1);
   }, TIMECAMP_BUNDLE);
+});
+
+test("the dist-only timekeeping bundle completes an MCP handshake and registers every tool", async () => {
+  await withDistOnlyServer({ ...process.env, COCLERK_REPO_ROOT: REPO_ROOT }, async (client) => {
+    const { tools } = await client.listTools();
+    assert.equal(tools.length, buildTimekeepingToolDefinitions().length);
+  }, TIMEKEEPING_BUNDLE);
 });
 
 // #591's acceptance: no model call anywhere in session entry. The packaged bundle runs

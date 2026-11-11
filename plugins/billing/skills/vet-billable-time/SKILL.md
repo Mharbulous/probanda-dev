@@ -20,7 +20,7 @@ Turn a matter's TimeCamp entries since the last bill into lines the practitioner
 
 `scripts/tie_out.py` does all the billing arithmetic and every check. Never add, round or write off time yourself, and never state a total it did not print. Its docstring is the contract for its inputs. Run it with the host Python (`python`; if that is the WindowsApps stub, the interpreter `COCLERK_PYTHON` names). A failing check stops this skill: tell the practitioner what failed, in plain words, and fix the input only with their answer.
 
-**Inputs:** the matter, its candidate-dates file, the last billed date, the retainer PDF, and the judged dates file `/timecamping` keeps at `<matter-data folder>\timecamping\judged-dates.jsonl`.
+**Inputs:** the matter, its candidate-dates file, the last billed date, the retainer PDF, and the judged dates file `/bill-client` exports from the review-date records at `<matter-data folder>\timecamping\judged-dates.export.jsonl`.
 
 Working files go in `<matter-data folder>\vet-billable-time\`, and the two reports in the matter's draft folder's `BILLING` subfolder, resolved as `shared/workspace-output-rule.md` says. Create only the `BILLING` leaf if it is absent.
 

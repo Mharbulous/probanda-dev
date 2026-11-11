@@ -15,6 +15,9 @@ const fileManagerOutfile = resolve(root, "..", "..", "file-manager", "files-mcp"
 // The billing plugin's `timecamp` server: a third entry point, serving only the
 // TimeCamp API tools (src/timecamp-index.ts, docs/Specs/2026-10-15_timecamp-api-connector-spec.md).
 const timecampOutfile = resolve(root, "..", "..", "billing", "timecamp-mcp", "dist", "timecamp-mcp.js");
+// The billing plugin's `timekeeping` server: the time-pipeline store and the per-date review
+// records (src/timekeeping-index.ts, issue 284). It needs host Python for the store; it names no TimeCamp.
+const timekeepingOutfile = resolve(root, "..", "..", "billing", "timekeeping-mcp", "dist", "timekeeping-mcp.js");
 // The lawyer plugin's `contacts-calendars-email` server: a fourth entry point, serving only the
 // mail, calendar and contacts tools (src/contacts-calendars-email-index.ts).
 const contactsCalendarsEmailOutfile = resolve(
@@ -125,4 +128,5 @@ for (const out of [outfile, fileManagerOutfile]) {
   await copyFile(resolve(root, "THIRD-PARTY-NOTICES.txt"), resolve(dirname(out), "THIRD-PARTY-NOTICES.txt"));
 }
 await bundle("timecamp-index.ts", timecampOutfile);
+await bundle("timekeeping-index.ts", timekeepingOutfile);
 await bundle("contacts-calendars-email-index.ts", contactsCalendarsEmailOutfile, REQUIRE_SHIM);

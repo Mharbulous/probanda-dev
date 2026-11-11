@@ -25,6 +25,21 @@ class BillRecordWiring(unittest.TestCase):
     def test_issue_invoice_ends_record(self):
         self.assertTrue("time_pipeline__" in text("issue-invoice"), "issue-invoice does not end the bill record")
 
+    def test_saves_name_what_they_read(self):
+        """Issue 284: a save names the hash it read, or that the key was absent, so two bills cannot overwrite each other."""
+        body = text("bill-client")
+        for name in ("expect_sha256", "expect_absent", "stale_write", "time_pipeline__get"):
+            self.assertTrue(name in body, f"bill-client's save does not use {name}")
+        self.assertTrue("expect_sha256" in text("issue-invoice"), "issue-invoice saves the bill record blind")
+
+    def test_dates_are_claimed_not_appended(self):
+        timecamping = text("timecamping")
+        for name in ("review_date__claim", "review_date__renew", "review_date__judge", "review_date__release"):
+            self.assertTrue(name in timecamping, f"/timecamping's candidate-list run does not call {name}")
+        self.assertTrue("never appends to `judged-dates.jsonl`" in timecamping, "/timecamping may still append judged marks")
+        body = text("bill-client")
+        self.assertTrue("review_date__export" in body and "review_date__import_file" in body, "bill-client neither exports nor imports judged dates")
+
 
 if __name__ == "__main__":
     unittest.main()

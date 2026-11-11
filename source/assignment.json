@@ -211,7 +211,8 @@
         "screenshot-reader-gate": "source/billing/hooks/screenshot-reader-gate.py"
       },
       "servers": [
-        "timecamp"
+        "timecamp",
+        "timekeeping"
       ]
     },
     "developer": {

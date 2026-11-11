@@ -264,12 +264,23 @@ unconfirmed one stays listed.
 Given a matter's candidate-dates file, run Steps 0 to 7 once per date, in this order: Strong, then Medium, each oldest first. Then offer the Weak dates once as a group, and work them only on a yes. A date marked `Staff` alone is not worked, because this skill judges only the practitioner's own time.
 
 - **Recheck the matter's own entries.** This run reviews the entries already on the matter's task as well as the default queue. Being opened with a candidate list is the practitioner-directed recheck `reference/TimeCampEntries.md` describes.
-- **Skip a date already judged.** The marks are in `<matter-data folder>\timecamping\judged-dates.jsonl`, the folder as `shared/workspace-output-rule.md` resolves it.
-- **Judged mark.** A date is judged when none of its proposals is `pending` and the practitioner has answered Step 7 for each entry. Only then append one line: `{"date": "YYYY-MM-DD", "judged_at": "<UTC now>"}`. A date that stops at the Step 3 gate or a failed source gets no mark: report it, and go on to the next date.
+- **Holder.** `/bill-client` passes its bill id as the holder. A candidate-list run with no bill uses `timecamping:<UTC stamp>`, made once at the start. The `review_date__*` tools are on this plugin's `timekeeping` server, under whichever of `mcp__plugin_billing_timekeeping__<name>` and `mcp__remote-devices__plugin_billing_timekeeping__<name>` this host grants.
+- **For each date, in the list's existing order:**
+  1. Call `review_date__claim` with the date and the holder.
+     - `judged`: do not review the date. Add it to the "already judged" list with `judged_by`. Go to the next date.
+     - `held`: do not review the date and do not wait. Add it to the "held" list with `holder` and `expires_at`. Go to the next date.
+     - `claimed`: keep the `token` for this date and go on.
+  2. Run Steps 0 to 7 for the date. Call `review_date__renew` at three fixed points: when the Step 3 gate passes, when Step 5's screenshot reading returns, and after each answer the practitioner gives at Step 7.
+     - `claim_lost` from any renew: stop work on this date, write nothing more for it, and report it as taken by another run.
+  3. When the date meets the judged condition (no proposal is `pending`, and Step 7 is answered for each entry), call `review_date__judge`.
+     - `claim_lost`: report the date as left without a mark, taken by another run. Do not retry.
+  4. When the date stops at the Step 3 gate or on a failed source, call `review_date__release` and report it, then go on to the next date.
+  5. After the last date, call `review_date__claim` once more for each date on the "held" list and work those now claimed. A date still `held` is reported as left without a mark, with its holder and expiry.
+- **The run never appends to `judged-dates.jsonl`.** A session that loses its token (a crash) cannot renew, so its claim lapses within 60 minutes and the date becomes claimable again.
 - **No duplicate proposals.** Before writing a date's proposals on a re-run, read its live proposals. Keep one that has the same span and matter, whatever has been answered about it.
 - **Calls in window titles.** For each match in `<matter-data folder>\triage-billing-dates\phone-matches.json` on this date, save a `call_window` row to `/timecamping-data`'s evidence store and cite it in the block's evidence chain. A match off the matter's task or with no entry is direct evidence of a call on the matter: propose it as a block on the matter, for a ceremony. A title that is only a number names no matter by itself, so the service list is what ties it.
 - **What the practitioner says.** Save a statement about a date or matter that the evidence does not hold ("I know I called the client that day") verbatim as a `statement` row, with when it was said, and cite it. Save a ruling that a window pattern is never billable as a `marker` row: the pattern, the ruling verbatim and when. A pattern holds no client content.
-- **At the end,** return the Possible unbilled time list across all the dates, and each date left without a mark and why.
+- **At the end,** return the Possible unbilled time list across all the dates, the "already judged" list, and each date left without a mark and why.
 
 ## Queries
 

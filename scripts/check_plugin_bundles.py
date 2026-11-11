@@ -22,7 +22,7 @@ _TOP_LEVEL_FUNCTION = re.compile(r"^(?:async )?function (\w+)\([^)]*\)\s*\{", re
 DATA_BUNDLE = ("dist", "litigation-mcp.js")
 # The servers with `purity` in plugin_layout.SERVERS have their bundles checked for
 # Supabase and the commons tool namespace. commons is exempt: it is the plugins'
-# Supabase surface. canlii, files, timecamp and contacts-calendars-email must carry neither
+# Supabase surface. canlii, files, timecamp, timekeeping and contacts-calendars-email must carry neither
 # 'supabase' nor 'legal_commons__'. data may carry 'supabase', because its practice writes
 # go to Probanda's Cloud, but only through the three items functions and the two
 # key-request functions that let a practitioner ask for Probanda's key (Brahm,

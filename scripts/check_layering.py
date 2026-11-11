@@ -48,7 +48,8 @@ LITIGATOR_TOOL_FAMILIES = ("drafting_data__", "drafting_forms__", "rules__")
 # researcher plugin's commons server, and the file-manager plugin's files server, whose
 # tools rename, move or delete a user's file.
 SERVER_TOOL_FAMILIES = {"commons": ("legal_commons__", "troubleshoot__"),
-                        "files": ("file_ops__", "housekeeping__")}
+                        "files": ("file_ops__", "housekeeping__"),
+                        "timekeeping": ("time_pipeline__", "review_date__")}
 # A family name starts a tool name or follows the server key (data__rules__at), so
 # rules__ is not found inside skill_rules__.
 FAMILY_START = r"(?:(?<![a-z_])|(?<=__))"

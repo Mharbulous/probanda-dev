@@ -4,5 +4,11 @@
     "args": [
       "${CLAUDE_PLUGIN_ROOT}/timecamp-mcp/dist/timecamp-mcp.js"
     ]
+  },
+  "timekeeping": {
+    "command": "node",
+    "args": [
+      "${CLAUDE_PLUGIN_ROOT}/timekeeping-mcp/dist/timekeeping-mcp.js"
+    ]
   }
 }

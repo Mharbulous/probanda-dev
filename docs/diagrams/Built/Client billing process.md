@@ -52,7 +52,7 @@ Every screenshot a model reads goes to `timekeeper:screenshot-reader`. Apart fro
 |---|---|
 | The bill record (time-pipeline store, namespace `bill`) | Where each bill stands: its state, its last signed invoice, one row per finished step. A fresh session resumes from it. |
 | The time-review database (`timecamping.db`, one per practitioner) | Each day's evidence from seven sources, the fetch log the gate reads, proposals, and the practitioner's answers. |
-| The judged-dates file (`<matter-data folder>\timecamping\judged-dates.jsonl`, one per matter) | Which dates have been reviewed, for this matter. |
+| The review-date records (time-pipeline store, namespace `item`, one per date) | Which dates have been reviewed, and which a run holds now. `/bill-client` exports the judged ones to `<matter-data folder>\timecamping\judged-dates.export.jsonl` for the tie-out. |
 | The practice database | Invoices, rates, time entries, firm profile, trust. |
 | TimeCamp | The system of record for time entries. Each entry has exactly one task. |
 
@@ -107,7 +107,7 @@ This narrows the unbilled period to the days with any indicator of work on the m
 
 ### Step 6.2: Review each day (`/timecamping`)
 
-In Cowork, the bill stops here, because the screen captures can be read only on the PC. Elsewhere, `/timecamping` takes the Strong dates, then the Medium dates, each oldest first. A date already in the judged-dates file is skipped, and a Staff-only date is not reviewed.
+In Cowork, the bill stops here, because the screen captures can be read only on the PC. Elsewhere, `/timecamping` takes the Strong dates, then the Medium dates, each oldest first. Each date is claimed first: a date already judged, or held by another run, is skipped, and a Staff-only date is not reviewed.
 
 For each date:
 

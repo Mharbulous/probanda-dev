@@ -21,7 +21,7 @@ REPO = str(Path(__file__).resolve().parent.parent)
 #   dir: the server's folder, in its plugin's source and in the built plugin. The
 #        bundle is at <dir>/dist/.
 #   build: the folder its bundle is built from. source/lawyer/mcp's bundle.mjs writes
-#        the data, files, timecamp and contacts-calendars-email bundles.
+#        the data, files, timecamp, timekeeping and contacts-calendars-email bundles.
 #   entry: the source file the bundle starts from.
 #   purity: whether its bundle is checked for Supabase and the commons tool namespace.
 #        commons is exempt: it is the plugins' Supabase surface (check_plugin_bundles.py
@@ -38,6 +38,8 @@ SERVERS = {
               "purity": True, "host_path": True},
     "timecamp": {"dir": "timecamp-mcp", "build": "source/lawyer/mcp", "entry": "source/lawyer/mcp/src/timecamp-index.ts",
                  "purity": True, "host_path": True},
+    "timekeeping": {"dir": "timekeeping-mcp", "build": "source/lawyer/mcp",
+                    "entry": "source/lawyer/mcp/src/timekeeping-index.ts", "purity": True, "host_path": True},
     "contacts-calendars-email": {"dir": "contacts-calendars-email-mcp", "build": "source/lawyer/mcp",
                                  "entry": "source/lawyer/mcp/src/contacts-calendars-email-index.ts",
                                  "purity": True, "host_path": True},

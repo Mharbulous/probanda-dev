@@ -28,14 +28,21 @@ One typed command takes one litigation matter from its last invoice to an invoic
 
 ## The bill record
 
-The bill in progress is recorded as it goes, so a fresh session on any computer learns where it stands from recorded data alone, never from a summary or a handoff. This skill reads and writes the record itself with `time_pipeline__list` and `time_pipeline__set`, in namespace `bill`, which it owns. Those tools are in this plugin's own data server. Their descriptions send a caller to another skill first, and for this namespace that does not apply (ruled on #250). Never call `time_pipeline__delete` or `time_pipeline__bulk_apply` on it: a record is ended, never removed.
+The bill in progress is recorded as it goes, so a fresh session on any computer learns where it stands from recorded data alone, never from a summary or a handoff. This skill reads and writes the record itself with `time_pipeline__list`, `time_pipeline__get` and `time_pipeline__set`, in namespace `bill`, which it owns. Those tools are on this plugin's `timekeeping` server, under whichever of `mcp__plugin_billing_timekeeping__<name>` and `mcp__remote-devices__plugin_billing_timekeeping__<name>` this host grants. Their descriptions send a caller to another skill first, and for this namespace that does not apply (ruled on #250). Never call `time_pipeline__delete` or `time_pipeline__bulk_apply` on it: a record is ended, never removed.
+
+**Saving the bill record.** Every write to the record takes these four steps:
+
+1. Read with `time_pipeline__list` as today, and keep each row's `sha256`.
+2. Save with `time_pipeline__set`, passing `expect_sha256` for a key that was read, or `expect_absent: true` for a new key.
+3. On `stale_write`: call `time_pipeline__get` for that key, make the same change to the value it returns, and save once more with the new hash.
+4. On a second `stale_write`: say once, in plain words, that this step's progress was not saved, and carry on. This is the skill's existing rule for a failed write.
 
 | Key | Value (a JSON string) |
 |---|---|
 | `<bill id>:bill` | `state`, `started_at`, `signed_invoice` (path, SHA-256 hash and number, or `first_bill`), `bill_number`, `superseded` (each final copy a reopen replaced), and `history` (each move with when and why) |
 | `<bill id>:step:<step>` | `finished_at` and that step's row below |
 
-The bill id is `<matter number>:<YYYYMMDD-HHMMSS>`, stamped when the record is created. It is new at every start-over, so an old bill's keys are never overwritten. Keys under `<bill id>:item:` are reserved. A path inside the matter's folder is recorded relative to that folder, because the bill may resume on another computer. To change a value, read it, change it, and write the whole value back. If a write fails, say once, in plain words, that this step's progress was not saved, and carry on.
+The bill id is `<matter number>:<YYYYMMDD-HHMMSS>`, stamped when the record is created. It is new at every start-over, so an old bill's keys are never overwritten. Keys under `<bill id>:item:` are reserved. A path inside the matter's folder is recorded relative to that folder, because the bill may resume on another computer. To change a value, read it, change it, and write the whole value back by the four steps above. If a write fails, say once, in plain words, that this step's progress was not saved, and carry on.
 
 | `state` | The practitioner hears | Entered when | Left when |
 |---|---|---|---|
@@ -54,7 +61,7 @@ Each step writes its row when it finishes, from what it already holds. A step th
 | 4 | Dates read | Bill date, last billed date, each billed date with its time, and whether a date was assumed |
 | 5 | Records agree or are imported | Invoice number read from the document, and any import |
 | 6.1 | List saved | List's path and hash, last date covered, count per strength, and the phone matches' path |
-| 6.2 | Every Strong and Medium date is marked or reported, and the Weak offer is answered | The judged dates file's path and hash, each date left without a mark and why, the Weak answer, and the possible unbilled list |
+| 6.2 | Every Strong and Medium date is marked or reported, and the Weak offer is answered | The path and hash `review_date__export` returned for `judged-dates.export.jsonl`, each date left without a mark and why, the Weak answer, and the possible unbilled list |
 | 6.3 | Every block answered | Each block's span and the choice made: entered by hand or left for an estimate |
 | 6.4 | Tie-out passed and time entries recorded | The saved answers file's path and hash, last date covered, fees and hours printed, and the reports' paths and hashes |
 | 7 | Chart saved or not needed | Whether one is needed, the image's path, and the hash of the lines it drew |
@@ -130,7 +137,9 @@ Write each numbered item's row in the bill record as it finishes.
 This step needs the billing plugin. If no billing skill is in your skill list, tell the practitioner that the time work needs the billing plugin installed, and stop. Never tally time from the TimeCamp web app: a figure that did not come from the connector is not used.
 
 1. **Candidate dates.** Invoke `/triage-billing-dates` for the matter, giving it the last invoice's facts from Step 4 or its row, so the PDF is read once.
-2. **Judge the days.** **In Cowork, stop here,** before `/timecamping` starts. In Cowork (this host grants the data tools as `mcp__remote-devices__plugin_lawyer_data__<name>`), a day's review cannot finish, because SyncoPaid's screen captures can be read only on the PC. Tell the practitioner so, that the candidate list is saved, and how to carry on: open a Code-tab session in the desktop app, in the matter's folder, and type `/bill-client`. Do not retry or probe in Cowork. Everywhere else, invoke `/timecamping` with the candidate list. It works the Strong and Medium dates, strongest first, and every change it makes to TimeCamp waits for the practitioner's approval.
+2. **Judge the days.** **In Cowork, stop here,** before `/timecamping` starts. In Cowork (this host grants the data tools as `mcp__remote-devices__plugin_lawyer_data__<name>`), a day's review cannot finish, because SyncoPaid's screen captures can be read only on the PC. Tell the practitioner so, that the candidate list is saved, and how to carry on: open a Code-tab session in the desktop app, in the matter's folder, and type `/bill-client`. Do not retry or probe in Cowork. Everywhere else, invoke `/timecamping` with the candidate list and this bill's id as the holder. It works the Strong and Medium dates, strongest first, and every change it makes to TimeCamp waits for the practitioner's approval.
+   - **First use on a matter that has a `judged-dates.jsonl`** (in `<matter-data folder>\timecamping\`): before invoking `/timecamping`, call `review_date__import_file` with that path, `judged_by` the practitioner, and `dry_run` true. Tell the practitioner the count it would add, and call it again with `dry_run` false on their yes.
+   - **When `/timecamping` returns,** call `review_date__export` for the candidate list's first and last dates, with `out_path` `<matter-data folder>\timecamping\judged-dates.export.jsonl`. Record that path and hash in the 6.2 row, and give that path to `tie_out.py` as its judged dates file.
 3. **Uncovered time.** Give the practitioner `/timecamping`'s list of possible unbilled time. For each block they may enter the time in TimeCamp by hand, or leave it for the next step to propose as an estimate. Stop until they have said which. The session never creates an entry.
 4. **Vet the lines.** Invoke `/vet-billable-time` with the matter, the candidate list, the last billed date and the retainer PDF. It records the vetted time entries, writes the billable time summary and the audit file to the `BILLING` folder, and writes `invoice_lines.json` to its working folder. Every figure on the invoice comes from that file, and a line with neither evidence nor an estimate basis cannot reach it. A step that stops stops this skill: report it and go no further.
 

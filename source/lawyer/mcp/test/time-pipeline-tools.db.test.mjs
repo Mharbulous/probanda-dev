@@ -7,14 +7,28 @@ import test from "node:test";
 
 const {
   resolveTimePipelineDbPath,
-  timePipelineGet,
-  timePipelineSet,
-  timePipelineList,
+  timePipelineGet: getWithHash,
+  timePipelineSet: setWithExpectation,
+  timePipelineList: listWithHash,
   timePipelineDelete,
   timePipelineBulkApply,
   timePipelineExport,
 } = await import("../build/time-pipeline/backend.js");
 const { callTool } = await import("../build/dispatch.js");
+const { callTimekeepingTool } = await import("../build/timekeeping-dispatch.js");
+
+// Most tests below are about what is stored, so these read values without their hashes and save
+// unconditionally (in a namespace that allows it). The hashes and conditional saves are tested
+// under "conditional saves" further down.
+function timePipelineGet(namespace, key, env) {
+  return { value: getWithHash(namespace, key, env).value };
+}
+function timePipelineSet(namespace, key, value, env) {
+  return setWithExpectation(namespace, key, value, {}, env);
+}
+function timePipelineList(namespace, prefix, env) {
+  return { items: listWithHash(namespace, prefix, env).items.map(({ key, value }) => ({ key, value })) };
+}
 
 function fixture(t) {
   const scratch = mkdtempSync(join(tmpdir(), "coclerk-time-pipeline-"));
@@ -370,7 +384,7 @@ test("bulk_apply takes exactly one of preview and expect", (t) => {
   assert.deepEqual(timePipelineGet("timeline", "k", f.env), { value: null });
 });
 
-test("the tool takes preview then expect through dispatch", async (t) => {
+test("the tool takes preview then expect through the timekeeping server's dispatch", async (t) => {
   const f = fixture(t);
   const dbPath = join(f.root, "tool.db");
   process.env.COCLERK_TIME_PIPELINE_DB_PATH = dbPath;
@@ -378,11 +392,83 @@ test("the tool takes preview then expect through dispatch", async (t) => {
   const path = jsonl(t, [{ op: "set", key: "k", value: "1" }]);
   const call = { namespace: "timeline", path };
 
-  await assert.rejects(callTool({}, "time_pipeline__bulk_apply", call), /preview or expect/);
-  const { added, replaced, removed, file_sha256 } = await callTool({}, "time_pipeline__bulk_apply", { ...call, preview: true });
+  await assert.rejects(callTimekeepingTool("time_pipeline__bulk_apply", call), /preview or expect/);
+  const { added, replaced, removed, file_sha256 } = await callTimekeepingTool("time_pipeline__bulk_apply", { ...call, preview: true });
   assert.equal(timePipelineGet("timeline", "k", { ...f.env, COCLERK_TIME_PIPELINE_DB_PATH: dbPath }).value, null);
-  await callTool({}, "time_pipeline__bulk_apply", { ...call, expect: { added, replaced, removed, file_sha256 } });
+  await callTimekeepingTool("time_pipeline__bulk_apply", { ...call, expect: { added, replaced, removed, file_sha256 } });
   assert.equal(timePipelineGet("timeline", "k", { ...f.env, COCLERK_TIME_PIPELINE_DB_PATH: dbPath }).value, "1");
+});
+
+test("the data server no longer serves any time_pipeline__ tool", async () => {
+  await assert.rejects(callTool({}, "time_pipeline__get", { namespace: "timeline", key: "k" }), /Unknown tool/);
+});
+
+// --- conditional saves --------------------------------------------------------
+// Issue 284: a read returns the stored value's SHA-256, and a save that names it is refused when
+// the record changed since, so two bills sharing dates cannot overwrite each other's rows.
+
+test("get and list return the SHA-256 of the stored value's UTF-8 text, and null for an absent key", (t) => {
+  const f = fixture(t);
+  const value = '{"note":"Zoë"}';
+  setWithExpectation("timeline", "k", value, {}, f.env);
+  assert.deepEqual(getWithHash("timeline", "k", f.env), { value, sha256: sha256(value) });
+  assert.deepEqual(getWithHash("timeline", "absent", f.env), { value: null, sha256: null });
+  assert.deepEqual(listWithHash("timeline", "", f.env).items, [{ key: "k", value, sha256: sha256(value) }]);
+});
+
+function refusedWith(code) {
+  return (err) => err.code === code;
+}
+
+test("a save naming the hash it read lands, and one naming an older hash is refused with stale_write", (t) => {
+  const f = fixture(t);
+  assert.deepEqual(setWithExpectation("bill", "L1:b1", "v1", { expect_absent: true }, f.env), { ok: true, sha256: sha256("v1") });
+  const read = getWithHash("bill", "L1:b1", f.env);
+  setWithExpectation("bill", "L1:b1", "v2", { expect_sha256: read.sha256 }, f.env);
+  assert.throws(() => setWithExpectation("bill", "L1:b1", "v3", { expect_sha256: read.sha256 }, f.env), refusedWith("stale_write"));
+  assert.equal(getWithHash("bill", "L1:b1", f.env).value, "v2");
+  assert.throws(() => setWithExpectation("bill", "L1:b1", "v4", { expect_absent: true }, f.env), refusedWith("stale_write"));
+  assert.throws(() => setWithExpectation("bill", "L1:gone", "v", { expect_sha256: sha256("v") }, f.env), refusedWith("stale_write"));
+  assert.equal(getWithHash("bill", "L1:gone", f.env).value, null);
+});
+
+test("in namespaces bill and item a save naming nothing is refused with expectation_required; elsewhere it overwrites", (t) => {
+  const f = fixture(t);
+  for (const namespace of ["bill", "item"]) {
+    assert.throws(() => setWithExpectation(namespace, "x:1", "v", {}, f.env), refusedWith("expectation_required"));
+    assert.equal(getWithHash(namespace, "x:1", f.env).value, null);
+  }
+  setWithExpectation("timesort", "day:1", "a", {}, f.env);
+  setWithExpectation("timesort", "day:1", "b", {}, f.env);
+  assert.equal(getWithHash("timesort", "day:1", f.env).value, "b");
+  assert.throws(() => setWithExpectation("timesort", "day:1", "c", { expect_sha256: sha256("b"), expect_absent: true }, f.env), /not both/);
+});
+
+test("set, delete, bulk_apply and export refuse a review_date: key in namespace item", async (t) => {
+  const f = fixture(t);
+  const key = "review_date:2026-10-02";
+  assert.throws(() => setWithExpectation("item", key, "{}", { expect_absent: true }, f.env), refusedWith("protected_key"));
+  assert.throws(() => timePipelineDelete("item", key, f.env), refusedWith("protected_key"));
+
+  // A record only the review_date__* tools write, put in place the way they do.
+  process.env.COCLERK_TIME_PIPELINE_DB_PATH = resolveTimePipelineDbPath(f.env);
+  t.after(() => delete process.env.COCLERK_TIME_PIPELINE_DB_PATH);
+  await callTimekeepingTool("review_date__claim", { date: "2026-10-02", holder: "L1:b1" });
+  const before = getWithHash("item", key, f.env).value;
+  assert.ok(before);
+  assert.throws(() => timePipelineDelete("item", key, f.env), refusedWith("protected_key"));
+  for (const lines of [[{ op: "delete_prefix", prefix: "" }], [{ op: "set", key, value: "{}" }], [{ op: "delete", key }]]) {
+    assert.throws(() => timePipelineBulkApply("item", jsonl(t, lines), { preview: true }, f.env), refusedWith("protected_key"));
+  }
+  assert.throws(() => timePipelineExport("item", "", join(f.root, "out.jsonl"), f.env), refusedWith("protected_key"));
+  assert.equal(existsSync(join(f.root, "out.jsonl")), false);
+  assert.equal(getWithHash("item", key, f.env).value, before);
+  // Another kind in the same namespace is unaffected.
+  setWithExpectation("item", "reading:1", "{}", { expect_absent: true }, f.env);
+  assert.equal(timePipelineExport("item", "reading:", join(f.root, "ok.jsonl"), f.env).items, 1);
+  // The same keys in another namespace are not protected.
+  setWithExpectation("timesort", key, "{}", {}, f.env);
+  assert.deepEqual(timePipelineDelete("timesort", key, f.env), { ok: true, deleted: true });
 });
 
 // --- export -----------------------------------------------------------------

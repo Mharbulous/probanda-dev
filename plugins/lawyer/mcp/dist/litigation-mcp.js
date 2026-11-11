@@ -1,4 +1,4 @@
-// build-stamp: 0ea6c99754f5
+// build-stamp: 31f7e304cff1
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75267,7 +75267,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "0ea6c99754f5";
+var BUILD_STAMP = false ? null : "31f7e304cff1";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -76218,7 +76218,36 @@ def namespace_rows(con, namespace):
     return dict(con.execute("SELECT key, value FROM kv_store WHERE namespace = ?", (namespace,)))
 
 
-def bulk_apply(con, namespace, path, expect):
+def sha256_text(text):
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def denied(deny_prefix, key):
+    return bool(deny_prefix) and key.startswith(deny_prefix)
+
+
+def set_if(con, namespace, key, value, expect_sha256, expect_absent):
+    """Write only if the stored value is still the one the caller read: its
+    SHA-256 matches expect_sha256, or with expect_absent the key is absent.
+    BEGIN IMMEDIATE takes the write lock before the read, so a second process
+    cannot write between the compare and the write."""
+    con.execute("BEGIN IMMEDIATE")
+    row = con.execute(
+        "SELECT value FROM kv_store WHERE namespace = ? AND key = ?", (namespace, key)
+    ).fetchone()
+    if expect_absent:
+        stale = row is not None
+    else:
+        stale = row is None or sha256_text(row[0]) != expect_sha256
+    if stale:
+        con.rollback()
+        return {"stale": True}
+    con.execute(UPSERT, (namespace, key, value, now_iso()))
+    con.commit()
+    return {"ok": True, "sha256": sha256_text(value)}
+
+
+def bulk_apply(con, namespace, path, expect, deny_prefix=""):
     """Apply a whole JSONL file of writes to one namespace in ONE transaction.
     Reading the file here rather than through tool arguments is what makes a
     58k-row import possible; one transaction is what makes it one process
@@ -76274,6 +76303,13 @@ def bulk_apply(con, namespace, path, expect):
             else:
                 raise SystemExit("line %d has unknown op %r" % (line_no, op))
     after = namespace_rows(con, namespace)
+    touched = sorted(
+        key for key in set(before) | set(after)
+        if denied(deny_prefix, key) and before.get(key) != after.get(key)
+    )
+    if touched:
+        con.rollback()
+        return {"denied": touched}
     effect = {
         "added": sum(key not in before for key in after),
         "replaced": sum(key in before and before[key] != value for key, value in after.items()),
@@ -76289,18 +76325,21 @@ def bulk_apply(con, namespace, path, expect):
     return {**counts, **effect, "applied": expect is not None}
 
 
-def export(con, namespace, prefix, path):
+def export(con, namespace, prefix, path, deny_prefix=""):
     """The read twin of bulk_apply: write every key under prefix to a JSONL
     file of bulk_apply "set" lines, sorted by key, so an export re-applies as
     it stands. The rows go to a file the caller named, never back through tool
-    output."""
-    parent = os.path.dirname(os.path.abspath(path))
-    if parent:
-        os.makedirs(parent, exist_ok=True)
+    output. A key under deny_prefix refuses the export before the file is opened."""
     rows = con.execute(
         "SELECT key, value FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\' ORDER BY key",
         (namespace, escape_like(prefix) + "%"),
-    )
+    ).fetchall()
+    touched = [key for key, _ in rows if denied(deny_prefix, key)]
+    if touched:
+        return {"denied": touched}
+    parent = os.path.dirname(os.path.abspath(path))
+    if parent:
+        os.makedirs(parent, exist_ok=True)
     items = 0
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         for key, value in rows:
@@ -76362,6 +76401,11 @@ def main():
             con.execute(UPSERT, (namespace, req["key"], req["value"], now_iso()))
             con.commit()
             return {"ok": True}
+        if op == "set_if":
+            return set_if(
+                con, namespace, req["key"], req["value"],
+                req.get("expect_sha256"), bool(req.get("expect_absent")),
+            )
         if op == "list":
             prefix = req.get("prefix") or ""
             rows = con.execute(
@@ -76369,7 +76413,10 @@ def main():
                 (namespace, escape_like(prefix) + "%"),
             ).fetchall()
             return {"items": [{"key": k, "value": v} for k, v in rows]}
+        deny_prefix = req.get("deny_prefix") or ""
         if op == "delete":
+            if denied(deny_prefix, req["key"]):
+                return {"denied": [req["key"]]}
             cur = con.execute(
                 "DELETE FROM kv_store WHERE namespace = ? AND key = ?",
                 (namespace, req["key"]),
@@ -76377,9 +76424,9 @@ def main():
             con.commit()
             return {"ok": True, "deleted": cur.rowcount > 0}
         if op == "bulk_apply":
-            return bulk_apply(con, namespace, req["path"], req.get("expect"))
+            return bulk_apply(con, namespace, req["path"], req.get("expect"), deny_prefix)
         if op == "export":
-            return export(con, namespace, req.get("prefix") or "", req["path"])
+            return export(con, namespace, req.get("prefix") or "", req["path"], deny_prefix)
         raise SystemExit("unknown op: %s" % op)
     finally:
         con.close()
@@ -77799,71 +77846,6 @@ function caseDataToolDefinitions() {
         { name: "replaces", type: "str" }
       ], ["matter_root"]),
       annotations: { destructiveHint: false, openWorldHint: false }
-    }
-  ];
-}
-
-// src/schema/time-pipeline.ts
-function timePipelinePrefixed(name) {
-  return `time_pipeline__${name}`;
-}
-function timePipelineToolDefinitions() {
-  return [
-    {
-      name: timePipelinePrefixed("get"),
-      description: "Read one value from the time-pipeline key-value store by (namespace, key). Returns { value: null } when the key is absent. Only the /time-pipeline-data skill may call this tool -- you satisfy that by invoking it (Skill: billing:time-pipeline-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
-      inputSchema: objectSchema([
-        { name: "namespace", type: "str" },
-        { name: "key", type: "str" }
-      ], ["namespace", "key"]),
-      annotations: { readOnlyHint: true, openWorldHint: false }
-    },
-    {
-      name: timePipelinePrefixed("set"),
-      description: "Write one value into the time-pipeline key-value store at (namespace, key), overwriting any existing value there. `value` is stored verbatim -- pass an already-JSON-encoded string for a structured value. Only the /time-pipeline-data skill may call this tool -- see time_pipeline__get for how a caller from another skill's workflow satisfies that.",
-      inputSchema: objectSchema([
-        { name: "namespace", type: "str" },
-        { name: "key", type: "str" },
-        { name: "value", type: "str" }
-      ], ["namespace", "key", "value"])
-    },
-    {
-      name: timePipelinePrefixed("list"),
-      description: "List every (key, value) pair in one namespace of the time-pipeline key-value store whose key starts with `prefix`, sorted by key. Omit `prefix` (or pass an empty string) to list the whole namespace. Only the /time-pipeline-data skill may call this tool.",
-      inputSchema: objectSchema([
-        { name: "namespace", type: "str" },
-        { name: "prefix", type: "str" }
-      ], ["namespace"]),
-      annotations: { readOnlyHint: true, openWorldHint: false }
-    },
-    {
-      name: timePipelinePrefixed("delete"),
-      description: "Delete one (namespace, key) entry from the time-pipeline key-value store. Returns { ok: true, deleted: false } when the key was already absent. Only the /time-pipeline-data skill may call this tool.",
-      inputSchema: objectSchema([
-        { name: "namespace", type: "str" },
-        { name: "key", type: "str" }
-      ], ["namespace", "key"])
-    },
-    {
-      name: timePipelinePrefixed("bulk_apply"),
-      description: 'Apply a whole file of writes to one namespace of the time-pipeline key-value store, in a single transaction. `path` is an absolute path to a JSONL file on this machine -- one JSON object per line, applied in file order. Four line types: {"op":"set","key":...,"value":...} stores one value verbatim; {"op":"delete","key":...} removes one key; {"op":"delete_prefix","prefix":...} removes every key in the namespace starting with that prefix, matched literally; {"op":"merge","key":...,"add":[...],"drop_prefix":...} treats the value as a JSON array of strings, drops every element starting with `drop_prefix`, appends the elements of `add` not already present, and deletes the key if nothing remains. The server reads the file itself, so a bulk import never passes through tool arguments. A missing file, a malformed line, an unknown op, or a merge target that is not a JSON array of strings aborts the whole call before the commit and names the line number -- nothing partial is written. Call it twice: first with preview true, which writes nothing and returns { lines, sets, deletes, merges, deleted_by_prefix, added, replaced, removed, file_sha256, applied: false }; then with expect holding that added, replaced, removed and file_sha256, which commits only if they still match the file and the store, and otherwise writes nothing. Only the /time-pipeline-data skill may call this tool -- see time_pipeline__get for how a caller from another skill\'s workflow satisfies that.',
-      inputSchema: objectSchema([
-        { name: "namespace", type: "str" },
-        { name: "path", type: "str" },
-        { name: "preview", type: "bool" },
-        { name: "expect", type: "obj" }
-      ], ["namespace", "path"]),
-      annotations: { destructiveHint: true, openWorldHint: false }
-    },
-    {
-      name: timePipelinePrefixed("export"),
-      description: 'Write every (key, value) pair in one namespace of the time-pipeline key-value store whose key starts with `prefix` (matched literally; omit it or pass an empty string for the whole namespace) to a JSONL file, sorted by key. `path` is an absolute path on this machine; the server creates its parent directory and overwrites any file already there. Each line is a time_pipeline__bulk_apply set line, {"op":"set","key":...,"value":...}, so an export re-applies as it stands. The rows go to the file, never through tool output. Returns { items, path }. Only the /time-pipeline-data skill may call this tool -- see time_pipeline__get for how a caller from another skill\'s workflow satisfies that.',
-      inputSchema: objectSchema([
-        { name: "namespace", type: "str" },
-        { name: "prefix", type: "str" },
-        { name: "path", type: "str" }
-      ], ["namespace", "path"]),
-      annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false }
     }
   ];
 }
@@ -80956,7 +80938,6 @@ function buildToolDefinitions() {
   return [
     ...practiceToolDefinitions(),
     ...caseDataToolDefinitions(),
-    ...timePipelineToolDefinitions(),
     ...looseThreadsToolDefinitions(),
     ...timecampingToolDefinitions(),
     ...submissionDataToolDefinitions(),
@@ -115147,56 +115128,8 @@ async function repointDocuments(request2, env = process.env) {
   return done.warning ? { database: true, repointed, warning: done.warning } : { database: true, repointed };
 }
 
-// src/time-pipeline/backend.ts
-import { join as join53 } from "node:path";
-function resolveTimePipelineDbPath(env = process.env) {
-  if (env.COCLERK_TIME_PIPELINE_DB_PATH) return env.COCLERK_TIME_PIPELINE_DB_PATH;
-  const root = resolveCaseDataRoot(env);
-  return join53(root, "_practice", env.COCLERK_TIME_PIPELINE_DB_NAME || "time_pipeline.db");
-}
-function timePipelineTimeoutMs(op, env = process.env) {
-  const defaultMs = isKvRead(op) ? READ_TIMEOUT_MS : op === "bulk_apply" ? WRITE_TIMEOUT_MS : EXECUTE_TIMEOUT_MS;
-  return pythonTimeoutMs(env, defaultMs, "COCLERK_TIME_PIPELINE_PYTHON_TIMEOUT_MS");
-}
-var KILLED_WRITE_ADVICE3 = "The write may already have committed: verify it by reading it back before retrying (/time-pipeline-data Conventions).";
-function runHelper3(request2, env) {
-  return runKv(request2, {
-    label: "time-pipeline sqlite helper",
-    env,
-    timeoutMs: timePipelineTimeoutMs(request2.op, env),
-    timeoutAdvice: isKvRead(request2.op) ? void 0 : KILLED_WRITE_ADVICE3
-  });
-}
-function timePipelineGet(namespace, key, env = process.env) {
-  const db_path = resolveTimePipelineDbPath(env);
-  return runHelper3({ op: "get", db_path, namespace, key }, env);
-}
-function timePipelineSet(namespace, key, value2, env = process.env) {
-  const db_path = resolveTimePipelineDbPath(env);
-  return runHelper3({ op: "set", db_path, namespace, key, value: value2 }, env);
-}
-function timePipelineList(namespace, prefix, env = process.env) {
-  const db_path = resolveTimePipelineDbPath(env);
-  return runHelper3({ op: "list", db_path, namespace, prefix: prefix ?? "" }, env);
-}
-function timePipelineDelete(namespace, key, env = process.env) {
-  const db_path = resolveTimePipelineDbPath(env);
-  return runHelper3({ op: "delete", db_path, namespace, key }, env);
-}
-function timePipelineBulkApply(namespace, path, mode, env = process.env) {
-  if (mode.preview === true === (mode.expect !== void 0)) {
-    throw new ValidationError("time_pipeline__bulk_apply takes preview or expect, not both and not neither");
-  }
-  const db_path = resolveTimePipelineDbPath(env);
-  return runHelper3({ op: "bulk_apply", db_path, namespace, path, expect: mode.expect }, env);
-}
-function timePipelineExport(namespace, prefix, path, env = process.env) {
-  const db_path = resolveTimePipelineDbPath(env);
-  return runHelper3({ op: "export", db_path, namespace, prefix: prefix ?? "", path }, env);
-}
-
 // src/timecamping/backend.ts
-import { join as join54 } from "node:path";
+import { join as join53 } from "node:path";
 
 // src/timecamping/lock.ts
 var SITE4 = {
@@ -115215,7 +115148,7 @@ function acquireDataLock2(dbPath, env = process.env) {
 function resolveTimecampingDbPath(env = process.env) {
   if (env.COCLERK_TIMECAMPING_DB_PATH) return env.COCLERK_TIMECAMPING_DB_PATH;
   const root = resolveCaseDataRoot(env);
-  return join54(root, "_practice", env.COCLERK_TIMECAMPING_DB_NAME || "timecamping.db");
+  return join53(root, "_practice", env.COCLERK_TIMECAMPING_DB_NAME || "timecamping.db");
 }
 var PY_HELPER5 = String.raw`
 import json, os, re, shutil, sqlite3, sys, tempfile
@@ -115363,7 +115296,7 @@ function helperFile5() {
   return pythonDriverFile("timecamping-sqlite", PY_HELPER5);
 }
 var EXECUTE_TIMEOUT_ADVICE2 = "The write may already have committed: verify before retrying (/timecamping-data Operation Routing).";
-function runHelper4(request2, env) {
+function runHelper3(request2, env) {
   const write2 = request2.op !== "query";
   const defaultMs = request2.op === "bulk_upsert" ? WRITE_TIMEOUT_MS : write2 ? EXECUTE_TIMEOUT_MS : READ_TIMEOUT_MS;
   return runPythonDriver({
@@ -115377,14 +115310,14 @@ function runHelper4(request2, env) {
 }
 function timecampingDataQuery(sql, params, env = process.env) {
   const dbPath = resolveTimecampingDbPath(env);
-  const result = runHelper4({ op: "query", db_path: dbPath, sql, params }, env);
+  const result = runHelper3({ op: "query", db_path: dbPath, sql, params }, env);
   return result;
 }
 async function timecampingDataExecute(sqlScript, env = process.env) {
   const dbPath = resolveTimecampingDbPath(env);
   const lock = await acquireDataLock2(dbPath, env);
   try {
-    const result = runHelper4({ op: "execute", db_path: dbPath, sql_script: sqlScript }, env);
+    const result = runHelper3({ op: "execute", db_path: dbPath, sql_script: sqlScript }, env);
     const withWarning = { ...result };
     if (lock.brokeStale) {
       withWarning.warning = STALE_LOCK_WARNING;
@@ -115399,7 +115332,7 @@ async function timecampingDataBulkUpsert(path, env = process.env) {
   const dbPath = resolveTimecampingDbPath(env);
   const lock = await acquireDataLock2(dbPath, env);
   try {
-    const result = runHelper4({ op: "bulk_upsert", db_path: dbPath, path }, env);
+    const result = runHelper3({ op: "bulk_upsert", db_path: dbPath, path }, env);
     return lock.brokeStale ? { ...result, warning: STALE_LOCK_WARNING } : result;
   } finally {
     lock.release();
@@ -115898,7 +115831,7 @@ function partiesSnapshotStatements(dbPath, filing, tool, env = process.env) {
 
 // src/submission/forms/sent-write.ts
 import { existsSync as existsSync48 } from "node:fs";
-import { extname as extname4, join as join55 } from "node:path";
+import { extname as extname4, join as join54 } from "node:path";
 var TOOL7 = "drafting_data__record_sent";
 var DELIVER_TITLE = "Deliver";
 var WAIVER2 = " \u2014 WAIVED: ";
@@ -116010,7 +115943,7 @@ function storedParagraphs(dbPath, filing, stored) {
 function compareSentCopy(paragraphs, args, env) {
   return runPythonDriver({
     label: "sent-copy comparison",
-    driver: join55(submissionDataMigrateScriptsDir(env), "sent_copy_compare.py"),
+    driver: join54(submissionDataMigrateScriptsDir(env), "sent_copy_compare.py"),
     payload: JSON.stringify({ paragraphs, path: args.sent_copy_path ?? null, text: args.sent_copy_text ?? null }),
     env,
     timeoutMs: pythonTimeoutMs2(env, READ_TIMEOUT_MS)
@@ -117018,7 +116951,7 @@ async function submissionDataRewriteJob(args, env = process.env) {
 
 // src/submission/forms/complete-job.ts
 import { readFileSync as readFileSync42 } from "node:fs";
-import { dirname as dirname32, join as join56 } from "node:path";
+import { dirname as dirname32, join as join55 } from "node:path";
 var TOOL16 = "drafting_data__complete_job";
 function rewritePages(args, read3, client, todos, dates) {
   try {
@@ -117073,7 +117006,7 @@ function openSteps(dbPath, id, token) {
 var INCOMPLETE_MEMO = /^(?:More research is needed on the following issues:|Confidence:\s*"?INCOMPLETE)/m;
 function memoIncomplete(draftDir, filePath) {
   try {
-    return INCOMPLETE_MEMO.test(readFileSync42(join56(dirname32(draftDir), ...filePath.split(/[\\/]+/)), "utf8"));
+    return INCOMPLETE_MEMO.test(readFileSync42(join55(dirname32(draftDir), ...filePath.split(/[\\/]+/)), "utf8"));
   } catch (err) {
     if (UNREADABLE.has(err.code ?? "")) return false;
     throw err;
@@ -117465,7 +117398,7 @@ async function submissionDataMergeJobs(args, env = process.env) {
 // src/submission/forms/quick-edit.ts
 import { randomBytes as randomBytes5 } from "node:crypto";
 import { appendFileSync as appendFileSync4, existsSync as existsSync51, mkdirSync as mkdirSync25, readdirSync as readdirSync24, readFileSync as readFileSync43, renameSync as renameSync10, rmSync as rmSync3, statSync as statSync20, unlinkSync as unlinkSync15, writeFileSync as writeFileSync15 } from "node:fs";
-import { basename as basename12, dirname as dirname34, join as join57 } from "node:path";
+import { basename as basename12, dirname as dirname34, join as join56 } from "node:path";
 var PREVIEW = "drafting_forms__preview_edit";
 var APPLY = "drafting_forms__apply_edit";
 var TOKEN_TTL_MS = 30 * 60 * 1e3;
@@ -118081,7 +118014,7 @@ function pruneTokens(db) {
   const cutoff = Date.now() - TOKEN_PRUNE_MS;
   for (const name of readdirSync24(dir)) {
     if (!name.startsWith(prefix)) continue;
-    const file = join57(dir, name);
+    const file = join56(dir, name);
     if (statSync20(file).mtimeMs < cutoff) unlinkSync15(file);
   }
 }
@@ -118244,7 +118177,7 @@ async function submissionFormsPreviewEdit(args) {
     mkdirSync25(previewDir2, { recursive: true });
     const sources = new Set(mapSources(after.documents).map((s3) => s3.title));
     const previewPaths = after.documents.filter((doc) => sources.has(doc.fileName.replace(/\.md$/i, ""))).map((doc) => {
-      const path = join57(previewDir2, doc.fileName);
+      const path = join56(previewDir2, doc.fileName);
       writeFileSync15(path, withLegend(doc.markdown, doc.documentType).markdown, "utf-8");
       return path;
     });
@@ -118328,7 +118261,7 @@ async function submissionFormsApplyEdit(args) {
   return { applied: true, filing_id: stored.filing_id, revision, audit_log: log.file, audit_lines: log.lines, note: `Applied${written.warning ? ` (${written.warning})` : ""}.` };
 }
 function logFile(db, filingId) {
-  return join57(recordsDir(db), `quick-edits-${filingId}.jsonl`);
+  return join56(recordsDir(db), `quick-edits-${filingId}.jsonl`);
 }
 function appendLog(db, stored, results, revision) {
   const file = logFile(db, stored.filing_id);
@@ -118364,12 +118297,12 @@ function appendLog(db, stored, results, revision) {
 // src/page-api/focus.ts
 import { createHash as createHash13, randomUUID as randomUUID12 } from "node:crypto";
 import { existsSync as existsSync52, mkdirSync as mkdirSync26, readFileSync as readFileSync44 } from "node:fs";
-import { dirname as dirname35, join as join58 } from "node:path";
+import { dirname as dirname35, join as join57 } from "node:path";
 var FOCUS_SECTIONS = ["submissions", "counter", "rebuttals", "killed"];
 function focusPath(dbPath, filingId, env) {
   const name = createHash13("sha256").update(`${dbPath}
 ${filingId}`).digest("hex").slice(0, 32);
-  return join58(dirname35(configPath(env)), "page-focus", `${name}.json`);
+  return join57(dirname35(configPath(env)), "page-focus", `${name}.json`);
 }
 function writeFocus(dbPath, filingId, section3, number3, env = process.env) {
   const record2 = { id: randomUUID12(), section: section3, number: number3, at: (/* @__PURE__ */ new Date()).toISOString() };
@@ -118418,7 +118351,7 @@ function submissionFormsFocusViewPage(args, env = process.env) {
 
 // src/submission/open-session.ts
 import { existsSync as existsSync53, mkdirSync as mkdirSync27, readdirSync as readdirSync25 } from "node:fs";
-import { basename as basename13, dirname as dirname36, join as join59 } from "node:path";
+import { basename as basename13, dirname as dirname36, join as join58 } from "node:path";
 
 // src/submission/matter-todos.ts
 var text6 = (value2) => value2 === null || value2 === void 0 ? null : String(value2);
@@ -118477,7 +118410,7 @@ function openBoard(dbPath, draftDir, client, todos, dates, listed, filingId, tim
           ...rendered.filing_retired ? { filing_retired: true, note: rendered.note } : {},
           ...board.ingest_inputs ? { ingest_inputs: board.ingest_inputs } : {}
         },
-        matter_board_path: join59(draftDir, MATTER_BOARD_FILE),
+        matter_board_path: join58(draftDir, MATTER_BOARD_FILE),
         milestone_path: board.path,
         ...written.pages ? { milestone_paths: written.pages.milestone_paths, view_page_paths: written.pages.view_page_paths, loose_threads_path: written.pages.loose_threads_path } : {},
         // ADR 0038: the render read the opened filing's form currency; it is not read twice.
@@ -118635,7 +118568,7 @@ async function openSession(matterRoot, practiceDb2, client = {}, unattended = fa
     }
     const to2 = migrationRefused === void 0 ? target2 : result.schema_version;
     if (to2 !== null && to2 !== from) {
-      migrated = { from, to: to2, backup: written.length > 0 ? join59(dirname36(dbPath), written[0]) : null };
+      migrated = { from, to: to2, backup: written.length > 0 ? join58(dirname36(dbPath), written[0]) : null };
       if (migrateWarnings.length > 0) migrated.warnings = migrateWarnings;
     }
   }
@@ -122223,7 +122156,7 @@ function rulesLifecycle(dbPath, since) {
 // src/preferences/tools.ts
 import { randomUUID as randomUUID13 } from "node:crypto";
 import { existsSync as existsSync59, readFileSync as readFileSync49 } from "node:fs";
-import { join as join60 } from "node:path";
+import { join as join59 } from "node:path";
 
 // src/preferences/redact.ts
 var PLACEHOLDERS = ["<user>", "<username>", "<matter>", "<folder>"];
@@ -122325,7 +122258,7 @@ function person(env) {
 }
 function preferencesFile(env) {
   const key = person(env);
-  return { file: join60(resolveCaseDataRoot(env), "_practice", "preferences", `${key}.json`), person: key };
+  return { file: join59(resolveCaseDataRoot(env), "_practice", "preferences", `${key}.json`), person: key };
 }
 function readEntries2(file) {
   if (!existsSync59(file)) return [];
@@ -122659,7 +122592,7 @@ async function withdrawSuggestion(recordId, env = process.env, seams = {}) {
 // src/suggestions/card.ts
 import { randomUUID as randomUUID15 } from "node:crypto";
 import { existsSync as existsSync63, unlinkSync as unlinkSync17 } from "node:fs";
-import { join as join64 } from "node:path";
+import { join as join63 } from "node:path";
 
 // src/local-page/wait.ts
 var timerSleep = (ms2) => new Promise((resolve12) => setTimeout(resolve12, ms2));
@@ -122678,7 +122611,7 @@ async function waitFor(check3, options) {
 
 // src/suggestions/crosscheck.ts
 import { existsSync as existsSync60, readFileSync as readFileSync50 } from "node:fs";
-import { join as join61 } from "node:path";
+import { join as join60 } from "node:path";
 
 // src/case/list-record-names.ts
 var DRIVER11 = String.raw`
@@ -122828,7 +122761,7 @@ function loadStopWords(env = process.env, installRoot) {
   const root = resolveShippedRoot(STOP_WORDS_DIR, env, { subject: "the suggestion word lists", plugin: "lawyer", installRoot }).root;
   const words2 = /* @__PURE__ */ new Set();
   for (const file of STOP_WORD_FILES) {
-    const path = join61(root, ...STOP_WORDS_DIR.split("/"), file);
+    const path = join60(root, ...STOP_WORDS_DIR.split("/"), file);
     if (!existsSync60(path)) throw new DataServerError("The suggestion check is missing its word lists. Update the lawyer plugin.", "stop_words_missing");
     for (const word of parseStopWords(readFileSync50(path, "utf-8"))) words2.add(word);
   }
@@ -123323,7 +123256,7 @@ function renderCardHtml(card2, port4, token) {
 
 // src/suggestions/mockup.ts
 import { existsSync as existsSync61, readFileSync as readFileSync51 } from "node:fs";
-import { join as join62 } from "node:path";
+import { join as join61 } from "node:path";
 var PLACEHOLDERS_DIR = "suggestion/references/mockup";
 var PLACEHOLDERS_FILE = "placeholders.txt";
 var MAX_MOCKUP_BYTES = 1e6;
@@ -123333,7 +123266,7 @@ function parsePlaceholders(text11) {
 }
 function loadPlaceholders(env = process.env, installRoot) {
   const root = resolveShippedRoot(PLACEHOLDERS_DIR, env, { subject: "the suggestion mockup placeholders", plugin: "lawyer", installRoot }).root;
-  const path = join62(root, ...PLACEHOLDERS_DIR.split("/"), PLACEHOLDERS_FILE);
+  const path = join61(root, ...PLACEHOLDERS_DIR.split("/"), PLACEHOLDERS_FILE);
   if (!existsSync61(path)) throw new DataServerError("The suggestion mockup is missing its placeholder text. Update the lawyer plugin.", "placeholders_missing");
   return parsePlaceholders(readFileSync51(path, "utf-8"));
 }
@@ -123501,7 +123434,7 @@ function renderMockupPage(opts) {
 // src/suggestions/observation.ts
 import { randomUUID as randomUUID14 } from "node:crypto";
 import { existsSync as existsSync62, readdirSync as readdirSync33, readFileSync as readFileSync52 } from "node:fs";
-import { join as join63 } from "node:path";
+import { join as join62 } from "node:path";
 
 // src/suggestions/environment.ts
 import { arch as osArch, homedir as homedir10, hostname as osHostname, platform as osPlatform, release as osRelease, userInfo } from "node:os";
@@ -124037,7 +123970,7 @@ function parseObservationTexts(text11) {
 }
 function loadObservationTexts(env = process.env, installRoot) {
   const root = resolveShippedRoot(OBSERVATION_TEXTS_PATH, env, { subject: "the suggestion observation texts", plugin: "lawyer", installRoot }).root;
-  const path = join63(root, ...OBSERVATION_TEXTS_PATH.split("/"));
+  const path = join62(root, ...OBSERVATION_TEXTS_PATH.split("/"));
   if (!existsSync62(path)) throw new DataServerError("The suggestion observation texts are missing. Update the lawyer plugin.", "observation_texts_missing");
   return parseObservationTexts(readFileSync52(path, "utf-8"));
 }
@@ -124293,10 +124226,10 @@ function findCard(store, cardId) {
   return record2;
 }
 function cardPath(cardId, env = process.env) {
-  return join64(storeDir(env), `Suggestion-${cardId}.html`);
+  return join63(storeDir(env), `Suggestion-${cardId}.html`);
 }
 function mockupPagePath(cardId, n3, env = process.env) {
-  return join64(storeDir(env), `Suggestion-${cardId}-mockup-${n3}.html`);
+  return join63(storeDir(env), `Suggestion-${cardId}-mockup-${n3}.html`);
 }
 function nowOf2(deps) {
   return deps.now ? deps.now() : /* @__PURE__ */ new Date();
@@ -125418,7 +125351,7 @@ function repoDocsRead(relative6, env) {
 }
 
 // src/pages/preview.ts
-import { basename as basename16, dirname as dirname38, join as join66, relative as relative5 } from "node:path";
+import { basename as basename16, dirname as dirname38, join as join65, relative as relative5 } from "node:path";
 
 // src/housekeeping/templates/approval.css.ts
 var approval_css_default = ':root{\n  --paper:#F4FAF7;--card:#FFFFFF;--ink:#025056;--muted:#436864;--line:#D7E8E0;--line-strong:#B9D3C8;\n  --accent:#8A5F1F;--accent-soft:#F7ECD6;\n  --panel:#C1E3CF;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;--gradient:linear-gradient(90deg,#E5B521,#BA802B);\n  --ok:#025056;--ok-ink:#FFFFFF;--ok-soft:#E3F2EC;--bad:#B3261E;\n  --shadow:0 1px 2px rgba(2,80,86,.06),0 4px 14px rgba(2,80,86,.06);\n  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;\n  --sans-heading:"Trebuchet MS","Century Gothic",var(--sans);\n  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;\n}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}}\n:root[data-theme="dark"]{\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}\n*{box-sizing:border-box}\nbody{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}\nmain{padding:28px 28px 96px;max-width:1080px;margin:0 auto}\nheader{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}\nheader h1{font-family:var(--sans-heading);font-weight:600;font-size:22px;margin:0;letter-spacing:-.01em}\nheader h1::after{content:"";display:block;height:4px;width:140px;margin-top:8px;border-radius:2px;background:var(--gradient)}\n.meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.meta span::before{content:attr(data-k) " ";color:var(--line-strong)}\n.note{font-size:12.5px;color:var(--muted);margin:0}\n.banner{padding:10px 14px;border-radius:10px;border:2px solid var(--ok);background:var(--ok-soft);font-weight:600;margin-top:6px}\n.board{display:flex;flex-direction:column;gap:22px}\n\n/* Group panel */\nsection.grp{background:var(--panel);border-radius:12px;padding:14px 16px 16px}\nsection.grp>h2{font-family:var(--sans-heading);font-size:17px;font-weight:700;letter-spacing:-.005em;margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--frame);display:flex;align-items:center;gap:10px}\nlabel.all{margin-left:auto;display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--muted);padding:4px 8px;border-radius:8px}\nlabel.all:hover{color:var(--ink);background:var(--card)}\nlabel.all input{position:absolute;opacity:0;pointer-events:none}\n.box{width:18px;height:18px;border-radius:5px;border:2px solid var(--frame);background:var(--card);display:grid;place-items:center;transition:background .12s,border-color .12s}\nlabel.all input:checked+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:checked+.box::after{content:"";width:9px;height:5px;border:2px solid var(--ok-ink);border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}\nlabel.all input:indeterminate+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:indeterminate+.box::after{content:"";width:9px;height:2px;background:var(--ok-ink);border-radius:1px}\nlabel.all input:focus-visible+.box{outline:2px solid var(--accent);outline-offset:2px}\nlabel.all input:disabled+.box{opacity:.6}\n.count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}\nsection[data-kind="misfiled"]>h2,section[data-kind="stuck"]>h2{color:var(--accent)}\n\n/* Row card */\nol.stack{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}\nli.card{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;gap:8px 18px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow);transition:border-color .15s,background .15s}\nli.card:hover{border-color:var(--line-strong)}\nli.card[data-state="ok"]{border-color:var(--ok);background:var(--ok-soft)}\n.what{flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:2px}\n.src{font-size:13px;overflow-wrap:anywhere}\n.src a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line-strong)}\n.src a:hover{color:var(--ink);border-bottom-color:var(--ink)}\n.dir{font-weight:700}\n.to{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}\n.verb{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--frame);white-space:nowrap}\n.verb::before{content:"\\2192"}\n.verb.solo::before{content:"\\2192\\00A0\\00A0"}\n.verb.solo{font-size:12px;font-weight:600;color:var(--ink)}\n.tgt{font-weight:400;font-size:14px;overflow-wrap:anywhere}\n.dest-f{font-weight:700}\n.why{font-size:12.5px;color:var(--muted)}\n.why::before{content:"\\2014\\00A0"}\n.aside{font-size:12.5px;color:var(--muted)}\n\n/* Decision toggles */\n.pick{display:flex;gap:6px;flex:0 0 auto}\nlabel.opt{position:relative;cursor:pointer;user-select:none}\nlabel.opt input{position:absolute;opacity:0;pointer-events:none}\nlabel.opt span{display:inline-block;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line-strong);font-size:12.5px;font-weight:500;color:var(--muted);background:var(--card);transition:all .12s;white-space:nowrap}\nlabel.opt:hover span{border-color:var(--frame);color:var(--ink)}\nlabel.opt.ok input:checked+span{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}\nlabel.opt.ok input:checked+span::before{content:"\\2713\\00A0"}\nlabel.opt.leave input:checked+span{background:var(--line);border-color:var(--line-strong);color:var(--ink)}\nlabel.opt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}\nlabel.opt input:disabled+span{cursor:default}\n\n/* Ingested, nothing to approve */\ndetails.ingested{margin-top:22px;background:var(--panel);border-radius:12px;padding:12px 16px}\ndetails.ingested summary{font-family:var(--sans-heading);font-size:15px;font-weight:700;cursor:pointer}\ndetails.ingested .src{padding:6px 0 0}\n\n/* Sticky footer tally */\n.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line-strong);box-shadow:0 -4px 16px rgba(2,80,86,.08)}\n.bar .in{max-width:1080px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}\n.tally{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}\n.tally b{color:var(--ink);font-weight:600}\n.tally .t-ok b{color:var(--ok)}\n.msg{font-size:13px}\n.msg.done{color:var(--ok);font-weight:600}\n.msg.error{color:var(--bad)}\nbutton.submit{margin-left:auto;font:600 14px var(--sans-heading);padding:8px 22px;border-radius:8px;border:0;background:var(--ink);color:var(--paper);cursor:pointer;transition:transform .08s,opacity .12s}\nbutton.submit:hover{opacity:.92}\nbutton.submit:active{transform:translateY(1px)}\nbutton.submit:disabled{opacity:.4;cursor:default}\n\n@media (max-width:640px){main{padding:18px 16px 120px}.bar .in{padding:10px 16px}.what{flex-basis:100%}}\n@media (prefers-reduced-motion: reduce){*{transition:none!important}}';
@@ -127084,10 +127017,10 @@ var CAST_FIXTURE = {
 // src/pages/preview-file.ts
 import { mkdirSync as mkdirSync31, writeFileSync as writeFileSync18 } from "node:fs";
 import { tmpdir as tmpdir5 } from "node:os";
-import { join as join65 } from "node:path";
+import { join as join64 } from "node:path";
 var FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
 function fixturePreviewDir() {
-  return join65(tmpdir5(), FIXTURE_PREVIEW_FOLDER);
+  return join64(tmpdir5(), FIXTURE_PREVIEW_FOLDER);
 }
 var FIXTURE_PREVIEW_MARKER = "<!-- probanda-fixture-preview -->";
 function composeWithOverrides(set, overrides = {}) {
@@ -127104,7 +127037,7 @@ function writePreview(dir, base, html2, fixture) {
   const text11 = fixture ? `${html2}${html2.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
 ` : html2;
   for (let n3 = 1; ; n3++) {
-    const path = join65(dir, `${base} preview ${n3}.html`);
+    const path = join64(dir, `${base} preview ${n3}.html`);
     try {
       writeFileSync18(path, text11, { flag: "wx" });
       return path;
@@ -127207,7 +127140,7 @@ async function pagesPreview(args, store) {
     ids.filing_id === void 0 ? {} : { only: ids.filing_id },
     threads ? { threads: withoutListener(threads) } : viewPage ? { views: { [page]: viewPage } } : page === "Work Board" ? { milestone: composed } : { matterBoard: composed }
   );
-  const target2 = threads || page === "Litigation Strategy" ? join66(draftDir, threads ? LOOSE_THREADS_FILE2 : MATTER_BOARD_FILE) : page === "Work Board" ? built.paths.milestone_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page && v3.filing_id === ids.filing_id)?.path;
+  const target2 = threads || page === "Litigation Strategy" ? join65(draftDir, threads ? LOOSE_THREADS_FILE2 : MATTER_BOARD_FILE) : page === "Work Board" ? built.paths.milestone_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page && v3.filing_id === ids.filing_id)?.path;
   const pageFile = target2 === void 0 ? void 0 : relative5(draftDir, target2);
   const html2 = built.pages.find((p3) => p3.name === pageFile)?.html;
   if (target2 === void 0 || html2 === void 0) {
@@ -128205,8 +128138,8 @@ function assertBareFilename(name, label2) {
 
 // src/research/preflight.ts
 import { tmpdir as tmpdir6 } from "node:os";
-import { join as join67 } from "node:path";
-var PROBE_STEM = join67(tmpdir6(), "coclerk-research-preflight-probe-absent");
+import { join as join66 } from "node:path";
+var PROBE_STEM = join66(tmpdir6(), "coclerk-research-preflight-probe-absent");
 var CAPS = {
   "extractor.pdf": "every PDF in 6. LAW comes back UNREAD, so the audit cannot read it",
   "extractor.docx": "every .docx in 6. LAW comes back UNREAD, so the audit cannot read it",
@@ -128794,7 +128727,7 @@ async function researchFolder(args) {
 // src/files/extract/page-compare.ts
 import { createHash as createHash17 } from "node:crypto";
 import { mkdirSync as mkdirSync33, writeFileSync as writeFileSync20 } from "node:fs";
-import { isAbsolute as isAbsolute11, join as join68 } from "node:path";
+import { isAbsolute as isAbsolute11, join as join67 } from "node:path";
 var FPDF_ANNOT = 1;
 var GROUP_MAX = 5;
 var VISUAL = /* @__PURE__ */ new Set(["only_in_a", "only_in_b", "size", "rotation", "render"]);
@@ -128823,13 +128756,13 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
         const flagged2 = [];
         let workDir = null;
         const write2 = (side, n3, facts) => {
-          workDir ??= join68(args.destination_dir, `compare-${sha2564(dataA).slice(0, 16)}-${sha2564(dataB).slice(0, 16)}`);
-          const dir = join68(workDir, side);
+          workDir ??= join67(args.destination_dir, `compare-${sha2564(dataA).slice(0, 16)}-${sha2564(dataB).slice(0, 16)}`);
+          const dir = join67(workDir, side);
           mkdirSync33(dir, { recursive: true });
           const tiles = tileRows(facts.width, 0, facts.height);
           return tiles.map(([top, rows5], i3) => {
             const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
-            const file = join68(dir, `${name}.png`);
+            const file = join67(dir, `${name}.png`);
             const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows5) * facts.width * 3);
             writeFileSync20(file, encodePng(rgb, facts.width, rows5));
             return file;
@@ -129051,7 +128984,7 @@ async function saveAnswerTool(args, env = process.env) {
 
 // src/key-request/tools.ts
 import { createHash as createHash18, randomBytes as randomBytes7 } from "node:crypto";
-import { join as join69 } from "node:path";
+import { join as join68 } from "node:path";
 
 // src/key-request/save-key.ts
 async function configureCloudKey(env = process.env) {
@@ -129104,7 +129037,7 @@ var pending3;
 var port3 = credentialListener({ bundle: "lawyer", prefix: "key-request", handle: handle3 });
 var sent;
 function requestPath(env = process.env) {
-  return join69(defaultStateDir(env), "key-request.json.dpapi");
+  return join68(defaultStateDir(env), "key-request.json.dpapi");
 }
 var keyRequestTools = ["key_request__submit", "key_request__status", "cloud_key__configure_credential"].map((name) => defineTool(name, () => callKeyRequestTool(name)));
 function callKeyRequestTool(name, env = process.env) {
@@ -129318,12 +129251,6 @@ var dataTools = [
     }
     return caseDataRelocate(args.matter_root, mode);
   }),
-  defineTool("time_pipeline__get", (args) => timePipelineGet(args.namespace, args.key)),
-  defineTool("time_pipeline__set", (args) => timePipelineSet(args.namespace, args.key, args.value)),
-  defineTool("time_pipeline__list", (args) => timePipelineList(args.namespace, args.prefix)),
-  defineTool("time_pipeline__delete", (args) => timePipelineDelete(args.namespace, args.key)),
-  defineTool("time_pipeline__bulk_apply", (args) => timePipelineBulkApply(args.namespace, args.path, args)),
-  defineTool("time_pipeline__export", (args) => timePipelineExport(args.namespace, args.prefix, args.path)),
   defineTool("timecamping_data__query", (args) => timecampingDataQuery(args.sql, args.params)),
   defineTool("timecamping_data__execute", (args) => timecampingDataExecute(args.sql_script)),
   defineTool("timecamping_data__bulk_upsert", (args) => timecampingDataBulkUpsert(args.path)),

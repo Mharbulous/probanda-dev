@@ -253,32 +253,32 @@ test("a killed practice write fails with a verify-before-retry timeout and leave
 
 test("time-pipeline get and set that outlive their budget fail with named timeouts, and the next call recovers", (t) => {
   const f = timePipelineFixture(t);
-  timePipelineSet("timeline", "k", "\"v\"", f.env);
+  timePipelineSet("timeline", "k", "\"v\"", {}, f.env);
   const hung = { ...f.env, [TIME_PIPELINE_VAR]: "1" };
   assert.throws(() => timePipelineGet("timeline", "k", hung), (err) => {
     isReadTimeout(err);
     assert.match(err.message, /^time-pipeline sqlite helper \(/);
     return true;
   });
-  assert.throws(() => timePipelineSet("timeline", "k", "\"w\"", hung), isWriteTimeout);
+  assert.throws(() => timePipelineSet("timeline", "k", "\"w\"", {}, hung), isWriteTimeout);
   const { value } = timePipelineGet("timeline", "k", f.env);
   assert.ok(value === "\"v\"" || value === "\"w\"", `unexpected value ${value}`);
-  timePipelineSet("timeline", "k2", "\"x\"", f.env);
-  assert.deepEqual(timePipelineGet("timeline", "k2", f.env), { value: "\"x\"" });
+  timePipelineSet("timeline", "k2", "\"x\"", {}, f.env);
+  assert.equal(timePipelineGet("timeline", "k2", f.env).value, "\"x\"");
 });
 
 // 5000 sets run first, then merges into one ever-growing array (quadratic, many seconds), so the
 // kill lands inside the transaction and SQLite must roll every set back on the next open.
 test("a time-pipeline bulk_apply killed mid-transaction leaves the database unchanged and readable", (t) => {
   const f = timePipelineFixture(t);
-  timePipelineSet("timeline", "before", "\"kept\"", f.env);
+  timePipelineSet("timeline", "before", "\"kept\"", {}, f.env);
   const lines = [];
   for (let i = 0; i < 5000; i++) lines.push(JSON.stringify({ op: "set", key: `bulk:${i}`, value: "1" }));
   for (let i = 0; i < 40000; i++) lines.push(JSON.stringify({ op: "merge", key: "index", add: [`id-${i}`] }));
   const file = join(f.scratch, "bulk.jsonl");
   writeFileSync(file, lines.join("\n"), "utf-8");
   assert.throws(() => timePipelineBulkApply("timeline", file, { preview: true }, { ...f.env, [TIME_PIPELINE_VAR]: "3000" }), isWriteTimeout);
-  assert.deepEqual(timePipelineList("timeline", "", f.env).items, [{ key: "before", value: "\"kept\"" }]);
+  assert.deepEqual(timePipelineList("timeline", "", f.env).items.map(({ key, value }) => ({ key, value })), [{ key: "before", value: "\"kept\"" }]);
 });
 
 test("with no override each practice and time-pipeline operation takes its brief's budget", () => {

@@ -98,7 +98,36 @@ def namespace_rows(con, namespace):
     return dict(con.execute("SELECT key, value FROM kv_store WHERE namespace = ?", (namespace,)))
 
 
-def bulk_apply(con, namespace, path, expect):
+def sha256_text(text):
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def denied(deny_prefix, key):
+    return bool(deny_prefix) and key.startswith(deny_prefix)
+
+
+def set_if(con, namespace, key, value, expect_sha256, expect_absent):
+    """Write only if the stored value is still the one the caller read: its
+    SHA-256 matches expect_sha256, or with expect_absent the key is absent.
+    BEGIN IMMEDIATE takes the write lock before the read, so a second process
+    cannot write between the compare and the write."""
+    con.execute("BEGIN IMMEDIATE")
+    row = con.execute(
+        "SELECT value FROM kv_store WHERE namespace = ? AND key = ?", (namespace, key)
+    ).fetchone()
+    if expect_absent:
+        stale = row is not None
+    else:
+        stale = row is None or sha256_text(row[0]) != expect_sha256
+    if stale:
+        con.rollback()
+        return {"stale": True}
+    con.execute(UPSERT, (namespace, key, value, now_iso()))
+    con.commit()
+    return {"ok": True, "sha256": sha256_text(value)}
+
+
+def bulk_apply(con, namespace, path, expect, deny_prefix=""):
     """Apply a whole JSONL file of writes to one namespace in ONE transaction.
     Reading the file here rather than through tool arguments is what makes a
     58k-row import possible; one transaction is what makes it one process
@@ -154,6 +183,13 @@ def bulk_apply(con, namespace, path, expect):
             else:
                 raise SystemExit("line %d has unknown op %r" % (line_no, op))
     after = namespace_rows(con, namespace)
+    touched = sorted(
+        key for key in set(before) | set(after)
+        if denied(deny_prefix, key) and before.get(key) != after.get(key)
+    )
+    if touched:
+        con.rollback()
+        return {"denied": touched}
     effect = {
         "added": sum(key not in before for key in after),
         "replaced": sum(key in before and before[key] != value for key, value in after.items()),
@@ -169,18 +205,21 @@ def bulk_apply(con, namespace, path, expect):
     return {**counts, **effect, "applied": expect is not None}
 
 
-def export(con, namespace, prefix, path):
+def export(con, namespace, prefix, path, deny_prefix=""):
     """The read twin of bulk_apply: write every key under prefix to a JSONL
     file of bulk_apply "set" lines, sorted by key, so an export re-applies as
     it stands. The rows go to a file the caller named, never back through tool
-    output."""
-    parent = os.path.dirname(os.path.abspath(path))
-    if parent:
-        os.makedirs(parent, exist_ok=True)
+    output. A key under deny_prefix refuses the export before the file is opened."""
     rows = con.execute(
         "SELECT key, value FROM kv_store WHERE namespace = ? AND key LIKE ? ESCAPE '\\' ORDER BY key",
         (namespace, escape_like(prefix) + "%"),
-    )
+    ).fetchall()
+    touched = [key for key, _ in rows if denied(deny_prefix, key)]
+    if touched:
+        return {"denied": touched}
+    parent = os.path.dirname(os.path.abspath(path))
+    if parent:
+        os.makedirs(parent, exist_ok=True)
     items = 0
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         for key, value in rows:
@@ -242,6 +281,11 @@ def main():
             con.execute(UPSERT, (namespace, req["key"], req["value"], now_iso()))
             con.commit()
             return {"ok": True}
+        if op == "set_if":
+            return set_if(
+                con, namespace, req["key"], req["value"],
+                req.get("expect_sha256"), bool(req.get("expect_absent")),
+            )
         if op == "list":
             prefix = req.get("prefix") or ""
             rows = con.execute(
@@ -249,7 +293,10 @@ def main():
                 (namespace, escape_like(prefix) + "%"),
             ).fetchall()
             return {"items": [{"key": k, "value": v} for k, v in rows]}
+        deny_prefix = req.get("deny_prefix") or ""
         if op == "delete":
+            if denied(deny_prefix, req["key"]):
+                return {"denied": [req["key"]]}
             cur = con.execute(
                 "DELETE FROM kv_store WHERE namespace = ? AND key = ?",
                 (namespace, req["key"]),
@@ -257,9 +304,9 @@ def main():
             con.commit()
             return {"ok": True, "deleted": cur.rowcount > 0}
         if op == "bulk_apply":
-            return bulk_apply(con, namespace, req["path"], req.get("expect"))
+            return bulk_apply(con, namespace, req["path"], req.get("expect"), deny_prefix)
         if op == "export":
-            return export(con, namespace, req.get("prefix") or "", req["path"])
+            return export(con, namespace, req.get("prefix") or "", req["path"], deny_prefix)
         raise SystemExit("unknown op: %s" % op)
     finally:
         con.close()
@@ -272,7 +319,7 @@ function helperFile(): string {
   return pythonDriverFile("kv-sqlite", PY_HELPER);
 }
 
-export type KvOp = "get" | "set" | "list" | "delete" | "bulk_apply" | "export" | "dump" | "apply";
+export type KvOp = "get" | "set" | "set_if" | "list" | "delete" | "bulk_apply" | "export" | "dump" | "apply";
 
 /** One write of an `apply` call. */
 export interface KvWrite {
@@ -305,6 +352,12 @@ export interface KvRequest {
   writes?: KvWrite[];
   /** Refuse a file holding any table but kv_store: the reply is then {other_tables: true}. */
   exclusive?: boolean;
+  /** set_if: write only if the stored value's SHA-256 (of its UTF-8 text) is this; else {stale: true}. */
+  expect_sha256?: string;
+  /** set_if: write only if the key is absent; else {stale: true}. */
+  expect_absent?: boolean;
+  /** delete, bulk_apply, export: a key starting with this, touched, refuses the call with {denied: [keys]} and writes nothing. */
+  deny_prefix?: string;
 }
 
 export interface KvCallOptions {
