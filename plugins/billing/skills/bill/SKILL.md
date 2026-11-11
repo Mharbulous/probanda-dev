@@ -1,5 +1,5 @@
 ---
-name: "bill-client"
+name: "bill"
 disable-model-invocation: true
 description: "Use when the user asks to \"bill a client\", \"run billing for [matter]\", or \"prep the bill\" for a BC litigation matter: runs the whole path from the last invoice to an invoice ready for the lawyer's signature, with a billable time summary and an audit file beside it, and stops there. Sends and issues nothing."
 ---
@@ -26,7 +26,7 @@ description: "Use when the user asks to \"bill a client\", \"run billing for [ma
 | Step 8 — Render the draft invoice | The billable time summary has passed |
 | Step 9 — Present the draft, make it ready for signature, and stop | The draft is rendered |
 
-# /bill-client
+# /bill
 
 One typed command takes one litigation matter from its last invoice to an invoice ready for the lawyer's signature, with a billable time summary and an audit file beside it. It runs every step below in order, in this conversation, and stops at the unsigned invoice. A DRAFT mark means the invoice is still a draft, and no mark means it is ready for signature. It sends nothing, issues nothing, records no invoice before the lawyer signs it and moves no trust money. Only the lawyer signs.
 
@@ -46,7 +46,7 @@ The bill in progress is recorded as it goes, so a fresh session on any computer 
 | `<bill id>:bill` | `state`, `started_at`, `signed_invoice` (path, SHA-256 hash and number, or `first_bill`), `bill_number`, `superseded` (each final copy a reopen replaced), and `history` (each move with when and why) |
 | `<bill id>:step:<step>` | `finished_at` and that step's row below |
 
-The bill id is `<matter number>:<YYYYMMDD-HHMMSS>`, stamped when the record is created. It is new at every start-over, so an old bill's keys are never overwritten. Keys under `<bill id>:item:` are reserved. A path inside the matter's folder is recorded relative to that folder, because the bill may resume on another computer. To change a value, read it, change it, and write the whole value back by the four steps above. If a write fails, say once, in plain words, that this step's progress was not saved, and carry on.
+The bill id is `<matter number>:<YYYYMMDD-HHMMSS>`, stamped when the record is created. It is new at every start-over, so an old bill's keys are never overwritten. Keys under `<bill id>:item:` are reserved. A path inside the matter's folder is recorded relative to that folder, because the bill may resume on another computer. A resumed bill keeps the working folder its record names, even the older `<matter-data folder>\bill-client\`, and only a new bill uses `<matter-data folder>\bill\`. To change a value, read it, change it, and write the whole value back by the four steps above. If a write fails, say once, in plain words, that this step's progress was not saved, and carry on.
 
 | `state` | The practitioner hears | Entered when | Left when |
 |---|---|---|---|
@@ -143,7 +143,7 @@ Write each numbered item's row in the bill record as it finishes.
 This step needs the billing plugin. If no billing skill is in your skill list, tell the practitioner that the time work needs the billing plugin installed, and stop. Never tally time from the TimeCamp web app: a figure that did not come from the connector is not used.
 
 1. **Candidate dates.** Invoke `/triage-billing-dates` for the matter, giving it the last invoice's facts from Step 4 or its row, so the PDF is read once.
-2. **Judge the days.** **In Cowork, stop here,** before `/timecamping` starts. In Cowork (this host grants the data tools as `mcp__remote-devices__plugin_lawyer_data__<name>`), a day's review cannot finish, because SyncoPaid's screen captures can be read only on the PC. Tell the practitioner so, that the candidate list is saved, and how to carry on: open a Code-tab session in the desktop app, in the matter's folder, and type `/bill-client`. Do not retry or probe in Cowork. Everywhere else, invoke `/timecamping` with the candidate list and this bill's id as the holder. It works the Strong and Medium dates, strongest first, and every change it makes to TimeCamp waits for the practitioner's approval.
+2. **Judge the days.** **In Cowork, stop here,** before `/timecamping` starts. In Cowork (this host grants the data tools as `mcp__remote-devices__plugin_lawyer_data__<name>`), a day's review cannot finish, because SyncoPaid's screen captures can be read only on the PC. Tell the practitioner so, that the candidate list is saved, and how to carry on: open a Code-tab session in the desktop app, in the matter's folder, and type `/bill`. Do not retry or probe in Cowork. Everywhere else, invoke `/timecamping` with the candidate list and this bill's id as the holder. It works the Strong and Medium dates, strongest first, and every change it makes to TimeCamp waits for the practitioner's approval.
    - **First use on a matter that has a `judged-dates.jsonl`** (in `<matter-data folder>\timecamping\`): before invoking `/timecamping`, call `review_date__import_file` with that path, `judged_by` the practitioner, and `dry_run` true. Tell the practitioner the count it would add, and call it again with `dry_run` false on their yes.
    - **When `/timecamping` returns,** call `review_date__export` for the candidate list's first and last dates, with `out_path` `<matter-data folder>\timecamping\judged-dates.export.jsonl`. Record that path and hash in the 6.2 row, and give that path to `tie_out.py` as its judged dates file.
 3. **Uncovered time.** Give the practitioner `/timecamping`'s list of possible unbilled time. For each block they may enter the time in TimeCamp by hand, or leave it for the next step to propose as an estimate. Stop until they have said which. The session never creates an entry.
@@ -151,7 +151,7 @@ This step needs the billing plugin. If no billing skill is in your skill list, t
 
 ## Step 7 — The chart
 
-If the last signed invoice has a time-entry bar chart, or the practitioner asks for one, read `references/chart.md` and build it from `invoice_lines.json`, then save the chart as a PNG in `<matter-data folder>\bill-client\`. Otherwise go to Step 8. Either way, write this step's row.
+If the last signed invoice has a time-entry bar chart, or the practitioner asks for one, read `references/chart.md` and build it from `invoice_lines.json`, then save the chart as a PNG in `<matter-data folder>\bill\`. Otherwise go to Step 8. Either way, write this step's row.
 
 ## Step 8 — Render the draft invoice
 
@@ -160,12 +160,12 @@ Ask once whether the practitioner wants Word or PDF. `scripts/render_invoice.py`
 1. **The template** is the `invoice_template` path `practice_data__firm_profile` returns. If it is null, build it once:
    - The `letterhead` path must not be null. If it is, tell the practitioner a firm letterhead must be registered, and stop.
    - The profile's `style` is the firm's style guide. If it is absent, ask the practitioner for its values (`scripts/build_invoice_template.py`'s docstring lists them, and `chart_series` gives each roster key a color), read them back, and set `style` with `practice_data__upsert_firm_profile` on their approval.
-   - Write `wording.json` from the closing and the paragraphs after it in the last signed invoice read at Step 4, with `{{AUTHOR_NAME}}` for the lawyer's name, and with no amount. Run `scripts/build_invoice_template.py` with `--out <matter-data folder>\bill-client\Invoice template.docx`. Images come only from the letterhead: never take one from a signed document.
+   - Write `wording.json` from the closing and the paragraphs after it in the last signed invoice read at Step 4, with `{{AUTHOR_NAME}}` for the lawyer's name, and with no amount. Run `scripts/build_invoice_template.py` with `--out <matter-data folder>\bill\Invoice template.docx`. Images come only from the letterhead: never take one from a signed document.
    - Present that file as a file card (`shared/present-files.md`) and ask the practitioner to correct it in Word and say whether to save it as the firm's template. Only on their yes, pass its path as `invoice_template` to `practice_data__upsert_firm_profile`. Otherwise stop.
-2. **Write `invoice.json`** in `<matter-data folder>\bill-client\`. The our-reference, addressee, delivery and Re lines and the salutation come from the last signed invoice read at Step 4, never an amount. If this is the matter's first bill, ask the practitioner for them once. The invoice date is today. The bill number is `DRAFT` until Step 9: never assign one. The letterhead's tokens come from the firm profile and the matter's file number. `chart` is the PNG from Step 7, if there is one.
+2. **Write `invoice.json`** in `<matter-data folder>\bill\`. The our-reference, addressee, delivery and Re lines and the salutation come from the last signed invoice read at Step 4, never an amount. If this is the matter's first bill, ask the practitioner for them once. The invoice date is today. The bill number is `DRAFT` until Step 9: never assign one. The letterhead's tokens come from the firm profile and the matter's file number. `chart` is the PNG from Step 7, if there is one.
 3. **Taxes.** Work each tax's rate from the last signed invoice's printed tax and fees, and show the rates to the practitioner once before rendering.
 4. **Trust.** If the last signed invoice states trust applied, set `trust_balance` to the matter's balance from `practice_data__trust_summary`. The invoice only states it.
-5. **Disbursements.** They come only from this item's output, plus any the practitioner adds, passed with its receipt file through `--receipts`. Run `scripts/collect_disbursements.py` (its docstring is the contract) with `--cso-dir` once each for the matter's disbursements folder and `4. LAWYER BRIEF\CSO`, `--from` the day after the last billed date (none on a first bill), `--to` today, `--billing-settings` a file holding the firm profile's `billing_settings`, and `--out` `<matter-data folder>\bill-client\disbursements.json`.
+5. **Disbursements.** They come only from this item's output, plus any the practitioner adds, passed with its receipt file through `--receipts`. Run `scripts/collect_disbursements.py` (its docstring is the contract) with `--cso-dir` once each for the matter's disbursements folder and `4. LAWYER BRIEF\CSO`, `--from` the day after the last billed date (none on a first bill), `--to` today, `--billing-settings` a file holding the firm profile's `billing_settings`, and `--out` `<matter-data folder>\bill\disbursements.json`.
    - In plain words and with its file name, show the practitioner every line with a flag and every entry in `undecided`, `needs_scanned_route`, `unread`, `other_files` and `outside_period`. Never decide a flagged line or a tax status for them.
    - Read each `needs_scanned_route` and `unread` file as Step 4 reads a PDF, and pass its fees back through `--receipts`, unless the practitioner says it holds no fee.
    - Put their answers in `--decisions` and re-run. Never edit the output.

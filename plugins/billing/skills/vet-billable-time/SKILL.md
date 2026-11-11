@@ -1,6 +1,6 @@
 ---
 name: vet-billable-time
-description: "Use when /bill-client reaches its time work, or the practitioner asks to vet a matter's billable time: confirms each TimeCamp line's duration and client-readable description against its evidence, one line at a time, proposes estimates for documented work with no entry and write-offs for non-billable windows, ties the result to TimeCamp, records the time entries, and writes the billable time summary and audit file beside the coming invoice. Never changes TimeCamp (/timecamping does). Does not render the invoice (/bill-client)."
+description: "Use when /bill reaches its time work, or the practitioner asks to vet a matter's billable time: confirms each TimeCamp line's duration and client-readable description against its evidence, one line at a time, proposes estimates for documented work with no entry and write-offs for non-billable windows, ties the result to TimeCamp, records the time entries, and writes the billable time summary and audit file beside the coming invoice. Never changes TimeCamp (/timecamping does). Does not render the invoice (/bill)."
 dependencies:
   - timecamping-data  # the determinations each line joins to
   - show-me           # every line presented for the practitioner's decision
@@ -12,7 +12,7 @@ dependencies:
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
 
-This skill deliberately carries no `disable-model-invocation` line: `/bill-client` opens it through the Skill tool, which refuses a skill carrying that line. It is a stated exception. Do not add the line back.
+This skill deliberately carries no `disable-model-invocation` line: `/bill` opens it through the Skill tool, which refuses a skill carrying that line. It is a stated exception. Do not add the line back.
 
 # /vet-billable-time
 
@@ -20,7 +20,7 @@ Turn a matter's TimeCamp entries since the last bill into lines the practitioner
 
 `scripts/tie_out.py` does all the billing arithmetic and every check. Never add, round or write off time yourself, and never state a total it did not print. Its docstring is the contract for its inputs. Run it with the host Python (`python`; if that is the WindowsApps stub, the interpreter `COCLERK_PYTHON` names). A failing check stops this skill: tell the practitioner what failed, in plain words, and fix the input only with their answer.
 
-**Inputs:** the matter, its candidate-dates file, the last billed date, the retainer PDF, and the judged dates file `/bill-client` exports from the review-date records at `<matter-data folder>\timecamping\judged-dates.export.jsonl`.
+**Inputs:** the matter, its candidate-dates file, the last billed date, the retainer PDF, and the judged dates file `/bill` exports from the review-date records at `<matter-data folder>\timecamping\judged-dates.export.jsonl`.
 
 Working files go in `<matter-data folder>\vet-billable-time\`, and the two reports in the matter's draft folder's `BILLING` subfolder, resolved as `shared/workspace-output-rule.md` says. Create only the `BILLING` leaf if it is absent.
 

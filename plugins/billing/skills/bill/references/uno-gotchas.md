@@ -4,7 +4,7 @@ Use this when the user declines the computer-use prompt, so Excel and File
 Explorer are off the table. The sandbox already has LibreOffice and its
 Python bridge (the `uno` module), and together they can build a genuine
 PivotTable and PivotChart with no screen at all. A real session did this
-end to end on 2026-08-31 (E2E report `2026-08-31-1446 bill-client-e2e-test.md`).
+end to end on 2026-08-31 (the E2E report of that run, 14:46).
 Every trap below cost that session real time — read this before writing
 any script.
 

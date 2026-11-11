@@ -1,6 +1,6 @@
 ---
 name: triage-billing-dates
-description: "Use when a bill must go out now for one matter and the time records are behind, or for 'which dates should I look at before billing' or /triage-billing-dates: narrows that one matter to a short, evidenced list of dates with an indicator of work, reconciled against the last invoice, so only those dates' evidence is gathered. Does not bill (/bill-client), fetch or store a day's evidence (/build-timeline), sort time to matters (/time-sorting), correct TimeCamp (/timecamping) or draft entries (/time-entry-drafting)."
+description: "Use when a bill must go out now for one matter and the time records are behind, or for 'which dates should I look at before billing' or /triage-billing-dates: narrows that one matter to a short, evidenced list of dates with an indicator of work, reconciled against the last invoice, so only those dates' evidence is gathered. Does not bill (/bill), fetch or store a day's evidence (/build-timeline), sort time to matters (/time-sorting), correct TimeCamp (/timecamping) or draft entries (/time-entry-drafting)."
 ---
 
 <!-- billing v0.3.1 -->
@@ -23,7 +23,7 @@ Narrow one matter to the dates worth a minute-by-minute review. A candidate date
 
 ## Phase 0: the last invoice
 
-Do this before reading any other source. When `/bill-client` opened this skill and gave the bill date, the last billed date and each billed date with its time, take them as given and go to Phase 1, so the PDF is read once.
+Do this before reading any other source. When `/bill` opened this skill and gave the bill date, the last billed date and each billed date with its time, take them as given and go to Phase 1, so the PDF is read once.
 
 1. Find the last invoice: `/practice-data`'s invoice data, then the matter's `2. SOLICITOR CLIENT` folder, then firm receipts reports. Practice records can be empty for a matter that has been billed.
 2. Read the invoice PDF itself. Never take its number, date or amount from the file name. Call `pdf_pages__images` first: read a `scanned` page only from its PNGs and a `born_digital` page with `Read` `pages:`. Read the bar chart's labels or the itemized list exactly.
@@ -103,4 +103,4 @@ The list is one table, by date:
 
 After the table come three sections: **Write-offs**, **Sources checked, nothing found** and **Unexplored leads**.
 
-Then tell the practitioner where the list is and how many dates it holds at each strength. `/timecamping` takes these dates one at a time for the review, through `/build-timeline`. Billing stays with `/bill-client`, run by the practitioner. When `/bill-client` opened this skill, return the list's path to it and go on.
+Then tell the practitioner where the list is and how many dates it holds at each strength. `/timecamping` takes these dates one at a time for the review, through `/build-timeline`. Billing stays with `/bill`, run by the practitioner. When `/bill` opened this skill, return the list's path to it and go on.

@@ -1,6 +1,6 @@
 # The bill's chart
 
-Read when: `/bill-client` Step 7 finds the last signed invoice has a chart, or the practitioner asks for one. Written from a walkthrough on a real matter. Several steps failed silently the first time, and the fixes below are why they are here.
+Read when: `/bill` Step 7 finds the last signed invoice has a chart, or the practitioner asks for one. Written from a walkthrough on a real matter. Several steps failed silently the first time, and the fixes below are why they are here.
 
 ## 1. Write the workbook
 
@@ -84,7 +84,7 @@ Any time the underlying "Time Tracking Report - decimal" sheet is edited (rows d
 
 `Ctrl+S`. Confirm the file is saved with AutoSave/manual save before considering the task done. If AutoSave is on (check the toggle top-left of the Excel window), it is also your safety net — if a window gets closed by mistake mid-edit (see step 2), the file's "Date modified" timestamp will confirm whether recent changes survived, and reopening it from its saved path recovers the work rather than losing it.
 
-Then save the chart as a PNG (`build_chart.py` writes one itself; otherwise right-click the chart's border → **Save as Picture...**) in `<matter-data folder>\bill-client\`.
+Then save the chart as a PNG (`build_chart.py` writes one itself; otherwise right-click the chart's border → **Save as Picture...**) in `<matter-data folder>\bill\`.
 
 ## General technique notes (apply throughout)
 
