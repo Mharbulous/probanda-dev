@@ -17,8 +17,8 @@ description: "Use when the user asks to \"bill a client\", \"run billing for [ma
 | The bill record | Writing a step's record, or the bill's state |
 | A bill already under way | Step 1 has found the matter |
 | Step 1 — Identify the matter and client number | Starting billing for a matter, first |
-| Step 2 — Check housekeeping on "2. SOLICITOR CLIENT" before trusting file names | Before reading file names to find the last invoice |
-| Step 3 — Find the most recently sent bill | Housekeeping is current and the last invoice must be located |
+| Step 2 — Look up the last invoice in the practice records | Before looking for the last invoice in the folder |
+| Step 3 — Find the most recently sent bill | The records have been read and the last invoice must be located |
 | Step 4 — Read the bill to find the exact last-billed date | Setting the start of the unbilled period |
 | Step 5 — Cross-check against matter-data / practice-data | Verifying the last invoice or recording invoices |
 | Step 6 — Run the time work | Carrying the matter from its dates of work to confirmed billable lines |
@@ -55,12 +55,12 @@ The bill id is `<matter number>:<YYYYMMDD-HHMMSS>`, stamped when the record is c
 | `ended_issued` | Issued | `/issue-invoice` records the invoice | Never |
 | `ended_started_over` | Started over | The practitioner confirms a start-over | Never |
 
-Each step writes its row when it finishes, from what it already holds. A step that stops writes nothing. Compute a hash as Step 2 does.
+Each step writes its row when it finishes, from what it already holds. A step that stops writes nothing. Compute a hash as Step 3 does.
 
 | Step | Done when | Row |
 |---|---|---|
 | 1 | Profile read | Matter number and client number |
-| 2 | No unreviewed non-conforming file | When checked, and each file name and hash checked |
+| 2 | Records read and the folder listed | When checked, the latest recorded invoice number (or none), and each file name and hash looked at |
 | 3 | Invoice chosen | Signed invoice's path and hash, or first bill |
 | 4 | Dates read | Bill date, last billed date, each billed date with its time, and whether a date was assumed |
 | 5 | Records agree or are imported | Invoice number read from the document, and any import |
@@ -81,7 +81,7 @@ After Step 1, call `time_pipeline__list` once, with namespace `bill` and prefix 
 **In progress.** Test whether Steps 2 to 5 still stand, without reading the invoice:
 
 - Hash the recorded signed invoice and compare it with the record.
-- List `2. SOLICITOR CLIENT`. A newer signed invoice is one whose file name sorts after the recorded one. A file missing from Step 2's row that fails the naming grammar could be one, so count it as one.
+- List `2. SOLICITOR CLIENT`. A newer signed invoice is one dated after the recorded one, or bearing a later invoice number. A file missing from Step 2's row that could be an invoice could be one, so count it as one.
 - On a first bill, the test is that the folder still holds no signed invoice.
 
 If the hash matches and there is no newer signed invoice, Steps 2 to 5 count as done: carry their recorded facts forward and go to Step 6. Read the invoice only when a later step needs what only the invoice holds, as Steps 7 and 8 do. Otherwise, say in plain words what changed and redo Steps 2 to 5 as usual. If Step 3 then lands on the same invoice, their rows are rewritten on this bill. If it lands on another, this bill no longer describes the matter's last invoice: say so, offer a start-over, and stop.
@@ -103,18 +103,21 @@ Open the matter's workspace folder (e.g. `...\L8166 LindaleJ re Parental Loan`).
 
 Then check for a bill already under way, as that section says, before Step 2.
 
-## Step 2 — Check housekeeping on "2. SOLICITOR CLIENT" before trusting file names
+## Step 2 — Look up the last invoice in the practice records
 
-Before reading file names to find the last invoice, confirm housekeeping has already been run on `2. SOLICITOR CLIENT`:
+The practice records hold every invoice `/issue-invoice` recorded and every invoice imported at Step 5, so they are read first. File names are not trusted on their own.
 
-1. List files in that folder, compute SHA-256 hashes (`sha256sum` in bash works fine).
-2. Invoke the `matter-data` skill's housekeeping-log operation in `lookup` mode with the list of `{file_name, file_hash}` pairs.
-3. If every non-conforming file already has a review row (matched by name or hash), housekeeping is up to date — no action needed.
-4. If there are files that fail the naming grammar (`/file-naming`'s name gate, against its code registry) **and** are not yet in the review log, stop and ask the practitioner to run `/housekeeping` on that one folder, then continue once they confirm it is done. `/housekeeping` ships in the `file-manager` plugin: if it is not available in this session, say that naming those files needs `file-manager` (or the practitioner renaming them by hand), and stop. Do not skip this — file names are how the next step finds the invoice.
+1. Invoke the `practice-data` skill's `invoice-data` operation for the matter number. Take the latest recorded invoice by issue date. A row `/issue-invoice` recorded carries the signed copy's path and hash. An imported row may carry neither.
+2. List the files in `2. SOLICITOR CLIENT` and compute each one's SHA-256 hash (`sha256sum` in bash works fine). Note any signed invoice dated after the latest recorded one, or bearing a later invoice number.
+3. If the records hold no invoice and no import date, practice-data has never been populated for this matter: say so to the practitioner rather than silently trusting the folder. Carry on with Step 3.
 
 ## Step 3 — Find the most recently sent bill
 
-With housekeeping current, invoice files sort by name (`YYYY-MM-DD INV#nnnnn ... signed.pdf`). Pick the latest date. This is "the most recently sent bill."
+- **The records hold an invoice and the folder holds no newer signed invoice.** The most recently sent bill is the latest recorded invoice. Its PDF is the signed copy at its recorded path, or else the file in `2. SOLICITOR CLIENT` bearing its invoice number. If a recorded hash does not match the file, say so and treat it as the next case.
+- **The records hold no invoice for the matter, or the folder holds a signed invoice newer than the latest recorded one.** Take the newest invoice file in `2. SOLICITOR CLIENT`, read it as Step 4 does, and verify and record it as Step 5 does.
+- **Still no single last signed invoice** (no candidate, or two that could each be the last): ask the practitioner that one question, which file is the last signed invoice, or whether this is the matter's first bill.
+
+Record the chosen file's path and its SHA-256 hash, or that this is the first bill.
 
 ## Step 4 — Read the bill to find the exact last-billed date
 
@@ -126,9 +129,8 @@ Record the bill date, the last billed date and each billed date with the time bi
 
 ## Step 5 — Cross-check against matter-data / practice-data
 
-Invoke the `practice-data` skill's `invoice-data` operation for the matter number to see what practice-data thinks the last invoice date is.
+Use the rows Step 2 read to compare what practice-data holds with the invoice read at Step 4.
 
-- If it returns no rows and no import date, practice-data has never been populated for this matter — flag this to the user rather than silently trusting the PDF-derived date.
 - If the practice-data invoices don't match what's on disk, **verify before recording anything**: open each candidate invoice PDF, as Step 4 reads one, and confirm (a) it bears a lawyer's signature, and (b) the invoice number printed inside the document matches the invoice number in the file name. Never trust the file name alone for invoice number, date, or amount — read the PDF.
 - Once verified, invoke the `practice-data` skill's `import-invoices` operation to record each invoice's matter number, invoice number, issue date, `date_to` (the last billed date, left out when the invoice lists no service dates), amount, amount paid and status. Leave amount paid and status blank unless the document itself gives positive evidence of what was actually paid — a static invoice PDF only proves the amount *billed*, not what happened to it afterward.
 
