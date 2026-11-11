@@ -15,6 +15,7 @@ import {
 } from "./time-pipeline/backend.js";
 import {
   reviewDateClaim,
+  reviewDateRejudge,
   reviewDateExport,
   reviewDateImportFile,
   reviewDateJudge,
@@ -23,6 +24,7 @@ import {
   reviewDateStatus,
 } from "./time-pipeline/review-date.js";
 import { timeReviewCompareDay } from "./time-review/fingerprint.js";
+import { timeReviewExportBlocks } from "./time-review/export.js";
 import { markIssued, redraftBlock } from "./time-review/restructure.js";
 import { serveReviewPage, waitClick } from "./time-review/server.js";
 import { timeReviewReadDay, timeReviewRecordTimecamp, timeReviewSaveEvidence, timeReviewStageDay } from "./time-review/tools.js";
@@ -48,6 +50,7 @@ const tools = [
   ),
 
   defineTool<{ date: string; holder: string }>("review_date__claim", (args) => reviewDateClaim(args.date, args.holder)),
+  defineTool<{ date: string; holder: string }>("review_date__rejudge", (args) => reviewDateRejudge(args.date, args.holder)),
   defineTool<DateToken>("review_date__renew", (args) => reviewDateRenew(args.date, args.token)),
   defineTool<DateToken>("review_date__judge", (args) => reviewDateJudge(args.date, args.token)),
   defineTool<DateToken>("review_date__release", (args) => reviewDateRelease(args.date, args.token)),
@@ -76,6 +79,9 @@ const tools = [
     const saved = redraftBlock(args.block, args.matter, args.description);
     return { block: saved.id, state: saved.state, flags: saved.flags, redraft: saved.redraft };
   }),
+  defineTool<{ from: string; to: string; out_path: string }>("time_review__export_blocks", (args) =>
+    timeReviewExportBlocks(args.from, args.to, args.out_path)
+  ),
   defineTool<{ blocks: string[]; invoice: string }>("time_review__mark_issued", (args) => markIssued(args.blocks, args.invoice)),
 ];
 

@@ -45,11 +45,11 @@ pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap 
 <body>
 <main>
   <figure class="diagram" id="client-billing"
-          data-based-on-commit="f308fe7aa0021be0cce367c9b940923bb842d2a9"
-          data-updated="2026-11-10T23:29:00-07:00">
+          data-based-on-commit="237d488c990d3e4aab22d78dd86e009727924ed8"
+          data-updated="2026-11-11T09:00:00-07:00">
     <figcaption>
       <h1>How Probanda bills a client, from the last invoice to the signed one</h1>
-      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/f308fe7aa0021be0cce367c9b940923bb842d2a9"><code>f308fe7a</code></a> on main · Last updated 2026-11-10 23:29 -07:00</p>
+      <p class="stamp">Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/237d488c990d3e4aab22d78dd86e009727924ed8"><code>237d488c</code></a> on main · Last updated 2026-11-11 09:00 -07:00</p>
     </figcaption>
     <div class="legend" aria-label="Colour key">
       <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer plugin skill</span>
@@ -189,70 +189,55 @@ flowchart LR
 </pre>
     </div>
 
-    <h2 id="review">3. Review each day</h2>
+    <h2 id="review">3. Judge the days, then review the page</h2>
     <div class="chart">
 <pre class="mermaid">
 flowchart TD
     I3(["from 2. Find the days with work"])
     CW{"Running in Cowork,<br/>the web version?"}
-    STOPC["Stop here: screenshots<br/>can only be read on your PC"]
-    TC["/timecamping<br/>reviews each listed day,<br/>strongest days first.<br/>Days with only staff work are skipped"]
-    JD[("Reviewed-days list<br/>kept separately<br/>for each matter")]
-    BT["/build-timeline<br/>gathers 5 sources: computer activity,<br/>calls, two calendars, sent mail"]
-    OWN["/timecamping fetches the other 2 itself:<br/>TimeCamp time entries<br/>and SyncoPaid screenshots"]
+    STOPC["Stop here: screenshots and the<br/>review page work only on your PC"]
+    TC["/timecamping, parallel mode<br/>claims each listed day, strongest first,<br/>and runs up to 10 days at once.<br/>Days with only staff work are skipped"]
+    JD[("Reviewed-days list<br/>a day another bill holds is<br/>skipped, then picked up")]
+    OLD["A day judged in chat before the<br/>page existed has no blocks:<br/>it is judged once more to build them"]
+    BT["/build-timeline<br/>gathers the day's evidence<br/>from all 7 sources, one day at a time"]
+    GATE{{"Have all 7 sources<br/>reported in for this day?<br/>Nothing is judged until they have"}}
+    HALT["Release this day and say<br/>which sources are missing"]
     TCD["/timecamping-data<br/>stores the evidence"]
-    DB[("Time-review database<br/>all evidence and decisions,<br/>for every matter")]
-    GATE{{"Have all 7 sources<br/>reported in for this day?<br/>Nothing may be read until they have"}}
-    HALT["Skip this day and say<br/>which sources are missing"]
-    WHOLE["Read the whole day,<br/>for every client,<br/>not just this one"]
-    PROP["Split the day into blocks of work<br/>and suggest the matter for each block"]
-    SR[["screenshot-reader agent<br/>looks at the screenshots,<br/>up to 5 at a time"]]
-    GRID{"Does the evidence itself<br/>name the matter?"}
-    SIL["Accept the suggestion<br/>without asking you"]
-    ASK(["👤 You answer a question<br/>about each unclear block,<br/>shown with its screenshots"])
+    DB[("Saved evidence for the day")]
+    SR[["screenshot-reader agent<br/>reads the picked screenshots,<br/>up to 5 at a time.<br/>Each reading is saved"]]
+    DR[["day-reviewer agent<br/>on the Opus model turns one day into<br/>blocks of time. It asks nobody<br/>anything: a doubt becomes a flag"]]
+    BL[("Blocks: matter, description,<br/>times, evidence, and a flag<br/>for every doubt")]
+    PAGE["The review page, shown on your PC<br/>built from the saved blocks,<br/>with no model drawing it"]
+    HP(["👤 You act only on flagged blocks:<br/>Approve, Correct, Write off,<br/>Split, Merge or Undo"])
     SHOW["/show-me<br/>rules for how each<br/>question is put to you"]
-    DRY["List every change<br/>to be made in TimeCamp"]
-    HC(["👤 You say go ahead,<br/>once for the day"])
-    WB{{"Make one change in TimeCamp,<br/>then read it back to confirm it"}}
-    TCAMP[("TimeCamp<br/>each time entry belongs<br/>to exactly one matter")]
-    MARK["Record the day as reviewed"]
-    UNC["Work found with<br/>no TimeCamp entry at all"]
-    HU(["👤 You enter that time in<br/>TimeCamp yourself, or leave it<br/>to be estimated later"])
-    WEAK(["👤 Do you want the<br/>weakest days reviewed too?"])
+    TCAMP[("TimeCamp<br/>an approved change is written<br/>one entry at a time, then read back")]
+    SEEN["Day clear:<br/>judged, with no flagged block"]
+    WEAK(["👤 Do you want the<br/>weakest days judged too?"])
     O3(["to 4. Check every line of time"])
 
     I3 --> CW
     CW -->|"yes"| STOPC
     CW -->|"no"| TC
-    TC <-.->|"skips days<br/>already reviewed"| JD
+    TC <-.->|"skips days<br/>already judged"| JD
+    JD -.-> OLD
+    OLD -.->|"judge it again"| TC
     TC -->|"for each day"| BT
-    TC -->|"for each day"| OWN
-    BT --> TCD
-    OWN --> TCD
-    TCD --> DB
-    DB --> GATE
+    BT --> GATE
     GATE -->|"no"| HALT
     HALT -.->|"next day"| TC
-    GATE -->|"yes"| WHOLE
-    WHOLE --> PROP
-    PROP <-.-> SR
-    PROP --> GRID
-    GRID -->|"yes"| SIL
-    GRID -->|"no, or sources disagree"| ASK
-    ASK -.- SHOW
-    SIL --> DRY
-    ASK --> DRY
-    DRY --> HC
-    HC --> WB
-    WB --> TCAMP
-    WB --> MARK
-    MARK --> JD
-    MARK -.->|"next day"| TC
-    PROP -->|"work nobody logged"| UNC
-    UNC --> HU
-    MARK -->|"all days done"| WEAK
+    GATE -->|"yes"| TCD
+    TCD --> DB
+    DB --> SR
+    SR -.-> DR
+    DB --> DR
+    DR --> BL
+    BL --> PAGE
+    PAGE --> HP
+    HP -.- SHOW
+    HP -->|"changed matter or description"| TCAMP
+    HP --> SEEN
+    SEEN -->|"all days clear"| WEAK
     WEAK --> O3
-    HU --> O3
 
     classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
     classDef tk fill:#e3eefb,stroke:#2563a8,color:#1d2733
@@ -264,11 +249,11 @@ flowchart TD
     classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
     class SHOW lawyer
     class TC,BT,TCD tk
-    class SR agent
-    class ASK,HC,HU,WEAK human
-    class GATE,WB gate
-    class CW,STOPC,HALT,WHOLE,PROP,GRID,SIL,DRY,MARK,UNC,OWN step
-    class JD,DB,TCAMP store
+    class SR,DR agent
+    class HP,WEAK human
+    class GATE gate
+    class CW,STOPC,HALT,OLD,PAGE,SEEN step
+    class JD,DB,BL,TCAMP store
     class I3,O3 link
     click I3 href "#dates"
     click O3 href "#vet"
@@ -279,36 +264,33 @@ flowchart TD
     <div class="chart">
 <pre class="mermaid">
 flowchart TD
-    I4(["from 3. Review each day"])
+    I4(["from 3. Judge the days,<br/>then review the page"])
     VBT["/vet-billable-time<br/>checks every line of time<br/>before it goes on the bill"]
     TCAMP[("TimeCamp")]
     PULL["Get this matter's time entries<br/>since the last invoice"]
-    T1{{"First check:<br/>every entry inside the billing period?<br/>totals match TimeCamp's own?<br/>every listed day reviewed?"}}
-    BACK(["back to 3: review<br/>the days that were missed"])
-    JOIN["Attach to each entry<br/>the evidence and decision<br/>from the day review"]
+    T1{{"First check:<br/>every entry inside the billing period?<br/>totals match TimeCamp's own?<br/>every listed day judged?"}}
+    BACK(["back to 3: judge<br/>the days that were missed"])
     PDR["/practice-data<br/>hourly rates, initials,<br/>firm billing rules"]
     HR(["👤 You supply any<br/>missing rate or rule"])
-    HL(["👤 You confirm, correct<br/>or write off each line of time"])
-    HF(["👤 You decide the extras:<br/>late work, estimates for unlogged work,<br/>calls logged under other matters"])
-    SHOW["/show-me<br/>rules for how each<br/>line is put to you"]
+    BX["Export the reviewed blocks<br/>and turn them into the lines:<br/>each entry joins the blocks that cite it"]
+    BK{{"Is every block answered?<br/>Does every entry have a block?<br/>Does every block with no entry<br/>carry an approved estimate?"}}
+    PAGE2(["back to the page:<br/>answer the flagged blocks"])
     T2{{"Final check:<br/>every entry has a line backed by evidence?<br/>every listed day billed, written off or explained?<br/>total close to what the evidence shows?"}}
-    OUT[("Billable time summary,<br/>audit file, and the<br/>lines for the invoice")]
+    OUT[("Billable time summary,<br/>audit file, and the lines for the<br/>invoice, each line naming its blocks")]
     O4(["to 5. Make the invoice"])
 
     I4 --> VBT
     VBT --> PULL
     TCAMP --> PULL
     PULL --> T1
-    T1 -->|"a listed day<br/>was never reviewed"| BACK
-    T1 -->|"passes"| JOIN
-    JOIN --> PDR
+    T1 -->|"a listed day<br/>was never judged"| BACK
+    T1 -->|"passes"| PDR
     PDR -.-> HR
-    PDR --> HL
-    HL --> HF
-    HL -.- SHOW
-    HF -.- SHOW
-    HF --> T2
-    T2 -->|"fails: fix it with you"| HL
+    PDR --> BX
+    BX --> BK
+    BK -->|"a flagged block<br/>or a gap is left"| PAGE2
+    BK -->|"passes"| T2
+    T2 -->|"fails: fix it with you"| PAGE2
     T2 -->|"passes"| OUT
     OUT -->|"records the time entries"| PDR
     OUT --> O4
@@ -320,15 +302,16 @@ flowchart TD
     classDef step fill:#ffffff,stroke:#8a94a0,color:#1d2733
     classDef store fill:#e0f2f1,stroke:#00796b,color:#1d2733
     classDef link fill:#ffffff,stroke:#55616f,stroke-dasharray:4 3,color:#1d2733
-    class PDR,SHOW lawyer
+    class PDR lawyer
     class VBT tk
-    class HR,HL,HF human
-    class T1,T2 gate
-    class PULL,JOIN step
+    class HR human
+    class T1,T2,BK gate
+    class PULL,BX step
     class TCAMP,OUT store
-    class I4,O4,BACK link
+    class I4,O4,BACK,PAGE2 link
     click I4 href "#review"
     click BACK href "#review"
+    click PAGE2 href "#review"
     click O4 href "#render"
 </pre>
     </div>
@@ -358,6 +341,7 @@ flowchart TD
     FRZ{{"Does the signed total<br/>match the checked time?"}}
     HI(["👤 You approve issuing it.<br/>This cannot be undone"])
     DONE[("Invoice issued and locked.<br/>Later fixes are recorded<br/>as adjustments")]
+    LB["Lock the reviewed blocks the lines rest on:<br/>no split, merge or undo<br/>of invoiced time"]
     SCR[["scrivener agent<br/>drafts the email to accounting<br/>about moving trust money"]]
     HS(["👤 You check and<br/>send that email"])
     DC[["delivery-checker agent<br/>checks the invoice was<br/>sent and received"]]
@@ -382,6 +366,7 @@ flowchart TD
     II --> FRZ
     FRZ --> HI
     HI --> DONE
+    DONE --> LB
     HI -.->|"if trust money<br/>pays part of it"| SCR
     SCR --> HS
     DONE -.->|"later"| DC
@@ -398,6 +383,7 @@ flowchart TD
     class SCR,DC agent
     class HW,HT,HTX,HD,HY,HN,SIGN,HI,HS human
     class DISB,REN,FRZ gate
+    class LB step
     class CH,TPL,TAX,TRU step
     class DRAFT store
     class FIN,DONE done
@@ -407,7 +393,7 @@ flowchart TD
 </pre>
     </div>
 
-    <p class="sources">Full account: <a href="../Planned/Client billing process.md">Client billing process.md</a>. Sources: the <code>bill</code>, <code>issue-invoice</code>, <code>triage-billing-dates</code>, <code>timecamping</code>, <code>timecamping-data</code>, <code>vet-billable-time</code> and <code>build-timeline</code> skills and their scripts.</p>
+    <p class="sources">Full account: <a href="Client billing process.md">Client billing process.md</a>. Sources: the <code>bill</code>, <code>issue-invoice</code>, <code>triage-billing-dates</code>, <code>timecamping</code>, <code>timecamping-data</code>, <code>vet-billable-time</code> and <code>build-timeline</code> skills, the <code>day-reviewer</code> agent, the review page tools and their scripts.</p>
   </figure>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>

@@ -86,11 +86,10 @@ SELECT source_name, local_date, status, error_detail, fetched_at FROM source_fet
 
 ## The evidence store
 
-Evidence with no table here lives in the `evidence` namespace of the time-pipeline store, reached through `/time-pipeline-data`: one row per item, its key `<family>:<native id>` and its value JSON. Keys come from the source's own ids, so saving again changes nothing. A proposal's evidence chain or a billing line cites a row by source `evidence:<family>` and that native id. Rows hold metadata and references only: never a mail body, document text or image bytes.
+Evidence with no table here lives in the `evidence` namespace of the time-pipeline store, reached through `/time-pipeline-data`: one row per item, its key `<family>:<native id>` and its value JSON. Keys come from the source's own ids, so saving again changes nothing. A proposal's evidence chain or a billing line cites a row by source `evidence:<family>` and that native id. Rows hold metadata and references only: never a mail body, document text or image bytes. The candidate list is not an evidence family: it is `candidate_date` records in namespace `item`, kept through `/time-pipeline-data`.
 
 | Family | Written by | Holds |
 |---|---|---|
-| `triage:<matter>:<date>` | `/triage-billing-dates` | Each date or range, strength, lawyer or staff, flags, and the evidence that put it on the list |
 | `service_list:<matter>` | `/triage-billing-dates` | Each person's name, role, addresses and numbers |
 | `document` | `/triage-billing-dates` | Path at the time, filename date, internal created, modified, last-modified-by and total editing time, PDF dates, file hash |
 | `filing` | `/triage-billing-dates` | Package id, submitted-by, submitted-at, document list, fees, receipt ids, file hash |

@@ -1,6 +1,6 @@
 # How Probanda bills a client: the `/bill` process
 
-Based on commit `c9154155` on `main` of probanda-dev (lawyer 0.25.10, timekeeper 0.8.8), 2026-11-06. Screenshot review updated against commit `a0ac8923` plus the `timekeeper:screenshot-reader` change, 2026-11-06. The installed copies on this PC (lawyer 0.25.5, timekeeper 0.8.5) have the same skill text apart from version comments. Steps 2 and 3 and the skill's name (`/bill`, formerly `/bill-client`) updated against commit `f308fe7a`, 2026-11-10.
+Based on commit `c9154155` on `main` of probanda-dev (lawyer 0.25.10, timekeeper 0.8.8), 2026-11-06. Screenshot review updated against commit `a0ac8923` plus the `timekeeper:screenshot-reader` change, 2026-11-06. The installed copies on this PC (lawyer 0.25.5, timekeeper 0.8.5) have the same skill text apart from version comments. Steps 2 and 3 and the skill's name (`/bill`, formerly `/bill-client`) updated against commit `f308fe7a`, 2026-11-10. Steps 6.2 to 6.4 (the day review and the line vetting now run on the review page), the skills and agents tables, the guards and the practitioner's points updated against commit `237d488c`, 2026-11-11.
 
 This is the prose for a planned diagram. It describes the process as built, not as it might be improved.
 
@@ -25,13 +25,13 @@ A script, not the model, refuses to produce invoice lines until that is true (se
 | lawyer | `/matter-data` | Supplies the client number (profile). |
 | lawyer | `/practice-data` | Invoice history, invoice import, firm profile (template, letterhead, style, billing settings), rates, trust balance, time-entry records. |
 | lawyer | `/show-me` | The presentation rules for every question asked of the practitioner: one decision per question, the actual evidence shown. |
-| lawyer | `/issue-invoice` | After signature: freezes the record, issues the invoice, ends the bill. |
+| lawyer | `/issue-invoice` | After signature: freezes the record, issues the invoice, locks the reviewed blocks its lines rest on, ends the bill. |
 | timekeeper | `/triage-billing-dates` | Builds the candidate dates list. |
-| timekeeper | `/timecamping` | Reviews each candidate date's whole day, corrects TimeCamp, and lists possible unbilled time. |
+| timekeeper | `/timecamping` | In a bill, its parallel mode judges the candidate dates, and its review-page section serves the page and writes each approved change to TimeCamp. Outside a bill it reviews a day in chat, as before. |
 | timekeeper | `/build-timeline` | Fetches each day's raw evidence for `/timecamping`. |
 | timekeeper | `/timecamping-data` | The time-review database: evidence tables, the evidence gate, proposals, determinations. |
 | timekeeper | `/time-pipeline-data` | The key-value store holding the bill record (`bill`), the timeline and the evidence store. |
-| timekeeper | `/vet-billable-time` | Vets every TimeCamp line, ties out, and writes the invoice lines. |
+| timekeeper | `/vet-billable-time` | Turns the reviewed blocks into lines, ties out, and writes the invoice lines and the line map, each line naming its blocks. |
 
 ### Custom agents and helpers
 
@@ -39,10 +39,11 @@ A script, not the model, refuses to produce invoice lines until that is true (se
 |---|---|---|
 | A background helper on Sonnet (general-purpose, no custom type) | `/triage-billing-dates`, Phase 2 | Scans the range's TimeCamp computer activity for the matter's keywords and returns matching stretches. Reads only. |
 | `timekeeper:screenshot-reader` (Haiku 5.5, effort high, fixed in its file) | `/timecamping` Step 5 and `/triage-billing-dates`, Phase 2 | Views up to 5 decrypted screenshots of one stretch and reports what each shows: on screen, identifiers, unchanged or not, unreadable parts. Holds only `Read`, and a hook lets it open only `.png` files in a `syncopaid-screens` folder and refuses a dispatch that sets its model or effort. Judges no matter and no billing. |
+| `billing:day-reviewer` (Opus 5.5, effort high, fixed in its file) | `/timecamping` parallel mode, up to 10 at once | Turns one day's saved evidence into blocks of time, each with a matter, a description, its evidence and a stated basis. It asks nobody anything: a doubt it cannot settle becomes a flag, which code sets from the stated basis. Holds the day read, the stage tool and `Read`, and no TimeCamp tool. |
 | `lawyer:scrivener` | `/issue-invoice` Step 4 | Writes the body of the trust-transfer email to accounting. |
 | `lawyer:delivery-checker` | `/issue-invoice`, "When it went out" | Checks whether the invoice was sent and delivered before anyone asks. |
 
-Every screenshot a model reads goes to `timekeeper:screenshot-reader`. Apart from it, `/bill`, `/timecamping` and `/vet-billable-time` dispatch no custom agent.
+Every screenshot a model reads goes to `timekeeper:screenshot-reader`, and the day reviewer looks at one only when a saved reading leaves a doubt. Apart from these two, `/bill`, `/timecamping` and `/vet-billable-time` dispatch no custom agent.
 
 ### Data stores
 
@@ -50,7 +51,8 @@ Every screenshot a model reads goes to `timekeeper:screenshot-reader`. Apart fro
 |---|---|
 | The bill record (time-pipeline store, namespace `bill`) | Where each bill stands: its state, its last signed invoice, one row per finished step. A fresh session resumes from it. |
 | The time-review database (`timecamping.db`, one per practitioner) | Each day's evidence from seven sources, the fetch log the gate reads, proposals, and the practitioner's answers. |
-| The review-date records (time-pipeline store, namespace `item`, one per date) | Which dates have been reviewed, and which a run holds now. `/bill` exports the judged ones to `<matter-data folder>\timecamping\judged-dates.export.jsonl` for the tie-out. |
+| The review-date records (time-pipeline store, namespace `item`, one per date) | Which dates have been judged, and which a run holds now. Judging saves a fingerprint of the day's TimeCamp entries. `/bill` exports the judged ones to `<matter-data folder>\timecamping\judged-dates.export.jsonl` for the tie-out. |
+| The day and block records (time-pipeline store, namespace `item`) | Each day's saved evidence, and its blocks with their state, flags, acts and links. The review page is built from them, and `/bill` exports them to `<matter-data folder>\vet-billable-time\blocks.json` for the tie-out. |
 | The practice database | Invoices, rates, time entries, firm profile, trust. |
 | TimeCamp | The system of record for time entries. Each entry has exactly one task. |
 
@@ -103,42 +105,38 @@ This narrows the unbilled period to the days with any indicator of work on the m
 
 **Human:** saving a newly found phone number to a contact waits for the practitioner's yes.
 
-### Step 6.2: Review each day (`/timecamping`)
+### Step 6.2: Judge the days (`/timecamping`, parallel mode)
 
-In Cowork, the bill stops here, because the screen captures can be read only on the PC. Elsewhere, `/timecamping` takes the Strong dates, then the Medium dates, each oldest first. Each date is claimed first: a date already judged, or held by another run, is skipped, and a Staff-only date is not reviewed.
+In Cowork, the bill stops here, because the screen captures and the review page work only on the PC. Elsewhere, `/timecamping` works the Strong and Medium dates, strongest first, with this bill's id as the holder, and puts no question to the practitioner. The Weak dates are judged only on a yes. A Staff-only date is not worked.
 
 For each date:
 
-1. **Fetch** the day's evidence from seven sources through `/build-timeline`: TimeCamp entries, TimeCamp computer activity, SyncoPaid screen captures, the call archive, Google Calendar, the iCloud calendar and sent mail. **Human:** a fetch that replaces stored rows waits for a pasted approval.
-2. **The evidence gate.** The day's evidence can be read only through one sanctioned query. That query returns nothing but a violation line if any registered source lacks a final status for the day. This is enforced by the database query, not by an instruction to the model.
-3. **Read the whole day,** for every client. Lines from different sources stay separate, never merged.
-4. **Group and propose.** Each block of time gets a proposed matter and note, by the named presumptions (P1 to P10) and the evidence doctrine. **Review point:** before any block resting on screen captures is proposed, the session decrypts its first, middle and last captures (more where the window title changes matter) and `timekeeper:screenshot-reader` views them. The proposal records the viewed capture ids. A block of client work that no entry covers is flagged as **uncovered**: possible unbilled time.
-5. **Decide.** A grid sorts each proposal:
-   - a silent commit, where the evidence names the matter outright, or
-   - a question to the practitioner, where it rests on a leap, indirect evidence (a calendar entry, TimeCamp's own label) or a conflict.
+1. **Claim** it. A date already judged, or held by another bill, is skipped, and picked up once its holder has judged it. A date judged in chat before the page existed has no blocks: it is opened for one more judgment to build them, and the run says which dates.
+2. **Gather** the day's evidence through `/build-timeline`, one date at a time, from the seven sources, and save it. **The evidence gate** is unchanged: a day is not judged unless every source has reported, and a day that fails is released and reported. This is enforced by the database, not by an instruction to the model.
+3. **Pick and read screenshots.** For each stretch SyncoPaid covers, a script picks the first, a middle and the last capture and each capture where the window title changes. **Review point:** `timekeeper:screenshot-reader` views them, and each reading is saved.
+4. **Judge.** Up to 10 `billing:day-reviewer` agents run at once, one per day. Each turns the day into blocks, states the basis of each block's matter and of what goes on the bill, and stages them. Code, not the agent, sets a block flagged or auto-assigned from those bases, so a doubt stated truthfully is never staged unflagged. When its blocks are staged, the date is marked judged.
+5. **On a resume,** each judged date's TimeCamp entries are compared with the fingerprint saved when it was judged. A changed, added or removed entry returns its block to flagged, or adds a flagged block. Other blocks keep their approvals.
 
-   **Human:** every question is the practitioner's to answer, under `/show-me`. **Presentation point:** the practitioner sees the block's actual screenshots and those around it, and any capture that failed to decrypt is named as a gap.
-6. **Write back, dry run first.** A report lists every change ready for TimeCamp. **Human:** nothing is written until the practitioner says to commit. Then each entry is written one at a time, and each is re-read to confirm it. Locked (invoiced) entries are skipped.
-7. **Mark the date judged** only when no proposal is pending and every entry's write-back has been answered.
+At the end, `/timecamping` reports each date left unjudged and why, and offers the Weak dates. **Human:** the Weak dates are judged only on a yes.
 
-At the end, `/timecamping` returns the possible unbilled time list, each date left without a mark and why, and the offer of the Weak dates. **Human:** the Weak dates are reviewed only on a yes.
+### Step 6.3: The review page
 
-### Step 6.3: Uncovered time
+The review page is served from the PC, built from the stored blocks with no model drawing it. Each card shows the matter, the description, the times, the state and flags, the evidence rows, the screenshots and their readings. It has a date picker, a matter filter, Previous, Next and Next flagged.
 
-**Human:** for each possible unbilled block, the practitioner either enters the time in TimeCamp by hand or leaves it for an estimate. The session never creates a TimeCamp entry.
+**Human:** only flagged blocks need action. For each, the practitioner clicks Approve, Correct, Write off, Split here, Merge with next or Undo. A block records an approval only from a click on that block. The session then:
+- writes a changed matter or description to TimeCamp one entry at a time, re-reads the entry, and saves the outcome to the block. A staff member's TimeCamp note is left alone, and a locked entry is reported, never written.
+- redrafts both halves of a split from the stored evidence and readings, opening no image. A merge joins descriptions by script. Originals are kept and linked, so Undo restores them until the time is on an issued invoice.
 
-### Step 6.4: Vet the lines (`/vet-billable-time`)
+Work that no TimeCamp entry covers appears as a flagged block that states an estimate, and is approved or written off on the page. The session never creates a TimeCamp entry. A day reads as clear when it is judged and no block on it is flagged.
+
+### Step 6.4: Tie out the reviewed blocks (`/vet-billable-time`)
 
 1. **Pull** the matter's billable TimeCamp entries since the last billed date.
-2. **First tie-out** (`tie_out.py pull`, described in section 4). An unjudged date goes back to `/timecamping`.
-3. **Join** each entry to its review decision. An entry with none is flagged "no evidence", which includes every staff entry. Non-billable window patterns the practitioner ruled on before are matched and proposed as write-offs.
-4. **Rates, initials and firm rules** come from the practice database, or from the retainer letter. **Human:** a missing rate, missing initials, and whether clerical staff work is billed are each asked once.
-5. **Vet each line, one at a time. Human:** the practitioner confirms, corrects or writes off every line. A "no evidence" line bills only with the practitioner's confirmation and an estimate. Each answer is saved before the next line is shown.
-6. **Flags from the candidate list. Human:**
-   - each under-billed or suspicious date: bill it as a late line, or write it off
-   - each Strong or Medium date with no TimeCamp time, each uncovered block, and each phone call found off the matter's task: approve, correct or write off a proposed estimate, or enter the time by hand
-7. **Final tie-out** (`tie_out.py final`). On a pass it writes the billable time summary and audit file to `BILLING`, plus `invoice_lines.json`, the line map and the time entries.
-8. **Record the time entries** in the practice database.
+2. **First tie-out** (`tie_out.py pull`, described in section 4). An unjudged date goes back to Step 6.2.
+3. **Rates, initials and firm rules** come from the practice database, or from the retainer letter. **Human:** a missing rate, missing initials, and whether clerical staff work is billed are each asked once.
+4. **Export the blocks** to a file and turn them into the lines `tie_out.py` reads (`blocks_export.py`). Each TimeCamp entry joins the live blocks that cite it: a written-off block, or one that moved the time to another matter, writes the entry off, and an approved or auto-assigned block bills it, with the evidence its block cites. A block with no entry becomes an approved estimate. The export refuses, writing nothing, while any day is not clear, an entry has no block, or a block with no entry states no estimate. **Human:** a refusal sends the practitioner back to the page for the flagged block.
+5. **Final tie-out** (`tie_out.py final`). On a pass it writes the billable time summary and audit file to `BILLING`, plus `invoice_lines.json`, the line map and the time entries. The line map gives each invoice line the ids of its blocks, so a line opens its block on the page.
+6. **Record the time entries** in the practice database.
 
 ### Step 7: The chart
 
@@ -163,7 +161,7 @@ The draft, the summary and the audit file are presented, with the summary's gaps
 **Human:** this runs only on the practitioner's word that the invoice is signed.
 1. **Read** the signed PDF: confirm the signature, and take the figures from the document.
 2. **Freeze** the record (`freeze_invoice.py`). A total that differs from the vetted time stops it.
-3. **Issue** it in the practice database, which locks the records. **Human:** this is one-way, so it needs the practitioner's approval. The bill record moves to "Issued".
+3. **Issue** it in the practice database, which locks the records. **Human:** this is one-way, so it needs the practitioner's approval. The bill record moves to "Issued", and the reviewed blocks the invoice's lines rest on are locked: an Undo, a split or a merge of that time is refused from then on.
 4. **Trust:** if trust is applied, `lawyer:scrivener` drafts an unsent email to accounting. **Human:** the practitioner names the recipient and sends it.
 5. **Delivery:** later, `lawyer:delivery-checker` checks whether the invoice went out before the practitioner is asked. A correction after issue is recorded as an adjustment, never an edit.
 
@@ -184,24 +182,25 @@ Each guard below names what enforces it. A script check refuses outright; a skil
 | 3 | Reconciliation against the last bill: "under-billed" and "suspicious" flags | Work the last bill missed or under-counted | Skill rule |
 | 4 | Each date's whole day is reviewed, for every client | Matter time sitting in another client's entry, or in a review queue. On L145's 30 reviewed dates this was up to 44% of the matter's time. | Skill rule |
 | 5 | The evidence gate: no reading until all seven sources report for the day | A judgment made on partial evidence | **Database query** |
-| 6 | Uncovered time is listed for hand entry or an estimate | Work with no TimeCamp entry at all | Skill rule |
-| 7 | Write-back puts each corrected entry on the right task, one at a time with a re-read | The bill pulls only the matter's own task, so a judgment not written back is not billed | Skill rule; re-read |
+| 6 | Work with no TimeCamp entry appears as a flagged block that states an estimate | Work with no TimeCamp entry at all | Skill rule; **code sets the flag** |
+| 7 | A click on the page writes each approved change to TimeCamp one entry at a time with a re-read, and a changed entry flags its block on the next resume | The bill pulls only the matter's own task, so a judgment not written back is not billed | Skill rule; re-read; **fingerprint compare** |
 | 8 | First tie-out: entries are inside the period, tie to TimeCamp's own count and hours, and every Strong and Medium non-staff date is judged | Missing or stray entries, and unreviewed dates | **`tie_out.py pull`** |
 | 9 | One line per entry, each billed line with evidence or a confirmed estimate, and every write-off with a reason | An entry silently dropped, or billed without support | **`tie_out.py final`** |
+| 9a | Every block is answered, every entry has a block, and a block with no entry carries an approved estimate | A flagged doubt reaching the bill unanswered, or an entry the review never saw | **`blocks_export.py`** |
 | 10 | Coverage: every Strong and Medium candidate date is billed, written off or listed unexplained, with a reason | A candidate day that simply vanished | **`tie_out.py final`** |
 | 11 | Run scope: evidence fetched during this run stays on this matter's dates | A stray fetch that pads the bill | **`tie_out.py final`** |
 | 12 | Accuracy: the draft's fees must be within 80% to 120% of a "perfect-tracking" total built from what each line's evidence supports | A bill far above or below what the evidence shows | **`tie_out.py final`** |
 | 13 | The renderer recomputes every amount, and refuses lines without a pass stamp, a line with no evidence or estimate basis, an undecided disbursement, or an old dollar figure in the template wording | A figure that does not tie reaching the page | **`render_invoice.py`** |
 | 14 | Disbursements are counted once each across receipts and court sheets, with every doubtful fee flagged rather than dropped | A missed or double-counted fee | **`collect_disbursements.py`** |
-| 15 | The yes at Step 9 closes the period, and issue locks the records | Work billed twice across two bills | Bill record; practice database lock |
+| 15 | The yes at Step 9 closes the period, and issue locks the records and the reviewed blocks | Work billed twice across two bills, or invoiced time split or undone later | Bill record; practice database lock; **block lock** |
 
 ## 5. Where completeness is not guaranteed
 
 These are facts about the current build, not proposals.
 
-- **The judged mark is per matter.** A day reviewed in full for one matter counts as unreviewed for every other matter, so the same day can be reviewed again for each matter billed.
+- **A day is judged once, for every matter.** Its blocks cover all the day's work, so a second bill that shares the day reads the same blocks. A date held by another bill waits until that bill has judged it.
 - **A judgment counts only once it reaches TimeCamp.** If an approved move is never written back, the bill misses that time, or bills time that belongs elsewhere. On L145, 4.19 h judged as L145 still sit on other tasks, and 2.56 h judged as other matters still sit on L145.
-- **A re-run of a day replaces earlier decisions** for that day that have not been written back, for every matter.
+- **A judged day is not judged again.** Its blocks are staged once. A TimeCamp entry changed afterwards flags its block on the next resume. A change nobody makes through TimeCamp, such as new evidence for a judged day, is not found until a re-check is asked for.
 - **Staff time is never reviewed day by day.** Staff lines are vetted from their notes and the surrounding evidence.
 - **Weak dates are reviewed only on request.**
 - **Sources have limits.** Sent mail before its `copy_from` date cannot be searched. The call archive covers only the carrier on file (L145: calls after 31 August show only through window titles). Received mail with no reply is checked only when the practitioner asks for a thorough list.
@@ -215,9 +214,9 @@ These are facts about the current build, not proposals.
 | Start | Types `/bill`. Chooses which bill to continue, if two are live. |
 | Step 3 | Says which file is the last signed invoice, only if asked. |
 | Step 6.1 | Approves saving a new phone number to a contact. |
-| Step 6.2 | Pastes approval for a replacing evidence write. Answers each day's questions. Says "commit". Gives a yes per TimeCamp change. Accepts or declines the Weak dates. |
-| Step 6.3 | Enters uncovered time by hand, or leaves it for an estimate. |
-| Step 6.4 | Supplies any missing rate, initials and clerical-billing rule. Confirms, corrects or writes off every line. Rules on under-billed and suspicious dates and on each estimate. |
+| Step 6.2 | Accepts or declines the Weak dates. |
+| Step 6.3 | Opens the review page and acts on each flagged block: Approve, Correct, Write off, Split, Merge or Undo. Every other block needs nothing. |
+| Step 6.4 | Supplies any missing rate, initials and clerical-billing rule. Returns to the page if the export names a flagged block. |
 | Step 8 | Chooses Word or PDF. Corrects and approves the template, and the firm style if absent. Sees the tax rates. Decides every flagged disbursement. |
 | Step 9 | Says the draft is ready for signature. Gives the bill number from accounting. |
 | Signature | The lawyer signs. |

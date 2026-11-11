@@ -1,4 +1,4 @@
-// build-stamp: 9035a7c84e98
+// build-stamp: a82cd284d41c
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -2980,7 +2980,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve3.call(this, root, ref);
+      let _sch = resolve4.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a3 = root.localRefs) === null || _a3 === void 0 ? void 0 : _a3[ref];
         const { schemaId } = this.opts;
@@ -3007,7 +3007,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve3(root, ref) {
+    function resolve4(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3638,7 +3638,7 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve3(baseURI, relativeURI, options) {
+    function resolve4(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
@@ -3896,7 +3896,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve: resolve3,
+      resolve: resolve4,
       resolveComponent,
       equal,
       serialize,
@@ -6643,10 +6643,10 @@ var require_formats = __commonJS({
     function isLeapYear(year) {
       return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
     }
-    var DATE3 = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
+    var DATE4 = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
     var DAYS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
     function date3(str) {
-      const matches = DATE3.exec(str);
+      const matches = DATE4.exec(str);
       if (!matches)
         return false;
       const year = +matches[1];
@@ -14203,7 +14203,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve3) => setTimeout(resolve3, pollInterval));
+        await new Promise((resolve4) => setTimeout(resolve4, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error2) {
@@ -14220,7 +14220,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve3, reject) => {
+    return new Promise((resolve4, reject) => {
       const earlyReject = (error2) => {
         reject(error2);
       };
@@ -14298,7 +14298,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve3(parseResult.data);
+            resolve4(parseResult.data);
           }
         } catch (error2) {
           reject(error2);
@@ -14559,12 +14559,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve3, reject) => {
+    return new Promise((resolve4, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve3, interval);
+      const timeoutId = setTimeout(resolve4, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -15434,12 +15434,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve3) => {
+    return new Promise((resolve4) => {
       const json2 = serializeMessage(message);
       if (this._stdout.write(json2)) {
-        resolve3();
+        resolve4();
       } else {
-        this._stdout.once("drain", resolve3);
+        this._stdout.once("drain", resolve4);
       }
     });
   }
@@ -15558,6 +15558,14 @@ function reviewDateToolDefinitions() {
     {
       name: "review_date__claim",
       description: 'Claim one date for review. `holder` names the claimant: the bill id, or timecamping:<UTC stamp> for a run with no bill. Returns one of: { status: "claimed", token, expires_at } -- keep the token, which renew, judge and release need and which is given only here; { status: "judged", judged_at, judged_by } -- do not review the date; { status: "held", holder, expires_at } -- another run holds it, do not review it or wait. A claim lasts 60 minutes; a lapsed one can be claimed by another run.' + ROUTE,
+      inputSchema: objectSchema([
+        { name: "date", type: "str" },
+        { name: "holder", type: "str" }
+      ], ["date", "holder"])
+    },
+    {
+      name: "review_date__rejudge",
+      description: 'Open a date that was judged before the review page existed, so it has no staged block, for one more judgment that builds its blocks. Call it only when the practitioner has said to judge that date again. Returns { status: "claimed", token, expires_at } -- as review_date__claim does, and the earlier judgment stays on the record; { status: "not_judged" } -- claim the date instead; { status: "has_blocks", blocks } -- the date is already staged, so read it and do not judge it again; { status: "held", holder, expires_at } -- another run holds it.' + ROUTE,
       inputSchema: objectSchema([
         { name: "date", type: "str" },
         { name: "holder", type: "str" }
@@ -15806,6 +15814,17 @@ function timeReviewToolDefinitions() {
         required: ["block", "matter", "description"],
         additionalProperties: false
       }
+    },
+    {
+      name: "time_review__export_blocks",
+      description: "Write the staged blocks of every date from `from` to `to` (YYYY-MM-DD, inclusive) to `out_path`, an absolute path on this machine, as { from, to, days: [{ date, clear, blocks }] }, in date order: the file /vet-billable-time's blocks_export.py reads. A date with no staged block is left out. The server creates the parent folder and overwrites any file there. The blocks go to the file, never through tool output. Returns { path, days, blocks, sha256 } of the file." + ROUTE2,
+      inputSchema: {
+        type: "object",
+        properties: { from: { type: "string" }, to: { type: "string" }, out_path: { type: "string" } },
+        required: ["from", "to", "out_path"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: false, openWorldHint: false }
     },
     {
       name: "time_review__mark_issued",
@@ -16945,6 +16964,30 @@ function reviewDateClaim(dateIn, holder, seams = {}) {
     };
   });
 }
+function reviewDateRejudge(dateIn, holder, seams = {}) {
+  const date3 = checkDate("review_date__rejudge", dateIn);
+  if (holder.trim() === "") throw new ValidationError("review_date__rejudge: holder must name the bill or the run");
+  return change("review_date__rejudge", date3, seams, (current) => {
+    const now = nowOf2(seams);
+    if (!current?.judged_at) return { result: { status: "not_judged", date: date3 } };
+    const staged = timePipelineList(REVIEW_DATE_NAMESPACE, `${BLOCK_PREFIX}${date3}:`, envOf2(seams)).items.length;
+    if (staged > 0) return { result: { status: "has_blocks", date: date3, blocks: staged } };
+    if (isLive(current.claim, now)) {
+      return { result: { status: "held", date: date3, holder: current.claim.holder, expires_at: current.claim.expires_at } };
+    }
+    const claim = {
+      token: randomUUID(),
+      holder,
+      claimed_at: now.toISOString(),
+      expires_at: new Date(now.getTime() + CLAIM_MS).toISOString()
+    };
+    const { fingerprint: _old, ...rest } = current;
+    return {
+      write: { ...rest, judged_at: null, judged_by: null, claim, rejudged_from: { judged_at: current.judged_at, judged_by: current.judged_by } },
+      result: { status: "claimed", date: date3, token: claim.token, expires_at: claim.expires_at }
+    };
+  });
+}
 function ownClaim(current, token) {
   if (!current || current.judged_at || !current.claim || current.claim.token !== token) return null;
   return current.claim;
@@ -17056,18 +17099,133 @@ function reviewDateImportFile(path, judgedBy, dryRun, seams = {}) {
   return { dry_run: false, added: written, skipped: skipped.sort() };
 }
 
+// src/time-review/export.ts
+import { mkdirSync as mkdirSync3, writeFileSync as writeFileSync3 } from "node:fs";
+import { dirname as dirname2, resolve as resolve2 } from "node:path";
+
+// src/time-review/act.ts
+var ACTOR = "practitioner";
+var ACTS = ["approve", "correct", "write_off"];
+var isAct = (value) => ACTS.includes(value);
+var ATTEMPTS2 = 5;
+var MAX_TEXT = 2e3;
+var MAX_SHORT = 200;
+function text(label2, value, max) {
+  if (typeof value !== "string" || value.trim() === "") throw new ValidationError(`${label2} must be a non-empty text`);
+  if (value.length > max) throw new ValidationError(`${label2} is longer than ${max} characters`);
+  return value.trim();
+}
+function change2(id, seams, edit) {
+  const env = envOf(seams);
+  for (let attempt = 0; attempt < ATTEMPTS2; attempt += 1) {
+    const read2 = timePipelineGet(NAMESPACE, blockKey(id), env);
+    if (read2.value === null) throw new ValidationError(`${id} is not a block`);
+    const current = JSON.parse(read2.value);
+    if (current.state === "merged" || current.state === "split") {
+      throw new ValidationError(`${id} was ${current.state} into a new block; act on the new block, or undo first`);
+    }
+    const next = edit(current);
+    const saved = timePipelineWriteIf(NAMESPACE, blockKey(id), JSON.stringify(next), { expect_sha256: read2.sha256 }, env);
+    if (!("stale" in saved)) return next;
+  }
+  throw new DataServerError(`block ${id} changed ${ATTEMPTS2} times while it was being saved; nothing was written. Try again`, "contended");
+}
+function applyAct(act, id, fields, seams = {}) {
+  const at = nowOf(seams).toISOString();
+  const review = (extra) => ({ act: "approved", by: ACTOR, at, ...extra });
+  if (act === "write_off") {
+    const reason = text("A write-off reason", fields.reason, MAX_SHORT);
+    return change2(id, seams, (b) => {
+      const { timecamp: _none, ...rest } = b;
+      return { ...rest, state: "written_off", review: review({ act: "written_off", reason }) };
+    });
+  }
+  if (act === "approve") {
+    return change2(id, seams, (b) => ({ ...b, state: "approved", review: review({}), timecamp: { status: "pending", at } }));
+  }
+  const matter = text("The matter", fields.matter, MAX_SHORT);
+  const description = text("The description", fields.description, MAX_TEXT);
+  const start2 = text("The start", fields.start, MAX_SHORT);
+  const end = text("The end", fields.end, MAX_SHORT);
+  return change2(id, seams, (b) => ({
+    ...b,
+    matter,
+    description,
+    start: start2,
+    end,
+    state: "corrected",
+    // A second correction keeps the first `before`: the version the AI staged.
+    review: review({ act: "corrected", before: b.review?.before ?? { matter: b.matter, description: b.description, start: b.start, end: b.end } }),
+    timecamp: { status: "pending", at }
+  }));
+}
+var TIMECAMP_STATUSES = ["saved", "unchanged", "staff_left_alone", "error"];
+function recordTimecamp(id, status, message, seams = {}) {
+  if (!TIMECAMP_STATUSES.includes(status)) {
+    throw new ValidationError(`status must be one of ${TIMECAMP_STATUSES.join(", ")}`);
+  }
+  if (status === "error" && (message === void 0 || message.trim() === "")) {
+    throw new ValidationError("status error needs the message TimeCamp or the re-read gave");
+  }
+  if (message !== void 0 && message.length > MAX_TEXT) throw new ValidationError(`message is longer than ${MAX_TEXT} characters`);
+  const at = nowOf(seams).toISOString();
+  return change2(id, seams, (b) => {
+    if (b.review?.act !== "approved" && b.review?.act !== "corrected") {
+      throw new ValidationError(`block ${id} has no approval or correction to write to TimeCamp`);
+    }
+    return { ...b, timecamp: { status, ...message ? { message } : {}, at } };
+  });
+}
+function dayIsClear(date3, blocks, seams = {}) {
+  return reviewDateJudgment(date3, seams) !== null && !blocks.some((b) => b.date === date3 && b.state === "flagged");
+}
+
+// src/time-review/export.ts
+var DATE2 = /^\d{4}-\d{2}-\d{2}$/;
+var MAX_DAYS = 400;
+function checkDate2(tool, value) {
+  if (typeof value !== "string" || !DATE2.test(value) || Number.isNaN(Date.parse(`${value}T00:00:00Z`))) {
+    throw new ValidationError(`${tool}: ${JSON.stringify(value)} is not a date as YYYY-MM-DD`);
+  }
+  return value;
+}
+function timeReviewExportBlocks(fromIn, toIn, outPath, seams = {}) {
+  const tool = "time_review__export_blocks";
+  const from = checkDate2(tool, fromIn);
+  const to = checkDate2(tool, toIn);
+  if (from > to) throw new ValidationError(`${tool}: from ${from} is after to ${to}`);
+  if (typeof outPath !== "string" || outPath.trim() === "") throw new ValidationError(`${tool}: out_path must be an absolute path`);
+  const span = (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / (24 * 60 * 60 * 1e3) + 1;
+  if (span > MAX_DAYS) throw new ValidationError(`${tool}: at most ${MAX_DAYS} days in one export`);
+  const all = timePipelineList(NAMESPACE, BLOCK_PREFIX, envOf(seams)).items.map((item) => JSON.parse(item.value));
+  const byDate = /* @__PURE__ */ new Map();
+  for (const block of all) {
+    if (block.date < from || block.date > to) continue;
+    byDate.set(block.date, [...byDate.get(block.date) ?? [], block]);
+  }
+  const days = [...byDate.keys()].sort().map((date3) => {
+    const blocks = byDate.get(date3).sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    return { date: date3, clear: dayIsClear(date3, blocks, seams), blocks };
+  });
+  const text3 = JSON.stringify({ from, to, days }, null, 2) + "\n";
+  const path = resolve2(outPath);
+  mkdirSync3(dirname2(path), { recursive: true });
+  writeFileSync3(path, text3, "utf-8");
+  return { path, days: days.length, blocks: days.reduce((n, d) => n + d.blocks.length, 0), sha256: valueSha256(text3) };
+}
+
 // src/time-review/restructure.ts
 var ROLE_SPLIT_FROM = "split_from";
 var ROLE_MERGED_INTO = "merged_into";
 var FLAG_REDRAFT = "split:redraft_pending";
 var FLAG_MERGED = "merge:new_block";
-var ATTEMPTS2 = 5;
+var ATTEMPTS3 = 5;
 var SHOT = "syncopaid_captures";
 var ID_FIELDS = ["id", "native_id", "capture_id", "entry_id"];
 var TIME_FIELDS = ["captured_at", "native_id", "id"];
 var MAX_MERGE = 20;
-var MAX_TEXT = 2e3;
-var MAX_SHORT = 200;
+var MAX_TEXT2 = 2e3;
+var MAX_SHORT2 = 200;
 var CLOCK = /^(\d{1,2}):(\d{2})$/;
 var BLOCK_ID = /^\d{4}-\d{2}-\d{2}:\d{3}$/;
 var RESTRUCTURED = ["merged", "split"];
@@ -17082,7 +17240,7 @@ function unique(list) {
 }
 function commit(tool, date3, seams, plan) {
   const env = envOf(seams);
-  for (let attempt = 0; attempt < ATTEMPTS2; attempt += 1) {
+  for (let attempt = 0; attempt < ATTEMPTS3; attempt += 1) {
     const items = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, env).items;
     const blocks = items.map((item) => JSON.parse(item.value));
     const { save, remove: remove2, result } = plan(blocks);
@@ -17097,7 +17255,7 @@ function commit(tool, date3, seams, plan) {
     ];
     if (!("stale" in timePipelineApplyIf(checks, writes, env))) return result;
   }
-  throw new DataServerError(`${tool}: ${date3} changed ${ATTEMPTS2} times while this call was saving; nothing was written. Try again`, "contended");
+  throw new DataServerError(`${tool}: ${date3} changed ${ATTEMPTS3} times while this call was saving; nothing was written. Try again`, "contended");
 }
 function find(blocks, id) {
   const found = blocks.find((b) => b.id === id);
@@ -17154,7 +17312,7 @@ var shotName = (day, ref) => {
 };
 function splitBlock(idIn, captureIn, seams = {}) {
   const id = checkId("The block", idIn);
-  if (typeof captureIn !== "string" || captureIn.trim() === "" || captureIn.length > MAX_SHORT) {
+  if (typeof captureIn !== "string" || captureIn.trim() === "" || captureIn.length > MAX_SHORT2) {
     throw new ValidationError("A split needs the screenshot to split at");
   }
   const capture = captureIn.trim();
@@ -17227,8 +17385,8 @@ function redraftBlock(idIn, matterIn, descriptionIn, seams = {}) {
     if (value.length > max) throw new ValidationError(`${tool}: ${label2} is longer than ${max} characters`);
     return value.trim();
   };
-  const matter = text3("matter", matterIn, MAX_SHORT);
-  const description = text3("description", descriptionIn, MAX_TEXT);
+  const matter = text3("matter", matterIn, MAX_SHORT2);
+  const description = text3("description", descriptionIn, MAX_TEXT2);
   const at = nowOf(seams).toISOString();
   return commit(tool, id.slice(0, 10), seams, (blocks) => {
     const b = find(blocks, id);
@@ -17352,14 +17510,14 @@ import { win32 as pathWin32 } from "node:path";
 
 // src/repo-root.ts
 import { existsSync as existsSync5, readFileSync as readFileSync3, readdirSync as readdirSync3, statSync } from "node:fs";
-import { basename, dirname as dirname2, join as join5, resolve as resolve2 } from "node:path";
+import { basename, dirname as dirname3, join as join5, resolve as resolve3 } from "node:path";
 import { fileURLToPath } from "node:url";
 var CHECKOUT_LAYOUTS = [
   { skills: join5("source", "skills"), marker: join5("source", "lawyer", "mcp") },
   { skills: join5(".claude", "skills"), marker: join5(".claude", "skills", "plugin-packager") }
 ];
-var SELF_DIR = dirname2(fileURLToPath(import.meta.url));
-var INSTALL_ROOT = resolve2(SELF_DIR, "..", "..");
+var SELF_DIR = dirname3(fileURLToPath(import.meta.url));
+var INSTALL_ROOT = resolve3(SELF_DIR, "..", "..");
 function pluginVersion(installRoot = INSTALL_ROOT) {
   return pluginManifest(installRoot).version;
 }
@@ -17376,27 +17534,27 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "9035a7c84e98";
+var BUILD_STAMP = false ? null : "a82cd284d41c";
 
 // src/local-page/links.ts
-import { mkdirSync as mkdirSync4, readdirSync as readdirSync4, readFileSync as readFileSync5, renameSync, statSync as statSync2, unlinkSync as unlinkSync3, writeFileSync as writeFileSync4 } from "node:fs";
-import { dirname as dirname4, join as join7 } from "node:path";
+import { mkdirSync as mkdirSync5, readdirSync as readdirSync4, readFileSync as readFileSync5, renameSync, statSync as statSync2, unlinkSync as unlinkSync3, writeFileSync as writeFileSync5 } from "node:fs";
+import { dirname as dirname5, join as join7 } from "node:path";
 
 // src/local-page/token.ts
 import { createHmac, randomBytes as randomBytes2, timingSafeEqual } from "node:crypto";
-import { existsSync as existsSync6, linkSync as linkSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync4, unlinkSync as unlinkSync2, writeFileSync as writeFileSync3 } from "node:fs";
-import { dirname as dirname3, join as join6 } from "node:path";
+import { existsSync as existsSync6, linkSync as linkSync2, mkdirSync as mkdirSync4, readFileSync as readFileSync4, unlinkSync as unlinkSync2, writeFileSync as writeFileSync4 } from "node:fs";
+import { dirname as dirname4, join as join6 } from "node:path";
 var SECRET_FILE = "page-api.secret";
 var SECRET_BYTES = 32;
 function secretPath(env) {
-  return join6(dirname3(configPath(env)), SECRET_FILE);
+  return join6(dirname4(configPath(env)), SECRET_FILE);
 }
 function deviceSecret(env) {
   const path = secretPath(env);
   if (!existsSync6(path)) {
-    mkdirSync3(dirname3(path), { recursive: true });
+    mkdirSync4(dirname4(path), { recursive: true });
     const temp = `${path}.${process.pid}.${randomBytes2(6).toString("hex")}.tmp`;
-    writeFileSync3(temp, randomBytes2(SECRET_BYTES), { flag: "wx" });
+    writeFileSync4(temp, randomBytes2(SECRET_BYTES), { flag: "wx" });
     try {
       linkSync2(temp, path);
     } catch (err) {
@@ -17423,7 +17581,7 @@ var LINKS_DIR = "page-links";
 var ID_RE = /^[A-Za-z0-9_-]{32}$/;
 var MAX_AGE_MS = 30 * 24 * 3600 * 1e3;
 function linksDir(env) {
-  return join7(dirname4(configPath(env)), LINKS_DIR);
+  return join7(dirname5(configPath(env)), LINKS_DIR);
 }
 function linkId(kind, target, env) {
   return deviceHmac(`link
@@ -17433,11 +17591,11 @@ ${target}`, env).subarray(0, 24).toString("base64url");
 function deviceLink(kind, target, env) {
   const id = linkId(kind, target, env);
   const dir = linksDir(env);
-  mkdirSync4(dir, { recursive: true });
+  mkdirSync5(dir, { recursive: true });
   const record2 = { kind, target, created_at: (/* @__PURE__ */ new Date()).toISOString() };
   const path = join7(dir, `${id}.json`);
   const temp = `${path}.${process.pid}.tmp`;
-  writeFileSync4(temp, JSON.stringify(record2));
+  writeFileSync5(temp, JSON.stringify(record2));
   renameSync(temp, path);
   return id;
 }
@@ -17538,7 +17696,7 @@ var BodyTooLarge = class extends Error {
   }
 };
 function readBody(req, max) {
-  return new Promise((resolve3, reject) => {
+  return new Promise((resolve4, reject) => {
     const chunks = [];
     let size = 0;
     req.on("data", (chunk) => {
@@ -17550,7 +17708,7 @@ function readBody(req, max) {
       }
       chunks.push(chunk);
     });
-    req.on("end", () => resolve3(Buffer.concat(chunks).toString("utf-8")));
+    req.on("end", () => resolve4(Buffer.concat(chunks).toString("utf-8")));
     req.on("error", reject);
   });
 }
@@ -17581,7 +17739,7 @@ function json(res, status, body, options = {}) {
 function html(res, status, body, options = {}) {
   send(res, status, "text/html; charset=utf-8", body, options);
 }
-function text(res, status, body, options = {}) {
+function text2(res, status, body, options = {}) {
   send(res, status, "text/plain; charset=utf-8", body, options);
 }
 function file(res, path, name, type) {
@@ -17619,9 +17777,9 @@ async function startPageListener(options) {
     held = true;
     server2.unref();
   });
-  const first = await new Promise((resolve3) => {
-    server2.once("listening", () => resolve3(null));
-    server2.once("error", (err) => resolve3(err));
+  const first = await new Promise((resolve4) => {
+    server2.once("listening", () => resolve4(null));
+    server2.once("error", (err) => resolve4(err));
     server2.listen(wanted, "127.0.0.1");
   });
   if (first && !fixed) throw first;
@@ -17650,21 +17808,21 @@ async function startPageListener(options) {
       if (retry) clearTimeout(retry);
       if (!server2.listening) return Promise.resolve();
       server2.closeAllConnections();
-      return new Promise((resolve3) => server2.close(() => resolve3()));
+      return new Promise((resolve4) => server2.close(() => resolve4()));
     }
   };
 }
 function probeHolder(port, bundle, timeoutMs = 1e3) {
-  return new Promise((resolve3) => {
+  return new Promise((resolve4) => {
     const req = get({ host: "127.0.0.1", port, path: "/health", timeout: timeoutMs, agent: false }, (res) => {
       let body = "";
       res.setEncoding("utf-8");
       res.on("data", (chunk) => body += chunk);
-      res.on("end", () => resolve3(holderFrom(res.statusCode, body, bundle)));
-      res.on("error", (err) => resolve3({ kind: "other", reason: err.message }));
+      res.on("end", () => resolve4(holderFrom(res.statusCode, body, bundle)));
+      res.on("error", (err) => resolve4({ kind: "other", reason: err.message }));
     });
     req.on("timeout", () => req.destroy(new Error(`no answer within ${timeoutMs} ms`)));
-    req.on("error", (err) => resolve3(err.code === "ECONNREFUSED" ? { kind: "none" } : { kind: "other", reason: err.message }));
+    req.on("error", (err) => resolve4(err.code === "ECONNREFUSED" ? { kind: "none" } : { kind: "other", reason: err.message }));
   });
 }
 function holderFrom(status, body, bundle) {
@@ -17683,7 +17841,7 @@ function holderFrom(status, body, bundle) {
 }
 async function route(req, res, options) {
   const url = new URL(req.url ?? "/", "http://127.0.0.1");
-  const fail = (status, message) => options.cors ? json(res, status, { error: message }, { cors: req }) : text(res, status, message);
+  const fail = (status, message) => options.cors ? json(res, status, { error: message }, { cors: req }) : text2(res, status, message);
   if (options.cors && req.method === "OPTIONS") {
     res.writeHead(204, { ...corsHeaders(req), "Access-Control-Allow-Methods": "GET, POST", "Access-Control-Allow-Headers": "Content-Type" });
     res.end();
@@ -17707,7 +17865,7 @@ async function route(req, res, options) {
 }
 
 // src/local-page/wait.ts
-var timerSleep = (ms) => new Promise((resolve3) => setTimeout(resolve3, ms));
+var timerSleep = (ms) => new Promise((resolve4) => setTimeout(resolve4, ms));
 async function waitFor(check, options) {
   const sleep = options.sleep ?? timerSleep;
   const now = options.now ?? Date.now;
@@ -17719,83 +17877,6 @@ async function waitFor(check, options) {
     if (waited >= options.budgetMs) return { pending: true, waited_ms: waited };
     await sleep(Math.min(options.pollMs, options.budgetMs - waited));
   }
-}
-
-// src/time-review/act.ts
-var ACTOR = "practitioner";
-var ACTS = ["approve", "correct", "write_off"];
-var isAct = (value) => ACTS.includes(value);
-var ATTEMPTS3 = 5;
-var MAX_TEXT2 = 2e3;
-var MAX_SHORT2 = 200;
-function text2(label2, value, max) {
-  if (typeof value !== "string" || value.trim() === "") throw new ValidationError(`${label2} must be a non-empty text`);
-  if (value.length > max) throw new ValidationError(`${label2} is longer than ${max} characters`);
-  return value.trim();
-}
-function change2(id, seams, edit) {
-  const env = envOf(seams);
-  for (let attempt = 0; attempt < ATTEMPTS3; attempt += 1) {
-    const read2 = timePipelineGet(NAMESPACE, blockKey(id), env);
-    if (read2.value === null) throw new ValidationError(`${id} is not a block`);
-    const current = JSON.parse(read2.value);
-    if (current.state === "merged" || current.state === "split") {
-      throw new ValidationError(`${id} was ${current.state} into a new block; act on the new block, or undo first`);
-    }
-    const next = edit(current);
-    const saved = timePipelineWriteIf(NAMESPACE, blockKey(id), JSON.stringify(next), { expect_sha256: read2.sha256 }, env);
-    if (!("stale" in saved)) return next;
-  }
-  throw new DataServerError(`block ${id} changed ${ATTEMPTS3} times while it was being saved; nothing was written. Try again`, "contended");
-}
-function applyAct(act, id, fields, seams = {}) {
-  const at = nowOf(seams).toISOString();
-  const review = (extra) => ({ act: "approved", by: ACTOR, at, ...extra });
-  if (act === "write_off") {
-    const reason = text2("A write-off reason", fields.reason, MAX_SHORT2);
-    return change2(id, seams, (b) => {
-      const { timecamp: _none, ...rest } = b;
-      return { ...rest, state: "written_off", review: review({ act: "written_off", reason }) };
-    });
-  }
-  if (act === "approve") {
-    return change2(id, seams, (b) => ({ ...b, state: "approved", review: review({}), timecamp: { status: "pending", at } }));
-  }
-  const matter = text2("The matter", fields.matter, MAX_SHORT2);
-  const description = text2("The description", fields.description, MAX_TEXT2);
-  const start2 = text2("The start", fields.start, MAX_SHORT2);
-  const end = text2("The end", fields.end, MAX_SHORT2);
-  return change2(id, seams, (b) => ({
-    ...b,
-    matter,
-    description,
-    start: start2,
-    end,
-    state: "corrected",
-    // A second correction keeps the first `before`: the version the AI staged.
-    review: review({ act: "corrected", before: b.review?.before ?? { matter: b.matter, description: b.description, start: b.start, end: b.end } }),
-    timecamp: { status: "pending", at }
-  }));
-}
-var TIMECAMP_STATUSES = ["saved", "unchanged", "staff_left_alone", "error"];
-function recordTimecamp(id, status, message, seams = {}) {
-  if (!TIMECAMP_STATUSES.includes(status)) {
-    throw new ValidationError(`status must be one of ${TIMECAMP_STATUSES.join(", ")}`);
-  }
-  if (status === "error" && (message === void 0 || message.trim() === "")) {
-    throw new ValidationError("status error needs the message TimeCamp or the re-read gave");
-  }
-  if (message !== void 0 && message.length > MAX_TEXT2) throw new ValidationError(`message is longer than ${MAX_TEXT2} characters`);
-  const at = nowOf(seams).toISOString();
-  return change2(id, seams, (b) => {
-    if (b.review?.act !== "approved" && b.review?.act !== "corrected") {
-      throw new ValidationError(`block ${id} has no approval or correction to write to TimeCamp`);
-    }
-    return { ...b, timecamp: { status, ...message ? { message } : {}, at } };
-  });
-}
-function dayIsClear(date3, blocks, seams = {}) {
-  return reviewDateJudgment(date3, seams) !== null && !blocks.some((b) => b.date === date3 && b.state === "flagged");
 }
 
 // src/time-review/templates/review.css.ts
@@ -18066,17 +18147,17 @@ function page(target, id, env, res) {
   html(res, 200, renderReviewPage(model, target.screens_dir === null ? null : `/t/${id}/img/`), REPLY);
 }
 function image(target, captureId2, res) {
-  if (target.screens_dir === null || !IMAGE_ID.test(captureId2)) return text(res, 404, "No such screenshot", REPLY);
+  if (target.screens_dir === null || !IMAGE_ID.test(captureId2)) return text2(res, 404, "No such screenshot", REPLY);
   let real;
   try {
     real = realpathSync.native(pathWin32.join(target.screens_dir, `${captureId2}.png`));
     if (!statSync3(real).isFile()) throw new Error("not a file");
   } catch {
-    return text(res, 404, "The screenshot is not in the folder", REPLY);
+    return text2(res, 404, "The screenshot is not in the folder", REPLY);
   }
   const inside = pathWin32.relative(target.screens_dir, real);
   if (inside.startsWith("..") || pathWin32.isAbsolute(inside) || pathWin32.dirname(real).toLowerCase() !== target.screens_dir.toLowerCase()) {
-    return text(res, 403, "This file is not served", REPLY);
+    return text2(res, 403, "This file is not served", REPLY);
   }
   file(res, real, pathWin32.basename(real), "image/png");
 }
@@ -18167,12 +18248,12 @@ async function waitClick(env = process.env) {
 }
 
 // src/time-review/tools.ts
-var DATE2 = /^\d{4}-\d{2}-\d{2}$/;
+var DATE3 = /^\d{4}-\d{2}-\d{2}$/;
 var BLOCK_ID2 = /^\d{4}-\d{2}-\d{2}:\d{3}$/;
 var MAX_BLOCKS = 999;
 var STAGE_ATTEMPTS = 5;
-function checkDate2(tool, date3) {
-  if (typeof date3 !== "string" || !DATE2.test(date3) || Number.isNaN(Date.parse(`${date3}T00:00:00Z`))) {
+function checkDate3(tool, date3) {
+  if (typeof date3 !== "string" || !DATE3.test(date3) || Number.isNaN(Date.parse(`${date3}T00:00:00Z`))) {
     throw new ValidationError(`${tool}: ${JSON.stringify(date3)} is not a date as YYYY-MM-DD`);
   }
   return date3;
@@ -18192,7 +18273,7 @@ function nonEmpty(label2, field, value) {
 }
 function timeReviewSaveEvidence(dateIn, sourcesIn, rowsIn, seams = {}) {
   const tool = "time_review__save_evidence";
-  const date3 = checkDate2(tool, dateIn);
+  const date3 = checkDate3(tool, dateIn);
   if (!Array.isArray(sourcesIn)) throw new ValidationError(`${tool}: sources must be a list of {source, status}`);
   if (!Array.isArray(rowsIn)) throw new ValidationError(`${tool}: rows must be a list of evidence rows`);
   const sources = [];
@@ -18255,7 +18336,7 @@ function checkBlock(tool, index, raw) {
 }
 function timeReviewStageDay(dateIn, token, blocksIn, seams = {}) {
   const tool = "time_review__stage_day";
-  const date3 = checkDate2(tool, dateIn);
+  const date3 = checkDate3(tool, dateIn);
   if (typeof token !== "string" || token === "") throw new ValidationError(`${tool}: token must be the claim token review_date__claim gave`);
   if (!Array.isArray(blocksIn)) throw new ValidationError(`${tool}: blocks must be a list`);
   if (blocksIn.length > MAX_BLOCKS) throw new ValidationError(`${tool}: at most ${MAX_BLOCKS} blocks a day`);
@@ -18298,7 +18379,7 @@ function timeReviewStageDay(dateIn, token, blocksIn, seams = {}) {
   throw new DataServerError(`${tool}: ${date3} changed ${STAGE_ATTEMPTS} times while this call was staging; nothing was written. Try again`, "contended");
 }
 function timeReviewReadDay(dateIn, seams = {}) {
-  const date3 = checkDate2("time_review__read_day", dateIn);
+  const date3 = checkDate3("time_review__read_day", dateIn);
   const env = envOf(seams);
   const { items } = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, env);
   const blocks = items.map((item) => JSON.parse(item.value));
@@ -18352,6 +18433,7 @@ var tools = [
     (args) => timePipelineExport(args.namespace, args.prefix, args.path)
   ),
   defineTool("review_date__claim", (args) => reviewDateClaim(args.date, args.holder)),
+  defineTool("review_date__rejudge", (args) => reviewDateRejudge(args.date, args.holder)),
   defineTool("review_date__renew", (args) => reviewDateRenew(args.date, args.token)),
   defineTool("review_date__judge", (args) => reviewDateJudge(args.date, args.token)),
   defineTool("review_date__release", (args) => reviewDateRelease(args.date, args.token)),
@@ -18384,6 +18466,10 @@ var tools = [
     const saved = redraftBlock(args.block, args.matter, args.description);
     return { block: saved.id, state: saved.state, flags: saved.flags, redraft: saved.redraft };
   }),
+  defineTool(
+    "time_review__export_blocks",
+    (args) => timeReviewExportBlocks(args.from, args.to, args.out_path)
+  ),
   defineTool("time_review__mark_issued", (args) => markIssued(args.blocks, args.invoice))
 ];
 var server = dispatchFrom(buildTimekeepingToolDefinitions, tools);

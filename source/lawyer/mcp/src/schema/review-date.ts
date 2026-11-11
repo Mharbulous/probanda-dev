@@ -17,6 +17,15 @@ export function reviewDateToolDefinitions(): ToolDefinition[] {
       ], ["date", "holder"]),
     },
     {
+      name: "review_date__rejudge",
+      description:
+        "Open a date that was judged before the review page existed, so it has no staged block, for one more judgment that builds its blocks. Call it only when the practitioner has said to judge that date again. Returns { status: \"claimed\", token, expires_at } -- as review_date__claim does, and the earlier judgment stays on the record; { status: \"not_judged\" } -- claim the date instead; { status: \"has_blocks\", blocks } -- the date is already staged, so read it and do not judge it again; { status: \"held\", holder, expires_at } -- another run holds it." + ROUTE,
+      inputSchema: objectSchema([
+        { name: "date", type: "str" },
+        { name: "holder", type: "str" },
+      ], ["date", "holder"]),
+    },
+    {
       name: "review_date__renew",
       description:
         "Renew this run's claim on a date to a full 60 minutes from now. Works after the claim lapsed if no other run has claimed the date since. Returns { status: \"renewed\", expires_at }, or { status: \"claim_lost\" } when the claim is no longer this token's." + ROUTE,

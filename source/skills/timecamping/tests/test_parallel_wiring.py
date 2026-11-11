@@ -77,11 +77,11 @@ class ParallelMode(unittest.TestCase):
     def test_no_question_reaches_the_practitioner(self):
         self.assertIn("puts no question to the practitioner", self.section)
 
-    def test_bill_does_not_call_the_mode_yet(self):
+    def test_bill_calls_the_mode(self):
         bill = (SOURCE / "skills" / "bill" / "SKILL.md").read_text(encoding="utf-8")
-        self.assertNotIn("Parallel mode", bill)
-        self.assertNotIn("day-reviewer", bill)
-        self.assertIn("Not called by `/bill` yet", self.section)
+        self.assertIn("Parallel mode", bill)
+        self.assertIn("`/bill` calls this mode", self.section)
+        self.assertNotIn("Not called by `/bill` yet", self.section)
 
     def test_screenshot_rule_reader_first_then_day_reviewer_on_doubt(self):
         step5 = self.text[self.text.index("### Step 5"):self.text.index("### Step 6")]

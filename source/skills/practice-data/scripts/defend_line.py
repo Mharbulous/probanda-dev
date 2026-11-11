@@ -62,6 +62,8 @@ def answer(line, invoice):
            f"Rate from: {line.get('rate_source') or 'no source recorded'}",
            f"Time before rounding: {line['unrounded_hours']} hours. Rounded because {line['rounding']['rule']}."]
     out += [f"Could not be checked: {g['source']}, because {g['reason']}." for g in line.get("unavailable") or []]
+    if line.get("block_ids"):
+        out.append(f"Reviewed on the time review page as: {', '.join(line['block_ids'])}")
     for entry in line["entries"]:
         out.append(f"Time entry {entry['entry_id']}: {entry.get('start')} to {entry.get('end')}, tracked {hours(entry['tracked_seconds'])}, "
                    f"billed {hours(entry['billed_seconds'])}")

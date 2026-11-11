@@ -146,6 +146,18 @@ export function timeReviewToolDefinitions(): ToolDefinition[] {
       },
     },
     {
+      name: "time_review__export_blocks",
+      description:
+        "Write the staged blocks of every date from `from` to `to` (YYYY-MM-DD, inclusive) to `out_path`, an absolute path on this machine, as { from, to, days: [{ date, clear, blocks }] }, in date order: the file /vet-billable-time's blocks_export.py reads. A date with no staged block is left out. The server creates the parent folder and overwrites any file there. The blocks go to the file, never through tool output. Returns { path, days, blocks, sha256 } of the file." + ROUTE,
+      inputSchema: {
+        type: "object",
+        properties: { from: { type: "string" }, to: { type: "string" }, out_path: { type: "string" } },
+        required: ["from", "to", "out_path"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: false, openWorldHint: false },
+    },
+    {
       name: "time_review__mark_issued",
       description:
         "Mark blocks as on an issued invoice, when /issue-invoice issues it: from then on the page's Unmerge and Unsplit, and any further split or merge, are refused for those blocks and for the blocks they were made from, because the issued record is final and a later correction is an adjustment. `blocks` are the block ids the invoice's lines rest on; `invoice` is the invoice number. Marking a block already marked changes nothing." + ROUTE,

@@ -14,6 +14,7 @@ import { dirname, resolve } from "node:path";
 
 import { DataServerError, ValidationError } from "../errors.js";
 import { fingerprintForJudge } from "../time-review/fingerprint.js";
+import { BLOCK_PREFIX } from "../time-review/records.js";
 import {
   REVIEW_DATE_NAMESPACE,
   REVIEW_DATE_PREFIX,
@@ -123,6 +124,41 @@ export function reviewDateClaim(dateIn: unknown, holder: string, seams: ReviewDa
     };
     return {
       write: { ...(current ?? blank(date)), claim },
+      result: { status: "claimed", date, token: claim.token, expires_at: claim.expires_at },
+    };
+  });
+}
+
+export type RejudgeResult =
+  | { status: "claimed"; date: string; token: string; expires_at: string }
+  | { status: "not_judged"; date: string }
+  | { status: "has_blocks"; date: string; blocks: number }
+  | { status: "held"; date: string; holder: string; expires_at: string };
+
+/** Open a date judged before the review page existed (in chat, so with no staged block) for one more
+ * judgment, which builds its blocks (build plan slice 11). Refused for a date that is not judged
+ * (claim it) and for any date that has a block, so a staged day is never staged twice. The earlier
+ * judgment stays on the record as `rejudged_from`. Returns a claim, as review_date__claim does. */
+export function reviewDateRejudge(dateIn: unknown, holder: string, seams: ReviewDateSeams = {}): RejudgeResult {
+  const date = checkDate("review_date__rejudge", dateIn);
+  if (holder.trim() === "") throw new ValidationError("review_date__rejudge: holder must name the bill or the run");
+  return change<RejudgeResult>("review_date__rejudge", date, seams, (current) => {
+    const now = nowOf(seams);
+    if (!current?.judged_at) return { result: { status: "not_judged", date } };
+    const staged = timePipelineList(REVIEW_DATE_NAMESPACE, `${BLOCK_PREFIX}${date}:`, envOf(seams)).items.length;
+    if (staged > 0) return { result: { status: "has_blocks", date, blocks: staged } };
+    if (isLive(current.claim, now)) {
+      return { result: { status: "held", date, holder: current.claim.holder, expires_at: current.claim.expires_at } };
+    }
+    const claim: Claim = {
+      token: randomUUID(),
+      holder,
+      claimed_at: now.toISOString(),
+      expires_at: new Date(now.getTime() + CLAIM_MS).toISOString(),
+    };
+    const { fingerprint: _old, ...rest } = current;
+    return {
+      write: { ...rest, judged_at: null, judged_by: null, claim, rejudged_from: { judged_at: current.judged_at, judged_by: current.judged_by } },
       result: { status: "claimed", date, token: claim.token, expires_at: claim.expires_at },
     };
   });

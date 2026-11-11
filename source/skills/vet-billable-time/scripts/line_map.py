@@ -1,6 +1,8 @@
 """What tie_out.py writes beside invoice_lines.json on a pass, so each line can be defended later.
 
-    line_map.json      each invoice line with the time entries, estimates, evidence and rulings behind it
+    line_map.json      each invoice line with the time entries, estimates, evidence and rulings behind it,
+                       and the ids of the review-page blocks it rests on (`block_ids`, empty for a line
+                       vetted in chat before the page existed)
     time_entries.json  the rows for the practice records' time entries, one per TimeCamp entry or estimate
 """
 FIRM_RULE = "firm rule"
@@ -80,7 +82,8 @@ def build(the_date, rows, lines, estimates, by_id, people, under_minimum, adjust
                 "description": line.get("description"), "proposal_id": line.get("proposal_id"), "evidence": line.get("evidence") or [],
                 "ruling": line.get("confirmed"), "supported_seconds": line.get("supported_seconds"),
                 "excluded": line.get("excluded") or [], "late_reason": line.get("late_reason"),
-                "note": entry.get("description") or None, "adjustments": per_source.get(tracker_key(entry["id"]), [])}
+                "note": entry.get("description") or None, "adjustments": per_source.get(tracker_key(entry["id"]), []),
+                "block_ids": list(line.get("block_ids") or [])}
 
     out_lines = []
     for row in rows:
@@ -88,7 +91,9 @@ def build(the_date, rows, lines, estimates, by_id, people, under_minimum, adjust
         tracked = [l for l in lines if l["disposition"] == "bill"
                    and (by_id[str(l["entry_id"])]["date"], by_id[str(l["entry_id"])]["user_name"]) == day_user]
         estimated = [e for e in estimates if (e["date"], e["user"]) == day_user]
-        out_lines.append({**row, "rate_source": people[row["user"]].get("rate_source"),
+        block_ids = list(dict.fromkeys([i for l in tracked for i in l.get("block_ids") or []]
+                                       + [i for e in estimated for i in e.get("block_ids") or []]))
+        out_lines.append({**row, "rate_source": people[row["user"]].get("rate_source"), "block_ids": block_ids,
                           "entries": [tracker_detail(l) for l in tracked],
                           "estimates": [{**e, "source_key": estimate_key(e["key"])} for e in estimated]})
     unbilled_lines = [l for l in lines if l["disposition"] == "write_off"

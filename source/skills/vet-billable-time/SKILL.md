@@ -16,11 +16,20 @@ Turn a matter's TimeCamp entries since the last bill into lines the practitioner
 
 `scripts/tie_out.py` does all the billing arithmetic and every check. Never add, round or write off time yourself, and never state a total it did not print. Its docstring is the contract for its inputs. Run it with the host Python (`python`; if that is the WindowsApps stub, the interpreter `COCLERK_PYTHON` names). A failing check stops this skill: tell the practitioner what failed, in plain words, and fix the input only with their answer.
 
-**Inputs:** the matter, its candidate-dates file, the last billed date, the retainer PDF, and the judged dates file `/bill` exports from the review-date records at `<matter-data folder>\timecamping\judged-dates.export.jsonl`.
+**Inputs:** the matter, its candidate-dates file, the last billed date, the retainer PDF, and the judged dates file `/bill` exports from the review-date records at `<matter-data folder>\timecamping\judged-dates.export.jsonl`. When `/bill` also passes a blocks file (`<matter-data folder>\vet-billable-time\blocks.json`, from `time_review__export_blocks`), the days were judged on the review page: follow "From reviewed blocks" below instead of Steps 3, 5 and 6.
 
 Working files go in `<matter-data folder>\vet-billable-time\`, and the two reports in the matter's draft folder's `BILLING` subfolder, resolved as `shared/workspace-output-rule.md` says. Create only the `BILLING` leaf if it is absent.
 
 Connector tools are named without their prefix. Call each under whichever of `mcp__plugin_billing_timecamp__<name>` and `mcp__remote-devices__plugin_billing_timecamp__<name>` this host grants. This skill never calls `update_entry`: a change of matter or note goes back to `/timecamping`.
+
+## From reviewed blocks
+
+The practitioner has already answered every flagged block on the review page, so no line is shown again. Run Steps 1 and 2, then Step 4 for rates, initials and firm rules. Then:
+
+1. Run `scripts/blocks_export.py export` with `--blocks` the blocks file, `--entries` and each `--late-entries` file from Step 1, `--matter`, `--user` the practitioner's TimeCamp name, `--people` a file holding the Step 4 people, `--candidates` the candidate export, `--decided-by` the practitioner and `--out` `vetted.json` in the working folder. Its docstring is the contract. It refuses, writing nothing, while a day is not clear, an entry has no block, or a block of the matter rests on no entry and states no estimate. Report each problem it names in plain words, send the practitioner back to the page for a flagged block, and go no further. Never edit `vetted.json` to get past it.
+2. Add `gaps` the source log shows, then do Steps 7 to 9 as written. A non-billable window the page did not take off stays billed: the page, not this skill, rules on it.
+
+Every line and estimate carries the ids of its blocks, `tie_out.py` copies them to `line_map.json`, and `scripts/blocks_export.py lookup` names the blocks behind an invoice line, each as the page address fragment `#<block id>` that opens it.
 
 ## Steps
 
