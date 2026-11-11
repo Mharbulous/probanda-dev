@@ -17,7 +17,8 @@ and exits 0 on a pass and 1 on a fail. A bad input stops with a message on stder
 Inputs:
     --entries       the connector's out_file: a JSON array of TimeCamp entries
     --connector-*   the count and totals.hours the same connector call returned
-    --candidates    the /triage-billing-dates list, Markdown, one table by date
+    --candidates    the JSON export of the stored candidate dates, [{"cell", "strength", "who", "flags"}]
+                    (`/triage-billing-dates` candidate_list.py export), or the older Markdown list, one table by date
     --judged        JSON lines, each with a "date": the dates /timecamping has judged
     --late-entries  a connector out_file for one earlier date, for a late line
     --vetted        {"people": {user_name: {"initials", "rate", "rate_source"}},
@@ -104,11 +105,22 @@ def days_in(cell):
 
 
 def load_candidates(path):
-    """Each row of the table whose first header is `Date or range`: {cell, strength, who, days}."""
+    """Each candidate date: {cell, strength, who, days}. From the JSON export that
+    /triage-billing-dates' candidate_list.py writes, else the table headed `Date or range`."""
     try:
         text = Path(path).read_text(encoding="utf-8")
     except OSError as err:
         stop(f"cannot read candidates {path}: {err}")
+    if text.lstrip().startswith("["):
+        try:
+            exported = json.loads(text)
+            rows = [{"cell": r["cell"], "strength": r.get("strength", ""), "who": r.get("who", ""), "days": days_in(r["cell"])}
+                    for r in exported]
+        except (ValueError, KeyError, TypeError) as err:
+            stop(f"candidates {path}: {err}")
+        if not rows:
+            stop(f"candidates {path} holds no dates")
+        return rows
     rows = []
     header = None
     for line in text.splitlines():

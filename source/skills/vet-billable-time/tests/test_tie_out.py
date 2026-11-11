@@ -103,6 +103,16 @@ class PullStage(Case):
         path.write_text(CANDIDATES.replace("| 2030-01-20 | Weak | Staff |", "| 2030-01-20 | Strong | Staff |"), encoding="utf-8")
         self.assertEqual(self.run_tie("pull", [entry(1, "2030-01-10", 738)])[0], 0)
 
+    def test_reads_the_json_export_of_the_stored_candidates(self):
+        export = [{"cell": "2030-01-10", "strength": "Strong", "who": "Lawyer", "flags": []},
+                  {"cell": "2030-01-12 to 2030-01-13", "strength": "Medium", "who": "Lawyer", "flags": ["unverified"]},
+                  {"cell": "2030-01-20", "strength": "Weak", "who": "Staff", "flags": []}]
+        (self.dir / "candidates.md").write_text(json.dumps(export), encoding="utf-8")
+        self.assertEqual(self.run_tie("pull", [entry(1, "2030-01-10", 738)])[0], 0)
+        self.judged(["2030-01-10", "2030-01-12"])
+        _, out = self.run_tie("pull", [entry(1, "2030-01-10", 738)])
+        self.assertEqual(out["failed"]["judged_dates"], ["2030-01-12 to 2030-01-13 (Medium): 2030-01-13 is not judged"])
+
     def test_bad_date_cell_stops(self):
         (self.dir / "candidates.md").write_text("| Date or range | Strength |\n|---|---|\n| Jan 5 | Strong |\n", encoding="utf-8")
         with self.assertRaises(SystemExit) as caught, contextlib.redirect_stderr(io.StringIO()):

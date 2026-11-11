@@ -33,6 +33,8 @@ Build or confirm it from matter data, correspondence and pleadings: every party 
 
 ## Phase 2: the sources
 
+**Resume first.** The list lives in the time-pipeline store, not in a file. Before searching, export the matter's coverage record: `time_pipeline__export` with namespace `item`, prefix `candidate_coverage:<matter>`, to `<matter-data folder>\triage-billing-dates\coverage.jsonl`. Then run `scripts/resume_plan.py plan --coverage <that file> --today <today>`. With `first_run` false, search every source only for the `new_days` it names, run the activity scan on `scan_days` only, and search each of its `open_leads` for the whole period. With `first_run` true, search the whole period once, as below.
+
 Fastest first: the drafts folder, then sent mail, calls against the service list, filings and the calendar. Stop once the dates are clear, and list each source not reached under unexplored leads. Work the rest only when the practitioner asks for a thorough list. The phone scan in Time trackers runs on every run. Each source reached is a place to look, and finding nothing there is a result to report.
 
 **Mail, deduplicated across all folders**
@@ -83,20 +85,30 @@ Find this matter's work in TimeCamp computer activity, from {first date} to {las
 3. If the bill date is more than three months before today, drop every remaining candidate date before the last billed date and list it as a write-off, with no review.
 4. Otherwise, keep a candidate date that falls before the last billed date and is absent from the bill, as Flagged: suspicious, missed by the last bill. If it holds up, state why the bill missed it (for example, no TimeCamp entry, or work after the bill was drafted).
 
-**Save the list** as a Markdown file named `YYYY-MM-DD Candidate dates` in the matter's draft folder's `BILLING` subfolder. Resolve the draft folder as `shared/workspace-output-rule.md` says, and create only the `BILLING` leaf if it is absent. Rewrite the file in place on a re-run. If the session cannot reach that folder, save it to the matter's project instead.
+**Save what put each date on the list first,** through `/timecamping-data`'s evidence store (`time_pipeline__set`, namespace `evidence`, key `<family>:<native id>`): the service list, and a row for each document, court filing and received-mail window. Later steps cite those rows by key.
 
-**Save what put each date on the list,** through `/timecamping-data`'s evidence store: the triage list, the service list, and a row for each document, court filing and received-mail window. Later steps cite those rows.
+**Save the list in the store.** One `candidate_date` record per date, in namespace `item` through `time_pipeline__set`:
 
-The list is one table, by date:
+- Key `candidate_date:<matter>:<first date>` (a range is keyed by its first date).
+- Value `{"kind": "candidate_date", "matter", "date", "date_to" (a range only), "strength", "who", "flags": [], "found_at" (now, ISO 8601), "evidence": [the keys of the evidence rows just saved that put it on the list], "summary": "the evidence with local times"}`. Rows hold metadata only, never a mail body or document text.
+- A new date: `expect_absent: true`. A date already on the list that this run changes: `time_pipeline__get` it, then save with `expect_sha256` from the read. A `stale_write` means another run saved it first: read it again and merge. Never overwrite a date without reading it.
+
+Then save the matter's one `candidate_coverage` record, key `candidate_coverage:<matter>`: `{"kind": "candidate_coverage", "matter", "covered_through" (the last day this run searched), "period_start", "write_offs": [{"date", "reason"}], "nothing_found": [text], "open_leads": [{"lead", "source"}]}`. Create it with `expect_absent: true`, and on a resume advance it with `expect_sha256`. `open_leads` is the Unexplored leads, and a lead leaves it only when a run searches it.
+
+**Check the saves.** Export the matter's dates and the evidence namespace (`time_pipeline__export`, namespace `item` with prefix `candidate_date:<matter>:`, and namespace `evidence`, each to a `.jsonl` in `<matter-data folder>\triage-billing-dates\`). Run `scripts/resume_plan.py check --records <dates file> --evidence <evidence file>`. A date it reports under `missing` cites an evidence row that did not save. Search that date again alone, save its rows and its record again, and run the check again. Tell the practitioner which dates were re-searched. Do not finish while the check fails.
+
+**Write the files from the store.** Export the matter's dates and its coverage record again, then run `scripts/candidate_list.py render --records <dates file> --coverage <coverage file> --out` a file named `YYYY-MM-DD Candidate dates` in the matter's draft folder's `BILLING` subfolder (resolve the draft folder as `shared/workspace-output-rule.md` says, create only the `BILLING` leaf if it is absent, and save to the matter's project if the session cannot reach it). Run `scripts/candidate_list.py export --records <dates file> --out <matter-data folder>\triage-billing-dates\candidates.json`: `/vet-billable-time`'s `tie_out.py` reads that file. Never edit either by hand and never parse the Markdown: the store is the list.
+
+The generated file is one table, by date:
 
 | Date or range | Strength | Lawyer or Staff | Flags | Evidence, with local times |
 |---|---|---|---|---|
 
-- **Date or range:** `YYYY-MM-DD`, or `YYYY-MM-DD to YYYY-MM-DD`, because the billing check reads it exactly.
+- **Date or range:** `YYYY-MM-DD`, or `YYYY-MM-DD to YYYY-MM-DD`, because the billing check reads it exactly. The script writes it from `date` and `date_to`.
 - **Lawyer or Staff:** `Lawyer`, `Staff` or `Both`. A date with only staff evidence is `Staff`.
 - **Strength:** Strong means several independent sources, or a document or email the lawyer wrote. Medium means one direct source. Weak means a seconds-long touch, a client or staff action only, or an inferred window.
 - **Flags:** suspicious, under-billed, inferred, unverified.
 
 After the table come three sections: **Write-offs**, **Sources checked, nothing found** and **Unexplored leads**.
 
-Then tell the practitioner where the list is and how many dates it holds at each strength. `/timecamping` takes these dates one at a time for the review, through `/build-timeline`. Billing stays with `/bill`, run by the practitioner. When `/bill` opened this skill, return the list's path to it and go on.
+Then tell the practitioner where the list is and how many dates it holds at each strength. `/timecamping` takes these dates one at a time for the review, through `/build-timeline`. Billing stays with `/bill`, run by the practitioner. When `/bill` opened this skill, return the list's path and the export's path to it and go on.

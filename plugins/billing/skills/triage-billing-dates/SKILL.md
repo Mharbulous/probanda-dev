@@ -3,7 +3,7 @@ name: triage-billing-dates
 description: "Use when a bill must go out now for one matter and the time records are behind, or for 'which dates should I look at before billing' or /triage-billing-dates: narrows that one matter to a short, evidenced list of dates with an indicator of work, reconciled against the last invoice, so only those dates' evidence is gathered. Does not bill (/bill), fetch or store a day's evidence (/build-timeline), sort time to matters (/time-sorting), correct TimeCamp (/timecamping) or draft entries (/time-entry-drafting)."
 ---
 
-<!-- billing v0.4.1 -->
+<!-- billing v0.4.2 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). `${CLAUDE_SKILL_DIR}` is the directory holding this SKILL.md, even where it shows unsubstituted: never search for it or guess. Read references and shared files from there with the Read tool, a whole file or an offset and limit, never with a shell command, the litigation data server's skill-source tool or a folder-access request; scripts and templates the text declares are executed and read from there too. Before each fresh read (a file not already in context), list only `${CLAUDE_SKILL_DIR}/../../..` (the folder holding this plugin's folder). If it holds this plugin's folder name, with any `~g<N>` suffix removed, plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if `${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session: take the highest `~g<N>` copy and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, authors or requests a screenshot of one, but may present one to a human user to view, staging it first where presenting needs that, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -36,6 +36,8 @@ A receipts report or a trust-transfer email shows when a bill was paid, not what
 Build or confirm it from matter data, correspondence and pleadings: every party and counsel, current and former, their staff, self-represented parties and witnesses. Give each person their email addresses and phone and fax numbers. Numbers come from the client intake form, letterheads, filed notices and fax lines. Phase 2's mail and phone matches run against this list.
 
 ## Phase 2: the sources
+
+**Resume first.** The list lives in the time-pipeline store, not in a file. Before searching, export the matter's coverage record: `time_pipeline__export` with namespace `item`, prefix `candidate_coverage:<matter>`, to `<matter-data folder>\triage-billing-dates\coverage.jsonl`. Then run `scripts/resume_plan.py plan --coverage <that file> --today <today>`. With `first_run` false, search every source only for the `new_days` it names, run the activity scan on `scan_days` only, and search each of its `open_leads` for the whole period. With `first_run` true, search the whole period once, as below.
 
 Fastest first: the drafts folder, then sent mail, calls against the service list, filings and the calendar. Stop once the dates are clear, and list each source not reached under unexplored leads. Work the rest only when the practitioner asks for a thorough list. The phone scan in Time trackers runs on every run. Each source reached is a place to look, and finding nothing there is a result to report.
 
@@ -87,20 +89,30 @@ Find this matter's work in TimeCamp computer activity, from {first date} to {las
 3. If the bill date is more than three months before today, drop every remaining candidate date before the last billed date and list it as a write-off, with no review.
 4. Otherwise, keep a candidate date that falls before the last billed date and is absent from the bill, as Flagged: suspicious, missed by the last bill. If it holds up, state why the bill missed it (for example, no TimeCamp entry, or work after the bill was drafted).
 
-**Save the list** as a Markdown file named `YYYY-MM-DD Candidate dates` in the matter's draft folder's `BILLING` subfolder. Resolve the draft folder as `shared/workspace-output-rule.md` says, and create only the `BILLING` leaf if it is absent. Rewrite the file in place on a re-run. If the session cannot reach that folder, save it to the matter's project instead.
+**Save what put each date on the list first,** through `/timecamping-data`'s evidence store (`time_pipeline__set`, namespace `evidence`, key `<family>:<native id>`): the service list, and a row for each document, court filing and received-mail window. Later steps cite those rows by key.
 
-**Save what put each date on the list,** through `/timecamping-data`'s evidence store: the triage list, the service list, and a row for each document, court filing and received-mail window. Later steps cite those rows.
+**Save the list in the store.** One `candidate_date` record per date, in namespace `item` through `time_pipeline__set`:
 
-The list is one table, by date:
+- Key `candidate_date:<matter>:<first date>` (a range is keyed by its first date).
+- Value `{"kind": "candidate_date", "matter", "date", "date_to" (a range only), "strength", "who", "flags": [], "found_at" (now, ISO 8601), "evidence": [the keys of the evidence rows just saved that put it on the list], "summary": "the evidence with local times"}`. Rows hold metadata only, never a mail body or document text.
+- A new date: `expect_absent: true`. A date already on the list that this run changes: `time_pipeline__get` it, then save with `expect_sha256` from the read. A `stale_write` means another run saved it first: read it again and merge. Never overwrite a date without reading it.
+
+Then save the matter's one `candidate_coverage` record, key `candidate_coverage:<matter>`: `{"kind": "candidate_coverage", "matter", "covered_through" (the last day this run searched), "period_start", "write_offs": [{"date", "reason"}], "nothing_found": [text], "open_leads": [{"lead", "source"}]}`. Create it with `expect_absent: true`, and on a resume advance it with `expect_sha256`. `open_leads` is the Unexplored leads, and a lead leaves it only when a run searches it.
+
+**Check the saves.** Export the matter's dates and the evidence namespace (`time_pipeline__export`, namespace `item` with prefix `candidate_date:<matter>:`, and namespace `evidence`, each to a `.jsonl` in `<matter-data folder>\triage-billing-dates\`). Run `scripts/resume_plan.py check --records <dates file> --evidence <evidence file>`. A date it reports under `missing` cites an evidence row that did not save. Search that date again alone, save its rows and its record again, and run the check again. Tell the practitioner which dates were re-searched. Do not finish while the check fails.
+
+**Write the files from the store.** Export the matter's dates and its coverage record again, then run `scripts/candidate_list.py render --records <dates file> --coverage <coverage file> --out` a file named `YYYY-MM-DD Candidate dates` in the matter's draft folder's `BILLING` subfolder (resolve the draft folder as `shared/workspace-output-rule.md` says, create only the `BILLING` leaf if it is absent, and save to the matter's project if the session cannot reach it). Run `scripts/candidate_list.py export --records <dates file> --out <matter-data folder>\triage-billing-dates\candidates.json`: `/vet-billable-time`'s `tie_out.py` reads that file. Never edit either by hand and never parse the Markdown: the store is the list.
+
+The generated file is one table, by date:
 
 | Date or range | Strength | Lawyer or Staff | Flags | Evidence, with local times |
 |---|---|---|---|---|
 
-- **Date or range:** `YYYY-MM-DD`, or `YYYY-MM-DD to YYYY-MM-DD`, because the billing check reads it exactly.
+- **Date or range:** `YYYY-MM-DD`, or `YYYY-MM-DD to YYYY-MM-DD`, because the billing check reads it exactly. The script writes it from `date` and `date_to`.
 - **Lawyer or Staff:** `Lawyer`, `Staff` or `Both`. A date with only staff evidence is `Staff`.
 - **Strength:** Strong means several independent sources, or a document or email the lawyer wrote. Medium means one direct source. Weak means a seconds-long touch, a client or staff action only, or an inferred window.
 - **Flags:** suspicious, under-billed, inferred, unverified.
 
 After the table come three sections: **Write-offs**, **Sources checked, nothing found** and **Unexplored leads**.
 
-Then tell the practitioner where the list is and how many dates it holds at each strength. `/timecamping` takes these dates one at a time for the review, through `/build-timeline`. Billing stays with `/bill`, run by the practitioner. When `/bill` opened this skill, return the list's path to it and go on.
+Then tell the practitioner where the list is and how many dates it holds at each strength. `/timecamping` takes these dates one at a time for the review, through `/build-timeline`. Billing stays with `/bill`, run by the practitioner. When `/bill` opened this skill, return the list's path and the export's path to it and go on.
