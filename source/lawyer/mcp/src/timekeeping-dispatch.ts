@@ -22,6 +22,7 @@ import {
   reviewDateRenew,
   reviewDateStatus,
 } from "./time-pipeline/review-date.js";
+import { markIssued, redraftBlock } from "./time-review/restructure.js";
 import { serveReviewPage, waitClick } from "./time-review/server.js";
 import { timeReviewReadDay, timeReviewRecordTimecamp, timeReviewSaveEvidence, timeReviewStageDay } from "./time-review/tools.js";
 
@@ -69,6 +70,11 @@ const tools = [
   defineTool<{ block: string; status: string; message?: string }>("time_review__record_timecamp", (args) =>
     timeReviewRecordTimecamp(args.block, args.status, args.message)
   ),
+  defineTool<{ block: string; matter: string; description: string }>("time_review__redraft", (args) => {
+    const saved = redraftBlock(args.block, args.matter, args.description);
+    return { block: saved.id, state: saved.state, flags: saved.flags, redraft: saved.redraft };
+  }),
+  defineTool<{ blocks: string[]; invoice: string }>("time_review__mark_issued", (args) => markIssued(args.blocks, args.invoice)),
 ];
 
 const server = dispatchFrom(buildTimekeepingToolDefinitions, tools);

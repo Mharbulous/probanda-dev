@@ -235,7 +235,7 @@ test("the dist-only timekeeping bundle completes an MCP handshake and registers 
     const { tools } = await client.listTools();
     assert.equal(tools.length, buildTimekeepingToolDefinitions().length);
     const names = tools.map((tool) => tool.name);
-    for (const name of ["time_review__save_evidence", "time_review__stage_day", "time_review__read_day", "time_review__serve_page", "time_review__wait_click", "time_review__record_timecamp"]) {
+    for (const name of ["time_review__save_evidence", "time_review__stage_day", "time_review__read_day", "time_review__serve_page", "time_review__wait_click", "time_review__record_timecamp", "time_review__redraft", "time_review__mark_issued"]) {
       assert.ok(names.includes(name), `${name} is listed`);
     }
   }, TIMEKEEPING_BUNDLE);

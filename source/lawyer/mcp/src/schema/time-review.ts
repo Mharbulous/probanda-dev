@@ -75,7 +75,7 @@ export function timeReviewToolDefinitions(): ToolDefinition[] {
     {
       name: "time_review__read_day",
       description:
-        "Read one day: { date, clear, evidence, blocks }. `clear` is true when the date is judged and no block on it is flagged. `evidence` is the saved day_evidence record, or null; `blocks` are the staged block records in order, each with its flags and state. Writes nothing." + ROUTE,
+        "Read one day: { date, clear, evidence, blocks }. `clear` is true when the date is judged and no block on it is flagged. `evidence` is the saved day_evidence record, or null; `blocks` are the staged block records in order, each with its flags and state; `readings` holds the saved reading of each screenshot the blocks cite, by capture id (null where none is saved). A block made by a split and waiting for its redraft has `redraft.status` pending. Writes nothing and opens no image." + ROUTE,
       inputSchema: {
         type: "object",
         properties: { date: { type: "string" } },
@@ -87,7 +87,7 @@ export function timeReviewToolDefinitions(): ToolDefinition[] {
     {
       name: "time_review__serve_page",
       description:
-        "Serve the time review page: a fixed page built from the stored blocks, day evidence and saved screenshot readings, with no model drawing it. It shows each block as a card (matter, description, times, state, flags, evidence rows, the screenshot slideshow with each saved reading) and has a date picker, a matter filter, Previous, Next and Next flagged, and on every card the Approve, Correct and Write off buttons, which save the act to the block through the page's own listener. `screens_dir` is the absolute path of the `syncopaid-screens` folder holding the decrypted PNGs; leave it out and the cards show no images. Returns { url, screenshots, blocks }: give the practitioner the url to open in Chrome on this PC. Serving drops every earlier page and any unread click. Does not open or read an image." + ROUTE,
+        "Serve the time review page: a fixed page built from the stored blocks, day evidence and saved screenshot readings, with no model drawing it. It shows each block as a card (matter, description, times, state, flags, evidence rows, the screenshot slideshow with each saved reading) and has a date picker, a matter filter, Previous, Next and Next flagged, and on every card the Approve, Correct and Write off buttons, which save the act to the block through the page's own listener, and Split here (at a screenshot), Merge with next and Undo, which restructure the blocks the same way. `screens_dir` is the absolute path of the `syncopaid-screens` folder holding the decrypted PNGs; leave it out and the cards show no images. Returns { url, screenshots, blocks }: give the practitioner the url to open in Chrome on this PC. Serving drops every earlier page and any unread click. Does not open or read an image." + ROUTE,
       inputSchema: {
         type: "object",
         properties: { screens_dir: { type: "string" } },
@@ -97,7 +97,7 @@ export function timeReviewToolDefinitions(): ToolDefinition[] {
     {
       name: "time_review__wait_click",
       description:
-        "Wait for a click on the served time review page. Returns { status: \"clicked\", act, block, clicked_at } for the oldest unread click (and marks it read), or { status: \"pending\", waited_ms } when about 45 seconds pass with none: call it again. The page's Approve, Correct and Write off buttons have already saved the act to the block when the click arrives here (`act` is approve, correct or write_off, `block` the block id). Read the block with time_review__read_day. After an approve or a correct, write a changed matter or description to TimeCamp, read the entry back and report the outcome with time_review__record_timecamp." + ROUTE,
+        "Wait for a click on the served time review page. Returns { status: \"clicked\", act, block, clicked_at } for the oldest unread click (and marks it read), or { status: \"pending\", waited_ms } when about 45 seconds pass with none: call it again. The page's Approve, Correct and Write off buttons have already saved the act to the block when the click arrives here (`act` is approve, correct or write_off, `block` the block id). Read the block with time_review__read_day. After an approve or a correct, write a changed matter or description to TimeCamp, read the entry back and report the outcome with time_review__record_timecamp. A `split`, `merge` or `undo` click has also been saved already, by the page: `blocks` lists the blocks it made or restored. After a `split`, redraft both halves with time_review__redraft; a merge or an undo needs nothing from you, and none of the three touches TimeCamp." + ROUTE,
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
     },
     {
@@ -112,6 +112,28 @@ export function timeReviewToolDefinitions(): ToolDefinition[] {
           message: { type: "string" },
         },
         required: ["block", "status"],
+        additionalProperties: false,
+      },
+    },
+    {
+      name: "time_review__redraft",
+      description:
+        "Save the redrafted matter and description of one half made by a split on the page, and end its pending redraft. Draft both halves from the day's stored evidence and the saved screenshot readings that `time_review__read_day` returns (`evidence`, `readings`): never open, view or dispatch a reader for any image. Refused for a block with no redraft waiting. The half stays flagged: only a click on the page approves it. Nothing is written to TimeCamp." + ROUTE,
+      inputSchema: {
+        type: "object",
+        properties: { block: { type: "string" }, matter: { type: "string" }, description: { type: "string" } },
+        required: ["block", "matter", "description"],
+        additionalProperties: false,
+      },
+    },
+    {
+      name: "time_review__mark_issued",
+      description:
+        "Mark blocks as on an issued invoice, when /issue-invoice issues it: from then on the page's Unmerge and Unsplit, and any further split or merge, are refused for those blocks and for the blocks they were made from, because the issued record is final and a later correction is an adjustment. `blocks` are the block ids the invoice's lines rest on; `invoice` is the invoice number. Marking a block already marked changes nothing." + ROUTE,
+      inputSchema: {
+        type: "object",
+        properties: { blocks: { type: "array", items: { type: "string" } }, invoice: { type: "string" } },
+        required: ["blocks", "invoice"],
         additionalProperties: false,
       },
     },

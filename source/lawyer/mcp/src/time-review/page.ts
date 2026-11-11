@@ -79,8 +79,21 @@ export function timecampLine(block: BlockRecord): { text: string; cls: string } 
   }
 }
 
+/** Days in order, and within a day by start time, then id: a split's new halves sit where their
+ * time is, not at the end of the day. */
 function byTime(a: BlockRecord, b: BlockRecord): number {
-  return a.date === b.date ? (a.id < b.id ? -1 : a.id > b.id ? 1 : 0) : a.date < b.date ? -1 : 1;
+  if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+  const x = startValue(a.start);
+  const y = startValue(b.start);
+  if (x !== y && Number.isFinite(x - y)) return x - y;
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+
+function startValue(text: string): number {
+  const clock = /^(\d{1,2}):(\d{2})$/.exec(text);
+  if (clock) return Number(clock[1]) * 60 + Number(clock[2]);
+  const instant = Date.parse(text);
+  return Number.isFinite(instant) ? instant : Number.POSITIVE_INFINITY;
 }
 
 export const escapeHtml = (text: string): string =>
@@ -144,7 +157,7 @@ function cardHtml(block: BlockRecord, model: ReviewModel, imgBase: string | null
     if (ref.source === SHOT_SOURCE) {
       const id = captureId(day, ref.ref);
       const image = imgBase === null ? "" : `<img src="${escapeHtml(imgBase)}${encodeURIComponent(id)}" alt="Screenshot ${escapeHtml(id)}" loading="lazy">`;
-      shots.push(`<div class="shot" hidden><div>${image}</div>${readingHtml(model.readings[id])}</div>`);
+      shots.push(`<div class="shot" data-capture="${escapeHtml(id)}" hidden><div>${image}</div>${readingHtml(model.readings[id])}</div>`);
     } else {
       rows.push(
         `<h3 class="src">${escapeHtml(label(ref.source))}: ${escapeHtml(ref.ref)}</h3>` +
@@ -155,7 +168,7 @@ function cardHtml(block: BlockRecord, model: ReviewModel, imgBase: string | null
   const slideshow =
     shots.length === 0
       ? ""
-      : `<h2>Screenshots</h2><div class="shots"><div class="shot-bar"><button type="button" class="shot-prev">&larr;</button><span class="shot-count"></span><button type="button" class="shot-next">&rarr;</button></div>${shots.join("")}</div>`;
+      : `<h2>Screenshots</h2><div class="shots"><div class="shot-bar"><button type="button" class="shot-prev">&larr;</button><span class="shot-count"></span><button type="button" class="shot-next">&rarr;</button>${block.state === "merged" || block.state === "split" ? "" : `<button type="button" class="act-split">Split here</button>`}</div>${shots.join("")}</div>`;
   const evidence = rows.length === 0 && shots.length === 0 ? `<p class="none">No evidence is cited for this block.</p>` : rows.join("");
   const flags = block.flags.length === 0 ? "" : `<ul class="flags">${block.flags.map((f) => `<li>${escapeHtml(label(f))}</li>`).join("")}</ul>`;
   const duration = minutes === null ? "" : ` (${minutes} min)`;
@@ -166,23 +179,40 @@ function cardHtml(block: BlockRecord, model: ReviewModel, imgBase: string | null
     `<div class="top"><span class="matter">${escapeHtml(block.matter)}</span><span class="state state-${escapeHtml(block.state)}">${escapeHtml(label(block.state))}</span></div>` +
     `<div class="times">${escapeHtml(block.date)} ${escapeHtml(block.start)} to ${escapeHtml(block.end)}${duration}</div>` +
     `<p class="desc">${escapeHtml(block.description)}</p>${flags}${links}` +
-    actionsHtml(block, matters) +
+    actionsHtml(block, matters, undoable(block, model.blocks)) +
     `<p class="review-text">${escapeHtml(reviewText(block))}</p>` +
     `<p class="tc-text ${tc.cls}">${escapeHtml(tc.text)}</p>` +
     `<h2>Evidence</h2>${evidence}${slideshow}</article>`
   );
 }
 
-/** The three buttons and the two small forms they open. The forms are plain elements, never
+/** Whether the block is part of a split or merge that Undo can reverse: an original kept behind a
+ * new block, or one of the new blocks. */
+function undoable(block: BlockRecord, all: BlockRecord[]): boolean {
+  if (block.state === "merged" || block.state === "split") return true;
+  if (block.links.some((l) => l.role === "split_from")) return true;
+  return all.some((o) => o.links.some((l) => l.role === "merged_into" && l.block === block.id));
+}
+
+function undoLabel(block: BlockRecord): string {
+  const split = block.state === "split" || block.links.some((l) => l.role === "split_from");
+  return split ? "Unsplit" : "Unmerge";
+}
+
+/** The buttons and the two small forms they open. The forms are plain elements, never
  * <form>s: the page's policy forbids form submission, and the script posts the click itself. */
-function actionsHtml(block: BlockRecord, matters: string[]): string {
+function actionsHtml(block: BlockRecord, matters: string[], undo: boolean): string {
   const options = (matters.includes(block.matter) ? matters : [block.matter, ...matters])
     .map((m) => `<option value="${escapeHtml(m)}"${m === block.matter ? " selected" : ""}>${escapeHtml(m)}</option>`)
     .join("");
+  // An original kept behind a split or merge takes no act: act on the new block, or undo.
+  const off = block.state === "merged" || block.state === "split" ? " disabled" : "";
   return (
-    `<div class="acts"><button type="button" class="act-approve">Approve</button>` +
-    `<button type="button" class="act-correct-open">Correct</button>` +
-    `<button type="button" class="act-writeoff-open">Write off</button></div>` +
+    `<div class="acts"><button type="button" class="act-approve"${off}>Approve</button>` +
+    `<button type="button" class="act-correct-open"${off}>Correct</button>` +
+    `<button type="button" class="act-writeoff-open"${off}>Write off</button>` +
+    `<button type="button" class="act-merge"${off}>Merge with next</button>` +
+    `<button type="button" class="act-undo"${undo ? "" : " disabled"}>${escapeHtml(undoLabel(block))}</button></div>` +
     `<div class="edit edit-correct" hidden>` +
     `<label>Matter<select class="f-matter">${options}</select></label>` +
     `<label>Description<textarea class="f-description" rows="3">${escapeHtml(block.description)}</textarea></label>` +
@@ -213,7 +243,7 @@ const scriptJson = (value: unknown): string =>
 export function renderReviewPage(model: ReviewModel, imgBase: string | null): string {
   const dates = [...new Set(model.blocks.map((b) => b.date))];
   const matters = [...new Set(model.blocks.map((b) => b.matter))].sort();
-  const index = model.blocks.map((b) => ({ id: b.id, date: b.date, matter: b.matter, flagged: b.state === "flagged" }));
+  const index = model.blocks.map((b) => ({ id: b.id, date: b.date, matter: b.matter, flagged: b.state === "flagged", live: b.state !== "merged" && b.state !== "split" }));
   const cards = model.blocks.length === 0 ? `<p class="none">No day has staged blocks yet.</p>` : model.blocks.map((b) => cardHtml(b, model, imgBase, matters)).join("\n");
   return fill(HTML, {
     CSS,

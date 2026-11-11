@@ -1,6 +1,6 @@
-// The time review page's script (build plan slices 7 and 8). It steps through the cards the server
-// rendered, filters them, swaps screenshots, and posts the Approve, Correct and Write off clicks to
-// the page's own listener, which saves the act to the block. It draws nothing from a model.
+// The time review page's script (build plan slices 7 to 9). It steps through the cards the server
+// rendered, filters them, swaps screenshots, and posts the Approve, Correct, Write off, Split, Merge
+// and Undo clicks to the page's own listener, which saves them to the blocks. It draws nothing from a model.
 // nextId is pure, so a test can load this file and call it.
 
 /** The id of the item the step reaches from `currentId`, or null. `items` is in time order, each
@@ -18,6 +18,19 @@ function nextId(items, currentId, matter, flaggedOnly, step) {
     for (var j = at + 1; j < items.length; j += 1) if (pass(items[j])) return items[j].id;
   } else {
     for (var k = (at < 0 ? items.length : at) - 1; k >= 0; k -= 1) if (pass(items[k])) return items[k].id;
+  }
+  return null;
+}
+
+/** The id of the next item after `currentId` on the same day that is still live (not kept behind a
+ * split or merge), or null. The server checks the two are next to each other and of one matter. */
+function nextLive(items, currentId) {
+  var at = -1;
+  for (var i = 0; i < items.length; i += 1) if (items[i].id === currentId) at = i;
+  if (at < 0) return null;
+  for (var j = at + 1; j < items.length; j += 1) {
+    if (items[j].date !== items[at].date) return null;
+    if (items[j].live) return items[j].id;
   }
   return null;
 }
@@ -87,7 +100,7 @@ if (typeof document !== "undefined") {
             message.textContent = result.json.error || "The click was not saved.";
             return;
           }
-          then();
+          then(result.json);
         })
         .catch(function () {
           message.textContent = "The click could not be sent. Is the session still open?";
@@ -210,6 +223,34 @@ if (typeof document !== "undefined") {
       find(card, "writeoff-save").addEventListener("click", function () {
         post(card, { act: "write_off", block: id, reason: find(card, "f-reason").value }, function () {
           reloadAt(id);
+        });
+      });
+      // Split, merge and undo change the blocks themselves; the page then opens the block they made or restored.
+      var splitButton = find(card, "act-split");
+      if (splitButton) {
+        splitButton.addEventListener("click", function () {
+          var shots = card.querySelectorAll(".shot");
+          var capture = null;
+          for (var i = 0; i < shots.length; i += 1) if (!shots[i].hidden) capture = shots[i].getAttribute("data-capture");
+          if (capture === null) return;
+          post(card, { act: "split", block: id, capture: capture }, function (json) {
+            reloadAt(json.block || id);
+          });
+        });
+      }
+      find(card, "act-merge").addEventListener("click", function () {
+        var next = nextLive(items, id);
+        if (next === null) {
+          find(card, "act-note").textContent = "There is no block after this one to merge with.";
+          return;
+        }
+        post(card, { act: "merge", blocks: [id, next] }, function (json) {
+          reloadAt(json.block || id);
+        });
+      });
+      find(card, "act-undo").addEventListener("click", function () {
+        post(card, { act: "undo", block: id }, function (json) {
+          reloadAt(json.block || id);
         });
       });
     });

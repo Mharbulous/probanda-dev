@@ -11,6 +11,7 @@ import {
   reviewDateStageGate,
 } from "../time-pipeline/review-date.js";
 import { dayIsClear, recordTimecamp } from "./act.js";
+import { captureId } from "./page.js";
 import { checkBillBasis, checkMatterBasis, decideFlags, MATTER_BASIS } from "./flags.js";
 import {
   BLOCK_PREFIX,
@@ -208,16 +209,35 @@ export function timeReviewStageDay(
   throw new DataServerError(`${tool}: ${date} changed ${STAGE_ATTEMPTS} times while this call was staging; nothing was written. Try again`, "contended");
 }
 
-/** The day's saved evidence (or null), its staged blocks in order and whether the day is clear
- * (judged, with no flagged block). Writes nothing. */
+/** The day's saved evidence (or null), its staged blocks in order, whether the day is clear
+ * (judged, with no flagged block) and the saved reading of each screenshot the blocks cite, by
+ * capture id (null where none is saved). Writes nothing and opens no image. */
 export function timeReviewReadDay(
   dateIn: unknown,
   seams: ReviewDateSeams = {}
-): { date: string; clear: boolean; evidence: DayEvidenceRecord | null; blocks: BlockRecord[] } {
+): {
+  date: string;
+  clear: boolean;
+  evidence: DayEvidenceRecord | null;
+  blocks: BlockRecord[];
+  readings: Record<string, unknown>;
+} {
   const date = checkDate("time_review__read_day", dateIn);
-  const { items } = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date}:`, envOf(seams));
+  const env = envOf(seams);
+  const { items } = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date}:`, env);
   const blocks = items.map((item) => JSON.parse(item.value) as BlockRecord);
-  return { date, clear: dayIsClear(date, blocks, seams), evidence: readDayEvidence(date, seams), blocks };
+  const evidence = readDayEvidence(date, seams);
+  const readings: Record<string, unknown> = {};
+  for (const block of blocks) {
+    for (const ref of block.evidence) {
+      if (ref.source !== "syncopaid_captures") continue;
+      const id = captureId(evidence, ref.ref);
+      if (id in readings) continue;
+      const { value } = timePipelineGet(NAMESPACE, `capture_reading:${id}`, env);
+      readings[id] = value === null ? null : JSON.parse(value);
+    }
+  }
+  return { date, clear: dayIsClear(date, blocks, seams), evidence, blocks, readings };
 }
 
 /** Save how the session's write of a block's matter or description to TimeCamp went, read back. */

@@ -1,4 +1,4 @@
-// build-stamp: 148a77536bc7
+// build-stamp: 7458ea9b9be6
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15742,7 +15742,7 @@ function timeReviewToolDefinitions() {
     },
     {
       name: "time_review__read_day",
-      description: "Read one day: { date, clear, evidence, blocks }. `clear` is true when the date is judged and no block on it is flagged. `evidence` is the saved day_evidence record, or null; `blocks` are the staged block records in order, each with its flags and state. Writes nothing." + ROUTE2,
+      description: "Read one day: { date, clear, evidence, blocks }. `clear` is true when the date is judged and no block on it is flagged. `evidence` is the saved day_evidence record, or null; `blocks` are the staged block records in order, each with its flags and state; `readings` holds the saved reading of each screenshot the blocks cite, by capture id (null where none is saved). A block made by a split and waiting for its redraft has `redraft.status` pending. Writes nothing and opens no image." + ROUTE2,
       inputSchema: {
         type: "object",
         properties: { date: { type: "string" } },
@@ -15753,7 +15753,7 @@ function timeReviewToolDefinitions() {
     },
     {
       name: "time_review__serve_page",
-      description: "Serve the time review page: a fixed page built from the stored blocks, day evidence and saved screenshot readings, with no model drawing it. It shows each block as a card (matter, description, times, state, flags, evidence rows, the screenshot slideshow with each saved reading) and has a date picker, a matter filter, Previous, Next and Next flagged, and on every card the Approve, Correct and Write off buttons, which save the act to the block through the page's own listener. `screens_dir` is the absolute path of the `syncopaid-screens` folder holding the decrypted PNGs; leave it out and the cards show no images. Returns { url, screenshots, blocks }: give the practitioner the url to open in Chrome on this PC. Serving drops every earlier page and any unread click. Does not open or read an image." + ROUTE2,
+      description: "Serve the time review page: a fixed page built from the stored blocks, day evidence and saved screenshot readings, with no model drawing it. It shows each block as a card (matter, description, times, state, flags, evidence rows, the screenshot slideshow with each saved reading) and has a date picker, a matter filter, Previous, Next and Next flagged, and on every card the Approve, Correct and Write off buttons, which save the act to the block through the page's own listener, and Split here (at a screenshot), Merge with next and Undo, which restructure the blocks the same way. `screens_dir` is the absolute path of the `syncopaid-screens` folder holding the decrypted PNGs; leave it out and the cards show no images. Returns { url, screenshots, blocks }: give the practitioner the url to open in Chrome on this PC. Serving drops every earlier page and any unread click. Does not open or read an image." + ROUTE2,
       inputSchema: {
         type: "object",
         properties: { screens_dir: { type: "string" } },
@@ -15762,7 +15762,7 @@ function timeReviewToolDefinitions() {
     },
     {
       name: "time_review__wait_click",
-      description: 'Wait for a click on the served time review page. Returns { status: "clicked", act, block, clicked_at } for the oldest unread click (and marks it read), or { status: "pending", waited_ms } when about 45 seconds pass with none: call it again. The page\'s Approve, Correct and Write off buttons have already saved the act to the block when the click arrives here (`act` is approve, correct or write_off, `block` the block id). Read the block with time_review__read_day. After an approve or a correct, write a changed matter or description to TimeCamp, read the entry back and report the outcome with time_review__record_timecamp.' + ROUTE2,
+      description: 'Wait for a click on the served time review page. Returns { status: "clicked", act, block, clicked_at } for the oldest unread click (and marks it read), or { status: "pending", waited_ms } when about 45 seconds pass with none: call it again. The page\'s Approve, Correct and Write off buttons have already saved the act to the block when the click arrives here (`act` is approve, correct or write_off, `block` the block id). Read the block with time_review__read_day. After an approve or a correct, write a changed matter or description to TimeCamp, read the entry back and report the outcome with time_review__record_timecamp. A `split`, `merge` or `undo` click has also been saved already, by the page: `blocks` lists the blocks it made or restored. After a `split`, redraft both halves with time_review__redraft; a merge or an undo needs nothing from you, and none of the three touches TimeCamp.' + ROUTE2,
       inputSchema: { type: "object", properties: {}, additionalProperties: false }
     },
     {
@@ -15776,6 +15776,26 @@ function timeReviewToolDefinitions() {
           message: { type: "string" }
         },
         required: ["block", "status"],
+        additionalProperties: false
+      }
+    },
+    {
+      name: "time_review__redraft",
+      description: "Save the redrafted matter and description of one half made by a split on the page, and end its pending redraft. Draft both halves from the day's stored evidence and the saved screenshot readings that `time_review__read_day` returns (`evidence`, `readings`): never open, view or dispatch a reader for any image. Refused for a block with no redraft waiting. The half stays flagged: only a click on the page approves it. Nothing is written to TimeCamp." + ROUTE2,
+      inputSchema: {
+        type: "object",
+        properties: { block: { type: "string" }, matter: { type: "string" }, description: { type: "string" } },
+        required: ["block", "matter", "description"],
+        additionalProperties: false
+      }
+    },
+    {
+      name: "time_review__mark_issued",
+      description: "Mark blocks as on an issued invoice, when /issue-invoice issues it: from then on the page's Unmerge and Unsplit, and any further split or merge, are refused for those blocks and for the blocks they were made from, because the issued record is final and a later correction is an adjustment. `blocks` are the block ids the invoice's lines rest on; `invoice` is the invoice number. Marking a block already marked changes nothing." + ROUTE2,
+      inputSchema: {
+        type: "object",
+        properties: { blocks: { type: "array", items: { type: "string" } }, invoice: { type: "string" } },
+        required: ["blocks", "invoice"],
         additionalProperties: false
       }
     }
@@ -16831,6 +16851,329 @@ function reviewDateImportFile(path, judgedBy, dryRun, seams = {}) {
   return { dry_run: false, added: written, skipped: skipped.sort() };
 }
 
+// src/time-review/records.ts
+var NAMESPACE = REVIEW_DATE_NAMESPACE;
+var DAY_EVIDENCE_PREFIX = "day_evidence:";
+var BLOCK_PREFIX = "block:";
+var dayEvidenceKey = (date3) => DAY_EVIDENCE_PREFIX + date3;
+var blockId = (date3, index) => `${date3}:${String(index + 1).padStart(3, "0")}`;
+var blockKey = (id) => BLOCK_PREFIX + id;
+function envOf2(seams) {
+  return seams.env ?? process.env;
+}
+function nowOf2(seams) {
+  return seams.now ? seams.now() : /* @__PURE__ */ new Date();
+}
+function sourcesShort(record2) {
+  const done = new Set(
+    record2.sources.filter((s) => TERMINAL_STATUSES.includes(s.status)).map((s) => s.source)
+  );
+  return GATE_SOURCES.filter((source) => !done.has(source));
+}
+function readDayEvidence(date3, seams) {
+  const { value } = timePipelineGet(NAMESPACE, dayEvidenceKey(date3), envOf2(seams));
+  return value === null ? null : JSON.parse(value);
+}
+function putRecord(tool, key, value, seams) {
+  const attempts = 5;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const current = timePipelineGet(NAMESPACE, key, envOf2(seams));
+    const expectation = current.sha256 === null ? { expect_absent: true } : { expect_sha256: current.sha256 };
+    const reply = timePipelineWriteIf(NAMESPACE, key, JSON.stringify(value), expectation, envOf2(seams));
+    if (!("stale" in reply)) return reply.sha256;
+  }
+  throw new DataServerError(`${tool}: ${key} changed ${attempts} times while this call was writing; try again`, "contended");
+}
+
+// src/time-review/restructure.ts
+var ROLE_SPLIT_FROM = "split_from";
+var ROLE_MERGED_INTO = "merged_into";
+var FLAG_REDRAFT = "split:redraft_pending";
+var FLAG_MERGED = "merge:new_block";
+var ATTEMPTS = 5;
+var SHOT = "syncopaid_captures";
+var ID_FIELDS = ["id", "native_id", "capture_id", "entry_id"];
+var TIME_FIELDS = ["captured_at", "native_id", "id"];
+var MAX_MERGE = 20;
+var MAX_TEXT = 2e3;
+var MAX_SHORT = 200;
+var CLOCK = /^(\d{1,2}):(\d{2})$/;
+var BLOCK_ID = /^\d{4}-\d{2}-\d{2}:\d{3}$/;
+var RESTRUCTURED = ["merged", "split"];
+var isRestructured = (b) => RESTRUCTURED.includes(b.state);
+var linkTo = (b, role) => b.links.find((l) => l.role === role)?.block;
+function checkId(label2, value) {
+  if (typeof value !== "string" || !BLOCK_ID.test(value)) throw new ValidationError(`${label2} must be a block id as YYYY-MM-DD:nnn`);
+  return value;
+}
+function unique(list) {
+  return [...new Set(list)];
+}
+function commit(tool, date3, seams, plan) {
+  const env = envOf2(seams);
+  for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
+    const items = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, env).items;
+    const blocks = items.map((item) => JSON.parse(item.value));
+    const { save, remove: remove2, result } = plan(blocks);
+    const known = new Set(blocks.map((b) => b.id));
+    const checks = [
+      ...items.map((item) => ({ namespace: NAMESPACE, key: item.key, expect_sha256: item.sha256 })),
+      ...save.filter((b) => !known.has(b.id)).map((b) => ({ namespace: NAMESPACE, key: blockKey(b.id), expect_absent: true }))
+    ];
+    const writes = [
+      ...save.map((block) => ({ op: "set", namespace: NAMESPACE, key: blockKey(block.id), value: JSON.stringify(block) })),
+      ...remove2.map((id) => ({ op: "delete", namespace: NAMESPACE, key: blockKey(id) }))
+    ];
+    if (!("stale" in timePipelineApplyIf(checks, writes, env))) return result;
+  }
+  throw new DataServerError(`${tool}: ${date3} changed ${ATTEMPTS} times while this call was saving; nothing was written. Try again`, "contended");
+}
+function find(blocks, id) {
+  const found = blocks.find((b) => b.id === id);
+  if (!found) throw new ValidationError(`${id} is not a block`);
+  return found;
+}
+function refuseIssued(b) {
+  if (b.issued) {
+    throw new ValidationError(
+      `The time in block ${b.id} is on issued invoice ${b.issued.invoice_number}, so it is final. Record a later correction as an adjustment`
+    );
+  }
+}
+function nextIndex(blocks) {
+  return blocks.reduce((most, b) => Math.max(most, Number(b.id.slice(11))), 0);
+}
+function clockMinutes(text3) {
+  const m = CLOCK.exec(text3);
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+}
+function sortValue(text3) {
+  const clock = clockMinutes(text3);
+  if (clock !== null) return clock;
+  const instant = Date.parse(text3);
+  return Number.isFinite(instant) ? instant : Number.POSITIVE_INFINITY;
+}
+function byStart(a, b) {
+  const diff = sortValue(a.start) - sortValue(b.start);
+  if (diff !== 0 && Number.isFinite(diff)) return diff;
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+var clockText = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+function shotRow(day, ref) {
+  if (!day) return null;
+  if (/^\d+$/.test(ref)) {
+    const at = day.rows[Number(ref)];
+    if (at && at.source === SHOT) return at;
+  }
+  return day.rows.find((r) => r.source === SHOT && ID_FIELDS.some((f) => r[f] !== void 0 && String(r[f]) === ref)) ?? null;
+}
+function shotInstant(day, ref) {
+  const row = shotRow(day, ref);
+  const candidates = [...row ? TIME_FIELDS.map((f) => row[f]) : [], ref];
+  for (const c of candidates) {
+    if (typeof c !== "string") continue;
+    const ms = Date.parse(c);
+    if (Number.isFinite(ms)) return { date: new Date(ms), text: c };
+  }
+  return null;
+}
+var shotName = (day, ref) => {
+  const row = shotRow(day, ref);
+  return row && typeof row.capture_id === "string" && row.capture_id !== "" ? row.capture_id : ref;
+};
+function splitBlock(idIn, captureIn, seams = {}) {
+  const id = checkId("The block", idIn);
+  if (typeof captureIn !== "string" || captureIn.trim() === "" || captureIn.length > MAX_SHORT) {
+    throw new ValidationError("A split needs the screenshot to split at");
+  }
+  const capture = captureIn.trim();
+  const date3 = id.slice(0, 10);
+  const day = readDayEvidence(date3, seams);
+  const at = nowOf2(seams).toISOString();
+  return commit("split", date3, seams, (blocks) => {
+    const b = find(blocks, id);
+    refuseIssued(b);
+    if (isRestructured(b)) throw new ValidationError(`Block ${id} is already ${b.state}; undo that first`);
+    if (b.state === "written_off") throw new ValidationError(`Block ${id} is written off and cannot be split`);
+    const cited = b.evidence.filter((e) => e.source === SHOT);
+    const chosen = cited.find((e) => e.ref === capture || shotName(day, e.ref) === capture);
+    if (!chosen) throw new ValidationError(`Block ${id} does not cite a screenshot ${capture}`);
+    const when = shotInstant(day, chosen.ref);
+    if (!when) throw new ValidationError(`The saved evidence does not say when screenshot ${capture} was taken`);
+    const startClock = clockMinutes(b.start);
+    const endClock = clockMinutes(b.end);
+    let cutText;
+    let before;
+    if (startClock !== null && endClock !== null) {
+      const cut = when.date.getHours() * 60 + when.date.getMinutes();
+      if (!(cut > startClock && cut < endClock)) throw new ValidationError(`Screenshot ${capture} is not inside block ${id} (${b.start} to ${b.end}), so it cannot split it`);
+      cutText = clockText(when.date);
+      before = (d) => d.getHours() * 60 + d.getMinutes() < cut;
+    } else {
+      const s = Date.parse(b.start);
+      const e = Date.parse(b.end);
+      const cut = when.date.getTime();
+      if (!(Number.isFinite(s) && Number.isFinite(e) && cut > s && cut < e)) {
+        throw new ValidationError(`Screenshot ${capture} is not inside block ${id} (${b.start} to ${b.end}), so it cannot split it`);
+      }
+      cutText = when.text;
+      before = (d) => d.getTime() < cut;
+    }
+    const evidenceFor = (first2) => b.evidence.filter((e) => {
+      if (e.source !== SHOT) return true;
+      const t = shotInstant(day, e.ref);
+      return t === null || before(t.date) === first2;
+    });
+    const base = nextIndex(blocks);
+    const bill_basis = unique([...b.bill_basis, "description_inferred"]);
+    const half = (n, start2, end, first2) => ({
+      kind: "block",
+      id: blockId(date3, base + n),
+      date: date3,
+      start: start2,
+      end,
+      matter: b.matter,
+      description: b.description,
+      matter_basis: b.matter_basis,
+      bill_basis,
+      flags: [...decideFlags(b.matter_basis, bill_basis).flags, FLAG_REDRAFT],
+      state: "flagged",
+      evidence: evidenceFor(first2),
+      links: [{ role: ROLE_SPLIT_FROM, block: b.id }],
+      staged_at: at,
+      redraft: { status: "pending", at }
+    });
+    const first = half(0, b.start, cutText, true);
+    const second = half(1, cutText, b.end, false);
+    return { save: [{ ...b, state: "split" }, first, second], remove: [], result: { original: b.id, halves: [first.id, second.id] } };
+  });
+}
+function redraftBlock(idIn, matterIn, descriptionIn, seams = {}) {
+  const tool = "time_review__redraft";
+  const id = checkId(`${tool}: block`, idIn);
+  const text3 = (label2, value, max) => {
+    if (typeof value !== "string" || value.trim() === "") throw new ValidationError(`${tool}: ${label2} must be a non-empty text`);
+    if (value.length > max) throw new ValidationError(`${tool}: ${label2} is longer than ${max} characters`);
+    return value.trim();
+  };
+  const matter = text3("matter", matterIn, MAX_SHORT);
+  const description = text3("description", descriptionIn, MAX_TEXT);
+  const at = nowOf2(seams).toISOString();
+  return commit(tool, id.slice(0, 10), seams, (blocks) => {
+    const b = find(blocks, id);
+    if (b.redraft?.status !== "pending") throw new ValidationError(`${tool}: block ${id} has no redraft waiting`);
+    const next = {
+      ...b,
+      matter,
+      description,
+      flags: b.flags.filter((f) => f !== FLAG_REDRAFT),
+      state: "flagged",
+      redraft: { status: "done", at }
+    };
+    return { save: [next], remove: [], result: next };
+  });
+}
+function mergeBlocks(idsIn, seams = {}) {
+  if (!Array.isArray(idsIn) || idsIn.length < 2 || idsIn.length > MAX_MERGE) {
+    throw new ValidationError(`A merge needs between 2 and ${MAX_MERGE} blocks`);
+  }
+  const ids = unique(idsIn.map((v, i) => checkId(`Block ${i + 1}`, v)));
+  if (ids.length < 2) throw new ValidationError("A merge needs two different blocks");
+  const date3 = ids[0].slice(0, 10);
+  if (ids.some((id) => id.slice(0, 10) !== date3)) throw new ValidationError("A merge joins blocks of one day only");
+  const at = nowOf2(seams).toISOString();
+  return commit("merge", date3, seams, (blocks) => {
+    const picked = ids.map((id) => find(blocks, id));
+    for (const b of picked) {
+      refuseIssued(b);
+      if (isRestructured(b)) throw new ValidationError(`Block ${b.id} is already ${b.state}; undo that first`);
+      if (b.state === "written_off") throw new ValidationError(`Block ${b.id} is written off and cannot be merged`);
+    }
+    if (unique(picked.map((b) => b.matter)).length !== 1) throw new ValidationError("A merge joins blocks of one matter only");
+    const live = blocks.filter((b) => !isRestructured(b)).sort(byStart);
+    const at_ = picked.map((b) => live.indexOf(b)).sort((x, y) => x - y);
+    if (at_.some((pos, i) => i > 0 && pos !== at_[i - 1] + 1)) throw new ValidationError("A merge joins blocks that are next to each other");
+    const ordered = at_.map((pos) => live[pos]);
+    const matter_basis = (ordered.find((b) => MATTER_BASIS[b.matter_basis]) ?? ordered[0]).matter_basis;
+    const bill_basis = unique(ordered.flatMap((b) => b.bill_basis));
+    const evidence = ordered.flatMap((b) => b.evidence).filter((e, i, all) => all.findIndex((o) => o.source === e.source && o.ref === e.ref) === i);
+    const made = {
+      kind: "block",
+      id: blockId(date3, nextIndex(blocks)),
+      date: date3,
+      start: ordered[0].start,
+      end: ordered[ordered.length - 1].end,
+      matter: ordered[0].matter,
+      description: ordered.map((b) => b.description).join("; "),
+      matter_basis,
+      bill_basis,
+      flags: [...decideFlags(matter_basis, bill_basis).flags, FLAG_MERGED],
+      state: "flagged",
+      evidence,
+      links: [],
+      staged_at: at
+    };
+    const kept = ordered.map((b) => ({ ...b, state: "merged", links: [...b.links, { role: ROLE_MERGED_INTO, block: made.id }] }));
+    return { save: [...kept, made], remove: [], result: { merged: made.id, originals: ordered.map((b) => b.id) } };
+  });
+}
+function restore(b, role, flag) {
+  return { ...b, state: "flagged", links: b.links.filter((l) => l.role !== role), flags: unique([...b.flags, flag]) };
+}
+function undoRestructure(idIn, seams = {}) {
+  const id = checkId("The block", idIn);
+  return commit("undo", id.slice(0, 10), seams, (blocks) => {
+    const b = find(blocks, id);
+    const mergedInto = linkTo(b, ROLE_MERGED_INTO);
+    const splitFrom = linkTo(b, ROLE_SPLIT_FROM);
+    const asMergeResult = blocks.filter((o) => linkTo(o, ROLE_MERGED_INTO) === b.id);
+    if (b.state === "split" || splitFrom) {
+      const original = splitFrom ? find(blocks, splitFrom) : b;
+      const halves = blocks.filter((h) => linkTo(h, ROLE_SPLIT_FROM) === original.id);
+      for (const x of [original, ...halves]) refuseIssued(x);
+      const moved = halves.find(isRestructured);
+      if (moved) throw new ValidationError(`Block ${moved.id} has since been ${moved.state}; undo that first`);
+      return {
+        save: [restore(original, "", "undo:split")],
+        remove: halves.map((h) => h.id),
+        result: { undone: "split", restored: [original.id], removed: halves.map((h) => h.id) }
+      };
+    }
+    if (mergedInto || asMergeResult.length > 0) {
+      const made = mergedInto ? find(blocks, mergedInto) : b;
+      const originals = blocks.filter((o) => linkTo(o, ROLE_MERGED_INTO) === made.id);
+      for (const x of [made, ...originals]) refuseIssued(x);
+      if (isRestructured(made)) throw new ValidationError(`Block ${made.id} has since been ${made.state}; undo that first`);
+      return {
+        save: originals.map((o) => restore(o, ROLE_MERGED_INTO, "undo:merge")),
+        remove: [made.id],
+        result: { undone: "merge", restored: originals.map((o) => o.id), removed: [made.id] }
+      };
+    }
+    throw new ValidationError(`Block ${id} is not part of a split or a merge`);
+  });
+}
+function markIssued(idsIn, invoiceIn, seams = {}) {
+  const tool = "time_review__mark_issued";
+  if (!Array.isArray(idsIn) || idsIn.length === 0) throw new ValidationError(`${tool}: blocks must be a list of block ids`);
+  const ids = unique(idsIn.map((v, i) => checkId(`${tool}: block ${i + 1}`, v)));
+  if (typeof invoiceIn !== "string" || invoiceIn.trim() === "" || invoiceIn.length > 80) {
+    throw new ValidationError(`${tool}: invoice must be the invoice number as text`);
+  }
+  const invoice_number = invoiceIn.trim();
+  const at = nowOf2(seams).toISOString();
+  for (const date3 of unique(ids.map((id) => id.slice(0, 10)))) {
+    commit(tool, date3, seams, (blocks) => {
+      const save = ids.filter((id) => id.startsWith(date3)).map((id) => {
+        const b = find(blocks, id);
+        return b.issued ? b : { ...b, issued: { invoice_number, at } };
+      });
+      return { save, remove: [], result: null };
+    });
+  }
+  return { marked: ids };
+}
+
 // src/time-review/server.ts
 import { randomBytes as randomBytes3 } from "node:crypto";
 import { existsSync as existsSync8, realpathSync, statSync as statSync3 } from "node:fs";
@@ -16862,7 +17205,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "148a77536bc7";
+var BUILD_STAMP = false ? null : "7458ea9b9be6";
 
 // src/local-page/links.ts
 import { mkdirSync as mkdirSync4, readdirSync as readdirSync4, readFileSync as readFileSync5, renameSync, statSync as statSync2, unlinkSync as unlinkSync3, writeFileSync as writeFileSync4 } from "node:fs";
@@ -17207,47 +17550,13 @@ async function waitFor(check, options) {
   }
 }
 
-// src/time-review/records.ts
-var NAMESPACE = REVIEW_DATE_NAMESPACE;
-var DAY_EVIDENCE_PREFIX = "day_evidence:";
-var BLOCK_PREFIX = "block:";
-var dayEvidenceKey = (date3) => DAY_EVIDENCE_PREFIX + date3;
-var blockId = (date3, index) => `${date3}:${String(index + 1).padStart(3, "0")}`;
-var blockKey = (id) => BLOCK_PREFIX + id;
-function envOf2(seams) {
-  return seams.env ?? process.env;
-}
-function nowOf2(seams) {
-  return seams.now ? seams.now() : /* @__PURE__ */ new Date();
-}
-function sourcesShort(record2) {
-  const done = new Set(
-    record2.sources.filter((s) => TERMINAL_STATUSES.includes(s.status)).map((s) => s.source)
-  );
-  return GATE_SOURCES.filter((source) => !done.has(source));
-}
-function readDayEvidence(date3, seams) {
-  const { value } = timePipelineGet(NAMESPACE, dayEvidenceKey(date3), envOf2(seams));
-  return value === null ? null : JSON.parse(value);
-}
-function putRecord(tool, key, value, seams) {
-  const attempts = 5;
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
-    const current = timePipelineGet(NAMESPACE, key, envOf2(seams));
-    const expectation = current.sha256 === null ? { expect_absent: true } : { expect_sha256: current.sha256 };
-    const reply = timePipelineWriteIf(NAMESPACE, key, JSON.stringify(value), expectation, envOf2(seams));
-    if (!("stale" in reply)) return reply.sha256;
-  }
-  throw new DataServerError(`${tool}: ${key} changed ${attempts} times while this call was writing; try again`, "contended");
-}
-
 // src/time-review/act.ts
 var ACTOR = "practitioner";
 var ACTS = ["approve", "correct", "write_off"];
 var isAct = (value) => ACTS.includes(value);
-var ATTEMPTS = 5;
-var MAX_TEXT = 2e3;
-var MAX_SHORT = 200;
+var ATTEMPTS2 = 5;
+var MAX_TEXT2 = 2e3;
+var MAX_SHORT2 = 200;
 function text2(label2, value, max) {
   if (typeof value !== "string" || value.trim() === "") throw new ValidationError(`${label2} must be a non-empty text`);
   if (value.length > max) throw new ValidationError(`${label2} is longer than ${max} characters`);
@@ -17255,20 +17564,24 @@ function text2(label2, value, max) {
 }
 function change2(id, seams, edit) {
   const env = envOf2(seams);
-  for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
+  for (let attempt = 0; attempt < ATTEMPTS2; attempt += 1) {
     const read2 = timePipelineGet(NAMESPACE, blockKey(id), env);
     if (read2.value === null) throw new ValidationError(`${id} is not a block`);
-    const next = edit(JSON.parse(read2.value));
+    const current = JSON.parse(read2.value);
+    if (current.state === "merged" || current.state === "split") {
+      throw new ValidationError(`${id} was ${current.state} into a new block; act on the new block, or undo first`);
+    }
+    const next = edit(current);
     const saved = timePipelineWriteIf(NAMESPACE, blockKey(id), JSON.stringify(next), { expect_sha256: read2.sha256 }, env);
     if (!("stale" in saved)) return next;
   }
-  throw new DataServerError(`block ${id} changed ${ATTEMPTS} times while it was being saved; nothing was written. Try again`, "contended");
+  throw new DataServerError(`block ${id} changed ${ATTEMPTS2} times while it was being saved; nothing was written. Try again`, "contended");
 }
 function applyAct(act, id, fields, seams = {}) {
   const at = nowOf2(seams).toISOString();
   const review = (extra) => ({ act: "approved", by: ACTOR, at, ...extra });
   if (act === "write_off") {
-    const reason = text2("A write-off reason", fields.reason, MAX_SHORT);
+    const reason = text2("A write-off reason", fields.reason, MAX_SHORT2);
     return change2(id, seams, (b) => {
       const { timecamp: _none, ...rest } = b;
       return { ...rest, state: "written_off", review: review({ act: "written_off", reason }) };
@@ -17277,10 +17590,10 @@ function applyAct(act, id, fields, seams = {}) {
   if (act === "approve") {
     return change2(id, seams, (b) => ({ ...b, state: "approved", review: review({}), timecamp: { status: "pending", at } }));
   }
-  const matter = text2("The matter", fields.matter, MAX_SHORT);
-  const description = text2("The description", fields.description, MAX_TEXT);
-  const start2 = text2("The start", fields.start, MAX_SHORT);
-  const end = text2("The end", fields.end, MAX_SHORT);
+  const matter = text2("The matter", fields.matter, MAX_SHORT2);
+  const description = text2("The description", fields.description, MAX_TEXT2);
+  const start2 = text2("The start", fields.start, MAX_SHORT2);
+  const end = text2("The end", fields.end, MAX_SHORT2);
   return change2(id, seams, (b) => ({
     ...b,
     matter,
@@ -17301,7 +17614,7 @@ function recordTimecamp(id, status, message, seams = {}) {
   if (status === "error" && (message === void 0 || message.trim() === "")) {
     throw new ValidationError("status error needs the message TimeCamp or the re-read gave");
   }
-  if (message !== void 0 && message.length > MAX_TEXT) throw new ValidationError(`message is longer than ${MAX_TEXT} characters`);
+  if (message !== void 0 && message.length > MAX_TEXT2) throw new ValidationError(`message is longer than ${MAX_TEXT2} characters`);
   const at = nowOf2(seams).toISOString();
   return change2(id, seams, (b) => {
     if (b.review?.act !== "approved" && b.review?.act !== "corrected") {
@@ -17321,11 +17634,11 @@ var review_css_default = ':root { --ink: #1d2733; --muted: #5b6776; --line: #d5d
 var review_html_default = '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Time review</title>\n<style>\n{{CSS}}\n</style>\n</head>\n<body>\n<header>\n<h1>Time review</h1>\n<label for="date-picker">Date</label>\n<select id="date-picker">{{DATES}}</select>\n<label for="matter-filter">Matter</label>\n<select id="matter-filter">{{MATTERS}}</select>\n<button id="prev" type="button">Previous</button>\n<button id="next" type="button">Next</button>\n<button id="next-flagged" type="button">Next flagged</button>\n<span id="day-clear" class="day-clear" role="status"></span>\n<span id="nav-note" role="status"></span>\n</header>\n<main>\n{{CARDS}}\n</main>\n<script type="application/json" id="review-index">{{INDEX}}</script>\n<script type="application/json" id="review-clear">{{CLEAR}}</script>\n<script>\n{{JS}}\n</script>\n</body>\n</html>';
 
 // src/time-review/templates/review.js.ts
-var review_js_default = '// The time review page\'s script (build plan slices 7 and 8). It steps through the cards the server\n// rendered, filters them, swaps screenshots, and posts the Approve, Correct and Write off clicks to\n// the page\'s own listener, which saves the act to the block. It draws nothing from a model.\n// nextId is pure, so a test can load this file and call it.\n\n/** The id of the item the step reaches from `currentId`, or null. `items` is in time order, each\n * { id, date, matter, flagged }. Only items that pass the filter count: a matter ("" is all) and,\n * when `flaggedOnly`, the flagged ones. `currentId` need not pass the filter. `step` is 1 or -1. */\nfunction nextId(items, currentId, matter, flaggedOnly, step) {\n  var at = -1;\n  for (var i = 0; i < items.length; i += 1) {\n    if (items[i].id === currentId) at = i;\n  }\n  var pass = function (item) {\n    return (matter === "" || item.matter === matter) && (!flaggedOnly || item.flagged);\n  };\n  if (step > 0) {\n    for (var j = at + 1; j < items.length; j += 1) if (pass(items[j])) return items[j].id;\n  } else {\n    for (var k = (at < 0 ? items.length : at) - 1; k >= 0; k -= 1) if (pass(items[k])) return items[k].id;\n  }\n  return null;\n}\n\n/** The first item on `date` that passes the matter filter, or null. */\nfunction firstOnDate(items, date, matter) {\n  for (var i = 0; i < items.length; i += 1) {\n    if (items[i].date === date && (matter === "" || items[i].matter === matter)) return items[i].id;\n  }\n  return null;\n}\n\nif (typeof document !== "undefined") {\n  (function () {\n    var items = JSON.parse(document.getElementById("review-index").textContent);\n    var cards = {};\n    Array.prototype.forEach.call(document.querySelectorAll(".card"), function (el) {\n      cards[el.getAttribute("data-id")] = el;\n    });\n    var picker = document.getElementById("date-picker");\n    var filter = document.getElementById("matter-filter");\n    var note = document.getElementById("nav-note");\n    var clearBadge = document.getElementById("day-clear");\n    var clear = JSON.parse(document.getElementById("review-clear").textContent);\n    var base = location.pathname.replace(/\\/?$/, "/");\n    var current = null;\n\n    function showClear() {\n      var date = current === null ? picker.value : cards[current].getAttribute("data-date");\n      var isClear = clear[date] === true;\n      clearBadge.textContent = isClear ? "This day is clear" : "This day is not clear";\n      clearBadge.className = isClear ? "day-clear is-clear" : "day-clear";\n    }\n\n    function show(id) {\n      if (id === null) {\n        note.textContent = "No further block matches.";\n        return;\n      }\n      note.textContent = "";\n      if (current !== null) cards[current].hidden = true;\n      current = id;\n      cards[id].hidden = false;\n      var date = cards[id].getAttribute("data-date");\n      if (picker.value !== date) picker.value = date;\n      slide(cards[id], 0);\n      showClear();\n      window.scrollTo(0, 0);\n    }\n\n    function find(card, cls) {\n      return card.querySelector("." + cls);\n    }\n\n    /** Posts one click. On success the page is reloaded at the same block, so it shows what was saved. */\n    function post(card, body, then) {\n      var message = find(card, "act-note");\n      message.textContent = "";\n      fetch(base + "click", { method: "POST", body: JSON.stringify(body) })\n        .then(function (res) {\n          return res.json().then(function (json) {\n            return { ok: res.ok, json: json };\n          });\n        })\n        .then(function (result) {\n          if (!result.ok) {\n            message.textContent = result.json.error || "The click was not saved.";\n            return;\n          }\n          then();\n        })\n        .catch(function () {\n          message.textContent = "The click could not be sent. Is the session still open?";\n        });\n    }\n\n    function reloadAt(id) {\n      location.hash = id;\n      location.reload();\n    }\n\n    /** Refreshes what the session writes after a click (the TimeCamp line) and each day\'s clear mark. */\n    function refresh() {\n      fetch(base + "state")\n        .then(function (res) {\n          return res.ok ? res.json() : null;\n        })\n        .then(function (state) {\n          if (!state) return;\n          Object.keys(state.blocks).forEach(function (id) {\n            var card = cards[id];\n            if (!card) return;\n            var line = find(card, "tc-text");\n            line.textContent = state.blocks[id].timecamp_text;\n            line.className = "tc-text " + state.blocks[id].timecamp_class;\n          });\n          clear = state.clear;\n          showClear();\n        })\n        .catch(function () {});\n    }\n\n    function slide(card, delta) {\n      var shots = card.querySelectorAll(".shot");\n      if (shots.length === 0) return;\n      var at = 0;\n      for (var i = 0; i < shots.length; i += 1) if (!shots[i].hidden) at = i;\n      var to = Math.max(0, Math.min(shots.length - 1, at + delta));\n      for (var j = 0; j < shots.length; j += 1) shots[j].hidden = j !== to;\n      var counter = card.querySelector(".shot-count");\n      if (counter) counter.textContent = to + 1 + " of " + shots.length;\n    }\n\n    function matter() {\n      return filter.value;\n    }\n\n    document.getElementById("prev").addEventListener("click", function () {\n      show(nextId(items, current, matter(), false, -1));\n    });\n    document.getElementById("next").addEventListener("click", function () {\n      show(nextId(items, current, matter(), false, 1));\n    });\n    document.getElementById("next-flagged").addEventListener("click", function () {\n      show(nextId(items, current, matter(), true, 1));\n    });\n    picker.addEventListener("change", function () {\n      show(firstOnDate(items, picker.value, matter()));\n    });\n    filter.addEventListener("change", function () {\n      var onFilter = current !== null && (matter() === "" || cards[current].getAttribute("data-matter") === matter());\n      if (!onFilter) show(firstOnDate(items, picker.value, matter()) || nextId(items, null, matter(), false, 1));\n    });\n    Array.prototype.forEach.call(document.querySelectorAll(".shot-prev"), function (b) {\n      b.addEventListener("click", function () {\n        slide(b.closest(".card"), -1);\n      });\n    });\n    Array.prototype.forEach.call(document.querySelectorAll(".shot-next"), function (b) {\n      b.addEventListener("click", function () {\n        slide(b.closest(".card"), 1);\n      });\n    });\n    document.addEventListener("keydown", function (event) {\n      var tag = event.target.tagName;\n      if (current === null || tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;\n      if (event.key === "ArrowLeft") slide(cards[current], -1);\n      if (event.key === "ArrowRight") slide(cards[current], 1);\n    });\n\n    Object.keys(cards).forEach(function (id) {\n      var card = cards[id];\n      var correct = find(card, "edit-correct");\n      var writeoff = find(card, "edit-writeoff");\n      find(card, "act-approve").addEventListener("click", function () {\n        post(card, { act: "approve", block: id }, function () {\n          reloadAt(id);\n        });\n      });\n      find(card, "act-correct-open").addEventListener("click", function () {\n        writeoff.hidden = true;\n        correct.hidden = !correct.hidden;\n      });\n      find(card, "act-writeoff-open").addEventListener("click", function () {\n        correct.hidden = true;\n        writeoff.hidden = !writeoff.hidden;\n      });\n      find(card, "correct-cancel").addEventListener("click", function () {\n        correct.hidden = true;\n      });\n      find(card, "writeoff-cancel").addEventListener("click", function () {\n        writeoff.hidden = true;\n      });\n      find(card, "correct-save").addEventListener("click", function () {\n        post(\n          card,\n          {\n            act: "correct",\n            block: id,\n            matter: find(card, "f-matter").value,\n            description: find(card, "f-description").value,\n            start: find(card, "f-start").value,\n            end: find(card, "f-end").value,\n          },\n          function () {\n            reloadAt(id);\n          }\n        );\n      });\n      find(card, "writeoff-save").addEventListener("click", function () {\n        post(card, { act: "write_off", block: id, reason: find(card, "f-reason").value }, function () {\n          reloadAt(id);\n        });\n      });\n    });\n\n    var wanted = decodeURIComponent(location.hash.replace(/^#/, ""));\n    if (items.length > 0) show(cards[wanted] ? wanted : items[0].id);\n    setInterval(refresh, 3000);\n  })();\n}';
+var review_js_default = '// The time review page\'s script (build plan slices 7 to 9). It steps through the cards the server\n// rendered, filters them, swaps screenshots, and posts the Approve, Correct, Write off, Split, Merge\n// and Undo clicks to the page\'s own listener, which saves them to the blocks. It draws nothing from a model.\n// nextId is pure, so a test can load this file and call it.\n\n/** The id of the item the step reaches from `currentId`, or null. `items` is in time order, each\n * { id, date, matter, flagged }. Only items that pass the filter count: a matter ("" is all) and,\n * when `flaggedOnly`, the flagged ones. `currentId` need not pass the filter. `step` is 1 or -1. */\nfunction nextId(items, currentId, matter, flaggedOnly, step) {\n  var at = -1;\n  for (var i = 0; i < items.length; i += 1) {\n    if (items[i].id === currentId) at = i;\n  }\n  var pass = function (item) {\n    return (matter === "" || item.matter === matter) && (!flaggedOnly || item.flagged);\n  };\n  if (step > 0) {\n    for (var j = at + 1; j < items.length; j += 1) if (pass(items[j])) return items[j].id;\n  } else {\n    for (var k = (at < 0 ? items.length : at) - 1; k >= 0; k -= 1) if (pass(items[k])) return items[k].id;\n  }\n  return null;\n}\n\n/** The id of the next item after `currentId` on the same day that is still live (not kept behind a\n * split or merge), or null. The server checks the two are next to each other and of one matter. */\nfunction nextLive(items, currentId) {\n  var at = -1;\n  for (var i = 0; i < items.length; i += 1) if (items[i].id === currentId) at = i;\n  if (at < 0) return null;\n  for (var j = at + 1; j < items.length; j += 1) {\n    if (items[j].date !== items[at].date) return null;\n    if (items[j].live) return items[j].id;\n  }\n  return null;\n}\n\n/** The first item on `date` that passes the matter filter, or null. */\nfunction firstOnDate(items, date, matter) {\n  for (var i = 0; i < items.length; i += 1) {\n    if (items[i].date === date && (matter === "" || items[i].matter === matter)) return items[i].id;\n  }\n  return null;\n}\n\nif (typeof document !== "undefined") {\n  (function () {\n    var items = JSON.parse(document.getElementById("review-index").textContent);\n    var cards = {};\n    Array.prototype.forEach.call(document.querySelectorAll(".card"), function (el) {\n      cards[el.getAttribute("data-id")] = el;\n    });\n    var picker = document.getElementById("date-picker");\n    var filter = document.getElementById("matter-filter");\n    var note = document.getElementById("nav-note");\n    var clearBadge = document.getElementById("day-clear");\n    var clear = JSON.parse(document.getElementById("review-clear").textContent);\n    var base = location.pathname.replace(/\\/?$/, "/");\n    var current = null;\n\n    function showClear() {\n      var date = current === null ? picker.value : cards[current].getAttribute("data-date");\n      var isClear = clear[date] === true;\n      clearBadge.textContent = isClear ? "This day is clear" : "This day is not clear";\n      clearBadge.className = isClear ? "day-clear is-clear" : "day-clear";\n    }\n\n    function show(id) {\n      if (id === null) {\n        note.textContent = "No further block matches.";\n        return;\n      }\n      note.textContent = "";\n      if (current !== null) cards[current].hidden = true;\n      current = id;\n      cards[id].hidden = false;\n      var date = cards[id].getAttribute("data-date");\n      if (picker.value !== date) picker.value = date;\n      slide(cards[id], 0);\n      showClear();\n      window.scrollTo(0, 0);\n    }\n\n    function find(card, cls) {\n      return card.querySelector("." + cls);\n    }\n\n    /** Posts one click. On success the page is reloaded at the same block, so it shows what was saved. */\n    function post(card, body, then) {\n      var message = find(card, "act-note");\n      message.textContent = "";\n      fetch(base + "click", { method: "POST", body: JSON.stringify(body) })\n        .then(function (res) {\n          return res.json().then(function (json) {\n            return { ok: res.ok, json: json };\n          });\n        })\n        .then(function (result) {\n          if (!result.ok) {\n            message.textContent = result.json.error || "The click was not saved.";\n            return;\n          }\n          then(result.json);\n        })\n        .catch(function () {\n          message.textContent = "The click could not be sent. Is the session still open?";\n        });\n    }\n\n    function reloadAt(id) {\n      location.hash = id;\n      location.reload();\n    }\n\n    /** Refreshes what the session writes after a click (the TimeCamp line) and each day\'s clear mark. */\n    function refresh() {\n      fetch(base + "state")\n        .then(function (res) {\n          return res.ok ? res.json() : null;\n        })\n        .then(function (state) {\n          if (!state) return;\n          Object.keys(state.blocks).forEach(function (id) {\n            var card = cards[id];\n            if (!card) return;\n            var line = find(card, "tc-text");\n            line.textContent = state.blocks[id].timecamp_text;\n            line.className = "tc-text " + state.blocks[id].timecamp_class;\n          });\n          clear = state.clear;\n          showClear();\n        })\n        .catch(function () {});\n    }\n\n    function slide(card, delta) {\n      var shots = card.querySelectorAll(".shot");\n      if (shots.length === 0) return;\n      var at = 0;\n      for (var i = 0; i < shots.length; i += 1) if (!shots[i].hidden) at = i;\n      var to = Math.max(0, Math.min(shots.length - 1, at + delta));\n      for (var j = 0; j < shots.length; j += 1) shots[j].hidden = j !== to;\n      var counter = card.querySelector(".shot-count");\n      if (counter) counter.textContent = to + 1 + " of " + shots.length;\n    }\n\n    function matter() {\n      return filter.value;\n    }\n\n    document.getElementById("prev").addEventListener("click", function () {\n      show(nextId(items, current, matter(), false, -1));\n    });\n    document.getElementById("next").addEventListener("click", function () {\n      show(nextId(items, current, matter(), false, 1));\n    });\n    document.getElementById("next-flagged").addEventListener("click", function () {\n      show(nextId(items, current, matter(), true, 1));\n    });\n    picker.addEventListener("change", function () {\n      show(firstOnDate(items, picker.value, matter()));\n    });\n    filter.addEventListener("change", function () {\n      var onFilter = current !== null && (matter() === "" || cards[current].getAttribute("data-matter") === matter());\n      if (!onFilter) show(firstOnDate(items, picker.value, matter()) || nextId(items, null, matter(), false, 1));\n    });\n    Array.prototype.forEach.call(document.querySelectorAll(".shot-prev"), function (b) {\n      b.addEventListener("click", function () {\n        slide(b.closest(".card"), -1);\n      });\n    });\n    Array.prototype.forEach.call(document.querySelectorAll(".shot-next"), function (b) {\n      b.addEventListener("click", function () {\n        slide(b.closest(".card"), 1);\n      });\n    });\n    document.addEventListener("keydown", function (event) {\n      var tag = event.target.tagName;\n      if (current === null || tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;\n      if (event.key === "ArrowLeft") slide(cards[current], -1);\n      if (event.key === "ArrowRight") slide(cards[current], 1);\n    });\n\n    Object.keys(cards).forEach(function (id) {\n      var card = cards[id];\n      var correct = find(card, "edit-correct");\n      var writeoff = find(card, "edit-writeoff");\n      find(card, "act-approve").addEventListener("click", function () {\n        post(card, { act: "approve", block: id }, function () {\n          reloadAt(id);\n        });\n      });\n      find(card, "act-correct-open").addEventListener("click", function () {\n        writeoff.hidden = true;\n        correct.hidden = !correct.hidden;\n      });\n      find(card, "act-writeoff-open").addEventListener("click", function () {\n        correct.hidden = true;\n        writeoff.hidden = !writeoff.hidden;\n      });\n      find(card, "correct-cancel").addEventListener("click", function () {\n        correct.hidden = true;\n      });\n      find(card, "writeoff-cancel").addEventListener("click", function () {\n        writeoff.hidden = true;\n      });\n      find(card, "correct-save").addEventListener("click", function () {\n        post(\n          card,\n          {\n            act: "correct",\n            block: id,\n            matter: find(card, "f-matter").value,\n            description: find(card, "f-description").value,\n            start: find(card, "f-start").value,\n            end: find(card, "f-end").value,\n          },\n          function () {\n            reloadAt(id);\n          }\n        );\n      });\n      find(card, "writeoff-save").addEventListener("click", function () {\n        post(card, { act: "write_off", block: id, reason: find(card, "f-reason").value }, function () {\n          reloadAt(id);\n        });\n      });\n      // Split, merge and undo change the blocks themselves; the page then opens the block they made or restored.\n      var splitButton = find(card, "act-split");\n      if (splitButton) {\n        splitButton.addEventListener("click", function () {\n          var shots = card.querySelectorAll(".shot");\n          var capture = null;\n          for (var i = 0; i < shots.length; i += 1) if (!shots[i].hidden) capture = shots[i].getAttribute("data-capture");\n          if (capture === null) return;\n          post(card, { act: "split", block: id, capture: capture }, function (json) {\n            reloadAt(json.block || id);\n          });\n        });\n      }\n      find(card, "act-merge").addEventListener("click", function () {\n        var next = nextLive(items, id);\n        if (next === null) {\n          find(card, "act-note").textContent = "There is no block after this one to merge with.";\n          return;\n        }\n        post(card, { act: "merge", blocks: [id, next] }, function (json) {\n          reloadAt(json.block || id);\n        });\n      });\n      find(card, "act-undo").addEventListener("click", function () {\n        post(card, { act: "undo", block: id }, function (json) {\n          reloadAt(json.block || id);\n        });\n      });\n    });\n\n    var wanted = decodeURIComponent(location.hash.replace(/^#/, ""));\n    if (items.length > 0) show(cards[wanted] ? wanted : items[0].id);\n    setInterval(refresh, 3000);\n  })();\n}';
 
 // src/time-review/page.ts
 var SHOT_SOURCE = "syncopaid_captures";
-var ID_FIELDS = ["id", "native_id", "capture_id", "entry_id"];
+var ID_FIELDS2 = ["id", "native_id", "capture_id", "entry_id"];
 var MAX_FIELDS = 8;
 var MAX_VALUE = 200;
 function loadReviewModel(seams = {}) {
@@ -17371,11 +17684,21 @@ function timecampLine(block) {
   }
 }
 function byTime(a, b) {
-  return a.date === b.date ? a.id < b.id ? -1 : a.id > b.id ? 1 : 0 : a.date < b.date ? -1 : 1;
+  if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+  const x = startValue(a.start);
+  const y = startValue(b.start);
+  if (x !== y && Number.isFinite(x - y)) return x - y;
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+function startValue(text3) {
+  const clock = /^(\d{1,2}):(\d{2})$/.exec(text3);
+  if (clock) return Number(clock[1]) * 60 + Number(clock[2]);
+  const instant = Date.parse(text3);
+  return Number.isFinite(instant) ? instant : Number.POSITIVE_INFINITY;
 }
 var escapeHtml = (text3) => text3.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 function rowFor(day, source, ref) {
-  const row = day?.rows.find((r) => r.source === source && ID_FIELDS.some((f) => r[f] !== void 0 && String(r[f]) === ref));
+  const row = day?.rows.find((r) => r.source === source && ID_FIELDS2.some((f) => r[f] !== void 0 && String(r[f]) === ref));
   return row ?? null;
 }
 function captureId(day, ref) {
@@ -17418,24 +17741,34 @@ function cardHtml(block, model, imgBase, matters) {
     if (ref.source === SHOT_SOURCE) {
       const id = captureId(day, ref.ref);
       const image2 = imgBase === null ? "" : `<img src="${escapeHtml(imgBase)}${encodeURIComponent(id)}" alt="Screenshot ${escapeHtml(id)}" loading="lazy">`;
-      shots.push(`<div class="shot" hidden><div>${image2}</div>${readingHtml(model.readings[id])}</div>`);
+      shots.push(`<div class="shot" data-capture="${escapeHtml(id)}" hidden><div>${image2}</div>${readingHtml(model.readings[id])}</div>`);
     } else {
       rows.push(
         `<h3 class="src">${escapeHtml(label(ref.source))}: ${escapeHtml(ref.ref)}</h3>` + (row ? `<table class="rows">${fieldRows(row)}</table>` : `<p class="none">This row is not in the day's saved evidence.</p>`)
       );
     }
   }
-  const slideshow = shots.length === 0 ? "" : `<h2>Screenshots</h2><div class="shots"><div class="shot-bar"><button type="button" class="shot-prev">&larr;</button><span class="shot-count"></span><button type="button" class="shot-next">&rarr;</button></div>${shots.join("")}</div>`;
+  const slideshow = shots.length === 0 ? "" : `<h2>Screenshots</h2><div class="shots"><div class="shot-bar"><button type="button" class="shot-prev">&larr;</button><span class="shot-count"></span><button type="button" class="shot-next">&rarr;</button>${block.state === "merged" || block.state === "split" ? "" : `<button type="button" class="act-split">Split here</button>`}</div>${shots.join("")}</div>`;
   const evidence = rows.length === 0 && shots.length === 0 ? `<p class="none">No evidence is cited for this block.</p>` : rows.join("");
   const flags = block.flags.length === 0 ? "" : `<ul class="flags">${block.flags.map((f) => `<li>${escapeHtml(label(f))}</li>`).join("")}</ul>`;
   const duration3 = minutes === null ? "" : ` (${minutes} min)`;
   const links = block.links.length === 0 ? "" : `<p class="times">${block.links.map((l) => `${escapeHtml(label(l.role))} ${escapeHtml(l.block)}`).join("; ")}</p>`;
   const tc = timecampLine(block);
-  return `<article class="card" data-id="${escapeHtml(block.id)}" data-date="${escapeHtml(block.date)}" data-matter="${escapeHtml(block.matter)}" hidden><div class="top"><span class="matter">${escapeHtml(block.matter)}</span><span class="state state-${escapeHtml(block.state)}">${escapeHtml(label(block.state))}</span></div><div class="times">${escapeHtml(block.date)} ${escapeHtml(block.start)} to ${escapeHtml(block.end)}${duration3}</div><p class="desc">${escapeHtml(block.description)}</p>${flags}${links}` + actionsHtml(block, matters) + `<p class="review-text">${escapeHtml(reviewText(block))}</p><p class="tc-text ${tc.cls}">${escapeHtml(tc.text)}</p><h2>Evidence</h2>${evidence}${slideshow}</article>`;
+  return `<article class="card" data-id="${escapeHtml(block.id)}" data-date="${escapeHtml(block.date)}" data-matter="${escapeHtml(block.matter)}" hidden><div class="top"><span class="matter">${escapeHtml(block.matter)}</span><span class="state state-${escapeHtml(block.state)}">${escapeHtml(label(block.state))}</span></div><div class="times">${escapeHtml(block.date)} ${escapeHtml(block.start)} to ${escapeHtml(block.end)}${duration3}</div><p class="desc">${escapeHtml(block.description)}</p>${flags}${links}` + actionsHtml(block, matters, undoable(block, model.blocks)) + `<p class="review-text">${escapeHtml(reviewText(block))}</p><p class="tc-text ${tc.cls}">${escapeHtml(tc.text)}</p><h2>Evidence</h2>${evidence}${slideshow}</article>`;
 }
-function actionsHtml(block, matters) {
+function undoable(block, all) {
+  if (block.state === "merged" || block.state === "split") return true;
+  if (block.links.some((l) => l.role === "split_from")) return true;
+  return all.some((o) => o.links.some((l) => l.role === "merged_into" && l.block === block.id));
+}
+function undoLabel(block) {
+  const split = block.state === "split" || block.links.some((l) => l.role === "split_from");
+  return split ? "Unsplit" : "Unmerge";
+}
+function actionsHtml(block, matters, undo) {
   const options = (matters.includes(block.matter) ? matters : [block.matter, ...matters]).map((m) => `<option value="${escapeHtml(m)}"${m === block.matter ? " selected" : ""}>${escapeHtml(m)}</option>`).join("");
-  return `<div class="acts"><button type="button" class="act-approve">Approve</button><button type="button" class="act-correct-open">Correct</button><button type="button" class="act-writeoff-open">Write off</button></div><div class="edit edit-correct" hidden><label>Matter<select class="f-matter">${options}</select></label><label>Description<textarea class="f-description" rows="3">${escapeHtml(block.description)}</textarea></label><label>Start<input class="f-start" type="text" value="${escapeHtml(block.start)}"></label><label>End<input class="f-end" type="text" value="${escapeHtml(block.end)}"></label><div class="edit-buttons"><button type="button" class="correct-save">Save correction</button><button type="button" class="correct-cancel">Cancel</button></div></div><div class="edit edit-writeoff" hidden><label>Reason<input class="f-reason" type="text" maxlength="200"></label><div class="edit-buttons"><button type="button" class="writeoff-save">Write off this block</button><button type="button" class="writeoff-cancel">Cancel</button></div></div><p class="act-note" role="status"></p>`;
+  const off = block.state === "merged" || block.state === "split" ? " disabled" : "";
+  return `<div class="acts"><button type="button" class="act-approve"${off}>Approve</button><button type="button" class="act-correct-open"${off}>Correct</button><button type="button" class="act-writeoff-open"${off}>Write off</button><button type="button" class="act-merge"${off}>Merge with next</button><button type="button" class="act-undo"${undo ? "" : " disabled"}>${escapeHtml(undoLabel(block))}</button></div><div class="edit edit-correct" hidden><label>Matter<select class="f-matter">${options}</select></label><label>Description<textarea class="f-description" rows="3">${escapeHtml(block.description)}</textarea></label><label>Start<input class="f-start" type="text" value="${escapeHtml(block.start)}"></label><label>End<input class="f-end" type="text" value="${escapeHtml(block.end)}"></label><div class="edit-buttons"><button type="button" class="correct-save">Save correction</button><button type="button" class="correct-cancel">Cancel</button></div></div><div class="edit edit-writeoff" hidden><label>Reason<input class="f-reason" type="text" maxlength="200"></label><div class="edit-buttons"><button type="button" class="writeoff-save">Write off this block</button><button type="button" class="writeoff-cancel">Cancel</button></div></div><p class="act-note" role="status"></p>`;
 }
 function fill(template, parts) {
   return template.replace(/\{\{([A-Z]+)\}\}/g, (_all, name) => parts[name] ?? "");
@@ -17444,7 +17777,7 @@ var scriptJson = (value) => JSON.stringify(value).replace(/</g, "\\u003c").repla
 function renderReviewPage(model, imgBase) {
   const dates = [...new Set(model.blocks.map((b) => b.date))];
   const matters = [...new Set(model.blocks.map((b) => b.matter))].sort();
-  const index = model.blocks.map((b) => ({ id: b.id, date: b.date, matter: b.matter, flagged: b.state === "flagged" }));
+  const index = model.blocks.map((b) => ({ id: b.id, date: b.date, matter: b.matter, flagged: b.state === "flagged", live: b.state !== "merged" && b.state !== "split" }));
   const cards = model.blocks.length === 0 ? `<p class="none">No day has staged blocks yet.</p>` : model.blocks.map((b) => cardHtml(b, model, imgBase, matters)).join("\n");
   return fill(review_html_default, {
     CSS: review_css_default,
@@ -17607,12 +17940,37 @@ async function click(id, req, res, env) {
       return json(res, 500, { error: `The act could not be saved: ${err.message}` }, REPLY);
     }
   }
+  let made = { block: body.block ?? null, blocks: [] };
+  if (isRestructureAct(body.act)) {
+    try {
+      made = restructure(body.act, body, env);
+    } catch (err) {
+      if (err instanceof ValidationError) return json(res, 400, { error: err.message }, REPLY);
+      return json(res, 500, { error: `The ${body.act} could not be saved: ${err.message}` }, REPLY);
+    }
+  }
   const clicked_at = (/* @__PURE__ */ new Date()).toISOString();
   const key = `${CLICK_PREFIX}${clicked_at}:${randomBytes3(4).toString("hex")}`;
-  const record2 = { kind: "page_click", link: id, act: body.act, block: body.block ?? null, clicked_at };
+  const record2 = { kind: "page_click", link: id, act: body.act, block: made.block, blocks: made.blocks, clicked_at };
   const saved = timePipelineWriteIf(NAMESPACE, key, JSON.stringify(record2), { expect_absent: true }, env);
   if ("stale" in saved) return json(res, 409, { error: "The click could not be saved to tell the session. Click again." }, REPLY);
-  json(res, 200, { ok: true }, REPLY);
+  json(res, 200, { ok: true, block: made.block, blocks: made.blocks }, REPLY);
+}
+var RESTRUCTURE_ACTS = ["split", "merge", "undo"];
+var isRestructureAct = (value) => RESTRUCTURE_ACTS.includes(value);
+function restructure(act, body, env) {
+  const seams = { env };
+  if (act === "merge") {
+    const made = mergeBlocks(body.blocks, seams);
+    return { block: made.merged, blocks: [made.merged] };
+  }
+  if (typeof body.block !== "string") throw new ValidationError(`A ${act} needs a block.`);
+  if (act === "split") {
+    const made = splitBlock(body.block, body.capture, seams);
+    return { block: made.halves[0], blocks: made.halves };
+  }
+  const undone = undoRestructure(body.block, seams);
+  return { block: undone.restored[0], blocks: undone.restored };
 }
 function clearClicks(env) {
   for (const item of timePipelineList(NAMESPACE, CLICK_PREFIX, env).items) timePipelineDelete(NAMESPACE, item.key, env, item.sha256);
@@ -17630,7 +17988,7 @@ async function waitClick(env = process.env) {
         throw err;
       }
       const record2 = JSON.parse(oldest.value);
-      return { status: "clicked", act: record2.act, block: record2.block, clicked_at: record2.clicked_at };
+      return { status: "clicked", act: record2.act, block: record2.block, blocks: record2.blocks ?? [], clicked_at: record2.clicked_at };
     },
     { budgetMs: budget, pollMs: POLL_MS }
   );
@@ -17639,7 +17997,7 @@ async function waitClick(env = process.env) {
 
 // src/time-review/tools.ts
 var DATE2 = /^\d{4}-\d{2}-\d{2}$/;
-var BLOCK_ID = /^\d{4}-\d{2}-\d{2}:\d{3}$/;
+var BLOCK_ID2 = /^\d{4}-\d{2}-\d{2}:\d{3}$/;
 var MAX_BLOCKS = 999;
 var STAGE_ATTEMPTS = 5;
 function checkDate2(tool, date3) {
@@ -17770,13 +18128,25 @@ function timeReviewStageDay(dateIn, token, blocksIn, seams = {}) {
 }
 function timeReviewReadDay(dateIn, seams = {}) {
   const date3 = checkDate2("time_review__read_day", dateIn);
-  const { items } = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, envOf2(seams));
+  const env = envOf2(seams);
+  const { items } = timePipelineList(NAMESPACE, `${BLOCK_PREFIX}${date3}:`, env);
   const blocks = items.map((item) => JSON.parse(item.value));
-  return { date: date3, clear: dayIsClear(date3, blocks, seams), evidence: readDayEvidence(date3, seams), blocks };
+  const evidence = readDayEvidence(date3, seams);
+  const readings = {};
+  for (const block of blocks) {
+    for (const ref of block.evidence) {
+      if (ref.source !== "syncopaid_captures") continue;
+      const id = captureId(evidence, ref.ref);
+      if (id in readings) continue;
+      const { value } = timePipelineGet(NAMESPACE, `capture_reading:${id}`, env);
+      readings[id] = value === null ? null : JSON.parse(value);
+    }
+  }
+  return { date: date3, clear: dayIsClear(date3, blocks, seams), evidence, blocks, readings };
 }
 function timeReviewRecordTimecamp(blockIn, statusIn, messageIn, seams = {}) {
   const tool = "time_review__record_timecamp";
-  if (typeof blockIn !== "string" || !BLOCK_ID.test(blockIn)) throw new ValidationError(`${tool}: block must be a block id as YYYY-MM-DD:nnn`);
+  if (typeof blockIn !== "string" || !BLOCK_ID2.test(blockIn)) throw new ValidationError(`${tool}: block must be a block id as YYYY-MM-DD:nnn`);
   if (typeof statusIn !== "string") throw new ValidationError(`${tool}: status must be text`);
   if (messageIn !== void 0 && typeof messageIn !== "string") throw new ValidationError(`${tool}: message must be text`);
   try {
@@ -17835,7 +18205,12 @@ var tools = [
   defineTool(
     "time_review__record_timecamp",
     (args) => timeReviewRecordTimecamp(args.block, args.status, args.message)
-  )
+  ),
+  defineTool("time_review__redraft", (args) => {
+    const saved = redraftBlock(args.block, args.matter, args.description);
+    return { block: saved.id, state: saved.state, flags: saved.flags, redraft: saved.redraft };
+  }),
+  defineTool("time_review__mark_issued", (args) => markIssued(args.blocks, args.invoice))
 ];
 var server = dispatchFrom(buildTimekeepingToolDefinitions, tools);
 function dispatchTimekeepingTool(name, rawArgs) {

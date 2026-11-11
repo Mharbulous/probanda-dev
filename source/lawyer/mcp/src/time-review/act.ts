@@ -46,7 +46,11 @@ function change(id: string, seams: ReviewDateSeams, edit: (block: BlockRecord) =
   for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
     const read = timePipelineGet(NAMESPACE, blockKey(id), env);
     if (read.value === null) throw new ValidationError(`${id} is not a block`);
-    const next = edit(JSON.parse(read.value) as BlockRecord);
+    const current = JSON.parse(read.value) as BlockRecord;
+    if (current.state === "merged" || current.state === "split") {
+      throw new ValidationError(`${id} was ${current.state} into a new block; act on the new block, or undo first`);
+    }
+    const next = edit(current);
     const saved = timePipelineWriteIf(NAMESPACE, blockKey(id), JSON.stringify(next), { expect_sha256: read.sha256 as string }, env);
     if (!("stale" in saved)) return next;
   }

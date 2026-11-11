@@ -50,6 +50,18 @@ class ReviewPage(unittest.TestCase):
             self.assertIn(text, page)
         self.assertRegex(page, r"A staff entry's TimeCamp note is the staff member's: do not write it")
 
+    def test_a_split_is_redrafted_from_stored_readings_with_no_image(self):
+        page = section(TIMECAMPING, "The review page")
+        for text in ("time_review__redraft", "saved `readings`", "Never open, view or describe an image",
+                     "never dispatch `billing:screenshot-reader` for a split", "None of split, merge or undo writes to TimeCamp",
+                     "time_review__mark_issued"):
+            self.assertIn(text, page)
+
+    def test_the_split_tools_are_listed_and_defined(self):
+        for tool in ("time_review__redraft", "time_review__mark_issued"):
+            self.assertIn(tool, DATA)
+            self.assertIn(f'name: "{tool}"', SCHEMA)
+
     def test_a_clear_day_is_judged_with_no_flagged_block(self):
         page = section(TIMECAMPING, "The review page")
         self.assertRegex(page, r"judged and no block on it is flagged")

@@ -72,6 +72,10 @@ export interface BlockRecord {
   staged_at: string;
   review?: BlockReview;
   timecamp?: TimecampResult;
+  /** A half made by a split: `pending` until the waiting session redrafts it from the evidence. */
+  redraft?: { status: "pending" | "done"; at: string };
+  /** Set when the time is on an issued invoice: split, merge and undo then refuse the block. */
+  issued?: { invoice_number: string; at: string };
 }
 
 export const dayEvidenceKey = (date: string): string => DAY_EVIDENCE_PREFIX + date;

@@ -33,8 +33,9 @@ export const BILL_BASIS = [
 export type MatterBasis = keyof typeof MATTER_BASIS;
 export type BillBasis = (typeof BILL_BASIS)[number];
 /** `flagged` and `auto_assigned` are set when a block is staged; the other three only by a click on
- * the block (act.ts), which is the only way a block records an approval, a correction or a write-off. */
-export type BlockState = "flagged" | "auto_assigned" | "approved" | "corrected" | "written_off";
+ * the block (act.ts), which is the only way a block records an approval, a correction or a write-off.
+ * `merged` and `split` mark an original kept behind a new block (restructure.ts). */
+export type BlockState = "flagged" | "auto_assigned" | "approved" | "corrected" | "written_off" | "merged" | "split";
 
 export function checkMatterBasis(label: string, value: unknown): MatterBasis {
   if (typeof value !== "string" || !Object.hasOwn(MATTER_BASIS, value)) {

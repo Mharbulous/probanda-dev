@@ -35,6 +35,7 @@ import { timePipelineDelete, timePipelineList, timePipelineWriteIf } from "../ti
 import { type ActFields, applyAct, isAct } from "./act.js";
 import { loadReviewModel, renderReviewPage, timecampLine } from "./page.js";
 import { NAMESPACE } from "./records.js";
+import { mergeBlocks, splitBlock, undoRestructure } from "./restructure.js";
 
 const KIND = "time-review";
 const CLICK_PREFIX = "page_click:";
@@ -214,7 +215,7 @@ function state(res: ServerResponse, env: NodeJS.ProcessEnv): void {
 }
 
 async function click(id: string, req: IncomingMessage, res: ServerResponse, env: NodeJS.ProcessEnv): Promise<void> {
-  let body: ActFields & { act?: unknown; block?: unknown };
+  let body: ActFields & { act?: unknown; block?: unknown; blocks?: unknown; capture?: unknown };
   try {
     body = JSON.parse(await readBody(req, MAX_BODY)) as typeof body;
   } catch (err) {
@@ -236,12 +237,49 @@ async function click(id: string, req: IncomingMessage, res: ServerResponse, env:
       return json(res, 500, { error: `The act could not be saved: ${(err as Error).message}` }, REPLY);
     }
   }
+  let made: Restructured = { block: body.block ?? null, blocks: [] };
+  if (isRestructureAct(body.act)) {
+    // A split, merge or undo is saved to the blocks before the session is told of it. It reads no
+    // image and calls no model; the session redrafts a split's halves afterwards.
+    try {
+      made = restructure(body.act, body, env);
+    } catch (err) {
+      if (err instanceof ValidationError) return json(res, 400, { error: err.message }, REPLY);
+      return json(res, 500, { error: `The ${body.act} could not be saved: ${(err as Error).message}` }, REPLY);
+    }
+  }
   const clicked_at = new Date().toISOString();
   const key = `${CLICK_PREFIX}${clicked_at}:${randomBytes(4).toString("hex")}`;
-  const record = { kind: "page_click", link: id, act: body.act, block: body.block ?? null, clicked_at };
+  const record = { kind: "page_click", link: id, act: body.act, block: made.block, blocks: made.blocks, clicked_at };
   const saved = timePipelineWriteIf(NAMESPACE, key, JSON.stringify(record), { expect_absent: true }, env);
   if ("stale" in saved) return json(res, 409, { error: "The click could not be saved to tell the session. Click again." }, REPLY);
-  json(res, 200, { ok: true }, REPLY);
+  json(res, 200, { ok: true, block: made.block, blocks: made.blocks }, REPLY);
+}
+
+const RESTRUCTURE_ACTS = ["split", "merge", "undo"] as const;
+type RestructureAct = (typeof RESTRUCTURE_ACTS)[number];
+const isRestructureAct = (value: string): value is RestructureAct => (RESTRUCTURE_ACTS as readonly string[]).includes(value);
+
+interface Restructured {
+  /** The block the page opens next. */
+  block: string | null;
+  /** The blocks the click made or restored. */
+  blocks: string[];
+}
+
+function restructure(act: RestructureAct, body: { block?: unknown; blocks?: unknown; capture?: unknown }, env: NodeJS.ProcessEnv): Restructured {
+  const seams = { env };
+  if (act === "merge") {
+    const made = mergeBlocks(body.blocks, seams);
+    return { block: made.merged, blocks: [made.merged] };
+  }
+  if (typeof body.block !== "string") throw new ValidationError(`A ${act} needs a block.`);
+  if (act === "split") {
+    const made = splitBlock(body.block, body.capture, seams);
+    return { block: made.halves[0], blocks: made.halves };
+  }
+  const undone = undoRestructure(body.block, seams);
+  return { block: undone.restored[0], blocks: undone.restored };
 }
 
 function clearClicks(env: NodeJS.ProcessEnv): void {
@@ -249,7 +287,7 @@ function clearClicks(env: NodeJS.ProcessEnv): void {
 }
 
 export type WaitClickResult =
-  | { status: "clicked"; act: string; block: string | null; clicked_at: string }
+  | { status: "clicked"; act: string; block: string | null; blocks: string[]; clicked_at: string }
   | { status: "pending"; waited_ms: number };
 
 /** Returns the oldest unread click and consumes it, or `pending` when the budget runs out. The
@@ -268,8 +306,8 @@ export async function waitClick(env: NodeJS.ProcessEnv = process.env): Promise<W
         if (err instanceof DataServerError && err.code === "stale_write") return undefined;
         throw err;
       }
-      const record = JSON.parse(oldest.value) as { act: string; block: string | null; clicked_at: string };
-      return { status: "clicked", act: record.act, block: record.block, clicked_at: record.clicked_at };
+      const record = JSON.parse(oldest.value) as { act: string; block: string | null; blocks?: string[]; clicked_at: string };
+      return { status: "clicked", act: record.act, block: record.block, blocks: record.blocks ?? [], clicked_at: record.clicked_at };
     },
     { budgetMs: budget, pollMs: POLL_MS },
   );
