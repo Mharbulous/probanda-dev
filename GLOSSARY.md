@@ -167,6 +167,7 @@ terms:
   - Verified
   - Work Board
   - Work marker
+  - Write off
   - Writing
   - Writing Job
   - Written Argument
@@ -567,8 +568,8 @@ Taking one existing file out of the folder it is in and putting it in another, s
 _Avoid_: move for a **Copy (file)**; move for a **Delete (file)**.
 
 **Non-billable entry**:
-A time entry recorded against a matter with `billable` false: kept on the file, excluded from WIP and accounts receivable, never billed. The consolidation push records one per retirement run, tagged `retire:<filing_id>:<retired_on>`. Matter-less administrative time is not the same thing and is still never committed.
-_Avoid_: firm time, admin time (both mean no matter); write-off (a billed entry later forgiven, a different act).
+A time entry recorded against a matter for work that is not billable by its nature, such as drafting the matter's bills: kept on the file, excluded from WIP and accounts receivable, never billed. The consolidation push records one per retirement run, tagged `retire:<filing_id>:<retired_on>`. Matter-less administrative time is not the same thing and is still never committed.
+_Avoid_: firm time, admin time (both mean no matter); **Write off** (billable work not charged, a different act).
 
 **Note up**:
 Vet an authority's subsequent treatment before relying on it — routine, mandatory before filing, law side only. Marked 📇 until done; the outcome lands in the authority's `treatment` column (⚠️ distinguishable, 🚨 negative treatment, ⛔ not good law, or clean). Distinct from **Doubt**. All of that is for a case: a statute or regulation is noted up by its currency check alone, its outcome its currency result; a provision of a **Rule Set** or a practice direction is noted up on **Reliance on a rule**, by its currency check and a word-for-word comparison of the text relied on with the source its **Venue source record** names; and doctrine is never noted up (`source/skills/shared/statute-currency.md` → Noting up legislation).
@@ -859,6 +860,10 @@ _Avoid_: Milestone (its name before 2026-11-01); Job Board (its name before 2026
 **Work marker**:
 One emoji from a closed set, printed on a Mockup where a predicate over the database is true (an open jurisdictional-basis slot, an excerpt with no pinpoint, a fact with no witness…), each naming the work that finishes it. The compressed to-do list of a Writing. Deferred work counts (a reserved row awaits its deployment decision); only ⬜ means nothing started; an emoji that names no work is not a marker. Three types: **work** (we act), **event** (they or the world acted — reports that outcome and renders as prefix of the work it routed; several events may route the same work), **hold** (our posture — renders only in Held in reserve). Rules, tables and mis-readings: `source/skills/drafting-data/references/work-markers.md` (SSOT).
 _Avoid_: badge (one marker); glyph; readiness decoration; checklist; status label (of our work — an event marker reports their outcome, never our progress).
+
+**Write off**:
+The practitioner's decision, made before the bill, that time spent on billable work will not be charged. It always carries one of two reasons, kept apart so that practice profitability can tell them apart: **courtesy**, for billable work on a matter that the practitioner chooses not to charge, and **unidentified**, for time that could not be tied to a client or described. A bill already sent and later reduced is an adjustment, never a write-off.
+_Avoid_: non-billable (see **Non-billable entry**: work not billable by its nature); no charge; waiver; adjustment (a change after the bill is sent).
 
 **Writing**:
 Any legal writing `/draft` drafts in a proceeding: a Filing, a demand letter, a letter to opposing counsel, a memo to file. It carries its own metadata, its selection and order of the proceeding's shared substance, and its mockups. Every Writing belongs to exactly one proceeding, which may have no forum. Every Writing is either **Form-bound writing** or **Free-form writing**. On a separate axis, every Writing is either a **Structured Writing** or an **Unstructured Writing**. A letter to the client is a Writing too, of the type `letter-to-client` (ADR 0019). Internal names are unchanged: a Writing is stored as a `filings` row, with its `kind` values, except that a `filings` row of the reserved kind `task-board` is a **Standalone Work Board** and never a Writing. Lowercase "filing" in this glossary means only the act of delivering a Writing to a registry or forum, never the Writing itself.
