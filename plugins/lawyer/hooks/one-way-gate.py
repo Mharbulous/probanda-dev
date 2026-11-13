@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Hold lawyer's one-way calls until the practitioner pastes the approval block.
 
-Hook event: PreToolUse, matcher mcp__.+(practice_data__(delete_anchor|merge_contact|issue_invoice)|mail__dedupe_apply)$.
+Hook event: PreToolUse, matcher
+mcp__.+(practice_data__(delete_anchor|merge_contact|issue_invoice)|mail__dedupe_apply|contacts__(write_probe|import_apply|merge_apply|restore_card))$.
 The rules are shared/scripts/approval_gate.py's. Refuses by a JSON permissionDecision on
 stdout, exit 0; allows by exiting 0 silently. Fails CLOSED on its own error.
 """

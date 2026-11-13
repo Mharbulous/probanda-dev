@@ -1,4 +1,4 @@
-// build-stamp: c94f58f17234
+// build-stamp: ec27dfdadb3f
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75267,7 +75267,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "c94f58f17234";
+var BUILD_STAMP = false ? null : "ec27dfdadb3f";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -80745,6 +80745,11 @@ function contactsToolDefinitions() {
         additionalProperties: false
       },
       annotations: { readOnlyHint: true }
+    },
+    {
+      name: "contacts__write_probe",
+      description: "Test whether this account lets Probanda change the address book, on one test contact that holds nothing real: create it, read it back, add a phone, save a copy on this machine, remove it. Changes no other contact. Held until the practitioner approves it. Returns {can_write, altered_on_create, altered_on_update (the properties the server changed or dropped, by name), removed, backup_path}. An error that says the test stopped part-way means the test contact may remain; tell the practitioner its name from the message." + errors,
+      inputSchema: { type: "object", properties: {}, additionalProperties: false }
     }
   ];
 }
@@ -81593,6 +81598,44 @@ function listCaseParties(caseDataDir, env = process.env) {
   }
 }
 
+// src/contact-match.ts
+var CORPORATE_SUFFIX = /\s+(ltd|limited|inc|incorporated|llp|lp|llc|corp|corporation|co)$/;
+function normalizeName2(value2) {
+  let name = String(value2 ?? "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  while (CORPORATE_SUFFIX.test(name)) name = name.replace(CORPORATE_SUFFIX, "");
+  return name;
+}
+var PHONE_EXTENSION = /\s*(?:x|ext\.?|extension|#)\s*\d+\s*$/i;
+function phoneDigits(value2) {
+  const digits2 = value2.replace(PHONE_EXTENSION, "").replace(/\D/g, "");
+  return digits2.length > 10 ? digits2.slice(-10) : digits2;
+}
+function emailKey(value2) {
+  return value2.trim().toLowerCase();
+}
+function postalKey(value2) {
+  return value2.replace(/\s+/g, "").toUpperCase();
+}
+var MIN_PHONE_DIGITS = 7;
+function matchKeys(raw) {
+  const keys = (values, key) => new Set((values ?? []).map(key).filter((value2) => value2 !== ""));
+  return {
+    names: new Set((raw.names ?? []).map(normalizeName2).filter((name) => name !== "")),
+    emails: keys(raw.emails, emailKey),
+    phones: new Set([...keys(raw.phones, phoneDigits)].filter((digits2) => digits2.length >= MIN_PHONE_DIGITS)),
+    postals: keys(raw.postals, postalKey)
+  };
+}
+function matchReasons(a3, b3) {
+  const shares = (left, right) => [...left].some((value2) => right.has(value2));
+  const reasons = [];
+  if (shares(a3.names, b3.names)) reasons.push("same name");
+  if (shares(a3.emails, b3.emails)) reasons.push("shared email");
+  if (shares(a3.phones, b3.phones)) reasons.push("shared phone");
+  if (shares(a3.postals, b3.postals)) reasons.push("same postal code");
+  return reasons;
+}
+
 // src/files/matter-root.ts
 import { existsSync as existsSync6, readdirSync as readdirSync5, readFileSync as readFileSync5, statSync as statSync3 } from "node:fs";
 import { basename as basename2, dirname as dirname4, isAbsolute as isAbsolute2, join as join11, normalize, resolve as resolve2, win32 as pathWin322 } from "node:path";
@@ -82173,16 +82216,6 @@ async function upsert_matter_role(store, args) {
   }]);
   return rowOf(items2, ops[0].as);
 }
-var CORPORATE_SUFFIX = /\s+(ltd|limited|inc|incorporated|llp|lp|llc|corp|corporation|co)$/;
-function normalizeName2(value2) {
-  let name = String(value2 ?? "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
-  while (CORPORATE_SUFFIX.test(name)) name = name.replace(CORPORATE_SUFFIX, "");
-  return name;
-}
-function phoneDigits(value2) {
-  const digits2 = value2.replace(/\D/g, "");
-  return digits2.length > 10 ? digits2.slice(-10) : digits2;
-}
 function listOf(value2) {
   return Array.isArray(value2) ? value2.filter((entry3) => typeof entry3 === "string") : [];
 }
@@ -82200,24 +82233,17 @@ async function contact_lookup(store, args) {
   const queryDigits = query.replace(/\D/g, "");
   const found2 = (args.id ? contacts.filter((contact) => contact.id === String(args.id)) : contacts.filter((contact) => !query || [contact.name, ...listOf(contact.other_names), ...listOf(contact.emails), ...listOf(contact.phones)].some((value2) => typeof value2 === "string" && value2.toLowerCase().includes(query)) || queryDigits.length >= 4 && listOf(contact.phones).some((phone) => phone.replace(/\D/g, "").includes(queryDigits)))).filter((contact) => matterId === null || roles.some((row2) => row2.contact_id === contact.id)).slice(0, limit);
   if (!args.id && !query) return { contacts: found2.map((contact) => withTies(contact, affiliations, roles, matters)), near: [] };
-  const names = new Set(found2.flatMap((contact) => [contact.name, ...listOf(contact.other_names)].map(normalizeName2)));
-  const emails = new Set(found2.flatMap((contact) => listOf(contact.emails).map((email2) => email2.toLowerCase())));
-  const phones = new Set(found2.flatMap((contact) => listOf(contact.phones).map(phoneDigits)));
-  if (query) {
-    names.add(normalizeName2(query));
-    emails.add(query.trim());
-    phones.add(phoneDigits(query));
-  }
-  names.delete("");
-  phones.forEach((digits2) => digits2.length < 7 && phones.delete(digits2));
+  const keysOf = (rows5, extra) => matchKeys({
+    names: [...rows5.flatMap((contact) => [contact.name, ...listOf(contact.other_names)]), ...extra],
+    emails: [...rows5.flatMap((contact) => listOf(contact.emails)), ...extra],
+    phones: [...rows5.flatMap((contact) => listOf(contact.phones)), ...extra]
+  });
+  const wanted2 = keysOf(found2, query ? [query] : []);
   const foundIds = new Set(found2.map((contact) => String(contact.id)));
   const near = [];
   for (const contact of contacts) {
     if (foundIds.has(String(contact.id))) continue;
-    const reasons = [];
-    if ([contact.name, ...listOf(contact.other_names)].some((name) => names.has(normalizeName2(name)))) reasons.push("same name");
-    if (listOf(contact.emails).some((email2) => emails.has(email2.toLowerCase()))) reasons.push("shared email");
-    if (listOf(contact.phones).some((phone) => phones.has(phoneDigits(phone)))) reasons.push("shared phone");
+    const reasons = matchReasons(wanted2, keysOf([contact], []));
     if (reasons.length) near.push({ id: contact.id, name: contact.name, entity: contact.entity, reasons });
   }
   return { contacts: found2.map((contact) => withTies(contact, affiliations, roles, matters)), near };

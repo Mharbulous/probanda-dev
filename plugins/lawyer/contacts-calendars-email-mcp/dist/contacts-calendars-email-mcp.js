@@ -1,4 +1,4 @@
-// build-stamp: 8b1b15e6ef35
+// build-stamp: f3818bd39d91
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -108084,6 +108084,11 @@ function contactsToolDefinitions() {
         additionalProperties: false
       },
       annotations: { readOnlyHint: true }
+    },
+    {
+      name: "contacts__write_probe",
+      description: "Test whether this account lets Probanda change the address book, on one test contact that holds nothing real: create it, read it back, add a phone, save a copy on this machine, remove it. Changes no other contact. Held until the practitioner approves it. Returns {can_write, altered_on_create, altered_on_update (the properties the server changed or dropped, by name), removed, backup_path}. An error that says the test stopped part-way means the test contact may remain; tell the practitioner its name from the message." + errors,
+      inputSchema: { type: "object", properties: {}, additionalProperties: false }
     }
   ];
 }
@@ -119581,7 +119586,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "8b1b15e6ef35";
+var BUILD_STAMP = false ? null : "f3818bd39d91";
 
 // src/local-page/listener.ts
 import { createServer, get } from "node:http";
@@ -122002,6 +122007,31 @@ function getObject(context, credential, kind, url) {
     if (res.status === 401) throw new DataServerError(`${LABEL[kind]}: the server refused the sign-in reading ${url} (HTTP 401).`, "dav_auth");
     if (!res.ok) throw new DataServerError(`Could not read ${url}: HTTP ${res.status} ${res.statusText}`, "dav_error");
     return { text: await res.text(), etag: res.headers.get("etag") };
+  });
+}
+function permittedRequest(context, credential, url, init, permit2) {
+  const kind = "carddav";
+  return runDav(context, credential, kind, "changing " + url, async () => {
+    const { username, trust } = await session(context, credential, kind);
+    const book = assertTrustedUrl(credential, kind, permit2.collectionUrl, trust);
+    const target = assertTrustedUrl(credential, kind, url, trust);
+    const name2 = book.pathname.endsWith("/") && target.href.startsWith(book.href) ? target.href.slice(book.href.length) : "";
+    if (!/^[^/?#]+\.vcf$/.test(name2)) {
+      throw new ValidationError(`Refusing to change "${url}": it is not a contact card in the address book.`);
+    }
+    const headers2 = new Headers(init.headers);
+    permit2.check(init.method.toUpperCase(), headers2);
+    headers2.set("Authorization", "Basic " + Buffer.from(username + ":" + credential.password).toString("base64"));
+    const res = await (context.davFetch ?? fetch)(url, {
+      method: init.method.toUpperCase(),
+      headers: headers2,
+      body: init.body,
+      redirect: "error",
+      // never let the credential follow a redirect
+      signal: AbortSignal.timeout(context.davTimeoutMs ?? DEFAULT_DAV_TIMEOUT_MS)
+    });
+    if (res.status === 401) throw new DataServerError(`${LABEL[kind]}: the server refused the sign-in changing ${url} (HTTP 401).`, "dav_auth");
+    return { status: res.status, etag: res.headers.get("etag") };
   });
 }
 var absolute = (href, base) => new URL(href, base).href;
@@ -130260,6 +130290,20 @@ async function getEvent(context, args) {
   }
 }
 
+// src/contacts/book.ts
+function readBook(context, credential) {
+  return runDav(context, credential, "carddav", "reading contacts", async (client) => {
+    const books = await client.fetchAddressBooks();
+    if (books.length === 0) throw new DataServerError("contacts: no address book found for this account.", "dav_error");
+    const book = books[0];
+    const cards = await client.fetchVCards({ addressBook: book });
+    return {
+      bookUrl: book.url,
+      cards: cards.filter((c3) => c3.data?.includes("BEGIN:VCARD")).map((c3) => ({ url: absolute(c3.url, book.url), etag: c3.etag, text: c3.data }))
+    };
+  });
+}
+
 // src/contacts/vcard.ts
 var unescape2 = (v3) => v3.replace(/\\([nN,;\\])/g, (_3, c3) => c3 === "n" || c3 === "N" ? "\n" : c3);
 function splitUnescaped(v3, sep) {
@@ -130389,10 +130433,225 @@ function parseContact(text3) {
   };
 }
 
+// src/contacts/write-tools.ts
+import { randomUUID as randomUUID2 } from "node:crypto";
+import { mkdirSync as mkdirSync4, writeFileSync as writeFileSync3 } from "node:fs";
+import { join as join7 } from "node:path";
+
+// src/contacts/card-write.ts
+var WRITE = "PUT";
+var REMOVE = "DELETE";
+function permit(bookUrl) {
+  return {
+    collectionUrl: bookUrl,
+    check(method, headers2) {
+      const creating = headers2.get("if-none-match") === "*" && !headers2.has("if-match");
+      const unchanged = Boolean(headers2.get("if-match")) && headers2.get("if-match") !== "*" && !headers2.has("if-none-match");
+      if (!(method === WRITE && (creating || unchanged)) && !(method === REMOVE && unchanged)) {
+        throw new ValidationError(`Refusing a ${method} request: a contact card changes only under its condition.`);
+      }
+    }
+  };
+}
+var CARD_TYPE = { "Content-Type": "text/vcard; charset=utf-8" };
+function requireEtag(etag, url) {
+  if (!etag) throw new DataServerError(`The card at ${url} has no version mark, so it cannot be changed safely.`, "dav_stale");
+  return etag;
+}
+function judge(status2, url, what) {
+  if (status2 === 412) {
+    throw new DataServerError(`The card at ${url} changed since it was read, so nothing was ${what}. Scan again.`, "dav_stale");
+  }
+  if (status2 < 200 || status2 >= 300) throw new DataServerError(`The card at ${url} was not ${what}: HTTP ${status2}`, "dav_error");
+}
+async function createCard(context, credential, bookUrl, fileName, text3) {
+  const url = bookUrl + fileName;
+  const res = await permittedRequest(context, credential, url, { method: WRITE, headers: { ...CARD_TYPE, "If-None-Match": "*" }, body: text3 }, permit(bookUrl));
+  if (res.status === 412) throw new DataServerError(`A card already exists at ${url}, so nothing was created.`, "dav_exists");
+  judge(res.status, url, "created");
+  return { url, etag: res.etag };
+}
+async function replaceCard(context, credential, bookUrl, url, etag, text3) {
+  const headers2 = { ...CARD_TYPE, "If-Match": requireEtag(etag, url) };
+  const res = await permittedRequest(context, credential, url, { method: WRITE, headers: headers2, body: text3 }, permit(bookUrl));
+  judge(res.status, url, "changed");
+  return { etag: res.etag };
+}
+async function removeCard(context, credential, bookUrl, url, etag) {
+  const res = await permittedRequest(context, credential, url, { method: REMOVE, headers: { "If-Match": requireEtag(etag, url) } }, permit(bookUrl));
+  judge(res.status, url, "removed");
+}
+
+// src/contact-match.ts
+var CORPORATE_SUFFIX = /\s+(ltd|limited|inc|incorporated|llp|lp|llc|corp|corporation|co)$/;
+function normalizeName2(value) {
+  let name2 = String(value ?? "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  while (CORPORATE_SUFFIX.test(name2)) name2 = name2.replace(CORPORATE_SUFFIX, "");
+  return name2;
+}
+var PHONE_EXTENSION = /\s*(?:x|ext\.?|extension|#)\s*\d+\s*$/i;
+function phoneDigits(value) {
+  const digits = value.replace(PHONE_EXTENSION, "").replace(/\D/g, "");
+  return digits.length > 10 ? digits.slice(-10) : digits;
+}
+function emailKey(value) {
+  return value.trim().toLowerCase();
+}
+function postalKey(value) {
+  return value.replace(/\s+/g, "").toUpperCase();
+}
+
+// src/contacts/vcard-edit.ts
+var escape3 = (value) => value.replace(/\\/g, "\\\\").replace(/\r?\n/g, "\\n").replace(/([,;])/g, "\\$1");
+var FOLD_AT = 75;
+function fold(line, eol) {
+  const parts = [line.slice(0, FOLD_AT)];
+  for (let at = FOLD_AT; at < line.length; at += FOLD_AT - 1) parts.push(" " + line.slice(at, at + FOLD_AT - 1));
+  return parts.join(eol);
+}
+var PHONE_TYPES = {
+  mobile: "type=CELL;type=VOICE",
+  work: "type=WORK;type=VOICE",
+  home: "type=HOME;type=VOICE",
+  main: "type=MAIN",
+  "work fax": "type=WORK;type=FAX",
+  "other fax": "type=OTHER;type=FAX",
+  car: "type=CAR",
+  other: "type=OTHER;type=VOICE"
+};
+var emailLine = (value) => `EMAIL;type=INTERNET:${escape3(value)}`;
+var phoneLine = (phone) => `TEL;${PHONE_TYPES[phone.label] ?? PHONE_TYPES.other}:${escape3(phone.value)}`;
+var addressLine = (a3) => `ADR;type=${a3.label.toUpperCase()}:;;${[a3.street, a3.city, a3.region, a3.postalCode, ""].map(escape3).join(";")}`;
+var addressKey = (a3) => postalKey(a3.postalCode ?? "") || normalizeName2(`${a3.street ?? ""} ${a3.city ?? ""}`);
+function additions(cardText, row) {
+  const card = parseContact(cardText);
+  const raw = parseLines(cardText);
+  const out = { lines: [], added: [], conflicts: [] };
+  const add = (line, what) => {
+    out.lines.push(line);
+    out.added.push(what);
+  };
+  const emails = new Set(card.emails.map((entry) => emailKey(entry.value)));
+  for (const email2 of row.emails) if (!emails.has(emailKey(email2))) add(emailLine(email2), `email ${email2}`);
+  const phones = new Set(card.phones.map((entry) => phoneDigits(entry.value)));
+  for (const phone of row.phones) if (!phones.has(phoneDigits(phone.value))) add(phoneLine(phone), `${phone.label} phone ${phone.value}`);
+  const addresses = new Set(card.addresses.map(addressKey));
+  for (const address of row.addresses) if (!addresses.has(addressKey(address))) add(addressLine(address), `${address.label} address`);
+  const single = (what, held2, wanted, line, same) => {
+    if (!wanted) return;
+    if (!held2) add(line, what);
+    else if (!same(held2, wanted)) out.conflicts.push(`${what} differs`);
+  };
+  const sameText = (a3, b3) => normalizeName2(a3) === normalizeName2(b3);
+  if (row.kind === "person") single("organization", card.organization, row.organization, `ORG:${escape3(row.organization)};`, sameText);
+  single("job title", card.jobTitle, row.jobTitle, `TITLE:${escape3(row.jobTitle)}`, sameText);
+  single("birthday", card.birthday, row.birthday, `BDAY;value=date:${row.birthday}`, (held2, wanted) => wanted.endsWith(held2.replace(/^--/, "")));
+  single("note", card.notes, row.notes, `NOTE:${escape3(row.notes)}`, (held2, wanted) => held2.includes(wanted.trim()));
+  const held = (name2) => raw.filter((line) => line.name === name2).map((line) => unescape2(line.value));
+  single("web page", held("URL")[0], row.url, `URL:${escape3(row.url)}`, (_3, wanted) => held("URL").some((url) => url.replace(/\/$/, "") === wanted.replace(/\/$/, "")));
+  single("nickname", held("NICKNAME")[0], row.nickname, `NICKNAME:${escape3(row.nickname)}`, sameText);
+  return out;
+}
+var END = /^END:VCARD[ \t]*\r?$/im;
+var REV = /^REV[;:].*\r?\n/im;
+function addLines(cardText, lines, rev) {
+  const eol = cardText.includes("\r\n") ? "\r\n" : "\n";
+  const text3 = cardText.replace(REV, "");
+  const end = END.exec(text3);
+  if (!end) throw new Error("the card has no end marker");
+  const added = [...lines, `REV:${rev}`].map((line) => fold(line, eol) + eol).join("");
+  return text3.slice(0, end.index) + added + text3.slice(end.index);
+}
+function newCard(row, uid, rev) {
+  const company = row.kind === "company";
+  const head = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    "PRODID:-//Probanda//Contacts//EN",
+    `N:${[row.lastName, row.firstName, row.middleName, "", ""].map(escape3).join(";")}`,
+    `FN:${escape3(row.name)}`,
+    ...company ? [`ORG:${escape3(row.organization)};`, "X-ABShowAs:COMPANY"] : [],
+    `UID:${uid}`,
+    "END:VCARD"
+  ];
+  return addLines(head.join("\r\n") + "\r\n", additions(head.join("\r\n"), row).lines, rev);
+}
+function lostProperties(before, after) {
+  const SERVER_OWNED = /* @__PURE__ */ new Set(["REV", "PRODID", "VERSION"]);
+  const kept = new Set(parseLines(after).map((line) => `${line.name}:${line.value}`));
+  return [...new Set(parseLines(before).filter((line) => !SERVER_OWNED.has(line.name) && !kept.has(`${line.name}:${line.value}`)).map((line) => line.name))];
+}
+
+// src/contacts/write-tools.ts
+var contactsWriteTools = [
+  { name: "contacts__write_probe", handler: (_args, context) => writeProbe(context) }
+];
+var contactsStateDir = () => defaultStateDir(process.env, "contacts");
+var revNow = () => (/* @__PURE__ */ new Date()).toISOString().replace(/\.\d+Z$/, "Z");
+var PROBE_NAME = "ZZ Probanda test - safe to remove";
+async function exists(context, credential, url) {
+  try {
+    await getObject(context, credential, "carddav", url);
+    return true;
+  } catch (error2) {
+    if (error2 instanceof DataServerError && /^Nothing found/.test(error2.message)) return false;
+    throw error2;
+  }
+}
+async function writeProbe(context) {
+  const credential = requireDav(context.mail, "carddav");
+  const { bookUrl } = await readBook(context, credential);
+  const uid = randomUUID2();
+  const row = {
+    row: 0,
+    kind: "company",
+    name: PROBE_NAME,
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    nickname: "",
+    organization: PROBE_NAME,
+    jobTitle: "",
+    emails: [],
+    phones: [{ label: "main", value: "604-555-0100" }],
+    addresses: [],
+    url: "",
+    birthday: "",
+    notes: ""
+  };
+  const sent = addLines(newCard(row, uid, revNow()), ["item1.TEL;type=pref:604-555-0101", "item1.X-ABLabel:Probe label", "X-PROBANDA-PROBE:kept"], revNow());
+  const { url } = await createCard(context, credential, bookUrl, `${uid}.vcf`, sent);
+  try {
+    const created = await getObject(context, credential, "carddav", url);
+    const edited = addLines(created.text, ["TEL;type=WORK;type=VOICE:604-555-0102"], revNow());
+    await replaceCard(context, credential, bookUrl, url, created.etag, edited);
+    const changed = await getObject(context, credential, "carddav", url);
+    const backupDir = join7(contactsStateDir(), "backups", "probe");
+    mkdirSync4(backupDir, { recursive: true });
+    const backupPath = join7(backupDir, `${uid}.vcf`);
+    writeFileSync3(backupPath, changed.text, "utf-8");
+    await removeCard(context, credential, bookUrl, url, changed.etag);
+    return {
+      can_write: true,
+      altered_on_create: lostProperties(sent, created.text),
+      altered_on_update: lostProperties(edited, changed.text),
+      removed: !await exists(context, credential, url),
+      backup_path: backupPath
+    };
+  } catch (error2) {
+    const message = error2 instanceof Error ? error2.message : String(error2);
+    throw new DataServerError(
+      `The test stopped part-way: ${message} A test contact named "${PROBE_NAME}" may remain in the address book; it holds nothing real.`,
+      error2 instanceof DataServerError ? error2.code : "dav_error"
+    );
+  }
+}
+
 // src/contacts/tools.ts
 var contactsTools = [
   { name: "contacts__search", handler: (args, context) => search2(context, args) },
-  { name: "contacts__get", handler: (args, context) => get2(context, args) }
+  { name: "contacts__get", handler: (args, context) => get2(context, args) },
+  ...contactsWriteTools
 ];
 var summary2 = (c3) => ({
   url: c3.url,
@@ -130409,12 +130668,8 @@ function search2(context, args) {
   }
   const q3 = typeof args.query === "string" ? args.query.trim().toLowerCase() : void 0;
   const digits = q3?.replace(/\D/g, "");
-  return runDav(context, credential, "carddav", "reading contacts", async (client) => {
-    const books = await client.fetchAddressBooks();
-    if (books.length === 0) throw new DataServerError("contacts: no address book found for this account.", "dav_error");
-    const book = books[0];
-    const cards = await client.fetchVCards({ addressBook: book });
-    const all = cards.filter((c3) => c3.data?.includes("BEGIN:VCARD")).map((c3) => ({ url: absolute(c3.url, book.url), etag: c3.etag, ...parseContact(c3.data) })).filter((c3) => !c3.isGroup).map(({ isGroup, ...c3 }) => c3);
+  return readBook(context, credential).then(({ cards }) => {
+    const all = cards.map((c3) => ({ url: c3.url, etag: c3.etag, ...parseContact(c3.text) })).filter((c3) => !c3.isGroup).map(({ isGroup, ...c3 }) => c3);
     const hits = all.filter((c3) => {
       if (!q3) return true;
       const hay = [c3.name, c3.organization, ...c3.emails.map((e3) => e3.value)].filter(Boolean).join("\n").toLowerCase();
