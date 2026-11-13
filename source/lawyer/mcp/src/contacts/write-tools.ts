@@ -2,26 +2,23 @@
 // approval hook (source/lawyer/hooks/one-way-gate.py) until the practitioner approves it.
 
 import { randomUUID } from "node:crypto";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { defaultStateDir } from "../../../../mcp-shared/dpapi-store.js";
 import { DataServerError } from "../errors.js";
 import { getObject, requireDav, type DavContext } from "../dav/session.js";
 import type { MailCredential } from "../mail/config.js";
 import type { Tool } from "../tool-list.js";
 import { readBook } from "./book.js";
 import { createCard, removeCard, replaceCard } from "./card-write.js";
+import { contactsImportTools } from "./import-tools.js";
+import { revNow, stateFolder } from "./plans.js";
 import { addLines, lostProperties, newCard } from "./vcard-edit.js";
 
 export const contactsWriteTools: Tool<DavContext>[] = [
   { name: "contacts__write_probe", handler: (_args, context) => writeProbe(context) },
+  ...contactsImportTools,
 ];
-
-/** Where plans and the backups of changed cards are kept, on this machine only. */
-export const contactsStateDir = (): string => defaultStateDir(process.env, "contacts");
-
-const revNow = (): string => new Date().toISOString().replace(/\.\d+Z$/, "Z");
 
 const PROBE_NAME = "ZZ Probanda test - safe to remove";
 
@@ -56,9 +53,7 @@ async function writeProbe(context: DavContext): Promise<unknown> {
     const edited = addLines(created.text, ["TEL;type=WORK;type=VOICE:604-555-0102"], revNow());
     await replaceCard(context, credential, bookUrl, url, created.etag, edited);
     const changed = await getObject(context, credential, "carddav", url);
-    const backupDir = join(contactsStateDir(), "backups", "probe");
-    mkdirSync(backupDir, { recursive: true });
-    const backupPath = join(backupDir, `${uid}.vcf`);
+    const backupPath = join(stateFolder("backups", "probe"), `${uid}.vcf`);
     writeFileSync(backupPath, changed.text, "utf-8");
     await removeCard(context, credential, bookUrl, url, changed.etag);
     return {

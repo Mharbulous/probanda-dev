@@ -63,20 +63,20 @@ function known(text: string, source: { card?: Card; row?: number }): Known | und
 
 const shares = (a: Set<string>, b: Set<string>): boolean => [...a].some((value) => b.has(value));
 
-export function classify(rows: Incoming[], cards: Card[]): Classified {
+/**
+ * `decisions` holds the practitioner's answer for a row that came back ambiguous, by row
+ * number: "new" to create it, or the address of the card it is. It changes no other row.
+ */
+export function classify(rows: Incoming[], cards: Card[], decisions: Record<string, string> = {}): Classified {
   const pool = cards.map((card) => known(card.text, { card })).filter((entry): entry is Known => entry !== undefined);
   const outcomes: Outcome[] = [];
   for (const row of rows) {
     const fresh = known(newCard(row, "", ""), { row: row.row }) as Known;
-    const ambiguous = (reason: string, candidates: Known[]) =>
-      outcomes.push({ row: row.row, name: row.name, class: "ambiguous", reason, candidates: [...new Set(candidates.map((entry) => entry.name))] });
-
-    const sameName = pool.filter((entry) => entry.company === fresh.company && shares(entry.keys.names, fresh.keys.names));
-    // The same contact: the same name, and either a shared detail or nothing in the row the card lacks.
-    const same = sameName.filter((entry) => matchReasons(entry.keys, fresh.keys).length > 1 || additions(entry.text, row).lines.length === 0);
-    if (same.length > 1) ambiguous("more than one contact matches", same);
-    else if (same.length === 1) {
-      const entry = same[0];
+    const create = () => {
+      pool.push(fresh);
+      outcomes.push({ row: row.row, name: row.name, class: "new" });
+    };
+    const fold = (entry: Known) => {
       const { lines, added, conflicts } = additions(entry.text, row);
       if (lines.length) {
         entry.text = addLines(entry.text, lines, "");
@@ -87,7 +87,21 @@ export function classify(rows: Incoming[], cards: Card[]): Classified {
       if (entry.card === undefined) outcomes.push({ row: row.row, name: row.name, class: "duplicate_row", of_row: entry.row as number });
       else if (lines.length) outcomes.push({ row: row.row, name: row.name, class: "add_only", url: entry.card.url, added, conflicts });
       else outcomes.push({ row: row.row, name: row.name, class: "unchanged", url: entry.card.url, conflicts });
-    } else if (sameName.length) ambiguous("same name, no shared detail", sameName);
+    };
+    const ambiguous = (reason: string, candidates: Known[]) => {
+      const decision = decisions[String(row.row)];
+      const chosen = pool.find((entry) => entry.card !== undefined && entry.card.url === decision);
+      if (decision === "new") create();
+      else if (chosen) fold(chosen);
+      else outcomes.push({ row: row.row, name: row.name, class: "ambiguous", reason, candidates: [...new Set(candidates.map((entry) => entry.name))] });
+    };
+
+    const sameName = pool.filter((entry) => entry.company === fresh.company && shares(entry.keys.names, fresh.keys.names));
+    // The same contact: the same name, and either a shared detail or nothing in the row the card lacks.
+    const same = sameName.filter((entry) => matchReasons(entry.keys, fresh.keys).length > 1 || additions(entry.text, row).lines.length === 0);
+    if (same.length > 1) ambiguous("more than one contact matches", same);
+    else if (same.length === 1) fold(same[0]);
+    else if (sameName.length) ambiguous("same name, no shared detail", sameName);
     else {
       const byEmail = pool.filter((entry) => shares(entry.keys.emails, fresh.keys.emails));
       // A number one other person holds may be this person under another name. A number a
@@ -96,10 +110,7 @@ export function classify(rows: Incoming[], cards: Card[]): Classified {
         [...fresh.keys.phones].some((phone) => entry.keys.phones.has(phone) && pool.filter((other) => other.keys.phones.has(phone)).length === 1));
       if (byEmail.length) ambiguous("shares an email with a different name", byEmail);
       else if (byPhone.length) ambiguous("shares a phone with a different name", byPhone);
-      else {
-        pool.push(fresh);
-        outcomes.push({ row: row.row, name: row.name, class: "new" });
-      }
+      else create();
     }
   }
   const byRow = new Map(rows.map((row) => [row.row, row]));

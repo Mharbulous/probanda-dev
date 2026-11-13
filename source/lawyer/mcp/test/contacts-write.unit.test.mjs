@@ -2,7 +2,7 @@
 // edits, and sorting rows against the cards already held. Every name and number is invented.
 
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
@@ -232,4 +232,108 @@ test("a server that refuses writes fails the probe with its answer, and a probe 
   partial.context.davFetch = async (url, init) => (init.method === "PUT" && ++writes === 2 ? new Response("", { status: 500 }) : fetch(url, init));
   const stopped = JSON.parse((await dispatchTool(partial.context, "contacts__write_probe", {})).content[0].text).error;
   assert.match(stopped.message, /stopped part-way: .*HTTP 500.*"ZZ Probanda test - safe to remove" may remain/);
+});
+
+// --- the import tools, end to end against the fake address book ---
+
+const errorOf = async (context, name, args) => {
+  const result = await dispatchTool(context, name, args);
+  assert.equal(result.isError, true, result.content[0].text);
+  return JSON.parse(result.content[0].text).error;
+};
+
+function csvFile(...lines) {
+  const path = join(mkdtempSync(join(STATE_DIR, "csv-")), "contacts.csv");
+  writeFileSync(path, csv(...lines), "utf-8");
+  return path;
+}
+
+const IMPORT_ROWS = [
+  '"Ada","Sample","","","ada@example.test","604-555-0102","","","","","","",""',
+  '"","","Harbour Example LLP","","","","604-555-0101","","","","1899-01-01","","null null"',
+  '"Gil","Sample","","","gil@example.test","","","","","","","",""',
+  '"Ada","Other","","","","604-555-0102","","","","","","",""',
+];
+
+test("a scan writes nothing, an approved plan adds the new contacts and details, and a second scan finds nothing to do", async () => {
+  const { store, sent, context } = fakeBook({ "ada.vcf": ADA });
+  const path = csvFile(...IMPORT_ROWS);
+  const scan = await callTool(context, "contacts__import_scan", { path });
+  assert.deepEqual(scan.counts, { new: 2, add_only: 1, unchanged: 0, duplicate_row: 0, ambiguous: 1, left_out: 0 });
+  assert.deepEqual([scan.rows, scan.create_count, scan.update_count], [4, 2, 1]);
+  assert.deepEqual(scan.ambiguous.map((row) => [row.row, row.name, row.reason]), [[5, "Ada Other", "shares a phone with a different name"]]);
+  assert.match(readFileSync(scan.report_path, "utf-8"), /row 2: Ada Sample - add to the existing contact: email ada@example\.test\r\nrow 3: Harbour Example LLP - new contact/);
+  assert.deepEqual([sent, store.size], [[], 1], "the scan sent nothing");
+
+  assert.match((await errorOf(context, "contacts__import_apply", { plan_id: scan.plan_id, create_count: 3, update_count: 1 })).message, /must be the plan's: 2 and 1/);
+  assert.equal((await errorOf(context, "contacts__import_apply_continue", { plan_id: scan.plan_id })).code, "contacts_plan_not_started");
+  const applied = await callTool(context, "contacts__import_apply", { plan_id: scan.plan_id, create_count: 2, update_count: 1 });
+  assert.deepEqual([applied.status, applied.created, applied.updated, applied.remaining, applied.stopped], ["done", 2, 1, 0, []]);
+  assert.equal(store.size, 3);
+  assert.match(store.get(`${BOOK}ada.vcf`).text, /TEL;type=CELL:604-555-0102\r\n(.*\r\n)*EMAIL;type=INTERNET:ada@example\.test\r\nREV:/);
+  assert.ok(sent.every(([method]) => method !== "DELETE"));
+  assert.equal((await errorOf(context, "contacts__import_apply", { plan_id: scan.plan_id, create_count: 2, update_count: 1 })).code, "contacts_plan_started");
+
+  const again = await callTool(context, "contacts__import_scan", { path });
+  assert.deepEqual([again.create_count, again.update_count, again.counts.unchanged, again.counts.ambiguous], [0, 0, 3, 1]);
+  assert.match((await errorOf(context, "contacts__import_apply", { plan_id: again.plan_id, create_count: 0, update_count: 0 })).message, /changes nothing/);
+});
+
+test("a long plan runs over several calls, and a stopped run continues without writing anything twice", async () => {
+  const { store, sent, context } = fakeBook({ "ada.vcf": ADA });
+  context.contactsBudgetMs = 0;
+  const scan = await callTool(context, "contacts__import_scan", { path: csvFile(...IMPORT_ROWS) });
+  const first = await callTool(context, "contacts__import_apply", { plan_id: scan.plan_id, create_count: 2, update_count: 1 });
+  assert.deepEqual([first.status, first.created, first.remaining], ["writing", 1, 2]);
+  // The second create reaches the server, then the call dies before its result is recorded.
+  const fetch = context.davFetch;
+  let gets = 0;
+  context.davFetch = async (url, init) => (init.method === "GET" && ++gets === 1 ? Promise.reject(new Error("connection lost")) : fetch(url, init));
+  assert.equal((await errorOf(context, "contacts__import_apply_continue", { plan_id: scan.plan_id })).code, "dav_error");
+  assert.equal(store.size, 3, "the card was created before the call died");
+  for (let i = 0; i < 2; i++) await callTool(context, "contacts__import_apply_continue", { plan_id: scan.plan_id });
+  const last = await callTool(context, "contacts__import_apply_continue", { plan_id: scan.plan_id });
+  assert.deepEqual([last.status, last.created, last.updated, last.stopped_count], ["done", 2, 1, 0]);
+  assert.equal(store.size, 3);
+  assert.equal(sent.filter(([method, , condition]) => method === "PUT" && condition !== "*").length, 1, "the existing card was changed once");
+});
+
+test("a contact that changed or went since the scan is left as it is and listed, and a card the server altered is named", async () => {
+  const { store, context } = fakeBook({ "ada.vcf": ADA, "gil.vcf": person("gil", "Gil", "Sample", ["EMAIL:gil@example.test"]).text });
+  const scan = await callTool(context, "contacts__import_scan", { path: csvFile(
+    '"Ada","Sample","","","ada@example.test","604-555-0102","","","","","","",""',
+    '"Gil","Sample","","","gil@example.test","604-555-0105","","","","","","",""',
+  ) });
+  assert.equal(scan.update_count, 2);
+  store.set(`${BOOK}ada.vcf`, { text: ADA.replace("END:VCARD", "NOTE:edited on the phone\r\nEND:VCARD"), etag: '"9"' });
+  store.delete(`${BOOK}gil.vcf`);
+  const applied = await callTool(context, "contacts__import_apply", { plan_id: scan.plan_id, create_count: 0, update_count: 2 });
+  assert.deepEqual([applied.status, applied.updated, applied.stopped], ["done", 0, [
+    { name: "Ada Sample", why: "changed since the scan, so it was left as it is" },
+    { name: "Gil Sample", why: "no longer in the address book" },
+  ]]);
+  assert.match(store.get(`${BOOK}ada.vcf`).text, /NOTE:edited on the phone/);
+  assert.doesNotMatch(store.get(`${BOOK}ada.vcf`).text, /ada@example\.test/);
+
+  const altering = fakeBook({}, { rewrite: (text) => text.replace(/^TEL.*\r\n/m, "") });
+  const plan = await callTool(altering.context, "contacts__import_scan", { path: csvFile('"Hal","Sample","","","","604-555-0106","","","","","","",""') });
+  const result = await callTool(altering.context, "contacts__import_apply", { plan_id: plan.plan_id, create_count: 1, update_count: 0 });
+  assert.deepEqual(result.stopped, [{ name: "Hal Sample", why: "added, but the address book holds it differently (TEL)" }]);
+});
+
+test("the practitioner's decision settles an ambiguous row, as a new contact or as an existing one, and no other row", async () => {
+  const { store, context } = fakeBook({ "ada.vcf": ADA });
+  const path = csvFile(
+    '"Ada","Other","","","","604-555-0102","","","","","","",""',
+    '"Ada","Sample","","","","604-555-0177","","","","","","",""',
+    '"Gil","Sample","","","","","","","","","","",""',
+  );
+  const scan = await callTool(context, "contacts__import_scan", { path });
+  assert.deepEqual([scan.counts.ambiguous, scan.create_count, scan.update_count], [2, 1, 0]);
+  const decided = await callTool(context, "contacts__import_scan", { path, decisions: { 2: "new", 3: `${BOOK}ada.vcf`, 4: `${BOOK}ada.vcf` } });
+  assert.deepEqual([decided.counts.ambiguous, decided.create_count, decided.update_count], [0, 2, 1]);
+  await callTool(context, "contacts__import_apply", { plan_id: decided.plan_id, create_count: 2, update_count: 1 });
+  assert.equal(store.size, 3);
+  assert.match(store.get(`${BOOK}ada.vcf`).text, /TEL;type=CELL;type=VOICE:604-555-0177/);
+  assert.match((await errorOf(context, "contacts__import_scan", { path: join(STATE_DIR, "missing.csv") })).message, /Could not read a file/);
 });
