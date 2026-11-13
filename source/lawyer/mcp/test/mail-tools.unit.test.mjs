@@ -747,14 +747,22 @@ test("the contacts-calendars-email server lists the twenty-two mail tools and th
     "contacts__import_apply",
     "contacts__import_apply_continue",
     "contacts__import_scan",
+    "contacts__merge_apply",
+    "contacts__merge_apply_continue",
+    "contacts__merge_plan",
+    "contacts__merge_scan",
+    "contacts__restore_card",
     "contacts__search",
     "contacts__write_probe",
   ]);
   // Every calendar tool only reads. The contacts tools named here change the address book,
   // each behind the practitioner's approval; no other tool may.
-  const writers = ["contacts__write_probe", "contacts__import_apply", "contacts__import_apply_continue"];
+  const writers = [
+    "contacts__write_probe", "contacts__import_apply", "contacts__import_apply_continue",
+    "contacts__merge_apply", "contacts__merge_apply_continue", "contacts__restore_card",
+  ];
   for (const t of dav) assert.equal(t.annotations?.readOnlyHint === true, !writers.includes(t.name), t.name);
-  assert.equal(buildContactsCalendarsEmailToolDefinitions().length, 31);
+  assert.equal(buildContactsCalendarsEmailToolDefinitions().length, 36);
   assert.deepEqual(buildToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
   assert.deepEqual(buildFileManagerToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
 });

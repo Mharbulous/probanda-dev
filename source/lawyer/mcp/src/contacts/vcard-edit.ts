@@ -7,7 +7,7 @@ import { emailKey, normalizeName, phoneDigits, postalKey } from "../contact-matc
 import type { Incoming, IncomingAddress } from "./import-csv.js";
 import { parseContact, parseLines, unescape } from "./vcard.js";
 
-const escape = (value: string): string =>
+export const escape = (value: string): string =>
   value.replace(/\\/g, "\\\\").replace(/\r?\n/g, "\\n").replace(/([,;])/g, "\\$1");
 
 const FOLD_AT = 75;

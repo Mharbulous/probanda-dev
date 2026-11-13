@@ -337,3 +337,116 @@ test("the practitioner's decision settles an ambiguous row, as a new contact or 
   assert.match(store.get(`${BOOK}ada.vcf`).text, /TEL;type=CELL;type=VOICE:604-555-0177/);
   assert.match((await errorOf(context, "contacts__import_scan", { path: join(STATE_DIR, "missing.csv") })).message, /Could not read a file/);
 });
+
+// --- merging duplicate cards ---
+
+// Each fixture card's UID is its short name, so the group card names ben1 by it.
+const DUPLICATES = {
+  "ada1.vcf": person("ada1", "Ada", "Sample", ["TEL;type=CELL:604-555-0102", "EMAIL:ada@example.test"]).text,
+  "ada2.vcf": person("ada2", "Ada", "Sample", ["TEL;type=CELL:(604) 555-0102"]).text,
+  "ben1.vcf": person("ben1", "Ben", "Sample", ["TEL;type=WORK:604-555-0110", "NOTE:First note"]).text,
+  "ben2.vcf": person("ben2", "Ben", "Sample", [
+    "TEL;type=WORK:+1 604 555 0110", "item1.TEL:604-555-0111", "item1.X-ABLabel:Cottage", "EMAIL:ben@example.test",
+    "NOTE:Second note", "X-CUSTOM:carried", "PHOTO;ENCODING=b:AAAA",
+  ]).text,
+  "cy1.vcf": person("cy1", "Cy", "Sample", ["EMAIL:cy@example.test", "TITLE:Associate", "TEL:604-555-0120"]).text,
+  "cy2.vcf": person("cy2", "Cy", "Sample", ["EMAIL:cy@example.test", "TITLE:Partner"]).text,
+  "dee1.vcf": person("dee1", "Dee", "Sample", ["TEL:604-555-0130"]).text,
+  "dee2.vcf": person("dee2", "Dee", "Sample", ["TEL:604-555-0131"]).text,
+  "eve.vcf": person("eve", "Eve", "Sample", ["TEL:604-555-0140"]).text,
+  "team.vcf": card("team", ["N:Team;;;;", "FN:Team", "X-ADDRESSBOOKSERVER-KIND:group", "X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:ben1"]).text,
+};
+const short = (url) => url.replace(BOOK, "");
+const groupOf = (scan, name) => scan.groups.find((group) => group.contacts[0].name === name).group_id;
+
+test("a merge scan sorts same-name contacts into exact, mergeable, needs a choice and possible, and sends nothing", async () => {
+  const { sent, context } = fakeBook(DUPLICATES);
+  const scan = await callTool(context, "contacts__merge_scan", {});
+  assert.deepEqual(scan.counts, { exact: 1, mergeable: 1, needs_choice: 1, possible: 1 });
+  assert.deepEqual(scan.groups.map((group) => [group.class, group.contacts.map((c) => c.name), short(group.keep), group.conflicts]), [
+    ["exact", ["Ada Sample", "Ada Sample"], "ada1.vcf", []],
+    ["mergeable", ["Ben Sample", "Ben Sample"], "ben2.vcf", []],
+    ["needs_choice", ["Cy Sample", "Cy Sample"], "cy1.vcf", ["job title"]],
+    ["possible", ["Dee Sample", "Dee Sample"], "dee1.vcf", []],
+  ]);
+  assert.match(readFileSync(scan.report_path, "utf-8"), /\(needs_choice: job title differ\)\r\n  keep Cy Sample \| cy@example\.test, 604-555-0120/);
+  assert.deepEqual(sent, []);
+});
+
+test("an approved merge backs up every card first, writes the union into the kept card, and only then removes the other", async () => {
+  const { store, sent, context } = fakeBook(DUPLICATES);
+  const scan = await callTool(context, "contacts__merge_scan", {});
+  assert.match((await errorOf(context, "contacts__merge_plan", { groups: [{ group_id: groupOf(scan, "Cy Sample") }] })).message, /differ on job title/);
+  assert.equal((await errorOf(context, "contacts__merge_plan", { groups: [{ group_id: "0123456789ab" }] })).code, "contacts_plan_stale");
+  const plan = await callTool(context, "contacts__merge_plan", { groups: [
+    { group_id: groupOf(scan, "Ada Sample") },
+    { group_id: groupOf(scan, "Ben Sample"), keep: `${BOOK}ben1.vcf` },
+    { group_id: groupOf(scan, "Cy Sample"), choices: { "job title": `${BOOK}cy2.vcf` } },
+  ] });
+  assert.deepEqual([plan.group_count, plan.remove_count], [3, 3]);
+  assert.deepEqual([sent, store.size], [[], 10], "planning sent nothing");
+  assert.match((await errorOf(context, "contacts__merge_apply", { plan_id: plan.plan_id, group_count: 3, remove_count: 2 })).message, /must be the plan's: 3 and 3/);
+
+  // Each removal must find its card's backup already on disk.
+  const folder = join(STATE_DIR, "Coclerk", "contacts", "backups", `${new Date().toISOString().slice(0, 10)}_${plan.plan_id}`);
+  const fetch = context.davFetch;
+  context.davFetch = async (url, init) => {
+    if (init.method === "DELETE") assert.ok(existsSync(join(folder, short(url))), `backed up before removal: ${url}`);
+    return fetch(url, init);
+  };
+  const applied = await callTool(context, "contacts__merge_apply", { plan_id: plan.plan_id, group_count: 3, remove_count: 3 });
+  assert.deepEqual([applied.status, applied.merged, applied.removed, applied.stopped, applied.backup_dir], ["done", 3, 3, [], folder]);
+  assert.deepEqual([...store.keys()].map(short).sort(), ["ada1.vcf", "ben1.vcf", "cy1.vcf", "dee1.vcf", "dee2.vcf", "eve.vcf", "team.vcf"]);
+
+  const ben = store.get(`${BOOK}ben1.vcf`).text;
+  for (const line of ["TEL;type=WORK:604-555-0110", "item1.TEL:604-555-0111", "item1.X-ABLabel:Cottage", "EMAIL:ben@example.test", "X-CUSTOM:carried", "PHOTO;ENCODING=b:AAAA", "UID:ben1"]) {
+    assert.ok(ben.split("\r\n").includes(line), `merged card holds: ${line}`);
+  }
+  assert.equal(ben.match(/^(item1\.)?TEL/gm).length, 2, "the same number in another format is not added twice");
+  assert.match(ben, /NOTE:First note\\n\\nSecond note\r\n/);
+  assert.equal(ben.match(/^NOTE/gm).length, 1);
+  assert.match(store.get(`${BOOK}cy1.vcf`).text, /TITLE:Partner\r\n/);
+  assert.doesNotMatch(store.get(`${BOOK}cy1.vcf`).text, /Associate/);
+  assert.equal(store.get(`${BOOK}ada1.vcf`).text, DUPLICATES["ada1.vcf"], "an exact duplicate leaves the kept card untouched");
+  for (const name of ["ben1.vcf", "ben2.vcf"]) assert.equal(readFileSync(join(folder, name), "utf-8"), DUPLICATES[name]);
+  assert.equal(sent.filter(([method]) => method === "DELETE").length, 3);
+});
+
+test("a contact group the removed card was in gains the kept card, and a removed card is put back from its backup once", async () => {
+  const { store, context } = fakeBook(DUPLICATES);
+  const scan = await callTool(context, "contacts__merge_scan", {});
+  const plan = await callTool(context, "contacts__merge_plan", { groups: [{ group_id: groupOf(scan, "Ben Sample") }] });
+  const applied = await callTool(context, "contacts__merge_apply", { plan_id: plan.plan_id, group_count: 1, remove_count: 1 });
+  assert.equal(store.has(`${BOOK}ben1.vcf`), false);
+  assert.match(store.get(`${BOOK}team.vcf`).text, /MEMBER:urn:uuid:ben1\r\n(.*\r\n)*X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:ben2\r\n/);
+
+  assert.equal((await errorOf(context, "contacts__restore_card", { name: "Nobody Here" })).code, "contacts_backup_not_found");
+  // The merge test before this one also removed a Ben Sample, so the name alone is not enough.
+  assert.match((await errorOf(context, "contacts__restore_card", { name: "Ben Sample" })).message, /More than one removed contact has that name/);
+  assert.match((await errorOf(context, "contacts__restore_card", { name: "Ben Sample", path: join(STATE_DIR, "elsewhere.vcf") })).message, /must be a backup file/);
+  const path = join(applied.backup_dir, "ben1.vcf");
+  assert.match((await errorOf(context, "contacts__restore_card", { name: "Ada Sample", path })).message, /not the name of the contact in that backup/);
+  const restored = await callTool(context, "contacts__restore_card", { name: "ben sample", path });
+  assert.deepEqual([restored.name, restored.altered], ["Ben Sample", []]);
+  assert.equal(store.get(restored.url).text, DUPLICATES["ben1.vcf"]);
+  assert.equal((await errorOf(context, "contacts__restore_card", { name: "Ben Sample", path })).code, "contacts_already_present");
+});
+
+test("a card that changed after the plan is never removed, and a long merge runs over several calls", async () => {
+  const { store, context } = fakeBook(DUPLICATES);
+  const scan = await callTool(context, "contacts__merge_scan", {});
+  const plan = await callTool(context, "contacts__merge_plan", { groups: ["Ben Sample", "Ada Sample", "Dee Sample"].map((name) => ({ group_id: groupOf(scan, name) })) });
+  store.set(`${BOOK}ben1.vcf`, { text: DUPLICATES["ben1.vcf"].replace("First note", "Edited on the phone"), etag: '"7"' });
+  store.set(`${BOOK}ada1.vcf`, { text: DUPLICATES["ada1.vcf"], etag: '"7"' });
+  context.contactsBudgetMs = 0;
+  const first = await callTool(context, "contacts__merge_apply", { plan_id: plan.plan_id, group_count: 3, remove_count: 3 });
+  assert.deepEqual([first.status, first.remaining], ["writing", 2]);
+  await callTool(context, "contacts__merge_apply_continue", { plan_id: plan.plan_id });
+  const last = await callTool(context, "contacts__merge_apply_continue", { plan_id: plan.plan_id });
+  assert.deepEqual([last.status, last.merged, last.removed, last.stopped_count], ["done", 2, 2, 1]);
+  assert.match(last.stopped[0].why, /^Ben Sample changed since the scan, so it was left as it is/);
+  assert.match(store.get(`${BOOK}ben1.vcf`).text, /Edited on the phone/);
+  assert.equal(store.has(`${BOOK}ada2.vcf`), false, "an exact duplicate goes: nothing is written to the kept card, so its change does not matter");
+  assert.equal(store.has(`${BOOK}dee2.vcf`), false, "a possible group merges when the practitioner names it");
+  assert.match(store.get(`${BOOK}dee1.vcf`).text, /TEL:604-555-0131/);
+});

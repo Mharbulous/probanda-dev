@@ -12,12 +12,14 @@ import type { Tool } from "../tool-list.js";
 import { readBook } from "./book.js";
 import { createCard, removeCard, replaceCard } from "./card-write.js";
 import { contactsImportTools } from "./import-tools.js";
+import { contactsMergeTools } from "./merge-tools.js";
 import { revNow, stateFolder } from "./plans.js";
 import { addLines, lostProperties, newCard } from "./vcard-edit.js";
 
 export const contactsWriteTools: Tool<DavContext>[] = [
   { name: "contacts__write_probe", handler: (_args, context) => writeProbe(context) },
   ...contactsImportTools,
+  ...contactsMergeTools,
 ];
 
 const PROBE_NAME = "ZZ Probanda test - safe to remove";
