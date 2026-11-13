@@ -17,6 +17,7 @@ const { PracticeStore } = await import("../build/practice/store.js");
 const reads = await import("../build/tools/practice/reads.js");
 const writes = await import("../build/tools/practice/writes.js");
 const contacts = await import("../build/tools/practice/contacts.js");
+const match = await import("../build/contact-match.js");
 const { render_practice_board } = await import("../build/tools/practice/practice-board.js");
 const { pagesPreview } = await import("../build/pages/preview.js");
 
@@ -124,6 +125,16 @@ test("contact_lookup finds by name, email or phone and lists likely duplicates a
   const byId = await contacts.contact_lookup(store, { id: acme2.contact_id });
   assert.deepEqual(byId.near.map((row) => row.id), [acme.contact_id]);
   await assert.rejects(contacts.contact_lookup(store, {}), /requires id, query or a matter ref/);
+});
+
+test("the shared match rules ignore a phone's format and extension, and a short number matches nothing", () => {
+  for (const phone of ["778-386-2608", "(778) 386-2608", "17783862608", "+1 778 386 2608 x12", "778.386.2608 ext. 4"]) {
+    assert.equal(match.phoneDigits(phone), "7783862608", phone);
+  }
+  const row = match.matchKeys({ names: ["Acme Holdings Ltd.", ""], emails: [" Info@Acme.example "], phones: ["555-0199", "12"], postals: ["v6c 2t5"] });
+  const card = match.matchKeys({ names: ["ACME HOLDINGS INC"], emails: ["info@acme.example"], phones: ["604 555 0199", "12"], postals: ["V6C2T5"] });
+  assert.deepEqual(match.matchReasons(row, card), ["same name", "shared email", "same postal code"]);
+  assert.deepEqual(match.matchReasons(match.matchKeys({ names: [""] }), match.matchKeys({ names: [""] })), []);
 });
 
 // A party's counsel history: one role per appearance, closed by id, read back by matter.

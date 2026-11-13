@@ -10,6 +10,7 @@ import { dirname, join } from "node:path";
 import { caseDataFolder } from "../../case/locate.js";
 import { listCaseParties } from "../../case/list-parties.js";
 import { NotFoundError, ValidationError } from "../../errors.js";
+import { matchKeys, matchReasons } from "../../contact-match.js";
 import { CASE_DATA_FOLDER } from "../../files/matter-root.js";
 import { today } from "../../knowledge/common.js";
 import { resolveCaseDataRoot } from "../../practice/matter-data-root.js";
@@ -104,20 +105,6 @@ export async function upsert_matter_role(store: PracticeStore, args: Record<stri
 
 // ---- contact_lookup ----
 
-const CORPORATE_SUFFIX = /\s+(ltd|limited|inc|incorporated|llp|lp|llc|corp|corporation|co)$/;
-
-/** A name with case, punctuation and trailing corporate suffixes ignored. */
-export function normalizeName(value: unknown): string {
-  let name = String(value ?? "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
-  while (CORPORATE_SUFFIX.test(name)) name = name.replace(CORPORATE_SUFFIX, "");
-  return name;
-}
-
-export function phoneDigits(value: string): string {
-  const digits = value.replace(/\D/g, "");
-  return digits.length > 10 ? digits.slice(-10) : digits;
-}
-
 function listOf(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
 }
@@ -150,25 +137,18 @@ export async function contact_lookup(
   if (!args.id && !query) return { contacts: found.map((contact) => withTies(contact, affiliations, roles, matters)), near: [] };
 
   // What a near contact may share with what was found, or with the query itself.
-  const names = new Set(found.flatMap((contact) => [contact.name, ...listOf(contact.other_names)].map(normalizeName)));
-  const emails = new Set(found.flatMap((contact) => listOf(contact.emails).map((email) => email.toLowerCase())));
-  const phones = new Set(found.flatMap((contact) => listOf(contact.phones).map(phoneDigits)));
-  if (query) {
-    names.add(normalizeName(query));
-    emails.add(query.trim());
-    phones.add(phoneDigits(query));
-  }
-  names.delete("");
-  phones.forEach((digits) => digits.length < 7 && phones.delete(digits));
+  const keysOf = (rows: Row[], extra: string[]) => matchKeys({
+    names: [...rows.flatMap((contact) => [contact.name, ...listOf(contact.other_names)]), ...extra],
+    emails: [...rows.flatMap((contact) => listOf(contact.emails)), ...extra],
+    phones: [...rows.flatMap((contact) => listOf(contact.phones)), ...extra],
+  });
+  const wanted = keysOf(found, query ? [query] : []);
 
   const foundIds = new Set(found.map((contact) => String(contact.id)));
   const near: Row[] = [];
   for (const contact of contacts) {
     if (foundIds.has(String(contact.id))) continue;
-    const reasons: string[] = [];
-    if ([contact.name, ...listOf(contact.other_names)].some((name) => names.has(normalizeName(name)))) reasons.push("same name");
-    if (listOf(contact.emails).some((email) => emails.has(email.toLowerCase()))) reasons.push("shared email");
-    if (listOf(contact.phones).some((phone) => phones.has(phoneDigits(phone)))) reasons.push("shared phone");
+    const reasons = matchReasons(wanted, keysOf([contact], []));
     if (reasons.length) near.push({ id: contact.id, name: contact.name, entity: contact.entity, reasons });
   }
 

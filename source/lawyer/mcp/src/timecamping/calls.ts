@@ -7,7 +7,7 @@
 import { ValidationError } from "../errors.js";
 import { rowsOf, type Row } from "../practice/items.js";
 import type { PracticeStore } from "../practice/store.js";
-import { phoneDigits } from "../tools/practice/contacts.js";
+import { phoneDigits } from "../contact-match.js";
 import { addDaysIso, requireMatter, resolveMatter } from "../tools/practice/shared.js";
 import { timecampingDataQuery } from "./backend.js";
 
