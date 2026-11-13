@@ -1,12 +1,14 @@
-// The contacts__* tools of the lawyer plugin's data server: read-only CardDAV, signed
-// in with the mail credential (src/dav/session.ts). No tool creates, changes or
-// deletes a contact. Inputs and outputs match the practitioner's own desktop
-// extension's contacts_search and contacts_get, from which this is ported (MIT).
-// Tool definitions live in schema-gen.ts.
+// The contacts__* tools of the lawyer plugin's contacts-calendars-email server: CardDAV,
+// signed in with the mail credential (src/dav/session.ts). The two here only read, with
+// inputs and outputs matching the practitioner's own desktop extension's contacts_search
+// and contacts_get, from which they are ported (MIT). The tools that change the address
+// book are in write-tools.ts. Tool definitions live in src/schema/contacts.ts.
 
-import { DataServerError, ValidationError } from "../errors.js";
-import { absolute, getObject, requireDav, runDav, type DavContext } from "../dav/session.js";
+import { ValidationError } from "../errors.js";
+import { getObject, requireDav, type DavContext } from "../dav/session.js";
+import { readBook } from "./book.js";
 import { parseContact, type Contact } from "./vcard.js";
+import { contactsWriteTools } from "./write-tools.js";
 import type { Tool } from "../tool-list.js";
 
 type Args = Record<string, unknown>;
@@ -14,6 +16,7 @@ type Args = Record<string, unknown>;
 export const contactsTools: Tool<DavContext>[] = [
   { name: "contacts__search", handler: (args, context) => search(context, args) },
   { name: "contacts__get", handler: (args, context) => get(context, args) },
+  ...contactsWriteTools,
 ];
 
 type Listed = Omit<Contact, "isGroup"> & { url: string; etag?: string };
@@ -34,14 +37,9 @@ function search(context: DavContext, args: Args): Promise<unknown> {
   }
   const q = typeof args.query === "string" ? args.query.trim().toLowerCase() : undefined;
   const digits = q?.replace(/\D/g, "");
-  return runDav(context, credential, "carddav", "reading contacts", async (client) => {
-    const books = await client.fetchAddressBooks();
-    if (books.length === 0) throw new DataServerError("contacts: no address book found for this account.", "dav_error");
-    const book = books[0];
-    const cards = await client.fetchVCards({ addressBook: book });
+  return readBook(context, credential).then(({ cards }) => {
     const all: Listed[] = cards
-      .filter((c) => c.data?.includes("BEGIN:VCARD"))
-      .map((c) => ({ url: absolute(c.url, book.url), etag: c.etag, ...parseContact(c.data as string) }))
+      .map((c) => ({ url: c.url, etag: c.etag, ...parseContact(c.text) }))
       .filter((c) => !c.isGroup)
       .map(({ isGroup, ...c }) => c);
     const hits = all

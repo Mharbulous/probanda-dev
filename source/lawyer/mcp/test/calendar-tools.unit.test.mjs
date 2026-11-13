@@ -301,21 +301,37 @@ test("configure_credential checks the calendar fields, and the page saves a fail
   assert.equal(JSON.stringify(status).includes(FAKE_PASSWORD), false);
 });
 
-test("no file under src/dav/, src/calendar/ or src/contacts/ writes to a calendar or address book", () => {
-  const forbidden = [
-    /\b(PUT|DELETE|PROPPATCH|MKCALENDAR|MKCOL|MOVE|COPY)\b/,
-    /\b(create|update|delete)(CalendarObject|VCard|Object)\b/,
+// The practitioner allowed changes to contact cards on 2026-11-12, through one file. Everything
+// else here still only reads, and the calendar has no such file.
+const CARD_WRITER = "card-write.ts";
+
+test("no file under src/dav/, src/calendar/ or src/contacts/ writes to a calendar or address book, but the one card writer", () => {
+  const methods = /\b(PUT|DELETE|PROPPATCH|MKCALENDAR|MKCOL|MOVE|COPY)\b/;
+  const everywhere = [
+    /\b(create|update|delete)(CalendarObject|VCard|Object)\b/, // tsdav's own write functions
     /\bmake(Calendar|Collection)\b/,
+    /\b(PROPPATCH|MKCALENDAR|MKCOL|MOVE|COPY)\b/,
   ];
   let scanned = 0;
   for (const dir of ["dav", "calendar", "contacts"]) {
     for (const file of readdirSync(join(SRC, dir)).filter((f) => f.endsWith(".ts"))) {
       scanned += 1;
       const text = readFileSync(join(SRC, dir, file), "utf-8");
-      for (const pattern of forbidden) assert.equal(pattern.test(text), false, `${dir}/${file} matches ${pattern}`);
+      const writer = dir === "contacts" && file === CARD_WRITER;
+      for (const pattern of writer ? everywhere : [methods, ...everywhere]) {
+        assert.equal(pattern.test(text), false, `${dir}/${file} matches ${pattern}`);
+      }
     }
   }
   assert.ok(scanned >= 6, `only ${scanned} files scanned`);
+});
+
+test("only files under src/contacts/ import the card writer", () => {
+  const importers = readdirSync(SRC, { recursive: true, encoding: "utf-8" })
+    .filter((file) => file.endsWith(".ts") && /from\s+"[^"]*card-write\.js"/.test(readFileSync(join(SRC, file), "utf-8")))
+    .map((file) => file.replaceAll("\\", "/"));
+  assert.ok(importers.length > 0);
+  assert.deepEqual(importers.filter((file) => !file.startsWith("contacts/")), []);
 });
 
 // --- review fixes of 2026-10-15 -------------------------------------------------------

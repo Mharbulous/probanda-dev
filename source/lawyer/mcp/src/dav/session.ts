@@ -1,7 +1,10 @@
 // CalDAV and CardDAV access for the calendar__* and contacts__* tools, signed in
-// with the mail credential's password (src/mail/config.ts). Read-only: tsdav
-// handles discovery and collection queries, and the one raw request is a GET of
-// a single object. Ported from the practitioner's own mail, calendar and
+// with the mail credential's password (src/mail/config.ts). The calendar is
+// read-only. So is the address book, except through permittedRequest, which
+// changes one contact card under a permit only src/contacts/card-write.ts
+// holds (decided by the practitioner on 2026-11-12). tsdav handles discovery
+// and collection queries and can only read; the one raw read is a GET of a
+// single object. Ported from the practitioner's own mail, calendar and
 // contacts desktop extension (MIT), without its write paths.
 //
 // The password goes only to the configured CalDAV or CardDAV host, or over HTTPS
@@ -10,7 +13,8 @@
 // host during discovery). Sign-in follows only the configured server's own
 // answers, never a URL the model supplies. Every request, tsdav's included,
 // passes the same check, never follows a redirect unless discovery asks for it
-// to be handed back, and may only read (GET, PROPFIND, REPORT, OPTIONS).
+// to be handed back, and, permittedRequest aside, may only read (GET, PROPFIND,
+// REPORT, OPTIONS).
 
 import { createDAVClient } from "tsdav";
 
@@ -294,6 +298,49 @@ export function getObject(
     if (res.status === 401) throw new DataServerError(`${LABEL[kind]}: the server refused the sign-in reading ${url} (HTTP 401).`, "dav_auth");
     if (!res.ok) throw new DataServerError(`Could not read ${url}: HTTP ${res.status} ${res.statusText}`, "dav_error");
     return { text: await res.text(), etag: res.headers.get("etag") };
+  });
+}
+
+/** What one changing request may be: a card directly under one address book, under the caller's rule. */
+export interface CardPermit {
+  collectionUrl: string;
+  /** Throws unless this method, with these headers, is one the caller may send. */
+  check(method: string, headers: Headers): void;
+}
+
+/**
+ * The one way a request that changes anything is sent: to a contact card directly under the
+ * permit's address book, and never to a calendar. The guarded fetch, which tsdav uses, still
+ * only reads, so no permit ever reaches tsdav. Returns the status for the caller to judge.
+ */
+export function permittedRequest(
+  context: DavContext,
+  credential: MailCredential,
+  url: string,
+  init: { method: string; headers: Record<string, string>; body?: string },
+  permit: CardPermit
+): Promise<{ status: number; etag: string | null }> {
+  const kind: DavKind = "carddav";
+  return runDav(context, credential, kind, "changing " + url, async () => {
+    const { username, trust } = await session(context, credential, kind);
+    const book = assertTrustedUrl(credential, kind, permit.collectionUrl, trust);
+    const target = assertTrustedUrl(credential, kind, url, trust);
+    const name = book.pathname.endsWith("/") && target.href.startsWith(book.href) ? target.href.slice(book.href.length) : "";
+    if (!/^[^/?#]+\.vcf$/.test(name)) {
+      throw new ValidationError(`Refusing to change "${url}": it is not a contact card in the address book.`);
+    }
+    const headers = new Headers(init.headers);
+    permit.check(init.method.toUpperCase(), headers);
+    headers.set("Authorization", "Basic " + Buffer.from(username + ":" + credential.password).toString("base64"));
+    const res = await (context.davFetch ?? fetch)(url, {
+      method: init.method.toUpperCase(),
+      headers,
+      body: init.body,
+      redirect: "error", // never let the credential follow a redirect
+      signal: AbortSignal.timeout(context.davTimeoutMs ?? DEFAULT_DAV_TIMEOUT_MS),
+    });
+    if (res.status === 401) throw new DataServerError(`${LABEL[kind]}: the server refused the sign-in changing ${url} (HTTP 401).`, "dav_auth");
+    return { status: res.status, etag: res.headers.get("etag") };
   });
 }
 

@@ -745,9 +745,13 @@ test("the contacts-calendars-email server lists the twenty-two mail tools and th
     "calendar__list_events",
     "contacts__get",
     "contacts__search",
+    "contacts__write_probe",
   ]);
-  for (const t of dav) assert.equal(t.annotations?.readOnlyHint, true, t.name);
-  assert.equal(buildContactsCalendarsEmailToolDefinitions().length, 27);
+  // Every calendar tool only reads. The contacts tools named here change the address book,
+  // each behind the practitioner's approval; no other tool may.
+  const writers = ["contacts__write_probe"];
+  for (const t of dav) assert.equal(t.annotations?.readOnlyHint === true, !writers.includes(t.name), t.name);
+  assert.equal(buildContactsCalendarsEmailToolDefinitions().length, 28);
   assert.deepEqual(buildToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
   assert.deepEqual(buildFileManagerToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
 });

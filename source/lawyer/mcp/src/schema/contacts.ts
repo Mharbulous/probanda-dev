@@ -1,8 +1,8 @@
 import type { ToolDefinition } from "./shared.js";
 
 // The contacts__* tools: the practitioner's address book over CardDAV, signed in
-// with the Probanda mail connector's credential. Read-only; no tool writes a
-// contact. Served by the `data` server only.
+// with the Probanda mail connector's credential. Search and get only read. The
+// tools that change the address book are each held for the practitioner's approval.
 export function contactsToolDefinitions(): ToolDefinition[] {
   const errors =
     " Errors: `dav_not_configured` (run mail__configure_credential with the contacts fields), `dav_auth` (the " +
@@ -43,6 +43,17 @@ export function contactsToolDefinitions(): ToolDefinition[] {
         additionalProperties: false,
       },
       annotations: { readOnlyHint: true },
+    },
+    {
+      name: "contacts__write_probe",
+      description:
+        "Test whether this account lets Probanda change the address book, on one test contact that holds nothing real: " +
+        "create it, read it back, add a phone, save a copy on this machine, remove it. Changes no other contact. Held " +
+        "until the practitioner approves it. Returns {can_write, altered_on_create, altered_on_update (the properties " +
+        "the server changed or dropped, by name), removed, backup_path}. An error that says the test stopped part-way " +
+        "means the test contact may remain; tell the practitioner its name from the message." +
+        errors,
+      inputSchema: { type: "object", properties: {}, additionalProperties: false },
     },
   ];
 }
