@@ -1,4 +1,4 @@
-// build-stamp: 1eb7f61930a2
+// build-stamp: 37672a30c694
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15760,6 +15760,14 @@ var CONTENT_SOURCES = {
   calendar__get_event: "calendar",
   contacts__search: "contacts",
   contacts__get: "contacts",
+  contacts__import_scan: "contacts",
+  contacts__import_apply: "contacts",
+  contacts__import_apply_continue: "contacts",
+  contacts__merge_scan: "contacts",
+  contacts__merge_plan: "contacts",
+  contacts__merge_apply: "contacts",
+  contacts__merge_apply_continue: "contacts",
+  contacts__restore_card: "contacts",
   drafting_forms__read_message: "email file",
   sources__fetch: "web page",
   sources__check: "web page",
@@ -15858,7 +15866,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "1eb7f61930a2";
+var BUILD_STAMP = false ? null : "37672a30c694";
 
 // src/local-page/listener.ts
 import { createServer, get } from "node:http";

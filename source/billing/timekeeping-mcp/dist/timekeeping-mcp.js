@@ -1,4 +1,4 @@
-// build-stamp: 629e8447fea7
+// build-stamp: c0c4dc5a4c3b
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -16048,6 +16048,14 @@ var CONTENT_SOURCES = {
   calendar__get_event: "calendar",
   contacts__search: "contacts",
   contacts__get: "contacts",
+  contacts__import_scan: "contacts",
+  contacts__import_apply: "contacts",
+  contacts__import_apply_continue: "contacts",
+  contacts__merge_scan: "contacts",
+  contacts__merge_plan: "contacts",
+  contacts__merge_apply: "contacts",
+  contacts__merge_apply_continue: "contacts",
+  contacts__restore_card: "contacts",
   drafting_forms__read_message: "email file",
   sources__fetch: "web page",
   sources__check: "web page",
@@ -17979,7 +17987,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "629e8447fea7";
+var BUILD_STAMP = false ? null : "c0c4dc5a4c3b";
 
 // src/local-page/links.ts
 import { mkdirSync as mkdirSync5, readdirSync as readdirSync4, readFileSync as readFileSync5, renameSync, statSync as statSync2, unlinkSync as unlinkSync3, writeFileSync as writeFileSync5 } from "node:fs";

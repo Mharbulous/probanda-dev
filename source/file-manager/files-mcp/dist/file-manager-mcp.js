@@ -1,4 +1,4 @@
-// build-stamp: 81376c2be07b
+// build-stamp: d4f0c15d1cfb
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15870,6 +15870,14 @@ var CONTENT_SOURCES = {
   calendar__get_event: "calendar",
   contacts__search: "contacts",
   contacts__get: "contacts",
+  contacts__import_scan: "contacts",
+  contacts__import_apply: "contacts",
+  contacts__import_apply_continue: "contacts",
+  contacts__merge_scan: "contacts",
+  contacts__merge_plan: "contacts",
+  contacts__merge_apply: "contacts",
+  contacts__merge_apply_continue: "contacts",
+  contacts__restore_card: "contacts",
   drafting_forms__read_message: "email file",
   sources__fetch: "web page",
   sources__check: "web page",
@@ -24608,7 +24616,7 @@ import { existsSync as existsSync15, realpathSync as realpathSync10, statSync as
 import { win32 as pathWin3216 } from "node:path";
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "81376c2be07b";
+var BUILD_STAMP = false ? null : "d4f0c15d1cfb";
 
 // src/local-page/durable.ts
 import { closeSync as closeSync4, fsyncSync as fsyncSync2, openSync as openSync4, writeSync as writeSync2 } from "node:fs";
