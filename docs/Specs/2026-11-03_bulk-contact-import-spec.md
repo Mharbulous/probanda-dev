@@ -1,6 +1,6 @@
 # Spec: bulk contact import with duplicate detection (spreadsheet or CSV into the practice-data contact list)
 
-Status: proposed, 2026-11-03. Written in a matter session; implementation is handed to Claude Code.
+Status: proposed, 2026-11-03. Written in a matter session; implementation is handed to Claude Code. Not built, except that the shared match rules of section 7 step 2 exist since 2026-11-12 as `source/lawyer/mcp/src/contact-match.ts`, and a CSV reader for contacts as `source/lawyer/mcp/src/contacts/import-csv.ts`, both built for the related spec.
 Plugin: `lawyer` (installed copy seen at v0.21.9). Paths below are as seen in the installed copy and are **UNVERIFIED** against the repo unless marked otherwise.
 Related specs, same date: `2026-11-03_write-icloud-contacts-spec.md`
 

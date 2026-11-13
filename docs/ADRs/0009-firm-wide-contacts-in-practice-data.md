@@ -20,7 +20,7 @@ Decided by the developer in `docs/Specs/2026-11-06_cast-of-characters-board-spec
 ## Considered options
 
 - **Keep contact details per matter in case-data**: the duplication and drift stay, and there is still no firm-wide conflict search.
-- **Use the address book as the source of truth**: it is read-only to Probanda, holds only the practitioner's own entries, and cannot record roles or ties to matters.
+- **Use the address book as the source of truth**: it holds only the practitioner's own entries, and cannot record roles or ties to matters. It was also read-only to Probanda when this was decided. Since 2026-11-12 Probanda adds contacts and details to it and merges its duplicates, each on the practitioner's approval (`docs/Specs/2026-11-03_write-icloud-contacts-spec.md`), which does not change this decision.
 - **Add contact tables or a contact snapshot to case-data**: case-data is a legacy store under Exception 2 of COMMANDMENTS.md, so it may gain no new DDL, and a snapshot would bring the duplication back.
 - **Separate person and organization kinds**: two kinds would double the rules and tools for no gain, so one kind carries a tag.
 - **Store the client's contact on the `client` item**: a link holds one item id, so joint clients would need a special case.

@@ -1,6 +1,6 @@
-// vCard 3.0 reading (the version iCloud stores). Read-only: nothing here builds
-// or changes a card. Ported from the practitioner's own mail, calendar and
-// contacts desktop extension (MIT).
+// vCard 3.0 reading (the version iCloud stores). Nothing here builds or changes a
+// card: vcard-edit.ts and merge-cards.ts do, from these lines. Ported from the
+// practitioner's own mail, calendar and contacts desktop extension (MIT).
 
 export const unescape = (v: string): string => v.replace(/\\([nN,;\\])/g, (_, c: string) => (c === "n" || c === "N" ? "\n" : c));
 

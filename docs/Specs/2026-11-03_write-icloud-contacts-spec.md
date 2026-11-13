@@ -1,6 +1,6 @@
 # Spec: write and dedupe contacts on the practitioner's mail-server contact list (iCloud CardDAV)
 
-Status: proposed, 2026-11-03. Written in a matter session; implementation is handed to Claude Code.
+Status: built, 2026-11-13, as amended by "Decisions of 2026-11-12" at the end, which governs where it differs from sections 3 to 9. Proposed 2026-11-03 in a matter session.
 Plugin: `lawyer` (installed copy seen at v0.21.9). Paths below are as seen in the installed copy and are **UNVERIFIED** against the repo unless marked otherwise.
 Related specs, same date: `2026-11-03_bulk-contact-import-spec.md`
 
@@ -74,3 +74,37 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 
 Confirm in the repo: the contacts tools and their descriptions; how the connector signs in for contacts; whether any card-writing code exists; the stored contact `carddav_url` field; and the shared match implementation from the bulk-contact-import spec. Record each finding in a table appended to this spec.
+
+## Decisions of 2026-11-12
+
+Made by the practitioner in the building session, after being told what would stop being enforced.
+
+1. **Direct writes, with no export step.** Section 6's recommended order (a vCard export first) is not followed. The import writes to the address book after a preview and an approval. The read-only guard is narrowed for contacts only: a card can be created, and lines can be added to a card. The calendar stays read-only.
+2. **A merge removes its loser after a backup.** The "no deletion" rule of sections 3, 5 and 8.3 is superseded for one case only: the card a merge of duplicates leaves behind, after every card of the group is saved to a backup file on the machine and the merged card is written and read back. A restore re-creates a removed card from its backup. No other code path removes a card.
+3. **A group that only shares a name can be merged when the practitioner names it.** Decided by the building session, not the practitioner: the scan lists such a group as only possibly the same contact, and the approval stands in front of the merge.
+
+Not built: section 4.2's recording of the card address on the practice contact's `carddav_url` (plan step 5 of section 7). The import reads a file, not practice data, so no practice contact is in hand.
+
+Section 9's first question is answered: on 2026-11-13 the live write test created, changed and removed a test card with the stored app-specific password, and the server altered nothing. Its second question (which contact group) is answered by doing nothing: a new card joins no group.
+
+## Verification against HEAD (2026-11-12)
+
+| Item | Finding |
+|---|---|
+| Contacts tools | `contacts__search` and `contacts__get` only, both read-only, in `source/lawyer/mcp/src/contacts/tools.ts`. |
+| Sign-in | The mail credential's password, with `carddavUrl` and an optional `davUsername` (`src/mail/config.ts`, `src/dav/session.ts`). |
+| Card-writing code | None. A guard refused every changing request, and a test failed on write code under `src/contacts/`. |
+| `carddav_url` | Stored on a practice contact and checked in a merge. Nothing reads or writes it from a card. |
+| Shared match rules | None existed. Now `src/contact-match.ts`, used by `contact_lookup` and by the address-book tools (criterion 7). |
+
+## What was built
+
+In the `lawyer` plugin's `contacts-calendars-email` server, under `source/lawyer/mcp/src/contacts/`:
+
+- `card-write.ts` is the only file that changes the address book. A create fails if a card is already at that address. A replace or a remove fails if the card changed since it was read.
+- `contacts__import_scan`, `contacts__import_apply` and `contacts__import_apply_continue` add the contacts of a CSV file.
+- `contacts__merge_scan`, `contacts__merge_plan`, `contacts__merge_apply`, `contacts__merge_apply_continue` and `contacts__restore_card` merge duplicate cards and put a removed card back.
+- `contacts__write_probe` tests whether an account accepts changes.
+- The approval gate holds the probe, both applies and the restore. The skill is `address-book`.
+
+Plans, reports and backups are files under the machine's `Coclerk/contacts` state folder. Only the first address book of the account is read and written.

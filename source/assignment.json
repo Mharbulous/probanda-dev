@@ -5,6 +5,7 @@
     "lawyer": {
       "requires": [],
       "skills": [
+        "address-book",
         "calendar-reminders",
         "call-contact",
         "compare-documents",
