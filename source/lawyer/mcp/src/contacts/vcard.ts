@@ -2,7 +2,7 @@
 // or changes a card. Ported from the practitioner's own mail, calendar and
 // contacts desktop extension (MIT).
 
-const unescape = (v: string): string => v.replace(/\\([nN,;\\])/g, (_, c: string) => (c === "n" || c === "N" ? "\n" : c));
+export const unescape = (v: string): string => v.replace(/\\([nN,;\\])/g, (_, c: string) => (c === "n" || c === "N" ? "\n" : c));
 
 function splitUnescaped(v: string, sep: string): string[] {
   const out: string[] = [];
@@ -41,7 +41,7 @@ function splitOutsideQuotes(v: string, sep: string): string[] {
   return out;
 }
 
-interface Line {
+export interface Line {
   group?: string;
   name: string;
   params: Record<string, string[]>;
@@ -49,7 +49,7 @@ interface Line {
 }
 
 /** Parse into raw lines: { group, name, params: {key: [values]}, value }. */
-function parseLines(text: string): Line[] {
+export function parseLines(text: string): Line[] {
   const unfolded = text.replace(/\r?\n[ \t]/g, "");
   const lines: Line[] = [];
   for (const raw of unfolded.split(/\r?\n/)) {
