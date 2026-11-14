@@ -36,7 +36,7 @@ One free-text note per machine (`practice_quirks` in `probanda.json`, at most 1,
 - `expect_type` and `expect_title` on a call about an existing entry let the hook know its type and title without reading the store (it cannot in Cowork). The tool refuses a call whose echo does not match the stored entry, so a rule cannot be demoted to knowledge by claiming it was knowledge.
 - One message pasting several blocks approves several calls, since the check is on the last turn.
 - Known limit, shared with `rule-gate.py`: the gate proves the practitioner's message holds the words, not that they meant to approve them. The proposal block asks them to paste the whole block, which makes it deliberate.
-- Not yet verified: that a PreToolUse payload carries `transcript_path` in Cowork. If it does not, the gate refuses every rule write there, which is safe but limiting. `source/developer/hooks/payload-probe.py` settles it.
+- Measured in Cowork on 2026-11-13, on `contacts__write_probe` (lawyer 0.29.5): the approval gate refused the call before and after the practitioner pasted the approval block, both times with "No record of this conversation could be read", the message `approval_gate.check` gives when the payload holds no `transcript_path`. So a PreToolUse payload carries no usable `transcript_path` in Cowork, and every gated call is refused there: safe but limiting. Not measured: whether the field is absent or empty, which `source/developer/hooks/payload-probe.py` would show.
 
 ## Server refusals
 
