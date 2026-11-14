@@ -1,4 +1,4 @@
-// build-stamp: 5ba830d96725
+// build-stamp: bf9b30c7263f
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75267,7 +75267,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "5ba830d96725";
+var BUILD_STAMP = false ? null : "bf9b30c7263f";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -80828,7 +80828,7 @@ function contactsToolDefinitions() {
     },
     {
       name: "contacts__merge_plan",
-      description: 'Turn the groups the practitioner chose from contacts__merge_scan into a plan for contacts__merge_apply. Writes nothing to the address book. Per group: `keep` (the url of the contact to keep; default the scan\'s) and `choices` for a `needs_choice` group ({"name" | "organization" | "job title" | "birthday" | "photo" | "nickname": the url of the contact whose value stays}). The kept contact gains every detail the others hold and it lacks; two different notes are joined. Returns {plan_id, group_count, remove_count, groups: [{group_id, keep, remove: [names]}] (first 20)}. Errors: `contacts_plan_stale` (the address book changed: scan again).' + errors,
+      description: 'Turn the groups the practitioner chose from contacts__merge_scan into a plan for contacts__merge_apply. Writes nothing to the address book. Per group: `keep` (the url of the contact to keep; default the scan\'s) and `choices` for a `needs_choice` group ({"name" | "organization" | "job title" | "birthday" | "photo" | "nickname": the url of the contact whose value stays}; only the words the group differs on). A `possible` group is refused unless it carries `same_person: true`, passed only when the practitioner said its contacts are the same person. The kept contact gains every detail the others hold and it lacks; two different notes are joined. Returns {plan_id, group_count, remove_count, groups: [{group_id, keep, remove: [names]}] (first 20)}. Errors: `contacts_plan_stale` (the address book changed: scan again).' + errors,
       inputSchema: {
         type: "object",
         properties: {
@@ -80840,7 +80840,8 @@ function contactsToolDefinitions() {
               properties: {
                 group_id: { type: "string" },
                 keep: { type: "string" },
-                choices: { type: "object", additionalProperties: { type: "string" } }
+                choices: { type: "object", additionalProperties: { type: "string" } },
+                same_person: { type: "boolean" }
               },
               required: ["group_id"],
               additionalProperties: false

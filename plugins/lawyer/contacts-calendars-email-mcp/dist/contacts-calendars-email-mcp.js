@@ -1,4 +1,4 @@
-// build-stamp: e4d3adf0357e
+// build-stamp: a4080160def5
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -108160,7 +108160,7 @@ function contactsToolDefinitions() {
     },
     {
       name: "contacts__merge_plan",
-      description: 'Turn the groups the practitioner chose from contacts__merge_scan into a plan for contacts__merge_apply. Writes nothing to the address book. Per group: `keep` (the url of the contact to keep; default the scan\'s) and `choices` for a `needs_choice` group ({"name" | "organization" | "job title" | "birthday" | "photo" | "nickname": the url of the contact whose value stays}). The kept contact gains every detail the others hold and it lacks; two different notes are joined. Returns {plan_id, group_count, remove_count, groups: [{group_id, keep, remove: [names]}] (first 20)}. Errors: `contacts_plan_stale` (the address book changed: scan again).' + errors,
+      description: 'Turn the groups the practitioner chose from contacts__merge_scan into a plan for contacts__merge_apply. Writes nothing to the address book. Per group: `keep` (the url of the contact to keep; default the scan\'s) and `choices` for a `needs_choice` group ({"name" | "organization" | "job title" | "birthday" | "photo" | "nickname": the url of the contact whose value stays}; only the words the group differs on). A `possible` group is refused unless it carries `same_person: true`, passed only when the practitioner said its contacts are the same person. The kept contact gains every detail the others hold and it lacks; two different notes are joined. Returns {plan_id, group_count, remove_count, groups: [{group_id, keep, remove: [names]}] (first 20)}. Errors: `contacts_plan_stale` (the address book changed: scan again).' + errors,
       inputSchema: {
         type: "object",
         properties: {
@@ -108172,7 +108172,8 @@ function contactsToolDefinitions() {
               properties: {
                 group_id: { type: "string" },
                 keep: { type: "string" },
-                choices: { type: "object", additionalProperties: { type: "string" } }
+                choices: { type: "object", additionalProperties: { type: "string" } },
+                same_person: { type: "boolean" }
               },
               required: ["group_id"],
               additionalProperties: false
@@ -108575,7 +108576,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "e4d3adf0357e";
+var BUILD_STAMP = false ? null : "a4080160def5";
 
 // src/local-page/listener.ts
 import { createServer, get } from "node:http";
@@ -131265,22 +131266,26 @@ var SINGLE = {
   NOTE: "note",
   "X-ABSHOWAS": "kind"
 };
+var plain = (value) => value.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 function valueKey(line) {
   const value = unescape2(line.value);
   switch (line.name) {
     case "EMAIL":
       return emailKey(value);
-    case "TEL":
-      return phoneDigits(value) || value;
+    case "TEL": {
+      const digits = phoneDigits(value);
+      return digits ? `${digits}x${(PHONE_EXTENSION.exec(value)?.[0] ?? "").replace(/\D/g, "")}` : value;
+    }
     case "ADR": {
       const parts = line.value.split(";");
-      return postalKey(parts[5] ?? "") || normalizeName2(`${parts[2] ?? ""} ${parts[3] ?? ""}`);
+      return [0, 1, 2, 3].map((index) => plain(unescape2(parts[index] ?? ""))).concat(postalKey(parts[5] ?? "")).join("|");
     }
     case "URL":
       return value.replace(/\/$/, "").toLowerCase();
     case "FN":
-    case "N":
     case "ORG":
+      return plain(value);
+    case "N":
     case "TITLE":
     case "NICKNAME":
       return normalizeName2(value);
@@ -131365,7 +131370,7 @@ function findGroups(cards) {
     sets.push(merged);
   }
   const same = (a3, b3) => {
-    const details = (keys, other) => within(keys.emails, other.emails) && within(keys.phones, other.phones) && within(keys.postals, other.postals);
+    const details = (keys, other) => keys.emails.size + keys.phones.size + keys.postals.size > 0 && within(keys.emails, other.emails) && within(keys.phones, other.phones) && within(keys.postals, other.postals);
     return matchReasons(a3.keys, b3.keys).length > 1 || details(a3.keys, b3.keys) || details(b3.keys, a3.keys);
   };
   return sets.filter((set) => set.length > 1).map((set) => {
@@ -131440,7 +131445,18 @@ async function mergePlan(context, args) {
       if (!group) throw new DataServerError(`Group ${String(want.group_id)} is not in the address book as it is now. Scan again.`, "contacts_plan_stale");
       const keep = want.keep === void 0 ? group.keep : String(want.keep);
       if (!group.members.some((member) => member.url === keep)) throw new ValidationError(`Group ${group.group_id}: keep must be the url of one of its contacts`);
-      const merged = mergeGroup(group.members, keep, want.choices ?? {}, rev);
+      if (group.class === "possible" && want.same_person !== true) {
+        throw new ValidationError(
+          `Group ${group.group_id}: its contacts share only a name. Show them to the practitioner and pass same_person: true only if they say the contacts are the same person.`
+        );
+      }
+      const choices = want.choices ?? {};
+      const open = mergeGroup(group.members, keep, {}, rev).conflicts;
+      for (const [word, url] of Object.entries(choices)) {
+        if (!open.includes(word)) throw new ValidationError(`Group ${group.group_id}: its contacts do not differ on ${word}; choices may name only ${open.join(", ") || "nothing"}`);
+        if (!group.members.some((member) => member.url === url)) throw new ValidationError(`Group ${group.group_id}: the choice for ${word} must be the url of one of its contacts`);
+      }
+      const merged = mergeGroup(group.members, keep, choices, rev);
       if (merged.conflicts.length) {
         throw new ValidationError(
           `Group ${group.group_id}: the contacts differ on ${merged.conflicts.join(", ")}. Ask the practitioner which contact's value stays, then pass choices, for example {"${merged.conflicts[0]}": "<that contact's url>"}.`
@@ -131495,9 +131511,10 @@ async function mergeOne(context, credential, plan, group, groupCards) {
     if (lost.length) return stop(`merged, but the address book holds the result differently (${lost.join(", ")}), so nothing was removed`);
   }
   const keepUid = uidOf(group.keep.text);
-  for (const url of groupCards) {
+  const otherUids = group.others.map((other) => uidOf(other.text)).filter((uid) => uid !== "");
+  for (const url of keepUid && otherUids.length ? groupCards : []) {
     const card = await current(context, credential, url);
-    if (!card || card.text.includes(MEMBER + keepUid) || !group.others.some((other) => card.text.includes(MEMBER + uidOf(other.text)))) continue;
+    if (!card || card.text.includes(MEMBER + keepUid) || !otherUids.some((uid) => card.text.includes(MEMBER + uid))) continue;
     try {
       await replaceCard(context, credential, plan.book_url, url, card.etag, addLines(card.text, [MEMBER + keepUid], revNow()));
     } catch (error2) {

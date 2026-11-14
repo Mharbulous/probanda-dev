@@ -160,7 +160,9 @@ export function contactsToolDefinitions(): ToolDefinition[] {
         "Turn the groups the practitioner chose from contacts__merge_scan into a plan for contacts__merge_apply. " +
         "Writes nothing to the address book. Per group: `keep` (the url of the contact to keep; default the scan's) and " +
         "`choices` for a `needs_choice` group ({\"name\" | \"organization\" | \"job title\" | \"birthday\" | \"photo\" | " +
-        "\"nickname\": the url of the contact whose value stays}). The kept contact gains every detail the others hold " +
+        "\"nickname\": the url of the contact whose value stays}; only the words the group differs on). A `possible` " +
+        "group is refused unless it carries `same_person: true`, passed only when the practitioner said its contacts " +
+        "are the same person. The kept contact gains every detail the others hold " +
         "and it lacks; two different notes are joined. Returns {plan_id, group_count, remove_count, groups: [{group_id, " +
         "keep, remove: [names]}] (first 20)}. Errors: `contacts_plan_stale` (the address book changed: scan again)." +
         errors,
@@ -176,6 +178,7 @@ export function contactsToolDefinitions(): ToolDefinition[] {
                 group_id: { type: "string" },
                 keep: { type: "string" },
                 choices: { type: "object", additionalProperties: { type: "string" } },
+                same_person: { type: "boolean" },
               },
               required: ["group_id"],
               additionalProperties: false,

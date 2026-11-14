@@ -10,7 +10,7 @@ export function normalizeName(value: unknown): string {
   return name;
 }
 
-const PHONE_EXTENSION = /\s*(?:x|ext\.?|extension|#)\s*\d+\s*$/i;
+export const PHONE_EXTENSION =/\s*(?:x|ext\.?|extension|#)\s*\d+\s*$/i;
 
 /** A phone's digits without its extension, cut to the last ten so a country code does not matter. */
 export function phoneDigits(value: string): string {

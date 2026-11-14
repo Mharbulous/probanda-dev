@@ -4,7 +4,7 @@
 
 import { createHash } from "node:crypto";
 
-import { emailKey, matchKeys, matchReasons, normalizeName, phoneDigits, postalKey, type MatchKeys } from "../contact-match.js";
+import { emailKey, matchKeys, matchReasons, normalizeName, PHONE_EXTENSION, phoneDigits, postalKey, type MatchKeys } from "../contact-match.js";
 import type { Card } from "./import-classify.js";
 import { addLines, escape } from "./vcard-edit.js";
 import { parseContact, parseLines, unescape, type Contact, type Line } from "./vcard.js";
@@ -30,18 +30,30 @@ const SINGLE: Record<string, string> = {
   "X-ABSHOWAS": "kind",
 };
 
-/** What makes two lines of the same property the same value, whatever their format. */
+/** Case and punctuation ignored, but not a corporate suffix: "Acme Ltd." and "Acme Inc." stay different. */
+const plain = (value: string): string => value.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+
+/**
+ * What makes two lines of the same property the same value, whatever their format. Stricter
+ * than the rules that group cards: a value judged held is not carried over, so a near-copy
+ * kept is the safe side.
+ */
 function valueKey(line: Line): string {
   const value = unescape(line.value);
   switch (line.name) {
     case "EMAIL": return emailKey(value);
-    case "TEL": return phoneDigits(value) || value;
+    case "TEL": {
+      const digits = phoneDigits(value);
+      return digits ? `${digits}x${(PHONE_EXTENSION.exec(value)?.[0] ?? "").replace(/\D/g, "")}` : value;
+    }
     case "ADR": {
+      // PO box, extended address, street, city and postal code together: one postal code holds many addresses.
       const parts = line.value.split(";");
-      return postalKey(parts[5] ?? "") || normalizeName(`${parts[2] ?? ""} ${parts[3] ?? ""}`);
+      return [0, 1, 2, 3].map((index) => plain(unescape(parts[index] ?? ""))).concat(postalKey(parts[5] ?? "")).join("|");
     }
     case "URL": return value.replace(/\/$/, "").toLowerCase();
-    case "FN": case "N": case "ORG": case "TITLE": case "NICKNAME": return normalizeName(value);
+    case "FN": case "ORG": return plain(value);
+    case "N": case "TITLE": case "NICKNAME": return normalizeName(value);
     default: return line.value;
   }
 }
@@ -152,9 +164,11 @@ export function findGroups(cards: Card[]): Group[] {
     joined.forEach((set) => sets.splice(sets.indexOf(set), 1));
     sets.push(merged);
   }
-  // The same contact: a shared detail, or one card's details all held by the other.
+  // The same contact: a shared detail, or one card's details all held by the other. A card
+  // with no email, phone or postal code is held by every namesake, so it proves nothing.
   const same = (a: Entry, b: Entry): boolean => {
     const details = (keys: MatchKeys, other: MatchKeys) =>
+      keys.emails.size + keys.phones.size + keys.postals.size > 0 &&
       within(keys.emails, other.emails) && within(keys.phones, other.phones) && within(keys.postals, other.postals);
     return matchReasons(a.keys, b.keys).length > 1 || details(a.keys, b.keys) || details(b.keys, a.keys);
   };

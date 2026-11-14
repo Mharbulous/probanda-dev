@@ -442,7 +442,9 @@ test("a contact group the removed card was in gains the kept card, and a removed
 test("a card that changed after the plan is never removed, and a long merge runs over several calls", async () => {
   const { store, context } = fakeBook(DUPLICATES);
   const scan = await callTool(context, "contacts__merge_scan", {});
-  const plan = await callTool(context, "contacts__merge_plan", { groups: ["Ben Sample", "Ada Sample", "Dee Sample"].map((name) => ({ group_id: groupOf(scan, name) })) });
+  const plan = await callTool(context, "contacts__merge_plan", { groups: [
+    { group_id: groupOf(scan, "Ben Sample") }, { group_id: groupOf(scan, "Ada Sample") }, { group_id: groupOf(scan, "Dee Sample"), same_person: true },
+  ] });
   store.set(`${BOOK}ben1.vcf`, { text: DUPLICATES["ben1.vcf"].replace("First note", "Edited on the phone"), etag: '"7"' });
   store.set(`${BOOK}ada1.vcf`, { text: DUPLICATES["ada1.vcf"], etag: '"7"' });
   context.contactsBudgetMs = 0;
@@ -456,4 +458,56 @@ test("a card that changed after the plan is never removed, and a long merge runs
   assert.equal(store.has(`${BOOK}ada2.vcf`), false, "an exact duplicate goes: nothing is written to the kept card, so its change does not matter");
   assert.equal(store.has(`${BOOK}dee2.vcf`), false, "a possible group merges when the practitioner names it");
   assert.match(store.get(`${BOOK}dee1.vcf`).text, /TEL:604-555-0131/);
+});
+
+test("a plan refuses a name-only group the practitioner has not called the same person, and a choice that is not a contact of the group", async () => {
+  const { context } = fakeBook(DUPLICATES);
+  const scan = await callTool(context, "contacts__merge_scan", {});
+  const dee = groupOf(scan, "Dee Sample");
+  assert.match((await errorOf(context, "contacts__merge_plan", { groups: [{ group_id: dee }] })).message, /share only a name/);
+  assert.match((await errorOf(context, "contacts__merge_plan", { groups: [{ group_id: dee, same_person: false }] })).message, /share only a name/);
+  assert.equal((await callTool(context, "contacts__merge_plan", { groups: [{ group_id: dee, same_person: true }] })).group_count, 1);
+  const cy = groupOf(scan, "Cy Sample");
+  for (const choices of [{ "job title": "Cy Sample" }, { "job title": cy }, { "job title": `${BOOK}eve.vcf` }]) {
+    assert.match((await errorOf(context, "contacts__merge_plan", { groups: [{ group_id: cy, choices }] })).message, /must be the url of one of its contacts/);
+  }
+  assert.match((await errorOf(context, "contacts__merge_plan", { groups: [{ group_id: cy, choices: { "job title": `${BOOK}cy2.vcf`, birthday: `${BOOK}cy2.vcf` } }] })).message, /do not differ on birthday/);
+});
+
+test("a different suite, a phone extension or a different corporate suffix is not already held, and a card with no email, phone or postal code proves nothing", async () => {
+  const { store, context } = fakeBook({
+    "ann1.vcf": person("ann1", "Ann", "Sample", ["TEL:604-555-0150", "EMAIL:ann@example.test", "ADR;type=WORK:;;400-1055 Main St;Vancouver;BC;V6B 1A1;Canada"]).text,
+    "ann2.vcf": person("ann2", "Ann", "Sample", ["TEL:604-555-0150", "ADR;type=WORK:;;1200-1055 Main St;Vancouver;BC;V6B 1A1;Canada"]).text,
+    "bo1.vcf": person("bo1", "Bo", "Sample", ["TEL:604-555-0160", "EMAIL:bo@example.test"]).text,
+    "bo2.vcf": person("bo2", "Bo", "Sample", ["TEL;type=WORK:604-555-0160 ext 101"]).text,
+    "acme1.vcf": company("acme1", "Acme Holdings Ltd.", ["TEL:604-555-0170", "EMAIL:info@acme.example.test"]).text,
+    "acme2.vcf": company("acme2", "Acme Holdings Inc.", ["TEL:604-555-0170"]).text,
+    "cal1.vcf": person("cal1", "Cal", "Sample", ["TEL:604-555-0180"]).text,
+    "cal2.vcf": person("cal2", "Cal", "Sample", ["NOTE:met at a conference"]).text,
+  });
+  const scan = await callTool(context, "contacts__merge_scan", {});
+  assert.deepEqual(scan.groups.map((group) => [group.contacts[0].name, group.class, group.conflicts]).sort(), [
+    ["Acme Holdings Ltd.", "needs_choice", ["name", "organization"]],
+    ["Ann Sample", "mergeable", []],
+    ["Bo Sample", "mergeable", []],
+    ["Cal Sample", "possible", []],
+  ]);
+  await callTool(context, "contacts__merge_plan", { groups: [{ group_id: groupOf(scan, "Ann Sample") }, { group_id: groupOf(scan, "Bo Sample") }] })
+    .then((plan) => callTool(context, "contacts__merge_apply", { plan_id: plan.plan_id, group_count: 2, remove_count: 2 }));
+  assert.match(store.get(`${BOOK}ann1.vcf`).text, /400-1055 Main St(.*\r\n)*.*1200-1055 Main St/);
+  assert.match(store.get(`${BOOK}bo1.vcf`).text, /604-555-0160 ext 101/);
+});
+
+test("a removed card with no identifier adds the kept contact to no contact group", async () => {
+  const { store, context } = fakeBook({
+    "gus1.vcf": person("gus1", "Gus", "Sample", ["TEL:604-555-0190", "EMAIL:gus@example.test"]).text,
+    "gus2.vcf": person("gus2", "Gus", "Sample", ["TEL:604-555-0190", "TITLE:Clerk"]).text.replace(/^UID:.*\r\n/m, ""),
+    "eve.vcf": DUPLICATES["eve.vcf"],
+    "team.vcf": card("team", ["N:Team;;;;", "FN:Team", "X-ADDRESSBOOKSERVER-KIND:group", "X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:eve"]).text,
+  });
+  const scan = await callTool(context, "contacts__merge_scan", {});
+  const plan = await callTool(context, "contacts__merge_plan", { groups: [{ group_id: groupOf(scan, "Gus Sample") }] });
+  const applied = await callTool(context, "contacts__merge_apply", { plan_id: plan.plan_id, group_count: 1, remove_count: 1 });
+  assert.deepEqual([applied.merged, store.has(`${BOOK}gus2.vcf`)], [1, false]);
+  assert.doesNotMatch(store.get(`${BOOK}team.vcf`).text, /gus1/);
 });

@@ -36,7 +36,7 @@ Each tool's description states its inputs and what its reply holds. A reply's `r
    - Groups whose contacts are plainly the same can be chosen together.
    - Where the contacts differ on a value a contact holds once (the scan names it), ask which contact's value stays.
    - Where only the name matches, show both contacts and merge them only if the practitioner says they are the same person.
-3. **Plan.** Call `contacts__merge_plan` with the groups the practitioner chose, the contact to keep where they picked one, and their choices.
+3. **Plan.** Call `contacts__merge_plan` with the groups the practitioner chose, the contact to keep where they picked one, and their choices. Pass `same_person: true` only for a name-only group the practitioner said is the same person.
 4. **Apply on a yes.** Ask whether to go ahead, saying how many contacts will be removed and that a copy of each is saved on this computer first. On a yes, call `contacts__merge_apply` with the plan's `plan_id`, `group_count` and `remove_count`. See **While it runs**.
 5. **Report.** Say how many groups were merged and how many contacts removed, name each group left as it is with the reason given, and say where the copies were saved (`backup_dir`).
 

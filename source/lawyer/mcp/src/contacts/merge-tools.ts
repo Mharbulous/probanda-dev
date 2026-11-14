@@ -74,7 +74,7 @@ async function mergeScan(context: DavContext): Promise<unknown> {
 
 async function mergePlan(context: DavContext, args: Args): Promise<unknown> {
   const credential = requireDav(context.mail, "carddav");
-  const wanted = args.groups as Array<{ group_id?: unknown; keep?: unknown; choices?: unknown }>;
+  const wanted = args.groups as Array<{ group_id?: unknown; keep?: unknown; choices?: unknown; same_person?: unknown }>;
   if (!Array.isArray(wanted) || wanted.length === 0) throw new ValidationError("contacts__merge_plan requires groups");
   const { bookUrl, cards } = await readBook(context, credential);
   const found = new Map(findGroups(cards).map((group) => [group.group_id, group]));
@@ -86,7 +86,19 @@ async function mergePlan(context: DavContext, args: Args): Promise<unknown> {
       if (!group) throw new DataServerError(`Group ${String(want.group_id)} is not in the address book as it is now. Scan again.`, "contacts_plan_stale");
       const keep = want.keep === undefined ? group.keep : String(want.keep);
       if (!group.members.some((member) => member.url === keep)) throw new ValidationError(`Group ${group.group_id}: keep must be the url of one of its contacts`);
-      const merged = mergeGroup(group.members, keep, (want.choices ?? {}) as Record<string, string>, rev);
+      if (group.class === "possible" && want.same_person !== true) {
+        throw new ValidationError(
+          `Group ${group.group_id}: its contacts share only a name. Show them to the practitioner and pass same_person: true ` +
+          `only if they say the contacts are the same person.`
+        );
+      }
+      const choices = (want.choices ?? {}) as Record<string, string>;
+      const open = mergeGroup(group.members, keep, {}, rev).conflicts;
+      for (const [word, url] of Object.entries(choices)) {
+        if (!open.includes(word)) throw new ValidationError(`Group ${group.group_id}: its contacts do not differ on ${word}; choices may name only ${open.join(", ") || "nothing"}`);
+        if (!group.members.some((member) => member.url === url)) throw new ValidationError(`Group ${group.group_id}: the choice for ${word} must be the url of one of its contacts`);
+      }
+      const merged = mergeGroup(group.members, keep, choices, rev);
       if (merged.conflicts.length) {
         throw new ValidationError(
           `Group ${group.group_id}: the contacts differ on ${merged.conflicts.join(", ")}. Ask the practitioner which contact's ` +
@@ -150,11 +162,12 @@ async function mergeOne(context: DavContext, credential: MailCredential, plan: M
     if (lost.length) return stop(`merged, but the address book holds the result differently (${lost.join(", ")}), so nothing was removed`);
   }
 
-  // 3. Contact groups the others were in gain the kept card.
+  // 3. Contact groups the others were in gain the kept card. A card with no identifier is in no group.
   const keepUid = uidOf(group.keep.text);
-  for (const url of groupCards) {
+  const otherUids = group.others.map((other) => uidOf(other.text)).filter((uid) => uid !== "");
+  for (const url of keepUid && otherUids.length ? groupCards : []) {
     const card = await current(context, credential, url);
-    if (!card || card.text.includes(MEMBER + keepUid) || !group.others.some((other) => card.text.includes(MEMBER + uidOf(other.text)))) continue;
+    if (!card || card.text.includes(MEMBER + keepUid) || !otherUids.some((uid) => card.text.includes(MEMBER + uid))) continue;
     try {
       await replaceCard(context, credential, plan.book_url, url, card.etag, addLines(card.text, [MEMBER + keepUid], revNow()));
     } catch (error) {
