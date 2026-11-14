@@ -1,4 +1,4 @@
-// build-stamp: 761b60a499fd
+// build-stamp: e4d3adf0357e
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -108092,8 +108092,8 @@ function contactsToolDefinitions() {
     },
     {
       name: "contacts__write_probe",
-      description: "Test whether this account lets Probanda change the address book, on one test contact that holds nothing real: create it, read it back, add a phone, save a copy on this machine, remove it. Changes no other contact. Returns {can_write, altered_on_create, altered_on_update (the properties the server changed or dropped, by name), removed, backup_path}. An error that says the test stopped part-way means the test contact may remain; tell the practitioner its name from the message." + APPROVAL_NEEDED + errors,
-      inputSchema: { type: "object", properties: { approval_proof: APPROVAL_PROOF }, additionalProperties: false }
+      description: "Test whether this account lets Probanda change the address book, on one test contact that holds nothing real: create it, read it back, add a phone, save a copy on this machine, remove it. Changes no other contact. Returns {can_write, altered_on_create, altered_on_update (the properties the server changed or dropped, by name), removed, backup_path}. An error that says the test stopped part-way means the test contact may remain; tell the practitioner its name from the message." + errors,
+      inputSchema: { type: "object", properties: {}, additionalProperties: false }
     },
     {
       name: "contacts__read_report",
@@ -108130,14 +108130,13 @@ function contactsToolDefinitions() {
     },
     {
       name: "contacts__import_apply",
-      description: "Carry out a plan from contacts__import_scan: add its new contacts and add its details to existing contacts. It removes and replaces nothing a contact holds. Once per plan. `create_count` and `update_count` must be the scan's. Each contact is read back after it is written; one that changed since the scan is left as it is and listed. Returns {status, created, updated, remaining, stopped: [{name, why}] (first 20), stopped_count}: while `status` is `writing`, call contacts__import_apply_continue; `done` ends it. Errors: `contacts_plan_missing`, `contacts_plan_stale` (scan again), `contacts_plan_started`." + APPROVAL_NEEDED + errors,
+      description: "Carry out a plan from contacts__import_scan: add its new contacts and add its details to existing contacts. It removes and replaces nothing a contact holds. Once per plan. `create_count` and `update_count` must be the scan's. Each contact is read back after it is written; one that changed since the scan is left as it is and listed. Returns {status, created, updated, remaining, stopped: [{name, why}] (first 20), stopped_count}: while `status` is `writing`, call contacts__import_apply_continue; `done` ends it. Errors: `contacts_plan_missing`, `contacts_plan_stale` (scan again), `contacts_plan_started`." + errors,
       inputSchema: {
         type: "object",
         properties: {
           plan_id: { type: "string" },
           create_count: { type: "integer", minimum: 0 },
-          update_count: { type: "integer", minimum: 0 },
-          approval_proof: APPROVAL_PROOF
+          update_count: { type: "integer", minimum: 0 }
         },
         required: ["plan_id", "create_count", "update_count"],
         additionalProperties: false
@@ -108187,14 +108186,13 @@ function contactsToolDefinitions() {
     },
     {
       name: "contacts__merge_apply",
-      description: "Carry out a plan from contacts__merge_plan. Once per plan. `group_count` and `remove_count` must be the plan's. Per group, in order: every contact of the group is saved to a backup file on this computer, the kept contact is written and read back, any contact group the others were in gains the kept contact, and only then are the others removed from the address book. A group whose contact changed since the scan is left as it is and listed. Returns {status, merged, removed, remaining, stopped: [{name, why}] (first 20), stopped_count, backup_dir}: while `status` is `writing`, call contacts__merge_apply_continue; `done` ends it. A removed contact comes back with contacts__restore_card." + APPROVAL_NEEDED + errors,
+      description: "Carry out a plan from contacts__merge_plan. Once per plan. `group_count` and `remove_count` must be the plan's. Per group, in order: every contact of the group is saved to a backup file on this computer, the kept contact is written and read back, any contact group the others were in gains the kept contact, and only then are the others removed from the address book. A group whose contact changed since the scan is left as it is and listed. Returns {status, merged, removed, remaining, stopped: [{name, why}] (first 20), stopped_count, backup_dir}: while `status` is `writing`, call contacts__merge_apply_continue; `done` ends it. A removed contact comes back with contacts__restore_card." + errors,
       inputSchema: {
         type: "object",
         properties: {
           plan_id: { type: "string" },
           group_count: { type: "integer", minimum: 1 },
-          remove_count: { type: "integer", minimum: 1 },
-          approval_proof: APPROVAL_PROOF
+          remove_count: { type: "integer", minimum: 1 }
         },
         required: ["plan_id", "group_count", "remove_count"],
         additionalProperties: false
@@ -108212,10 +108210,10 @@ function contactsToolDefinitions() {
     },
     {
       name: "contacts__restore_card",
-      description: "Put a contact that contacts__merge_apply removed back in the address book, from its backup file, as it was before the merge. It changes no other contact: the merged contact keeps the details it gained. `name` is the removed contact's name; pass `path` (from the error's list) only when more than one removed contact has that name. Returns {url, name, altered}. Errors: `contacts_backup_not_found`, `contacts_already_present`." + APPROVAL_NEEDED + errors,
+      description: "Put a contact that contacts__merge_apply removed back in the address book, from its backup file, as it was before the merge. It changes no other contact: the merged contact keeps the details it gained. `name` is the removed contact's name; pass `path` (from the error's list) only when more than one removed contact has that name. Returns {url, name, altered}. Errors: `contacts_backup_not_found`, `contacts_already_present`." + errors,
       inputSchema: {
         type: "object",
-        properties: { name: { type: "string" }, path: { type: "string" }, approval_proof: APPROVAL_PROOF },
+        properties: { name: { type: "string" }, path: { type: "string" } },
         required: ["name"],
         additionalProperties: false
       }
@@ -108577,7 +108575,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "761b60a499fd";
+var BUILD_STAMP = false ? null : "e4d3adf0357e";
 
 // src/local-page/listener.ts
 import { createServer, get } from "node:http";
@@ -108866,34 +108864,12 @@ function sameText(given, expected) {
 }
 
 // src/approval/acts.ts
-var ONE_WAY_UNDERSTAND = "I understand it is one-way and irreversible.";
-var ONE_WAY_WARNING = "**This step is a one-way door: easy to pass through and costly to reverse.**";
 var v = (value) => typeof value === "string" ? value.split(/\s+/).filter(Boolean).join(" ") : String(value);
 var ACTS = {
   "mail__dedupe_apply": {
     act: (f3) => `move ${v(f3.expected_count)} duplicate email copies, listed in plan ${v(f3.plan_id)}, to Trash`,
     understand: "They can be recovered from Trash, but the mail server may empty Trash on its own schedule.",
     warning: "**This step moves email to Trash: it can be recovered from there until the mail server empties Trash on its own schedule.**"
-  },
-  "contacts__write_probe": {
-    act: () => "test whether Probanda can change the address book: create one test contact that holds nothing real, add a phone number to it, and remove it again",
-    understand: "No other contact is changed, and the test contact is removed at the end.",
-    warning: "**This step writes to your address book: it creates one test contact and removes it again.**"
-  },
-  "contacts__import_apply": {
-    act: (f3) => `add ${v(f3.create_count)} new contact(s) to the address book and add details to ${v(f3.update_count)} existing contact(s), as listed in plan ${v(f3.plan_id)}, so the address book holds them. Probanda cannot take them out again`,
-    understand: ONE_WAY_UNDERSTAND,
-    warning: ONE_WAY_WARNING
-  },
-  "contacts__merge_apply": {
-    act: (f3) => `merge ${v(f3.group_count)} group(s) of duplicate contacts in the address book, as listed in plan ${v(f3.plan_id)}, removing ${v(f3.remove_count)} contact(s) after saving a copy of each on this computer`,
-    understand: "A removed contact can be put back from its saved copy, but the address book has no Trash of its own.",
-    warning: "**This step removes contacts from your address book after merging them: each can be put back from the copy saved on this computer.**"
-  },
-  "contacts__restore_card": {
-    act: (f3) => `put the contact ${v(f3.name)} back in the address book from the copy saved before it was merged`,
-    understand: "It adds one contact and changes no other.",
-    warning: "**This step adds a contact back to your address book.**"
   }
 };
 var APPROVAL_TOOLS = Object.keys(ACTS);
@@ -131127,7 +131103,7 @@ var sameEtag = (a3, b3) => {
 // src/contacts/import-tools.ts
 var contactsImportTools = [
   { name: "contacts__import_scan", handler: (args, context) => importScan(context, args) },
-  gated("contacts__import_apply", (args, context) => importApply(context, args, true)),
+  { name: "contacts__import_apply", handler: (args, context) => importApply(context, args, true) },
   { name: "contacts__import_apply_continue", handler: (args, context) => importApply(context, args, false) }
 ];
 var SHOWN = 20;
@@ -131411,9 +131387,9 @@ function findGroups(cards) {
 var contactsMergeTools = [
   { name: "contacts__merge_scan", handler: (_args, context) => mergeScan(context) },
   { name: "contacts__merge_plan", handler: (args, context) => mergePlan(context, args) },
-  gated("contacts__merge_apply", (args, context) => mergeApply(context, args, true)),
+  { name: "contacts__merge_apply", handler: (args, context) => mergeApply(context, args, true) },
   { name: "contacts__merge_apply_continue", handler: (args, context) => mergeApply(context, args, false) },
-  gated("contacts__restore_card", (args, context) => restoreCard(context, args))
+  { name: "contacts__restore_card", handler: (args, context) => restoreCard(context, args) }
 ];
 var SHOWN2 = 20;
 var ORDER = ["exact", "mergeable", "needs_choice", "possible"];
@@ -131614,7 +131590,7 @@ async function restoreCard(context, args) {
 
 // src/contacts/write-tools.ts
 var contactsWriteTools = [
-  gated("contacts__write_probe", (_args, context) => writeProbe(context)),
+  { name: "contacts__write_probe", handler: (_args, context) => writeProbe(context) },
   { name: "contacts__read_report", handler: (args) => readReport(args) },
   ...contactsImportTools,
   ...contactsMergeTools
