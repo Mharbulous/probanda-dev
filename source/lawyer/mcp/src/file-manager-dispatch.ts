@@ -25,7 +25,7 @@ type Run = { matter_root: string; run_id: string };
 
 const tools = [
   defineTool<RunRow & { path: string; dry_run?: boolean }>("file_ops__trash", ({ path, dry_run, run_id, row_id }) =>
-    fileOpsTrash(path, dry_run ?? false, new Date(), { run_id, row_id })
+    fileOpsTrash(path, dry_run ?? false, new Date(), { run_id, row_id }, true)
   ),
   defineTool<RunRow & {
     matter_root: string;

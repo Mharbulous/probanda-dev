@@ -179,7 +179,8 @@
       ],
       "hooks": {
         "housekeeping-approval-guard": "source/file-manager/hooks/housekeeping-approval-guard.py",
-        "one-way-gate": "source/file-manager/hooks/one-way-gate.py"
+        "one-way-gate": "source/file-manager/hooks/one-way-gate.py",
+        "trash-rewrite": "source/file-manager/hooks/trash-rewrite.py"
       },
       "servers": [
         "files"

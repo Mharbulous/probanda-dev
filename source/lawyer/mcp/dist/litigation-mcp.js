@@ -1,4 +1,4 @@
-// build-stamp: 92c2990d27bb
+// build-stamp: 0a2d8304d11c
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75267,7 +75267,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "92c2990d27bb";
+var BUILD_STAMP = false ? null : "0a2d8304d11c";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -80098,7 +80098,7 @@ function fileOpsToolDefinitions() {
   return [
     {
       name: "file_ops__trash",
-      description: "Soft-delete one file or folder in a client-matter workspace: move it to `<matter root>/TRASH/<same relative path>`. Use this instead of rm, unlink or any other delete -- one call, no shell, and it works while the device mount is down. `path` is the absolute host path (the Windows path from get_device_info connectedFolders). Refuses with an error `code`, touching nothing: `not_found`; `git_worktree` (ordinary repository rules apply); `not_a_matter_file` (no probanda.json at or above the path); `protected` (the workspace root, probanda.json, TRASH or anything in it, the 0. CASE DATA folder, or a privileged/disclosed tree); `cross_device`. A taken destination gets a ` (trashed YYYY-MM-DD HHMMSS)` suffix. `dry_run: true` returns the planned move only. Every move is logged to TRASH/.trash-log.jsonl. With `run_id` and `row_id` (a /housekeeping run's approved row; pass both or neither), it refuses unless that run's approval.json approves the row and the file still holds the row's proposal.json hash: `not_approved` (no approval, or the row is not approved), `unknown_row`, `changed_since_approval`, `approval_corrupt`, `invalid_argument` (only one of the two).",
+      description: "Soft-delete one file or folder: move a client-matter file to `<matter root>/TRASH/<same relative path>`, and a path in no matter to `<home>/TRASH/<path relative to home>`, or `<drive>:/TRASH/<path relative to the drive root>` when it is outside home. Use this instead of rm, unlink or any other delete -- one call, no shell, and it works while the device mount is down. `path` is the absolute host path (the Windows path from get_device_info connectedFolders). Refuses with an error `code`, touching nothing: `not_found`; `git_worktree` (ordinary repository rules apply); `protected` (the workspace root, probanda.json, TRASH or anything in it, the 0. CASE DATA folder, a privileged/disclosed tree, the home folder or a drive root); `cross_device`. A taken destination gets a ` (trashed YYYY-MM-DD HHMMSS)` suffix. `dry_run: true` returns the planned move only. Every move is logged to TRASH/.trash-log.jsonl. With `run_id` and `row_id` (a /housekeeping run's approved row; pass both or neither), it refuses unless that run's approval.json approves the row and the file still holds the row's proposal.json hash: `not_approved` (no approval, or the row is not approved), `unknown_row`, `changed_since_approval`, `approval_corrupt`, `invalid_argument` (only one of the two).",
       inputSchema: {
         type: "object",
         properties: {
@@ -85062,6 +85062,7 @@ import {
   renameSync as renameSync3,
   statSync as statSync8
 } from "node:fs";
+import { homedir as homedir7 } from "node:os";
 import { win32 as pathWin3210 } from "node:path";
 
 // src/files/zones.ts
@@ -85501,7 +85502,7 @@ function requireApprovedRow(matterRoot, row2, source) {
 // src/file_ops/trash.ts
 var TRASH2 = "TRASH";
 var TRASH_LOG = ".trash-log.jsonl";
-function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), row2 = {}) {
+function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), row2 = {}, outsideMatter2 = false) {
   if (typeof path !== "string" || !pathWin3210.isAbsolute(path)) {
     throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
   }
@@ -85523,14 +85524,21 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), ro
       "git_worktree"
     );
   }
-  const root = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile2(pathWin3210.join(dir, marker))));
-  if (root === void 0) {
+  const matterRoot = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile2(pathWin3210.join(dir, marker))));
+  if (matterRoot === void 0 && !outsideMatter2) {
     throw new DataServerError(
       `no ${POINTER_FILES.join(" or ")} at or above the path; not a client-matter file: ${target2}`,
       "not_a_matter_file"
     );
   }
+  const root = matterRoot ?? mirrorRoot(target2);
   const rel = pathWin3210.relative(root, target2);
+  if (matterRoot === void 0 && (rel === "" || rel.split(pathWin3210.sep).some((s3) => s3.toUpperCase() === TRASH2))) {
+    throw new DataServerError(
+      `path is protected (the home folder, a drive root, or ${TRASH2} or anything in it): ${target2}`,
+      "protected"
+    );
+  }
   if (zoneProblem("move-from", target2, root)) {
     throw new DataServerError(
       `path is protected (the workspace root, the matter pointer, ${TRASH2}, the matter-data folder, or a privileged/disclosed tree): ${target2}`,
@@ -85568,6 +85576,12 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), ro
     result.log_error = err instanceof Error ? err.message : String(err);
   }
   return result;
+}
+function mirrorRoot(target2) {
+  const home = realpathSync5.native(homedir7());
+  const rel = pathWin3210.relative(home, target2);
+  if (rel !== ".." && !rel.startsWith("..\\") && !pathWin3210.isAbsolute(rel)) return home;
+  return pathWin3210.parse(target2).root;
 }
 function isFile2(path) {
   return existsSync14(path) && statSync8(path).isFile();
@@ -85952,7 +85966,7 @@ function researchFormProblems(title2, intent) {
 // src/data-lock.ts
 import { createHash as createHash4, randomUUID as randomUUID7 } from "node:crypto";
 import { closeSync as closeSync4, existsSync as existsSync15, mkdirSync as mkdirSync10, openSync as openSync4, readFileSync as readFileSync16, statSync as statSync9, unlinkSync as unlinkSync5, writeSync as writeSync4 } from "node:fs";
-import { homedir as homedir7 } from "node:os";
+import { homedir as homedir8 } from "node:os";
 import { win32 as pathWin3211 } from "node:path";
 var LOCK_RETRY_MS2 = 400;
 var LOCK_STALE_MS2 = 9e5;
@@ -85960,7 +85974,7 @@ function lockKey(target2) {
   return createHash4("sha256").update(pathWin3211.normalize(target2).toLowerCase()).digest("hex").slice(0, 16);
 }
 function hostLocalDir(site, env) {
-  const base = env[site.envVar] || pathWin3211.join(env.LOCALAPPDATA || homedir7(), "Coclerk", site.dirName);
+  const base = env[site.envVar] || pathWin3211.join(env.LOCALAPPDATA || homedir8(), "Coclerk", site.dirName);
   mkdirSync10(base, { recursive: true });
   return base;
 }
@@ -107290,12 +107304,12 @@ function resolveParticipant(matterRoot, name, env = process.env) {
 // src/case/stage-result.ts
 import { randomUUID as randomUUID10 } from "node:crypto";
 import { mkdirSync as mkdirSync22, readdirSync as readdirSync22, statSync as statSync17, unlinkSync as unlinkSync12, writeFileSync as writeFileSync11 } from "node:fs";
-import { homedir as homedir8 } from "node:os";
+import { homedir as homedir9 } from "node:os";
 import { join as join48 } from "node:path";
 var KEEP_MS = 7 * 24 * 60 * 60 * 1e3;
 var RESULT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 function stagedResultsDir(env) {
-  return join48(env.LOCALAPPDATA || homedir8(), "Coclerk", "extract-results");
+  return join48(env.LOCALAPPDATA || homedir9(), "Coclerk", "extract-results");
 }
 function stagedResultPath(resultId, env) {
   if (typeof resultId !== "string" || !RESULT_ID.test(resultId)) {
@@ -119320,7 +119334,7 @@ import { tmpdir as tmpdir4 } from "node:os";
 import { win32 as pathWin3224 } from "node:path";
 
 // src/case/authority-source.ts
-import { homedir as homedir9 } from "node:os";
+import { homedir as homedir10 } from "node:os";
 import { win32 as pathWin3223 } from "node:path";
 var DRIVER10 = String.raw`
 import json, sys
@@ -119361,7 +119375,7 @@ function resolveAuthoritySource(request2, env = process.env, installRoot) {
   return parsed.result;
 }
 function authorityPdfCacheDir(env) {
-  return pathWin3223.join(env.LOCALAPPDATA || homedir9(), "Coclerk", "scrutiny-review");
+  return pathWin3223.join(env.LOCALAPPDATA || homedir10(), "Coclerk", "scrutiny-review");
 }
 
 // src/submission/scrutiny-review.ts
@@ -123649,7 +123663,7 @@ import { existsSync as existsSync62, readdirSync as readdirSync33, readFileSync 
 import { join as join62 } from "node:path";
 
 // src/suggestions/environment.ts
-import { arch as osArch, homedir as homedir10, hostname as osHostname, platform as osPlatform, release as osRelease, userInfo } from "node:os";
+import { arch as osArch, homedir as homedir11, hostname as osHostname, platform as osPlatform, release as osRelease, userInfo } from "node:os";
 import { basename as basename15 } from "node:path";
 
 // src/key-request/page.ts
@@ -124046,9 +124060,9 @@ function forbiddenValues(seams, env) {
     env.HOSTNAME,
     env.HOME,
     env.USERPROFILE,
-    safe(() => homedir10())
+    safe(() => homedir11())
   ];
-  for (const home of [env.HOME, env.USERPROFILE, safe(() => homedir10())]) if (home) values.push(basename15(home));
+  for (const home of [env.HOME, env.USERPROFILE, safe(() => homedir11())]) if (home) values.push(basename15(home));
   return [...new Set(values.filter((v3) => typeof v3 === "string" && v3.trim().length >= 3).map((v3) => v3.toLowerCase()))];
 }
 function safe(read3) {
@@ -127447,11 +127461,11 @@ function checkCoverageLine(text11) {
 
 // src/files/downloads.ts
 import { statSync as statSync24 } from "node:fs";
-import { homedir as homedir11 } from "node:os";
+import { homedir as homedir12 } from "node:os";
 import { win32 as pathWin3229 } from "node:path";
 var IN_PROGRESS_EXTENSIONS = /* @__PURE__ */ new Set([".crdownload", ".tmp", ".partial"]);
 function downloadsDir(env = process.env) {
-  const probe2 = env.COCLERK_DOWNLOADS_DIR || pathWin3229.join(homedir11(), "Downloads");
+  const probe2 = env.COCLERK_DOWNLOADS_DIR || pathWin3229.join(homedir12(), "Downloads");
   const dir = canonicalRoot(probe2, `Downloads folder not found at ${probe2}`, "downloads_missing");
   if (!statSync24(dir).isDirectory()) {
     throw new DataServerError(`Downloads path is not a folder: ${probe2}`, "downloads_missing");

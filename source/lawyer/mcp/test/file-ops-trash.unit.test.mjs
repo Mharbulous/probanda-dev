@@ -159,3 +159,83 @@ test("file_ops__trash suffixes a taken destination: before the extension for a f
     m.cleanup();
   }
 });
+
+/** Runs `fn` with the home folder pointed at a fresh temp folder, which it is given. */
+function withFakeHome(fn) {
+  const home = realpathSync.native(mkdtempSync(join(tmpdir(), "coclerk-trash-home-")));
+  const saved = { USERPROFILE: process.env.USERPROFILE, HOME: process.env.HOME };
+  process.env.USERPROFILE = home;
+  process.env.HOME = home;
+  try {
+    fn(home);
+  } finally {
+    for (const [k, v] of Object.entries(saved)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+    rmSync(home, { recursive: true, force: true });
+  }
+}
+
+test("file_ops__trash outside a matter moves a path under home to <home>/TRASH/<path relative to home> and logs it", () => {
+  withFakeHome((home) => {
+    mkdirSync(join(home, "Documents"));
+    writeFileSync(join(home, "Documents", "probe.txt"), "probe\n");
+
+    const result = fileOpsTrash(join(home, "Documents", "probe.txt"), false, NOW, {}, true);
+
+    assert.deepEqual(result, {
+      moved_from: join(home, "Documents", "probe.txt"),
+      moved_to: join(home, "TRASH", "Documents", "probe.txt"),
+      kind: "file",
+      bytes: 6,
+    });
+    assert.equal(existsSync(join(home, "Documents", "probe.txt")), false);
+    const line = JSON.parse(readFileSync(join(home, "TRASH", ".trash-log.jsonl"), "utf-8").trim());
+    assert.equal(line.to, join(home, "TRASH", "Documents", "probe.txt"));
+  });
+});
+
+test("file_ops__trash outside a matter and outside home plans a move to <drive root>/TRASH/<path relative to the drive root>", () => {
+  const outside = realpathSync.native(mkdtempSync(join(tmpdir(), "coclerk-trash-outside-")));
+  try {
+    writeFileSync(join(outside, "f.md"), "f\n");
+    withFakeHome(() => {
+      const plan = fileOpsTrash(join(outside, "f.md"), true, NOW, {}, true);
+      const drive = outside.slice(0, 3);
+      assert.deepEqual(plan, {
+        would_move_from: join(outside, "f.md"),
+        would_move_to: join(drive, "TRASH", outside.slice(3), "f.md"),
+      });
+    });
+    assert.ok(existsSync(join(outside, "f.md")));
+  } finally {
+    rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+test("file_ops__trash outside a matter refuses home itself, a drive root and anything already in a TRASH", () => {
+  withFakeHome((home) => {
+    mkdirSync(join(home, "TRASH", "old"), { recursive: true });
+    mkdirSync(join(home, "a", "trash"), { recursive: true });
+    writeFileSync(join(home, "TRASH", "old", "x.md"), "x\n");
+    writeFileSync(join(home, "a", "trash", "y.md"), "y\n");
+
+    assert.equal(codeOf(() => fileOpsTrash(home, true, NOW, {}, true)), "protected");
+    assert.equal(codeOf(() => fileOpsTrash(home.slice(0, 3), true, NOW, {}, true)), "protected");
+    assert.equal(codeOf(() => fileOpsTrash(join(home, "TRASH"), true, NOW, {}, true)), "protected");
+    assert.equal(codeOf(() => fileOpsTrash(join(home, "TRASH", "old", "x.md"), true, NOW, {}, true)), "protected");
+    assert.equal(codeOf(() => fileOpsTrash(join(home, "a", "trash", "y.md"), true, NOW, {}, true)), "protected");
+    assert.ok(existsSync(join(home, "a", "trash", "y.md")));
+  });
+});
+
+test("file_ops__trash outside a matter still moves a matter file into its own matter's TRASH", () => {
+  const m = matterFixture();
+  try {
+    const plan = fileOpsTrash(m.at("0. DRAFT/x.md"), true, NOW, {}, true);
+    assert.equal(plan.would_move_to, m.at("TRASH/0. DRAFT/x.md"));
+  } finally {
+    m.cleanup();
+  }
+});

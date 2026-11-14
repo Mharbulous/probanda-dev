@@ -118,6 +118,9 @@ async function bundle(entry, out, extraBanner = "") {
 
 await bundle("index.ts", outfile, REQUIRE_SHIM);
 await bundle("file-manager-index.ts", fileManagerOutfile);
+// file-manager's trash CLI (src/trash-cli.ts), which its trash-rewrite hook calls: fileOpsTrash
+// from this same source, so the shell route and file_ops__trash move a file by one copy of the code.
+await bundle("trash-cli.ts", resolve(dirname(fileManagerOutfile), "trash-cli.js"));
 // pdf_pages__images and file_ops__comment_pdf load PDFium's WebAssembly from beside the data and files
 // bundles, which esbuild cannot inline. PDFium's licence ships with it, and THIRD-PARTY-NOTICES.txt:
 // the licences of @embedpdf/pdfium, PDFium and the libraries compiled into the wasm, copied from upstream.

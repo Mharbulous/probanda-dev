@@ -1,6 +1,8 @@
-// Host-side soft delete for client-matter files (ADR 0014).
+// Host-side soft delete (ADR 0014).
 //
-// One verb: move an item to <matter root>/TRASH/<same relative path>. The move runs on the
+// One verb: move an item to <matter root>/TRASH/<same relative path>. With `outsideMatter`, a path
+// in no matter moves to a mirror instead: <home>/TRASH/<path relative to home> when it is under the
+// home folder, else <drive root>/TRASH/<path relative to the drive root>. The move runs on the
 // host, outside the Cowork sandbox, so it needs no shell, raises no delete-permission prompt and
 // still works while the device mount is down. No code path here deletes anything: every refusal
 // is thrown before the first filesystem change, and a destination collision gets a new name
@@ -16,6 +18,7 @@ import {
   renameSync,
   statSync,
 } from "node:fs";
+import { homedir } from "node:os";
 import { win32 as pathWin32 } from "node:path";
 
 import { DataServerError } from "../errors.js";
@@ -41,7 +44,17 @@ export interface TrashResult {
   log_error?: string;
 }
 
-export function fileOpsTrash(path: string, dryRun = false, now = new Date(), row: RunRow = {}): TrashPlan | TrashResult {
+/**
+ * Moves `path` into TRASH. Without `outsideMatter` a path in no matter is refused
+ * (`not_a_matter_file`); with it, the path goes to the home or drive-root mirror.
+ */
+export function fileOpsTrash(
+  path: string,
+  dryRun = false,
+  now = new Date(),
+  row: RunRow = {},
+  outsideMatter = false
+): TrashPlan | TrashResult {
   if (typeof path !== "string" || !pathWin32.isAbsolute(path)) {
     throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
   }
@@ -66,15 +79,22 @@ export function fileOpsTrash(path: string, dryRun = false, now = new Date(), row
       "git_worktree"
     );
   }
-  const root = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile(pathWin32.join(dir, marker))));
-  if (root === undefined) {
+  const matterRoot = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile(pathWin32.join(dir, marker))));
+  if (matterRoot === undefined && !outsideMatter) {
     throw new DataServerError(
       `no ${POINTER_FILES.join(" or ")} at or above the path; not a client-matter file: ${target}`,
       "not_a_matter_file"
     );
   }
+  const root = matterRoot ?? mirrorRoot(target);
 
   const rel = pathWin32.relative(root, target);
+  if (matterRoot === undefined && (rel === "" || rel.split(pathWin32.sep).some((s) => s.toUpperCase() === TRASH))) {
+    throw new DataServerError(
+      `path is protected (the home folder, a drive root, or ${TRASH} or anything in it): ${target}`,
+      "protected"
+    );
+  }
   if (zoneProblem("move-from", target, root)) {
     throw new DataServerError(
       `path is protected (the workspace root, the matter pointer, ${TRASH}, the matter-data folder, or a privileged/disclosed tree): ${target}`,
@@ -119,6 +139,14 @@ export function fileOpsTrash(path: string, dryRun = false, now = new Date(), row
     result.log_error = err instanceof Error ? err.message : String(err);
   }
   return result;
+}
+
+/** The home folder when `target` is under it, else `target`'s drive root. */
+function mirrorRoot(target: string): string {
+  const home = realpathSync.native(homedir());
+  const rel = pathWin32.relative(home, target);
+  if (rel !== ".." && !rel.startsWith("..\\") && !pathWin32.isAbsolute(rel)) return home;
+  return pathWin32.parse(target).root;
 }
 
 function isFile(path: string): boolean {

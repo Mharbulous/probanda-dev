@@ -1,4 +1,4 @@
-// build-stamp: c079f16d8665
+// build-stamp: ca18d56b0bdb
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15475,7 +15475,7 @@ function fileOpsToolDefinitions() {
   return [
     {
       name: "file_ops__trash",
-      description: "Soft-delete one file or folder in a client-matter workspace: move it to `<matter root>/TRASH/<same relative path>`. Use this instead of rm, unlink or any other delete -- one call, no shell, and it works while the device mount is down. `path` is the absolute host path (the Windows path from get_device_info connectedFolders). Refuses with an error `code`, touching nothing: `not_found`; `git_worktree` (ordinary repository rules apply); `not_a_matter_file` (no probanda.json at or above the path); `protected` (the workspace root, probanda.json, TRASH or anything in it, the 0. CASE DATA folder, or a privileged/disclosed tree); `cross_device`. A taken destination gets a ` (trashed YYYY-MM-DD HHMMSS)` suffix. `dry_run: true` returns the planned move only. Every move is logged to TRASH/.trash-log.jsonl. With `run_id` and `row_id` (a /housekeeping run's approved row; pass both or neither), it refuses unless that run's approval.json approves the row and the file still holds the row's proposal.json hash: `not_approved` (no approval, or the row is not approved), `unknown_row`, `changed_since_approval`, `approval_corrupt`, `invalid_argument` (only one of the two).",
+      description: "Soft-delete one file or folder: move a client-matter file to `<matter root>/TRASH/<same relative path>`, and a path in no matter to `<home>/TRASH/<path relative to home>`, or `<drive>:/TRASH/<path relative to the drive root>` when it is outside home. Use this instead of rm, unlink or any other delete -- one call, no shell, and it works while the device mount is down. `path` is the absolute host path (the Windows path from get_device_info connectedFolders). Refuses with an error `code`, touching nothing: `not_found`; `git_worktree` (ordinary repository rules apply); `protected` (the workspace root, probanda.json, TRASH or anything in it, the 0. CASE DATA folder, a privileged/disclosed tree, the home folder or a drive root); `cross_device`. A taken destination gets a ` (trashed YYYY-MM-DD HHMMSS)` suffix. `dry_run: true` returns the planned move only. Every move is logged to TRASH/.trash-log.jsonl. With `run_id` and `row_id` (a /housekeeping run's approved row; pass both or neither), it refuses unless that run's approval.json approves the row and the file still holds the row's proposal.json hash: `not_approved` (no approval, or the row is not approved), `unknown_row`, `changed_since_approval`, `approval_corrupt`, `invalid_argument` (only one of the two).",
       inputSchema: {
         type: "object",
         properties: {
@@ -15908,6 +15908,7 @@ import {
   renameSync as renameSync2,
   statSync as statSync3
 } from "node:fs";
+import { homedir } from "node:os";
 import { win32 as pathWin325 } from "node:path";
 
 // src/files/matter-root.ts
@@ -16850,7 +16851,7 @@ function requireApprovedRow(matterRoot, row3, source) {
 // src/file_ops/trash.ts
 var TRASH2 = "TRASH";
 var TRASH_LOG = ".trash-log.jsonl";
-function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), row3 = {}) {
+function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), row3 = {}, outsideMatter = false) {
   if (typeof path !== "string" || !pathWin325.isAbsolute(path)) {
     throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
   }
@@ -16872,14 +16873,21 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), ro
       "git_worktree"
     );
   }
-  const root = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile(pathWin325.join(dir, marker))));
-  if (root === void 0) {
+  const matterRoot = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile(pathWin325.join(dir, marker))));
+  if (matterRoot === void 0 && !outsideMatter) {
     throw new DataServerError(
       `no ${POINTER_FILES.join(" or ")} at or above the path; not a client-matter file: ${target}`,
       "not_a_matter_file"
     );
   }
+  const root = matterRoot ?? mirrorRoot(target);
   const rel = pathWin325.relative(root, target);
+  if (matterRoot === void 0 && (rel === "" || rel.split(pathWin325.sep).some((s) => s.toUpperCase() === TRASH2))) {
+    throw new DataServerError(
+      `path is protected (the home folder, a drive root, or ${TRASH2} or anything in it): ${target}`,
+      "protected"
+    );
+  }
   if (zoneProblem("move-from", target, root)) {
     throw new DataServerError(
       `path is protected (the workspace root, the matter pointer, ${TRASH2}, the matter-data folder, or a privileged/disclosed tree): ${target}`,
@@ -16918,6 +16926,12 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), ro
   }
   return result;
 }
+function mirrorRoot(target) {
+  const home = realpathSync4.native(homedir());
+  const rel = pathWin325.relative(home, target);
+  if (rel !== ".." && !rel.startsWith("..\\") && !pathWin325.isAbsolute(rel)) return home;
+  return pathWin325.parse(target).root;
+}
 function isFile(path) {
   return existsSync4(path) && statSync3(path).isFile();
 }
@@ -16947,7 +16961,7 @@ import { existsSync as existsSync6, readFileSync as readFileSync4 } from "node:f
 
 // src/config-path.ts
 import { copyFileSync, existsSync as existsSync5, mkdirSync as mkdirSync3, readdirSync as readdirSync5 } from "node:fs";
-import { homedir } from "node:os";
+import { homedir as homedir2 } from "node:os";
 import { join as join4 } from "node:path";
 var CONFIG_FILE = "probanda.json";
 var LEGACY_CONFIG_FILE = "coclerk.json";
@@ -16964,7 +16978,7 @@ function override(env) {
   return named;
 }
 function roaming(env) {
-  return env.APPDATA || join4(homedir(), "AppData", "Roaming");
+  return env.APPDATA || join4(homedir2(), "AppData", "Roaming");
 }
 function migrate(env) {
   const folder = join4(roaming(env), CONFIG_FOLDER);
@@ -17030,7 +17044,7 @@ import { win32 as pathWin326 } from "node:path";
 
 // src/repo-root.ts
 import { existsSync as existsSync7, readFileSync as readFileSync5, readdirSync as readdirSync6, statSync as statSync4 } from "node:fs";
-import { homedir as homedir2 } from "node:os";
+import { homedir as homedir3 } from "node:os";
 import { basename as basename2, dirname as dirname2, join as join5, resolve as resolve2 } from "node:path";
 import { fileURLToPath } from "node:url";
 var CHECKOUT_LAYOUTS = [
@@ -17114,7 +17128,7 @@ function readConfigRepoRoot(cfgPath, tried) {
   return void 0;
 }
 function conventionalCandidates(env) {
-  const home = env.USERPROFILE || env.HOME || homedir2();
+  const home = env.USERPROFILE || env.HOME || homedir3();
   return home ? [join5(home, "Git", "probanda-dev")] : [];
 }
 function bundledSkillFolders(installRoot = INSTALL_ROOT) {
@@ -17757,11 +17771,11 @@ import { win32 as pathWin3210 } from "node:path";
 
 // src/files/downloads.ts
 import { statSync as statSync7 } from "node:fs";
-import { homedir as homedir3 } from "node:os";
+import { homedir as homedir4 } from "node:os";
 import { win32 as pathWin329 } from "node:path";
 var IN_PROGRESS_EXTENSIONS = /* @__PURE__ */ new Set([".crdownload", ".tmp", ".partial"]);
 function downloadsDir(env = process.env) {
-  const probe = env.COCLERK_DOWNLOADS_DIR || pathWin329.join(homedir3(), "Downloads");
+  const probe = env.COCLERK_DOWNLOADS_DIR || pathWin329.join(homedir4(), "Downloads");
   const dir = canonicalRoot(probe, `Downloads folder not found at ${probe}`, "downloads_missing");
   if (!statSync7(dir).isDirectory()) {
     throw new DataServerError(`Downloads path is not a folder: ${probe}`, "downloads_missing");
@@ -24617,7 +24631,7 @@ import { existsSync as existsSync15, realpathSync as realpathSync10, statSync as
 import { win32 as pathWin3216 } from "node:path";
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "c079f16d8665";
+var BUILD_STAMP = false ? null : "ca18d56b0bdb";
 
 // src/local-page/durable.ts
 import { closeSync as closeSync4, fsyncSync as fsyncSync2, openSync as openSync4, writeSync as writeSync2 } from "node:fs";
@@ -25183,7 +25197,7 @@ async function waitApproval(matterRoot, runId, env = process.env) {
 var tools = [
   defineTool(
     "file_ops__trash",
-    ({ path, dry_run, run_id, row_id }) => fileOpsTrash(path, dry_run ?? false, /* @__PURE__ */ new Date(), { run_id, row_id })
+    ({ path, dry_run, run_id, row_id }) => fileOpsTrash(path, dry_run ?? false, /* @__PURE__ */ new Date(), { run_id, row_id }, true)
   ),
   defineTool("file_ops__move", (args) => {
     const createFolders = args.create_folders ?? [];

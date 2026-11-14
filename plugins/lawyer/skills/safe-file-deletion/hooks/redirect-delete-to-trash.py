@@ -3,8 +3,11 @@
 
 Refuses hard deletes issued outside a Git worktree and the OS temp dir, and
 points to the file-manager plugin's file_ops__trash tool, which moves the item to
-<workspace root>/TRASH/<same relative path>. It never moves a file itself, so
-without file-manager no file Probanda did not create is deleted or moved.
+<matter root>/TRASH/<same relative path>, or for a path in no matter to
+~/TRASH/<path relative to home> (<drive>:/TRASH/... outside home). While
+file-manager is enabled in the session, a lone delete that its trash-rewrite hook
+turns into a move is rewritten here the same way (rule 3b). Without file-manager
+this hook moves nothing, so no file Probanda did not create is deleted or moved.
 
 Policy (scope rules, rationale): source/skills/safe-file-deletion/SKILL.md
 
@@ -31,6 +34,13 @@ Decision rule
      parent directory on the device and refuses, before rm runs, any that lands
      in or above $HOME/mnt or in the real location of any $HOME/mnt entry.
      Any error in this step falls through to 4.
+  3b. Bash and PowerShell: a lone delete that delete_targets.trash_targets
+     accepts (every target a literal absolute path outside a worktree and the
+     temp dir, or in a matter folder), while delete_targets.file_manager_root
+     finds file-manager's session marker -> allow, rewritten into the same call
+     to file-manager's trash CLI that file-manager's own hook returns, so the
+     two never conflict (a deny here would beat its allow). Any doubt or error
+     in this step falls through to 4.
   4. Otherwise -> deny (JSON permissionDecision on stdout, exit 0), naming the
      file_ops__trash tool.
 
@@ -54,16 +64,18 @@ a bug here must never be able to block all shell use.
 """
 import base64
 import codecs
-import glob
-import json
 import os
 import re
 import sys
-import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared" / "scripts"))
 import hook_io  # noqa: E402
+from delete_targets import (  # noqa: E402
+    MSYS_ABS_RE, PS_DELETE_COMMANDS, PS_SWITCH_RE, REWRITE_COMMANDS, WIN_ABS_RE,
+    exempt, file_manager_root, follows, host_word, lone_rm_targets, plain_parts, split_simple_command,
+    trash_command, trash_targets,
+)
 
 # ---------------------------------------------------------------------------
 # DESTRUCTIVE_PATTERNS -- extend here. Non-exhaustive by design.
@@ -146,18 +158,11 @@ TRASH_DIRNAME = "TRASH"
 
 # Tokens: double-quoted, single-quoted, or bare.
 TOKEN_RE = re.compile(r'"([^"]*)"|\'([^\']*)\'|(\S+)')
-WIN_ABS_RE = re.compile(r"^[A-Za-z]:[\\/]")
-MSYS_ABS_RE = re.compile(r"^/([A-Za-z])/(.*)$")
 # Absolute paths embedded inside a larger token, e.g. the body of
 # `python -c "import shutil; shutil.rmtree(r'C:\\matter\\x')"`.
 EMBEDDED_WIN_RE = re.compile(r"(?<![\w:])[A-Za-z]:[\\/][^\"'\r\n|<>&;]*")
 EMBEDDED_MSYS_RE = re.compile(r"(?<![\w:])/[A-Za-z]/[^\"'\r\n|<>&;]*")
 
-# Rewriter. A word of a simple command: double-quoted (no escapes or backticks),
-# single-quoted, or bare (no quotes, escapes, operators or parentheses).
-WORD_RE = re.compile(r'"([^"\\`]*)"|\'([^\']*)\'|([^\s"\'\\;&|<>()`]+)')
-REWRITE_COMMANDS = {"rm", "unlink"}
-REWRITE_FLAGS = {"-r", "-R", "-f", "-rf", "-fr", "--recursive", "--force"}
 HOME_VAR = "$HOME/"
 DEVICE_MOUNT = "mnt"             # device_bash addresses a matter as $HOME/mnt/<folder>/...
 
@@ -471,248 +476,8 @@ SHELL_BINARY_RE = re.compile(r"[\\/](?:cmd|pwsh|powershell)\.exe$", re.IGNORECAS
 PATH_ENTRY_RE = re.compile(r":\$\{?PATH\}?$")
 
 
-def nearest_existing(path):
-    p = Path(os.path.abspath(path))
-    while not os.path.exists(p) and p.parent != p:     # os.path: False, not EACCES, under /root
-        p = p.parent
-    return p
 
 
-def in_git_worktree(path):
-    d = nearest_existing(path)
-    for anc in (d, *d.parents):
-        if (anc / ".git").exists():        # .git dir (repo) or .git file (linked worktree)
-            return True
-    return False
-
-
-def in_temp_dir(path):
-    tmp = Path(os.path.realpath(tempfile.gettempdir()))
-    try:
-        Path(os.path.abspath(path)).relative_to(tmp)
-        return True
-    except ValueError:
-        return False
-
-
-# ---------------------------------------------------------------------------
-# Client matter folders (spec 2026-10-16). A location inside one is never
-# exempt: a matter-folder hit only ever adds protection, so a matter folder
-# inside a Git worktree or the OS temp dir is refused too. A folder is
-# recognised two independent ways, so a lawyer deleting one marker file does
-# not leave the folder unprotected:
-#   1. an ancestor holds a matter pointer file (coclerk.json, or probanda.json
-#      once the rename lands);
-#   2. practice data's local record of matter folders names an ancestor: the
-#      `folder` data field on `matter` items in practice.db
-#      (<case_data_root>/_practice/practice.db, opened read-only), a path
-#      relative to the litigation library (the parent of case_data_root), or
-#      absolute for a folder outside it. The
-#      Roaming device settings file names case_data_root; COCLERK_CONFIG_PATH
-#      names another settings file to read in its place.
-# Any read error keeps the hook's existing behaviour: the failing check reads
-# as "not a matter folder" and the worktree/temp rules alone decide.
-# ---------------------------------------------------------------------------
-POINTER_NAMES = ("coclerk.json", "probanda.json")
-
-
-def _case_data_root():
-    """case_data_root from the device settings file, or None."""
-    override = os.environ.get("COCLERK_CONFIG_PATH")
-    if override:
-        candidates = [override]
-    else:
-        roaming = os.environ.get("APPDATA") or os.path.join(os.path.expanduser("~"), "AppData", "Roaming")
-        candidates = [os.path.join(roaming, "Probanda", "probanda.json")] + [
-            os.path.join(roaming, "Coclerk", name) for name in ("probanda.json", "coclerk.json")]
-    for candidate in candidates:
-        try:
-            with open(candidate, encoding="utf-8") as fh:
-                root = json.load(fh).get("case_data_root")
-        except (OSError, ValueError, AttributeError):
-            continue
-        if isinstance(root, str) and root:
-            return root
-    return None
-
-
-def recorded_matter_folders():
-    """The absolute path of each matter folder practice data records, or [] when
-    the record cannot be read: the check then adds nothing."""
-    import sqlite3
-    root = _case_data_root()
-    if not root:
-        return []
-    db = os.path.join(root, "_practice", "practice.db")
-    if not os.path.isfile(db):
-        return []
-    library = os.path.dirname(os.path.abspath(root))
-    con = sqlite3.connect("file:" + Path(db).as_posix() + "?mode=ro", uri=True)
-    try:
-        rows = con.execute("SELECT value FROM kv_store WHERE namespace = 'item'").fetchall()  # internals-ok: a query, not a message
-    finally:
-        con.close()
-    folders = []
-    for (value,) in rows:
-        try:
-            item = json.loads(value)
-        except ValueError:
-            continue
-        if not isinstance(item, dict) or item.get("kind") != "matter":
-            continue
-        data = item.get("data")
-        folder = data.get("folder") if isinstance(data, dict) else None
-        if isinstance(folder, str) and folder:
-            folders.append(os.path.join(library, folder))
-    return folders
-
-
-_matter_folders = None
-
-
-def matter_folder_roots():
-    global _matter_folders
-    if _matter_folders is None:
-        try:
-            _matter_folders = recorded_matter_folders()
-        except Exception:
-            _matter_folders = []
-    return _matter_folders
-
-
-def _under(path, root):
-    # realpath on both sides: the target arrives fully resolved (landing), so a
-    # recorded folder reached through a junction or symlink must resolve too.
-    child = os.path.normcase(os.path.realpath(path))
-    parent = os.path.normcase(os.path.realpath(root)).rstrip("\\/")
-    return child == parent or child.startswith(parent + os.sep)
-
-
-def in_matter_folder(path):
-    """Either check holds: an ancestor (of the nearest existing part) holds a
-    matter pointer file, or practice data's folder record names an ancestor."""
-    d = nearest_existing(path)
-    for anc in (d, *d.parents):
-        try:
-            if any((anc / name).is_file() for name in POINTER_NAMES):
-                return True
-        except OSError:
-            # A read error (e.g. PermissionError from is_file) reads as "not a
-            # matter folder": it must not leak into exempt()'s except and turn
-            # a worktree/temp path into a denial.
-            continue
-    try:
-        return any(_under(path, root) for root in matter_folder_roots())
-    except OSError:
-        return False
-
-
-def follows(word):
-    """rm follows a link only when the target ends in a slash or /."""
-    return re.search(r"[\\/]\.?$", str(word)) is not None
-
-
-def landing(path, follow):
-    """Where `path` really lands: fully resolved when `follow`, else only its
-    parent is resolved and the last name kept. Missing parts are re-appended.
-    No lexical abspath first: on POSIX a `..` after a link climbs from its target."""
-    if follow:
-        return Path(os.path.realpath(path))
-    head, name = os.path.split(path)
-    return Path(os.path.realpath(head), name)
-
-
-# The component holding a glob character, from that character to the next separator.
-GLOB_PART_RE = re.compile(r"[*?[][^\\/]*")
-GLOB_CHARS = set("*?[")
-
-
-def landings(path, follow):
-    """Every place `path` lands under rm's rule. A glob in a component rm
-    follows (any but the last, or the last when `follow`) is judged by each
-    real match, not by its spelling. With no match the shell passes the
-    pattern on as written, so that literal path is judged."""
-    path = str(path)
-    glob_end = max((m.end() for m in GLOB_PART_RE.finditer(path)), default=None)
-    if glob_end is None or (glob_end == len(path) and not follow):
-        return [landing(path, follow)]
-    matches = glob.glob(path[:glob_end]) or [path[:glob_end]]
-    return [landing(m + path[glob_end:], follow) for m in matches]
-
-
-def exempt(path, follow=None):
-    """True when `path` really lands inside a Git worktree or the OS temp dir,
-    and not inside a client matter folder: a matter-folder hit only ever adds
-    protection (spec 2026-10-16, §9 Q1). follow=None (rm's rule unknown)
-    requires both landings to be exempt. A `~` form that did not expand, or a
-    path or glob that fails to resolve, is not exempt."""
-    if str(path).startswith("~"):
-        return False
-    rules = (False, True) if follow is None else (follow,)
-    try:
-        return all((in_git_worktree(t) or in_temp_dir(t)) and not in_matter_folder(t)
-                   for f in rules for t in landings(path, f))
-    except (OSError, ValueError, RuntimeError):
-        return False
-
-
-def split_simple_command(command):
-    """Words of a single simple command, or None when splitting it would take
-    real shell parsing (operators, escapes, substitutions, adjacent quotes)."""
-    if "\n" in command or "\r" in command:
-        return None
-    words, pos = [], 0
-    while True:
-        while pos < len(command) and command[pos] in " \t":
-            pos += 1
-        if pos == len(command):
-            return words
-        m = WORD_RE.match(command, pos)
-        if m is None or (m.end() < len(command) and command[m.end()] not in " \t"):
-            return None
-        dq, sq, bare = m.groups()
-        if dq is not None:
-            words.append((dq, "double"))
-        elif sq is not None:
-            words.append((sq, "single"))
-        else:
-            words.append((bare, "bare"))
-        pos = m.end()
-
-
-def lone_rm_targets(command, cwd):
-    """(word, path) for each target of a single rm/unlink, after an optional
-    `cd <absolute dir> &&`, with the word joined to the directory it runs in."""
-    head, sep, tail = command.partition("&&")
-    cd = split_simple_command(head) if sep else None
-    if cd and len(cd) == 2 and cd[0][0] == "cd" and Path(cd[1][0]).is_absolute():
-        cwd, command = cd[1][0], tail
-    words = split_simple_command(command) or [("", "")]
-    if words[0][0] not in REWRITE_COMMANDS:
-        return []
-    return [(t, (Path(cwd) / host_word(t if q == "single" else bash_home(t))).as_posix())
-            for t, q in words[1:] if t not in REWRITE_FLAGS]
-
-
-BASH_HOME_RE = re.compile(r"\$(?:(HOME|USERPROFILE)|\{(HOME|USERPROFILE)\})(?=/|$)")
-
-
-def bash_home(word):
-    """`word` with a leading $HOME/$USERPROFILE (braced or not) expanded. Claude
-    Code on Windows runs hooks without HOME, so an unset one falls back to the
-    user's home folder, as the `~/` form does."""
-    m = BASH_HOME_RE.match(word)
-    if m is None:
-        return word
-    home = os.environ.get(m.group(1) or m.group(2)) or os.path.expanduser("~")
-    return home.replace("\\", "/") + word[m.end():]
-
-
-def plain_parts(path):
-    """No `.` or `..` component, and no dot-led component holding a glob (`.?`
-    can match `..`). A dot-led name such as `.claude` is fine."""
-    return all(not p.startswith(".") or (p not in (".", "..") and not GLOB_CHARS & set(p))
-               for p in re.split(r"[\\/]", path))
 
 
 def cwd_free(targets):
@@ -725,8 +490,6 @@ def cwd_free(targets):
         for word, path in targets)
 
 
-PS_DELETE_COMMANDS = {"remove-item", "ri", "rm", "del", "erase", "rd", "rmdir"}
-PS_SWITCH_RE = re.compile(r"-[A-Za-z]+")
 
 
 def ps_lone_free(command):
@@ -791,10 +554,6 @@ def shell_segments(command):
     return segments
 
 
-def host_word(word):
-    """An msys /c/... word as C:/..., anything else unchanged."""
-    msys = MSYS_ABS_RE.match(word)
-    return msys.group(1).upper() + ":/" + msys.group(2) if msys else word
 
 
 def rm_targets(command, cwd):
@@ -909,15 +668,20 @@ def device_rm_rewrite(command):
 def block_message(label, offending):
     lines = [
         "Do not delete this directly - move this path with the file-manager plugin's trash tool;"
-        " it moves the item to <root>/" + TRASH_DIRNAME + "/<same relative path>.",
+        " call it once per path. It moves a matter file to <matter root>/" + TRASH_DIRNAME + "/<same relative"
+        " path>, and any other path to ~/" + TRASH_DIRNAME + "/<path relative to home>, or"
+        " <drive>:/" + TRASH_DIRNAME + "/<path relative to the drive root> outside home.",
+        "With file-manager enabled, a lone rm or Remove-Item naming literal absolute paths is moved"
+        " to " + TRASH_DIRNAME + " automatically; this command is not one (a chain, a glob, a"
+        " variable, a relative path or another delete command).",
         "Blocked pattern: " + label,
     ]
     if offending is not None:
         lines.append("Location outside any Git worktree: " + str(Path(os.path.abspath(offending))))
     lines.append(
         "If that trash tool is not available in this session, the file-manager plugin is not"
-        " enabled and this deletion is refused: tell the practitioner that it needs file-manager."
-        " Never fall back to a shell move or delete, or the Write tool."
+        " enabled and this deletion is refused: ask the practitioner to delete it themselves or"
+        " to enable file-manager. Never fall back to a shell move or delete, or the Write tool."
     )
     lines.append(
         "Then retry your original task using the moved file's new location if needed."
@@ -946,6 +710,18 @@ def main():
         return 0
     if tool_name == "PowerShell" and ps_lone_free(command):
         return 0
+
+    if tool_name in ("Bash", "PowerShell") and hidden_label is None:
+        # Its own handler: any doubt here must fall through to the deny, never fail open.
+        try:
+            paths = trash_targets(tool_name, command, cwd)
+            root = file_manager_root(payload) if paths is not None else None
+        except Exception:
+            root = None
+        if root is not None:
+            # The rewrite file-manager's own hook returns, so the two never disagree.
+            return hook_io.pre_tool("allow", "delete moved to TRASH by file-manager",
+                                    updatedInput={**tool_input, "command": trash_command(tool_name, root, paths)})
 
     offending = None
     if tool_name in ("Bash", "PowerShell"):

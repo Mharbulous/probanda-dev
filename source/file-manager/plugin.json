@@ -2,7 +2,7 @@
   "name": "file-manager",
   "displayName": "File Manager",
   "version": "0.17.4",
-  "description": "Optional Probanda plugin for British Columbia lawyers that renames, moves, changes and deletes files on your computer that Probanda did not create: matter housekeeping, routing loose accounting files and applying approved renames. Without it, Probanda cannot rename, move, change or delete any file it did not create: it only reads or copies them. Requires the lawyer plugin: install lawyer first.",
+  "description": "Optional Probanda plugin for British Columbia lawyers that renames, moves, changes and deletes files on your computer that Probanda did not create: matter housekeeping, routing loose accounting files and applying approved renames. While it is enabled, a delete becomes a move to a TRASH folder (the matter's own, or one in your home folder), so it can be undone. Without it, Probanda cannot rename, move, change or delete any file it did not create: it only reads or copies them. Requires the lawyer plugin: install lawyer first.",
   "author": {
     "name": "Probanda Legal",
     "url": "https://github.com/Probanda-app"
@@ -44,6 +44,35 @@
             ],
             "timeout": 10,
             "statusMessage": "Housekeeping approval guard"
+          }
+        ]
+      },
+      {
+        "matcher": "^(Bash|PowerShell)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/trash-rewrite.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Delete to TRASH"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/trash-rewrite.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Delete to TRASH"
           }
         ]
       }

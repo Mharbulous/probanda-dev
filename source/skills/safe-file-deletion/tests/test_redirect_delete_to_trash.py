@@ -111,8 +111,8 @@ class DeviceBashGateTests(HookTestCase):
 
 
 class NoMoveTests(HookTestCase):
-    """A delete the hook once rewrote into a move to TRASH is now refused: moving a
-    file is the file-manager plugin's work (file_ops__trash), never the hook's."""
+    """Without file-manager's session marker, a delete is refused, never moved: moving a
+    file is the file-manager plugin's work (RewriteTests covers the marker case)."""
 
     def test_bash_rm_in_matter_is_denied_not_moved(self):
         command = 'rm "' + self.m + '/0. DRAFT/x.md"'
@@ -836,6 +836,142 @@ class PluginRegistrationTests(unittest.TestCase):
         for name in ("Bash", "PowerShell", DEVICE, "mcp__foo__device_bash"):
             self.assertTrue(matcher.fullmatch(name), name)
         self.assertFalse(matcher.fullmatch("mcp__plugin_lawyer_data__matter_data__query"))
+
+
+FM_ROOT = REPO_ROOT / "source" / "file-manager"
+FM_HOOK = FM_ROOT / "hooks" / "trash-rewrite.py"
+FM_PLUGIN_JSON = FM_ROOT / "plugin.json"
+TRASH_CLI = FM_ROOT / "files-mcp" / "dist" / "trash-cli.js"
+SESSION = "session-trash-rewrite-test"
+
+
+def bash_quote(text):
+    return "'" + text.replace("'", "'\\''") + "'"
+
+
+def host_bash():
+    """Git Bash on Windows (the Bash tool's shell, not WSL's bash.exe), else bash on PATH."""
+    git = shutil.which("git")
+    if os.name == "nt":
+        found = git and next((p for p in (Path(git).parents[1] / "bin" / "bash.exe",
+                                          Path(git).parents[1] / "usr" / "bin" / "bash.exe") if p.is_file()), None)
+        return str(found) if found else None
+    return shutil.which("bash")
+
+
+class RewriteTests(HookTestCase):
+    """file-manager's trash-rewrite hook turns a lone delete of literal absolute paths into a
+    call to its trash CLI; the lawyer hook returns the same rewrite only while file-manager's
+    session marker is present, and denies otherwise."""
+
+    def setUp(self):
+        self.env = {**self.env, "CLAUDE_PLUGIN_ROOT": str(FM_ROOT), "CLAUDE_PROJECT_DIR": str(self.home)}
+        self.marker = self.ostemp / "probanda-file-manager-sessions" / SESSION
+        self.marker.unlink(missing_ok=True)
+        (self.home / "Documents").mkdir(exist_ok=True)
+        self.doc = self.home / "Documents" / "trash-probe.txt"
+        self.doc.write_text("probe", encoding="utf-8")
+        self.settings = self.home / ".claude" / "settings.json"
+        self.settings.unlink(missing_ok=True)
+
+    def run_script(self, script, payload):
+        return subprocess.run([sys.executable, str(script)], input=json.dumps(payload), capture_output=True,
+                              text=True, encoding="utf-8", env=self.env)
+
+    def pre_tool(self, script, tool, command, cwd=None, **extra):
+        return self.run_script(script, {
+            "hook_event_name": "PreToolUse", "session_id": SESSION, "tool_name": tool,
+            "tool_input": {"command": command, **extra}, "cwd": str(cwd or self.home),
+        })
+
+    def start_session(self):
+        result = self.run_script(FM_HOOK, {"hook_event_name": "SessionStart", "session_id": SESSION,
+                                           "cwd": str(self.home)})
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def expected(self, *paths):
+        return "node " + " ".join(bash_quote(p) for p in [str(TRASH_CLI), *paths])
+
+    def test_session_start_writes_the_marker(self):
+        self.start_session()
+        self.assertEqual(self.marker.read_text(encoding="utf-8"), str(FM_ROOT))
+
+    def test_matter_home_and_other_drive_paths_are_rewritten(self):
+        cases = [
+            (self.m + "/0. DRAFT/x.md", self.m + "/0. DRAFT/x.md"),
+            (self.doc.as_posix(), self.doc.as_posix()),
+            ("$HOME/Documents/trash-probe.txt", self.doc.as_posix()),
+            ("Z:/archive/old.txt", "Z:/archive/old.txt"),
+        ]
+        for word, path in cases:
+            with self.subTest(word=word):
+                command = 'rm -f "' + word + '"'
+                self.assertRewritten(self.pre_tool(FM_HOOK, "Bash", command, description="d", timeout=5),
+                                     self.expected(path), {"command": command, "description": "d", "timeout": 5})
+
+    def test_powershell_remove_item_is_rewritten(self):
+        command = "Remove-Item -Force '" + str(self.doc) + "'"
+        cli = str(TRASH_CLI).replace("'", "''")
+        self.assertRewritten(self.pre_tool(FM_HOOK, "PowerShell", command),
+                             "& node '" + cli + "' '" + str(self.doc) + "'", {"command": command})
+
+    def test_worktree_temp_and_unresolvable_deletes_are_left_alone(self):
+        t = self.ostemp.as_posix()
+        for command, cwd in [("rm x.md", self.repo), ('rm "' + (self.repo / "x.md").as_posix() + '"', None),
+                             ('rm "' + t + '/x"', None), ('rm "' + self.doc.as_posix() + '"; rm b', None),
+                             ("rm " + self.home.as_posix() + "/Documents/*.txt", None),
+                             ("rm Documents/trash-probe.txt", None), ('rm -i "' + self.doc.as_posix() + '"', None),
+                             ("rm $FOO/x", None), ("ls " + self.doc.as_posix(), None)]:
+            with self.subTest(command=command):
+                self.assertAllowedSilently(self.pre_tool(FM_HOOK, "Bash", command, cwd=cwd))
+
+    def test_lawyer_hook_returns_the_same_rewrite_while_file_manager_is_on(self):
+        self.start_session()
+        command = 'rm "' + self.doc.as_posix() + '"'
+        expected = self.expected(self.doc.as_posix())
+        self.assertRewritten(self.pre_tool(FM_HOOK, "Bash", command), expected, {"command": command})
+        self.assertRewritten(self.pre_tool(HOOK, "Bash", command), expected, {"command": command})
+
+    def test_lawyer_hook_denies_when_file_manager_is_off(self):
+        command = 'rm "' + self.doc.as_posix() + '"'
+        with self.subTest("no marker"):
+            self.assertDenied(self.pre_tool(HOOK, "Bash", command))
+        self.start_session()
+        self.settings.parent.mkdir(exist_ok=True)
+        for settings in ('{"enabledPlugins": {"file-manager@Probanda_Legal_experimental": false}}', "{not json"):
+            with self.subTest(settings=settings):
+                self.settings.write_text(settings, encoding="utf-8")
+                self.assertDenied(self.pre_tool(HOOK, "Bash", command))
+        self.settings.unlink()
+        with self.subTest("marker names a root with no trash CLI"):
+            self.marker.write_text(str(self.base), encoding="utf-8")
+            self.assertDenied(self.pre_tool(HOOK, "Bash", command))
+
+    def test_lawyer_hook_still_denies_a_compound_delete_with_file_manager_on(self):
+        self.start_session()
+        self.assertDenied(self.pre_tool(HOOK, "Bash", 'rm "' + self.doc.as_posix() + '"; rm "' + self.m + '/0. DRAFT/x.md"'))
+
+    @unittest.skipUnless(host_bash() and shutil.which("node"), "needs Git Bash and node")
+    def test_rewritten_command_moves_the_file_to_the_home_trash(self):
+        command = 'rm "' + self.doc.as_posix() + '"'
+        rewritten = self.decision(self.pre_tool(FM_HOOK, "Bash", command))["updatedInput"]["command"]
+        ran = subprocess.run([host_bash(), "-c", rewritten], capture_output=True, text=True, env=self.env)
+        self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
+        self.assertFalse(self.doc.exists())
+        moved = self.home / "TRASH" / "Documents" / "trash-probe.txt"
+        self.assertEqual(moved.read_text(encoding="utf-8"), "probe")
+        log = json.loads((self.home / "TRASH" / ".trash-log.jsonl").read_text(encoding="utf-8").splitlines()[-1])
+        self.assertEqual(Path(log["to"]), moved)
+
+    def test_plugin_registers_the_hook_for_shells_and_session_start(self):
+        hooks = json.loads(FM_PLUGIN_JSON.read_text(encoding="utf-8"))["hooks"]
+        arg = "${CLAUDE_PLUGIN_ROOT}/hooks/trash-rewrite.py"
+        pre = [e for e in hooks["PreToolUse"] if any(arg in h.get("args", []) for h in e["hooks"])]
+        self.assertEqual(len(pre), 1)
+        for name in ("Bash", "PowerShell"):
+            self.assertTrue(re.fullmatch(pre[0]["matcher"], name), name)
+        self.assertFalse(re.fullmatch(pre[0]["matcher"], DEVICE))
+        self.assertTrue(any(arg in h.get("args", []) for e in hooks["SessionStart"] for h in e["hooks"]))
 
 
 if __name__ == "__main__":
