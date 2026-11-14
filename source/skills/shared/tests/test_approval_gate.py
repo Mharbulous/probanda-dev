@@ -8,10 +8,26 @@ import re
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from hook_runner import run_hook  # noqa: E402
+import approval_gate  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[4]
+SECRET = bytes(range(32))
+
+
+@pytest.fixture(autouse=True)
+def device_secret(tmp_path, monkeypatch):
+    """A scratch device secret where the hook looks for it (beside probanda.json)."""
+    folder = tmp_path / "appdata" / "Probanda"
+    folder.mkdir(parents=True)
+    (folder / "page-api.secret").write_bytes(SECRET)
+    monkeypatch.setenv("APPDATA", str(tmp_path / "appdata"))
+    monkeypatch.delenv("COCLERK_CONFIG_PATH", raising=False)
+    return folder / "page-api.secret"
 HOOKS = {plugin: REPO / "source" / plugin / "hooks" / "one-way-gate.py"
          for plugin in ("lawyer", "litigator", "file-manager", "researcher")}
 TOOL = "mcp__plugin_lawyer_data__practice_data__delete_anchor"
@@ -55,17 +71,20 @@ class Session:
 
     def gate(self, name=TOOL, tool_input=ARGS, plugin="lawyer", **extra):
         """Run the hook on a call. The refused call goes into the transcript with the refusal as its result;
-        a passed call goes in with an ok result unless `answered` is False."""
+        a passed call goes in with an ok result unless `answered` is False. A pass that changes the call's
+        input leaves the new input in `self.allowed`."""
         answered = extra.pop("answered", True)
         payload = {"hook_event_name": "PreToolUse", "tool_name": name, "tool_input": tool_input,
                    "transcript_path": str(self.path), **extra}
         result = run_hook(HOOKS[plugin], payload)
         assert result.returncode == 0, result.stderr
-        if not result.stdout:
+        output = json.loads(result.stdout)["hookSpecificOutput"] if result.stdout else {}
+        self.allowed = output.get("updatedInput")
+        if output.get("permissionDecision", "allow") == "allow":
             if answered:
                 self.call(name, tool_input, '{"ok": true}')
             return None
-        reason = json.loads(result.stdout)["hookSpecificOutput"]["permissionDecisionReason"]
+        reason = output["permissionDecisionReason"]
         self.call(name, tool_input, reason, is_error=True)
         return reason
 
@@ -327,6 +346,39 @@ def test_a_dedupe_move_from_a_subagent_is_refused(tmp_path):
     s.say(block_of(s.gate(name=DEDUPE, tool_input=DEDUPE_CALL)))
     reason = s.gate(name=DEDUPE, tool_input=DEDUPE_CALL, agent_id="a1", agent_type="lawyer:email-reader")
     assert reason and "subagent" in reason
+
+
+def test_a_pasted_approval_adds_the_proof_the_tool_checks_and_nothing_else_changes(tmp_path):
+    s = Session(tmp_path)
+    s.say("Remove the duplicates.")
+    s.say(block_of(s.gate(name=DEDUPE, tool_input={**DEDUPE_CALL, "approval_proof": "made up"})))
+    assert s.gate(name=DEDUPE, tool_input={**DEDUPE_CALL, "approval_proof": "made up"}) is None
+    assert s.allowed == {**DEDUPE_CALL, "approval_proof": approval_gate.proof("mail__dedupe_apply", DEDUPE_CALL, SECRET)}
+    s.say("Delete that anchor.")
+    s.say(block_of(s.gate()))
+    assert s.gate() is None and s.allowed is None, "a tool that does not check its own approval is let through as before"
+
+
+def test_with_no_record_only_a_tool_that_checks_its_own_approval_is_let_through(tmp_path):
+    for name, (plugin, call, _) in SAMPLES.items():
+        result = run_hook(HOOKS[plugin], {"hook_event_name": "PreToolUse", "tool_name": name, "tool_input": call})
+        assert result.returncode == 0, result.stderr
+        if approval_gate.own_check(name):
+            assert result.stdout == b"", name
+        else:
+            assert "No record of this conversation could be read." in json.loads(result.stdout)["hookSpecificOutput"][
+                "permissionDecisionReason"], name
+    sub = run_hook(HOOKS["lawyer"], {"tool_name": DEDUPE, "tool_input": DEDUPE_CALL, "agent_id": "a1"})
+    assert "subagent" in json.loads(sub.stdout)["hookSpecificOutput"]["permissionDecisionReason"]
+
+
+def test_without_the_device_secret_an_approved_call_goes_through_with_no_proof(tmp_path, device_secret):
+    device_secret.unlink()
+    s = Session(tmp_path)
+    s.say("Remove the duplicates.")
+    s.say(block_of(s.gate(name=DEDUPE, tool_input=DEDUPE_CALL)))
+    assert s.gate(name=DEDUPE, tool_input=DEDUPE_CALL) is None
+    assert s.allowed is None
 
 
 def test_a_sent_record_still_says_one_way(tmp_path):

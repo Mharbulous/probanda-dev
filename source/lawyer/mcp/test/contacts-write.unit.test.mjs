@@ -17,7 +17,10 @@ after(() => {
   rmSync(STATE_DIR, { recursive: true, force: true });
 });
 
-const { callContactsCalendarsEmailTool: callTool, dispatchContactsCalendarsEmailTool: dispatchTool } = await import("../build/contacts-calendars-email-dispatch.js");
+const server = await import("../build/contacts-calendars-email-dispatch.js");
+const { approved } = await import("./approved-call.mjs");
+const callTool = approved(server.callContactsCalendarsEmailTool);
+const dispatchTool = approved(server.dispatchContactsCalendarsEmailTool);
 const { createCard, removeCard, replaceCard } = await import("../build/contacts/card-write.js");
 const { permittedRequest } = await import("../build/dav/session.js");
 
@@ -264,6 +267,11 @@ test("a scan writes nothing, an approved plan adds the new contacts and details,
   assert.deepEqual(scan.ambiguous.map((row) => [row.row, row.name, row.reason]), [[5, "Ada Other", "shares a phone with a different name"]]);
   assert.match(readFileSync(scan.report_path, "utf-8"), /row 2: Ada Sample - add to the existing contact: email ada@example\.test\r\nrow 3: Harbour Example LLP - new contact/);
   assert.deepEqual([sent, store.size], [[], 1], "the scan sent nothing");
+  const page = await callTool(context, "contacts__read_report", { report_path: scan.report_path, offset: 1, limit: 2 });
+  assert.deepEqual([page.total, page.offset, page.next_offset], [4, 1, 3]);
+  assert.match(page.lines[0], /^row 3: Harbour Example LLP - new contact/);
+  assert.equal((await callTool(context, "contacts__read_report", { report_path: scan.report_path, offset: 3 })).next_offset, undefined);
+  assert.equal((await errorOf(context, "contacts__read_report", { report_path: join(STATE_DIR, "elsewhere.txt") })).message.includes("report_path must be"), true);
 
   assert.match((await errorOf(context, "contacts__import_apply", { plan_id: scan.plan_id, create_count: 3, update_count: 1 })).message, /must be the plan's: 2 and 1/);
   assert.equal((await errorOf(context, "contacts__import_apply_continue", { plan_id: scan.plan_id })).code, "contacts_plan_not_started");

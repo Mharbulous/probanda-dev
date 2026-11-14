@@ -125,6 +125,20 @@
         ]
       },
       {
+        "matcher": "^(Bash|PowerShell|Read|WebFetch|mcp__(.+__)?(device|workspace)_+bash|mcp__claude-in-chrome__.+|mcp__Claude_Browser__.+)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/approval-page-guard.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Approval page guard"
+          }
+        ]
+      },
+      {
         "matcher": "mcp__(.+__)?plugin_lawyer_contacts-calendars-email__mail__dedupe_record_verdicts",
         "hooks": [
           {

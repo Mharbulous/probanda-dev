@@ -134,6 +134,7 @@ const CONTENT_SOURCES: Record<string, string> = {
   contacts__merge_apply: "contacts",
   contacts__merge_apply_continue: "contacts",
   contacts__restore_card: "contacts",
+  contacts__read_report: "contacts",
   drafting_forms__read_message: "email file",
   sources__fetch: "web page",
   sources__check: "web page",

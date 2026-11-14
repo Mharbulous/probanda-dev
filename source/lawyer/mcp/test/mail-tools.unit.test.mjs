@@ -751,6 +751,7 @@ test("the contacts-calendars-email server lists the twenty-two mail tools and th
     "contacts__merge_apply_continue",
     "contacts__merge_plan",
     "contacts__merge_scan",
+    "contacts__read_report",
     "contacts__restore_card",
     "contacts__search",
     "contacts__write_probe",
@@ -762,7 +763,12 @@ test("the contacts-calendars-email server lists the twenty-two mail tools and th
     "contacts__merge_apply", "contacts__merge_apply_continue", "contacts__restore_card",
   ];
   for (const t of dav) assert.equal(t.annotations?.readOnlyHint === true, !writers.includes(t.name), t.name);
-  assert.equal(buildContactsCalendarsEmailToolDefinitions().length, 36);
+  assert.equal(buildContactsCalendarsEmailToolDefinitions().length, 37);
+  // Each tool that checks its own approval takes the proof the approval hook adds.
+  for (const name of ["mail__dedupe_apply", "contacts__write_probe", "contacts__import_apply", "contacts__merge_apply", "contacts__restore_card"]) {
+    const t = buildContactsCalendarsEmailToolDefinitions().find((d) => d.name === name);
+    assert.deepEqual(t.inputSchema.properties.approval_proof, { type: "string" }, name);
+  }
   assert.deepEqual(buildToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
   assert.deepEqual(buildFileManagerToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
 });

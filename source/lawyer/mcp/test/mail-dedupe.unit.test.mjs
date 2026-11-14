@@ -17,7 +17,10 @@ after(() => {
   rmSync(STATE_DIR, { recursive: true, force: true });
 });
 
-const { callContactsCalendarsEmailTool: callTool, dispatchContactsCalendarsEmailTool: dispatchTool } = await import("../build/contacts-calendars-email-dispatch.js");
+const server = await import("../build/contacts-calendars-email-dispatch.js");
+const { approved } = await import("./approved-call.mjs");
+const callTool = approved(server.callContactsCalendarsEmailTool);
+const dispatchTool = approved(server.dispatchContactsCalendarsEmailTool);
 
 const TRASH = "Deleted Messages";
 const FAKE = { host: "imap.example.test", port: 993, secure: true, username: "someone", password: "fake-password-0000-not-real" };

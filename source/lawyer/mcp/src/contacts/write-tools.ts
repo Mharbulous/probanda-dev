@@ -1,11 +1,13 @@
-// The contacts__* tools that change the address book. Each one that writes is held by the
-// approval hook (source/lawyer/hooks/one-way-gate.py) until the practitioner approves it.
+// The contacts__* tools that change the address book. Each one that writes runs only with the
+// practitioner's approval (../approval/gate.ts), pasted (source/lawyer/hooks/one-way-gate.py) or
+// clicked on the approval page.
 
 import { randomUUID } from "node:crypto";
-import { writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 
-import { DataServerError } from "../errors.js";
+import { gated } from "../approval/gate.js";
+import { DataServerError, ValidationError } from "../errors.js";
 import { getObject, requireDav, type DavContext } from "../dav/session.js";
 import type { MailCredential } from "../mail/config.js";
 import type { Tool } from "../tool-list.js";
@@ -17,12 +19,28 @@ import { revNow, stateFolder } from "./plans.js";
 import { addLines, lostProperties, newCard } from "./vcard-edit.js";
 
 export const contactsWriteTools: Tool<DavContext>[] = [
-  { name: "contacts__write_probe", handler: (_args, context) => writeProbe(context) },
+  gated("contacts__write_probe", (_args, context: DavContext) => writeProbe(context)),
+  { name: "contacts__read_report", handler: (args) => readReport(args) },
   ...contactsImportTools,
   ...contactsMergeTools,
 ];
 
 const PROBE_NAME = "ZZ Probanda test - safe to remove";
+const REPORT_PAGE = 100;
+
+/** Lines of a scan's report file, a page at a time, for a session that cannot open the file
+ * itself (Cowork runs where this computer's files are not). Only a report in the plans folder. */
+function readReport(args: Record<string, unknown>): unknown {
+  const path = typeof args.report_path === "string" ? resolve(args.report_path) : "";
+  if (dirname(path) !== resolve(stateFolder("plans")) || !path.endsWith(".txt") || !existsSync(path)) {
+    throw new ValidationError("report_path must be a report_path a contacts scan returned on this computer");
+  }
+  const lines = readFileSync(path, "utf-8").split(/\r?\n/).filter(Boolean);
+  const offset = typeof args.offset === "number" ? args.offset : 0;
+  const limit = typeof args.limit === "number" ? args.limit : REPORT_PAGE;
+  const page = lines.slice(offset, offset + limit);
+  return { total: lines.length, offset, lines: page, ...(offset + page.length < lines.length ? { next_offset: offset + page.length } : {}) };
+}
 
 /** Whether a card is still at `url`. */
 async function exists(context: DavContext, credential: MailCredential, url: string): Promise<boolean> {

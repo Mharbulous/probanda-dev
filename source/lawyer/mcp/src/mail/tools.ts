@@ -12,6 +12,7 @@ import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync }
 import { basename, extname, join, win32 as pathWin32 } from "node:path";
 
 import { defaultStateDir } from "../../../../mcp-shared/dpapi-store.js";
+import { gated } from "../approval/gate.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { parseMime } from "../correspondence/eml.js";
 import { pdfPages } from "../files/extract/pdf.js";
@@ -108,7 +109,7 @@ export const mailTools: Tool<MailContext>[] = [
   { name: "mail__dedupe_read_comparison", handler: (args, context) => dedupeReadComparison(context, args) },
   { name: "mail__dedupe_record_verdicts", handler: (args, context) => dedupeRecordVerdicts(context, args) },
   { name: "mail__dedupe_plan_tier2", handler: (args, context) => dedupePlanTier2(context, args) },
-  { name: "mail__dedupe_apply", handler: (args, context) => dedupeApply(context, args) },
+  gated("mail__dedupe_apply", (args, context: MailContext) => dedupeApply(context, args)),
   { name: "mail__dedupe_apply_continue", handler: (args, context) => dedupeApplyContinue(context, args) },
 ];
 

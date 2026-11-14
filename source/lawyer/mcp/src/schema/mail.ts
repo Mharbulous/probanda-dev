@@ -1,4 +1,4 @@
-import type { ToolDefinition } from "./shared.js";
+import { APPROVAL_NEEDED, APPROVAL_PROOF, type ToolDefinition } from "./shared.js";
 
 // The mail__* tools (docs/Plans/2026-10-15_imap-mail.md): the practitioner's
 // mailbox over IMAP, read-only apart from save_draft, which only appends a draft,
@@ -514,12 +514,14 @@ export function mailToolDefinitions(): ToolDefinition[] {
         "(`dedupe_plan_used`), a changed message or folder (`dedupe_stale`), a server without MOVE " +
         "(`mail_move_unsupported`) and a mailbox with no Trash folder (`mail_no_trash`). Writes to the mailbox: copies go " +
         "only to Trash, where they can be recovered until the mail server empties it on its own schedule." +
+        APPROVAL_NEEDED +
         errors,
       inputSchema: {
         type: "object",
         properties: {
           plan_id: { type: "string" },
           expected_count: { type: "integer", minimum: 1 },
+          approval_proof: APPROVAL_PROOF,
         },
         required: ["plan_id", "expected_count"],
         additionalProperties: false,

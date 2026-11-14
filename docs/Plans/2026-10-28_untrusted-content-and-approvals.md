@@ -91,6 +91,18 @@ Test (fails today): `test_approval_gate.py` on transcript fixtures:
 - `agent_id` present: refused;
 - each `plugin.json` matcher matches every gated name and none of the ungated ones.
 
+### Tools that check their own approval (2026-11-13)
+
+In Cowork the hook runs in the cloud and its payload holds no transcript, so it refused every gated call there (measured 2026-11-13). The practitioner chose to approve on a page the PC serves (option A), and on 2026-11-13 approved the plan, which stated what stops being enforced.
+
+- **Which tools.** The five gated tools of the `contacts-calendars-email` server: `mail__dedupe_apply`, `contacts__write_probe`, `contacts__import_apply`, `contacts__merge_apply`, `contacts__restore_card` (`CHECKS_OWN_APPROVAL` in `approval_gate.py`). The `data`, `files` and `commons` servers' gated tools follow only after this passes in Cowork.
+- **The tool's check** (`source/lawyer/mcp/src/approval/gate.ts`). A call runs only with one of two approvals for exactly that tool and those arguments: the `approval_proof` the hook adds, or a click on Approve on the tool's page. Otherwise it changes nothing and returns `{status: "approval_needed", url}`. A click is used once, and is kept when the call fails.
+- **The hook.** With a transcript it checks the pasted block as before. When the block approves one of these tools, it answers `allow` and adds the proof to the input (`updatedInput`, measured reaching an MCP tool on 2026-11-13). The `allow` also skips the app's usual permission prompt for that call; the practitioner's own ask and deny rules still apply. With no transcript it lets these tools through, and the tool asks for the click. Every other gated tool is refused with no transcript, as before.
+- **The proof.** HMAC-SHA256 under the device secret (`page-api.secret` beside `probanda.json`) of `approval\n<tool>\n<arguments as canonical JSON>`. If the hook cannot read the secret, an approved call goes through without it and the tool asks for the click.
+- **The page.** An ephemeral 127.0.0.1 port, state in memory, only the newest link works. Approve posts JSON with a value the page holds, from the page's own origin and host, so another web page cannot press it. It shows the block's own sentence for the step (`approval/acts.ts`, kept equal to `ACTS` and `REVERSIBLE` by a test).
+- **What it gives up.** A pasted block is in the practitioner's own message, in a record the session cannot write. A click proves only that something on the PC pressed Approve. A session with a shell or browser on the PC could press it, or read the secret and make a proof. `approval-page-guard.py` refuses shell, Read, WebFetch and browser calls that name an `/approve/` address on the PC or `page-api.secret`. It is a tripwire, not a proof, as housekeeping's approval page is.
+- **Tests.** `source/lawyer/mcp/test/approval.unit.test.mjs` (sentences and proof equal to the hook's, proof bound to tool and arguments, the click once, a forged click refused, the newest link only), `test_approval_gate.py` (proof added on a pasted block, no transcript lets only these tools through, no secret means no proof), `source/lawyer/tests/test_approval_page_guard.py`.
+
 ## 2c. Re-inject pending approvals (lawyer, patch)
 
 `pending-approvals-note.py` is a SessionStart hook with matcher `compact|resume`. It lists gate refusals with no later successful call. For each it gives the act and says that approval counts only if the practitioner pastes the block after this point. It writes nothing that reads as an approval, and it keeps no storage.

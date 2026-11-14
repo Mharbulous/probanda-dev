@@ -8,6 +8,7 @@ import { randomUUID } from "node:crypto";
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
 
+import { gated } from "../approval/gate.js";
 import { normalizeName } from "../contact-match.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { getObject, requireDav, type DavContext } from "../dav/session.js";
@@ -25,9 +26,9 @@ type Args = Record<string, unknown>;
 export const contactsMergeTools: Tool<DavContext>[] = [
   { name: "contacts__merge_scan", handler: (_args, context) => mergeScan(context) },
   { name: "contacts__merge_plan", handler: (args, context) => mergePlan(context, args) },
-  { name: "contacts__merge_apply", handler: (args, context) => mergeApply(context, args, true) },
+  gated("contacts__merge_apply", (args, context: DavContext) => mergeApply(context, args, true)),
   { name: "contacts__merge_apply_continue", handler: (args, context) => mergeApply(context, args, false) },
-  { name: "contacts__restore_card", handler: (args, context) => restoreCard(context, args) },
+  gated("contacts__restore_card", (args, context: DavContext) => restoreCard(context, args)),
 ];
 
 interface Saved {

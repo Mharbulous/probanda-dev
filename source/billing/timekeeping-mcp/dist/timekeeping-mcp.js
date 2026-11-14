@@ -1,4 +1,4 @@
-// build-stamp: c0c4dc5a4c3b
+// build-stamp: ada421aeaed2
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -16056,6 +16056,7 @@ var CONTENT_SOURCES = {
   contacts__merge_apply: "contacts",
   contacts__merge_apply_continue: "contacts",
   contacts__restore_card: "contacts",
+  contacts__read_report: "contacts",
   drafting_forms__read_message: "email file",
   sources__fetch: "web page",
   sources__check: "web page",
@@ -17987,7 +17988,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "c0c4dc5a4c3b";
+var BUILD_STAMP = false ? null : "ada421aeaed2";
 
 // src/local-page/links.ts
 import { mkdirSync as mkdirSync5, readdirSync as readdirSync4, readFileSync as readFileSync5, renameSync, statSync as statSync2, unlinkSync as unlinkSync3, writeFileSync as writeFileSync5 } from "node:fs";

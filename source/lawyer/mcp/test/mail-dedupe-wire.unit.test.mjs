@@ -20,7 +20,9 @@ after(() => {
   rmSync(STATE_DIR, { recursive: true, force: true });
 });
 
-const { callContactsCalendarsEmailTool: callTool } = await import("../build/contacts-calendars-email-dispatch.js");
+const dispatch = await import("../build/contacts-calendars-email-dispatch.js");
+const { approved } = await import("./approved-call.mjs");
+const callTool = approved(dispatch.callContactsCalendarsEmailTool);
 
 const MESSAGE = Buffer.from([
   "Message-ID: <wire@example.test>",

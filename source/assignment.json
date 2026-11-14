@@ -56,6 +56,7 @@
       ],
       "hooks": {
         "ai-noticed-card": "source/lawyer/hooks/ai-noticed-card.py",
+        "approval-page-guard": "source/lawyer/hooks/approval-page-guard.py",
         "client-file-label": "source/lawyer/hooks/client-file-label.py",
         "hidden-skills-note": "source/lawyer/hooks/hidden-skills-note.py",
         "inject-practice-quirks": "source/skills/practice-data/hooks/inject-practice-quirks.py",
