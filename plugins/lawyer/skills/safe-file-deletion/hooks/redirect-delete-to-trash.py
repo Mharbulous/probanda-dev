@@ -671,9 +671,9 @@ def block_message(label, offending):
         " call it once per path. It moves a matter file to <matter root>/" + TRASH_DIRNAME + "/<same relative"
         " path>, and any other path to ~/" + TRASH_DIRNAME + "/<path relative to home>, or"
         " <drive>:/" + TRASH_DIRNAME + "/<path relative to the drive root> outside home.",
-        "With file-manager enabled, a lone rm or Remove-Item naming literal absolute paths is moved"
-        " to " + TRASH_DIRNAME + " automatically; this command is not one (a chain, a glob, a"
-        " variable, a relative path or another delete command).",
+        "While file-manager is enabled, a lone rm or Remove-Item naming only literal absolute paths"
+        " is moved to " + TRASH_DIRNAME + " automatically; a chain, a glob, a variable, a relative"
+        " path or another delete command never is.",
         "Blocked pattern: " + label,
     ]
     if offending is not None:
