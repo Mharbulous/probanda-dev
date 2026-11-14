@@ -28,7 +28,7 @@ const DENIED = {
   "file-manager-index": [...DATA_SERVER_INTERNALS, /^src\/schema\/(?!(?:file-ops|housekeeping|shared)\.ts$)/, ...LAWYER_PAGES, TIMEKEEPING_PAGES],
   "timecamp-index": [...DATA_SERVER_INTERNALS, HOUSEKEEPING_PAGES, ...LAWYER_PAGES, TIMEKEEPING_PAGES],
   // Issue 284: billing's timekeeping server carries the kv store (src/kv/backend), which
-  // DATA_SERVER_INTERNALS denies, so it lists the rest by hand. It names no TimeCamp, and no
+  // DATA_SERVER_INTERNALS denies, so it lists the rest by hand. It carries no TimeCamp module, and no
   // practice store: it takes the case data root from src/practice/matter-data-root.ts.
   "timekeeping-index": [
     /^src\/case\/backend\.ts$/,

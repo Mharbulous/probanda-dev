@@ -75,7 +75,8 @@ export function buildFileManagerToolDefinitions(): ToolDefinition[] {
 }
 
 // The billing plugin's `timekeeping` server: the time-pipeline store and the per-date review
-// records (issue 284). Nothing it serves names or needs TimeCamp.
+// records (issue 284). Nothing it serves needs TimeCamp. The TimeCamp names it still carries are
+// frozen by test/timekeeping-timecamp-names.unit.test.mjs (source/billing/VISION.md, issue 283).
 export function buildTimekeepingToolDefinitions(): ToolDefinition[] {
   return [
     ...timePipelineToolDefinitions(),

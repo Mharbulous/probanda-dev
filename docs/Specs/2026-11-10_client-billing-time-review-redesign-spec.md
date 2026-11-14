@@ -104,6 +104,8 @@ Only flagged blocks need the practitioner's action before the bill is made. Unfl
 
 ### TimeCamp
 
+**Note, 2026-11-13:** The rule that billing's core dependency is its `timekeeping` server and TimeCamp is optional is stated in `source/billing/VISION.md` (issue 283). This section describes TimeCamp as it is used today. How a bill is produced with no TimeCamp account is for the map "Billing without TimeCamp".
+
 - A change to a block's matter or description is written to TimeCamp at once, when the practitioner clicks Approve or Correct, by the waiting session through the `timecamp` connector's `update_entry`, and read back to confirm, as `/timecamping` Step 7 does today. The card shows "saved to TimeCamp" or the error.
 - One text per block: the invoice description, in bill style (`/vet-billable-time` Step 5), is also the TimeCamp note.
 - Exception: a staff entry's TimeCamp note is left as the staff member wrote it. Its invoice description lives only in Probanda.
@@ -210,6 +212,7 @@ Done means each of these holds, each checked by a test or a recorded run, not by
 ## Open points
 
 - **Sequencing with Phase 2.** `docs/Plans/2026-11-10_data-store-restructure-phase-2.md` merges `timecamping.db` into `time_pipeline.db` as items whose `kind` is a value (decision 5), retires the `timecamping_data__*` tools at the timetracking-data conversion, and moves `time_pipeline.db`'s tools to `billing` (decision 6, Order step 1). Every store change in this spec lands in that store, so the build plan decides whether each change waits for that conversion or is built on the new store as part of it, never on `timecamping.db`'s typed tables.
+  **Note, 2026-11-13:** the merge of `timecamping.db` into the timekeeping store is on hold until the map "Billing without TimeCamp" decides it. The rule that billing's core dependency is its `timekeeping` server and TimeCamp is optional is stated in `source/billing/VISION.md` (issue 283).
 
 - What the page does in Cowork, where screenshots can be read only on the PC.
 - How the page gets the screenshot images: decrypted PNGs kept for the page, or decrypted when shown.

@@ -16,7 +16,8 @@ const fileManagerOutfile = resolve(root, "..", "..", "file-manager", "files-mcp"
 // TimeCamp API tools (src/timecamp-index.ts, docs/Specs/2026-10-15_timecamp-api-connector-spec.md).
 const timecampOutfile = resolve(root, "..", "..", "billing", "timecamp-mcp", "dist", "timecamp-mcp.js");
 // The billing plugin's `timekeeping` server: the time-pipeline store and the per-date review
-// records (src/timekeeping-index.ts, issue 284). It needs host Python for the store; it names no TimeCamp.
+// records (src/timekeeping-index.ts, issue 284). It needs host Python for the store and no TimeCamp
+// (its remaining TimeCamp names are frozen by test/timekeeping-timecamp-names.unit.test.mjs).
 const timekeepingOutfile = resolve(root, "..", "..", "billing", "timekeeping-mcp", "dist", "timekeeping-mcp.js");
 // The lawyer plugin's `contacts-calendars-email` server: a fourth entry point, serving only the
 // mail, calendar and contacts tools (src/contacts-calendars-email-index.ts).
