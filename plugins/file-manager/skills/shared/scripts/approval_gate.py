@@ -68,14 +68,6 @@ ACTS = {
     "troubleshoot__record": "add this entry to Probanda's shared store, where other Probanda users can read it: "
                             "symptom \"{symptom}\", cause \"{cause}\", fix \"{fix}\"",
     "dedupe_apply": "move {expected_count} duplicate email copies, listed in plan {plan_id}, to Trash",
-    "contacts__write_probe": "test whether Probanda can change the address book: create one test contact that holds "
-                             "nothing real, add a phone number to it, and remove it again",
-    "contacts__import_apply": "add {create_count} new contact(s) to the address book and add details to {update_count} "
-                              "existing contact(s), as listed in plan {plan_id}, so the address book holds them. "
-                              "Probanda cannot take them out again",
-    "contacts__merge_apply": "merge {group_count} group(s) of duplicate contacts in the address book, as listed in plan "
-                             "{plan_id}, removing {remove_count} contact(s) after saving a copy of each on this computer",
-    "contacts__restore_card": "put the contact {name} back in the address book from the copy saved before it was merged",
 }
 # Gated acts that can be undone, by the end of the tool's name: what the approval says the
 # practitioner understands, in place of "one-way and irreversible", and the warning shown.
@@ -85,23 +77,11 @@ REVERSIBLE = {
         "warning": "**This step moves email to Trash: it can be recovered from there until the mail server empties "
                    "Trash on its own schedule.**",
     },
-    "contacts__write_probe": {
-        "understand": "No other contact is changed, and the test contact is removed at the end.",
-        "warning": "**This step writes to your address book: it creates one test contact and removes it again.**",
-    },
-    "contacts__merge_apply": {
-        "understand": "A removed contact can be put back from its saved copy, but the address book has no Trash of its own.",
-        "warning": "**This step removes contacts from your address book after merging them: each can be put back from "
-                   "the copy saved on this computer.**",
-    },
-    "contacts__restore_card": {
-        "understand": "It adds one contact and changes no other.",
-        "warning": "**This step adds a contact back to your address book.**",
-    },
 }
 # Gated tools that check their own approval, by their name on their server (see the docstring).
-CHECKS_OWN_APPROVAL = ("mail__dedupe_apply", "contacts__write_probe", "contacts__import_apply",
-                       "contacts__merge_apply", "contacts__restore_card")
+# The address book's tools are not gated: the practitioner decided on 2026-11-13 that adding,
+# merging and restoring contacts needs no approval step.
+CHECKS_OWN_APPROVAL = ("mail__dedupe_apply",)
 SECRET_FILE = "page-api.secret"
 SECRET_BYTES = 32
 MARKER = re.compile(r"\[approval-gate act=([0-9a-f]{64})\]")

@@ -1,7 +1,7 @@
 {
   "name": "lawyer",
   "displayName": "Lawyer",
-  "version": "0.29.7",
+  "version": "0.30.0",
   "description": "The core Probanda plugin for British Columbia lawyers: firm records, time, billing, case data and deadlines, plus skills for any lawyer (restate a request before acting, summarize a session). Install it first. The researcher, litigator, solicitor, file-manager, billing and developer plugins all require it.",
   "author": {
     "name": "Probanda Legal",
@@ -111,7 +111,7 @@
         ]
       },
       {
-        "matcher": "mcp__.+(practice_data__(delete_anchor|merge_contact|issue_invoice)|mail__dedupe_apply|contacts__(write_probe|import_apply|merge_apply|restore_card))$",
+        "matcher": "mcp__.+(practice_data__(delete_anchor|merge_contact|issue_invoice)|mail__dedupe_apply)$",
         "hooks": [
           {
             "type": "command",
