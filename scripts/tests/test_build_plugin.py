@@ -19,7 +19,7 @@ PLUGINS = ("lawyer", "researcher", "litigator", "solicitor", "file-manager", "bi
            "tokeneconomizer")
 BUNDLES = {"lawyer": ("contacts-calendars-email-mcp/dist/contacts-calendars-email-mcp.js", "mcp/dist/litigation-mcp.js"),
            "researcher": ("canlii-mcp/dist/canlii-mcp.js", "commons-mcp/dist/legal-commons-mcp.js"),
-           "file-manager": ("files-mcp/dist/file-manager-mcp.js",),
+           "file-manager": ("files-mcp/dist/file-manager-mcp.js", "files-mcp/dist/trash-cli.js"),
            "billing": ("timecamp-mcp/dist/timecamp-mcp.js", "timekeeping-mcp/dist/timekeeping-mcp.js")}
 
 
