@@ -7,7 +7,6 @@ import { randomUUID } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { gated } from "../approval/gate.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { getObject, requireDav, type DavContext } from "../dav/session.js";
 import type { MailCredential } from "../mail/config.js";
@@ -24,7 +23,7 @@ type Args = Record<string, unknown>;
 
 export const contactsImportTools: Tool<DavContext>[] = [
   { name: "contacts__import_scan", handler: (args, context) => importScan(context, args) },
-  gated("contacts__import_apply", (args, context: DavContext) => importApply(context, args, true)),
+  { name: "contacts__import_apply", handler: (args, context) => importApply(context, args, true) },
   { name: "contacts__import_apply_continue", handler: (args, context) => importApply(context, args, false) },
 ];
 

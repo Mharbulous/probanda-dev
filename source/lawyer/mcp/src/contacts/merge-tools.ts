@@ -1,5 +1,5 @@
 // Merges cards in the address book that are the same contact. The scan and the plan write
-// nothing to the address book. The apply tools carry out an approved plan, one group at a
+// nothing to the address book. The apply tools carry out a plan, one group at a
 // time, in this order: save every card of the group to a backup file on this machine, write
 // the merged card, read it back, add the kept card to any contact group the other was in,
 // and only then take the other card out. A removed card comes back with the restore tool.
@@ -8,7 +8,6 @@ import { randomUUID } from "node:crypto";
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
 
-import { gated } from "../approval/gate.js";
 import { normalizeName } from "../contact-match.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { getObject, requireDav, type DavContext } from "../dav/session.js";
@@ -26,9 +25,9 @@ type Args = Record<string, unknown>;
 export const contactsMergeTools: Tool<DavContext>[] = [
   { name: "contacts__merge_scan", handler: (_args, context) => mergeScan(context) },
   { name: "contacts__merge_plan", handler: (args, context) => mergePlan(context, args) },
-  gated("contacts__merge_apply", (args, context: DavContext) => mergeApply(context, args, true)),
+  { name: "contacts__merge_apply", handler: (args, context) => mergeApply(context, args, true) },
   { name: "contacts__merge_apply_continue", handler: (args, context) => mergeApply(context, args, false) },
-  gated("contacts__restore_card", (args, context: DavContext) => restoreCard(context, args)),
+  { name: "contacts__restore_card", handler: (args, context) => restoreCard(context, args) },
 ];
 
 interface Saved {

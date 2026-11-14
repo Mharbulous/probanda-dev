@@ -155,18 +155,6 @@ SAMPLES = {
                                                                         "move 3 duplicate email copies, listed in plan abc, to Trash"),
     "mcp__remote-devices__plugin_lawyer_contacts-calendars-email__mail__dedupe_apply": (
         "lawyer", {"plan_id": "abc", "expected_count": 3}, "move 3 duplicate email copies, listed in plan abc, to Trash"),
-    CONTACTS + "write_probe": ("lawyer", {}, "create one test contact that holds nothing real, add a phone number to it, "
-                                             "and remove it again. No other contact is changed"),
-    CONTACTS + "import_apply": ("lawyer", {"plan_id": "abc", "create_count": 4, "update_count": 2},
-                                "add 4 new contact(s) to the address book and add details to 2 existing contact(s), as "
-                                "listed in plan abc, so the address book holds them. Probanda cannot take them out again. "
-                                "I understand it is one-way and irreversible."),
-    CONTACTS + "merge_apply": ("lawyer", {"plan_id": "abc", "group_count": 3, "remove_count": 4},
-                               "merge 3 group(s) of duplicate contacts in the address book, as listed in plan abc, removing "
-                               "4 contact(s) after saving a copy of each on this computer. A removed contact can be put back"),
-    CONTACTS + "restore_card": ("lawyer", {"name": "Ada Sample", "run": "r1"},
-                                "put the contact Ada Sample back in the address book from the copy saved before it was "
-                                "merged. It adds one contact and changes no other."),
 }
 
 
@@ -405,8 +393,7 @@ GATED = {
     "litigator": ["mcp__plugin_lawyer_data__drafting_data__record_sent", "mcp__plugin_lawyer_data__drafting_data__record_filed",
                   "mcp__plugin_lawyer_data__drafting_data__record_served"],
     "lawyer": ["mcp__plugin_lawyer_data__practice_data__delete_anchor", "mcp__plugin_lawyer_data__practice_data__merge_contact",
-               DEDUPE, "mcp__remote-devices__plugin_lawyer_contacts-calendars-email__mail__dedupe_apply",
-               *(CONTACTS + tool for tool in ("write_probe", "import_apply", "merge_apply", "restore_card"))],
+               DEDUPE, "mcp__remote-devices__plugin_lawyer_contacts-calendars-email__mail__dedupe_apply"],
     "file-manager": ["mcp__plugin_file-manager_files__file_ops__comment_pdf"],
     "researcher": ["mcp__plugin_researcher_commons__troubleshoot__record",
                    "mcp__remote-devices__plugin_researcher_commons__troubleshoot__record"],
@@ -426,6 +413,9 @@ UNGATED = [
     "mcp__plugin_lawyer_contacts-calendars-email__mail__dedupe_apply_continue",
     CONTACTS + "import_apply_continue", CONTACTS + "merge_apply_continue", CONTACTS + "import_scan",
     CONTACTS + "merge_scan", CONTACTS + "merge_plan", CONTACTS + "search", CONTACTS + "get",
+    # The practitioner's decision of 2026-11-13: the address book's writes need no approval step.
+    CONTACTS + "write_probe", CONTACTS + "import_apply", CONTACTS + "merge_apply", CONTACTS + "restore_card",
+    "mcp__remote-devices__plugin_lawyer_contacts-calendars-email__contacts__import_apply",
     "mcp__plugin_lawyer_contacts-calendars-email__mail__dedupe_scan",
     "mcp__plugin_lawyer_contacts-calendars-email__mail__dedupe_record_verdicts",
     "mcp__plugin_lawyer_contacts-calendars-email__mail__list_headers",

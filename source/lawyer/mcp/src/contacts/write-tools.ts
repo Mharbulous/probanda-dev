@@ -1,12 +1,11 @@
-// The contacts__* tools that change the address book. Each one that writes runs only with the
-// practitioner's approval (../approval/gate.ts), pasted (source/lawyer/hooks/one-way-gate.py) or
-// clicked on the approval page.
+// The contacts__* tools that change the address book. They run without a separate approval
+// step (the practitioner's decision of 2026-11-13): each write follows a scan's plan, and a merge
+// backs up every card before it removes one.
 
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
-import { gated } from "../approval/gate.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { getObject, requireDav, type DavContext } from "../dav/session.js";
 import type { MailCredential } from "../mail/config.js";
@@ -19,7 +18,7 @@ import { revNow, stateFolder } from "./plans.js";
 import { addLines, lostProperties, newCard } from "./vcard-edit.js";
 
 export const contactsWriteTools: Tool<DavContext>[] = [
-  gated("contacts__write_probe", (_args, context: DavContext) => writeProbe(context)),
+  { name: "contacts__write_probe", handler: (_args, context) => writeProbe(context) },
   { name: "contacts__read_report", handler: (args) => readReport(args) },
   ...contactsImportTools,
   ...contactsMergeTools,

@@ -1,8 +1,8 @@
-import { APPROVAL_NEEDED, APPROVAL_PROOF, type ToolDefinition } from "./shared.js";
+import type { ToolDefinition } from "./shared.js";
 
 // The contacts__* tools: the practitioner's address book over CardDAV, signed in
 // with the Probanda mail connector's credential. Search and get only read. The
-// tools that change the address book are each held for the practitioner's approval.
+// tools that change the address book need no separate approval (2026-11-13).
 export function contactsToolDefinitions(): ToolDefinition[] {
   const errors =
     " Errors: `dav_not_configured` (run mail__configure_credential with the contacts fields), `dav_auth` (the " +
@@ -52,9 +52,8 @@ export function contactsToolDefinitions(): ToolDefinition[] {
         "Returns {can_write, altered_on_create, altered_on_update (the properties " +
         "the server changed or dropped, by name), removed, backup_path}. An error that says the test stopped part-way " +
         "means the test contact may remain; tell the practitioner its name from the message." +
-        APPROVAL_NEEDED +
         errors,
-      inputSchema: { type: "object", properties: { approval_proof: APPROVAL_PROOF }, additionalProperties: false },
+      inputSchema: { type: "object", properties: {}, additionalProperties: false },
     },
     {
       name: "contacts__read_report",
@@ -114,7 +113,6 @@ export function contactsToolDefinitions(): ToolDefinition[] {
         "changed since the scan is left as it is and listed. Returns {status, created, updated, remaining, stopped: " +
         "[{name, why}] (first 20), stopped_count}: while `status` is `writing`, call contacts__import_apply_continue; " +
         "`done` ends it. Errors: `contacts_plan_missing`, `contacts_plan_stale` (scan again), `contacts_plan_started`." +
-        APPROVAL_NEEDED +
         errors,
       inputSchema: {
         type: "object",
@@ -122,7 +120,6 @@ export function contactsToolDefinitions(): ToolDefinition[] {
           plan_id: { type: "string" },
           create_count: { type: "integer", minimum: 0 },
           update_count: { type: "integer", minimum: 0 },
-          approval_proof: APPROVAL_PROOF,
         },
         required: ["plan_id", "create_count", "update_count"],
         additionalProperties: false,
@@ -200,7 +197,6 @@ export function contactsToolDefinitions(): ToolDefinition[] {
         "contact changed since the scan is left as it is and listed. Returns {status, merged, removed, remaining, " +
         "stopped: [{name, why}] (first 20), stopped_count, backup_dir}: while `status` is `writing`, call " +
         "contacts__merge_apply_continue; `done` ends it. A removed contact comes back with contacts__restore_card." +
-        APPROVAL_NEEDED +
         errors,
       inputSchema: {
         type: "object",
@@ -208,7 +204,6 @@ export function contactsToolDefinitions(): ToolDefinition[] {
           plan_id: { type: "string" },
           group_count: { type: "integer", minimum: 1 },
           remove_count: { type: "integer", minimum: 1 },
-          approval_proof: APPROVAL_PROOF,
         },
         required: ["plan_id", "group_count", "remove_count"],
         additionalProperties: false,
@@ -235,11 +230,10 @@ export function contactsToolDefinitions(): ToolDefinition[] {
         "keeps the details it gained. `name` is the removed contact's name; pass `path` (from the error's list) only " +
         "when more than one removed contact has that name. Returns {url, name, altered}. Errors: " +
         "`contacts_backup_not_found`, `contacts_already_present`." +
-        APPROVAL_NEEDED +
         errors,
       inputSchema: {
         type: "object",
-        properties: { name: { type: "string" }, path: { type: "string" }, approval_proof: APPROVAL_PROOF },
+        properties: { name: { type: "string" }, path: { type: "string" } },
         required: ["name"],
         additionalProperties: false,
       },

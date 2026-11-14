@@ -31,12 +31,9 @@ const { APPROVAL_TOOLS, firstLine, warning } = await import("../build/approval/a
 
 const SHARED_SCRIPTS = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "skills", "shared", "scripts");
 const SAMPLES = {
-  "mail__dedupe_apply": { plan_id: "ab12", expected_count: 4 },
-  "contacts__write_probe": {},
-  "contacts__import_apply": { plan_id: "cd34", create_count: 12, update_count: 3 },
-  "contacts__merge_apply": { plan_id: "ef56", group_count: 2, remove_count: 3 },
-  "contacts__restore_card": { name: "Ben  Sample", path: "D:\\cards\\b.vcf" },
+  "mail__dedupe_apply": { plan_id: "ab12  cd", expected_count: 4 },
 };
+const DEDUPE = "mail__dedupe_apply";
 
 /** One request to the approval page; resolves {status, body}. */
 function send(url, { method = "GET", body, headers = {} } = {}) {
@@ -88,28 +85,28 @@ test("the sentences and the proof agree with the approval hook's", () => {
 
 test("a call runs with the hook's proof for exactly its arguments, which the tool never sees", async () => {
   const runs = [];
-  const tool = gated("contacts__import_apply", async (args) => (runs.push(args), { done: true }));
-  const args = { plan_id: "p1", create_count: 1, update_count: 0 };
-  assert.deepEqual(await tool.handler({ ...args, approval_proof: proofFor("contacts__import_apply", args, process.env) }), { done: true });
+  const tool = gated(DEDUPE, async (args) => (runs.push(args), { done: true }));
+  const args = { plan_id: "p1", expected_count: 1 };
+  assert.deepEqual(await tool.handler({ ...args, approval_proof: proofFor(DEDUPE, args, process.env) }), { done: true });
   assert.deepEqual(runs, [args]);
-  const wrong = await tool.handler({ ...args, create_count: 2, approval_proof: proofFor("contacts__import_apply", args, process.env) });
+  const wrong = await tool.handler({ ...args, expected_count: 2, approval_proof: proofFor(DEDUPE, args, process.env) });
   assert.equal(wrong.status, "approval_needed", "a proof for other arguments is no approval");
-  const otherTool = await tool.handler({ ...args, approval_proof: proofFor("contacts__merge_apply", args, process.env) });
+  const otherTool = await tool.handler({ ...args, approval_proof: proofFor("mail__dedupe_apply_continue", args, process.env) });
   assert.equal(otherTool.status, "approval_needed", "a proof for another tool is no approval");
   assert.equal(runs.length, 1);
 });
 
 test("without a proof the tool changes nothing until Approve is clicked on its page, once per click", async () => {
   const runs = [];
-  const tool = gated("contacts__restore_card", async (args) => (runs.push(args), { restored: args.name }));
-  const needed = await tool.handler({ name: "Ben Sample" });
+  const tool = gated(DEDUPE, async (args) => (runs.push(args), { moved: args.plan_id }));
+  const needed = await tool.handler({ plan_id: "b1", expected_count: 3 });
   assert.equal(needed.status, "approval_needed");
   assert.match(needed.url, /^http:\/\/127\.0\.0\.1:\d+\/approve\/[0-9a-f]{48}$/);
   assert.deepEqual(runs, []);
 
   const page = await send(needed.url);
   assert.equal(page.status, 200);
-  assert.ok(page.body.includes("This step: put the contact Ben Sample back in the address book"));
+  assert.ok(page.body.includes("This step: move 3 duplicate email copies, listed in plan b1, to Trash"));
   const nonce = nonceOf(page.body);
 
   assert.equal((await click(needed.url, "0".repeat(48))).status, 403, "a wrong value");
@@ -120,23 +117,24 @@ test("without a proof the tool changes nothing until Approve is clicked on its p
 
   assert.equal((await click(needed.url, nonce)).status, 200);
   assert.equal((await send(needed.url)).status, 404, "a used link is gone");
-  assert.equal((await tool.handler({ name: "Ada Sample" })).status, "approval_needed", "the click approves only its own call");
-  assert.deepEqual(await tool.handler({ name: "Ben Sample" }), { restored: "Ben Sample" });
-  assert.equal((await tool.handler({ name: "Ben Sample" })).status, "approval_needed", "a click is used once");
+  assert.equal((await tool.handler({ plan_id: "a1", expected_count: 3 })).status, "approval_needed", "the click approves only its own call");
+  assert.deepEqual(await tool.handler({ plan_id: "b1", expected_count: 3 }), { moved: "b1" });
+  assert.equal((await tool.handler({ plan_id: "b1", expected_count: 3 })).status, "approval_needed", "a click is used once");
   assert.equal(runs.length, 1);
 });
 
 test("only the newest page link works, and a click is kept when the approved call fails", async () => {
   let fail = true;
-  const tool = gated("contacts__write_probe", async () => {
+  const tool = gated(DEDUPE, async () => {
     if (fail) throw new Error("the server did not answer");
-    return { can_write: true };
+    return { moved: true };
   });
-  const first = await tool.handler({});
-  const second = await tool.handler({});
+  const call = { plan_id: "c1", expected_count: 2 };
+  const first = await tool.handler(call);
+  const second = await tool.handler(call);
   assert.equal((await send(first.url)).status, 404);
   assert.equal((await click(second.url, nonceOf((await send(second.url)).body))).status, 200);
-  await assert.rejects(tool.handler({}), /did not answer/);
+  await assert.rejects(tool.handler(call), /did not answer/);
   fail = false;
-  assert.deepEqual(await tool.handler({}), { can_write: true });
+  assert.deepEqual(await tool.handler(call), { moved: true });
 });

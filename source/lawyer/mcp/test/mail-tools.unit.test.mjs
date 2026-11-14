@@ -757,17 +757,16 @@ test("the contacts-calendars-email server lists the twenty-two mail tools and th
     "contacts__write_probe",
   ]);
   // Every calendar tool only reads. The contacts tools named here change the address book,
-  // each behind the practitioner's approval; no other tool may.
+  // with no separate approval step (2026-11-13); no other tool may.
   const writers = [
     "contacts__write_probe", "contacts__import_apply", "contacts__import_apply_continue",
     "contacts__merge_apply", "contacts__merge_apply_continue", "contacts__restore_card",
   ];
   for (const t of dav) assert.equal(t.annotations?.readOnlyHint === true, !writers.includes(t.name), t.name);
   assert.equal(buildContactsCalendarsEmailToolDefinitions().length, 37);
-  // Each tool that checks its own approval takes the proof the approval hook adds.
-  for (const name of ["mail__dedupe_apply", "contacts__write_probe", "contacts__import_apply", "contacts__merge_apply", "contacts__restore_card"]) {
-    const t = buildContactsCalendarsEmailToolDefinitions().find((d) => d.name === name);
-    assert.deepEqual(t.inputSchema.properties.approval_proof, { type: "string" }, name);
+  // Only the tool that checks its own approval takes the proof the approval hook adds.
+  for (const t of buildContactsCalendarsEmailToolDefinitions()) {
+    assert.equal(t.inputSchema.properties?.approval_proof !== undefined, t.name === "mail__dedupe_apply", t.name);
   }
   assert.deepEqual(buildToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
   assert.deepEqual(buildFileManagerToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);

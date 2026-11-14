@@ -18,9 +18,8 @@ after(() => {
 });
 
 const server = await import("../build/contacts-calendars-email-dispatch.js");
-const { approved } = await import("./approved-call.mjs");
-const callTool = approved(server.callContactsCalendarsEmailTool);
-const dispatchTool = approved(server.dispatchContactsCalendarsEmailTool);
+const callTool = server.callContactsCalendarsEmailTool;
+const dispatchTool = server.dispatchContactsCalendarsEmailTool;
 const { createCard, removeCard, replaceCard } = await import("../build/contacts/card-write.js");
 const { permittedRequest } = await import("../build/dav/session.js");
 
@@ -258,7 +257,7 @@ const IMPORT_ROWS = [
   '"Ada","Other","","","","604-555-0102","","","","","","",""',
 ];
 
-test("a scan writes nothing, an approved plan adds the new contacts and details, and a second scan finds nothing to do", async () => {
+test("a scan writes nothing, its plan adds the new contacts and details, and a second scan finds nothing to do", async () => {
   const { store, sent, context } = fakeBook({ "ada.vcf": ADA });
   const path = csvFile(...IMPORT_ROWS);
   const scan = await callTool(context, "contacts__import_scan", { path });
@@ -381,7 +380,7 @@ test("a merge scan sorts same-name contacts into exact, mergeable, needs a choic
   assert.deepEqual(sent, []);
 });
 
-test("an approved merge backs up every card first, writes the union into the kept card, and only then removes the other", async () => {
+test("a merge backs up every card first, writes the union into the kept card, and only then removes the other", async () => {
   const { store, sent, context } = fakeBook(DUPLICATES);
   const scan = await callTool(context, "contacts__merge_scan", {});
   assert.match((await errorOf(context, "contacts__merge_plan", { groups: [{ group_id: groupOf(scan, "Cy Sample") }] })).message, /differ on job title/);
