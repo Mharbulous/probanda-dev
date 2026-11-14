@@ -25,14 +25,14 @@ def test_the_page_and_the_secret_are_refused_in_every_guarded_tool():
     assert decision("Bash", {"command": f"curl -X POST {URL}"}) == "deny"
     assert decision("PowerShell", {"command": "Invoke-WebRequest http://localhost:5000//approve/x"}) == "deny"
     assert decision("mcp__remote-devices__device_bash", {"command": "type %APPDATA%\\Probanda\\page-api.secret"}) == "deny"
-    assert decision("Read", {"file_path": r"C:\Users\x\AppData\Roaming\Probanda\page-api.secret"}) == "deny"
+    assert decision("Read", {"file_path": r"D:\Data\Probanda\page-api.secret"}) == "deny"
     assert decision("mcp__claude-in-chrome__navigate", {"url": URL, "tabId": 1}) == "deny"
     assert decision("mcp__Claude_Browser__javascript_tool", {"text": f"fetch('{URL}', {{method: 'POST'}})"}) == "deny"
 
 
 def test_other_pages_and_files_are_let_through():
     assert decision("Bash", {"command": "curl http://127.0.0.1:47616/h/abc/"}) == "allow"
-    assert decision("Read", {"file_path": r"C:\Users\x\AppData\Roaming\Probanda\probanda.json"}) == "allow"
+    assert decision("Read", {"file_path": r"D:\Data\Probanda\probanda.json"}) == "allow"
     assert decision("mcp__claude-in-chrome__navigate", {"url": "https://example.test/approve/1"}) == "allow"
 
 

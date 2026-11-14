@@ -1,7 +1,7 @@
 {
   "name": "lawyer",
   "displayName": "Lawyer",
-  "version": "0.29.5",
+  "version": "0.29.6",
   "description": "The core Probanda plugin for British Columbia lawyers: firm records, time, billing, case data and deadlines, plus skills for any lawyer (restate a request before acting, summarize a session). Install it first. The researcher, litigator, solicitor, file-manager, billing and developer plugins all require it.",
   "author": {
     "name": "Probanda Legal",
@@ -121,6 +121,20 @@
             ],
             "timeout": 10,
             "statusMessage": "One-way approval gate"
+          }
+        ]
+      },
+      {
+        "matcher": "^(Bash|PowerShell|Read|WebFetch|mcp__(.+__)?(device|workspace)_+bash|mcp__claude-in-chrome__.+|mcp__Claude_Browser__.+)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/approval-page-guard.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Approval page guard"
           }
         ]
       },

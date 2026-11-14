@@ -26,10 +26,20 @@ cannot write:
 A call from a subagent (`agent_id` in the payload) is refused: its calls and results go to its
 own transcript, which the gate cannot read. Plan: docs/Plans/2026-10-28_untrusted-content-and-approvals.md.
 
+Some gated tools also check their approval themselves, on the practitioner's computer
+(CHECKS_OWN_APPROVAL; lawyer's mcp/src/approval/gate.ts), because in Cowork the hook runs where no
+transcript can be read. For those, an approved call is allowed with `approval_proof` added to its
+input: HMAC-SHA256 under the device secret (page-api.secret beside probanda.json) of
+"approval\\n<tool>\\n<arguments as canonical JSON>". With no transcript the hook lets them through,
+and the tool changes nothing until the practitioner approves the step on a page it serves. If the
+secret cannot be read, an approved call goes through without the proof, and the tool asks for the
+page's approval. Every other gated tool is refused with no transcript, as before.
+
 A hook finds this module beside hook_io.py and transcript.py in shared/scripts. It keeps no
 storage: the transcript is the record.
 """
 import hashlib
+import hmac
 import json
 import re
 import sys
@@ -89,6 +99,11 @@ REVERSIBLE = {
         "warning": "**This step adds a contact back to your address book.**",
     },
 }
+# Gated tools that check their own approval, by their name on their server (see the docstring).
+CHECKS_OWN_APPROVAL = ("mail__dedupe_apply", "contacts__write_probe", "contacts__import_apply",
+                       "contacts__merge_apply", "contacts__restore_card")
+SECRET_FILE = "page-api.secret"
+SECRET_BYTES = 32
 MARKER = re.compile(r"\[approval-gate act=([0-9a-f]{64})\]")
 MODIFICATIONS = re.compile(r"modifications:(.*)", re.I | re.S)
 DATABASE_SUFFIXES = {".db", ".sqlite", ".sqlite3"}
@@ -224,14 +239,43 @@ def why_not(path, name, act):
     return None if act == refused_act else "The call is not the one approved."
 
 
+def own_check(name):
+    """The tool's name on its server when it checks its own approval, else None."""
+    return next((tool for tool in CHECKS_OWN_APPROVAL if name.endswith("__" + tool)), None)
+
+
+def proof(tool, args, secret):
+    """What the tool accepts as the practitioner's approval of this exact call."""
+    canonical = json.dumps(args, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hmac.new(secret, f"approval\n{tool}\n{canonical}".encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+def allow_with_proof(tool, tool_input):
+    try:
+        secret = (hook_io.config_path().parent / SECRET_FILE).read_bytes()
+    except OSError:
+        return 0
+    if len(secret) != SECRET_BYTES:
+        return 0
+    args = {key: value for key, value in tool_input.items() if key != "approval_proof"}
+    return hook_io.pre_tool("allow", "The practitioner pasted the approval of this step.",
+                            updatedInput={**args, "approval_proof": proof(tool, args, secret)})
+
+
 def check(payload):
     if payload.get("agent_id"):
         return hook_io.deny(SUBAGENT_MESSAGE)
     name = payload.get("tool_name") or ""
-    act = call_hash(name, payload.get("tool_input") or {})
+    tool_input = payload.get("tool_input") or {}
+    own = own_check(name)
     path = payload.get("transcript_path") or ""
+    if not path and own:
+        return 0
+    act = call_hash(name, tool_input)
     why = why_not(path, name, act) if path else "No record of this conversation could be read."
-    return 0 if why is None else hook_io.deny(refusal(name, payload.get("tool_input") or {}, act, why))
+    if why is not None:
+        return hook_io.deny(refusal(name, tool_input, act, why))
+    return allow_with_proof(own, tool_input) if own else 0
 
 
 def failed(exc):

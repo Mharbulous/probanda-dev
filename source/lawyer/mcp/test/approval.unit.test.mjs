@@ -35,7 +35,7 @@ const SAMPLES = {
   "contacts__write_probe": {},
   "contacts__import_apply": { plan_id: "cd34", create_count: 12, update_count: 3 },
   "contacts__merge_apply": { plan_id: "ef56", group_count: 2, remove_count: 3 },
-  "contacts__restore_card": { name: "Ben  Sample", path: "C:\\Users\\x\\b.vcf" },
+  "contacts__restore_card": { name: "Ben  Sample", path: "D:\\cards\\b.vcf" },
 };
 
 /** One request to the approval page; resolves {status, body}. */
