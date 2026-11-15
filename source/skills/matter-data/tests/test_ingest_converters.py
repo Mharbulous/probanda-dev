@@ -736,6 +736,26 @@ class Converters(unittest.TestCase):
         plan = ingest_affidavit.plan(self.exhibits([self.exhibit("A")], expected=()))
         self.assertIn("problems", plan)
 
+    # Suggestion 83893d42-82db-4d8d-a079-5081bd737271, items 1, 4 and 5 (red tests written by triage).
+
+    def response(self, **extra):
+        doc = self.facts(**extra)
+        doc["document"].update(title="Response to Civil Claim", author_or_filing_party="Plum Holdings Ltd.")
+        doc["facts"], doc["relief_items"], doc["relief_positions"] = [], [], []
+        doc["fact_positions"] = [{"target_fact_key": "fact:1", "party_name": "Plum Holdings Ltd.", "value": "deny",
+                                  "position_basis": None, "qualification": None, "source_locator": "Part 1, para. 1"}]
+        return doc
+
+    def answering(self, results, **extra):
+        req = self.request("facts", results, answered={"facts": ["fact:1"], "relief": []}, **extra)
+        req["route"]["answers_source_id"] = 1
+        return req
+
+    def test_an_unresolved_paragraph_offers_to_add_it_from_the_answered_pleading(self):
+        plan = ingest_facts.plan(self.answering([self.response(unresolved_references=[
+            {"target_locator": "para. 7", "reason": "x"}])]))
+        self.assertEqual([(a["kind"], a["ref"]) for a in plan.get("asks", [])], [("unresolved", "para. 7")])
+
 
 if __name__ == "__main__":
     unittest.main()

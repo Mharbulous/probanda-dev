@@ -199,7 +199,9 @@ A response paragraph or range resolves to every atomic fact stored at the
 referenced locator in the pleading being answered. Unresolved references abort
 the whole document transaction and name the smallest unresolved locator; a
 placeholder fact would preserve syntax while losing the proposition and is
-therefore prohibited. Current-position uniqueness is scoped to `(fact, party,
+therefore prohibited. The offer that follows an unresolved reference reads
+the real paragraph of the answered pleading and adds what it says unverified,
+so it adds no placeholder fact. Current-position uniqueness is scoped to `(fact, party,
 responding source, responding locator)`, so a response never supersedes the
 originating pleading's claim.
 

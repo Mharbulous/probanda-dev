@@ -162,7 +162,11 @@ A false positive here is harmless: `agents/extract-sought-orders.md` is the fina
    - All six arrays must exist and every enum/party/key must be valid.
    - If `unresolved_references` is non-empty, sort by the target's numeric
      paragraph/subparagraph order, report the smallest unresolved locator and
-     abort. No source or child row is written.
+     abort. No source or child row is written. Then offer to read that
+     paragraph of the answered pleading, add what it says as unverified facts
+     and read this document again. On yes, run `ingest-verify.md` on the
+     answered source with `PARAGRAPHS_WITHOUT_ROWS` naming that paragraph,
+     then start this path again for this document.
    - Every response `fact_position.target_fact_key` must resolve to
      `ANSWERED_FACTS`, except a `claim` that targets a genuinely new fact from
      this same extraction. Every relief position must likewise resolve.

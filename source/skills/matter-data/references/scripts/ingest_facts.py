@@ -19,7 +19,8 @@ A result whose document may be privileged (a `privilege_signal` flag, or the
 category `privileged`) writes nothing and is `blocked` `path_b`: the main thread
 reads it as Path B with its privilege question. The category `authority` is
 `blocked` `set_aside`, for /ingest's own path. An unresolved target locator is
-`blocked` `unresolved` with the smallest one reported (Path A step 3).
+`blocked` `unresolved` with the smallest one reported (Path A step 3), and an
+`unresolved` ask offering to add that paragraph from the answered pleading.
 
 A route with `transcript: true` adds Path A step 7: each current position of the
 transcript that differs from a current position of the same party on the same
@@ -339,9 +340,14 @@ def plan(request):
     except ExtractionError as exc:
         if str(exc).startswith('unresolved target locator: '):
             locator = str(exc).split(': ', 1)[1][:60]
+            # The offer reads the real paragraph of the answered pleading; it never adds a placeholder (#25).
             return {'blocked': 'unresolved', 'report': [
                 f'{title[:60]}: {locator} of the pleading it answers could not be matched, so nothing was '
-                'recorded for this document.']}
+                'recorded for this document.'],
+                'asks': [{'kind': 'unresolved', 'ref': locator,
+                          'say': f'{title[:60]} answers {locator} of the pleading it responds to, which has no '
+                                 'facts on record. Shall I read that paragraph of the answered pleading, add '
+                                 'what it says as unverified facts, and then read this document again?'}]}
         return {'problems': [f'invalid: {exc}']}
     except (KeyError, TypeError) as exc:
         return {'problems': [f'invalid: {exc}']}
