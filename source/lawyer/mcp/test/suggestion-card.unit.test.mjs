@@ -186,7 +186,7 @@ test("until the page API answers, the card hides its buttons and says where to o
   const { deps } = await device(t);
   const { card_path, card_url } = await built(deps);
   const body = readFileSync(card_path, "utf-8").replace(/<script[\s\S]*?<\/script>/g, "");
-  const note = /<p class="offline" id="offline">To submit or dismiss this suggestion, use its copy on this computer while Claude is open there: <a href="([^"]+)"[^>]*>Open on this computer<\/a>\.<\/p>/.exec(body);
+  const note = /<p class="offline" id="offline">To submit or dismiss this suggestion, use its copy on this computer while Claude is open there: <a class="button" href="([^"]+)"[^>]*>Open on this computer<\/a>\.<\/p>/.exec(body);
   assert.ok(note, "the note and its link are on the page as written, with no script run");
   assert.equal(note[1].replace(/&#38;/g, "&"), card_url);
   assert.match(body, /<div class="actions" id="actions" hidden><button type="button" id="submit">/, "Submit and Dismiss start hidden");

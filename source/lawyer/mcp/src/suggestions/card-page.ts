@@ -94,6 +94,7 @@ const STYLE =
   ".actions button{padding:.45rem 1.1rem;font-size:1rem;margin-right:.5rem}" +
   ".status{min-height:1.3em;font-weight:600}.status.error{color:var(--warn)}" +
   ".offline{color:var(--muted)}" +
+  ".button{display:inline-block;padding:.45rem 1.1rem;font-size:1rem;border-radius:4px;background:var(--accent);color:var(--card);text-decoration:none}" +
   ".prompt{font-size:.9rem;margin:.2rem .3rem;color:var(--warn)}.prompt button{margin-left:.4rem;font-size:.85rem}" +
   ".prompt q{font-weight:600}" +
   "main.dismissed{opacity:.45}main.dismissed .text{pointer-events:none}" +
@@ -406,7 +407,7 @@ export function renderCardHtml(card: CardRecord, port: number, token: string): s
     `<details class="tech"><summary class="link">${SHOW_TECHNICAL}</summary><pre>${escapeHtml(JSON.stringify(card.environment_facts, null, 2))}</pre></details>`;
   const actions =
     `<p class="later">${escapeHtml(LATER_LINE)}</p>` +
-    `<p class="offline" id="offline">${OFFLINE_NOTE} <a href="${escapeHtml(cardUrl(port, card.record_id, token))}" target="_blank" rel="noopener">${OPEN_HERE}</a>${OFFLINE_AFTER}</p>` +
+    `<p class="offline" id="offline">${OFFLINE_NOTE} <a class="button" href="${escapeHtml(cardUrl(port, card.record_id, token))}" target="_blank" rel="noopener">${OPEN_HERE}</a>${OFFLINE_AFTER}</p>` +
     `<div class="actions" id="actions" hidden><button type="button" id="submit">${SUBMIT}</button><button type="button" id="dismiss">${DISMISS}</button>` +
     `<button type="button" id="restore" hidden>${RESTORE}</button></div><p class="status" id="status" role="status"></p>`;
   const api = JSON.stringify({ port, card: card.record_id, token }).replace(/</g, "\\u003c");
