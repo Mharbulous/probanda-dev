@@ -1,4 +1,4 @@
-// build-stamp: bf9b30c7263f
+// build-stamp: 278ab0817f37
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75267,7 +75267,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "bf9b30c7263f";
+var BUILD_STAMP = false ? null : "278ab0817f37";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -123160,9 +123160,9 @@ var LATER_LINE = "You can see this later, with its status, under Past suggestion
 var SUBMIT = "Submit Suggestion";
 var DISMISS = "Dismiss";
 var RESTORE = "Restore Suggestion";
-var OFFLINE_NOTE = "This copy cannot reach Probanda, so it cannot send.";
+var OFFLINE_NOTE = "To submit or dismiss this suggestion, use its copy on this computer while Claude is open there:";
 var OPEN_HERE = "Open on this computer";
-var OFFLINE_AFTER = ", with Claude open there, to submit or dismiss it.";
+var OFFLINE_AFTER = ".";
 var NOT_CHECKED = "Not sent: Probanda could not check this against your records. Try again in a moment.";
 var BRACKET2 = /\[(client|matter|person|document|file|date|amount)\]/g;
 function escapeHtml3(text11) {
@@ -123181,7 +123181,7 @@ var KIND_LABEL = { constraint: "Constraint", evidence: "Evidence" };
 function contextLine(line) {
   return `<li class="block line" data-part="context_lines" data-id="${escapeHtml3(line.id)}"><span class="kind">${KIND_LABEL[line.kind]}</span>${editable(line.text)}${guess(line.guess)}<div class="prompts"></div></li>`;
 }
-var STYLE2 = ":root{--bg:#fafafa;--fg:#222;--muted:#666;--line:#ccc;--accent:#2f5f8a;--warn:#a00;--card:#fff}@media (prefers-color-scheme: dark){:root{--bg:#1e1e1e;--fg:#eee;--muted:#aaa;--line:#555;--accent:#8fb8e0;--warn:#f88;--card:#262626}}body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:var(--bg);color:var(--fg);line-height:1.45}main{max-width:44rem;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:1rem 1.25rem}.origin{font-weight:600;margin:0 0 .5rem}.text{white-space:pre-wrap;padding:.15rem .3rem;border-radius:3px;outline:none;border:1px dashed transparent}.text:hover,.text:focus{border-color:var(--line)}.pain .text{font-size:1.05rem}.guess{margin:.1rem .3rem;color:var(--muted);font-size:.8rem;font-style:italic}.items{padding-left:1.5rem}.items li{margin:.35rem 0}.context{list-style:none;padding:0;margin:.75rem 0}.context li{margin:.3rem 0}.kind{font-weight:600;font-size:.85rem;color:var(--muted);margin-right:.4rem}.line .text{display:inline}.bracket{border:1px solid var(--line);border-radius:3px;padding:0 .2em;font-family:ui-monospace,monospace;font-size:.9em;color:var(--accent)}.link{background:none;border:none;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit}.link:disabled{color:var(--muted);text-decoration:none;cursor:default}.mockup-frame{width:100%;height:20rem;border:1px solid var(--line);background:#fff;margin:.5rem 0}textarea{width:100%;min-height:4rem;font:inherit;box-sizing:border-box;margin:.5rem 0}.receives,.later{font-size:.9rem;color:var(--muted)}.tech pre{white-space:pre-wrap;font-size:.8rem;border:1px solid var(--line);padding:.5rem}.actions button{padding:.45rem 1.1rem;font-size:1rem;margin-right:.5rem}.status{min-height:1.3em;font-weight:600}.status.error{color:var(--warn)}.prompt{font-size:.9rem;margin:.2rem .3rem;color:var(--warn)}.prompt button{margin-left:.4rem;font-size:.85rem}.prompt q{font-weight:600}main.dismissed{opacity:.45}main.dismissed .text{pointer-events:none}main.done .text{border-color:transparent}";
+var STYLE2 = ":root{--bg:#fafafa;--fg:#222;--muted:#666;--line:#ccc;--accent:#2f5f8a;--warn:#a00;--card:#fff}@media (prefers-color-scheme: dark){:root{--bg:#1e1e1e;--fg:#eee;--muted:#aaa;--line:#555;--accent:#8fb8e0;--warn:#f88;--card:#262626}}body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:var(--bg);color:var(--fg);line-height:1.45}main{max-width:44rem;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:1rem 1.25rem}.origin{font-weight:600;margin:0 0 .5rem}.text{white-space:pre-wrap;padding:.15rem .3rem;border-radius:3px;outline:none;border:1px dashed transparent}.text:hover,.text:focus{border-color:var(--line)}.pain .text{font-size:1.05rem}.guess{margin:.1rem .3rem;color:var(--muted);font-size:.8rem;font-style:italic}.items{padding-left:1.5rem}.items li{margin:.35rem 0}.context{list-style:none;padding:0;margin:.75rem 0}.context li{margin:.3rem 0}.kind{font-weight:600;font-size:.85rem;color:var(--muted);margin-right:.4rem}.line .text{display:inline}.bracket{border:1px solid var(--line);border-radius:3px;padding:0 .2em;font-family:ui-monospace,monospace;font-size:.9em;color:var(--accent)}.link{background:none;border:none;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit}.link:disabled{color:var(--muted);text-decoration:none;cursor:default}.mockup-frame{width:100%;height:20rem;border:1px solid var(--line);background:#fff;margin:.5rem 0}textarea{width:100%;min-height:4rem;font:inherit;box-sizing:border-box;margin:.5rem 0}.receives,.later{font-size:.9rem;color:var(--muted)}.tech pre{white-space:pre-wrap;font-size:.8rem;border:1px solid var(--line);padding:.5rem}.actions button{padding:.45rem 1.1rem;font-size:1rem;margin-right:.5rem}.status{min-height:1.3em;font-weight:600}.status.error{color:var(--warn)}.offline{color:var(--muted)}.button{display:inline-block;padding:.45rem 1.1rem;font-size:1rem;border-radius:4px;background:var(--accent);color:var(--card);text-decoration:none}.prompt{font-size:.9rem;margin:.2rem .3rem;color:var(--warn)}.prompt button{margin-left:.4rem;font-size:.85rem}.prompt q{font-weight:600}main.dismissed{opacity:.45}main.dismissed .text{pointer-events:none}main.done .text{border-color:transparent}";
 var SCRIPT2 = `
 (function () {
   var api = JSON.parse(document.getElementById("api").textContent);
@@ -123474,7 +123474,7 @@ function renderCardHtml(card2, port4, token) {
   const context = `<ul class="context" id="context">${card2.context_lines.map(contextLine).join("")}${observed}</ul>`;
   const commentBox = `<div id="comment-block"><textarea id="comment" aria-label="Comment" placeholder="${escapeHtml3(COMMENT_PLACEHOLDER)}">${escapeHtml3(card2.comment)}</textarea><div class="prompts"></div></div>`;
   const tech = `<p class="receives">${escapeHtml3(RECEIVES_LINE)}</p><details class="tech"><summary class="link">${SHOW_TECHNICAL}</summary><pre>${escapeHtml3(JSON.stringify(card2.environment_facts, null, 2))}</pre></details>`;
-  const actions = `<p class="later">${escapeHtml3(LATER_LINE)}</p><p class="status error" id="offline">${OFFLINE_NOTE} <a href="${escapeHtml3(cardUrl(port4, card2.record_id, token))}" target="_blank" rel="noopener">${OPEN_HERE}</a>${OFFLINE_AFTER}</p><div class="actions" id="actions" hidden><button type="button" id="submit">${SUBMIT}</button><button type="button" id="dismiss">${DISMISS}</button><button type="button" id="restore" hidden>${RESTORE}</button></div><p class="status" id="status" role="status"></p>`;
+  const actions = `<p class="later">${escapeHtml3(LATER_LINE)}</p><p class="offline" id="offline">${OFFLINE_NOTE} <a class="button" href="${escapeHtml3(cardUrl(port4, card2.record_id, token))}" target="_blank" rel="noopener">${OPEN_HERE}</a>${OFFLINE_AFTER}</p><div class="actions" id="actions" hidden><button type="button" id="submit">${SUBMIT}</button><button type="button" id="dismiss">${DISMISS}</button><button type="button" id="restore" hidden>${RESTORE}</button></div><p class="status" id="status" role="status"></p>`;
   const api = JSON.stringify({ port: port4, card: card2.record_id, token }).replace(/</g, "\\u003c");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src http://127.0.0.1:${port4}; object-src 'none'; base-uri 'none'; form-action 'none'"><title>Suggestion</title><style>${STYLE2}</style></head><body><main><p class="origin">${ORIGIN_CUE[card2.origin]}</p>` + pain + items2 + mockup + context + commentBox + tech + actions + `</main><script type="application/json" id="api">${api}</script><script>${SCRIPT2}</script></body></html>`;
 }
