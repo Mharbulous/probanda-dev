@@ -73,6 +73,14 @@ LEFT JOIN main.proceeding_witnesses AS pw ON pw.witness_id = w.witness_id
 WHERE w.report_source_id = ?;
 ```
 
+For a court pleading, also load the locators of its relief items and source
+references, for the paragraph gaps in Step 2:
+
+```sql
+SELECT source_locator FROM main.relief_items WHERE source_id = ?;
+SELECT source_locator FROM main.source_references WHERE source_id = ?;
+```
+
 For a privileged-store match, query the source plus its current instruction rows instead; do not query or expose instruction descriptions through a main-store projection:
 
 ```sql
@@ -128,6 +136,14 @@ same-context verification is not verification
 - `VERIFICATION_MODE = normal` with no targets for a hash-matched pass, or
   `VERIFICATION_MODE = targeted_reverification` plus the exact pending target ids
   for a backlog/second pass.
+- For a court pleading in a `normal` pass, `PARAGRAPHS_WITHOUT_ROWS`: the
+  numbered paragraphs no stored row cites. Compute them with `paragraph_gaps`
+  in `../references/scripts/pleading_positions.py`, over the `source_locator`
+  of every fact, relief item and source reference Step 1 loaded. It ignores
+  locators that are not numbered paragraphs and lists each number from 1 to the
+  highest one present that nothing cites. When the caller names paragraphs of
+  its own (`ingest-extract.md`'s unresolved-paragraph offer), add them to the
+  list.
 
 **Dispatch a path the verifier can open.** Its only tool reads its own session filesystem — it cannot list a directory, and in a bridged session it cannot see host files at all. Supply the explicit path of every file it must read, and for a PDF its page manifest by [`ingest-extract.md`](ingest-extract.md)'s Universal rules (design decision #71), each PNG named individually rather than the render directory. In a bridged session, stage it first by [`verify-edges.md`](verify-edges.md) §2.
 
@@ -221,6 +237,11 @@ The verifier's `hallucination_flags` (loose characterizations, minor inaccuracie
 - **Report** applied first-pass corrections, second-pass confirmations, second-pass
   escalations, still-pending targets, human-reviewed deferrals, NULL backfills, and
   hallucination flags — grouped by entity type.
+- **Report paragraph gaps.** For a court pleading, after the pass is applied,
+  compute `paragraph_gaps` again over the committed rows and list each numbered
+  paragraph still without a row, with the verifier's `unsure` flag for it when
+  it returned one. A gap is reported, never a refusal: it does not fail the
+  pass or block any write.
 - Each successful `matter_data__execute` regenerates `evidence.sql` automatically;
   no separate dump call. Report every `INSERT`/`UPDATE`.
 

@@ -71,6 +71,28 @@ def locator_sort_key(locator):
     return start, sub or ""
 
 
+def paragraph_gaps(locators):
+    """Each numbered paragraph from 1 to the highest present that no locator covers.
+
+    Locators that are not numbered paragraphs (a page or header locator such as
+    ``p3`` or ``hdr``) are ignored. A range covers every number in it.
+    """
+    covered = set()
+    for locator in locators:
+        if not isinstance(locator, str):
+            continue
+        match = LOCATOR.match(locator.strip())
+        if not match:
+            continue
+        start, _start_sub, end, _end_sub = match.groups()
+        first = int(start)
+        last = int(end) if end else first
+        covered.update(range(first, max(first, last) + 1))
+    if not covered:
+        return []
+    return [f"para. {n}" for n in range(1, max(covered) + 1) if n not in covered]
+
+
 def resolve_fact_positions(
     references,
     answered_facts,

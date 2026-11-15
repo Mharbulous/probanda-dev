@@ -62,6 +62,9 @@ text yourself.
   segment, order, correspondence, etc.).
 - `{{PAGE_RANGE}}` — **required for affidavit segments**; the page range to check.
   For a whole document, absent or full-document.
+- `{{PARAGRAPHS_WITHOUT_ROWS}}` — for a court pleading in `normal` mode, the
+  numbered paragraphs (`para. N`) that no stored fact, relief item or source
+  reference cites. Empty or absent otherwise.
 
 ## Behavior
 
@@ -99,6 +102,12 @@ text yourself.
 9. Classify every in-scope existing row exactly once as confirmed, corrected,
    rejected, or ambiguous. Multiple field corrections for one row are one
    corrected classification.
+10. For each paragraph in `PARAGRAPHS_WITHOUT_ROWS`, read it and return at least
+    one finding for it: a `missed_facts` entry, a `relief_or_reference_findings`
+    omission (`row: "new"`), or, when it states no factual proposition, a
+    `hallucination_flags` entry with `row` set to its locator, `severity`
+    `unsure` and a description saying it holds no factual proposition. Each
+    finding carries that paragraph's locator.
 
 ## Output contract
 
