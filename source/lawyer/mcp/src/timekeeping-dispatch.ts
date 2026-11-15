@@ -70,7 +70,7 @@ const tools = [
     timeReviewStageDay(args.date, args.token, args.blocks)
   ),
   defineTool<{ date: string }>("time_review__read_day", (args) => timeReviewReadDay(args.date)),
-  defineTool<{ screens_dir?: string }>("time_review__serve_page", (args) => serveReviewPage(args.screens_dir)),
+  defineTool<{ screens_dir?: string; write_back?: boolean }>("time_review__serve_page", (args) => serveReviewPage(args.screens_dir, undefined, args.write_back)),
   defineTool<Record<string, never>>("time_review__wait_click", () => waitClick()),
   defineTool<{ block: string; status: string; message?: string; entry?: unknown }>("time_review__record_timecamp", (args) =>
     timeReviewRecordTimecamp(args.block, args.status, args.message, {}, args.entry)

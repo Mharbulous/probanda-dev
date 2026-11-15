@@ -110,6 +110,19 @@ test("Correct saves the new matter, description and times, keeps what they were,
   assert.equal(block(f, `${DAY}:002`).review.before.description, "Synthetic work 2");
 });
 
+test("on a page served with no write-back, Correct saves the act and leaves no write waiting (issue 288)", async (t) => {
+  const f = await device(t);
+  stage(f);
+  const served = await serveReviewPage(undefined, f.env, false);
+  const post = (body) => fetch(`${served.url}click`, { method: "POST", body: JSON.stringify(body) });
+  const res = await post({ act: "correct", block: `${DAY}:002`, matter: "Synthetic Matter B", description: "Reviewed letter", start: "02:05", end: "02:40" });
+  assert.equal(res.status, 200);
+  const saved = block(f, `${DAY}:002`);
+  assert.equal(saved.state, "corrected");
+  assert.equal(saved.timecamp, undefined);
+  assert.ok(!renderReviewPage(loadReviewModel(f.seams), null).includes("Waiting for the session"));
+});
+
 test("Write off saves the reason and has no TimeCamp write", async (t) => {
   const f = await device(t);
   stage(f);

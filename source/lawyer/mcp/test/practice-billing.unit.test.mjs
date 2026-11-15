@@ -64,6 +64,14 @@ test("upsert_time_entries: an estimate keeps its provenance and basis", async (t
   assert.deepEqual(row.data.estimate, estimate);
 });
 
+test("upsert_time_entries: a reviewed block's entry keeps provenance block (issue 291)", async (t) => {
+  const { store } = await setup(t);
+  await billing.upsert_time_entries(store, { ...MATTER, entries: [entry("block:2030-01-10:001", { provenance: "block", tracker_ids: [] })] });
+  const row = [...store.items().values()].find((item) => item.kind === "time_entry");
+  assert.equal(row.data.provenance, "block");
+  assert.equal(row.data.source_key, "block:2030-01-10:001");
+});
+
 test("upsert_time_entries: refuses an unknown provenance", async (t) => {
   const { store } = await setup(t);
   await assert.rejects(billing.upsert_time_entries(store, { ...MATTER, entries: [entry("x", { provenance: "guess" })] }), /provenance/);

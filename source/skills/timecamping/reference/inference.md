@@ -119,6 +119,14 @@ carries):
   ceremony. When the target child carries `billable = 1` in the synced task
   tree, the proposal adds the line: "`<child name>` is flagged billable in
   TimeCamp, so this entry will read billable; exclude from any bill."
+  Everything above from the child task of `PERSONAL` onward serves the
+  TimeCamp write-back. With the registry's `timecamp` source off, none of it
+  runs: no child task, no pre-#940 stop, no ceremony listing `PERSONAL`'s
+  children, no billable line and no by-hand split. The personal stretch is
+  staged as its own block. `billing:day-reviewer` reads no task tree, so it
+  writes a personal block's matter as the word `personal`, whether TimeCamp
+  is on or off. Its bases follow the evidence like any block's: content that
+  shows the time is personal names its matter, and adds no flag of its own.
 - **P10 — `Switching File` is a keyword guess, reviewed like amber**:
   TimeCamp's own rule switches the timer to `Switching File` on LEAP's
   `Matter List` window, and the timer stays there until another rule fires,

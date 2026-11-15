@@ -65,8 +65,11 @@ def answer(line, invoice):
     if line.get("block_ids"):
         out.append(f"Reviewed on the time review page as: {', '.join(line['block_ids'])}")
     for entry in line["entries"]:
-        out.append(f"Time entry {entry['entry_id']}: {entry.get('start')} to {entry.get('end')}, tracked {hours(entry['tracked_seconds'])}, "
-                   f"billed {hours(entry['billed_seconds'])}")
+        if entry.get("block_id"):
+            out.append(f"Reviewed block {entry['block_id']}: billed {hours(entry['billed_seconds'])}")
+        else:
+            out.append(f"Time entry {entry['entry_id']}: {entry.get('start')} to {entry.get('end')}, tracked {hours(entry['tracked_seconds'])}, "
+                       f"billed {hours(entry['billed_seconds'])}")
         out += [f"  Evidence: {evidence_text(row)}" for row in entry["evidence"]]
         if entry.get("ruling"):
             out.append(f"  Your ruling: {entry['ruling']}")

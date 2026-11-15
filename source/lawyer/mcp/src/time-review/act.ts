@@ -58,11 +58,16 @@ function change(id: string, seams: ReviewDateSeams, edit: (block: BlockRecord) =
 }
 
 /** Records one click's act on its block. Approve and Correct leave the TimeCamp result `pending`
- * for the waiting session; Write off has none. Correct needs the matter, description, start and end
- * the form holds; Write off needs a reason. Throws ValidationError, writing nothing, for anything else. */
-export function applyAct(act: Act, id: string, fields: ActFields, seams: ReviewDateSeams = {}): BlockRecord {
+ * for the waiting session, unless the page was served with no write-back; Write off has none. Correct
+ * needs the matter, description, start and end the form holds; Write off needs a reason. Throws
+ * ValidationError, writing nothing, for anything else. */
+export function applyAct(act: Act, id: string, fields: ActFields, seams: ReviewDateSeams = {}, writeBack = true): BlockRecord {
   const at = nowOf(seams).toISOString();
   const review = (extra: Partial<BlockReview>): BlockReview => ({ act: "approved", by: ACTOR, at, ...extra });
+  const pending = (b: BlockRecord): BlockRecord => {
+    const { timecamp: _none, ...rest } = b;
+    return writeBack ? { ...rest, timecamp: { status: "pending", at } } : rest;
+  };
   if (act === "write_off") {
     const reason = text("A write-off reason", fields.reason, MAX_SHORT);
     return change(id, seams, (b) => {
@@ -71,13 +76,13 @@ export function applyAct(act: Act, id: string, fields: ActFields, seams: ReviewD
     });
   }
   if (act === "approve") {
-    return change(id, seams, (b) => ({ ...b, state: "approved", review: review({}), timecamp: { status: "pending", at } }));
+    return change(id, seams, (b) => pending({ ...b, state: "approved", review: review({}) }));
   }
   const matter = text("The matter", fields.matter, MAX_SHORT);
   const description = text("The description", fields.description, MAX_TEXT);
   const start = text("The start", fields.start, MAX_SHORT);
   const end = text("The end", fields.end, MAX_SHORT);
-  return change(id, seams, (b) => ({
+  return change(id, seams, (b) => pending({
     ...b,
     matter,
     description,
@@ -86,7 +91,6 @@ export function applyAct(act: Act, id: string, fields: ActFields, seams: ReviewD
     state: "corrected",
     // A second correction keeps the first `before`: the version the AI staged.
     review: review({ act: "corrected", before: b.review?.before ?? { matter: b.matter, description: b.description, start: b.start, end: b.end } }),
-    timecamp: { status: "pending", at },
   }));
 }
 

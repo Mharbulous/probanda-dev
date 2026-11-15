@@ -79,8 +79,11 @@ def report(snapshot):
         for gone in line.get("unavailable") or []:
             out.append(f"Source unavailable: {gone['source']}, {gone['reason']}.")
         for entry in line["entries"]:
-            out.append(f"- Time entry {entry['entry_id']}, {entry.get('start')} to {entry.get('end')}, tracked {plain_hours(entry['tracked_seconds'])}, "
-                       f"billed {plain_hours(entry['billed_seconds'])}. Ruling: {entry.get('ruling') or 'none'}")
+            if entry.get("block_id"):
+                out.append(f"- Reviewed block {entry['block_id']}, billed {plain_hours(entry['billed_seconds'])}. Ruling: {entry.get('ruling') or 'none'}")
+            else:
+                out.append(f"- Time entry {entry['entry_id']}, {entry.get('start')} to {entry.get('end')}, tracked {plain_hours(entry['tracked_seconds'])}, "
+                           f"billed {plain_hours(entry['billed_seconds'])}. Ruling: {entry.get('ruling') or 'none'}")
             out += [f"  - Evidence: {row.get('source')} {row.get('native_id')} at {row.get('time')}" for row in entry["evidence"]]
             out += [f"  - {a['kind']}: {plain_hours(a['seconds'])}, {a['reason']}" for a in entry["adjustments"]]
         for estimate in line["estimates"]:

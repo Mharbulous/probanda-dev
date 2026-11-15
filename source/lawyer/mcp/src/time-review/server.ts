@@ -52,6 +52,8 @@ const POLL_MS = 1_000;
 interface Target {
   screens_dir: string | null;
   serve: string;
+  /** false when no time tracker takes the approved blocks: a click then leaves no write waiting. */
+  write_back?: boolean;
 }
 
 let listener: Promise<PageListener> | undefined;
@@ -81,7 +83,7 @@ export function startReviewPages(env: NodeJS.ProcessEnv = process.env, options: 
           { method: "GET", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/?$/, handle: (_req, res, m) => withTarget(m[1], env, res, (t) => page(t, m[1], env, res)) },
           { method: "GET", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/img\/([^/]+)\/?$/, handle: (_req, res, m) => withTarget(m[1], env, res, (t) => image(t, decodeId(m[2]), res)) },
           { method: "GET", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/state\/?$/, handle: (_req, res, m) => withTarget(m[1], env, res, () => state(res, env)) },
-          { method: "POST", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/click\/?$/, handle: (req, res, m) => withTarget(m[1], env, res, () => click(m[1], req, res, env)) },
+          { method: "POST", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/click\/?$/, handle: (req, res, m) => withTarget(m[1], env, res, (t) => click(m[1], t, req, res, env)) },
         ],
         env,
         about: { build_stamp: BUILD_STAMP, plugin_version: pluginVersion() },
@@ -112,8 +114,11 @@ function checkScreensDir(raw: unknown): string | null {
 }
 
 /** Serves the page and returns its URL. Every earlier link and unread click stops counting. */
-export async function serveReviewPage(screensDirIn: unknown, env: NodeJS.ProcessEnv = process.env): Promise<ServeResult> {
+export async function serveReviewPage(screensDirIn: unknown, env: NodeJS.ProcessEnv = process.env, writeBackIn: unknown = true): Promise<ServeResult> {
   const screens = checkScreensDir(screensDirIn);
+  if (writeBackIn !== undefined && typeof writeBackIn !== "boolean") {
+    throw new ValidationError("time_review__serve_page: write_back must be true or false");
+  }
   const pages = await startReviewPages(env);
   const { port } = pages;
   const failure = pages.holding() ? null : pages.failure();
@@ -126,7 +131,7 @@ export async function serveReviewPage(screensDirIn: unknown, env: NodeJS.Process
   const warning = pages.holding() ? null : await holderWarning(port);
   dropLinks(KIND, () => true, env);
   clearClicks(env);
-  const target: Target = { screens_dir: screens, serve: randomBytes(9).toString("base64url") };
+  const target: Target = { screens_dir: screens, serve: randomBytes(9).toString("base64url"), ...(writeBackIn === false ? { write_back: false } : {}) };
   const id = deviceLink(KIND, JSON.stringify(target), env);
   const served: ServeResult = { url: `http://127.0.0.1:${port}/t/${id}/`, screenshots: screens !== null, blocks: loadReviewModel({ env }).blocks.length };
   return warning ? { ...served, warning } : served;
@@ -214,7 +219,7 @@ function state(res: ServerResponse, env: NodeJS.ProcessEnv): void {
   json(res, 200, { blocks, clear: model.clear }, REPLY);
 }
 
-async function click(id: string, req: IncomingMessage, res: ServerResponse, env: NodeJS.ProcessEnv): Promise<void> {
+async function click(id: string, target: Target, req: IncomingMessage, res: ServerResponse, env: NodeJS.ProcessEnv): Promise<void> {
   let body: ActFields & { act?: unknown; block?: unknown; blocks?: unknown; capture?: unknown };
   try {
     body = JSON.parse(await readBody(req, MAX_BODY)) as typeof body;
@@ -231,7 +236,7 @@ async function click(id: string, req: IncomingMessage, res: ServerResponse, env:
     // An act is saved to the block the click names, before the session is told of it.
     if (typeof body.block !== "string") return json(res, 400, { error: "This act needs a block." }, REPLY);
     try {
-      applyAct(body.act, body.block, body, { env });
+      applyAct(body.act, body.block, body, { env }, target.write_back !== false);
     } catch (err) {
       if (err instanceof ValidationError) return json(res, 400, { error: err.message }, REPLY);
       return json(res, 500, { error: `The act could not be saved: ${(err as Error).message}` }, REPLY);

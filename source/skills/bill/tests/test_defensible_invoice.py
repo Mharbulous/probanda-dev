@@ -180,5 +180,47 @@ class Defensible(unittest.TestCase):
         self.assertEqual(records["adjustments"][0]["marker"], "evidence:marker:1")
 
 
+class DefensibleBlockLine(unittest.TestCase):
+    """Ticket 291: a line keyed by a reviewed block, with no timer entry, issues and is defended the same way."""
+
+    def test_a_block_line_freezes_and_is_defended(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name)
+        vetted = {"people": VETTED["people"], "decided_by": "Pat Example", "candidates": {}, "gaps": [],
+                  "lines": [{"block_id": "2030-01-10:001", "date": "2030-01-10", "user": "Pat Example", "disposition": "bill",
+                             "description": "Telephone call with client", "proposal_id": "2030-01-10:001",
+                             "evidence": [{"source": "telus_calls", "native_id": "c1", "time": "09:00"}],
+                             "confirmed": "2030-01-10:001 approved on the review page", "supported_seconds": 1800}]}
+        (root / "vetted.json").write_text(json.dumps(vetted), encoding="utf-8")
+        (root / "candidates.md").write_text(CANDIDATES.splitlines()[0] + "\n" + CANDIDATES.splitlines()[1] + "\n| 2030-01-10 | Strong | Lawyer | | Call |\n", encoding="utf-8")
+        (root / "judged.jsonl").write_text('{"date": "2030-01-10"}\n', encoding="utf-8")
+        (root / "signed.pdf").write_bytes(b"%PDF-invented")
+        with contextlib.redirect_stdout(io.StringIO()):
+            code = tie_out.main(["final", "--candidates", str(root / "candidates.md"), "--last-billed", "2030-01-01",
+                                 "--judged", str(root / "judged.jsonl"), "--vetted", str(root / "vetted.json"), "--date", "2030-02-01",
+                                 "--report-dir", str(root / "report"), "--data-dir", str(root / "data")])
+        self.assertEqual(code, 0)
+        line_map = json.loads((root / "data" / "line_map.json").read_text(encoding="utf-8"))
+        (root / "meta.json").write_text(json.dumps({"matter": "M1", "invoice_number": "102", "issue_date": "2030-02-02",
+                                                    "date_to": "2030-01-31", "amount": line_map["subtotal"], "taxes": "0.00",
+                                                    "signed_copy_path": str(root / "signed.pdf")}), encoding="utf-8")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = freeze_invoice.main(["--line-map", str(root / "data" / "line_map.json"), "--meta", str(root / "meta.json"),
+                                        "--out-dir", str(root / "billing"), "--data-dir", str(root / "data")])
+        result = json.loads(out.getvalue())
+        self.assertEqual(code, 0, result)
+        self.assertIn("Reviewed block 2030-01-10:001, billed 0.500 h", Path(result["report_path"]).read_text(encoding="utf-8"))
+        records = json.loads(Path(result["records_file"]).read_text(encoding="utf-8"))
+        self.assertEqual(records["lines"][0]["entry_source_keys"], ["block:2030-01-10:001"])
+        out = io.StringIO()
+        with NoNetwork(), contextlib.redirect_stdout(out):
+            code = defend_line.main(["--snapshot", result["snapshot_path"], "--hash", result["snapshot_hash"]])
+        self.assertEqual(code, 0)
+        self.assertIn("Reviewed block 2030-01-10:001: billed 0.500 hours", out.getvalue())
+        self.assertIn("phone call record at 09:00", out.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -231,7 +231,7 @@ export function practiceToolDefinitions(): ToolDefinition[] {
     },
     {
       name: practicePrefixed("upsert_time_entries"),
-      description: "Record a matter's vetted time entries, each with what defends it. source_key identifies an entry (a tracker entry id, or an estimate's key), so vetting again updates it rather than adding another. provenance is tracker or estimate. An entry already on an issued invoice is left as it is and named in locked_unchanged.",
+      description: "Record a matter's vetted time entries, each with what defends it. source_key identifies an entry (a tracker entry id, a reviewed block's id, or an estimate's key), so vetting again updates it rather than adding another. provenance is tracker, block (a reviewed block billed on its own time) or estimate. An entry already on an issued invoice is left as it is and named in locked_unchanged.",
       inputSchema: {
         type: "object",
         properties: {
@@ -253,7 +253,7 @@ export function practiceToolDefinitions(): ToolDefinition[] {
                 tracked_seconds: { type: "number" },
                 start: { type: "string" },
                 end: { type: "string" },
-                provenance: { type: "string", enum: ["tracker", "estimate"] },
+                provenance: { type: "string", enum: ["tracker", "block", "estimate"] },
                 billable: { type: "boolean" },
                 proposal_ids: { type: "array", items: { type: "string" } },
                 determination_ids: { type: "array", items: { type: "string" } },

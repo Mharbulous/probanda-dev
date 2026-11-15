@@ -1,5 +1,6 @@
 """blocks_export.py on invented data: the reviewed blocks of a fixture bill become the vetted.json that
-tie_out.py passes, and an invoice line resolves to its blocks (build plan slice 11, spec criterion 1)."""
+tie_out.py passes, and an invoice line resolves to its blocks (build plan slice 11, spec criterion 1). Here the
+registry enables TimeCamp, so the entries are given; test_no_timecamp_bill.py runs the same chain without them."""
 import contextlib
 import copy
 import io
@@ -72,9 +73,9 @@ class Case(unittest.TestCase):
         path.write_text(json.dumps(value), encoding="utf-8")
         return str(path)
 
-    def export(self):
+    def export(self, last_billed="2030-01-01"):
         argv = ["export", "--blocks", self.write("blocks.json", self.days), "--entries", self.write("entries.json", self.entries),
-                "--matter", MATTER, "--user", USER, "--people", self.write("people.json", PEOPLE),
+                "--matter", MATTER, "--user", USER, "--people", self.write("people.json", PEOPLE), "--last-billed", last_billed,
                 "--candidates", self.write("candidates.json", CANDIDATES), "--out", str(self.dir / "vetted.json")]
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
@@ -97,25 +98,28 @@ class Case(unittest.TestCase):
 
     def test_the_export_of_a_fixture_bill_passes_the_final_tie_out(self):
         code, reply = self.export()
-        self.assertEqual((code, reply["verdict"], reply["lines"], reply["estimates"]), (0, "pass", 3, 1), reply)
+        self.assertEqual((code, reply["verdict"], reply["lines"]), (0, "pass", 4), reply)
         code, verdict = self.tie()
         self.assertEqual((code, verdict["verdict"]), (0, "pass"), verdict)
-        # 1.5 h on the 11th (3600 s + the 1800 s estimate; the written-off 720 s bills nothing) and 0.5 h on the 10th.
+        # 1.5 h on the 11th (3600 s + the 1800 s estimate block; the written-off 720 s bills nothing) and 0.5 h on the 10th.
         self.assertEqual(verdict["fees"], "600.00")
 
     def test_each_kind_of_block_becomes_the_line_the_tie_out_expects(self):
         self.export()
         vetted = json.loads((self.dir / "vetted.json").read_text(encoding="utf-8"))
-        by_entry = {line["entry_id"]: line for line in vetted["lines"]}
-        self.assertEqual(by_entry["E1"]["disposition"], "bill")
-        self.assertEqual(by_entry["E1"]["supported_seconds"], 1800)
-        self.assertEqual(by_entry["E1"]["block_ids"], ["2030-01-10:001"])
-        self.assertIn("approved on the review page", by_entry["E1"]["confirmed"])
-        self.assertEqual(by_entry["E3"]["disposition"], "write_off")
-        self.assertEqual(by_entry["E3"]["write_off_reason"], "not chargeable to the client")
-        estimate = vetted["estimates"][0]
-        self.assertEqual((estimate["key"], estimate["seconds"], estimate["user"], estimate["block_ids"]),
-                         ("2030-01-11:003", 1800, USER, ["2030-01-11:003"]))
+        # Ticket 291 decision 1: one line per live block of the matter, keyed by block_id, carrying its date and user.
+        by_block = {line["block_id"]: line for line in vetted["lines"]}
+        self.assertEqual(list(by_block), ["2030-01-10:001", "2030-01-11:001", "2030-01-11:002", "2030-01-11:003"])
+        first = by_block["2030-01-10:001"]
+        self.assertEqual((first["disposition"], first["supported_seconds"], first["date"], first["user"]), ("bill", 1800, "2030-01-10", USER))
+        self.assertNotIn("entry_id", first)
+        self.assertIn({"source": "timecamp_time_entries", "native_id": "E1", "time": "09:00"}, first["evidence"])
+        self.assertIn("approved on the review page", first["confirmed"])
+        self.assertEqual(by_block["2030-01-11:002"]["disposition"], "write_off")
+        self.assertEqual(by_block["2030-01-11:002"]["write_off_reason"], "not chargeable to the client")
+        # Ticket 291 decisions 1 and 2: a block stating `estimate` bills its own span as estimate_seconds, with no estimates list.
+        self.assertEqual(by_block["2030-01-11:003"]["estimate_seconds"], 1800)
+        self.assertNotIn("estimates", vetted)
         self.assertEqual(vetted["candidates"], {"2030-01-12": {"status": "written_off", "reason": "the reviewed day holds no time for this matter"}})
         self.assertNotIn("2030-01-11:004", json.dumps(vetted), "an original kept behind a merge is not billed")
 
@@ -151,11 +155,32 @@ class Case(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("entry E9 on 2030-01-10 is cited by no block", reply["problems"])
 
-    def test_a_block_with_no_entry_and_no_stated_estimate_refuses_the_export(self):
-        self.days["days"][1]["blocks"][2].update(bill_basis=[], flags=[])
+    def test_a_block_with_no_entry_bills_from_its_own_span(self):
+        # Ticket 289 decisions 1 and 3: evidence that bounds a block's time is supported time, not an estimate.
+        self.days["days"][1]["blocks"][2].update(bill_basis=[], flags=[], state="auto_assigned")
+        self.days["days"][1]["blocks"][2].pop("review")
         code, reply = self.export()
+        self.assertEqual(code, 0, reply)
+        vetted = json.loads((self.dir / "vetted.json").read_text(encoding="utf-8"))
+        line = [l for l in vetted["lines"] if l["block_id"] == "2030-01-11:003"][0]
+        self.assertEqual((line["disposition"], line["supported_seconds"]), ("bill", 1800))
+        self.assertNotIn("estimate_seconds", line)
+
+    def test_a_late_block_bills_only_after_a_click(self):
+        # Ticket 289 decision 4: a block dated on or before the last billed date is late.
+        code, reply = self.export(last_billed="2030-01-10")
+        self.assertEqual(code, 0, reply)
+        vetted = json.loads((self.dir / "vetted.json").read_text(encoding="utf-8"))
+        late = [l for l in vetted["lines"] if l["block_id"] == "2030-01-10:001"][0]
+        self.assertEqual(late["late_reason"], "late line approved on the review page")
+        self.assertNotIn("late_reason", [l for l in vetted["lines"] if l["block_id"] == "2030-01-11:001"][0])
+        self.days["days"][0]["blocks"][0].update(state="auto_assigned")
+        self.days["days"][0]["blocks"][0].pop("review")
+        code, reply = self.export(last_billed="2030-01-10")
         self.assertEqual(code, 1)
-        self.assertIn("block 2030-01-11:003 rests on no TimeCamp entry and states no estimate", reply["problems"])
+        problem = [p for p in reply["problems"] if "2030-01-10:001" in p][0]
+        self.assertIn("#2030-01-10:001", problem)
+        self.assertIn("write-off when the last bill is over three months old", problem)
 
     def test_an_estimate_needs_a_click_on_the_page(self):
         self.days["days"][1]["blocks"][2].update(state="flagged")
@@ -164,13 +189,14 @@ class Case(unittest.TestCase):
         code, reply = self.export()
         self.assertEqual(code, 1)
 
-    def test_time_moved_to_another_matter_is_written_off_this_bill(self):
+    def test_time_moved_to_another_matter_gives_no_line_on_this_bill(self):
+        # Ticket 292 decision 5: the other matter's bill carries that time, under its block.
         self.days["days"][0]["blocks"][0].update(matter="L0002 Another Matter")
-        self.export()
+        code, reply = self.export()
+        self.assertEqual(code, 0, reply)
         vetted = json.loads((self.dir / "vetted.json").read_text(encoding="utf-8"))
-        first = [line for line in vetted["lines"] if line["entry_id"] == "E1"][0]
-        self.assertEqual(first["disposition"], "write_off")
-        self.assertIn("another matter", first["write_off_reason"])
+        self.assertNotIn("2030-01-10:001", [line["block_id"] for line in vetted["lines"]])
+        self.assertEqual(vetted["candidates"]["2030-01-10"]["status"], "written_off")
 
     def test_an_unreviewed_chat_vetted_line_has_no_blocks(self):
         line_map = {"lines": [{"date": "2030-01-10", "user": USER, "initials": "PE", "line_key": "2030-01-10|Pat Example"}]}

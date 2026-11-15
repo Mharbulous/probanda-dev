@@ -13,7 +13,7 @@ import { asString, newId, requireMatter } from "./shared.js";
 
 type Args = Record<string, unknown>;
 
-const PROVENANCE = ["tracker", "estimate"];
+const PROVENANCE = ["tracker", "block", "estimate"];
 const ADJUSTMENT_KINDS = ["trim", "write_off", "restoration", "credit"];
 const LINE_KINDS = ["fee", "disbursement"];
 

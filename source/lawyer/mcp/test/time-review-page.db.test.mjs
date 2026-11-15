@@ -233,3 +233,21 @@ test("the listener serves the page, a screenshot on request and a click, and ref
   assert.ok(!(await (await fetch(second.url)).text()).includes("<img"));
   assert.equal((await fetch(`${second.url}img/${CAPTURE}`)).status, 404);
 });
+
+test("served with no write-back, an approved card shows no write line; served as before, it waits for the write (issue 288)", async (t) => {
+  const f = await device(t);
+  fixtureDays(f);
+  await assert.rejects(serveReviewPage(undefined, f.env, "no"), /write_back/);
+  const lineAfterApprove = async (writeBack, block) => {
+    const served = await serveReviewPage(undefined, f.env, writeBack);
+    const posted = await fetch(`${served.url}click`, { method: "POST", body: JSON.stringify({ act: "approve", block }) });
+    assert.equal(posted.status, 200);
+    const state = await (await fetch(`${served.url}state`)).json();
+    return state.blocks[block].timecamp_text;
+  };
+  assert.equal(await lineAfterApprove(false, `${DAY1}:001`), "");
+  const stored = loadReviewModel({ env: f.env }).blocks.find((b) => b.id === `${DAY1}:001`);
+  assert.equal(stored.state, "approved");
+  assert.equal(stored.timecamp, undefined);
+  assert.equal(await lineAfterApprove(undefined, `${DAY2}:002`), "Waiting for the session to write this to TimeCamp.");
+});

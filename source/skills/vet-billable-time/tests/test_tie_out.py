@@ -384,5 +384,94 @@ class Settings(Case):
         self.assertIn("line_evidence", out["failed"])
 
 
+def block_line(block_id, day, secs, **over):
+    base = {"block_id": block_id, "date": day, "user": "Pat Example", "disposition": "bill",
+            "description": "Telephone call with client", "proposal_id": block_id,
+            "evidence": [{"source": "telus_calls", "native_id": "c1", "time": "09:00"}],
+            "confirmed": f"{block_id} approved on the review page", "supported_seconds": secs}
+    base.update(over)
+    return base
+
+
+class NoEntries(Case):
+    """Ticket 292: with TimeCamp off no entries are given, and block lines carry their own date, person and time."""
+
+    def run_blocks(self, stage, vetted=None, last="2030-01-01"):
+        argv = [stage, "--candidates", str(self.dir / "candidates.md"), "--last-billed", last, "--judged", str(self.dir / "judged.jsonl")]
+        if stage == "final":
+            (self.dir / "vetted.json").write_text(json.dumps(vetted), encoding="utf-8")
+            argv += ["--vetted", str(self.dir / "vetted.json"), "--date", "2030-02-01",
+                     "--report-dir", str(self.dir / "report"), "--data-dir", str(self.dir / "data")]
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = tie_out.main(argv)
+        return code, json.loads(out.getvalue())
+
+    def test_pull_checks_only_the_judged_dates(self):
+        code, out = self.run_blocks("pull")
+        self.assertEqual((code, out["entries"]), (0, 0), out)
+        self.judged(["2030-01-10", "2030-01-12"])
+        _, out = self.run_blocks("pull")
+        self.assertEqual(list(out["failed"]), ["judged_dates"])
+
+    def test_the_entry_arguments_come_together_or_not_at_all(self):
+        argv = ["pull", "--entries", str(self.dir / "x.json"), "--candidates", str(self.dir / "candidates.md"),
+                "--last-billed", "2030-01-01", "--judged", str(self.dir / "judged.jsonl")]
+        with self.assertRaises(SystemExit) as caught, contextlib.redirect_stderr(io.StringIO()):
+            tie_out.main(argv)
+        self.assertEqual(caught.exception.code, 2)
+
+    def test_a_block_line_bills_its_own_time_with_no_perfect_tracking_figure(self):
+        code, out = self.run_blocks("final", self.vetted([block_line("2030-01-10:001", "2030-01-10", 738)]))
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("perfect_tracking", out)
+        row = self.invoice()["rows"][0]
+        self.assertEqual((row["hours"], row["provenance"], row["block_ids"]), ("0.3", "block", ["2030-01-10:001"]))
+        summary = (self.dir / "report" / "2030-02-01 Billable time summary.md").read_text(encoding="utf-8")
+        self.assertNotIn("Perfect-tracking", summary)
+        self.assertNotIn("TimeCamp", summary)
+        records = json.loads((self.dir / "data" / "time_entries.json").read_text(encoding="utf-8"))
+        self.assertEqual((records[0]["source_key"], records[0]["provenance"], records[0]["timekeeper"]),
+                         ("block:2030-01-10:001", "block", "Pat Example"))
+
+    def test_a_block_billed_on_the_practitioners_figure_is_an_estimate(self):
+        line = block_line("2030-01-10:001", "2030-01-10", None, estimate_seconds=1800)
+        line.pop("supported_seconds")
+        code, out = self.run_blocks("final", self.vetted([line]))
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.invoice()["rows"][0]["provenance"], "estimate")
+        records = json.loads((self.dir / "data" / "time_entries.json").read_text(encoding="utf-8"))
+        self.assertEqual((records[0]["provenance"], records[0]["billed_seconds"]), ("estimate", 1800))
+
+    def test_one_line_per_block_and_never_both_keys(self):
+        for lines in ([block_line("2030-01-10:001", "2030-01-10", 738)] * 2,
+                      [block_line("2030-01-10:001", "2030-01-10", 738, entry_id=1)],
+                      [block_line("2030-01-10:001", "2030-01-10", 738), line(1, 738)]):
+            code, out = self.run_blocks("final", self.vetted(lines))
+            self.assertEqual(code, 1, lines)
+            self.assertIn("line_per_block", out["failed"])
+
+    def test_a_late_block_line_needs_its_late_reason(self):
+        lines = [block_line("2029-12-20:001", "2029-12-20", 3600), block_line("2030-01-10:001", "2030-01-10", 738)]
+        code, out = self.run_blocks("final", self.vetted(lines))
+        self.assertEqual(code, 1)
+        self.assertIn("late_lines", out["failed"])
+        lines[0]["late_reason"] = "missed by the last bill"
+        code, out = self.run_blocks("final", self.vetted(lines))
+        self.assertEqual(code, 0, out)
+
+    def test_an_exclusion_cannot_exceed_the_blocks_billed_time(self):
+        bad = [{"marker": "m", "seconds": 800, "confirmed": "y"}]
+        code, out = self.run_blocks("final", self.vetted([block_line("2030-01-10:001", "2030-01-10", 738, excluded=bad)]))
+        self.assertEqual(code, 1)
+        self.assertIn("excludes more than it bills", out["failed"]["line_exclusions"][0])
+
+    def test_a_bill_with_nothing_left_stops_without_naming_perfect_tracking(self):
+        lines = [block_line("2030-01-10:001", "2030-01-10", 738, disposition="write_off", write_off_reason="not chargeable")]
+        code, out = self.run_blocks("final", self.vetted(lines))
+        self.assertEqual(code, 1)
+        self.assertEqual(out["failed"]["invoice_accuracy"], ["no time is left to bill: every person-day is written off or under the minimum"])
+
+
 if __name__ == "__main__":
     unittest.main()
