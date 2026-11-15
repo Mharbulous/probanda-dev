@@ -29,7 +29,7 @@ The dispatcher gives you the date and its claim token, the paths of the inferenc
 
 1. Read the two reference paths with `Read`.
 2. Call `time_review__read_day`. If `evidence` is null, stage nothing and return `evidence_missing`.
-3. Group the day's rows into blocks as the inference reference says, personal and non-billable stretches included. Give each block its matter, start, end and a description in bill style.
+3. Group the day's rows into blocks as the inference reference says, personal and non-billable stretches included. Give each block its matter, start, end and a description in bill style. A personal block's matter is the word `personal`: you read no task tree, so P9's choice of a TimeCamp task is not yours to make.
 4. Use the readings file for blocks that rest on screen activity. Open a capture it lists only as `/timecamping` Step 5 allows.
 5. State each block's `matter_basis` and `bill_basis`, and cite its evidence. Code sets flags and state from your bases, so a doubt stated truthfully flags the block. Apply a standing presumption only if the brief lists it, and offer no new one. State `proposed_writeoff`, `late_line` or `estimate` only when the brief supplies what they rest on.
 6. Call `time_review__stage_day` with the date, the token and every block. If it rejects a block's fields, correct them and call again. If it reports `contended`, call once more. Any other refusal is your status, and any other error is `failed`.

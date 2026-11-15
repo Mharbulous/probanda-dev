@@ -1,4 +1,4 @@
-// build-stamp: ada421aeaed2
+// build-stamp: e55c312bf221
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15768,10 +15768,10 @@ function timeReviewToolDefinitions() {
     },
     {
       name: "time_review__serve_page",
-      description: "Serve the time review page: a fixed page built from the stored blocks, day evidence and saved screenshot readings, with no model drawing it. It shows each block as a card (matter, description, times, state, flags, evidence rows, the screenshot slideshow with each saved reading) and has a date picker, a matter filter, Previous, Next and Next flagged, and on every card the Approve, Correct and Write off buttons, which save the act to the block through the page's own listener, and Split here (at a screenshot), Merge with next and Undo, which restructure the blocks the same way. `screens_dir` is the absolute path of the `syncopaid-screens` folder holding the decrypted PNGs; leave it out and the cards show no images. Returns { url, screenshots, blocks }: give the practitioner the url to open in Chrome on this PC. Serving drops every earlier page and any unread click. Does not open or read an image." + ROUTE2,
+      description: "Serve the time review page: a fixed page built from the stored blocks, day evidence and saved screenshot readings, with no model drawing it. It shows each block as a card (matter, description, times, state, flags, evidence rows, the screenshot slideshow with each saved reading) and has a date picker, a matter filter, Previous, Next and Next flagged, and on every card the Approve, Correct and Write off buttons, which save the act to the block through the page's own listener, and Split here (at a screenshot), Merge with next and Undo, which restructure the blocks the same way. `screens_dir` is the absolute path of the `syncopaid-screens` folder holding the decrypted PNGs; leave it out and the cards show no images. Pass `write_back: false` when the registry has no time tracker to take the approved blocks: an Approve or Correct then leaves no write waiting, and its card shows no write line. Returns { url, screenshots, blocks }: give the practitioner the url to open in Chrome on this PC. Serving drops every earlier page and any unread click. Does not open or read an image." + ROUTE2,
       inputSchema: {
         type: "object",
-        properties: { screens_dir: { type: "string" } },
+        properties: { screens_dir: { type: "string" }, write_back: { type: "boolean" } },
         additionalProperties: false
       }
     },
@@ -17176,9 +17176,13 @@ function change2(id, seams, edit) {
   }
   throw new DataServerError(`block ${id} changed ${ATTEMPTS2} times while it was being saved; nothing was written. Try again`, "contended");
 }
-function applyAct(act, id, fields, seams = {}) {
+function applyAct(act, id, fields, seams = {}, writeBack = true) {
   const at = nowOf(seams).toISOString();
   const review = (extra) => ({ act: "approved", by: ACTOR, at, ...extra });
+  const pending = (b) => {
+    const { timecamp: _none, ...rest } = b;
+    return writeBack ? { ...rest, timecamp: { status: "pending", at } } : rest;
+  };
   if (act === "write_off") {
     const reason = text("A write-off reason", fields.reason, MAX_SHORT);
     return change2(id, seams, (b) => {
@@ -17187,13 +17191,13 @@ function applyAct(act, id, fields, seams = {}) {
     });
   }
   if (act === "approve") {
-    return change2(id, seams, (b) => ({ ...b, state: "approved", review: review({}), timecamp: { status: "pending", at } }));
+    return change2(id, seams, (b) => pending({ ...b, state: "approved", review: review({}) }));
   }
   const matter = text("The matter", fields.matter, MAX_SHORT);
   const description = text("The description", fields.description, MAX_TEXT);
   const start2 = text("The start", fields.start, MAX_SHORT);
   const end = text("The end", fields.end, MAX_SHORT);
-  return change2(id, seams, (b) => ({
+  return change2(id, seams, (b) => pending({
     ...b,
     matter,
     description,
@@ -17201,8 +17205,7 @@ function applyAct(act, id, fields, seams = {}) {
     end,
     state: "corrected",
     // A second correction keeps the first `before`: the version the AI staged.
-    review: review({ act: "corrected", before: b.review?.before ?? { matter: b.matter, description: b.description, start: b.start, end: b.end } }),
-    timecamp: { status: "pending", at }
+    review: review({ act: "corrected", before: b.review?.before ?? { matter: b.matter, description: b.description, start: b.start, end: b.end } })
   }));
 }
 var TIMECAMP_STATUSES = ["saved", "unchanged", "staff_left_alone", "error"];
@@ -17988,7 +17991,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "ada421aeaed2";
+var BUILD_STAMP = false ? null : "e55c312bf221";
 
 // src/local-page/links.ts
 import { mkdirSync as mkdirSync5, readdirSync as readdirSync4, readFileSync as readFileSync5, renameSync, statSync as statSync2, unlinkSync as unlinkSync3, writeFileSync as writeFileSync5 } from "node:fs";
@@ -18356,7 +18359,7 @@ function startReviewPages(env = process.env, options = {}) {
           { method: "GET", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/?$/, handle: (_req, res, m) => withTarget(m[1], env, res, (t) => page(t, m[1], env, res)) },
           { method: "GET", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/img\/([^/]+)\/?$/, handle: (_req, res, m) => withTarget(m[1], env, res, (t) => image(t, decodeId(m[2]), res)) },
           { method: "GET", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/state\/?$/, handle: (_req, res, m) => withTarget(m[1], env, res, () => state(res, env)) },
-          { method: "POST", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/click\/?$/, handle: (req, res, m) => withTarget(m[1], env, res, () => click(m[1], req, res, env)) }
+          { method: "POST", kind: KIND, path: /^\/t\/([A-Za-z0-9_-]+)\/click\/?$/, handle: (req, res, m) => withTarget(m[1], env, res, (t) => click(m[1], t, req, res, env)) }
         ],
         env,
         about: { build_stamp: BUILD_STAMP, plugin_version: pluginVersion() },
@@ -18382,8 +18385,11 @@ function checkScreensDir(raw) {
   }
   return real;
 }
-async function serveReviewPage(screensDirIn, env = process.env) {
+async function serveReviewPage(screensDirIn, env = process.env, writeBackIn = true) {
   const screens = checkScreensDir(screensDirIn);
+  if (writeBackIn !== void 0 && typeof writeBackIn !== "boolean") {
+    throw new ValidationError("time_review__serve_page: write_back must be true or false");
+  }
   const pages = await startReviewPages(env);
   const { port } = pages;
   const failure = pages.holding() ? null : pages.failure();
@@ -18396,7 +18402,7 @@ async function serveReviewPage(screensDirIn, env = process.env) {
   const warning = pages.holding() ? null : await holderWarning(port);
   dropLinks(KIND, () => true, env);
   clearClicks(env);
-  const target = { screens_dir: screens, serve: randomBytes3(9).toString("base64url") };
+  const target = { screens_dir: screens, serve: randomBytes3(9).toString("base64url"), ...writeBackIn === false ? { write_back: false } : {} };
   const id = deviceLink(KIND, JSON.stringify(target), env);
   const served = { url: `http://127.0.0.1:${port}/t/${id}/`, screenshots: screens !== null, blocks: loadReviewModel({ env }).blocks.length };
   return warning ? { ...served, warning } : served;
@@ -18461,7 +18467,7 @@ function state(res, env) {
   }
   json(res, 200, { blocks, clear: model.clear }, REPLY);
 }
-async function click(id, req, res, env) {
+async function click(id, target, req, res, env) {
   let body;
   try {
     body = JSON.parse(await readBody(req, MAX_BODY));
@@ -18477,7 +18483,7 @@ async function click(id, req, res, env) {
   if (isAct(body.act)) {
     if (typeof body.block !== "string") return json(res, 400, { error: "This act needs a block." }, REPLY);
     try {
-      applyAct(body.act, body.block, body, { env });
+      applyAct(body.act, body.block, body, { env }, target.write_back !== false);
     } catch (err) {
       if (err instanceof ValidationError) return json(res, 400, { error: err.message }, REPLY);
       return json(res, 500, { error: `The act could not be saved: ${err.message}` }, REPLY);
@@ -18581,7 +18587,7 @@ var tools = [
     (args) => timeReviewStageDay(args.date, args.token, args.blocks)
   ),
   defineTool("time_review__read_day", (args) => timeReviewReadDay(args.date)),
-  defineTool("time_review__serve_page", (args) => serveReviewPage(args.screens_dir)),
+  defineTool("time_review__serve_page", (args) => serveReviewPage(args.screens_dir, void 0, args.write_back)),
   defineTool("time_review__wait_click", () => waitClick()),
   defineTool(
     "time_review__record_timecamp",

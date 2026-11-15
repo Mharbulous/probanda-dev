@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Tie a matter's vetted billable time to the TimeCamp connector, and do the billing arithmetic.
+"""Check a matter's vetted billable time, tie it to the timer's pull when there is one, and do the billing arithmetic.
 
-    tie_out.py pull  --entries F --connector-count N --connector-hours H
+    tie_out.py pull  [--entries F --connector-count N --connector-hours H]
                      --candidates F --last-billed D --judged F
     tie_out.py final (the same) --vetted F [--late-entries F ...]
                      --date D --report-dir DIR --data-dir DIR
                      [--coverage F --run-started T] [--increment-seconds N] [--minimum-seconds N]
 
-pull runs before any line is shown: the entries sit after the last billed date, they tie to the
-connector, and every Strong and Medium candidate date not marked Staff has a judged mark. final adds the checks on
+The three entry arguments come together or not at all: they are given only when the registry enables
+TimeCamp. pull runs before any line is shown: every Strong and Medium candidate date not marked Staff has a
+judged mark and, with entries, the entries sit after the last billed date and tie to the connector. final adds the checks on
 the vetted lines, and on a pass writes `<date> Billable time audit.md` and `<date> Billable time
 summary.md` to --report-dir, and invoice_lines.json, line_map.json and time_entries.json (line_map.py)
 to --data-dir, each rewritten in place. On a fail it writes nothing. Either prints one JSON line, the verdict and each failing check by name,
@@ -22,7 +23,7 @@ Inputs:
     --judged        JSON lines, each with a "date": the dates /timecamping has judged
     --late-entries  a connector out_file for one earlier date, for a late line
     --vetted        {"people": {user_name: {"initials", "rate", "rate_source"}},
-                     "lines": [{"entry_id", "disposition": "bill" | "write_off", "description",
+                     "lines": [{"entry_id" | "block_id", "disposition": "bill" | "write_off", "description",
                                 "proposal_id", "determination_id",
                                 "evidence": [{"source", "native_id", "time", ...its metadata}],
                                 "confirmed", "supported_seconds", "estimate_seconds",
@@ -39,14 +40,18 @@ Inputs:
                     is shown on that date's line and reports. With --run-started, a row fetched at or
                     after it for a date off the candidate list, a late line or an estimate fails.
 
-An estimate is documented work with no TimeCamp entry, approved by the practitioner: it joins its
-person-day like an entry. "excluded" is non-billable time the practitioner approved taking off an
-entry; it comes off before the person-day is totalled. Evidence rows hold metadata only.
+A line keyed by "block_id" is a reviewed block (blocks_export.py): it also carries "date" and "user",
+bills its own supported_seconds or estimate_seconds, and every line of the file is keyed that way. A
+line keyed by "entry_id" is a timer entry vetted in chat and bills the entry's duration. An estimate is
+documented work with no TimeCamp entry, approved by the practitioner in chat: it joins its person-day
+like an entry. "excluded" is non-billable time the practitioner approved taking off a line; it comes off
+before the person-day is totalled. Evidence rows hold metadata only.
 
 Firm rules, unless --increment-seconds and --minimum-seconds say otherwise: a person's day under
 0.1 h is written off; every other person-day rounds up to the next 0.1 h; lines keep unrounded time. Perfect-tracking total: the same rules and rates applied to
 what each billed line's evidence supports, or the practitioner's estimate where nothing bounds it.
-The draft passes when its fees are within 80% to 120% of that total. All time is integer seconds.
+On entry lines the draft passes when its fees are within 80% to 120% of that total. Block lines bill that
+very figure, so the comparison does not run for them. All time is integer seconds.
 """
 import argparse
 import json
@@ -202,46 +207,74 @@ def tally(pairs):
     return totals
 
 
-def check_lines(lines, by_id, main_ids, people):
-    """One line per entry, and each billed line complete. Returns {check name: problems}."""
+def block_path(lines):
+    return any(line_map.is_block(line) for line in lines)
+
+
+def known_lines(lines, by_id):
+    """The lines the checks and arithmetic read: every block line, or the entry lines naming a pulled entry."""
+    if block_path(lines):
+        return [l for l in lines if line_map.is_block(l)]
+    return [l for l in lines if str(l.get("entry_id")) in by_id]
+
+
+def check_keys(lines, by_id, main_ids):
+    """One line per block on the block path; else one line per entry. Returns (check name, problems)."""
+    if block_path(lines):
+        ids = [str(l["block_id"]) for l in lines if line_map.is_block(l)]
+        problems = [f"a line has no block_id: {l.get('entry_id')}" for l in lines if not line_map.is_block(l)]
+        problems += [f"block {i} has {ids.count(i)} lines" for i in sorted({i for i in ids if ids.count(i) > 1})]
+        problems += [f"block {l['block_id']} is also keyed by entry {l['entry_id']}" for l in lines
+                     if line_map.is_block(l) and l.get("entry_id") is not None]
+        return "line_per_block", problems
     seen = {}
     for line in lines:
         seen.setdefault(str(line.get("entry_id")), []).append(line)
-    per_entry = [f"entry {i} has no line" for i in main_ids if i not in seen]
-    per_entry += [f"line for entry {i} matches no connector entry" for i in seen if i not in by_id]
-    per_entry += [f"entry {i} has {len(group)} lines" for i, group in seen.items() if len(group) > 1]
+    problems = [f"entry {i} has no line" for i in main_ids if i not in seen]
+    problems += [f"line for entry {i} matches no connector entry" for i in seen if i not in by_id]
+    problems += [f"entry {i} has {len(group)} lines" for i, group in seen.items() if len(group) > 1]
+    return "line_per_entry", problems
+
+
+def check_lines(lines, by_id, main_ids, people, last_billed):
+    """One line per block or entry, and each billed line complete. Returns {check name: problems}."""
+    keys_check, per_key = check_keys(lines, by_id, main_ids)
     evidence, description, rates, late, disposition, written, excluded = [], [], [], [], [], [], []
-    for line in lines:
-        entry_id = str(line.get("entry_id"))
-        if entry_id not in by_id:
-            continue
-        if entry_id not in main_ids and not (line.get("late_reason") or "").strip():
-            late.append(f"entry {entry_id} is outside the window with no late_reason")
+    for line in known_lines(lines, by_id):
+        name = f"{'block' if line_map.is_block(line) else 'entry'} {line_map.line_id(line)}"
+        day, user = line_map.day_of(line, by_id)
+        if line_map.is_block(line):
+            if line.get("disposition") == "bill" and day <= last_billed and not (line.get("late_reason") or "").strip():
+                late.append(f"{name} is dated on or before the last billed date {last_billed} with no late_reason")
+        elif str(line["entry_id"]) not in main_ids and not (line.get("late_reason") or "").strip():
+            late.append(f"{name} is outside the window with no late_reason")
         if line.get("disposition") == "write_off":
             if not (line.get("write_off_reason") or "").strip():
-                written.append(f"entry {entry_id} is written off with no reason")
+                written.append(f"{name} is written off with no reason")
             continue
         if line.get("disposition") != "bill":
-            disposition.append(f"entry {entry_id} has disposition {line.get('disposition')!r}")
+            disposition.append(f"{name} has disposition {line.get('disposition')!r}")
             continue
         judged = line.get("proposal_id") is not None and line.get("evidence")
         word = line.get("no_evidence_confirmed") and line.get("estimate_seconds") is not None
         if not (judged or word):
-            evidence.append(f"entry {entry_id} has no determination with evidence and no confirmed estimate")
+            evidence.append(f"{name} has no determination with evidence and no confirmed estimate")
+        if line_map.is_block(line) and not line_map.supported(line):
+            evidence.append(f"{name} has no supported span or estimate")
         if not (line.get("confirmed") or "").strip():
-            evidence.append(f"entry {entry_id} records no confirmation")
-        evidence += not_metadata(line.get("evidence"), f"entry {entry_id}")
+            evidence.append(f"{name} records no confirmation")
+        evidence += not_metadata(line.get("evidence"), name)
         for item in line.get("excluded") or []:
             if not item.get("marker") or not int(item.get("seconds") or 0) > 0 or not (item.get("confirmed") or "").strip():
-                excluded.append(f"entry {entry_id} excludes time with no marker, seconds or approval")
-        if line_map.excluded_seconds(line) > seconds(by_id[entry_id]):
-            excluded.append(f"entry {entry_id} excludes more than it tracked")
+                excluded.append(f"{name} excludes time with no marker, seconds or approval")
+        if line_map.excluded_seconds(line) > line_map.time_of(line, by_id):
+            excluded.append(f"{name} excludes more than it {'bills' if line_map.is_block(line) else 'tracked'}")
         if len((line.get("description") or "").strip()) < MIN_DESCRIPTION:
-            description.append(f"entry {entry_id} has a description under {MIN_DESCRIPTION} characters")
-        person = people.get(by_id[entry_id]["user_name"], {})
+            description.append(f"{name} has a description under {MIN_DESCRIPTION} characters")
+        person = people.get(user, {})
         if not person.get("rate") or not person.get("initials"):
-            rates.append(f"{by_id[entry_id]['user_name']} has no rate or initials")
-    return {"line_per_entry": per_entry, "line_disposition": disposition, "late_lines": late,
+            rates.append(f"{user} has no rate or initials")
+    return {keys_check: per_key, "line_disposition": disposition, "late_lines": late,
             "write_off_reasons": written, "line_evidence": evidence, "line_description": description,
             "line_exclusions": excluded, "people": sorted(set(rates))}
 
@@ -298,17 +331,12 @@ def check_scope(coverage, run_started, allowed):
                    and row.get("local_date") not in allowed})
 
 
-def supported(line):
-    """What this line's evidence supports, or the estimate where nothing bounds it."""
-    value = line.get("supported_seconds")
-    return value if value is not None else line.get("estimate_seconds")
-
-
 def check_accuracy(billable, by_id, people, draft_fees, estimates=(), increment=TENTH_SECONDS, minimum=TENTH_SECONDS):
+    supported = line_map.supported
     unbounded = [str(l["entry_id"]) for l in billable if supported(l) is None]
     if unbounded:
         return [f"no supported span or estimate for entries {', '.join(unbounded)}"], None
-    pairs = [((by_id[str(l["entry_id"])]["date"], by_id[str(l["entry_id"])]["user_name"]), int(supported(l))) for l in billable]
+    pairs = [(line_map.day_of(l, by_id), int(supported(l))) for l in billable]
     pairs += [((e["date"], e["user"]), int(e["seconds"])) for e in estimates]
     perfect_billed, _ = person_days(tally(pairs), increment, minimum)
     perfect = fees(perfect_billed, people, increment)
@@ -345,10 +373,18 @@ def audit_text(the_date, lines, by_id, estimates=(), unavailable=None):
         out.append("")
     for day, gone in sorted((unavailable or {}).items()):
         out += [f"## Sources unavailable on {day}", ""] + [f"- {g['source']}: {g['reason']}" for g in gone] + [""]
-    for line in sorted(lines, key=lambda l: (by_id[str(l["entry_id"])]["date"], by_id[str(l["entry_id"])].get("start_time", ""))):
-        entry = by_id[str(line["entry_id"])]
-        out.append(f"## Entry {entry['id']}: {entry['date']}, {entry['user_name']}, "
-                   f"{entry.get('start_time', '')} to {entry.get('end_time', '')}, {hours(seconds(entry))} h")
+    def order(line):
+        if line_map.is_block(line):
+            return line["date"], ""
+        return by_id[str(line["entry_id"])]["date"], by_id[str(line["entry_id"])].get("start_time", "")
+
+    for line in sorted(lines, key=order):
+        if line_map.is_block(line):
+            out.append(f"## Block {line['block_id']}: {line['date']}, {line['user']}, {hours(line_map.time_of(line, by_id))} h")
+        else:
+            entry = by_id[str(line["entry_id"])]
+            out.append(f"## Entry {entry['id']}: {entry['date']}, {entry['user_name']}, "
+                       f"{entry.get('start_time', '')} to {entry.get('end_time', '')}, {hours(seconds(entry))} h")
         out.append(f"- Disposition: {line['disposition']}")
         if line.get("description"):
             out.append(f"- Description: {line['description']}")
@@ -378,45 +414,54 @@ def table(headers, rows):
 
 
 def summary_text(the_date, result, vetted, by_id, not_candidates, unavailable=None):
-    lines = vetted["lines"]
+    lines = known_lines(vetted["lines"], by_id)
+    blocks = block_path(lines)
+    key = "Block" if blocks else "Entry"
+    day = lambda l: line_map.day_of(l, by_id)  # noqa: E731
     out = [f"# Billable time summary, {the_date}", "", "## Person-day totals", ""]
     out += table(["Date", "Person", "Unrounded h", "Rounded h", "Rate", "Amount"],
                  [(r["date"], r["user"], r["unrounded_hours"], r["hours"], r["rate"], r["amount"]) for r in result["rows"]])
-    out += [f"Fees {result['subtotal']}, on {result['rounded_hours']} h rounded from {result['unrounded_hours']} h.",
-            f"Perfect-tracking fees {result['perfect']}: the draft is within 80% to 120% of it.", "", "## Lines", ""]
+    out.append(f"Fees {result['subtotal']}, on {result['rounded_hours']} h rounded from {result['unrounded_hours']} h.")
+    if result["perfect"] is not None:
+        out.append(f"Perfect-tracking fees {result['perfect']}: the draft is within 80% to 120% of it.")
+    out += ["", "## Lines", ""]
     billed = [l for l in lines if l["disposition"] == "bill"]
-    out += table(["Date", "Person", "Start", "End", "Hours", "Description", "Entry"],
-                 [(by_id[str(l["entry_id"])]["date"], by_id[str(l["entry_id"])]["user_name"],
-                   by_id[str(l["entry_id"])].get("start_time", ""), by_id[str(l["entry_id"])].get("end_time", ""),
-                   hours(seconds(by_id[str(l["entry_id"])])), l["description"], l["entry_id"]) for l in billed])
+    if blocks:
+        out += table(["Date", "Person", "Hours", "Description", key],
+                     [(*day(l), hours(line_map.time_of(l, by_id)), l["description"], l["block_id"]) for l in billed])
+    else:
+        out += table(["Date", "Person", "Start", "End", "Hours", "Description", key],
+                     [(*day(l), by_id[str(l["entry_id"])].get("start_time", ""), by_id[str(l["entry_id"])].get("end_time", ""),
+                       hours(seconds(by_id[str(l["entry_id"])])), l["description"], l["entry_id"]) for l in billed])
     out += ["## Write-offs", ""]
-    rows = [(by_id[str(l["entry_id"])]["date"], by_id[str(l["entry_id"])]["user_name"],
-             hours(seconds(by_id[str(l["entry_id"])])), l["write_off_reason"]) for l in lines if l["disposition"] == "write_off"]
-    rows += [(day, user, hours(total), "a person's day under 0.1 h") for (day, user), total in result["under_minimum"].items()]
+    rows = [(*day(l), hours(line_map.time_of(l, by_id)), l["write_off_reason"]) for l in lines if l["disposition"] == "write_off"]
+    rows += [(d, user, hours(total), "a person's day under 0.1 h") for (d, user), total in result["under_minimum"].items()]
     out += table(["Date", "Person", "Hours", "Why"], rows) if rows else ["None.", ""]
-    out += ["## Estimates: documented work with no TimeCamp entry", ""]
-    rows = [(e["date"], e["user"], hours(int(e["seconds"])), e["description"], e["reason"],
-             "; ".join(f"{b.get('source')} {b.get('native_id')}" for b in e["basis"])) for e in vetted.get("estimates") or []]
-    out += table(["Date", "Person", "Estimated h", "Description", "Why", "Evidence"], rows) if rows else ["None.", ""]
+    if not blocks:
+        out += ["## Estimates: documented work with no TimeCamp entry", ""]
+        rows = [(e["date"], e["user"], hours(int(e["seconds"])), e["description"], e["reason"],
+                 "; ".join(f"{b.get('source')} {b.get('native_id')}" for b in e["basis"])) for e in vetted.get("estimates") or []]
+        out += table(["Date", "Person", "Estimated h", "Description", "Why", "Evidence"], rows) if rows else ["None.", ""]
     out += ["## Non-billable time taken off", ""]
-    rows = [(by_id[str(l["entry_id"])]["date"], l["entry_id"], hours(int(i["seconds"])), i["marker"], i["confirmed"])
+    rows = [(day(l)[0], line_map.line_id(l), hours(int(i["seconds"])), i["marker"], i["confirmed"])
             for l in billed for i in l.get("excluded") or []]
-    out += table(["Date", "Entry", "Hours", "Matched", "Approval"], rows) if rows else ["None.", ""]
+    out += table(["Date", key, "Hours", "Matched", "Approval"], rows) if rows else ["None.", ""]
     out += ["## Sources unavailable", ""]
-    rows = [(day, g["source"], g["reason"]) for day, gone in sorted((unavailable or {}).items()) for g in gone]
+    rows = [(d, g["source"], g["reason"]) for d, gone in sorted((unavailable or {}).items()) for g in gone]
     out += table(["Date", "Source", "Why"], rows) if rows else ["None.", ""]
     out += ["## Late lines", ""]
-    rows = [(by_id[str(l["entry_id"])]["date"], l["entry_id"], l["late_reason"]) for l in billed if l.get("late_reason")]
-    out += table(["Work date", "Entry", "Why"], rows) if rows else ["None.", ""]
+    rows = [(day(l)[0], line_map.line_id(l), l["late_reason"]) for l in billed if l.get("late_reason")]
+    out += table(["Work date", key, "Why"], rows) if rows else ["None.", ""]
     out += ["## Billed on the practitioner's word, with no judged evidence", ""]
-    rows = [(by_id[str(l["entry_id"])]["date"], by_id[str(l["entry_id"])]["user_name"], l["entry_id"], l["confirmed"])
-            for l in billed if l.get("no_evidence_confirmed")]
-    out += table(["Date", "Person", "Entry", "Confirmation"], rows) if rows else ["None.", ""]
+    rows = [(*day(l), line_map.line_id(l), l["confirmed"]) for l in billed if l.get("no_evidence_confirmed")]
+    out += table(["Date", "Person", key, "Confirmation"], rows) if rows else ["None.", ""]
     out += ["## Unexplained candidate dates", ""]
     rows = [(cell, given["reason"]) for cell, given in (vetted.get("candidates") or {}).items() if given.get("status") == "unexplained"]
     out += table(["Date", "Note"], rows) if rows else ["None.", ""]
-    out += ["## TimeCamp dates that were not candidates", ""]
-    out += [", ".join(not_candidates) if not_candidates else "None.", "", "## Gaps", ""]
+    if not_candidates is not None:
+        out += ["## TimeCamp dates that were not candidates", ""]
+        out += [", ".join(not_candidates) if not_candidates else "None.", ""]
+    out += ["## Gaps", ""]
     out += [f"- {gap}" for gap in vetted.get("gaps") or []] or ["None."]
     return "\n".join(out) + "\n"
 
@@ -431,27 +476,33 @@ def run_final(args, entries, candidates, failures):
     estimates = vetted.get("estimates") or []
     increment, minimum = args.increment_seconds, args.minimum_seconds
     coverage = load_coverage(args.coverage) if args.coverage else []
-    for name, problems in check_lines(lines, by_id, main_ids, people).items():
+    for name, problems in check_lines(lines, by_id, main_ids, people, args.last_billed).items():
         failures[name] = problems
     failures["estimates"] = check_estimates(estimates, people)
 
-    known = [l for l in lines if str(l.get("entry_id")) in by_id]
+    known = known_lines(lines, by_id)
+    blocks = block_path(lines)
     billable = [l for l in known if l.get("disposition") == "bill"]
     if any(failures.values()):
         return None
-    per_day = tally([((by_id[str(l["entry_id"])]["date"], by_id[str(l["entry_id"])]["user_name"]),
-                      seconds(by_id[str(l["entry_id"])]) - line_map.excluded_seconds(l)) for l in billable]
+    per_day = tally([(line_map.day_of(l, by_id), line_map.time_of(l, by_id) - line_map.excluded_seconds(l)) for l in billable]
                     + [((e["date"], e["user"]), int(e["seconds"])) for e in estimates])
     billed, under_minimum = person_days(per_day, increment, minimum)
     draft_fees = fees(billed, people, increment) if billed else Decimal(0)
     failures["rounding"] = [f"{key} rounds below its unrounded time" for key, units in billed.items()
                             if units * increment < per_day[key]]
-    failures["invoice_accuracy"], perfect = check_accuracy(billable, by_id, people, draft_fees, estimates, increment, minimum)
-    billed_days = {day for day, _ in billed} | {by_id[str(l["entry_id"])]["date"] for l in known if l["disposition"] == "write_off"}
+    if blocks:
+        # A block line bills what perfect tracking would, so only the nil arm of the comparison can fail.
+        perfect = None
+        failures["invoice_accuracy"] = [] if draft_fees else ["no time is left to bill: every person-day is written off or under the minimum"]
+    else:
+        failures["invoice_accuracy"], perfect = check_accuracy(billable, by_id, people, draft_fees, estimates, increment, minimum)
+    billed_days = {day for day, _ in billed} | {line_map.day_of(l, by_id)[0] for l in known if l["disposition"] == "write_off"}
     billed_days |= {day for day, _ in under_minimum}
     failures["candidate_coverage"] = check_coverage(candidates, billed_days, vetted.get("candidates") or {})
     days_listed = {day for row in candidates for day in row["days"]}
-    failures["run_scope"] = check_scope(coverage, args.run_started, days_listed | {e["date"] for e in late_entries} | {e["date"] for e in estimates})
+    allowed = days_listed | {e["date"] for e in late_entries} | {e["date"] for e in estimates} | {line_map.day_of(l, by_id)[0] for l in known}
+    failures["run_scope"] = check_scope(coverage, args.run_started, allowed)
     if any(failures.values()):
         return None
 
@@ -459,26 +510,30 @@ def run_final(args, entries, candidates, failures):
     tenths = increment % TENTH_SECONDS == 0
     rows = []
     for (day, user), units in sorted(billed.items()):
-        tracked = [l for l in billable if (by_id[str(l["entry_id"])]["date"], by_id[str(l["entry_id"])]["user_name"]) == (day, user)]
+        tracked = [l for l in billable if line_map.day_of(l, by_id) == (day, user)]
         estimated = [e for e in estimates if (e["date"], e["user"]) == (day, user)]
         wording = [l["description"].strip() for l in tracked] + [e["description"].strip() for e in estimated]
+        kinds = {"block" if l.get("supported_seconds") is not None else "estimate" for l in tracked if line_map.is_block(l)}
+        kinds |= {"tracker" for l in tracked if not line_map.is_block(l)} | {"estimate" for _ in estimated}
         rate = Decimal(str(people[user]["rate"]))
         billed_hours = unit_hours(units, increment)
         rows.append({"line_key": f"{day}|{user}", "date": day, "user": user, "initials": people[user]["initials"],
                      "description": "; ".join(dict.fromkeys(wording)),
+                     "block_ids": list(dict.fromkeys([i for l in tracked for i in line_map.block_ids_of(l)]
+                                                     + [i for e in estimated for i in e.get("block_ids") or []])),
                      "unrounded_hours": hours(per_day[(day, user)]), "hours": f"{billed_hours:.1f}" if tenths else f"{billed_hours:.2f}",
                      "rate": str(rate.quantize(CENT)),
                      "amount": str((billed_hours * rate).quantize(CENT, ROUND_HALF_UP)),
-                     "provenance": "+".join(name for name, held in (("tracker", tracked), ("estimate", estimated)) if held),
+                     "provenance": "+".join(name for name in ("tracker", "block", "estimate") if name in kinds),
                      "rounding": {"from_seconds": per_day[(day, user)], "rule": f"a person's day rounds up to the next {increment} seconds"},
                      "support": {"evidence_rows": sum(len(l.get("evidence") or []) for l in tracked) + sum(len(e["basis"]) for e in estimated),
                                  "estimate_bases": len(estimated) + sum(1 for l in tracked if l.get("no_evidence_confirmed"))},
                      "unavailable": unavailable.get(day, [])})
-    result = {"rows": rows, "subtotal": str(draft_fees.quantize(CENT)), "perfect": str(perfect),
+    result = {"rows": rows, "subtotal": str(draft_fees.quantize(CENT)), "perfect": None if perfect is None else str(perfect),
               "unrounded_hours": hours(sum(per_day[k] for k in billed)),
               "rounded_hours": f"{sum(unit_hours(u, increment) for u in billed.values()):.1f}" if tenths else f"{sum(unit_hours(u, increment) for u in billed.values()):.2f}",
               "under_minimum": under_minimum}
-    not_candidates = sorted({e["date"] for e in entries} - days_listed)
+    not_candidates = sorted({e["date"] for e in entries} - days_listed) if args.entries else None
 
     report_dir = Path(args.report_dir)
     report_dir.mkdir(parents=True, exist_ok=True)
@@ -491,7 +546,7 @@ def run_final(args, entries, candidates, failures):
         json.dumps({"passed_on": args.date, **{k: result[k] for k in ("rows", "subtotal", "unrounded_hours", "rounded_hours")}}, indent=2), encoding="utf-8")
     adjustments = line_map.adjustments_for(known, estimates, by_id, under_minimum, args.date, vetted.get("decided_by") or "the practitioner")
     (data_dir / "line_map.json").write_text(json.dumps(
-        {**line_map.build(args.date, rows, known, estimates, by_id, people, under_minimum, adjustments, vetted, not_candidates),
+        {**line_map.build(args.date, rows, known, estimates, by_id, people, under_minimum, adjustments, vetted, not_candidates or []),
          "subtotal": result["subtotal"]}, indent=2), encoding="utf-8")
     (data_dir / "time_entries.json").write_text(
         json.dumps(line_map.time_entries(known, estimates, by_id, under_minimum), indent=2), encoding="utf-8")
@@ -503,9 +558,9 @@ def parse(argv):
     sub = parser.add_subparsers(dest="stage", required=True)
     for stage in ("pull", "final"):
         one = sub.add_parser(stage)
-        one.add_argument("--entries", required=True)
-        one.add_argument("--connector-count", type=int, required=True)
-        one.add_argument("--connector-hours", type=float, required=True)
+        one.add_argument("--entries")
+        one.add_argument("--connector-count", type=int)
+        one.add_argument("--connector-hours", type=float)
         one.add_argument("--candidates", required=True)
         one.add_argument("--last-billed", required=True)
         one.add_argument("--judged", required=True)
@@ -519,25 +574,30 @@ def parse(argv):
     final.add_argument("--run-started")
     final.add_argument("--increment-seconds", type=int, default=TENTH_SECONDS)
     final.add_argument("--minimum-seconds", type=int, default=TENTH_SECONDS)
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    pulled = [args.entries is not None, args.connector_count is not None, args.connector_hours is not None]
+    if any(pulled) and not all(pulled):
+        stop("--entries, --connector-count and --connector-hours come together or not at all")
+    return args
 
 
 def main(argv=None):
     args = parse(argv)
-    entries = load_entries(args.entries)
+    entries = load_entries(args.entries) if args.entries else []
     candidates = load_candidates(args.candidates)
-    failures = {
-        "window": check_window(entries, args.last_billed),
-        "connector_total": check_connector(entries, args.connector_count, args.connector_hours),
-        "judged_dates": check_judged(candidates, load_judged(args.judged)),
-    }
+    failures = {"judged_dates": check_judged(candidates, load_judged(args.judged))}
+    if args.entries:
+        failures["window"] = check_window(entries, args.last_billed)
+        failures["connector_total"] = check_connector(entries, args.connector_count, args.connector_hours)
     result = None
     if args.stage == "final" and not any(failures.values()):
         result = run_final(args, entries, candidates, failures)
     failed = {name: problems for name, problems in failures.items() if problems}
     verdict = {"verdict": "fail" if failed else "pass", "stage": args.stage, "entries": len(entries), "failed": failed}
     if result:
-        verdict.update(fees=result["subtotal"], perfect_tracking=result["perfect"], rounded_hours=result["rounded_hours"])
+        verdict.update(fees=result["subtotal"], rounded_hours=result["rounded_hours"])
+        if result["perfect"] is not None:
+            verdict["perfect_tracking"] = result["perfect"]
     print(json.dumps(verdict))
     return 1 if failed else 0
 
