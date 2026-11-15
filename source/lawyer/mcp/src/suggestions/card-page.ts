@@ -36,9 +36,9 @@ export const LATER_LINE = "You can see this later, with its status, under Past s
 export const SUBMIT = "Submit Suggestion";
 export const DISMISS = "Dismiss";
 export const RESTORE = "Restore Suggestion";
-export const OFFLINE_NOTE = "This copy cannot reach Probanda, so it cannot send.";
+export const OFFLINE_NOTE = "To submit or dismiss this suggestion, use its copy on this computer while Claude is open there:";
 export const OPEN_HERE = "Open on this computer";
-export const OFFLINE_AFTER = ", with Claude open there, to submit or dismiss it.";
+export const OFFLINE_AFTER = ".";
 /** Decision 13's family: the check could not read every record source, so nothing was sent. */
 export const NOT_CHECKED = "Not sent: Probanda could not check this against your records. Try again in a moment.";
 
@@ -93,6 +93,7 @@ const STYLE =
   ".tech pre{white-space:pre-wrap;font-size:.8rem;border:1px solid var(--line);padding:.5rem}" +
   ".actions button{padding:.45rem 1.1rem;font-size:1rem;margin-right:.5rem}" +
   ".status{min-height:1.3em;font-weight:600}.status.error{color:var(--warn)}" +
+  ".offline{color:var(--muted)}" +
   ".prompt{font-size:.9rem;margin:.2rem .3rem;color:var(--warn)}.prompt button{margin-left:.4rem;font-size:.85rem}" +
   ".prompt q{font-weight:600}" +
   "main.dismissed{opacity:.45}main.dismissed .text{pointer-events:none}" +
@@ -405,7 +406,7 @@ export function renderCardHtml(card: CardRecord, port: number, token: string): s
     `<details class="tech"><summary class="link">${SHOW_TECHNICAL}</summary><pre>${escapeHtml(JSON.stringify(card.environment_facts, null, 2))}</pre></details>`;
   const actions =
     `<p class="later">${escapeHtml(LATER_LINE)}</p>` +
-    `<p class="status error" id="offline">${OFFLINE_NOTE} <a href="${escapeHtml(cardUrl(port, card.record_id, token))}" target="_blank" rel="noopener">${OPEN_HERE}</a>${OFFLINE_AFTER}</p>` +
+    `<p class="offline" id="offline">${OFFLINE_NOTE} <a href="${escapeHtml(cardUrl(port, card.record_id, token))}" target="_blank" rel="noopener">${OPEN_HERE}</a>${OFFLINE_AFTER}</p>` +
     `<div class="actions" id="actions" hidden><button type="button" id="submit">${SUBMIT}</button><button type="button" id="dismiss">${DISMISS}</button>` +
     `<button type="button" id="restore" hidden>${RESTORE}</button></div><p class="status" id="status" role="status"></p>`;
   const api = JSON.stringify({ port, card: card.record_id, token }).replace(/</g, "\\u003c");
