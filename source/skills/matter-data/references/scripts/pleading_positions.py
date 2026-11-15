@@ -47,8 +47,11 @@ RESIDUAL_NOTE = (
     "UNCONFIRMED: possible pleading stance or paragraph reference; "
     "confirm this is a fact"
 )
+# A numbered paragraph under a Part heading after the first carries its Part
+# ("Part 3, para. 2"); a locator with no Part is in Part 1.
 LOCATOR = re.compile(
-    r"^(?:paras?\.?\s*)?(\d+)(?:\(([a-z0-9]+)\))?"
+    r"^(?:part\s+(\d+)\s*,?\s*)?"
+    r"(?:paras?\.?\s*)?(\d+)(?:\(([a-z0-9]+)\))?"
     r"(?:\s*[-–—]\s*(\d+)(?:\(([a-z0-9]+)\))?)?$",
     re.IGNORECASE,
 )
@@ -62,35 +65,42 @@ def _locator_parts(locator):
     match = LOCATOR.match(locator.strip())
     if not match:
         raise ExtractionError(f"unparseable locator: {locator}")
-    start, start_sub, end, end_sub = match.groups()
-    return int(start), start_sub, int(end) if end else None, end_sub
+    part, start, start_sub, end, end_sub = match.groups()
+    return (int(part) if part else 1, int(start), start_sub,
+            int(end) if end else None, end_sub)
 
 
 def locator_sort_key(locator):
-    start, sub, _end, _end_sub = _locator_parts(locator)
-    return start, sub or ""
+    part, start, sub, _end, _end_sub = _locator_parts(locator)
+    return part, start, sub or ""
 
 
 def paragraph_gaps(locators):
     """Each numbered paragraph from 1 to the highest present that no locator covers.
 
     Locators that are not numbered paragraphs (a page or header locator such as
-    ``p3`` or ``hdr``) are ignored. A range covers every number in it.
+    ``p3`` or ``hdr``) are ignored. A range covers every number in it. Each Part
+    is counted on its own, a locator with no Part being in Part 1, and a gap in
+    a later Part is named with its Part.
     """
-    covered = set()
+    covered = {}
     for locator in locators:
         if not isinstance(locator, str):
             continue
-        match = LOCATOR.match(locator.strip())
-        if not match:
+        try:
+            part, first, _start_sub, end, _end_sub = _locator_parts(locator)
+        except ExtractionError:
             continue
-        start, _start_sub, end, _end_sub = match.groups()
-        first = int(start)
-        last = int(end) if end else first
-        covered.update(range(first, max(first, last) + 1))
-    if not covered:
-        return []
-    return [f"para. {n}" for n in range(1, max(covered) + 1) if n not in covered]
+        last = end if end else first
+        covered.setdefault(part, set()).update(range(first, max(first, last) + 1))
+    gaps = []
+    for part in sorted(covered):
+        prefix = "" if part == 1 else f"Part {part}, "
+        numbers = covered[part]
+        gaps.extend(
+            f"{prefix}para. {n}" for n in range(1, max(numbers) + 1) if n not in numbers
+        )
+    return gaps
 
 
 def resolve_fact_positions(
@@ -110,11 +120,11 @@ def resolve_fact_positions(
     resolved = []
     unresolved = []
     for reference in references:
-        start, start_sub, end, end_sub = _locator_parts(reference)
+        part, start, start_sub, end, end_sub = _locator_parts(reference)
         matches = []
         for fact in answered_facts:
             try:
-                number, sub, _unused_end, _unused_sub = _locator_parts(
+                fact_part, number, sub, _unused_end, _unused_sub = _locator_parts(
                     fact["source_locator"]
                 )
             except ExtractionError:
@@ -124,6 +134,10 @@ def resolve_fact_positions(
                 # resolution of the whole document. The reference's own
                 # locator (parsed above) still fails closed on unparseable
                 # input.
+                continue
+            if fact_part != part:
+                # Paragraph numbers restart in each Part of a pleading, so a
+                # reference matches only facts in its own Part.
                 continue
             if end is None:
                 if number == start and (start_sub is None or sub == start_sub):

@@ -141,7 +141,8 @@ same-context verification is not verification
   in `../references/scripts/pleading_positions.py`, over the `source_locator`
   of every fact, relief item and source reference Step 1 loaded. It ignores
   locators that are not numbered paragraphs and lists each number from 1 to the
-  highest one present that nothing cites. When the caller names paragraphs of
+  highest one present that nothing cites, counting each Part of the pleading on
+  its own (`Part 3, para. 2`; no Part means Part 1). When the caller names paragraphs of
   its own (`ingest-extract.md`'s unresolved-paragraph offer), add them to the
   list.
 

@@ -7,6 +7,7 @@ SCRIPTS = Path(__file__).resolve().parents[1] / "references" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 from pleading_positions import (  # noqa: E402
     ExtractionError,
+    locator_sort_key,
     resolve_fact_positions,
     validate_extraction,
 )
@@ -183,6 +184,32 @@ class PleadingPositionTests(unittest.TestCase):
             ExtractionError, "duplicate current factual position"
         ):
             validate_extraction(payload, answered_fact_keys={"f3"})
+
+
+# Suggestion 83893d42-82db-4d8d-a079-5081bd737271, item 3 (red test written by triage).
+class PartQualifiedLocators(unittest.TestCase):
+    def test_a_part_qualified_locator_resolves_within_its_part(self):
+        facts = [{"fact_key": "a", "source_locator": "para. 2", "description": "A"},
+                 {"fact_key": "b", "source_locator": "Part 3, para. 2", "description": "B"}]
+        try:
+            rows = resolve_fact_positions(["Part 3, para. 2"], facts, ["Ashbourne"], "deny", "para. 4")
+        except ExtractionError:
+            rows = []
+        self.assertEqual({r["target_fact_key"] for r in rows}, {"b"})
+
+    def test_part_qualified_locators_sort_by_part_then_paragraph(self):
+        locators = ["Part 3, para. 1", "para. 10", "Part 2, paras. 2-4", "para. 2(b)", "para. 2(a)"]
+        self.assertEqual(
+            sorted(locators, key=locator_sort_key),
+            ["para. 2(a)", "para. 2(b)", "para. 10", "Part 2, paras. 2-4", "Part 3, para. 1"],
+        )
+
+    def test_part_qualified_reference_without_a_fact_is_reported_unresolved(self):
+        facts = [{"fact_key": "a", "source_locator": "para. 5", "description": "A"}]
+        with self.assertRaisesRegex(
+            ExtractionError, r"unresolved target locator: Part 3, para\. 5"
+        ):
+            resolve_fact_positions(["Part 3, para. 5"], facts, ["Ashbourne"], "deny", "para. 1")
 
 
 if __name__ == "__main__":
