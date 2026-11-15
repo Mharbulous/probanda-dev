@@ -1,4 +1,4 @@
-// build-stamp: 278ab0817f37
+// build-stamp: 2c5eae81ca50
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75267,7 +75267,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "278ab0817f37";
+var BUILD_STAMP = false ? null : "2c5eae81ca50";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -77763,7 +77763,7 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("ingest_result"),
-      description: "Write one document's extracted results from their staged result_ids, in one transaction (an affidavit's exhibits each under their own savepoint), then regenerate evidence.sql. No extraction output and no SQL pass through the session. contract is facts, attachment, affidavit_body, affidavit_exhibits, sought_orders, caselaw, provision or privileged; for caselaw and provision, source_id is the authority's id and store is still main; document is {ref, store} for a file routed in this run (the ref of its dispatch, write, close or path_b line, as given), or {file_path (stored form), file_hash, store} for a Path B document; store is privileged only for a privileged contract answered yes; result_ids are the ids from the extractors' ok lines: one result named by its dispatch line's ref, or the result_ids of a write line, each already acknowledged (a call of several that holds an unacknowledged id is an error); [] closes an item whose extraction failed twice, or records by reference an authority routed with second_copy_of. answers carries the practitioner's answers to an earlier call's ask: privilege (yes, no or unclear, required for privileged, whose call takes exactly one result), category, proceeding_id, participants {name as extracted: party_id, or 0 for a filing party that is none of the parties}, informants {locator: privileged source id, or 0 when it came from no document on file} for a privileged informant, other_version (superseded or not_version, after an other_version ask). Returns at most 600 bytes: {outcome written|already_written|refused, refused?, source_id, counts {facts, positions, relief, links, exhibits}, items [{ref, outcome, reason}] for items that failed, ask [{kind, ref, say}], post [{pass, ref}] after-completion passes to run, report [lines]}. Relay report lines and ask the ask items in plain words; never show refused, reason or ref. A repeated call is safe: it returns already_written. refused waiting means call again once next lists it; path_b means read the document as Path B; set_aside, race and store_change mean set it aside for /ingest; already_held and taken mean the file is settled in another session, so do nothing more for it; attachment_held means that attachment is already on file. An ask of kind other_version names a held copy by its ref: settle the pair, then repeat the call with answers.other_version superseded or not_version. A result that cannot be read, or belongs to another contract, file or item than its reply, is refused and its item alone read once more. dropped counts ask or items entries left out to keep the cap: a repeated call lists them. Refuses without a live run_id (lease_lost) or after a plugin update (plugin_changed). Only the /ingest-orchestrator skill may call this tool -- invoke it (Skill: lawyer:ingest-orchestrator) and follow it, whatever skill you started in.",
+      description: "Write one document's extracted results from their staged result_ids, in one transaction (an affidavit's exhibits each under their own savepoint), then regenerate evidence.sql. No extraction output and no SQL pass through the session. contract is facts, attachment, affidavit_body, affidavit_exhibits, sought_orders, caselaw, provision or privileged; for caselaw and provision, source_id is the authority's id and store is still main; document is {ref, store} for a file routed in this run (the ref of its dispatch, write, close or path_b line, as given), or {file_path (stored form), file_hash, store} for a Path B document; store is privileged only for a privileged contract answered yes; result_ids are the ids from the extractors' ok lines: one result named by its dispatch line's ref, or the result_ids of a write line, each already acknowledged (a call of several that holds an unacknowledged id is an error); [] closes an item whose extraction failed twice, or records by reference an authority routed with second_copy_of. answers carries the practitioner's answers to an earlier call's ask: privilege (yes, no or unclear, required for privileged, whose call takes exactly one result), category, proceeding_id, participants {name as extracted: party_id, a list of two or more party_ids for a name that stands for several parties (a joint filing), or 0 for a filing party that is none of the parties}, informants {locator: privileged source id, or 0 when it came from no document on file} for a privileged informant, other_version (superseded or not_version, after an other_version ask). Returns at most 600 bytes: {outcome written|already_written|refused, refused?, source_id, counts {facts, positions, relief, links, exhibits}, items [{ref, outcome, reason}] for items that failed, ask [{kind, ref, say}], post [{pass, ref}] after-completion passes to run, report [lines]}. Relay report lines and ask the ask items in plain words; never show refused, reason or ref. A repeated call is safe: it returns already_written. refused waiting means call again once next lists it; path_b means read the document as Path B; set_aside, race and store_change mean set it aside for /ingest; already_held and taken mean the file is settled in another session, so do nothing more for it; attachment_held means that attachment is already on file. An ask of kind other_version names a held copy by its ref: settle the pair, then repeat the call with answers.other_version superseded or not_version. A result that cannot be read, or belongs to another contract, file or item than its reply, is refused and its item alone read once more. dropped counts ask or items entries left out to keep the cap: a repeated call lists them. Refuses without a live run_id (lease_lost) or after a plugin update (plugin_changed). Only the /ingest-orchestrator skill may call this tool -- invoke it (Skill: lawyer:ingest-orchestrator) and follow it, whatever skill you started in.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77788,7 +77788,7 @@ function caseDataToolDefinitions() {
               privilege: { type: "string", enum: ["yes", "no", "unclear"] },
               category: { type: "string", enum: ["court", "correspondence", "production", "work_product", "disbursements", "privileged", "authority"] },
               proceeding_id: { type: "integer" },
-              participants: { type: "object", additionalProperties: { type: "integer" } },
+              participants: { type: "object", additionalProperties: { anyOf: [{ type: "integer" }, { type: "array", items: { type: "integer" }, minItems: 2 }] } },
               informants: { type: "object", additionalProperties: { type: "integer" } },
               other_version: { type: "string", enum: ["superseded", "not_version"] }
             },
@@ -114806,7 +114806,7 @@ function partyNames(contract, result) {
 function resolveParties(matterRoot, names, answered) {
   const out = {};
   for (const name of names) {
-    if (typeof answered[name] === "number") {
+    if (typeof answered[name] === "number" || Array.isArray(answered[name])) {
       out[name] = answered[name];
       continue;
     }
@@ -114984,7 +114984,7 @@ async function write(args, env, run2, filePath, fileHash, results, dropAlso, loc
   const moved = run2.readRevision === null || run2.readRevision !== revision || run2.question !== null && run2.question.revision !== revision;
   let pendingOther = null;
   if (moved) {
-    const chosen = Object.values(answers.participants ?? {}).filter((id) => id !== 0);
+    const chosen = Object.values(answers.participants ?? {}).flat().filter((id) => id !== 0);
     const check3 = runCaseScript("write_recheck", "run", {
       case_data_dir: caseDataFolder(args.matter_root, env),
       matter_root: args.matter_root,
@@ -115020,7 +115020,7 @@ async function write(args, env, run2, filePath, fileHash, results, dropAlso, loc
       if (id === 0 || run2.question === null) continue;
       const before = run2.question.candidates[name] ?? [];
       const added = candidatesFor(args.matter_root, name).filter((candidate) => !before.includes(candidate));
-      if (check3.parties_gone.includes(id)) staleAnswers.push(`Since you answered, another session changed the party you chose for "${name.slice(0, 60)}".`);
+      if ((Array.isArray(id) ? id : [id]).some((one) => check3.parties_gone.includes(one))) staleAnswers.push(`Since you answered, another session changed the party you chose for "${name.slice(0, 60)}".`);
       else if (added.length > 0) staleAnswers.push(`Since you answered, another session added ${added.map((a3) => check3.names[String(a3)] ?? "a party").join(", ").slice(0, 80)}, who may be "${name.slice(0, 60)}".`);
       else continue;
       delete participantsAnswered[name];

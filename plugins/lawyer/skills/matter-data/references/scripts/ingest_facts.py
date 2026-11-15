@@ -9,7 +9,7 @@ references and, for a witness statement or expert report, the witness rows;
 then flip to `complete`. `pleading_positions.py` validates the arrays first.
 
     request  {"file_path", "file_hash", "results": [{"result_id", "path"}],
-              "participants": {name: party_id}, "answers": {...}, "route": {...},
+              "participants": {name: party_id | [party_id, ...]}, "answers": {...}, "route": {...},
               "mode": "attended"|"unattended"}
 
 With no result (`results` empty) the extraction failed twice: the source is
@@ -19,7 +19,8 @@ A result whose document may be privileged (a `privilege_signal` flag, or the
 category `privileged`) writes nothing and is `blocked` `path_b`: the main thread
 reads it as Path B with its privilege question. The category `authority` is
 `blocked` `set_aside`, for /ingest's own path. An unresolved target locator is
-`blocked` `unresolved` with the smallest one reported (Path A step 3).
+`blocked` `unresolved` with the smallest one reported (Path A step 3), and an
+`unresolved` ask offering to add that paragraph from the answered pleading.
 
 A route with `transcript: true` adds Path A step 7: each current position of the
 transcript that differs from a current position of the same party on the same
@@ -247,16 +248,29 @@ def _failed_child(request, attachment):
             'summary': f'Attachment {attachment["name"][:60]} could not be read and is recorded as not read.'}
 
 
+def _is_party_list(value):
+    """A name that means several parties is answered with two or more distinct party ids."""
+    return (isinstance(value, list) and len(value) >= 2 and len(set(value)) == len(value)
+            and all(isinstance(v, int) and not isinstance(v, bool) and v > 0 for v in value))
+
+
 def _party(name, participants, asks, where):
-    """A party field's id from the resolved participants, or an ask (spec 2.2): never guessed."""
+    """A party field's id (or list of ids) from the resolved participants, or an ask (spec 2.2):
+    never guessed. A malformed list is asked again, so no list ever reaches a party id column."""
     if name is None:
         return None
-    if name in participants:
+    if name in participants and (not isinstance(participants[name], list) or _is_party_list(participants[name])):
         return participants[name]
     if not any(a['ref'] == name for a in asks):
         asks.append({'kind': 'participant', 'ref': name,
-                     'say': f'Which party is "{name[:80]}" in this matter?'})
+                     'say': f'Which party is "{name[:80]}" in this matter? '
+                            'Name every party it covers if it means more than one.'})
     return None
+
+
+def _each(party):
+    """One row per party: a list answer stands for each party it names."""
+    return party if isinstance(party, list) else [party]
 
 
 def _key(key, prefix):
@@ -339,9 +353,14 @@ def plan(request):
     except ExtractionError as exc:
         if str(exc).startswith('unresolved target locator: '):
             locator = str(exc).split(': ', 1)[1][:60]
+            # The offer reads the real paragraph of the answered pleading; it never adds a placeholder (#25).
             return {'blocked': 'unresolved', 'report': [
                 f'{title[:60]}: {locator} of the pleading it answers could not be matched, so nothing was '
-                'recorded for this document.']}
+                'recorded for this document.'],
+                'asks': [{'kind': 'unresolved', 'ref': locator,
+                          'say': f'{title[:60]} answers {locator} of the pleading it responds to, which has no '
+                                 'facts on record. Shall I read that paragraph of the answered pleading, add '
+                                 'what it says as unverified facts, and then read this document again?'}]}
         return {'problems': [f'invalid: {exc}']}
     except (KeyError, TypeError) as exc:
         return {'problems': [f'invalid: {exc}']}
@@ -364,9 +383,12 @@ def plan(request):
     filer = read.text(document, 'author_or_filing_party', 'document')
     if filer and category == 'court':
         # A court document's filing party is resolved (spec 2.2); 0 answers "none of the parties".
-        source['filed_by_party_id'] = _party(filer, participants, asks, 'document') or None
+        # A list answer (a joint filing) leaves it NULL, as 0 does: the column holds one party.
+        filed = _party(filer, participants, asks, 'document')
+        source['filed_by_party_id'] = None if isinstance(filed, list) else (filed or None)
     else:
-        source['filed_by_party_id'] = (participants.get(filer) or None) if filer else None
+        filed = participants.get(filer) if filer else None
+        source['filed_by_party_id'] = None if isinstance(filed, list) else (filed or None)
 
     facts, by_key = [], {}
     for i, row in enumerate(doc['facts']):
@@ -381,43 +403,46 @@ def plan(request):
         where = f'fact_positions[{i}]'
         key = row.get('target_fact_key')
         target = by_key.get(key)
-        positions.append({
-            'fact_id': _key(key, 'fact'),
-            'fact_locator': target['locator'] if target else None,
-            'fact_description': target['description'] if target else None,
-            'party_id': _party(read.text(row, 'party_name', where, required=True), participants, asks, where),
-            'value': row.get('value'), 'basis': row.get('position_basis'),
-            'qualification': read.text(row, 'qualification', where),
-            'locator': read.text(row, 'source_locator', where),
-        })
+        party = _party(read.text(row, 'party_name', where, required=True), participants, asks, where)
+        qualification, locator = read.text(row, 'qualification', where), read.text(row, 'source_locator', where)
+        for party_id in _each(party):
+            positions.append({
+                'fact_id': _key(key, 'fact'),
+                'fact_locator': target['locator'] if target else None,
+                'fact_description': target['description'] if target else None,
+                'party_id': party_id,
+                'value': row.get('value'), 'basis': row.get('position_basis'),
+                'qualification': qualification, 'locator': locator,
+            })
 
     relief, relief_by_key = [], {}
     for i, row in enumerate(doc['relief_items']):
         where = f'relief_items[{i}]'
-        item = {
-            'seeking_party_id': _party(read.text(row, 'seeking_party_name', where, required=True),
-                                       participants, asks, where),
-            'against_party_id': _party(read.text(row, 'against_party_name', where), participants, asks, where),
-            'description': read.text(row, 'description', where, required=True),
-            'locator': read.text(row, 'source_locator', where),
-        }
-        relief.append(item)
-        relief_by_key[row.get('relief_key')] = item
+        seeking = _party(read.text(row, 'seeking_party_name', where, required=True), participants, asks, where)
+        against = _party(read.text(row, 'against_party_name', where), participants, asks, where)
+        description = read.text(row, 'description', where, required=True)
+        locator = read.text(row, 'source_locator', where)
+        items = [{'seeking_party_id': s, 'against_party_id': a, 'description': description, 'locator': locator}
+                 for s in _each(seeking) for a in _each(against)]
+        relief += items
+        relief_by_key[row.get('relief_key')] = items
 
     relief_positions = []
     for i, row in enumerate(doc['relief_positions']):
         where = f'relief_positions[{i}]'
         key = row.get('target_relief_key')
-        target = relief_by_key.get(key) or {}
-        relief_positions.append({
-            'relief_id': _key(key, 'relief'),
-            'seeking_party_id': target.get('seeking_party_id'),
-            'against_party_id': target.get('against_party_id'),
-            'description': target.get('description'), 'relief_locator': target.get('locator'),
-            'party_id': _party(read.text(row, 'party_name', where, required=True), participants, asks, where),
-            'value': row.get('value'), 'qualification': read.text(row, 'qualification', where),
-            'locator': read.text(row, 'source_locator', where),
-        })
+        party = _party(read.text(row, 'party_name', where, required=True), participants, asks, where)
+        qualification, locator = read.text(row, 'qualification', where), read.text(row, 'source_locator', where)
+        for target in relief_by_key.get(key) or [{}]:
+            for party_id in _each(party):
+                relief_positions.append({
+                    'relief_id': _key(key, 'relief'),
+                    'seeking_party_id': target.get('seeking_party_id'),
+                    'against_party_id': target.get('against_party_id'),
+                    'description': target.get('description'), 'relief_locator': target.get('locator'),
+                    'party_id': party_id,
+                    'value': row.get('value'), 'qualification': qualification, 'locator': locator,
+                })
 
     references = []
     for i, row in enumerate(doc['source_references']):

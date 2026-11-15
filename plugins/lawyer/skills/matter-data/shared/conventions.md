@@ -166,6 +166,7 @@ Locator forms:
 
 - `para. 14` — a numbered paragraph
 - `para. 14(a)` — a sub-paragraph
+- `Part 3, para. 2` — a numbered paragraph under a Part heading after the first, where the numbering starts again (also `Part 3, para. 2(a)` and `Part 3, paras. 2-4`). A paragraph in Part 1, or in a document without Parts, stays `para. N`
 - `p42-L3-L18` — a transcript span (page 42, lines 3–18)
 - `p3` — an unnumbered page
 - `¶14` — the 14th non-empty body paragraph of a rendered document (docx or email body; ordinal assigned by the renderer)
