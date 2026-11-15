@@ -63,7 +63,8 @@ export interface IngestResultArgs {
     privilege?: string;
     category?: string;
     proceeding_id?: number;
-    participants?: Record<string, number>;
+    /** A name that stands for several parties (a joint filing) is answered with a list of their ids. */
+    participants?: Record<string, number | number[]>;
     informants?: Record<string, number>;
     /** What became of an `other_version` ask, once supersede-draft has settled the pair. */
     other_version?: "superseded" | "not_version";
@@ -159,10 +160,11 @@ function partyNames(contract: string, result: Record<string, unknown>): string[]
 }
 
 /** A name resolves when exactly one party matches it exactly. Anything else stays unresolved. */
-function resolveParties(matterRoot: string, names: string[], answered: Record<string, number>): Record<string, number> {
-  const out: Record<string, number> = {};
+function resolveParties(matterRoot: string, names: string[], answered: Record<string, number | number[]>): Record<string, number | number[]> {
+  const out: Record<string, number | number[]> = {};
   for (const name of names) {
-    if (typeof answered[name] === "number") {
+    // A list answer passes through as given; the converter checks its shape before any write.
+    if (typeof answered[name] === "number" || Array.isArray(answered[name])) {
       out[name] = answered[name];
       continue;
     }
@@ -415,7 +417,7 @@ async function write(
   const moved = run.readRevision === null || run.readRevision !== revision || (run.question !== null && run.question.revision !== revision);
   let pendingOther: number | null = null;
   if (moved) {
-    const chosen = Object.values(answers.participants ?? {}).filter((id) => id !== 0);
+    const chosen = Object.values(answers.participants ?? {}).flat().filter((id) => id !== 0);
     const check = runCaseScript<Recheck>("write_recheck", "run", {
       case_data_dir: caseDataFolder(args.matter_root, env),
       matter_root: args.matter_root,
@@ -454,7 +456,7 @@ async function write(
       if (id === 0 || run.question === null) continue;
       const before = run.question.candidates[name] ?? [];
       const added = candidatesFor(args.matter_root, name).filter((candidate) => !before.includes(candidate));
-      if (check.parties_gone.includes(id)) staleAnswers.push(`Since you answered, another session changed the party you chose for "${name.slice(0, 60)}".`);
+      if ((Array.isArray(id) ? id : [id]).some((one) => check.parties_gone.includes(one))) staleAnswers.push(`Since you answered, another session changed the party you chose for "${name.slice(0, 60)}".`);
       else if (added.length > 0) staleAnswers.push(`Since you answered, another session added ${added.map((a) => check.names[String(a)] ?? "a party").join(", ").slice(0, 80)}, who may be "${name.slice(0, 60)}".`);
       else continue;
       delete participantsAnswered[name];

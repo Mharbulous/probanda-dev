@@ -168,6 +168,24 @@ test("a party name that does not resolve is asked, never guessed, and the answer
   assert.equal(sql(caseDataDir, "SELECT party_id FROM positions WHERE source_locator = 'para. 1'")[0].party_id, 2);
 });
 
+test("a name answered with a list of parties writes a position for each and leaves the filer unset", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const doc = pdf(matterRoot, "2026-02-02 Joint Response.pdf", ["Response"]);
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "facts" }] });
+  const result = FACTS("f1");
+  result.document.author_or_filing_party = "The Joint Filers";
+  result.fact_positions[0].party_name = "The Joint Filers";
+  const { result_id } = await stage(result);
+  const asked = await write(matterRoot, run_id, { ref: "f1" }, "facts", [result_id]);
+  assert.deepEqual(asked.ask.map((a) => [a.kind, a.ref]), [["participant", "The Joint Filers"]]);
+
+  const out = await write(matterRoot, run_id, doc, "facts", [result_id], { participants: { "The Joint Filers": [1, 2] } });
+  assert.equal(out.outcome, "written", JSON.stringify(out));
+  assert.deepEqual(sql(caseDataDir, "SELECT party_id FROM positions WHERE source_locator = 'para. 1' ORDER BY party_id"), [{ party_id: 1 }, { party_id: 2 }]);
+  assert.deepEqual(sql(caseDataDir, "SELECT filed_by_party_id FROM sources"), [{ filed_by_party_id: null }]);
+});
+
 test("refusals: an unknown result, another contract, another file's result and a lost lease write nothing", async (t) => {
   const { matterRoot, caseDataDir } = fixture(t);
   const doc = pdf(matterRoot, "a.pdf", ["A"]);

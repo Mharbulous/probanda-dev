@@ -761,6 +761,23 @@ class Converters(unittest.TestCase):
             {"target_locator": "Schedule A, item 2", "reason": "x"}])]))
         self.assertTrue(any("Schedule A, item 2" in a["say"] for a in plan.get("asks", [])), plan)
 
+    def test_a_joint_response_is_credited_to_every_filing_party(self):
+        self.write(ingest_facts, self.request("facts", [self.facts()]))
+        self.con.execute("INSERT INTO parties (party_id, name) VALUES (3, 'Fenwick Plum')")
+        doc = self.response()
+        doc["document"]["author_or_filing_party"] = "The Defendants"
+        doc["fact_positions"][0]["party_name"] = "The Defendants"
+        req = self.answering([doc], file_hash="b" * 64)
+        req["route"]["file_hash"] = "b" * 64
+        req["participants"]["The Defendants"] = [2, 3]
+        try:
+            plan = ingest_facts.plan(req)
+            if "statements" in plan:
+                run_plan(self.con, plan)
+        except (TypeError, ValueError, sqlite3.Error):
+            pass
+        self.assertEqual(self.q("SELECT party_id FROM positions WHERE source_id = 2 ORDER BY party_id"), [(2,), (3,)])
+
 
 if __name__ == "__main__":
     unittest.main()

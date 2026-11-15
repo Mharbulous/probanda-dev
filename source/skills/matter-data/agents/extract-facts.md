@@ -110,6 +110,9 @@ collection unless they are source-reference/procedural metadata or relief.
 - Strict-proof language is `not_admit/strict_proof`.
 - Missing-particulars language is `not_admit/insufficient_particulars`.
 - A response directed to another party is `no_position/directed_to_other_party`.
+- A response filed jointly by several parties: give each of its positions one
+  row per responding party, each named by its exact MATTER_CONTEXT name, never
+  by a collective name such as "the defendants".
 - Other express non-admission is `not_admit` with `position_basis = "other"` if
   no more specific basis applies.
 - A qualified or compound response may also assert genuinely new affirmative

@@ -155,8 +155,9 @@ def plan(request):
     for i, row in enumerate(read.items(doc, 'client_instructions', 'result') if 'client_instructions' in doc else []):
         where = f'client_instructions[{i}]'
         name = read.text(row, 'party_name', where, required=True)
-        if name and name not in participants:
-            asks.append({'kind': 'participant', 'ref': name, 'say': f'Which party is "{name[:80]}" in this matter?'})
+        if name and (name not in participants or isinstance(participants[name], list)):
+            # An instruction comes from one party, so a list answer is asked again as one.
+            asks.append({'kind': 'participant', 'ref': name, 'say': f'Which one party is "{name[:80]}" in this matter?'})
         status = row.get('status') or 'open'
         if status not in INSTRUCTION_STATUSES:
             read.problems.append(f'{where}.status must be open, actioned or superseded')
