@@ -184,10 +184,17 @@ def validate_extraction(payload, answered_fact_keys=(), answered_relief_keys=())
             raise ExtractionError(f"missing array: {name}")
 
     if payload["unresolved_references"]:
-        smallest = min(
-            payload["unresolved_references"],
-            key=lambda row: locator_sort_key(row["target_locator"]),
-        )
+        # A target that is not a numbered paragraph still blocks as unresolved,
+        # so it is named and offered once rather than failing as malformed.
+        # Parseable targets come first, smallest first; the rest keep their order.
+        def order(indexed):
+            index, row = indexed
+            try:
+                return (0, locator_sort_key(row["target_locator"]), index)
+            except ExtractionError:
+                return (1, (), index)
+
+        _index, smallest = min(enumerate(payload["unresolved_references"]), key=order)
         raise ExtractionError(
             f"unresolved target locator: {smallest['target_locator']}"
         )

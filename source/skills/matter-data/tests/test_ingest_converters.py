@@ -756,6 +756,11 @@ class Converters(unittest.TestCase):
             {"target_locator": "para. 7", "reason": "x"}])]))
         self.assertEqual([(a["kind"], a["ref"]) for a in plan.get("asks", [])], [("unresolved", "para. 7")])
 
+    def test_an_unreadable_target_locator_is_named_and_offered_not_reread(self):
+        plan = ingest_facts.plan(self.answering([self.response(unresolved_references=[
+            {"target_locator": "Schedule A, item 2", "reason": "x"}])]))
+        self.assertTrue(any("Schedule A, item 2" in a["say"] for a in plan.get("asks", [])), plan)
+
 
 if __name__ == "__main__":
     unittest.main()
