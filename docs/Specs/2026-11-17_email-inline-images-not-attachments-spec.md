@@ -58,3 +58,15 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 
 Confirm in HEAD: `render_eml`'s attachment loop; routing.md check 5 and the unattended attachments section; any other caller of the renderer's `attachments` list.
+
+### Verification against HEAD (4853f1b9, 2026-11-17)
+
+| Claim | HEAD | Result |
+|---|---|---|
+| `render_eml` appends every `iter_attachments()` part, with no inline or Content-ID test | `source/skills/matter-data/references/scripts/render_document.py` lines 268-277 | Confirmed. Python's `iter_attachments()` skips a nested `multipart/related` body, so an image inside `multipart/mixed{multipart/related{...}}` is never listed. The logo is listed when the message's top level is `multipart/related`, or when the image is a direct child of `multipart/mixed`. |
+| routing.md check 5 sets aside any email reported with attachments | `source/skills/ingest-orchestrator/references/routing.md` check 5 | Confirmed, word for word as §2 quotes it. |
+| routing.md "Emails with attachments, unattended" names unread attachments in `notes` | same file, that section | Confirmed: each attachment not read is named once in `notes` with size, content type and SHA-256 prefix. |
+| `render_msg` has the same gap | `render_document.py` `render_msg` | It lists every attachment too. Out of this spec's scope (§4 names `render_eml`). |
+| Other callers of `attachments` | `matter-data/operations/ingest-extract.md` (single-document path), `ingest-verify.md` and `tests/test_attachment_child_resolution.py` (both find an attachment by SHA-256), `ingest-unattended.md` (`notes`) | An additive `inline` key changes none of them. |
+| §9: does the single-document path register inline images? | `ingest-extract.md` attachment steps 1-3 | No. Step 3 writes no row for an image ("Any other kind ... write no row") and names it in the report. Only the batch's check 5 is affected, so the flag is needed there only. |
+| Rendering never feeds the hash | routing.md check 2; `ingest.md` Step 2 | Confirmed: the hash is of the raw bytes. |
