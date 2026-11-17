@@ -59,3 +59,19 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 
 Confirm in HEAD: `ceremony-gate.py`'s branches; what `transcript_path` a bridged cloud session supplies to a plugin hook; `transcript.records` error behaviour.
+
+### Verification at HEAD 4853f1b9 (2026-11-17)
+
+Repo source: `source/billing/hooks/ceremony-gate.py`, helpers `source/skills/shared/scripts/hook_io.py` and `transcript.py`, registered in `source/billing/plugin.json`.
+
+| Item | Finding |
+|---|---|
+| Branch: helper import fails | Writes "Refused: ceremony-gate cannot load its helper: ..." to stderr and exits 2. Not the observed text, so not the cause. |
+| Branch: `transcript_path` absent or empty | `main()` returns `deny(REFUSAL)`. |
+| Branch: path given but the file cannot be opened | `transcript.records` opens the file with no guard, so `open()` raises `FileNotFoundError` (or another `OSError`). `hook_io.run` calls `closed`, which is `deny(REFUSAL)`. Same text as the observed refusal. |
+| Branch: transcript read, timecamping opened | `deny(REFUSAL)`. |
+| Branch: transcript read, no timecamping record | Allows (exit 0, no output). |
+| `transcript.records` errors | Skips a line that is not JSON. Raises on a file that cannot be opened. |
+| What `transcript_path` a remote or Cowork plugin hook receives | Repo evidence only: `docs/Specs/2026-11-06_practice-quirks-entries-spec.md` records that a Cowork PreToolUse payload carries no usable `transcript_path` (`approval_gate.check` refused with its no-transcript message). `docs/Specs/2026-10-28_tokeneconomizer-cowork-adaptation-spec.md` and `source/tokeneconomizer/lib/tokeneconomizer/plugin/hosts.py` record Cowork hooks with no `transcript_path` (2026-10-31). Whether the bridged session of §2 sent no path or a path that does not exist on the practitioner's computer is not measured. Both reach the same refusal. |
+| Reproduction (§7 step 2), hook run at HEAD | No `transcript_path`: deny. Empty `transcript_path`: deny. Path to a file that does not exist: deny (error branch). Transcript with only a `bill` Skill call: allow. Transcript with a `billing:timecamping` Skill call: deny. |
+| Cause | The session never opened `/timecamping` and the refusal text is `REFUSAL`, so the refusal came from the missing-transcript branch or the unreadable-file branch. Option 1 applies. |
