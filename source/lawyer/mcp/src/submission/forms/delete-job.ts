@@ -1,14 +1,16 @@
 // drafting_data__delete_job: a /draft session deletes one or several mistaken jobs in one call, the
 // guarded stamping writes followed by their confirm-reads, as the /drafting-data gatekeeper documents
-// them in jobs-closeout.md §10a. A job is deleted when it is queued (shelved or not), or wip and held
-// by the caller's own token; the own-wip path returns it to queued and clears the lock in the same
-// write, so a restore gives an unlocked Ready job. The holder check and the stamp are one statement,
+// them in jobs-closeout.md §10a. A job is deleted when it is queued (shelved or not), wip and held
+// by the caller's own token, or wip under a lock that has lapsed (ADR 0015), another session's lapse
+// recorded in the same transaction; a wip path returns it to queued and clears the lock in the same write, so a
+// restore gives an unlocked Ready job. The holder check and the stamp are one statement,
 // so no session can claim the job between them. All statements run in one transaction. A delete is a
 // soft deleted_at stamp only. The job tables carry no revision triggers, so the revision does not move.
 
 import { ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
-import { checkClaim, heldBy } from "./job-activity.js";
+import { checkClaim, heldBy, lapsedClause, recordLapseSql } from "./job-activity.js";
+import { hasTable } from "../schema-capabilities.js";
 import { nowMinuteSql } from "./timings.js";
 
 const TOOL = "drafting_data__delete_job";
@@ -48,9 +50,9 @@ interface ConfirmRow {
   deleted_at: string | null;
 }
 
-const stamp = (): string =>
+const stamp = (lapsed: string, held: string): string =>
   `UPDATE tickets SET deleted_at = ${nowMinuteSql()}, status = 'queued', locked_by = NULL, locked_at = NULL ` +
-  "WHERE id = ? AND deleted_at IS NULL AND (status = 'queued' OR (status = 'wip' AND ";
+  `WHERE id = ? AND deleted_at IS NULL AND (status = 'queued' OR (status = 'wip' AND ${held}) OR ${lapsed})`;
 
 /** drafting_data__delete_job. Every refusal writes nothing. */
 export async function submissionDataDeleteJob(args: DeleteJobArgs, env: NodeJS.ProcessEnv = process.env): Promise<DeleteJobResult> {
@@ -63,13 +65,20 @@ export async function submissionDataDeleteJob(args: DeleteJobArgs, env: NodeJS.P
   }
   const claims = ids.map((id) => checkClaim(TOOL, args.db_path, id, args.session_token, args.claim_no));
   const held = heldBy(args.db_path, args.session_token, claims[0]);
+  const lapsed = lapsedClause(args.db_path);
+  // Another session's lapsed lock's release lands with its history row (ADR 0015 D4), written before the stamp clears it.
+  const record = hasTable(args.db_path, "kv_store");
   const written = await submissionDataWriteAll(
     args.db_path,
-    ids.map((id) => ({ sql: `${stamp()}${held.sql}))`, params: [id, ...held.params] })),
+    ids.flatMap((id) => [
+      ...(record ? [{ sql: recordLapseSql(`id = ? AND deleted_at IS NULL AND ${lapsed} AND locked_by IS NOT ?`), params: [id, args.session_token] }] : []),
+      { sql: stamp(lapsed, held.sql), params: [id, ...held.params] },
+    ]),
     env
   );
+  const per = record ? 2 : 1;
   const jobs = ids.map((id, i): DeleteJobOutcome => {
-    const changes = written.ok ? written.results[i].changes : 0;
+    const changes = written.ok ? written.results[i * per + per - 1].changes : 0;
     const [read] = submissionDataQuery(args.db_path, "SELECT status, locked_by, locked_at, rejected_at, deleted_at FROM tickets WHERE id = ?", [id])
       .rows as unknown as ConfirmRow[];
     if (read === undefined) {

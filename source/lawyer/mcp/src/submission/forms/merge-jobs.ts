@@ -4,7 +4,9 @@
 // step the survivor already did keeps its row, ordinal and done_at. Its scope and Proposal keys are
 // copied to the survivor, jobs waiting on it wait on the survivor instead, the survivor's plan approval
 // is cleared because its steps changed, and the absorbed job is superseded by the survivor: never
-// deleted, so the board names where its work went. Every statement carries the same guard, so either
+// deleted, so the board names where its work went. A job whose lock has lapsed (ADR 0015) merges as a
+// Ready job: another session's lapse is recorded, an absorbed job's lock is cleared as it is
+// superseded, and another session's lapsed lock on the survivor is released after its steps are added. Every statement carries the same guard, so either
 // all of them write or none does. The two rows are read first, and a merge the guard would refuse
 // writes nothing and names which job refused it. The job tables carry no revision triggers, so the
 // revision does not move.
@@ -12,7 +14,8 @@
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { deletedAtHeld, stepStatusHeld } from "./query.js";
-import { checkClaim, heldBy } from "./job-activity.js";
+import { RELEASE_SET, checkClaim, heldBy, lapsedClause, recordLapseSql } from "./job-activity.js";
+import { hasTable } from "../schema-capabilities.js";
 
 const TOOL = "drafting_data__merge_jobs";
 
@@ -65,23 +68,26 @@ interface JobRow {
   rejected_at: string | null;
   superseded_by: number | null;
   deleted_at?: string | null;
+  /** 1 when its lock has lapsed (lapsedClause). */
+  lapsed: number;
 }
 
 /** A wait on a job that is not completed, finished by the caller's condition on `b`. */
 const WAITS_OUTSIDE = "SELECT 1 FROM ticket_blocks b JOIN tickets bt ON bt.id = b.blocker_id WHERE bt.status <> 'completed' AND";
 
 /** The guard every statement carries, on params [absorbed, survivor, ...held.params]: both jobs live and
- * on one Writing (or both General Jobs) of one proceeding, the survivor Ready or held by this session
- * (`held`, heldBy on alias s), the absorbed job Ready with no either/or partner, and neither waiting on
- * a job outside the pair that is not completed. */
+ * on one Writing (or both General Jobs) of one proceeding, the survivor Ready, held by this session
+ * (`held`, heldBy on alias s) or under a lapsed lock, the absorbed job Ready or under a lapsed lock with
+ * no either/or partner, and neither waiting on a job outside the pair that is not completed. */
 function guard(dbPath: string, held: string): string {
   const live = deletedAtHeld(dbPath) ? " AND s.deleted_at IS NULL AND a.deleted_at IS NULL" : "";
+  const lapsed = (alias: string) => `${alias}.id IN (SELECT tickets.id FROM tickets WHERE ${lapsedClause(dbPath)})`;
   return (
     "EXISTS (SELECT 1 FROM tickets s JOIN tickets a ON a.id = ? WHERE s.id = ?" +
     " AND s.proceeding_id = a.proceeding_id AND s.filing_id IS a.filing_id" +
     ` AND s.rejected_at IS NULL AND a.rejected_at IS NULL${live}` +
-    ` AND ((s.status = 'queued' AND s.locked_by IS NULL) OR (s.status = 'wip' AND ${held}))` +
-    " AND a.status = 'queued' AND a.locked_by IS NULL" +
+    ` AND ((s.status = 'queued' AND s.locked_by IS NULL) OR (s.status = 'wip' AND ${held}) OR ${lapsed("s")})` +
+    ` AND ((a.status = 'queued' AND a.locked_by IS NULL) OR ${lapsed("a")})` +
     " AND NOT EXISTS (SELECT 1 FROM ticket_conflicts c WHERE c.a_id = a.id OR c.b_id = a.id)" +
     ` AND NOT EXISTS (${WAITS_OUTSIDE} b.blocked_id IN (s.id, a.id) AND b.blocker_id NOT IN (s.id, a.id)))`
   );
@@ -93,8 +99,8 @@ function jobRefusal(row: JobRow, role: "survivor" | "absorbed", token: string): 
   if (row.status === "completed") return "completed";
   if (row.status === "superseded") return "superseded";
   if (row.rejected_at !== null) return "shelved";
-  if (row.status === "wip" && row.locked_by !== token) return "held_elsewhere";
-  if (role === "absorbed" && row.status === "wip") return "held_here";
+  if (row.status === "wip" && row.lapsed !== 1 && row.locked_by !== token) return "held_elsewhere";
+  if (role === "absorbed" && row.status === "wip" && row.lapsed !== 1) return "held_here";
   return null;
 }
 
@@ -123,7 +129,7 @@ export async function submissionDataMergeJobs(args: MergeJobsArgs, env: NodeJS.P
   if (typeof token !== "string" || token.trim() === "") {
     throw new ValidationError(`${TOOL}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
-  const read = (id: number) => submissionDataQuery(args.db_path, "SELECT * FROM tickets WHERE id = ?", [id]).rows[0] as unknown as JobRow | undefined;
+  const read = (id: number) => submissionDataQuery(args.db_path, `SELECT *, ${lapsedClause(args.db_path)} AS lapsed FROM tickets WHERE id = ?`, [id]).rows[0] as unknown as JobRow | undefined;
   const survivor = read(s);
   const absorbed = read(a);
   if (survivor === undefined || absorbed === undefined) {
@@ -156,9 +162,15 @@ export async function submissionDataMergeJobs(args: MergeJobsArgs, env: NodeJS.P
   const g = guard(args.db_path, held.sql);
   const gp = [a, s, ...held.params];
   const undone = `done_at IS NULL${stepStatusHeld(args.db_path) ? " AND (status IS NULL OR status NOT IN ('cancelled', 'deferred'))" : ""}`;
+  // A lapsed lock's release lands with its history row (ADR 0015 D4), recorded before any lock is cleared.
+  // This session's own lapsed lock is its own: never recorded or released here (ADR 0015 D5).
+  const lapsedJob = `id IN (?, ?) AND ${lapsedClause(args.db_path)} AND locked_by IS NOT ? AND ${g}`;
+  const record = hasTable(args.db_path, "kv_store") ? [{ sql: recordLapseSql(lapsedJob), params: [s, a, token, ...gp] }] : [];
+  const first = record.length;
   const written = await submissionDataWriteAll(
     args.db_path,
     [
+      ...record,
       {
         sql:
           "INSERT INTO ticket_steps (ticket_id, ordinal, text) " +
@@ -192,16 +204,17 @@ export async function submissionDataMergeJobs(args: MergeJobsArgs, env: NodeJS.P
         sql: `UPDATE tickets SET plan_approved_at = NULL WHERE id = ? AND EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = ? AND ${undone}) AND ${g}`,
         params: [s, a, ...gp],
       },
-      { sql: `UPDATE tickets SET status = 'superseded', superseded_by = ? WHERE id = ? AND ${g}`, params: [s, a, ...gp] },
+      { sql: `UPDATE tickets SET ${RELEASE_SET} WHERE id = ? AND ${lapsedClause(args.db_path)} AND locked_by IS NOT ? AND ${g}`, params: [s, token, ...gp] },
+      { sql: `UPDATE tickets SET status = 'superseded', superseded_by = ?, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${g}`, params: [s, a, ...gp] },
     ],
     env
   );
-  const changes = (i: number) => (written.ok ? written.results[i].changes : 0);
+  const changes = (i: number) => (written.ok ? written.results[first + i].changes : 0);
   const [confirm] = submissionDataQuery(args.db_path, "SELECT status, superseded_by FROM tickets WHERE id = ?", [a]).rows as unknown as {
     status: string;
     superseded_by: number | null;
   }[];
-  const merged = confirm.status === "superseded" && confirm.superseded_by === s && changes(6) === 1;
+  const merged = confirm.status === "superseded" && confirm.superseded_by === s && changes(7) === 1;
   const counts = merged ? { steps_added: changes(0), scope_added: changes(1), keys_added: changes(2), blocks_moved: changes(3) } : {};
   return {
     ...empty,

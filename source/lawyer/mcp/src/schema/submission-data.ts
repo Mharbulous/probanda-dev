@@ -745,13 +745,14 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       description:
         "Delete one or several mistaken jobs (tickets rows) in one call, only on the practitioner's typed instruction: a " +
         "guarded stamping write per job, all in one transaction, then a confirm-read per job. A job is deleted when it is " +
-        "queued (shelved or not), or wip and held by this session's token; the holder check and the deleted_at stamp are " +
-        "one statement. A wip job held by this session goes back to queued with its lock cleared in the same write, so a " +
-        "restore gives a Ready job with no lock. Nothing else moves: the delete is a soft deleted_at stamp, and every row " +
+        "queued (shelved or not), wip and held by this session's token, or wip under a lock idle 60 minutes or more " +
+        "(lapsed, ADR 0015); the holder check and the deleted_at stamp are one statement. A wip job goes back to queued " +
+        "with its lock cleared in the same write, another session's lapsed lock recorded as lock_lapsed in the same " +
+        "transaction, so a restore gives a Ready job with no lock. Nothing else moves: the delete is a soft deleted_at stamp, and every row " +
         "pointing at the job stays. " +
         HOLDER +
         " Per job, the outcome is read off the confirm-read: deleted (changes 1), " +
-        "held_elsewhere (wip in another session: nothing written; never re-run), refused_status (completed or superseded), " +
+        "held_elsewhere (wip in another session, not lapsed: nothing written; never re-run), refused_status (completed or superseded), " +
         "already_deleted, not_found. It moves no revision. Refusals write nothing: invalid_ticket_ids, " +
         "invalid_session_token. Returns jobs, one {ticket_id, outcome, changes, status, locked_at, rejected_at, " +
         "deleted_at, note} per id.",
@@ -776,12 +777,14 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "confirm-read. The absorbed job's undone steps are appended after the survivor's, so the survivor's done steps " +
         "keep their stamps; its scope rows and Proposal keys are copied to the survivor where the survivor lacks them; " +
         "jobs waiting on it wait on the survivor; the survivor's plan approval is cleared when steps were added; and " +
-        "the absorbed job is superseded by the survivor (superseded_by), never deleted. The survivor is Ready or held " +
-        "by this session; the absorbed job is Ready. " +
+        "the absorbed job is superseded by the survivor (superseded_by) with any lock cleared, never deleted. The survivor " +
+        "is Ready or held by this session; the absorbed job is Ready. A job whose lock has lapsed (idle 60 minutes or " +
+        "more, ADR 0015) counts as Ready: another session's lapse is recorded as lock_lapsed, and its lock on the " +
+        "survivor is released. " +
         HOLDER +
         " Outcomes: merged, or a refusal that writes nothing " +
-        "and names refused_job: held_elsewhere (in progress in another session; never re-run), held_here (the absorbed " +
-        "job is this session's own: make it the survivor), completed, superseded, shelved, deleted, different_writing " +
+        "and names refused_job: held_elsewhere (in progress in another session, not lapsed; never re-run), held_here (the " +
+        "absorbed job is this session's own, not lapsed: make it the survivor), completed, superseded, shelved, deleted, different_writing " +
         "(a different Writing, or a General Job with a Writing Job), different_proceeding, either_or (the absorbed job " +
         "has an either/or partner), blocked (either job waits on a job outside the pair that is not completed), and " +
         "no_match (a job changed between the read and the write). It moves no revision and renders nothing: re-render " +
