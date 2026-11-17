@@ -248,6 +248,17 @@ def seed_rows(con):
     return con.execute("SELECT * FROM seeds ORDER BY id").fetchall() if held else []
 
 
+# A transaction that changed no row and no schema leaves the live file alone (committed False), so a
+# sync service never sees a write that did nothing as new work. total_changes counts rows changed by
+# triggers too. It does not count DDL or a user_version move, which the schema mark catches.
+def schema_mark(con):
+    return (con.execute("PRAGMA schema_version").fetchone()[0], con.execute("PRAGMA user_version").fetchone()[0])
+
+
+def changed(con, mark):
+    return con.total_changes > 0 or schema_mark(con) != mark
+
+
 def do_execute(req):
     guarded = req.get('guard_jobs')
     if guarded and re.search(SEEDS_WRITE_RE, req['sql_script']):
@@ -259,6 +270,7 @@ def do_execute(req):
         done = job_ids(con, "'completed'") if guarded else set()
         seeds = seed_rows(con) if guarded else None
         research = research_rows(con) if guarded else None
+        mark = schema_mark(con)
         try:
             con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
         except Exception:
@@ -283,7 +295,7 @@ def do_execute(req):
             raise SystemExit(refused)
         if guarded and seed_rows(con) != seeds:
             raise SystemExit(SEEDS_REFUSED)
-        return {"ok": True, "changes": con.total_changes}, True
+        return {"ok": True, "changes": con.total_changes}, changed(con, mark)
     return staged_write(req, 'execute', mutate)
 
 
@@ -291,6 +303,7 @@ def do_write(req):
     # One parameterized statement, staged exactly as do_execute stages a script, so a value
     # (a JSON snapshot full of quotes) is bound rather than spliced into SQL text.
     def mutate(con):
+        mark = schema_mark(con)
         con.execute("BEGIN")
         try:
             cur = con.execute(req['sql'], req.get('params') or [])
@@ -300,7 +313,7 @@ def do_write(req):
             if con.in_transaction:
                 con.execute("ROLLBACK")
             raise
-        return out, True
+        return out, changed(con, mark)
     return staged_write(req, 'write', mutate, isolation_level=None)
 
 
@@ -313,6 +326,7 @@ def do_write_all(req):
     def mutate(con):
         if req.get('foreign_keys_off'):
             con.execute("PRAGMA foreign_keys = OFF")
+        mark = schema_mark(con)
         con.execute("BEGIN")
         results = []
         try:
@@ -329,7 +343,7 @@ def do_write_all(req):
             if con.in_transaction:
                 con.execute("ROLLBACK")
             raise
-        return {"ok": True, "results": results}, True
+        return {"ok": True, "results": results}, changed(con, mark)
     return staged_write(req, 'write', mutate, isolation_level=None)
 
 

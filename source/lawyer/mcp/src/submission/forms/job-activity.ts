@@ -19,10 +19,19 @@ import { nowMinuteSql } from "./timings.js";
  * (ADR 0015). A lock-lapse time, never a countdown. */
 export const LAPSE_AFTER_MINUTES = 60;
 
+/** How often a held job's last activity and session-active stamp move: only once the stored stamp is
+ * this many minutes or more behind now, so a touch inside the window changes no row and leaves the
+ * drafting database's file alone (spec 2026-11-17 drafting-records-sync-safety §3.6). Well under
+ * LAPSE_AFTER_MINUTES: a held job reads at most this much staler than it is. */
+export const TOUCH_EVERY_MINUTES = 15;
+
 const NAMESPACE = "last_activity";
+/** SQL true of the `tickets` row in scope when `stored` (its stamp, NULL for none) is TOUCH_EVERY_MINUTES or more behind now. */
+const due = (stored: string): string => `COALESCE(${stored}, '') <= ${nowMinuteSql(-TOUCH_EVERY_MINUTES)}`;
 const touch = (held: string, now: string): string =>
   "INSERT INTO kv_store (namespace, key, value, updated_at) " +
   `SELECT '${NAMESPACE}', 'tickets:' || id, '"' || ${now} || '"', strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM tickets WHERE id = ? AND ${held} ` +
+  `AND ${due(`(SELECT trim(value, '"') FROM kv_store WHERE namespace = '${NAMESPACE}' AND key = 'tickets:' || tickets.id)`)} ` +
   "ON CONFLICT (namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at";
 
 /** SQL for the claim number of the `tickets` row in scope (alias `t`): the kv_store value `claim_no` /
@@ -68,24 +77,29 @@ export function checkClaim(tool: string, dbPath: string, id: number, token: stri
 }
 
 /** The statements that move job `id`'s session-active stamp and last activity to now, each landing
- * only under `held` (heldBy). Appended to a tool's own write, they run in its transaction and see its
- * result. None on a database held below v80, which has no last-activity stamp. */
+ * only under `held` (heldBy) and only once that stamp is TOUCH_EVERY_MINUTES behind. Appended to a
+ * tool's own write, they run in its transaction and see its result. None on a database held below
+ * v80, which has no last-activity stamp. */
 export function touchStatements(dbPath: string, id: number, held: { sql: string; params: unknown[] }): WriteStatement[] {
   if (!hasTable(dbPath, "kv_store")) return [];
   const now = nowMinuteSql();
   return [
-    { sql: `INSERT OR REPLACE INTO db_meta (key, value) SELECT 'job_active:' || id, ${now} FROM tickets WHERE id = ? AND ${held.sql}`, params: [id, ...held.params] },
+    { sql: `INSERT OR REPLACE INTO db_meta (key, value) SELECT 'job_active:' || id, ${now} FROM tickets WHERE id = ? AND ${held.sql} AND ${due("(SELECT value FROM db_meta WHERE key = 'job_active:' || tickets.id)")}`, params: [id, ...held.params] },
     { sql: touch(held.sql, now), params: [id, ...held.params] },
   ];
 }
 
 /** Moves job `id`'s session-active stamp and last activity to now, on their own, when `token` holds its
- * lock under `claim`. False when it does not, and on a database held below v80. */
+ * lock under `claim` and they are TOUCH_EVERY_MINUTES behind. Recorded true while it holds the lock,
+ * the stamps then current within the window; false when it does not, and on a database held below v80. */
 export async function touchJob(dbPath: string, id: number, token: string, claim: number | null, env: NodeJS.ProcessEnv = process.env): Promise<{ recorded: boolean; warning?: string }> {
   const statements = touchStatements(dbPath, id, heldBy(dbPath, token, claim));
   if (statements.length === 0) return { recorded: false };
   const written = await submissionDataWriteAll(dbPath, statements, env);
-  return { recorded: written.ok && written.results[1].changes === 1, ...(written.warning ? { warning: written.warning } : {}) };
+  const moved = written.ok && written.results[1].changes === 1;
+  const held = heldBy(dbPath, token, claim);
+  const recorded = moved || (written.ok && submissionDataQuery(dbPath, `SELECT 1 FROM tickets WHERE id = ? AND ${held.sql}`, [id, ...held.params]).rows.length === 1);
+  return { recorded, ...(written.warning ? { warning: written.warning } : {}) };
 }
 
 /** Each job's last activity by id; empty on a database held below v80. */
@@ -226,6 +240,6 @@ export async function submissionDataTouchJob(args: TouchJobArgs, env: NodeJS.Pro
   const { recorded, warning } = await touchJob(dbPath, id, token, claim, env);
   const warned = warning ? { warning } : {};
   return recorded
-    ? { ticket_id: id, recorded, note: `Job ${id}'s session-active stamp and last activity are now.`, ...warned }
+    ? { ticket_id: id, recorded, note: `Job ${id}'s session-active stamp and last activity are current (they move at most every ${TOUCH_EVERY_MINUTES} minutes).`, ...warned }
     : { ticket_id: id, recorded, note: `Nothing was written: job ${id} is not this session's (taken over, shelved or completed). Run the scope read and stop.`, ...warned };
 }
