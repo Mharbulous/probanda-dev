@@ -65,7 +65,7 @@ The extractor is served the matter's legal issues, the treatment vocabulary and 
 
 The renderer reports each attachment's name, size, content type, SHA-256 and path. Pass every SHA-256 as `attachment_hashes`, so they are claimed with the email. One `matter_data__query` over them, `../../matter-data/operations/ingest.md` Step 3's two-store hash query, finds those already registered. List under `attachments`, each `{name, file_hash, path, rendering?}`, only what the run reads: a `.pdf`, or a `.docx` rendered by check 5's script for `rendering`, with no earlier hash match, and neither a compound book (check 7) nor an affidavit (check 10, on its page 1). `next` reads each one after the email's own write, as a child of the email.
 
-Name each other one once in the email's `notes`, with its size, content type and the first 12 hex characters of its SHA-256 (#53): registered already, an inline image, of a kind ingest cannot read, or a book, an affidavit or a nested email, which are not read here. A privileged email (Path B) lists no `attachments`, and names them all that way, because the privileged store holds no children.
+Name each other one once in the email's `notes`, with its size, content type and the first 12 hex characters of its SHA-256 (#53): registered already, an inline image, of a kind ingest cannot read, or a book, an affidavit or a nested email, which are not read here. A privileged email (Path B) lists no `attachments`, and names them all that way, because the privileged store holds no children. One that Path B's client-lawyer protocol splits (a message marked `outside`), with an attachment this section would list, is `held` instead: an attended `/ingest` takes those attachments as children of its main row.
 
 ## Path B
 
