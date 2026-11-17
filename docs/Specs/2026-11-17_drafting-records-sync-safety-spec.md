@@ -25,7 +25,7 @@ Non-goals: ending sync forks (only arbitration outside the sync tool does that);
 Session entry (`openSession`) and `drafting_data__migrate` (`submissionDataMigrate`) create a database only when the plain file is missing **and** none of these signs of earlier work is present:
 
 - a `submission.sqlite.bak-*` file beside it (`backups()` in `open-session.ts` already lists them);
-- a page in the matter's draft folder that this generator wrote (the marker test `generatorWrote` in `src/submission/matter-page-files.ts`);
+- a page in the matter's draft folder that this generator wrote (the marker test `generatorWrote` in `src/submission/matter-page-files.ts`), or another file under the draft folder that only a drafting session writes, such as `matter-pages-state.json` (`src/submission/matter-pages-state.ts`). List every such file before building, and use only those as evidence, so a file another tool left there never blocks a matter that truly has no database;
 - this computer's write record for that database (§3.2).
 
 Otherwise both refuse, before anything is created, written or swept into TRASH, with a new code `earlier_work_missing` that names each sign found and says what to do: wait for the sync to finish, look for the file in the sync service's version history for the folder or in the `.bak-*` copy, and merge copies by `source/skills/drafting-data/references/sync-split.md`. How the practitioner overrides the refusal is decision D2 (§9).
@@ -35,6 +35,8 @@ Otherwise both refuse, before anything is created, written or swept into TRASH, 
 Each computer keeps, for each drafting database it writes, a record in its own host-local folder (`hostLocalPath(dbPath, ...)`, `src/submission/lock.ts:45`): a random writer id minted on first write and the count of writes it has made. Every committed write that changes a row also sets `db_meta` key `writes:<writer id>` to the new count, in the same staged transaction, and the host-local record is updated after the live file is replaced.
 
 Before every write, and at session entry, the server compares. If the live file's `writes:<writer id>` is lower than this computer remembers, or absent while the computer remembers a count, this computer's own writes are missing: the file was replaced by a copy that lacks them. Refuse with a new code `lost_writes`, naming the count missing, before anything is written. The override is decision D2.
+
+`split_merge` carries each `writes:<writer id>` row into the merged file at the higher of the two values, as it already does for `revision` (`split_merge.py:104-106, 160-161`). Otherwise the check refuses a good merge.
 
 No schema change: `db_meta` is a key-value table, and it carries no revision triggers (`job-activity.ts:8-9`), so the revision does not move. An older copy of the plugin ignores the row.
 
@@ -92,7 +94,7 @@ Each step lands as its own commit on `main` once its tests pass.
 3. Two `touch_job` calls 5 minutes apart change the file once. One 15 minutes later changes it again.
 4. Session entry on a matter with `submission.sqlite` missing and a `submission.sqlite.bak-*` present refuses `earlier_work_missing` and creates nothing. Same with a generator-marked Work Board page in the draft folder, and with this computer's write record present. With none of the three, it creates as today.
 5. `drafting_data__migrate` behaves as criterion 4.
-6. A file replaced by an older copy of itself (taken before this computer's last write) is refused `lost_writes` at session entry and at the next write, and nothing is written.
+6. A file replaced by an older copy of itself (taken before this computer's last write) is refused `lost_writes` at session entry and at the next write, and nothing is written. A file produced by `split_merge` from two copies is not refused on either computer.
 7. `submission (1).sqlite` and `submission (conflicted copy 2026-11-17).sqlite` beside the plain file each trigger `sync_conflict_copies`; a `.bak-*` file does not.
 8. After D1 only: a session entry with another session's lock 61 minutes idle writes nothing and the board shows the job Ready; `assign_job` takes it and records `lock_lapsed`; closing a filing whose only `wip` job has lapsed is not blocked.
 9. Existing tests pass, including `open-session.db.test.mjs`, `job-activity.db.test.mjs`, `release-lapsed.db.test.mjs` (rewritten for D1 if approved), `split-merge.db.test.mjs` and `case-sync-split.db.test.mjs`.
