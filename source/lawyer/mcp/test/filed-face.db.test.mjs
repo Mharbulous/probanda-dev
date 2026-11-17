@@ -197,11 +197,18 @@ test("strips the note-up tag through its own parentheses, alone or after a settl
 
 test("drops the header's optional list fields with the header, and keeps the body", () => {
   const lists =
-    "Authorities cited:\n  - Example v. Authority, 2020 BCSC 1 📜 <!-- statement_of_law_id 1 -->\n" +
     "Page budget:\n  - Limit: 2 pages; estimate: 1 pages\n" +
     "Layout confirmation:\n  - Note: the No venue requirements for Letter were learned by an agent.\n" +
     "Blind copies:\n  - bcc: Ada Client\n";
   const out = toFiledFace(withFrontmatter("## Re\n\n1. Body.\n\nTo: Cara Counsel\n").replace("\n---\n", `\n${lists}---\n`));
+  assert.equal(out, "## Re\n\n1. Body.\n\nTo: Cara Counsel\n");
+});
+
+test("drops the Authorities section, up to the Legend, from the final copy", () => {
+  const authorities =
+    "\n## Authorities\n\n- Authority not confirmed: link each authority this text cites, or record that it cites none. Sending is held until then.\n" +
+    "- > *Example v. Authority*, 2020 BCSC 1 📜 <!-- statement_of_law_id 1 -->\n\n## Legend\n\n| 📜 | x |\n";
+  const out = toFiledFace(withFrontmatter(`## Re\n\n1. Body.\n\nTo: Cara Counsel\n${authorities}`));
   assert.equal(out, "## Re\n\n1. Body.\n\nTo: Cara Counsel\n");
 });
 

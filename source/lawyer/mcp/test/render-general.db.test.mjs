@@ -54,8 +54,9 @@ const docOf = (result, type) => result.documents.find((d) => d.document_type ===
 /** The mockup header, both `---` lines included. */
 const headerOf = (md) => md.slice(0, md.indexOf("\n---\n") + "\n---\n".length);
 
-/** The header's four optional fields (plan 2026-10-07 step 3). */
-const OPTIONAL_FIELDS = ["Authorities cited:", "Page budget:", "Layout confirmation:", "Blind copies:"];
+/** The header's three optional fields (plan 2026-10-07 step 3). The authorities a Writing cites are in
+ * its Authorities section, never the header (spec 2026-11-17). */
+const OPTIONAL_FIELDS = ["Page budget:", "Layout confirmation:", "Blind copies:"];
 
 /** A gap line as the placeholder format prints it (plan 2026-10-07, Q2). */
 const gapLine = (what) => `🧩 ________ <!-- ${what} -->`;

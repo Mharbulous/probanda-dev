@@ -161,7 +161,7 @@ const STATEMENT_REF = /\s*<!-- statement_of_law_id (\d+) -->\s*$/;
 const BRIEF_LAW_SLOTS: ReadonlySet<string> = new Set(["holding", "ratio", "obiter"]);
 
 /** An item paragraph's lines after its summary: the statement's block (statementBlock), so a
- * paragraph number names one stored row. The markers are not recorded here: the header's "Authorities cited" line
+ * paragraph number names one stored row. The markers are not recorded here: the Authorities section's line
  * records each linked statement once (render-general.ts). A statement the Writing does not cite
  * prints a gap line instead, as does a case brief's statement short of its passage or pinpoint, which
  * a brief's item cannot go without. */

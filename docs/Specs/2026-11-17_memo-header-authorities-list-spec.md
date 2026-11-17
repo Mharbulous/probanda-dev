@@ -58,6 +58,7 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 9. Open questions
 
 - Does any other Writing type (a filing, a letter) want an authorities list in its header, or is the rule "never" for all types? The practitioner's words were "not ever".
+- **Answered 2026-11-17 by the practitioner:** "Remove the list from all headers, and add an Authorities section to the bottom of every Writing Type, similar to how the Legend that should also be at the bottom of every Writing mockup. Note that this applies to Mockups only; not to final drafts." Built as: the general renderer (the only one that had the header list) prints its items, the #1231 hold line and the marker recording unchanged, in a `## Authorities` section after the Writing's text and recipients, just before the Legend. `toFiledFace` drops the section (`MOCKUP_ONLY_HEADINGS`), so no sent, filed, published or saved copy carries it, and a saved memo's copy drops it too.
 
 ## 10. Verify against HEAD before building
 

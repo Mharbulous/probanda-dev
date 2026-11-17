@@ -1,6 +1,6 @@
 // A statement of law's line: its citation and its statement-line markers. Shared by the doctrinal
 // statement line (submission-paragraphs.ts's renderSubmissionParagraphs) and the general
-// renderer's prose-cited line under "Authorities cited" (render-general.ts, #1214), so the two
+// renderer's prose-cited line in its Authorities section (render-general.ts, #1214), so the two
 // can never drift.
 
 import { parseLinkedProvisions, predatedProvision } from "./authority-fit.js";

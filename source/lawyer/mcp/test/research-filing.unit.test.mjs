@@ -436,7 +436,9 @@ test("save_answer from_render files a memo Writing's mockup less its own header 
   const f = fixture();
   const other = fixture();
   try {
-    const mockup = "---\nMatter no: L0000\nClient Name: Ada Client\n---\n\n# Memorandum of Law\n\n---\nDocument: MEMORANDUM OF LAW\n---\n\n## Issue\n\n**Q?**\n";
+    const mockup =
+      "---\nMatter no: L0000\nClient Name: Ada Client\n---\n\n# Memorandum of Law\n\n---\nDocument: MEMORANDUM OF LAW\n---\n\n## Issue\n\n**Q?**\n" +
+      "\n## Authorities\n\n- > *Example v. Authority*, 2020 BCSC 1 📜 <!-- statement_of_law_id 1 -->\n";
     const folder = join(f.draft, "2026-10-31 ML re test");
     mkdirSync(folder);
     writeFileSync(join(folder, "General_writing.md"), mockup);
@@ -444,6 +446,7 @@ test("save_answer from_render files a memo Writing's mockup less its own header 
     const text = readFileSync(saved.path, "utf-8");
     assert.ok(text.startsWith("---\nDocument: MEMORANDUM OF LAW\n---\n\n## Issue\n\n**Q?**\n"), text);
     assert.doesNotMatch(text, /Ada Client|L0000|# Memorandum of Law/);
+    assert.doesNotMatch(text, /Authorities|Example v\. Authority|statement_of_law_id|Legend/, "the mockup-only Authorities section stays off the saved memo");
 
     writeFileSync(join(other.draft, "x.md"), mockup);
     assert.equal(codeOf(() => saveAnswer(f.law, "a.md", undefined, undefined, join(other.draft, "x.md"))), "not_render");

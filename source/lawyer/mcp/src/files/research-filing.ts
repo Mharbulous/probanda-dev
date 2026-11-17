@@ -36,7 +36,7 @@ import { checkCoverageLine } from "./coverage-line.js";
 import { downloadsDir, IN_PROGRESS_EXTENSIONS } from "./downloads.js";
 import { htmlBlocks, sourcesFetcher, type SourceFetcher } from "../sources/fetch.js";
 import { fenceStep } from "../submission/forms/fence.js";
-import { GAP_LINE_RE, MOCKUP_ONLY_LINE_RE, toFiledFace } from "../submission/forms/filed-face.js";
+import { GAP_LINE_RE, MOCKUP_ONLY_LINE_RE, stripSections, toFiledFace } from "../submission/forms/filed-face.js";
 import { withLegend } from "../submission/forms/legend.js";
 import { MOCKUP_ONLY_TAG } from "../submission/forms/markers.js";
 import { findDraftDir, validateMatterRoot } from "./matter-root.js";
@@ -276,12 +276,13 @@ function caseBriefCopy(mockup: string, source: string): string {
     .replace(/\uE000(\d+)\uE001/g, (_, n) => verbatim[Number(n)]);
 }
 
-/** A memo's copy: the mockup less its mockup-only lines, its header and title (MOCKUP_HEADER), with its own
+/** A memo's copy: the mockup less its mockup-only lines and sections (the Authorities section among them),
+ * its header and title (MOCKUP_HEADER), with its own
  * header's closing `---` bare. The render prints a prose slot's review marker after the slot's last line,
  * which in the `memo-header` slot is that `---`. `mockupOnly` is the lines it left out, without their tag. */
 function memoCopy(mockup: string): { copy: string; mockupOnly: string[] } {
   return {
-    copy: withLegend(mockup.replace(MOCKUP_ONLY_LINE_RE, "").replace(MOCKUP_HEADER, "").replace(/^---[ \t]+\uD83E\uDDD0[ \t]*$/gm, "---"), "").markdown,
+    copy: withLegend(stripSections(mockup.replace(MOCKUP_ONLY_LINE_RE, "").replace(MOCKUP_HEADER, "").replace(/^---[ \t]+\uD83E\uDDD0[ \t]*$/gm, "---")), "").markdown,
     mockupOnly: [...mockup.matchAll(MOCKUP_ONLY_LINE_RE)].map((m) => m[0].replace(MOCKUP_ONLY_TAG, "").trim()),
   };
 }
