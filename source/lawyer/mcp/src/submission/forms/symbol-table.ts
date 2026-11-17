@@ -144,8 +144,8 @@ export const SYMBOLS: readonly SymbolRow[] = [
     condition:
       "statement of law with `excerpt` ∅ — doctrinal, jurisdictional and prose-cited alike. A prose-cited " +
       "statement is a statement of law a Writing's own text cites (`filing_law`), printed on its own line in " +
-      "the Writing's mockup-only *Authorities cited* block, rendered for the human and withheld from the sent " +
-      "face.",
+      "the Writing's mockup-only *Authorities* section, last before the Legend, rendered for the human and " +
+      "withheld from the sent face.",
     history:
       "v3 (`statements_of_law.excerpt`); split off 💬 (#502); prose-cited instance admitted #1214 (`filing_law` " +
       "v36)",
