@@ -1,0 +1,124 @@
+# CanLII legislation-currency lookup
+
+Leg 1 of `shared/statute-currency.md`: whether a cited statute, regulation or
+rule of court exists in CanLII's legislation databases and is unrepealed.
+This file is the rule set. The canlii server's `legislation_currency` tool
+applies it in code (`plugins/litigation/canlii-mcp/src/legislation-currency.ts`),
+so a caller makes one tool call and runs no procedure itself; a change to a rule
+here is a change to that module and its tests. (Until 2026-10-06 law-getter's predecessor
+ran this as its legislation-currency mode; that mode is retired.) The tool
+reads the CanLII API and, for the amendment check below, BC Laws pages over
+HTTP: no browser, no downloads, no filing, no manifest. It needs
+`CANLII_API_KEY`.
+
+The tool reports metadata about each instrument's own record and, for a B.C.
+regulation, the amending regulations the publisher lists after its marker date.
+It never states what an instrument or an amendment says or whether it applies,
+and it never checks quoted text (legs 2 and 3 of the doctrine are done
+elsewhere).
+
+## Input contract
+
+- `instruments` — 1..N objects, each:
+  - `citation` — the citation of the instrument as consolidated, as the caller
+    stores it, unconverted (e.g. `SBC 2012, c 13`). Never an amending
+    regulation (`shared/statute-currency.md`).
+  - `title` — the instrument's title as the caller has it.
+  - `jurisdiction` — the CanLII jurisdiction code (e.g. `bc`).
+  - `currency_marker` (optional) — the filed consolidation's "current to" date,
+    `YYYY-MM-DD`, from its manifest line. Inputs sharing a `key` use the earliest.
+
+## Procedure
+
+1. Call `get_legislation_databases` once. Keep the databases whose
+   `jurisdiction` equals an instrument's `jurisdiction`.
+2. For each instrument, call `browse_legislation` on each kept database with
+   `titleContains` set to the caller's `citation`, periods removed. If that
+   matches nothing, repeat with the caller's `title`.
+3. An item **matches** when its `citation` equals the caller's `citation`,
+   ignoring only periods and case, with runs of whitespace collapsed. A title hit
+   whose citation does not match is not a match: report it under `near_items`
+   and give the instrument `not-found`.
+4. For each match, call `get_legislation_regulation_metadata` with its
+   `databaseId` and `legislationId`.
+5. Set `currency` by this rule and no other:
+   - `repealed` — the metadata's `repealed` field is present, non-empty and not
+     "NO" (case-insensitive), or its `endDate` is present and non-empty.
+   - `archived` — the database's `name` contains "archive" or "historical"
+     (case-insensitive) and no match was found in any other kept database.
+   - `current` — a match was found, and neither rule above applies.
+   - `not-found` — no match in any kept database.
+   - `validation_unavailable` — a tool is absent, unconfigured, or still errors
+     after one retry. Never infer another value.
+
+Report every field exactly as CanLII returned it. The metadata's `url` is a
+raw field: never open it. Supersession has no field of its own in CanLII's
+metadata, so it surfaces only as `repealed` or `endDate`.
+
+`current` means only that CanLII holds the instrument unrepealed in a current
+database. It never shows that a filed consolidation is the text in force: an
+amending regulation can take effect after the consolidation's date.
+
+6. **Amendments after the marker**, for an instrument that reads `current`. The
+   `marker_date` is the caller's `currency_marker`, else CanLII's `startDate`
+   (the date the consolidated version took effect); `marker_source` says which.
+   - Only a `bc` instrument cited as a B.C. Reg. is checked. Any other, or one
+     with no marker date, gives `amendments_after_marker: unknown` and the
+     reason in `amendments_note`.
+   - Read BC Laws' Cumulative B.C. Regulations Bulletin
+     (`https://www.bclaws.gov.bc.ca/civix/document/id/regulationbulletin/regulationbulletin/<YYYY>cumulati`)
+     for each year from the year before the marker's through the year of the
+     check. A bulletin that cannot be read after one retry, or does not read as
+     that year's bulletin with a "current to" date, gives `unknown` with the
+     reason, never an empty list.
+   - List each bulletin row whose description names the regulation's number (no
+     digit immediately before or after it) and either states an effective date
+     after `marker_date` or, stating none, was deposited after it:
+     `{instrument, effective_date, deposit_date, bulletin_text, provisions_amended,
+     provisions_reason, source_url}`. `bulletin_text` is the row's description
+     verbatim; `effective_date` is the first date it states, or `null`.
+   - `provisions_amended` quotes, from the row's linked B.C. Gazette Part II page,
+     the opening clause of each amending section, through its operative verb ("is
+     amended", "are repealed", "is added to ..."), in the schedule (or, with none,
+     the body) whose first amending section names the regulation's number. It is
+     never generated. With no link, an unreadable page or no such section, it is
+     `unknown` with the reason in `provisions_reason`. Only a
+     `/civix/document/id/lc/bcgaz2/` link on the BC Laws host is followed.
+   - `amendments_note` names the bulletins read and the deposit dates they cover;
+     a regulation deposited outside them is outside the check. `bulletin_current_to`
+     is the last bulletin's "current to" date.
+
+## Key-failure handling
+
+With no key configured the tool makes no request and returns
+`status: blocked (no-api-key)` with a `detail` naming both key paths verbatim:
+
+1. the `CANLII_API_KEY` user environment variable, or
+2. the canlii `configure_credential` tool.
+
+A caller relays that and never falls back to canlii.org's site, bclaws, or any
+browser.
+
+## Output contract
+
+`status` is `complete` or `blocked (no-api-key)`. With `complete` the result
+also carries:
+
+- `instruments`: `[{key, inputs, citation, title, jurisdiction, currency,
+  databaseId, database_name, legislationId, returned_title, returned_citation,
+  repealed, startDate, endDate, dateScheme, url, near_items, error, marker_date,
+  marker_source, fetched_on, bulletin_current_to, amendments_after_marker,
+  amendments_note}]`. `fetched_on` is the date the check ran. An instrument that
+  is not `current` has `amendments_after_marker: unknown`.
+
+**One check per instrument.** Inputs that share a `key` are checked once and
+return one entry. `key` is the jurisdiction, lower-cased, then `|`, then the
+citation with periods removed, lower-cased and whitespace runs collapsed: the
+matcher's own comparison form. `inputs` lists the input positions (from 0) the
+entry answers. Each database's listing is read once per call, whatever the
+number of instruments.
+
+Fields CanLII did not return are `null`. `error` is `null` unless `currency`
+is `validation_unavailable`, when it holds the failing tool and its message.
+The word "pass" never appears: `currency` is a report, and the caller decides
+what to do with it.
