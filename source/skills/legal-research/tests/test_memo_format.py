@@ -103,6 +103,9 @@ class ProtocolStepSixTests(unittest.TestCase):
         order = [template.index(h) for h in ("## Sources\n\n### Statutes\n", "### Case authority\n",
                                              "### Secondary sources\n")]
         self.assertEqual(order, sorted(order))
+        # 2026-11-17: Sources printed case names plain. The writer fills the slot, so the rule is here.
+        self.assertIn("a case's style of cause in italics as on the citation lines: "
+                      "`- *Alpha v Beta*, 2020 BCCA 1, paras 5, 9`", flat(template))
         self.assertNotIn("Authorities", template)
         self.assertNotIn("Question presented", template)
 
