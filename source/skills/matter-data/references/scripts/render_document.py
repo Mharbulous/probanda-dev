@@ -44,7 +44,8 @@ gains "quoted_blocks": [{"after_paragraph", "in_reply_to", "lines"}].
 paragraph_count stays the full rendering's. Any other file kind is refused.
 
 For an .eml or .msg, each attachments entry also carries "size",
-"content_type" and "path", and the attachment bytes are written to
+"content_type" and "path" (an .eml image part with an inline disposition, or
+whose Content-ID the HTML body cites, also carries "inline": true), and the attachment bytes are written to
 "<output_dir>/<original_basename>.attachments/<index>_<name>". An embedded
 Outlook message has no bytes of its own: its size, sha256 and path are null
 and a "note" says so. The msg hdr block is From, To, Cc, Bcc, Date, Subject,
@@ -265,6 +266,9 @@ def render_eml(input_path, attachment_dir=None, strip_quoted=False, meta=None):
         if strip_quoted:
             meta["quoted_blocks"] = quoted_blocks
 
+    htm = msg.get_body(preferencelist=("html",))
+    html_bytes = (htm.get_payload(decode=True) or b"") if htm is not None else b""
+    cids = {c.decode("ascii", "replace") for c in re.findall(rb"(?i)cid:([^\"'>\s)]+)", html_bytes)}
     attachments = []
     for part in msg.iter_attachments():
         name = part.get_filename() or "unnamed-attachment"
@@ -273,8 +277,12 @@ def render_eml(input_path, attachment_dir=None, strip_quoted=False, meta=None):
         path = None
         if attachment_dir:
             path = _write_attachment(attachment_dir, len(attachments) + 1, name, payload)
-        attachments.append({"name": name, "sha256": sha256, "size": len(payload),
-                            "content_type": part.get_content_type(), "path": path})
+        entry = {"name": name, "sha256": sha256, "size": len(payload),
+                 "content_type": part.get_content_type(), "path": path}
+        if part.get_content_maintype() == "image" and (
+                part.get_content_disposition() == "inline" or _bare_id(part["Content-ID"]) in cids):
+            entry["inline"] = True
+        attachments.append(entry)
 
     for att in attachments:
         lines.append(f"Attachment: {att['name']}")

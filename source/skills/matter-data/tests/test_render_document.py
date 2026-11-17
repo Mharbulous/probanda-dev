@@ -191,6 +191,45 @@ class StripQuotedTests(unittest.TestCase):
         self.assertEqual(rc, 2)
 
 
+PHOTO_PART = b"""--M
+Content-Type: image/png; name="photo.png"
+Content-Disposition: attachment; filename="photo.png"
+Content-Transfer-Encoding: base64
+
+iVBORw0KGgoB
+"""
+
+
+def logo_eml(extra=b""):
+    """A synthetic reply with an HTML body citing a signature logo by Content-ID."""
+    return b"""From: Jane Counsel <jane@examplefirm.test>
+Subject: Re: Settlement offer
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="M"
+
+--M
+Content-Type: multipart/alternative; boundary="A"
+
+--A
+Content-Type: text/plain
+
+Thanks.
+--A
+Content-Type: text/html
+
+<p>Thanks.</p><img src="cid:image001.png@01DA0000">
+--A--
+
+--M
+Content-Type: image/png; name="image001.png"
+Content-Disposition: inline; filename="image001.png"
+Content-ID: <image001.png@01DA0000>
+Content-Transfer-Encoding: base64
+
+iVBORw0KGgo=
+""" + extra + b"--M--\n"
+
+
 class RenderEmlTests(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory(dir=TEST_TMP)
@@ -238,6 +277,27 @@ class RenderEmlTests(unittest.TestCase):
         self.assertEqual(attachments[0]["size"], 12)
         self.assertEqual(attachments[0]["content_type"], "text/plain")
         self.assertEqual(Path(attachments[0]["path"]).read_bytes(), b"OFFER TERMS\n")
+
+    def render_raw(self, raw):
+        path = Path(self.tempdir.name) / "msg.eml"
+        path.write_bytes(raw)
+        return render_document.render_eml(str(path))
+
+    def test_signature_logo_is_inline_and_attached_photo_is_not(self):
+        _text, _count, attachments = self.render_raw(logo_eml(PHOTO_PART))
+        self.assertEqual([(a["name"], a.get("inline")) for a in attachments],
+                         [("image001.png", True), ("photo.png", None)])
+
+    def test_cid_cited_by_the_html_body_alone_marks_an_image_inline(self):
+        raw = logo_eml().replace(b"Content-Disposition: inline;", b"Content-Disposition: attachment;")
+        _text, _count, attachments = self.render_raw(raw)
+        # The only entry is inline, so routing.md check 5 does not set the email aside.
+        self.assertEqual([a.get("inline") for a in attachments], [True])
+
+    def test_uncited_content_id_without_inline_disposition_is_not_inline(self):
+        raw = logo_eml().replace(b"Content-Disposition: inline;", b"Content-Disposition: attachment;")
+        _text, _count, attachments = self.render_raw(raw.replace(b"cid:image001", b"cid:other"))
+        self.assertNotIn("inline", attachments[0])
 
     def test_determinism_via_cli(self):
         out1 = Path(self.tempdir.name) / "run1"
