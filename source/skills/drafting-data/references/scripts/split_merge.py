@@ -34,6 +34,8 @@ import sqlite3
 import sys
 import tempfile
 
+from migrate_engine import sqlite_too_old
+
 
 class Refused(Exception):
     def __init__(self, code, message):
@@ -206,6 +208,9 @@ def merge(req):
 def main():
     req = json.load(sys.stdin)
     try:
+        too_old = sqlite_too_old()
+        if too_old:
+            raise Refused("sqlite_too_old", too_old)
         out = {"diff": diff, "merge": merge}[req["op"]](req)
     except Refused as exc:
         out = {"refused": exc.code, "message": str(exc)}

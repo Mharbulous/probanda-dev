@@ -101,6 +101,23 @@ def refuse_split(db_path):
         raise SystemExit(f"sync_conflict_copies: the file sync has split the drafting records at {db_path}: {where} {', '.join(copies)}. {SPLIT_REMEDY}")
 
 
+# The drafting schema needs SQLite 3.47.0; an older one reports "malformed database schema", which reads
+# as damage (spec 2026-11-17 drafting-records sync safety, section 3.7). The /drafting-data skill's
+# migrate_engine.py holds the same check for its scripts: this server cannot import them, so it is
+# stated once here, for every op of this helper and every query of the sidecar.
+SQLITE_FLOOR = (3, 47, 0)
+
+
+def sqlite_too_old():
+    found = tuple(sqlite3.sqlite_version_info)
+    if found >= SQLITE_FLOOR:
+        return None
+    return {"refused": "sqlite_too_old", "message": (
+        f"This computer's Python uses SQLite {'.'.join(map(str, found))}, and the drafting records need SQLite "
+        f"{'.'.join(map(str, SQLITE_FLOOR))} or later. The matter's file is not damaged: nothing was read from it or "
+        "written to it. Drafting records stay closed on this computer until its Python uses a newer SQLite.")}
+
+
 # Leading whitespace, '--' line comments and '/* */' block comments are
 # skipped before the keyword check, so a query copied verbatim from a skill
 # file that opens with a comment is not refused. Each comment matches only up
@@ -110,6 +127,9 @@ READ_ONLY_RE = r'(?is)^(?:\s|--[^\n]*(?:\n|$)|/\*(?:(?!\*/).)*\*/)*(select|with|
 
 
 def do_query(req):
+    too_old = sqlite_too_old()
+    if too_old:
+        return too_old
     db_path = req['db_path']
     sql = req['sql'].strip()
     if not re.match(READ_ONLY_RE, sql):
@@ -378,6 +398,9 @@ def do_trial(req):
 def main():
     req = json.load(sys.stdin)
     op = req['op']
+    too_old = sqlite_too_old()
+    if too_old:
+        return too_old
     refuse_split(req['db_path'])
     if op == 'execute':
         return do_execute(req)
@@ -619,7 +642,7 @@ function sidecarQuery(request: QueryRequest): Record<string, unknown> {
     if (typeof out.error === "string") {
       throw new ValidationError(`drafting-data sqlite helper (${reply.py}) failed: ${out.error}`);
     }
-    return out;
+    return refusedOrResult(out);
   }
   discardSidecar();
   if (reply?.kind === "no_python") {
@@ -641,13 +664,19 @@ function runHelper(request: ExecuteRequest | WriteRequest | WriteAllRequest | Tr
   forgetDraftingQueries(request.db_path);
   // The budget stops a hung copy-back from holding the server forever. replace_live renames a
   // flushed sibling over db_path, so a kill at any point leaves db_path whole, old or new.
-  return runPythonDriver({
+  return refusedOrResult(runPythonDriver({
     label: "drafting-data sqlite helper",
     driver: helperFile(),
     payload: JSON.stringify(request),
     env,
     timeoutMs: pythonTimeoutMs(env, WRITE_TIMEOUT_MS),
-  }) as Record<string, unknown>;
+  }) as Record<string, unknown>);
+}
+
+/** Throws the helper's coded refusal (sqlite_too_old), or returns its result. */
+function refusedOrResult(out: Record<string, unknown>): Record<string, unknown> {
+  if (typeof out.refused === "string") throw new DataServerError(String(out.message), out.refused);
+  return out;
 }
 
 /** A query's key in the call memo: `drafting-query`, then the database, the SQL and its parameters. */
