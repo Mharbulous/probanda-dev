@@ -22,6 +22,7 @@ import { moveSeedsOnce, type SeedsLeft, type SeedsMove } from "../loose-threads/
 import { releaseLapsedLocks } from "./forms/job-activity.js";
 import type { PracticeStore } from "../practice/store.js";
 import { DataServerError, ValidationError } from "../errors.js";
+import { refuseSyncSplit } from "./backend.js";
 import { caseDataRootFromDbPath, findDraftDir, resolveDbPath, validateMatterRoot } from "../files/matter-root.js";
 import { resolveCaseDataRoot } from "../practice/backend.js";
 import { matter_lookup } from "../tools/practice/reads.js";
@@ -361,6 +362,8 @@ async function openSession(
 
   const root = await phase("matter_root", () => validateMatterRoot(matterRoot));
   const dbPath = await phase("pointer", () => resolveDbPath(root));
+  // Before anything is created, written or swept into TRASH.
+  refuseSyncSplit(dbPath);
   const blocking = await phase("practice_config", () => practiceConfigBlocking(dbPath));
   const { lookup, client: identity } = await phase("matter_lookup", () => lookUpMatter(root, practiceDb, client));
   // #585: the draft folder is confined before any other work.

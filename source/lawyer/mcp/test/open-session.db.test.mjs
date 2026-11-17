@@ -1164,3 +1164,61 @@ test("project_id opens the matter linked to the Project; none or several refuse 
   await assert.rejects(callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot, project_id: "proj-a" }), /exactly one of matter_root and project_id/);
   await assert.rejects(callTool(context, "drafting_forms__open_session", {}), /exactly one of matter_root and project_id/);
 });
+
+// A OneDrive sync conflict splits submission.sqlite into `submission-<computer name>.sqlite` copies
+// (backend.ts refuseSyncSplit). Nothing picks between them, creates a fresh database, or sweeps a page.
+async function rejection(promise) {
+  try {
+    await promise;
+  } catch (err) {
+    return err;
+  }
+  throw new Error("expected a rejection, got none");
+}
+
+async function splitFixture(t, { keepLive = false } = {}) {
+  const m = matterFixture(t);
+  await seedOneFiling(m.dbPath);
+  const copies = ["submission-DEVICE_A.sqlite", "submission-DESKTOP-4F2K9.sqlite"].map((name) => join(m.caseDataDir, name));
+  for (const copy of copies) writeFileSync(copy, readFileSync(m.dbPath));
+  if (!keepLive) rmSync(m.dbPath);
+  const bytes = () => copies.map((copy) => readFileSync(copy));
+  return { m, copies, bytes, before: bytes() };
+}
+
+test("a split database: session entry, the helper and migrate refuse naming both copies, and nothing is created, written or swept", async (t) => {
+  const { m, bytes, before } = await splitFixture(t);
+  const draftDir = join(m.matterRoot, "0. DRAFT");
+  const pageCopy = join(draftDir, "Work Board-DEVICE_B.html");
+  mkdirSync(draftDir);
+  writeFileSync(pageCopy, '<html data-workboard-shell="1"></html>');
+  const context = await practiceContext(t);
+
+  const refusals = [
+    await rejection(callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot })),
+    await rejection(callTool({}, "drafting_data__migrate", { db_path: m.dbPath })),
+    await rejection(Promise.resolve().then(() => submissionDataQuery(m.dbPath, "SELECT 1"))),
+    await rejection(submissionDataExecute(m.dbPath, "SELECT 1;")),
+  ];
+  for (const err of refusals) {
+    assert.match(err.message, /sync_conflict_copies: .*it is missing, and in its place are submission-DESKTOP-4F2K9\.sqlite, submission-DEVICE_A\.sqlite\./);
+    assert.doesNotMatch(err.message, /migrate/);
+  }
+  assert.equal(refusals[0].code, "sync_conflict_copies");
+  assert.equal(existsSync(m.dbPath), false, "no fresh database");
+  assert.deepEqual(bytes(), before, "both copies byte-identical");
+  assert.ok(existsSync(pageCopy), "the page's conflict copy is left where it is");
+  assert.equal(existsSync(join(m.matterRoot, "TRASH")), false);
+});
+
+test("a split that kept the live name: reads go on, writes and session entry refuse", async (t) => {
+  const { m, bytes, before } = await splitFixture(t, { keepLive: true });
+  const live = readFileSync(m.dbPath);
+  assert.equal(submissionDataQuery(m.dbPath, "SELECT COUNT(*) AS n FROM filings").rows[0].n, 1);
+  const err = await rejection(submissionDataExecute(m.dbPath, "UPDATE filings SET title = 'x';"));
+  assert.match(err.message, /sync_conflict_copies: .*beside it are submission-DESKTOP-4F2K9\.sqlite, submission-DEVICE_A\.sqlite\./);
+  const entry = await rejection(callTool(await practiceContext(t), "drafting_forms__open_session", { matter_root: m.matterRoot }));
+  assert.equal(entry.code, "sync_conflict_copies");
+  assert.deepEqual(readFileSync(m.dbPath), live);
+  assert.deepEqual(bytes(), before);
+});

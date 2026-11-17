@@ -47,7 +47,7 @@ import { type DriverResponse, MIGRATE_DRIVER, pushStaleLockWarning, throwDriverR
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { submissionDataMigrateScriptsDir } from "../repo-root.js";
-import { forgetDraftingQueries, pythonTimeoutMs, READ_TIMEOUT_MS, submissionDataQuery, WRITE_TIMEOUT_MS } from "./backend.js";
+import { forgetDraftingQueries, pythonTimeoutMs, READ_TIMEOUT_MS, refuseSyncSplit, submissionDataQuery, WRITE_TIMEOUT_MS } from "./backend.js";
 import { acquireDataLock } from "./lock.js";
 import { counselOffers, matterPartiesDrift, type CounselOffer, type PartiesDriftRow } from "./parties-drift.js";
 import { overrideActive, renderableSchemaVersion } from "./schema-ceiling.js";
@@ -74,6 +74,8 @@ export async function submissionDataMigrate(
   dbPath: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<Record<string, unknown>> {
+  // A split database is never migrated, and never replaced by a fresh one.
+  refuseSyncSplit(dbPath);
   // Never past what this bundle can read (#812): the run stops at the bundle's ceiling, and a
   // database already there is left untouched -- the engine copies aside only when it migrates.
   const engineTarget = currentSchemaVersion(env);

@@ -34,7 +34,8 @@
 // call (issue #517; see sidecarQuery). case/ and practice/ backends still
 // spawn per call. `execute` stays one spawn per call, under the data lock.
 
-import { join } from "node:path";
+import { existsSync, readdirSync } from "node:fs";
+import { basename, dirname, extname, join } from "node:path";
 import { MessageChannel, type MessagePort, receiveMessageOnPort, Worker } from "node:worker_threads";
 
 import { forgetPerCall, oncePerCall } from "../call-memo.js";
@@ -46,8 +47,58 @@ import { stagedStorePython } from "../staged-store.js";
 import { RESEARCH_JOB_PREFIX } from "./forms/research-job.js";
 import { acquireDataLock } from "./lock.js";
 
+// OneDrive names a sync conflict's copy `<name>-<computer name><ext>` (Microsoft, "Duplicate files in
+// OneDrive": book1-desktop-computer.xlsx beside book1.xlsx). Its copies of submission.sqlite are told
+// apart here and in split_copies below by that pattern alone.
+const SPLIT_REMEDY =
+  "Each copy may hold changes the others lack. Nothing was written or created. Probanda never picks between the copies or merges them: " +
+  "stop drafting work on this matter and ask the practitioner which copy holds the work to keep. Writes stay refused until that folder " +
+  "holds only the one file: the practitioner renames the copy to keep to that name and moves each other copy out of the folder, where it stays recoverable.";
+
+/** The sync conflict copies beside dbPath, by name. */
+export function syncSplitCopies(dbPath: string): string[] {
+  const dir = dirname(dbPath);
+  const ext = extname(dbPath).toLowerCase();
+  const stem = basename(dbPath).slice(0, -ext.length || undefined).toLowerCase();
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((f) => f.toLowerCase().startsWith(`${stem}-`) && f.toLowerCase().endsWith(ext) && f.length > stem.length + 1 + ext.length)
+    .sort();
+}
+
+/** Refuses, code sync_conflict_copies, while sync conflict copies sit beside dbPath, naming them. */
+export function refuseSyncSplit(dbPath: string): void {
+  const copies = syncSplitCopies(dbPath);
+  if (copies.length === 0) return;
+  const where = existsSync(dbPath) ? "beside it are" : "it is missing, and in its place are";
+  throw new DataServerError(
+    `sync_conflict_copies: the file sync has split the drafting records at ${dbPath}: ${where} ${copies.join(", ")}. ${SPLIT_REMEDY}`,
+    "sync_conflict_copies",
+    { copies: copies.map((c) => join(dirname(dbPath), c)) }
+  );
+}
+
 const PY_HELPER = String.raw`
 import json, os, re, shutil, sqlite3, sys, tempfile, traceback
+
+
+SPLIT_REMEDY = ${JSON.stringify(SPLIT_REMEDY)}
+
+
+def split_copies(db_path):
+    folder, name = os.path.split(db_path)
+    stem, ext = os.path.splitext(name.lower())
+    if not os.path.isdir(folder):
+        return []
+    return sorted(f for f in os.listdir(folder) if f.lower().startswith(stem + '-') and f.lower().endswith(ext) and len(f) > len(stem) + 1 + len(ext))
+
+
+# refuseSyncSplit above, for the helper's own calls: no write lands in one copy of a split database.
+def refuse_split(db_path):
+    copies = split_copies(db_path)
+    if copies:
+        where = "beside it are" if os.path.exists(db_path) else "it is missing, and in its place are"
+        raise SystemExit(f"sync_conflict_copies: the file sync has split the drafting records at {db_path}: {where} {', '.join(copies)}. {SPLIT_REMEDY}")
 
 
 # Leading whitespace, '--' line comments and '/* */' block comments are
@@ -64,9 +115,10 @@ def do_query(req):
     if not re.match(READ_ONLY_RE, sql):
         raise SystemExit("drafting_data__query only accepts SELECT/WITH/PRAGMA statements; use drafting_data__execute for writes.")
     if not os.path.exists(db_path):
+        refuse_split(db_path)
         raise SystemExit(
             f"No submission database found at {db_path}. Run drafting_data__migrate first.")
-    uri = 'file:' + db_path.replace('\\', '/').replace('?', '%3f').replace('#', '%23') + '?mode=ro'
+    uri ='file:' + db_path.replace('\\', '/').replace('?', '%3f').replace('#', '%23') + '?mode=ro'
     con = sqlite3.connect(uri, uri=True)
     try:
         cur = con.execute(sql, req.get('params') or [])
@@ -326,6 +378,7 @@ def do_trial(req):
 def main():
     req = json.load(sys.stdin)
     op = req['op']
+    refuse_split(req['db_path'])
     if op == 'execute':
         return do_execute(req)
     if op == 'write':
