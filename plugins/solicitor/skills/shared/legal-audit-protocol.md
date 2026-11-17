@@ -282,8 +282,7 @@ paragraph, and on a job it becomes a step. Never call other research required an
 more research is needed on it. If worth doing, it is a Step 5 offer; otherwise say nothing.
 
 **The memo always answers.** Write the memo whatever the coverage. Its Conclusion answers
-the Issue from the sources held: the principle(s) with pinpoint citations, the factual
-comparison and the distinguishability flags. A part no held authority answers is answered in
+the Issue from the sources held. A part no held authority answers is answered in
 one sentence naming what was searched: `No authority located in <the tiers searched>.`
 
 **Open issues.** When the scope test leaves research required, end the Conclusion with one
@@ -292,7 +291,7 @@ question, and begin the return's `Audit:` line `INCOMPLETE:` (Step 6). Nothing
 else in the memo defers to further research, offers research or names a tier not run. A spawn
 prompt's `Review:` line is memo-reviewer's verdict on your last memo: treat each `required` item
 as required, cut each `identifiers` passage from the memo, move each `out_of_scope` passage to
-a Step 5 offer, rewrite a `Conclusion shape:` item's Conclusion as one paragraph, and rewrite
+a Step 5 offer, rewrite a `Conclusion shape:` item's Conclusion to the template's rule, and rewrite
 each `findings` item as one finding or cut the item, quoting a `partial excerpt` item's
 whole paragraphs, giving a case it names as missing a tag
 that finding from the court's own reasons or cutting the case. With any `Review:` but `none`, return no

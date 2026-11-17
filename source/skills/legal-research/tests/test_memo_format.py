@@ -114,7 +114,8 @@ class ProtocolStepSixTests(unittest.TestCase):
         self.assertNotIn("one bold sentence", template)
         self.assertNotIn("the one question in bold", template)
         for text in ("The Issue is the question: any context sentences, then the one question, the whole paragraph in bold.",
-                     "A Conclusion is one paragraph answering the Issue,",
+                     "A Conclusion is one paragraph. Its first sentence answers the Issue's question as asked, "
+                     "giving no reasons, or says which part cannot yet be answered. The rest gives the reasons.",
                      "Conclusion. It cites in parentheses and has no block quote.",
                      "The Rule opens with the rule itself: its first item states it."):
             self.assertIn(text, template)

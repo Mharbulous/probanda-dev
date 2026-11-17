@@ -144,9 +144,10 @@ In every format:
   **A job's memo.** In an audit whose `Job question:` is not `none`, the Issue is that question
   verbatim if it meets rules A to D. If not, return no memo but one rewording proposal
   (`shared/legal-research.md`, "A research question holds one question").
-- A Conclusion is one paragraph answering the Issue, followed, only where research is required
-  (`shared/legal-audit-protocol.md` Step 4), by the open-issues paragraph, after the last
-  Conclusion. It cites in parentheses and has no block quote.
+- A Conclusion is one paragraph. Its first sentence answers the Issue's question as asked,
+  giving no reasons, or says which part cannot yet be answered. The rest gives the reasons. It is
+  followed, only where research is required (`shared/legal-audit-protocol.md` Step 4), by the
+  open-issues paragraph, after the last Conclusion. It cites in parentheses and has no block quote.
 - The Rule opens with the rule itself: its first item states it.
 - The Application: one sub-section per case, its items together. Each item is one finding of
   that court, its sentence opening `fact:` or `law-applied:` (the law applied to the facts to
