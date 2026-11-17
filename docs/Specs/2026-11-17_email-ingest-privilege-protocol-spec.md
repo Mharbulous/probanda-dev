@@ -80,3 +80,22 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 
 Confirm in HEAD: routing.md checks 6 and 9 and Path B wording; the `privileged` contract shape and `ingest_result`'s store handling in mcp/src; how the folder map's `privileged_by_default` flag reaches check 6; how `operations/ingest.md` routes a single email; and the "privileged store holds no children" rule.
+
+## 11. Verification against HEAD (2026-11-17, at 4853f1b9)
+
+Repo paths: `lawyer/skills/<skill>/...` in this spec is `source/skills/<skill>/...`; the server is `source/lawyer/mcp/src`.
+
+| Claim | HEAD | Where |
+|---|---|---|
+| Check 9 sends a client email to Path B with its question | Confirmed, word for word | `source/skills/ingest-orchestrator/references/routing.md` check 9 |
+| Path B asks unless check 6 answered it | Confirmed, word for word | same file, "Path B" |
+| `privileged` contract: one `document`, one `facts` list, optional `client_instructions` | Confirmed | same file; `source/skills/matter-data/references/scripts/ingest_privileged.py` docstring |
+| `ingest_result` takes `store` `privileged` only for a Yes | Confirmed: `document.store` must be `privileged` exactly when `answers.privilege` is `yes`, else `main` | `source/lawyer/mcp/src/case/ingest-result.ts` `checkAndWrite` |
+| A Yes writes the whole document to the privileged store | Confirmed: one `privileged_sources` row; each fact a bare `main.facts` row with its words on `privileged.fact_provenance`; `GUARD_MAIN` refuses a file already held in `main.sources` | `ingest_privileged.py` |
+| How `privileged_by_default` reaches check 6 | `practice_data__folder_map` answers `privileged: true` only when every document type kept in the folder carries the flag; check 6 then takes Yes with no question. A folder where only some types carry it gets the question. An unmapped folder gets no answer and falls to the page-1 read and check 9 | `source/lawyer/mcp/src/tools/practice/folder-map.ts`; routing.md check 6 |
+| How `operations/ingest.md` routes a single email | The gate hashes and looks up both stores and routes to `ingest-extract.md`, which renders the email and asks Path B's question there; its Path B writes by its own inserts, not through `ingest_result` | `source/skills/matter-data/operations/ingest.md` Steps 2-4; `operations/ingest-extract.md` "Path B" |
+| "The privileged store holds no children" | Confirmed in three places | routing.md "Emails with attachments, unattended"; `ingest-extract.md` email attachments; `ingest.md` Step 3 |
+| A second top-level row with the same hash | `main.sources` refuses a second top-level row per hash (trigger); nothing spans the two stores. The gate reads more than one top-level match across both stores as corruption | `references/triggers.sql`; `ingest.md` Step 3; routing.md check 3 |
+| Firm staff addresses (§9) | The firm profile's roster holds each person's `email`, with `role` `lawyer` or `staff`. It holds no firm domain | `source/lawyer/mcp/src/tools/practice/firm-profile.ts` |
+| Client addresses (§9) | `practice_data__contact_lookup` with a matter ref returns that matter's contacts, each with `emails` and its matter `roles` (`client` among them) | `source/lawyer/mcp/src/tools/practice/contacts.ts` |
+| Store for the standing rule (§9) | A practitioner Rule is kept as a preference (`preferences__write`), in the practitioner's own words, behind the Rule gate hook, and retired to turn it off. A practice quirk cannot hold it: the quirk validator refuses text that loosens a privilege safeguard | `source/skills/shared/paralegal-posture.md` §9; `source/lawyer/hooks/rule-gate.py`; `source/lawyer/mcp/src/quirks/validate.ts` |
