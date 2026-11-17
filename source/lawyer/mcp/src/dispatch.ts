@@ -21,6 +21,7 @@ import { proceduralHistoryAppend, type ProceduralHistoryAppendArgs } from "./cas
 import { relocateSource, type RelocateSourceRequest } from "./case/relocate-source.js";
 import { housekeepingLog, type HousekeepingLogRequest } from "./case/housekeeping-log.js";
 import { repointDocuments, type RepointDocumentsRequest } from "./submission/repoint-documents.js";
+import { splitMerge, type SplitMergeRequest } from "./submission/split-merge.js";
 import { timecampingDataQuery, timecampingDataExecute, timecampingDataBulkUpsert } from "./timecamping/backend.js";
 import { timecampingCalls, type CallsArgs } from "./timecamping/calls.js";
 import { timecampingDataMigrate } from "./timecamping/migrate.js";
@@ -215,6 +216,7 @@ export const dataTools: Tool<DispatchContext>[] = [
   defineTool("loose_threads__read", (args: ReadArgs) => looseThreadsRead(args)),
   defineTool("loose_threads__update", (args: UpdateArgs) => looseThreadsUpdate(args)),
   defineTool("drafting_data__repoint_documents", (args: RepointDocumentsRequest) => repointDocuments(args)),
+  defineTool("drafting_data__split_merge", (args: SplitMergeRequest) => splitMerge(args)),
   defineTool("drafting_data__create_writing", (args: CreateWritingArgs) =>
     submissionDataCreateWriting(args, {
       caseDataRoot: once(() => caseDataRootFromDbPath(args.db_path, process.env)),

@@ -102,6 +102,28 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: submissionDataPrefixed("split_merge"),
+      description:
+        "After a sync conflict split the matter's drafting records (sync_conflict_copies), follow /drafting-data's " +
+        "references/sync-split.md. op diff compares the two copies record by record and returns {inputs [{path, sha256}], " +
+        "differences [{id, table, key, kind only_a|only_b|differ, columns, a, b}], resolved}; it writes nothing. op merge takes " +
+        "the diff's sha256 list and decisions {id: a|b}, one per difference, each the practitioner's, and writes " +
+        "submission-merged.sqlite beside the copies; it never writes, moves or removes a copy. Refusals: split_not_two, " +
+        "split_schema_differs, split_inputs_changed, split_undecided, split_merge_unsound.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          matter_root: { type: "string" },
+          op: { type: "string", enum: ["diff", "merge"] },
+          sha256: { type: "array", items: { type: "string" } },
+          decisions: { type: "object", additionalProperties: { type: "string", enum: ["a", "b"] } },
+        },
+        required: ["matter_root", "op"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    {
       name: submissionDataPrefixed("create_writing"),
       description:
         "Create one Writing (a filings row) on a proceeding: the one door for a new Writing, because only this tool writes " +

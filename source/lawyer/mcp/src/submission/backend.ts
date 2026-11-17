@@ -51,9 +51,9 @@ import { acquireDataLock } from "./lock.js";
 // OneDrive": book1-desktop-computer.xlsx beside book1.xlsx). Its copies of submission.sqlite are told
 // apart here and in split_copies below by that pattern alone.
 const SPLIT_REMEDY =
-  "Each copy may hold changes the others lack. Nothing was written or created. Probanda never picks between the copies or merges them: " +
-  "stop drafting work on this matter and ask the practitioner which copy holds the work to keep. Writes stay refused until that folder " +
-  "holds only the one file: the practitioner renames the copy to keep to that name and moves each other copy out of the folder, where it stays recoverable.";
+  "Each copy may hold changes the others lack. Nothing was written or created. Stop drafting work on this matter and follow " +
+  "/drafting-data references/sync-split.md: drafting_data__split_merge compares two copies, and the practitioner decides each difference. " +
+  "Writes stay refused until that folder holds only the one file.";
 
 /** The sync conflict copies beside dbPath, by name. */
 export function syncSplitCopies(dbPath: string): string[] {
