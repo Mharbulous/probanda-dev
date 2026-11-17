@@ -19,9 +19,17 @@ The staged object:
     {"contract": "privileged", "contract_version": 2, "ref",
      "document": {"title", "description", "category", "author", "recipient", "date"},
      "facts": [{"source_locator", "description", "category", "date_of_fact", "notes"}],
+     "non_privileged_facts"?: [{..., "author", "sent"}],
      "client_instructions": [{"party_name", "instructed_by", "date", "description",
                               "source_locator", "status", "proceeding_file_number",
                               "supersedes_instruction_id"?}]}
+
+On a yes, an email's `non_privileged_facts` (each a fact as above plus `author` and
+`sent`) are the facts of the messages quoted or forwarded in it that were sent
+outside the solicitor-client relationship (routing.md Path B). They go to main
+as ordinary facts, each attributed in its notes, under a `main.sources`
+correspondence row that shares the file's hash with its privileged row: one
+top-level row per store for a split email.
 
 An instruction that changes a current one names it in `supersedes_instruction_id`:
 that row is closed (`valid_to`, status `superseded`) and the new row carries it
@@ -42,14 +50,16 @@ INSTRUCTION_STATUSES = ('open', 'actioned', 'superseded')
 PRIV = """(SELECT min(p.source_id) FROM privileged.privileged_sources p
         WHERE p.file_hash = json_extract(:doc, '$.source.file_hash'))"""
 
+# A main row beside a privileged one is a split email's own outside part (a repeat).
 GUARD_MAIN = {'sql': f"""
 SELECT 'store_change: this file is held in the case record, not the privileged store'
-FROM main.sources s WHERE s.source_id = {c.SOURCE}
+FROM main.sources s WHERE s.source_id = {c.SOURCE} AND {PRIV} IS NULL
 """, 'refuse': True}
 
 PRIOR_PRIV = {'sql': f"""
 SELECT CASE WHEN EXISTS (SELECT 1 FROM privileged.fact_provenance f WHERE f.source_id = {PRIV})
              OR EXISTS (SELECT 1 FROM privileged.client_instructions i WHERE i.source_id = {PRIV})
+             OR ({PRIV} IS NOT NULL AND {c.SOURCE} IS NOT NULL)
             THEN 'complete' END AS prior""", 'value_as': 'prior'}
 
 REGISTER_PRIV = f"""
@@ -114,6 +124,11 @@ def _note(fact):
     return '\n'.join(lines)
 
 
+def _on_main(statement):
+    """A main-store statement of ingest_common, bound to the split email's main part."""
+    return {**statement, 'sql': statement['sql'].replace(':doc', ':main')}
+
+
 def plan(request):
     if len(request.get('results') or []) != 1:
         return {'problems': ['contract privileged takes one result']}
@@ -129,6 +144,8 @@ def plan(request):
     asks = []
 
     if answer != 'yes':
+        if 'non_privileged_facts' in doc:
+            return {'problems': ['non_privileged_facts belong only to a privileged (yes) email']}
         status = 'cleared' if answer == 'no' else 'pending'
         source = {'category': 'work_product', 'title': title,
                   'description': read.text(document, 'description', 'document'),
@@ -171,6 +188,13 @@ def plan(request):
             'locator': read.text(row, 'source_locator', where), 'status': status,
             'file_number': read.text(row, 'proceeding_file_number', where), 'supersedes': supersedes,
         })
+    outside = []
+    for i, row in enumerate(read.items(doc, 'non_privileged_facts', 'result') if 'non_privileged_facts' in doc else []):
+        where = f'non_privileged_facts[{i}]'
+        fact = c.read_fact(read, row, where)
+        said = f"Stated in a message from {read.text(row, 'author', where, required=True)}, sent {read.text(row, 'sent', where, required=True)}."
+        fact['notes'] = f"{fact['notes']} {said}" if fact['notes'] else said
+        outside.append(fact)
     if read.problems:
         return {'problems': read.problems}
     if asks:
@@ -188,7 +212,17 @@ def plan(request):
         bound = {'locator': fact['locator'], 'note': _note(fact), 'verified': fact['verified']}
         statements.append({'ref': f'fact {i}', 'params': {'fact': json.dumps(bound, ensure_ascii=False)},
                            'statements': [{'sql': BARE, 'count': 'facts'}, {'sql': PROVENANCE}]})
-    statements += [{'sql': CLOSE_PRIOR}, {'sql': INSTRUCTIONS}, SELECT_PRIV]
-    return {'params': {'doc': json.dumps(payload, ensure_ascii=False)}, 'statements': statements,
+    statements += [{'sql': CLOSE_PRIOR}, {'sql': INSTRUCTIONS}]
+    params = {'doc': json.dumps(payload, ensure_ascii=False)}
+    if outside:
+        main = {'category': 'correspondence', 'title': c.title_from_path(request['file_path']), 'description': None, 'date': None,
+                'file_path': source['file_path'], 'file_hash': source['file_hash'], 'file_number': None,
+                'proceeding_id': source['proceeding_id'], 'execution_status': None, 'filed_by_party_id': None,
+                'verified': 0, 'notes': None, 'status': 'partial', 'privilege_status': None}
+        params['main'] = json.dumps({'source': main, 'facts': outside}, ensure_ascii=False)
+        statements += [_on_main(s) for s in ({'sql': c.REGISTER}, {'sql': c.REFRESH}, c.insert_facts(),
+                                              c.insert_links(), c.flip())]
+    statements.append(SELECT_PRIV)
+    return {'params': params, 'statements': statements,
             'post': [], 'markers': [], 'asks': [], 'report': [], 'title': title, 'date': source['date'],
             'store': 'privileged'}
