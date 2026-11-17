@@ -1,6 +1,6 @@
 # Spec: The drafting records survive a two-computer sync
 
-Status: proposed, 2026-11-17. Two decisions in §9 are Brahm's and block the parts that depend on them.
+Status: approved, 2026-11-17. Brahm approved both decisions in §9 as recommended (D1 and D2) on 2026-11-17.
 Plugin: `lawyer` (the data server and the `drafting-data` skill). Paths are relative to the repo root. `src/` means `source/lawyer/mcp/src/`.
 Source: the recommendation of 2026-11-17 on the per-matter drafting database, steps 1 to 3 of "What I would build now". No rename, no split into two files and no cloud work belongs in this spec.
 
@@ -106,6 +106,8 @@ Scope: edit the source the fix needs (`src/`, the `drafting-data` skill and its 
 Not code. Merge the two 819,200-byte copies with `drafting_data__split_merge` by `sync-split.md`, keeping the empty 757,760-byte file out of the merge and out of the folder. This is done in a matter session, not by this spec's implementer.
 
 ## 9. Decisions for Brahm
+
+Both approved as recommended by Brahm on 2026-11-17.
 
 **D1. Amend ADR 0015 D4 (§3.5).** A lapsed lock is written as released only when the job is next assigned, no longer at session entry or before a page write. Effect: a computer behind on sync no longer writes on its stale copy just by opening a matter. Cost: anything reading `tickets.status` directly sees a lapsed job as `wip` until it is assigned, so every such read moves to the lapse test first. This reverses your ruling of 2026-11-06. Recommended: approve. Without it, steps 1 to 4 still ship.
 
