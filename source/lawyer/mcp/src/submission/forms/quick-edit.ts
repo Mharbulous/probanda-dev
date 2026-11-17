@@ -28,6 +28,7 @@ import { renderableSchemaVersion } from "../schema-ceiling.js";
 import { fetchFilingById, readSchemaVersion } from "./filing-reads.js";
 import { renderFilingInMemory, type InMemoryRender } from "./render.js";
 import { nowStamp, todaySql } from "./timings.js";
+import { heldClause } from "./job-activity.js";
 import { fetchRevision, type FilingRow } from "./query.js";
 import { withLegend } from "./legend.js";
 import {
@@ -759,7 +760,7 @@ function foreignJobs(db: string, session: string, pairs: ReadonlyMap<string, Set
   return rows(
     db,
     `SELECT DISTINCT t.id, t.title FROM tickets t JOIN ticket_scope s ON s.ticket_id = t.id
-      WHERE t.status = 'wip' AND t.rejected_at IS NULL AND t.deleted_at IS NULL AND t.locked_by <> ?
+      WHERE t.id IN (SELECT tickets.id FROM tickets WHERE ${heldClause(db)}) AND t.rejected_at IS NULL AND t.deleted_at IS NULL AND t.locked_by <> ?
         AND (${clauses.join(" OR ")}) ORDER BY t.id`,
     params
   ).map((r) => ({ id: Number(r.id), title: String(r.title) }));

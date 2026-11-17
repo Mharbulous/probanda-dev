@@ -371,14 +371,24 @@ UPDATE filings SET entered_on = '2026-09-19' WHERE id = 7;
 UPDATE filings SET entered_on = NULL WHERE id = 7;   -- undo
 UPDATE filings SET retired_on = '2026-09-08', retirement_reason = 'appeal_expired'
   WHERE id = 7
-    AND NOT EXISTS (SELECT 1 FROM tickets WHERE filing_id = 7 AND status = 'wip');
+    AND NOT EXISTS (SELECT 1 FROM tickets t WHERE t.filing_id = 7
+      AND t.status = 'wip' AND NOT (t.locked_by IS NOT NULL AND t.rejected_at IS NULL
+        AND COALESCE(max(COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = 'last_activity' AND key = 'tickets:' || t.id),
+                                  replace(substr(t.locked_at, 1, 16), ' ', 'T')),
+                         COALESCE((SELECT max(wait_until) FROM ticket_steps st WHERE st.ticket_id = t.id AND st.done_at IS NULL AND st.status = 'waiting'), ''),
+                         '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-60 minutes'), 0)));
 UPDATE filings SET retired_on = '2026-09-25', retirement_reason = 'delivered'
   WHERE id = 8
-    AND NOT EXISTS (SELECT 1 FROM tickets WHERE filing_id = 8 AND status = 'wip');
+    AND NOT EXISTS (SELECT 1 FROM tickets t WHERE t.filing_id = 8
+      AND t.status = 'wip' AND NOT (t.locked_by IS NOT NULL AND t.rejected_at IS NULL
+        AND COALESCE(max(COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = 'last_activity' AND key = 'tickets:' || t.id),
+                                  replace(substr(t.locked_at, 1, 16), ' ', 'T')),
+                         COALESCE((SELECT max(wait_until) FROM ticket_steps st WHERE st.ticket_id = t.id AND st.done_at IS NULL AND st.status = 'waiting'), ''),
+                         '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-60 minutes'), 0)));
 UPDATE filings SET retired_on = NULL, retirement_reason = NULL WHERE id = 7;   -- recovery
 ```
 
-That `NOT EXISTS` is what refuses a retirement on a Writing another session is working; `references/jobs-closeout.md` §9a carries the rest of the retirement script, which puts the same clause on every statement, and its confirm-read. The recovery line takes no such clause — recovery reopens a Writing and has no equivalent precondition.
+That `NOT EXISTS` is what refuses a retirement on a Writing another session is working, by `jobs-run.md` §4a's held test, so a job whose lock has lapsed does not refuse it; `references/jobs-closeout.md` §9a carries the rest of the retirement script, which puts the same clause on every statement, and its confirm-read. The recovery line takes no such clause — recovery reopens a Writing and has no equivalent precondition.
 
 **Setting `filed_on` freezes that Writing's exhibits (schema v24, #712).** Three guard triggers refuse every insert, update and delete on a filed Writing's `filing_documents` rows. The only order that works is therefore **draft → link the exhibits → set `filed_on`**; linking one afterwards aborts with `a filed filing's exhibits do not change (#712)`. That is the freeze doing its job, not a defect: a VanIAC package's `Ex. N` is the document's position in one proceeding-wide ordered list derived at render time, so if a filed round's rows could still move, a later round's numbers would drift away from the paper already delivered. Clearing a `filed_on` set in error is an `UPDATE` on `filings`, which the guards do not touch, so the Writing reopens and its exhibits become editable again.
 

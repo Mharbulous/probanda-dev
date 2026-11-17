@@ -19,7 +19,6 @@ import { basename, dirname, join } from "node:path";
 import { inOneCall } from "../call-memo.js";
 import { writeCastPage } from "../cast/cast-write.js";
 import { moveSeedsOnce, type SeedsLeft, type SeedsMove } from "../loose-threads/migrate.js";
-import { releaseLapsedLocks } from "./forms/job-activity.js";
 import type { PracticeStore } from "../practice/store.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { refuseSyncSplit } from "./backend.js";
@@ -416,8 +415,6 @@ async function openSession(
   for (const t of result.timings) timings.push({ phase: `bootstrap: ${t.phase}`, ms: t.ms });
   const refused = result.migration_required || result.bundle_outdated;
   const threadsMoved = refused ? null : await phase("loose_threads", () => moveSeedsOnce(dbPath));
-  // ADR 0015, 2026-11-06 note: the opening's board and pages are drawn after lapsed locks are released. This session holds no job yet.
-  if (!refused) await phase("lapsed_locks", () => releaseLapsedLocks(dbPath, undefined));
   const opening: Opening =
     draftDir === undefined || todos === undefined || dates === undefined || refused ? {} : openBoard(dbPath, draftDir, identity, todos, dates, result, filingId, timings);
   // Cast of Characters spec 4.1: the matter's Cast page is written with the matter pages at session

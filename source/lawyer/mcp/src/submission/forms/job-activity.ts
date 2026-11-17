@@ -121,7 +121,15 @@ export function lapsedClause(dbPath: string): string {
   return `(tickets.status = 'wip' AND tickets.locked_by IS NOT NULL AND tickets.rejected_at IS NULL AND ${idleClause(dbPath, LAPSE_AFTER_MINUTES)})`;
 }
 
-/** The statement that records a lapse in each matching job's history, the kv_store value `lock_lapsed` /
+/** SQL true of the `tickets` row in scope when it is held and its lock has not lapsed: what a reader of
+ * `tickets.status = 'wip'` means by "in progress". A lapsed lock stays on its row until assign_job
+ * takes the job (ADR 0015, 2026-11-17 note), so every such read uses this test. The skills' form of it
+ * is drafting-data `jobs-run.md` §4a. */
+export function heldClause(dbPath: string): string {
+  return `(tickets.status = 'wip' AND NOT ${lapsedClause(dbPath)})`;
+}
+
+/** The statement that records a lapse in the matching job's history, the kv_store value `lock_lapsed` /
  * `tickets:<id>`: the minute it was released and the holder tag it was released from. `where` is the
  * releasing write's own, so it lands exactly when that write clears a lapsed lock. */
 export function recordLapseSql(where: string): string {
@@ -136,19 +144,6 @@ export function recordLapseSql(where: string): string {
 /** What a release sets on a job's row: back to Ready, unlocked. Plan, steps, scope, proposals, answers
  * and sources are not touched, and claim_no is raised only by the next assign_job. */
 export const RELEASE_SET = "status = 'queued', locked_by = NULL, locked_at = NULL";
-
-/** Writes the release of every lapsed lock (lapsedClause) but `ownToken`'s, each with its lapse
- * recorded in its history, before a board page is written (ADR 0015, 2026-11-06 note). Reads first
- * and writes nothing when no lock has lapsed, so a repeat call writes nothing new. Returns the count released. */
-export async function releaseLapsedLocks(dbPath: string, ownToken: string | undefined, env: NodeJS.ProcessEnv = process.env): Promise<number> {
-  const where = `${lapsedClause(dbPath)} AND locked_by IS NOT ?`;
-  const params = [ownToken ?? null];
-  const [{ n }] = submissionDataQuery(dbPath, `SELECT count(*) AS n FROM tickets WHERE ${where}`, params).rows as unknown as { n: number }[];
-  if (n === 0) return 0;
-  const record = hasTable(dbPath, "kv_store") ? [{ sql: recordLapseSql(where), params }] : [];
-  const written = await submissionDataWriteAll(dbPath, [...record, { sql: `UPDATE tickets SET ${RELEASE_SET} WHERE ${where}`, params }], env);
-  return written.ok ? written.results[record.length].changes : 0;
-}
 
 /** The statement that records a reopen in the job's history, the kv_store value `reopened` /
  * `tickets:<id>`: a JSON array gaining one entry per reopen, holding the completion and plan approval

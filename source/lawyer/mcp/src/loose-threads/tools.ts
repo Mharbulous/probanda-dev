@@ -5,6 +5,7 @@
 
 import { ValidationError } from "../errors.js";
 import { submissionDataQuery } from "../submission/backend.js";
+import { heldClause } from "../submission/forms/job-activity.js";
 import { acquireDataLock } from "../submission/lock.js";
 import { type LooseThread, isOpenThread, RANK_GROUPS, type RankGroup, readThreads, THREAD_KINDS, threadStamp, type ThreadKind, writeThreads } from "./backend.js";
 import { moveSeedsOnce } from "./migrate.js";
@@ -209,7 +210,7 @@ export async function looseThreadsUpdate(args: UpdateArgs, env: NodeJS.ProcessEn
       case "move": {
         check(isId(args.from_filing_id), "update", "from_filing_id", "must name the board the threads move from");
         const target = args.filing_id ?? null;
-        check(count(dbPath, "SELECT COUNT(*) AS n FROM tickets WHERE filing_id = ? AND status = 'wip'", [args.from_filing_id]) === 0, "update", "from_filing_id", "names a board with a job in progress");
+        check(count(dbPath, `SELECT COUNT(*) AS n FROM tickets WHERE filing_id = ? AND ${heldClause(dbPath)}`, [args.from_filing_id]) === 0, "update", "from_filing_id", "names a board with a job in progress");
         const moving = threads.filter((t) => t.filing_id === args.from_filing_id && isOpenThread(t, deleted));
         for (const t of moving) {
           check(target === null || count(dbPath, "SELECT COUNT(*) AS n FROM filings WHERE id = ? AND proceeding_id = ? AND retired_on IS NULL", [target, t.proceeding_id]) === 1, "update", "filing_id", "names no live Writing or Work Board in the threads' proceeding");
