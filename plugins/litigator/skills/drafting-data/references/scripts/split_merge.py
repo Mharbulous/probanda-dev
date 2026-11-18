@@ -34,6 +34,8 @@ import sqlite3
 import sys
 import tempfile
 
+from migrate_engine import sqlite_too_old
+
 
 class Refused(Exception):
     def __init__(self, code, message):
@@ -104,6 +106,11 @@ def compare(a, b):
             if table == "db_meta" and key == ("revision",) and va and vb:
                 resolved.append({"table": table, "key": {"key": "revision"}, "took": "the higher value"})
                 continue
+            # Each computer's count of its own writes (the lost-write check) is taken at the higher value, or
+            # from the one copy that holds it, so neither computer reads the merge as missing its writes.
+            if table == "db_meta" and str(key[0]).startswith("writes:"):
+                resolved.append({"table": table, "key": {"key": key[0]}, "took": "the higher value"})
+                continue
             kind = "only_a" if vb is None else "only_b" if va is None else "differ"
             changed = [c for c in cols if va and vb and va[c] != vb[c]] if kind == "differ" else cols
             differences.append({
@@ -159,6 +166,12 @@ def apply(con, b, differences, decisions):
         applied += 1
     revisions = [int(c.execute("SELECT value FROM db_meta WHERE key = 'revision'").fetchone()[0]) for c in (con, b)]
     con.execute("UPDATE db_meta SET value = ? WHERE key = 'revision'", (str(max(revisions)),))
+    writes = {}
+    for c in (con, b):
+        for k, v in c.execute("SELECT key, value FROM db_meta WHERE key LIKE 'writes:%'"):
+            writes[k] = max(writes.get(k, 0), int(v))
+    for k, v in writes.items():
+        con.execute("INSERT INTO db_meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", (k, str(v)))
     return applied
 
 
@@ -206,6 +219,9 @@ def merge(req):
 def main():
     req = json.load(sys.stdin)
     try:
+        too_old = sqlite_too_old()
+        if too_old:
+            raise Refused("sqlite_too_old", too_old)
         out = {"diff": diff, "merge": merge}[req["op"]](req)
     except Refused as exc:
         out = {"refused": exc.code, "message": str(exc)}

@@ -59,12 +59,16 @@ Run before every on-the-fly write, whether or not the session holds a job, with 
 
 ```sql
 SELECT t.id, t.title FROM tickets t JOIN ticket_scope s ON s.ticket_id = t.id
- WHERE t.status = 'wip' AND t.rejected_at IS NULL AND t.deleted_at IS NULL
-   AND t.locked_by <> 'sess-a1'
+ WHERE t.rejected_at IS NULL AND t.deleted_at IS NULL AND t.locked_by <> 'sess-a1'
+   AND t.status = 'wip' AND NOT (t.locked_by IS NOT NULL AND t.rejected_at IS NULL
+     AND COALESCE(max(COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = 'last_activity' AND key = 'tickets:' || t.id),
+                               replace(substr(t.locked_at, 1, 16), ' ', 'T')),
+                      COALESCE((SELECT max(wait_until) FROM ticket_steps st WHERE st.ticket_id = t.id AND st.done_at IS NULL AND st.status = 'waiting'), ''),
+                      '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-60 minutes'), 0))
    AND s.entity = 'facts' AND (s.entity_id = 12 OR s.entity_id IS NULL);
 ```
 
-Any row back means refuse, naming `Job #<id>: <title>` for each row, and write nothing. No row: proceed. A session holding its own job still runs `jobs-common.md` §2's scope read for its own job as well; nothing about that read changes. Counsel's review in progress scopes all six tables, `rhetorical_paragraphs` and `filing_orders` with `entity_id` NULL (`jobs-stock.md` §3c), so this read refuses every on-the-fly edit while counsel's review runs in another session.
+The `wip` test is `jobs-run.md` §4a's held test, so a job whose lock has lapsed refuses nothing. Any row back means refuse, naming `Job #<id>: <title>` for each row, and write nothing. No row: proceed. A session holding its own job still runs `jobs-common.md` §2's scope read for its own job as well; nothing about that read changes. Counsel's review in progress scopes all six tables, `rhetorical_paragraphs` and `filing_orders` with `entity_id` NULL (`jobs-stock.md` §3c), so this read refuses every on-the-fly edit while counsel's review runs in another session.
 
 ## 4. The one-script write
 
@@ -121,7 +125,12 @@ Positions N and M are rows N and M of this list, counting from 1. Stop, writing 
 
 ```sql
 SELECT DISTINCT t.id, t.title FROM tickets t JOIN ticket_scope s ON s.ticket_id = t.id
- WHERE t.status = 'wip' AND t.rejected_at IS NULL AND t.deleted_at IS NULL AND t.locked_by <> 'sess-a1'
+ WHERE t.rejected_at IS NULL AND t.deleted_at IS NULL AND t.locked_by <> 'sess-a1'
+   AND t.status = 'wip' AND NOT (t.locked_by IS NOT NULL AND t.rejected_at IS NULL
+     AND COALESCE(max(COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = 'last_activity' AND key = 'tickets:' || t.id),
+                               replace(substr(t.locked_at, 1, 16), ' ', 'T')),
+                      COALESCE((SELECT max(wait_until) FROM ticket_steps st WHERE st.ticket_id = t.id AND st.done_at IS NULL AND st.status = 'waiting'), ''),
+                      '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-60 minutes'), 0))
    AND ((s.entity = 'filing_facts' AND (s.entity_id IN (31, 32) OR s.entity_id IS NULL))
      OR (s.entity = 'facts'        AND (s.entity_id IN (5, 9)   OR s.entity_id IS NULL))
      OR (s.entity = 'filings'      AND (s.entity_id = 8         OR s.entity_id IS NULL)));
@@ -180,7 +189,12 @@ Positions N and M are rows N and M of this list, counting from 1. The standard c
 
 ```sql
 SELECT DISTINCT t.id, t.title FROM tickets t JOIN ticket_scope s ON s.ticket_id = t.id
- WHERE t.status = 'wip' AND t.rejected_at IS NULL AND t.deleted_at IS NULL AND t.locked_by <> 'sess-a1'
+ WHERE t.rejected_at IS NULL AND t.deleted_at IS NULL AND t.locked_by <> 'sess-a1'
+   AND t.status = 'wip' AND NOT (t.locked_by IS NOT NULL AND t.rejected_at IS NULL
+     AND COALESCE(max(COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = 'last_activity' AND key = 'tickets:' || t.id),
+                               replace(substr(t.locked_at, 1, 16), ' ', 'T')),
+                      COALESCE((SELECT max(wait_until) FROM ticket_steps st WHERE st.ticket_id = t.id AND st.done_at IS NULL AND st.status = 'waiting'), ''),
+                      '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-60 minutes'), 0))
    AND ((s.entity = 'filing_documents' AND (s.entity_id IN (51, 52) OR s.entity_id IS NULL))
      OR (s.entity = 'documents'        AND (s.entity_id IN (14, 17) OR s.entity_id IS NULL))
      OR (s.entity = 'filings'          AND (s.entity_id = 8         OR s.entity_id IS NULL)));
