@@ -6,7 +6,7 @@
 // is never synced, and it is Probanda's own file (Commandment 7).
 
 import { randomUUID } from "node:crypto";
-import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 import { hostLocalPath } from "./lock.js";
 
@@ -36,9 +36,7 @@ export function writerFor(dbPath: string, env: NodeJS.ProcessEnv = process.env):
 
 /** Stores the record, called after the live file was replaced. */
 export function saveWriteRecord(dbPath: string, record: WriteRecord, env: NodeJS.ProcessEnv = process.env): void {
-  const path = recordPath(dbPath, env);
-  writeFileSync(`${path}.tmp`, JSON.stringify(record));
-  renameSync(`${path}.tmp`, path);
+  writeFileSync(recordPath(dbPath, env), JSON.stringify(record));
 }
 
 /** The refusal when the live file lacks `missing` of this computer's writes. Plain words: the practitioner hears it. */
