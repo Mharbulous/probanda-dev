@@ -28,6 +28,7 @@ const MOCKUP_ONLY_HEADINGS = [
   "Points not yet answered",
   "Court rules not in this appendix",
   "Page budget",
+  "Authorities",
   "Legend",
 ];
 
