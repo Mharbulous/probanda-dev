@@ -47,9 +47,22 @@ import { stagedStorePython } from "../staged-store.js";
 import { RESEARCH_JOB_PREFIX } from "./forms/research-job.js";
 import { acquireDataLock } from "./lock.js";
 
-// OneDrive names a sync conflict's copy `<name>-<computer name><ext>` (Microsoft, "Duplicate files in
-// OneDrive": book1-desktop-computer.xlsx beside book1.xlsx). Its copies of submission.sqlite are told
-// apart here and in split_copies below by that pattern alone.
+// The names a copy of submission.sqlite takes beside it, matched here and by split_copies below, which
+// must stay identical (spec 2026-11-17 drafting-records sync safety, section 3.3), case-insensitively:
+// - `submission-<computer name>.sqlite`: Microsoft's sync conflict copy, the computer name added to the file
+//   name (Microsoft support article fd47ce5e-8dd0-465e-9e3a-461e1a3cf613, "Duplicate files in" Microsoft's
+//   cloud storage: book1-desktop-computer.xlsx beside book1.xlsx).
+// - `submission (<anything>).sqlite`: Dropbox's conflicted copy, its name holding the editor's name,
+//   "conflicted copy" and the date in parentheses (Dropbox, "What's a conflicted copy?",
+//   help.dropbox.com/organize/conflicted-copy), and the numbered copy `submission (1).sqlite` that Windows
+//   makes when both files are kept (Microsoft, The Old New Thing, 2019-06-04, "In the file copy conflict
+//   dialog, what happened to the option to copy the new file with a numeric suffix?": "the copied file
+//   will have a number added to its name") and other sync tools make.
+// - `submission - Copy.sqlite` and `submission - Copy (2).sqlite`: File Explorer's copy within one folder.
+//   No Microsoft page states this name; it is the default of Explorer's NamingTemplates CopyNameTemplate
+//   ("%s - Copy"), as reported by winaero.com and Microsoft Q&A threads.
+// Never a copy: the #353 backups `submission.sqlite.bak-*` and the staging sibling
+// `coclerk_submission_replace_*` (staged-store.ts), whose names this pattern cannot match.
 const SPLIT_REMEDY =
   "Each copy may hold changes the others lack. Nothing was written or created. Stop drafting work on this matter and follow " +
   "/drafting-data references/sync-split.md: drafting_data__split_merge compares two copies, and the practitioner decides each difference. " +
@@ -62,7 +75,11 @@ export function syncSplitCopies(dbPath: string): string[] {
   const stem = basename(dbPath).slice(0, -ext.length || undefined).toLowerCase();
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
-    .filter((f) => f.toLowerCase().startsWith(`${stem}-`) && f.toLowerCase().endsWith(ext) && f.length > stem.length + 1 + ext.length)
+    .filter((f) => {
+      const name = f.toLowerCase();
+      if (!name.startsWith(stem) || !name.endsWith(ext)) return false;
+      return /^(?:-.+| - copy(?: \(\d+\))?| \(.+\))$/.test(name.slice(stem.length, name.length - ext.length));
+    })
     .sort();
 }
 
@@ -90,7 +107,8 @@ def split_copies(db_path):
     stem, ext = os.path.splitext(name.lower())
     if not os.path.isdir(folder):
         return []
-    return sorted(f for f in os.listdir(folder) if f.lower().startswith(stem + '-') and f.lower().endswith(ext) and len(f) > len(stem) + 1 + len(ext))
+    return sorted(f for f in os.listdir(folder) if f.lower().startswith(stem) and f.lower().endswith(ext)
+                  and re.fullmatch(r'-.+| - copy(?: \(\d+\))?| \(.+\)', f.lower()[len(stem):len(f) - len(ext)]))
 
 
 # refuseSyncSplit above, for the helper's own calls: no write lands in one copy of a split database.

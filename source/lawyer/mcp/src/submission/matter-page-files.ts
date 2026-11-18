@@ -10,6 +10,7 @@ import { BoardIndex } from "./forms/board-members.js";
 import { readExistingRevision } from "./forms.js";
 import { LOOSE_THREADS_FILE, LOOSE_THREADS_PAGE_NAME } from "./forms/loose-ideas-page.js";
 import { MATTER_BOARD_FILE, MATTER_BOARD_MARKER } from "./forms/matter-board-shell.js";
+import { RECORDS_FOLDER } from "./render-manifest.js";
 import { liveMembers, pageGroups, viewTargets } from "./matter-page-groups.js";
 import { writeStatusFile } from "../status-file.js";
 import { isViewPageFile, VIEW_PAGE_MARKER, type ViewPage, type ViewPagePath } from "./view-pages.js";
@@ -106,6 +107,29 @@ const RETIRED_PREVIEW = /^(?:raw research|legal memos)(?: - (?:Milestone|job boa
 function generatorWrote(file: string): boolean {
   const text = readFileSync(file, "utf-8");
   return text.includes(MILESTONE_MARKER) || text.includes(MATTER_BOARD_MARKER) || text.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== undefined;
+}
+
+/** The records folder's entries only a drafting session writes: the pages' state file (matter-pages-state.ts),
+ * each filing's render manifest (render-manifest.ts), its quick-edit log, paragraph maps and previews (quick-edit.ts). */
+const RECORDS_ENTRY = /^(?:matter-pages-state\.json|render-manifest-\d+\.json|quick-edits-\d+\.jsonl|paragraph-maps|previews)$/i;
+
+/**
+ * Spec 2026-11-17 drafting-records sync safety, section 3.1: the files in `draftDir` that only a drafting
+ * session writes, as evidence that the matter's drafting records existed. They are a page this generator
+ * wrote (an `.html` file in `draftDir` or an immediate subfolder that passes generatorWrote: a Work Board,
+ * the Litigation Strategy, the Loose Threads page, a view page, or an older layout of one), and the records
+ * folder's own files (RECORDS_ENTRY). A file another tool or the practitioner left there is never one. Read-only.
+ */
+export function draftingWorkFiles(draftDir: string): string[] {
+  const found: string[] = [];
+  const subfolders = readdirSync(draftDir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => join(draftDir, e.name));
+  for (const dir of [draftDir, ...subfolders]) {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const file = join(dir, entry.name);
+      if (dir === join(draftDir, RECORDS_FOLDER) ? RECORDS_ENTRY.test(entry.name) : entry.isFile() && /\.html$/i.test(entry.name) && generatorWrote(file)) found.push(file);
+    }
+  }
+  return found.sort();
 }
 
 /**

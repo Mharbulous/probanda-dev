@@ -40,7 +40,7 @@ Every tool below except `drafting_forms__open_session` takes an already-resolved
 
 | Operation | Tool | Notes |
 |---|---|---|
-| Read-only SQL against the schema | `drafting_data__query` | `{db_path, sql, params?}` — exactly one `SELECT`/`WITH`/`PRAGMA` statement per call (split multi-statement SQL into separate calls); no schema-guard bypass; fails clearly if `db_path` doesn't exist yet — run `migrate` first, unless it refused `sync_conflict_copies`; read `references/schema.sql` first — never query from a guessed column name |
+| Read-only SQL against the schema | `drafting_data__query` | `{db_path, sql, params?}` — exactly one `SELECT`/`WITH`/`PRAGMA` statement per call (split multi-statement SQL into separate calls); no schema-guard bypass; fails clearly if `db_path` doesn't exist yet — run `migrate` first, unless it refused `sync_conflict_copies` or `earlier_work_missing` (`references/sync-split.md`); read `references/schema.sql` first — never query from a guessed column name |
 | Create a Writing | `drafting_data__create_writing` | Resolve the practitioner's phrase to one kinds-index row first. Then write the recipients and prose rows (`references/filing-checklists.md` §13) through `execute`, which never inserts a `filings` row |
 | Open a Work Board with no Writing | `drafting_data__create_milestone` | `title` is the practitioner's own words. `references/filing-checklists.md` §11 |
 | Record a board's statement of goals | `drafting_data__set_board_goal` † | `confirmed` only on the practitioner's bare yes to the exact wording |

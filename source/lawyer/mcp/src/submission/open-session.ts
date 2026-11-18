@@ -43,7 +43,7 @@ import { fetchRevision } from "./forms/query.js";
 import { type MatterDates, readMatterDates } from "./matter-dates.js";
 import { type BoardMove, DATES_NOT_READ, pagePathFor, type PagesWritten, recordPagesState, writeMatterPages } from "./matter-pages.js";
 import { type MatterTodos, readMatterTodos } from "./matter-todos.js";
-import { submissionDataMigrate } from "./migrate.js";
+import { refuseEarlierWorkMissing, submissionDataMigrate } from "./migrate.js";
 import { counselOffers, matterPartiesDrift, type CounselOffer, type PartiesDriftRow } from "./parties-drift.js";
 
 // The matter folder's leading token, e.g. "L8212" from "L8212 Northfield v. Brightwater" -- the same
@@ -324,8 +324,11 @@ function backups(dbPath: string): Set<string> {
 
 /** A first entry on a matter with no drafting database creates it at the path its pointer derives, by
  * the one migration path (a fresh create has nothing to back up, #353). Only the matter's own folder
- * may be made: a folder elsewhere that is missing means the pointer is stale, so that is refused. */
-async function createDatabase(root: string, dbPath: string): Promise<NonNullable<OpenSessionResult["migrated"]>> {
+ * may be made: a folder elsewhere that is missing means the pointer is stale, so that is refused. A sign
+ * of earlier work, in the matter's draft folder or beside the database, refuses before anything is made
+ * (spec 2026-11-17, section 3.1). */
+async function createDatabase(root: string, dbPath: string, draftDir: string | undefined): Promise<NonNullable<OpenSessionResult["migrated"]>> {
+  refuseEarlierWorkMissing(dbPath, draftDir === undefined ? undefined : [draftDir]);
   const folder = dirname(dbPath);
   if (!existsSync(folder)) {
     if (dirname(folder).toLowerCase() !== root.toLowerCase()) {
@@ -376,7 +379,7 @@ async function openSession(
   // returned beside the result, never in it, since the result is the tool response.
   const dates = draftDir === undefined ? undefined : await phase("dates", () => readMatterDates(practiceDb, identity.matterNo));
 
-  let migrated: OpenSessionResult["migrated"] = existsSync(dbPath) ? undefined : await phase("create_database", () => createDatabase(root, dbPath));
+  let migrated: OpenSessionResult["migrated"] = existsSync(dbPath) ? undefined : await phase("create_database", () => createDatabase(root, dbPath, draftDir));
   // Bootstrap writes no page: the opening below writes the pages, once.
   let result = submissionFormsBootstrap(dbPath, identity, undefined, undefined, undefined, unattended);
   let migrationRefused: string | undefined;
