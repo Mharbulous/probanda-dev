@@ -3,9 +3,11 @@
 // with sqlite_too_old, before it reads or writes anything.
 //
 // An older SQLite is simulated, not installed: a usercustomize.py in a throwaway PYTHONUSERBASE makes
-// sqlite3.sqlite_version_info read 3.46.0 while a flag file exists. The flag is read on every access,
-// so the long-lived query sidecar started before the flag sees the change too, and the fixtures are
-// built with the real SQLite.
+// sqlite3.sqlite_version_info read 3.46.0 while a flag file exists. It removes the two version
+// attributes from the module and serves them from a module __getattr__, which reads the flag on every
+// access, so the long-lived query sidecar started before the flag sees the change too, and the fixtures
+// are built with the real SQLite. Not a property on a swapped module class: Python 3.15 caches a
+// property read inside a warmed function, so the sidecar would keep the real version.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -25,22 +27,26 @@ const userSite = spawnSync(python, ["-c", "import site; print(site.getusersitepa
 mkdirSync(userSite, { recursive: true });
 writeFileSync(
   join(userSite, "usercustomize.py"),
-  `import os, sqlite3, types
+  `import os, sqlite3
 
 _real = sqlite3.sqlite_version_info
+del sqlite3.sqlite_version_info
+del sqlite3.sqlite_version
 
 
-class _Simulated(types.ModuleType):
-    @property
-    def sqlite_version_info(self):
-        return (3, 46, 0) if os.path.exists(os.environ.get("COCLERK_TEST_OLD_SQLITE_FLAG", "")) else _real
-
-    @property
-    def sqlite_version(self):
-        return ".".join(map(str, self.sqlite_version_info))
+def _version_info():
+    return (3, 46, 0) if os.path.exists(os.environ.get("COCLERK_TEST_OLD_SQLITE_FLAG", "")) else _real
 
 
-sqlite3.__class__ = _Simulated
+def __getattr__(name):
+    if name == "sqlite_version_info":
+        return _version_info()
+    if name == "sqlite_version":
+        return ".".join(map(str, _version_info()))
+    raise AttributeError(f"module 'sqlite3' has no attribute {name!r}")
+
+
+sqlite3.__getattr__ = __getattr__
 `,
   "utf-8"
 );
