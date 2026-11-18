@@ -244,7 +244,7 @@ export const dataTools: Tool<DispatchContext>[] = [
     (args: { db_path: string; filing_id: number; jurisdiction?: { country: string; jurisdiction: string }; remove_companion?: string }) =>
       resnapshotWriting(args.db_path, args.filing_id, { jurisdiction: args.jurisdiction, removeCompanion: args.remove_companion })
   ),
-  defineTool("drafting_data__migrate", (args: { db_path: string }) => submissionDataMigrate(args.db_path)),
+  defineTool("drafting_data__migrate", (args: { db_path: string; accept_current_file?: boolean }) => submissionDataMigrate(args.db_path, process.env, args.accept_current_file === true)),
   defineTool("drafting_data__complete_job", async (args: CompleteJobArgs & PageArgs, context: DispatchContext) => {
     const { client, todos, dates } = await pageContext(context, args, true);
     return submissionDataCompleteJob(args, client, todos?.todos, dates);
@@ -289,10 +289,10 @@ export const dataTools: Tool<DispatchContext>[] = [
   }),
   defineTool(
     "drafting_forms__open_session",
-    async (args: PageArgs & { matter_root?: string; project_id?: string; unattended?: boolean; filing_id?: number }, context: DispatchContext) => {
+    async (args: PageArgs & { matter_root?: string; project_id?: string; unattended?: boolean; filing_id?: number; accept_current_file?: boolean }, context: DispatchContext) => {
       // The Project's matter lookup shares the call's one practice snapshot; the job below starts outside it.
       const { result, dates, matterDescription } = await inOneCall(async () =>
-        submissionFormsOpenSession(await matterRootFor(args, context.practiceDb), context.practiceDb, clientContext(args), args.unattended === true, args.filing_id)
+        submissionFormsOpenSession(await matterRootFor(args, context.practiceDb), context.practiceDb, clientContext(args), args.unattended === true, args.filing_id, args.accept_current_file === true)
       );
       // #589: matter_lookup's client fields are the identity bootstrap used, so the job renders with it.
       const { client_name, client_no, matter_no } = result.matter_lookup;

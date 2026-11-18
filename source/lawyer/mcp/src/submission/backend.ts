@@ -46,6 +46,7 @@ import { pythonTimeoutMs as namespaceTimeoutMs, READ_TIMEOUT_MS, WRITE_TIMEOUT_M
 import { stagedStorePython } from "../staged-store.js";
 import { RESEARCH_JOB_PREFIX } from "./forms/research-job.js";
 import { acquireDataLock } from "./lock.js";
+import { lostWritesMessage, readWriteRecord, saveWriteRecord, type WriteRecord, writerFor, writesKey } from "./write-record.js";
 
 // The names a copy of submission.sqlite takes beside it, matched here and by split_copies below, which
 // must stay identical (spec 2026-11-17 drafting-records sync safety, section 3.3), case-insensitively:
@@ -277,6 +278,41 @@ def changed(con, mark):
     return con.total_changes > 0 or schema_mark(con) != mark
 
 
+# The lost-write check (spec 2026-11-17 drafting-records sync safety, section 3.2, and write-record.ts): the
+# live file's count for this computer's writer, against the count this computer remembers. Read before
+# anything is staged; returns how many of this computer's writes the file lacks, or 0.
+def writes_missing(req):
+    writer = req.get('writer')
+    if not writer or writer['writes'] <= 0 or not os.path.exists(req['db_path']):
+        return 0
+    uri = 'file:' + req['db_path'].replace('\\', '/').replace('?', '%3f').replace('#', '%23') + '?mode=ro'
+    con = sqlite3.connect(uri, uri=True)
+    try:
+        row = con.execute("SELECT value FROM db_meta WHERE key = ?", ('writes:' + writer['id'],)).fetchone()
+    finally:
+        con.close()
+    return max(0, writer['writes'] - (int(row[0]) if row else 0))
+
+
+# A write that commits also sets this computer's count in db_meta, on the staged copy before it replaces the
+# live file, so the file and the count land together or not at all. A write that changed nothing counts nothing.
+def counted(req, mutate):
+    writer = req.get('writer')
+    if not writer:
+        return mutate
+
+    def run(con):
+        out, committed = mutate(con)
+        if committed:
+            count = writer['writes'] + 1
+            con.execute("INSERT INTO db_meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                        ('writes:' + writer['id'], str(count)))
+            con.commit()
+            out = {**out, "writer_writes": count}
+        return out, committed
+    return run
+
+
 def do_execute(req):
     guarded = req.get('guard_jobs')
     if guarded and re.search(SEEDS_WRITE_RE, req['sql_script']):
@@ -314,7 +350,7 @@ def do_execute(req):
         if guarded and seed_rows(con) != seeds:
             raise SystemExit(SEEDS_REFUSED)
         return {"ok": True, "changes": con.total_changes}, changed(con, mark)
-    return staged_write(req, 'execute', mutate)
+    return staged_write(req, 'execute', counted(req, mutate))
 
 
 def do_write(req):
@@ -332,7 +368,7 @@ def do_write(req):
                 con.execute("ROLLBACK")
             raise
         return out, changed(con, mark)
-    return staged_write(req, 'write', mutate, isolation_level=None)
+    return staged_write(req, 'write', counted(req, mutate), isolation_level=None)
 
 
 def do_write_all(req):
@@ -362,7 +398,7 @@ def do_write_all(req):
                 con.execute("ROLLBACK")
             raise
         return {"ok": True, "results": results}, changed(con, mark)
-    return staged_write(req, 'write', mutate, isolation_level=None)
+    return staged_write(req, 'write', counted(req, mutate), isolation_level=None)
 
 
 def do_trial(req):
@@ -434,6 +470,9 @@ def main():
     if too_old:
         return too_old
     refuse_split(req['db_path'])
+    missing = writes_missing(req) if op in ('execute', 'write', 'write_all') else 0
+    if missing:
+        return {"writes_missing": missing}
     if op == 'execute':
         return do_execute(req)
     if op == 'write':
@@ -558,6 +597,8 @@ interface QueryRequest {
 interface ExecuteRequest {
   op: "execute";
   db_path: string;
+  /** This computer's write record (write-record.ts), added by runWrite. */
+  writer?: WriteRecord;
   sql_script: string;
   /** Refuse a job move (JOB_MOVES above): set by the drafting_data__execute tool, never by a fixture seed. */
   guard_jobs?: boolean;
@@ -566,6 +607,8 @@ interface ExecuteRequest {
 interface WriteRequest {
   op: "write";
   db_path: string;
+  /** This computer's write record (write-record.ts), added by runWrite. */
+  writer?: WriteRecord;
   sql: string;
   params: unknown[];
 }
@@ -581,6 +624,8 @@ export interface WriteStatement {
 interface WriteAllRequest {
   op: "write_all";
   db_path: string;
+  /** This computer's write record (write-record.ts), added by runWrite. */
+  writer?: WriteRecord;
   statements: WriteStatement[];
   foreign_keys_off?: boolean;
 }
@@ -705,6 +750,38 @@ function runHelper(request: ExecuteRequest | WriteRequest | WriteAllRequest | Tr
   }) as Record<string, unknown>);
 }
 
+/** A committing write, checked and counted against this computer's write record (write-record.ts): refused
+ * lost_writes, before anything is staged, when the live file lacks writes this computer made; the record is
+ * stored only after the live file was replaced. Run under the data lock. */
+function runWrite(request: ExecuteRequest | WriteRequest | WriteAllRequest, env: NodeJS.ProcessEnv): Record<string, unknown> {
+  const writer = writerFor(request.db_path, env);
+  const { writes_missing: missing, writer_writes: count, ...out } = runHelper({ ...request, writer }, env);
+  if (typeof missing === "number") throw new DataServerError(lostWritesMessage(request.db_path, missing), "lost_writes", { missing });
+  if (typeof count === "number") saveWriteRecord(request.db_path, { id: writer.id, writes: count }, env);
+  return out;
+}
+
+/** This computer's count as the file at dbPath holds it (0 when absent). */
+function fileWrites(dbPath: string, record: WriteRecord): number {
+  const [row] = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = ?", [writesKey(record.id)]).rows as { value?: string }[];
+  return row === undefined ? 0 : Number(row.value);
+}
+
+/** Refuses, code lost_writes, when the existing file at dbPath lacks writes this computer made (session entry, migrate). */
+export function refuseLostWrites(dbPath: string, env: NodeJS.ProcessEnv = process.env): void {
+  const record = readWriteRecord(dbPath, env);
+  if (record === null || record.writes <= 0 || !existsSync(dbPath)) return;
+  const missing = record.writes - fileWrites(dbPath, record);
+  if (missing > 0) throw new DataServerError(lostWritesMessage(dbPath, missing), "lost_writes", { missing });
+}
+
+/** Decision D2 (accept_current_file): this computer's record is set to what the file at dbPath now holds. */
+export function resetWriteRecord(dbPath: string, env: NodeJS.ProcessEnv = process.env): void {
+  const record = readWriteRecord(dbPath, env);
+  if (record === null) return;
+  saveWriteRecord(dbPath, { id: record.id, writes: existsSync(dbPath) ? fileWrites(dbPath, record) : 0 }, env);
+}
+
 /** Throws the helper's coded refusal (sqlite_too_old), or returns its result. */
 function refusedOrResult(out: Record<string, unknown>): Record<string, unknown> {
   if (typeof out.refused === "string") throw new DataServerError(String(out.message), out.refused);
@@ -766,7 +843,7 @@ export async function submissionDataExecute(
 ): Promise<{ ok: true; changes: number; warning?: string }> {
   const lock = await acquireDataLock(dbPath, env);
   try {
-    const result = withAttachHint(() => runHelper({ op: "execute", db_path: dbPath, sql_script: sqlScript, guard_jobs: guardJobs }, env)) as { ok: true; changes: number };
+    const result = withAttachHint(() => runWrite({ op: "execute", db_path: dbPath, sql_script: sqlScript, guard_jobs: guardJobs }, env)) as { ok: true; changes: number };
     const withWarning: { ok: true; changes: number; warning?: string } = { ...result };
     if (lock.brokeStale) {
       // A stale lock this long almost certainly means a crashed migrate or
@@ -795,7 +872,7 @@ export async function submissionDataWrite(
 ): Promise<{ ok: true; rowid: number; changes: number; warning?: string }> {
   const lock = await acquireDataLock(dbPath, env);
   try {
-    const result = runHelper({ op: "write", db_path: dbPath, sql, params }, env) as { ok: true; rowid: number; changes: number };
+    const result = runWrite({ op: "write", db_path: dbPath, sql, params }, env) as { ok: true; rowid: number; changes: number };
     return lock.brokeStale
       ? {
           ...result,
@@ -827,7 +904,7 @@ export async function submissionDataWriteAll(
 ): Promise<WriteAllResult> {
   const lock = await acquireDataLock(dbPath, env);
   try {
-    const result = runHelper({ op: "write_all", db_path: dbPath, statements, ...(options.foreignKeysOff ? { foreign_keys_off: true } : {}) }, env) as WriteAllResult;
+    const result = runWrite({ op: "write_all", db_path: dbPath, statements, ...(options.foreignKeysOff ? { foreign_keys_off: true } : {}) }, env) as WriteAllResult;
     return lock.brokeStale
       ? {
           ...result,

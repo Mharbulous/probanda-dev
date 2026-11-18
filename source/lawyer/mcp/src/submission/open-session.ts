@@ -21,7 +21,7 @@ import { writeCastPage } from "../cast/cast-write.js";
 import { moveSeedsOnce, type SeedsLeft, type SeedsMove } from "../loose-threads/migrate.js";
 import type { PracticeStore } from "../practice/store.js";
 import { DataServerError, ValidationError } from "../errors.js";
-import { refuseSyncSplit } from "./backend.js";
+import { refuseLostWrites, refuseSyncSplit, resetWriteRecord } from "./backend.js";
 import { caseDataRootFromDbPath, findDraftDir, resolveDbPath, validateMatterRoot } from "../files/matter-root.js";
 import { resolveCaseDataRoot } from "../practice/backend.js";
 import { matter_lookup } from "../tools/practice/reads.js";
@@ -327,8 +327,8 @@ function backups(dbPath: string): Set<string> {
  * may be made: a folder elsewhere that is missing means the pointer is stale, so that is refused. A sign
  * of earlier work, in the matter's draft folder or beside the database, refuses before anything is made
  * (spec 2026-11-17, section 3.1). */
-async function createDatabase(root: string, dbPath: string, draftDir: string | undefined): Promise<NonNullable<OpenSessionResult["migrated"]>> {
-  refuseEarlierWorkMissing(dbPath, draftDir === undefined ? undefined : [draftDir]);
+async function createDatabase(root: string, dbPath: string, draftDir: string | undefined, acceptCurrentFile: boolean): Promise<NonNullable<OpenSessionResult["migrated"]>> {
+  if (!acceptCurrentFile) refuseEarlierWorkMissing(dbPath, draftDir === undefined ? undefined : [draftDir]);
   const folder = dirname(dbPath);
   if (!existsSync(folder)) {
     if (dirname(folder).toLowerCase() !== root.toLowerCase()) {
@@ -336,7 +336,7 @@ async function createDatabase(root: string, dbPath: string, draftDir: string | u
     }
     mkdirSync(folder);
   }
-  const done = await submissionDataMigrate(dbPath);
+  const done = await submissionDataMigrate(dbPath, process.env, acceptCurrentFile);
   return { from: 0, to: done.schema_version as number, backup: null, ...(Array.isArray(done.warnings) && done.warnings.length > 0 ? { warnings: done.warnings as string[] } : {}) };
 }
 
@@ -351,7 +351,10 @@ async function openSession(
   /** Passed to bootstrap, which then mints an unattended-class session token (Goal card design §5.4). */
   unattended = false,
   /** The filing to open; omitted, the first live filing with a board, else the first pre-filing proceeding. */
-  filingId?: number
+  filingId?: number,
+  /** Decision D2 (spec 2026-11-17): on the practitioner's yes, create over earlier work or keep a file that lacks
+   * this computer's writes, resetting this computer's write record to the file. */
+  acceptCurrentFile = false
 ): Promise<{ result: OpenSessionResult; dates: MatterDates; matterDescription?: string }> {
   const started = performance.now();
   const timings: PhaseTimings = [];
@@ -366,6 +369,8 @@ async function openSession(
   const dbPath = await phase("pointer", () => resolveDbPath(root));
   // Before anything is created, written or swept into TRASH.
   refuseSyncSplit(dbPath);
+  if (acceptCurrentFile) resetWriteRecord(dbPath);
+  else refuseLostWrites(dbPath);
   const blocking = await phase("practice_config", () => practiceConfigBlocking(dbPath));
   const { lookup, client: identity } = await phase("matter_lookup", () => lookUpMatter(root, practiceDb, client));
   // #585: the draft folder is confined before any other work.
@@ -379,7 +384,7 @@ async function openSession(
   // returned beside the result, never in it, since the result is the tool response.
   const dates = draftDir === undefined ? undefined : await phase("dates", () => readMatterDates(practiceDb, identity.matterNo));
 
-  let migrated: OpenSessionResult["migrated"] = existsSync(dbPath) ? undefined : await phase("create_database", () => createDatabase(root, dbPath, draftDir));
+  let migrated: OpenSessionResult["migrated"] = existsSync(dbPath) ? undefined : await phase("create_database", () => createDatabase(root, dbPath, draftDir, acceptCurrentFile));
   // Bootstrap writes no page: the opening below writes the pages, once.
   let result = submissionFormsBootstrap(dbPath, identity, undefined, undefined, undefined, unattended);
   let migrationRefused: string | undefined;

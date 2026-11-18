@@ -476,7 +476,13 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "and read-only work goes on; nothing is written. No submission database at db_path: it creates one, reported as " +
         "migrated {from: 0, to, backup: null}, and the matter's own 0. CASE DATA folder if that is missing; a missing folder anywhere else " +
         "refuses, case_data_missing, naming /matter-data. Sync conflict copies beside db_path (submission-<device>.sqlite) refuse " +
-        "sync_conflict_copies, naming them, before anything is created or written. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder " +
+        "sync_conflict_copies, naming them, before anything is created or written. A missing database with any sign of earlier " +
+        "drafting work (a backup copy beside it, a file only drafting work writes in the draft folder, or this computer's record of " +
+        "changes it saved to the file) refuses earlier_work_missing, naming each sign; an existing file that lacks changes this " +
+        "computer saved to it refuses lost_writes, naming how many; both refuse before anything is created or written. " +
+        "accept_current_file: true, passed only after the practitioner's yes to a plain question naming what is missing " +
+        "(/drafting-data references/sync-split.md), creates the database anyway or keeps the file as it is, and resets this " +
+        "computer's record to match. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder " +
         "it opens filing_id, or the first live filing that is not a Work Board with no Writing or a research memo or case brief (each opens only when " +
         "filing_id names it), or the first pre-filing proceeding, as drafting_forms__render " +
         "with draft_dir would (mockups and the matter's pages written once), returning that board as opened " +
@@ -519,6 +525,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
           matter_no: { type: "string" },
           unattended: { type: "boolean" },
           filing_id: { type: "integer" },
+          accept_current_file: { type: "boolean" },
         },
         additionalProperties: false,
       },

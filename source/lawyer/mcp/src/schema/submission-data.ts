@@ -992,11 +992,17 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "counsel_not_reconciled, on the v43 hop that drops the submission copy of counsel of record, while any counsel " +
         "offer or parties_drift row stands: the refusal names each row, nothing is written (a database older than v42 is " +
         "first taken to v42 so its parties can be linked), and each is decided by /drafting-data filing-checklists " +
-        "section 0 before migrating again.",
+        "section 0 before migrating again. REFUSED, code earlier_work_missing, when db_path is missing and a sign of earlier " +
+        "drafting work stands (a backup copy beside it, a file only drafting work writes in the matter's draft folder, or this " +
+        "computer's record of changes it saved to the file), naming each sign; and code lost_writes when the file lacks changes this " +
+        "computer saved to it, naming how many. Both refuse before anything is created or written. accept_current_file: true, passed " +
+        "only after the practitioner's yes to a plain question naming what is missing (/drafting-data references/sync-split.md), " +
+        "creates the database anyway or keeps the file as it is, and resets this computer's record to match.",
       inputSchema: {
         type: "object",
         properties: {
           db_path: { type: "string" },
+          accept_current_file: { type: "boolean" },
         },
         required: ["db_path"],
         additionalProperties: false,

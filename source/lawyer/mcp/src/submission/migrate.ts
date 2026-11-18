@@ -48,11 +48,12 @@ import { type DriverResponse, MIGRATE_DRIVER, pushStaleLockWarning, throwDriverR
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { submissionDataMigrateScriptsDir } from "../repo-root.js";
-import { forgetDraftingQueries, pythonTimeoutMs, READ_TIMEOUT_MS, refuseSyncSplit, submissionDataQuery, WRITE_TIMEOUT_MS } from "./backend.js";
+import { forgetDraftingQueries, pythonTimeoutMs, READ_TIMEOUT_MS, refuseLostWrites, refuseSyncSplit, resetWriteRecord, submissionDataQuery, WRITE_TIMEOUT_MS } from "./backend.js";
 import { acquireDataLock } from "./lock.js";
 import { draftingWorkFiles } from "./matter-page-files.js";
 import { counselOffers, matterPartiesDrift, type CounselOffer, type PartiesDriftRow } from "./parties-drift.js";
 import { overrideActive, renderableSchemaVersion } from "./schema-ceiling.js";
+import { readWriteRecord } from "./write-record.js";
 
 // Read-only companion to MIGRATE_DRIVER (../migrate-driver.ts): reports the version the engine
 // targets, without opening a database or applying anything. TARGET_SCHEMA_VERSION
@@ -74,12 +75,19 @@ function driverFile(name: string, source: string): string {
 
 export async function submissionDataMigrate(
   dbPath: string,
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
+  /** Decision D2: the practitioner said yes to creating the file over earlier work, or to keeping a file that
+   * lacks this computer's writes. The refusal is skipped and this computer's write record reset to the file. */
+  acceptCurrentFile = false
 ): Promise<Record<string, unknown>> {
   // A split database is never migrated, and never replaced by a fresh one.
   refuseSyncSplit(dbPath);
-  // Nor is a missing one created over earlier work (spec 2026-11-17, section 3.1).
-  if (!existsSync(dbPath)) refuseEarlierWorkMissing(dbPath);
+  // Nor is a missing one created over earlier work, nor one missing this computer's writes migrated
+  // (spec 2026-11-17, sections 3.1 and 3.2).
+  if (!acceptCurrentFile) {
+    if (existsSync(dbPath)) refuseLostWrites(dbPath, env);
+    else refuseEarlierWorkMissing(dbPath);
+  }
   // Never past what this bundle can read (#812): the run stops at the bundle's ceiling, and a
   // database already there is left untouched -- the engine copies aside only when it migrates.
   const engineTarget = currentSchemaVersion(env);
@@ -111,6 +119,7 @@ export async function submissionDataMigrate(
     if (lock.brokeStale) pushStaleLockWarning(result, "drafting-data", "database");
     const pruneWarnings = pruneBackups(dbPath, backupsBefore);
     if (pruneWarnings.length > 0) result.warnings = [...(Array.isArray(result.warnings) ? (result.warnings as string[]) : []), ...pruneWarnings];
+    if (acceptCurrentFile) resetWriteRecord(dbPath, env);
     return result;
   } finally {
     lock.release();
@@ -131,13 +140,18 @@ function draftDirsOf(dbPath: string): string[] {
   return readdirSync(matter, { withFileTypes: true }).filter((e) => e.isDirectory() && /^0\. DRAFT/i.test(e.name)).map((e) => join(matter, e.name));
 }
 
-/** Spec 2026-11-17 section 3.1: each kind of sign of earlier work, read-only. Slice S5 adds this computer's write record. */
+/** Spec 2026-11-17 section 3.1: each kind of sign of earlier work, read-only. */
 const EARLIER_WORK_SIGNS: ((dbPath: string, draftDirs: string[]) => EarlierWorkSign[])[] = [
   // The #353 copy-aside backups beside the database.
   (dbPath) => (existsSync(dirname(dbPath)) ? readdirSync(dirname(dbPath)) : []).filter((name) => name.toLowerCase().startsWith(`${basename(dbPath).toLowerCase()}.bak-`)).sort()
     .map((name) => ({ path: join(dirname(dbPath), name), what: "a backup copy of the drafting records" })),
   // The files in the matter's draft folder that only a drafting session writes.
   (_dbPath, draftDirs) => draftDirs.flatMap((dir) => draftingWorkFiles(dir)).map((path) => ({ path, what: "a file only drafting work writes" })),
+  // This computer's record of its own writes to the file (section 3.2, write-record.ts).
+  (dbPath) => {
+    const writes = readWriteRecord(dbPath)?.writes ?? 0;
+    return writes > 0 ? [{ path: dbPath, what: `this computer saved ${writes} change${writes === 1 ? "" : "s"} to this file before` }] : [];
+  },
 ];
 
 /** Every sign of earlier work for a missing database at dbPath, in draftDirs (default: the matter's own draft folders). */
