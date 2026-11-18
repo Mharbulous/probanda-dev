@@ -75,15 +75,31 @@ async function timecampingFixture(t) {
 test("a matter-data execute that outlives its budget fails with a named timeout that does not claim rollback, and the server answers the next calls", async (t) => {
   const f = caseFixture(t);
   const tc = await timecampingFixture(t);
-  await assert.rejects(() => caseDataExecute(f.matterRoot, "SELECT 1;", { ...f.env, [CASE_VAR]: "1" }), (err) => {
-    isPythonTimeout(err);
-    assert.match(err.message, /may already have committed: verify before retrying/);
-    assert.match(err.message, /\.coclerk_execute_\*/);
-    assert.doesNotMatch(err.message, /rolled back/);
-    return true;
-  });
+  // The budget lets the sync-split check before the lock finish, so the kill lands in the execute
+  // helper itself: a script that never finishes in budget, as in the mid-script test below.
+  const never = "WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c WHERE x < 1000000000) SELECT count(*) FROM c;";
+  await withTempDir(f.matterRoot, () =>
+    assert.rejects(() => caseDataExecute(f.matterRoot, never, { ...f.env, [CASE_VAR]: "3000" }), (err) => {
+      isPythonTimeout(err);
+      assert.match(err.message, /may already have committed: verify before retrying/);
+      assert.match(err.message, /\.coclerk_execute_\*/);
+      assert.doesNotMatch(err.message, /rolled back/);
+      return true;
+    })
+  );
   // A different namespace answers, and so does matter-data's own write path: the killed call freed the lock.
   assert.deepEqual(timecampingDataQuery("SELECT 1 AS ok", undefined, tc.env).rows, [{ ok: 1 }]);
+  assert.deepEqual((await caseDataExecute(f.matterRoot, "SELECT 1;", f.env)).ok, true);
+});
+
+// The sync-split check runs before the lock and writes nothing, so a kill there claims no commit.
+test("a matter-data execute killed in its sync-split check fails with a named timeout that claims no commit, and the next execute succeeds", async (t) => {
+  const f = caseFixture(t);
+  await assert.rejects(() => caseDataExecute(f.matterRoot, "SELECT 1;", { ...f.env, [CASE_VAR]: "1" }), (err) => {
+    isPythonTimeout(err);
+    assert.doesNotMatch(err.message, /committed/);
+    return true;
+  });
   assert.deepEqual((await caseDataExecute(f.matterRoot, "SELECT 1;", f.env)).ok, true);
 });
 
