@@ -7,6 +7,7 @@ import test from "node:test";
 
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { acquireDataLock } = await import("../build/submission/lock.js");
+const { submissionDataMigrate } = await import("../build/submission/migrate.js");
 
 // Keep the lock files out of %LOCALAPPDATA% so a test never contends with a
 // real session.
@@ -22,13 +23,13 @@ function python() {
   return process.env.COCLERK_PYTHON || "python";
 }
 
-// Stands in for drafting_data__migrate, which build ticket #295 (not this
-// one) implements -- these tests exercise query/execute against a database
-// that already exists, the same contract migrate is responsible for handing
-// them.
-function emptyDbFixture() {
+// A database drafting_data__migrate made, as every real one is: each committing
+// execute counts itself in db_meta (docs/Specs/2026-11-17_drafting-records-sync-safety-spec.md,
+// section 3.2), so a bare file would fail every write. The fixtures add their rows to it.
+async function emptyDbFixture() {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-submission-db-"));
   const dbPath = join(dir, "submission.sqlite");
+  await submissionDataMigrate(dbPath);
   const result = spawnSync(
     python(),
     ["-c", "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('CREATE TABLE marker(value TEXT)'); c.execute(\"INSERT INTO marker VALUES ('live')\"); c.commit(); c.close()", dbPath],
@@ -38,13 +39,14 @@ function emptyDbFixture() {
   return { dir, dbPath, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
-// One job row held by session sess-a1, for guarded-release tests.
-function ticketsDbFixture() {
+// One job row held by session sess-a1, in the migrated tickets table, for guarded-release tests.
+async function ticketsDbFixture() {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-submission-db-"));
   const dbPath = join(dir, "submission.sqlite");
+  await submissionDataMigrate(dbPath);
   const result = spawnSync(
     python(),
-    ["-c", "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('CREATE TABLE tickets(id INTEGER PRIMARY KEY, status TEXT, locked_by TEXT, locked_at TEXT)'); c.execute(\"INSERT INTO tickets VALUES (42, 'wip', 'sess-a1', '2026-10-04T09:00')\"); c.commit(); c.close()", dbPath],
+    ["-c", "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute(\"INSERT INTO proceedings (id, matter_reference) VALUES (1, 'M-TEST')\"); c.execute(\"INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, locked_by, locked_at, created) VALUES (42, 1, 'Job', 'Test', 'wip', 'charting', 'sess-a1', '2026-10-04T09:00', '2026-10-04T08:00')\"); c.commit(); c.close()", dbPath],
     { encoding: "utf-8" },
   );
   if (result.status !== 0) throw new Error(`fixture Python failed: ${result.stderr}`);
@@ -54,8 +56,8 @@ function ticketsDbFixture() {
 const RELEASE = (holder) =>
   `UPDATE tickets SET status = 'queued', locked_by = NULL, locked_at = NULL WHERE id = 42 AND locked_by = '${holder}';`;
 
-test("query runs against an empty per-matter database", () => {
-  const f = emptyDbFixture();
+test("query runs against an empty per-matter database", async () => {
+  const f = await emptyDbFixture();
   try {
     const result = submissionDataQuery(f.dbPath, "SELECT value FROM marker");
     assert.deepEqual(result.rows, [{ value: "live" }]);
@@ -64,8 +66,8 @@ test("query runs against an empty per-matter database", () => {
   }
 });
 
-test("query rejects a write statement", () => {
-  const f = emptyDbFixture();
+test("query rejects a write statement", async () => {
+  const f = await emptyDbFixture();
   try {
     assert.throws(
       () => submissionDataQuery(f.dbPath, "DELETE FROM marker"),
@@ -76,8 +78,8 @@ test("query rejects a write statement", () => {
   }
 });
 
-test("query accepts a read that opens with comments", () => {
-  const f = emptyDbFixture();
+test("query accepts a read that opens with comments", async () => {
+  const f = await emptyDbFixture();
   try {
     const result = submissionDataQuery(f.dbPath, "-- probe\n/* a\nblock */\n  SELECT value FROM marker");
     assert.deepEqual(result.rows, [{ value: "live" }]);
@@ -86,8 +88,8 @@ test("query accepts a read that opens with comments", () => {
   }
 });
 
-test("query rejects a write behind leading comments", () => {
-  const f = emptyDbFixture();
+test("query rejects a write behind leading comments", async () => {
+  const f = await emptyDbFixture();
   try {
     for (const sql of [
       "-- SELECT\nINSERT INTO marker VALUES ('x')",
@@ -101,7 +103,7 @@ test("query rejects a write behind leading comments", () => {
   }
 });
 
-test("query fails loudly when the database does not exist", () => {
+test("query fails loudly when the database does not exist", async () => {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-submission-missing-"));
   const dbPath = join(dir, "submission.sqlite");
   try {
@@ -115,7 +117,7 @@ test("query fails loudly when the database does not exist", () => {
 });
 
 test("execute mutates the database and query observes the write", async () => {
-  const f = emptyDbFixture();
+  const f = await emptyDbFixture();
   try {
     const result = await submissionDataExecute(f.dbPath, "INSERT INTO marker VALUES ('added');");
     assert.equal(result.ok, true);
@@ -124,13 +126,15 @@ test("execute mutates the database and query observes the write", async () => {
       submissionDataQuery(f.dbPath, "SELECT value FROM marker ORDER BY value").rows,
       [{ value: "added" }, { value: "live" }],
     );
+    // The write counted itself on this computer (sync-safety spec, section 3.2).
+    assert.equal(submissionDataQuery(f.dbPath, "SELECT count(*) AS n FROM db_meta WHERE key LIKE 'writes:%'").rows[0].n, 1);
   } finally {
     f.cleanup();
   }
 });
 
 test("execute reports changes 0 when a guarded release matches no row", async () => {
-  const f = ticketsDbFixture();
+  const f = await ticketsDbFixture();
   try {
     const result = await submissionDataExecute(f.dbPath, RELEASE("sess-zz"));
     assert.equal(result.ok, true);
@@ -145,7 +149,7 @@ test("execute reports changes 0 when a guarded release matches no row", async ()
 });
 
 test("execute reports changes 1 when the holder's guarded release lands", async () => {
-  const f = ticketsDbFixture();
+  const f = await ticketsDbFixture();
   try {
     const result = await submissionDataExecute(f.dbPath, RELEASE("sess-a1"));
     assert.equal(result.ok, true);
@@ -160,7 +164,7 @@ test("execute reports changes 1 when the holder's guarded release lands", async 
 });
 
 test("execute tolerates a final statement missing its trailing semicolon", async () => {
-  const f = emptyDbFixture();
+  const f = await emptyDbFixture();
   try {
     const result = await submissionDataExecute(f.dbPath, "CREATE TABLE t(x); INSERT INTO t VALUES(1)");
     assert.equal(result.ok, true);
@@ -171,7 +175,7 @@ test("execute tolerates a final statement missing its trailing semicolon", async
 });
 
 test("execute rolls back and leaves the database untouched on a mid-script failure", async () => {
-  const f = emptyDbFixture();
+  const f = await emptyDbFixture();
   try {
     await assert.rejects(
       () => submissionDataExecute(f.dbPath, "INSERT INTO marker VALUES ('doomed'); SELECT * FROM absent;"),
@@ -187,7 +191,7 @@ test("execute rolls back and leaves the database untouched on a mid-script failu
 // then copies it back. Two sessions staging from the same starting bytes both
 // "succeed" and the second copy-back silently discards the first's writes.
 test("a second execute is refused while another session holds the data lock", async () => {
-  const f = emptyDbFixture();
+  const f = await emptyDbFixture();
   const { env, cleanup } = isolatedEnv();
   try {
     const held = await acquireDataLock(f.dbPath, env);
@@ -212,7 +216,7 @@ test("a second execute is refused while another session holds the data lock", as
 
 // Reads are the hot path and copy nothing back, so they must not be gated.
 test("query is not blocked by a held data lock", async () => {
-  const f = emptyDbFixture();
+  const f = await emptyDbFixture();
   const { env, cleanup } = isolatedEnv();
   try {
     const held = await acquireDataLock(f.dbPath, env);
