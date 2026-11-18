@@ -26,6 +26,7 @@ import { runPythonDriver } from "../python-spawn.js";
 import { pythonTimeoutMs, WRITE_TIMEOUT_MS } from "../python-timeout.js";
 import { caseDataMigrateScriptsDir } from "../repo-root.js";
 import { acquireCaseLock, withExclusive, type CaseLock } from "./case-lock.js";
+import { refuseCaseSyncSplit } from "./locate.js";
 
 function driverFile(): string {
   return pythonDriverFile("case-migrate-driver", MIGRATE_DRIVER);
@@ -45,6 +46,8 @@ export async function caseDataMigrate(
   opts: MigrateOptions = {},
   env: NodeJS.ProcessEnv = process.env
 ): Promise<Record<string, unknown>> {
+  // A split store is never migrated, and never replaced by a fresh one.
+  refuseCaseSyncSplit(matterRoot, env);
   const work = (lock: CaseLock) => {
     const result = runDriver(matterRoot, mode, opts, env);
     if (lock.brokeStale) pushStaleLockWarning(result, "matter-data", "matter", "its holder died, or it was >5 min old");

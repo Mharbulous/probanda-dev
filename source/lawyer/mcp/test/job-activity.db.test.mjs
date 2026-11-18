@@ -1,6 +1,7 @@
 // A job's last activity is one stored stamp (kv_store `last_activity` / `tickets:<id>`, schema v80).
-// Every server write made for a held job moves it, the research_filing writes too when they name the
-// job, and drafting_data__touch_job moves it at the holder's turn end. A write by any session that
+// Every server write made for a held job moves it once it is 15 minutes or more old, the research_filing
+// writes too when they name the job, and drafting_data__touch_job moves it at the holder's turn end
+// (the window itself is tested in write-skip.db.test.mjs). A write by any session that
 // does not hold the lock moves nothing, and a research_filing write naming a job it does not hold is
 // refused not_held and files nothing. board_card's `last activity` and the idle tag read it, and a
 // ⏳ step counts as activity until its wake-up minute passes. No revision moves.

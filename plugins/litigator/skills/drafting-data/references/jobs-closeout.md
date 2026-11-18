@@ -5,10 +5,15 @@ Any §N not in this file: find it in SKILL.md, "Job and scrutiny operations".
 
 Before retiring a Writing, run `jobs-run.md` §8's sweep. Retiring a Writing (schema v17, `filing-checklists.md` §11) ends its job work: every `queued` job scoped to that Writing is superseded by the retirement itself. Not by another job — a retirement is not a job and has no id to point at, which is why the v17 hop relaxed the CHECK to `superseded_by IS NULL OR status = 'superseded'`. Leave `superseded_by` NULL; the Work Board prints "Superseded by: retirement of this Writing (date)" from the Writing's own `retired_on`.
 
-**Read first — a `wip` job on this Writing refuses the retirement.** Its lock belongs to another session, and clearing it here is the same violation §9 forbids on a `wip` conflict partner:
+**Read first — a job in progress on this Writing refuses the retirement.** Its lock belongs to another session, and clearing it here is the same violation §9 forbids on a `wip` conflict partner. In progress means held and not lapsed (`jobs-run.md` §4a's test, on alias `t`): a `wip` job whose lock has lapsed does not refuse it, and the retirement supersedes it with the queued jobs.
 
 ```sql
-SELECT id, title, locked_by, locked_at FROM tickets WHERE filing_id = 7 AND status = 'wip';
+SELECT t.id, t.title, t.locked_by, t.locked_at FROM tickets t WHERE t.filing_id = 7
+  AND t.status = 'wip' AND NOT (t.locked_by IS NOT NULL AND t.rejected_at IS NULL
+    AND COALESCE(max(COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = 'last_activity' AND key = 'tickets:' || t.id),
+                              replace(substr(t.locked_at, 1, 16), ' ', 'T')),
+                     COALESCE((SELECT max(wait_until) FROM ticket_steps st WHERE st.ticket_id = t.id AND st.done_at IS NULL AND st.status = 'waiting'), ''),
+                     '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-60 minutes'), 0));
 ```
 
 Any row returned: stop, do not write anything, and report the job and its holder to the practitioner. Retirement resumes once that session completes or supersedes its own job. **That read is the report surface, not the barrier** — it is what names the blocking job and its holder, which the guard below cannot do; the guard is what actually refuses the write.
@@ -20,11 +25,23 @@ With no rows, write the retirement — **`filing_id` scoped, never proceeding-sc
 ```sql
 UPDATE filings SET retired_on = '2026-09-08', retirement_reason = 'appeal_expired'
   WHERE id = 7
-    AND NOT EXISTS (SELECT 1 FROM tickets WHERE filing_id = 7 AND status = 'wip');
-UPDATE tickets SET status = 'superseded'
-  WHERE filing_id = 7 AND status = 'queued' AND deleted_at IS NULL
-    AND NOT EXISTS (SELECT 1 FROM tickets WHERE filing_id = 7 AND status = 'wip');
+    AND NOT EXISTS (SELECT 1 FROM tickets t WHERE t.filing_id = 7
+      AND t.status = 'wip' AND NOT (t.locked_by IS NOT NULL AND t.rejected_at IS NULL
+        AND COALESCE(max(COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = 'last_activity' AND key = 'tickets:' || t.id),
+                                  replace(substr(t.locked_at, 1, 16), ' ', 'T')),
+                         COALESCE((SELECT max(wait_until) FROM ticket_steps st WHERE st.ticket_id = t.id AND st.done_at IS NULL AND st.status = 'waiting'), ''),
+                         '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-60 minutes'), 0)));
+UPDATE tickets SET status = 'superseded', locked_by = NULL, locked_at = NULL
+  WHERE filing_id = 7 AND status IN ('queued', 'wip') AND deleted_at IS NULL
+    AND NOT EXISTS (SELECT 1 FROM tickets t WHERE t.filing_id = 7
+      AND t.status = 'wip' AND NOT (t.locked_by IS NOT NULL AND t.rejected_at IS NULL
+        AND COALESCE(max(COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = 'last_activity' AND key = 'tickets:' || t.id),
+                                  replace(substr(t.locked_at, 1, 16), ' ', 'T')),
+                         COALESCE((SELECT max(wait_until) FROM ticket_steps st WHERE st.ticket_id = t.id AND st.done_at IS NULL AND st.status = 'waiting'), ''),
+                         '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-60 minutes'), 0)));
 ```
+
+Under that guard every `wip` job left on the Writing has lapsed, so the second statement supersedes it and clears its lock in the same write.
 
 The `filings` statement's own text is owned by `filing-checklists.md` §11 and is shown here only because the clause must ride every statement in the script. §11 is the source of truth for that statement and carries the same guarded form.
 
@@ -34,7 +51,7 @@ Then run the confirm-read:
 SELECT retired_on, retirement_reason FROM filings WHERE id = 7;
 ```
 
-NULL means the guard matched nothing — a `wip` job appeared between the read-first and the write. Re-run the read-first and report its rows.
+NULL means the guard matched nothing — a job in progress appeared between the read-first and the write. Re-run the read-first and report its rows.
 
 `completed`, already-`superseded` and deleted (§10a) jobs are left as they are. Recovery (clearing `filings.retired_on`) does **not** un-supersede them: the work they described belonged to the Writing as it stood, and a recovered Writing is outlined afresh. This write rides in the same `execute` script as the `filings` UPDATE, which is a substance write — so that script moves the revision through §8's triggers, the job tables' revision-bump exemption notwithstanding.
 
@@ -68,7 +85,7 @@ SELECT status, superseded_marker_gone_at, locked_by, rejected_at FROM tickets WH
 
 Two jobs on one board can name the same work in different words. `/draft`'s duplicate check (`work/references/job-session.md`, "The duplicate check") proposes a merge, and it runs only on the practitioner's bare yes, which the practitioner-words hook checks. It is never run on a session's own initiative and never in an unattended run. The merge is one call, `drafting_data__merge_jobs` `{db_path, survivor_id, absorbed_id, session_token}`. Never hand-write it through `execute`.
 
-**What it may merge.** The survivor is Ready (`queued`, no lock) or held by this session. The absorbed job is Ready. Both are unshelved and not deleted, in one proceeding and on one Writing, or both General Jobs. The absorbed job has no either/or partner, and neither job waits on a job outside the pair that is not completed. A completed job is merged only once reopened (§10e). The tool reads both rows first and refuses anything else, writing nothing and naming the job that refused (`refused_job`).
+**What it may merge.** The survivor is Ready (`queued`, no lock) or held by this session. The absorbed job is Ready. A job whose lock has lapsed in another session (`jobs-run.md` §4a) counts as Ready for either role, and so does this session's own lapsed job as the absorbed one. Both are unshelved and not deleted, in one proceeding and on one Writing, or both General Jobs. The absorbed job has no either/or partner, and neither job waits on a job outside the pair that is not completed. A completed job is merged only once reopened (§10e). The tool reads both rows first and refuses anything else, writing nothing and naming the job that refused (`refused_job`).
 
 **What it writes,** every statement under one guard in one transaction, so either all of them land or none does:
 
@@ -76,7 +93,8 @@ Two jobs on one board can name the same work in different words. `/draft`'s dupl
 - Its `ticket_scope` rows and `ticket_proposals` keys that the survivor lacks are copied to it.
 - Each job waiting on the absorbed job waits on the survivor instead, and the absorbed job's blocker rows are deleted, so nothing is left Blocked by a superseded job. A survivor that waited on the absorbed job is not made to wait on itself.
 - The survivor's `plan_approved_at` is cleared when steps were added, as §3a's "Adding a step" clears it. `drafting_data__approve_plan` stamps it again when the plan is announced.
-- The absorbed job becomes `superseded`, with `superseded_by` set to the survivor. The board prints "Superseded by" the survivor.
+- The absorbed job becomes `superseded`, with `superseded_by` set to the survivor and any lock cleared. The board prints "Superseded by" the survivor.
+- Another session's lapsed lock on either job is recorded as its lapse (`lock_lapsed`), and one on the survivor is released, so the survivor is Ready. A survivor this session holds keeps its lock, however long it was idle.
 
 **What stays.** The absorbed job keeps its own steps, scope, keys, saved answers and sources to get, as its record. It is superseded, not deleted, so it has no restore path. Outcomes: `merged`, `no_match` (a job changed between the read and the write, so re-render and read both cards again), and the refusals the tool's description lists. No revision bump. Re-render after it.
 
@@ -93,7 +111,7 @@ INSERT INTO proposal_rejections (proposal_key, ticket_id, marker, item, rejected
 
 **Only a Proposal in the `proposed` lane is shelved this way.** `drafting_forms__board_card` with `key` also shows a held Proposal: as the holding job, whose `keys:` line carries it, or as a Proposed line reading `lane: held by #N on <date the job was outlined>`. A request matching one of those is answered by naming the holder and offering to shelve that job instead — never by writing this row. A `ticket_id` NULL row under a held key is exactly what stands in the way of that job's own snapshot below. The insert is left unguarded on purpose: a collision here is a composition bug and should raise.
 
-**Shelving a job** — `queued` or `wip` only; a `completed` or `superseded` job cannot be shelved, and the status guard is what refuses one. Which of the three scripts below applies is decided by the status and the holder: a `queued` job takes this one, a `wip` job in progress in another session takes the in-progress variant, and the session's own `wip` job takes the own-job variant. For a `queued` job the status is left as it is:
+**Shelving a job** — `queued` or `wip` only; a `completed` or `superseded` job cannot be shelved, and the status guard is what refuses one. Which of the three scripts below applies is decided by the status and the holder: a `queued` job takes this one, a `wip` job in progress in another session takes the in-progress variant, and the session's own `wip` job takes the own-job variant. A `wip` job whose lock has lapsed (`jobs-run.md` §4a) shows in Ready but its row is still `wip`: it takes the in-progress variant with no decision form, because no session holds it. For a `queued` job the status is left as it is:
 
 ```sql
 UPDATE tickets SET rejected_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
@@ -162,9 +180,9 @@ DELETE FROM proposal_rejections WHERE proposal_key IN ('note-up:authorities:5', 
 
 `marker` and `item` are compared exactly, with no normalisation of any kind — no case folding, no whitespace collapsing, no punctuation allowance. Rewording an item therefore lapses its shelving, which is the accepted cost of catching a reused row id. A shelving whose Proposal no longer derives at all has not lapsed: it is dormant, shows nowhere, and is left where it is, like a `killed_on` date.
 
-**Deleting a mistaken job** — only on the practitioner's typed instruction to delete that job, for a job that should never have been written. It is received, never offered, and it is not a way to finish, drop or tidy work: a job the practitioner chose not to pursue is shelved (above), and one whose marker has gone is closed by §9b. While a marker-derived job is deleted its Proposals return to Proposed, and the next Opening's intake (§3e) writes them afresh while the marker still fires. To be rid of the work, shelve the Proposal or the job instead. A `queued` job, shelved or not, can be deleted, and so can a `wip` job held by this session. Another session's `wip` job is never deleted, and a `completed` or `superseded` job is refused. The delete stamps the job and moves nothing else (schema v54).
+**Deleting a mistaken job** — only on the practitioner's typed instruction to delete that job, for a job that should never have been written. It is received, never offered, and it is not a way to finish, drop or tidy work: a job the practitioner chose not to pursue is shelved (above), and one whose marker has gone is closed by §9b. While a marker-derived job is deleted its Proposals return to Proposed, and the next Opening's intake (§3e) writes them afresh while the marker still fires. To be rid of the work, shelve the Proposal or the job instead. A `queued` job, shelved or not, can be deleted, and so can a `wip` job held by this session or one whose lock has lapsed (`jobs-run.md` §4a). Another session's job in progress is never deleted, and a `completed` or `superseded` job is refused. The delete stamps the job and moves nothing else (schema v54).
 
-The delete is one `drafting_data__delete_job` call, `{db_path, ticket_ids, session_token}`, never a hand-written `UPDATE`. Several jobs named in one instruction go in one call. Each job's holder check and its `deleted_at` stamp are one guarded statement, so no session can claim the job between them. A `wip` job held by this session goes back to `queued` with its lock cleared in the same write, so a restore returns it as a Ready job with no lock, and from then on this session holds no job, as after a release (§10). The tool runs the confirm-read itself and returns one outcome per job:
+The delete is one `drafting_data__delete_job` call, `{db_path, ticket_ids, session_token}`, never a hand-written `UPDATE`. Several jobs named in one instruction go in one call. Each job's holder check and its `deleted_at` stamp are one guarded statement, so no session can claim the job between them. A `wip` job goes back to `queued` with its lock cleared in the same write, another session's lapsed lock recorded as its lapse (`lock_lapsed`) in the same transaction, so a restore returns it as a Ready job with no lock, and when it was this session's, from then on this session holds no job, as after a release (§10). The tool runs the confirm-read itself and returns one outcome per job:
 
 - `deleted`: it landed.
 - `held_elsewhere`: the job is in progress in another session, and nothing was written. Say so in one line and stop. The delete never clears another session's lock; the practitioner can return the job to Ready through `/draft`'s take-over form first.
@@ -252,30 +270,40 @@ SELECT status, rejected_at, deleted_at, bf_on FROM tickets WHERE id = 42;
 
 **The target.** Name it from `filing-checklists.md` §14's "The matter's boards" read. The source and the target share a `proceeding_id`, because no job moves between proceedings (`jobs-integrity.md` §11), and the target is live (`retired_on IS NULL`). It may be a Writing or a Work Board with no Writing. Proceeding scope (`filing_id` NULL, which makes each moved job a General Job) is a target only when the source is a Writing's board, because a General Job never shows on a Work Board with no Writing (`jobs-integrity.md` §11). Every guard below is the script's own: nothing in the schema refuses a move.
 
-**What moves.** Every `queued` job on the source with `deleted_at` NULL, shelved ones included, and, on a whole-board move, the source's open loose threads, so a Work Board with no Writing's own threads follow its jobs. A job holding a `note-up` key, or a key on one of the Writing's own rows (`filings`, `filing_facts`, `filing_submissions` or `filing_orders`, `jobs-create.md` §3, "`filing_id` on a job outlined from a Proposal"), stays: §3k's one-note-up-job-per-Writing guard reads `filing_id`, and those keys name the source Writing. `completed`, `superseded` and deleted (§10a) jobs stay too. Edges stay as they are: a `ticket_blocks` or `ticket_conflicts` edge still joins two jobs of one proceeding, which is all `jobs-integrity.md` §11 asks.
+**What moves.** Every `queued` job on the source with `deleted_at` NULL, shelved ones included, and every `wip` job whose lock has lapsed (`jobs-run.md` §4a), released to `queued` as it moves, and, on a whole-board move, the source's open loose threads, so a Work Board with no Writing's own threads follow its jobs. A job holding a `note-up` key, or a key on one of the Writing's own rows (`filings`, `filing_facts`, `filing_submissions` or `filing_orders`, `jobs-create.md` §3, "`filing_id` on a job outlined from a Proposal"), stays: §3k's one-note-up-job-per-Writing guard reads `filing_id`, and those keys name the source Writing. `completed`, `superseded` and deleted (§10a) jobs stay too. Edges stay as they are: a `ticket_blocks` or `ticket_conflicts` edge still joins two jobs of one proceeding, which is all `jobs-integrity.md` §11 asks.
 
-**Read first — a `wip` job on the source refuses the move**, as it refuses §9a's close, and the jobs that stay are named in one line. Here the source is board `7`:
+**Read first — a job in progress on the source refuses the move**, as it refuses §9a's close, and the jobs that stay are named in one line. In progress is `jobs-run.md` §4a's held test, on alias `t`. Here the source is board `7`:
 
 ```sql
-SELECT id, title, locked_by, locked_at FROM tickets WHERE filing_id = 7 AND status = 'wip';
+SELECT t.id, t.title, t.locked_by, t.locked_at FROM tickets t WHERE t.filing_id = 7
+  AND t.status = 'wip' AND NOT (t.locked_by IS NOT NULL AND t.rejected_at IS NULL
+    AND COALESCE(max(COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = 'last_activity' AND key = 'tickets:' || t.id),
+                              replace(substr(t.locked_at, 1, 16), ' ', 'T')),
+                     COALESCE((SELECT max(wait_until) FROM ticket_steps st WHERE st.ticket_id = t.id AND st.done_at IS NULL AND st.status = 'waiting'), ''),
+                     '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-60 minutes'), 0));
 SELECT DISTINCT t.id, t.title, p.proposal_key FROM tickets t JOIN ticket_proposals p ON p.ticket_id = t.id
-  WHERE t.filing_id = 7 AND t.status = 'queued' AND t.deleted_at IS NULL
+  WHERE t.filing_id = 7 AND t.status IN ('queued', 'wip') AND t.deleted_at IS NULL
     AND (p.proposal_key GLOB 'note-up:*' OR p.proposal_key GLOB '*:filings:*' OR p.proposal_key GLOB '*:filing_facts:*'
       OR p.proposal_key GLOB '*:filing_submissions:*' OR p.proposal_key GLOB '*:filing_orders:*');
 ```
 
 A row from the first read: stop, write nothing, and report the job and its holder. Rows from the second: those jobs stay on the source, to be closed by §9b or left; name them in one line.
 
-**Move every job of a board**, one `execute` script, here from board `7` to board `8`. Every statement carries the same `wip` guard and the target's live, same-proceeding guard:
+**Move every job of a board**, one `execute` script, here from board `7` to board `8`. Every statement carries the same in-progress guard and the target's live, same-proceeding guard. Under it every `wip` job left on the source has lapsed, so the statement releases it as it moves it:
 
 ```sql
-UPDATE tickets SET filing_id = 8
-  WHERE filing_id = 7 AND status = 'queued' AND deleted_at IS NULL
+UPDATE tickets SET filing_id = 8, status = 'queued', locked_by = NULL, locked_at = NULL
+  WHERE filing_id = 7 AND status IN ('queued', 'wip') AND deleted_at IS NULL
     AND NOT EXISTS (SELECT 1 FROM ticket_proposals p WHERE p.ticket_id = tickets.id
       AND (p.proposal_key GLOB 'note-up:*' OR p.proposal_key GLOB '*:filings:*' OR p.proposal_key GLOB '*:filing_facts:*'
         OR p.proposal_key GLOB '*:filing_submissions:*' OR p.proposal_key GLOB '*:filing_orders:*'))
     AND EXISTS (SELECT 1 FROM filings f WHERE f.id = 8 AND f.proceeding_id = tickets.proceeding_id AND f.retired_on IS NULL)
-    AND NOT EXISTS (SELECT 1 FROM tickets w WHERE w.filing_id = 7 AND w.status = 'wip');
+    AND NOT EXISTS (SELECT 1 FROM tickets t WHERE t.filing_id = 7
+      AND t.status = 'wip' AND NOT (t.locked_by IS NOT NULL AND t.rejected_at IS NULL
+        AND COALESCE(max(COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = 'last_activity' AND key = 'tickets:' || t.id),
+                                  replace(substr(t.locked_at, 1, 16), ' ', 'T')),
+                         COALESCE((SELECT max(wait_until) FROM ticket_steps st WHERE st.ticket_id = t.id AND st.done_at IS NULL AND st.status = 'waiting'), ''),
+                         '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-60 minutes'), 0)));
 ```
 
 To proceeding scope, from a Writing's board only, the statement sets `filing_id = NULL` and drops the target's `EXISTS` clause.
@@ -285,13 +313,18 @@ Then the source's open loose threads, by `loose_threads__update` with `action: "
 **Move one job**, or several named by id, with the same guards on each id, here job `42`:
 
 ```sql
-UPDATE tickets SET filing_id = 8
-  WHERE id = 42 AND filing_id = 7 AND status = 'queued' AND deleted_at IS NULL
+UPDATE tickets SET filing_id = 8, status = 'queued', locked_by = NULL, locked_at = NULL
+  WHERE id = 42 AND filing_id = 7 AND status IN ('queued', 'wip') AND deleted_at IS NULL
     AND NOT EXISTS (SELECT 1 FROM ticket_proposals p WHERE p.ticket_id = tickets.id
       AND (p.proposal_key GLOB 'note-up:*' OR p.proposal_key GLOB '*:filings:*' OR p.proposal_key GLOB '*:filing_facts:*'
         OR p.proposal_key GLOB '*:filing_submissions:*' OR p.proposal_key GLOB '*:filing_orders:*'))
     AND EXISTS (SELECT 1 FROM filings f WHERE f.id = 8 AND f.proceeding_id = tickets.proceeding_id AND f.retired_on IS NULL)
-    AND NOT EXISTS (SELECT 1 FROM tickets w WHERE w.filing_id = 7 AND w.status = 'wip');
+    AND NOT EXISTS (SELECT 1 FROM tickets t WHERE t.filing_id = 7
+      AND t.status = 'wip' AND NOT (t.locked_by IS NOT NULL AND t.rejected_at IS NULL
+        AND COALESCE(max(COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = 'last_activity' AND key = 'tickets:' || t.id),
+                                  replace(substr(t.locked_at, 1, 16), ' ', 'T')),
+                         COALESCE((SELECT max(wait_until) FROM ticket_steps st WHERE st.ticket_id = t.id AND st.done_at IS NULL AND st.status = 'waiting'), ''),
+                         '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-60 minutes'), 0)));
 ```
 
 Then run the confirm-read:

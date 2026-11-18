@@ -1,8 +1,9 @@
 // The general renderer (spec §6 piece 4; shared/declared-layout.md sections 3-5). A `general`
 // Writing renders one document from its stored layout alone: the parts in array order, each
-// through its projection (projections.ts), then the recipients. The mockup-only material is in the
-// header's optional list fields (Authorities cited, Page budget, Layout confirmation, Blind copies).
-// The filed face is the kind-agnostic toFiledFace transform, which drops the whole header.
+// through its projection (projections.ts), then the recipients, then the mockup-only Authorities
+// section. The other mockup-only material is in the header's optional list fields (Page budget,
+// Layout confirmation, Blind copies). The filed face is the kind-agnostic toFiledFace transform,
+// which drops the whole header and the Authorities section.
 //
 // The confirmation gate's mockup half (spec §6 piece 5): each item the stored layout cites is
 // tagged on the line it renders, `[unverified: <rule_ref>]` while this firm has not confirmed or
@@ -112,7 +113,7 @@ function recipientEntry(r: FilingRecipientRow, label: string): string {
   );
 }
 
-/** The mockup-only item in the header's "Authorities cited" while a Writing's authority confirmation is
+/** The mockup-only item in the Authorities section while a Writing's authority confirmation is
  * unset (#1231). Plain text with no glyph, so `open-items` does not count it. */
 const UNCONFIRMED_AUTHORITY_LINE =
   "Authority not confirmed: link each authority this text cites, or record that it cites none. Sending is held until then.";
@@ -133,9 +134,9 @@ export function authorityUnconfirmed(filing: FilingRow, layout: StoredLayout["la
   );
 }
 
-/** One prose-cited statement's item in the header's "Authorities cited" (#1214; work-markers.md rows 📜 📍 🔬
+/** One prose-cited statement's item in the Authorities section (#1214; work-markers.md rows 📜 📍 🔬
  * 🏅): the citation line and the statement-line markers the doctrinal statement line prints, recorded
- * on the inventory as there, and its own 🧐. A lead prints, the header reaching no sent face. A
+ * on the inventory as there, and its own 🧐. A lead prints, the section reaching no sent face. A
  * killed authority's line carries its `(killed <date>)` tag and no marker at all, 🧐 included. */
 function authorityCitedLine(ctx: RenderContext, row: FilingLawRow): string {
   const glyphs = lawStatementMarkers(row);
@@ -230,13 +231,18 @@ export function renderGeneral(
     declaresRecipients && !sent.some((r) => r.role === "to") ? [gap(ctx, state, "no To recipient", { table: NO_TO_RECIPIENT_TABLE, id: ctx.filing.id })] : [];
   if (noTo.length + sent.length > 0) lines.push("", ...noTo, ...sent.map((r) => recipientEntry(r, r.role === "to" ? "To" : "cc")));
 
-  // The four optional header fields, each a list printed only while it has items. The filed face
-  // drops the whole header, so none reaches the sent face.
-  const authorities = fetchFilingLaw(ctx.dbPath, ctx.filing.id);
+  // The mockup-only Authorities section, last before the Legend (render.ts adds that), printed only
+  // while it has items. filed-face.ts's MOCKUP_ONLY_HEADINGS keeps it off every final copy.
   // #1231: a plain line, no glyph, so `open-items` does not count it. It prints only while the
   // Writing's authority confirmation is NULL.
-  const authorityItems = [...(authorityUnconfirmed(ctx.filing, layout) ? [UNCONFIRMED_AUTHORITY_LINE] : []), ...authorities.map((row) => authorityCitedLine(ctx, row))];
+  const authorityItems = [
+    ...(authorityUnconfirmed(ctx.filing, layout) ? [UNCONFIRMED_AUTHORITY_LINE] : []),
+    ...fetchFilingLaw(ctx.dbPath, ctx.filing.id).map((row) => authorityCitedLine(ctx, row)),
+  ];
+  if (authorityItems.length > 0) lines.push("", "## Authorities", "", ...authorityItems.map((item) => `- ${item}`));
 
+  // The three optional header fields, each a list printed only while it has items. The filed face
+  // drops the whole header, so none reaches the sent face.
   const pageLimit = scalarValue(layout.page_limit);
   const pageBudget =
     pageLimit === undefined
@@ -268,7 +274,6 @@ export function renderGeneral(
     revision: ctx.revision,
     rendered: ctx.rendered,
     lists: [
-      { label: "Authorities cited", items: authorityItems },
       { label: "Page budget", items: pageBudget },
       { label: "Layout confirmation", items: confirmation },
       { label: "Blind copies", items: blind },

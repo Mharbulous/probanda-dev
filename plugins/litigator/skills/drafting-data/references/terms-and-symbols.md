@@ -146,7 +146,7 @@ relief          ─ groups      → order_sought ×N  # open decision — not re
 document        ─ deploys     → fact · submission · order_sought · rhetorical_paragraph · opposing_orders ×N  # ordered pointer list
 filing          ─ renders     → form ⊕ written_argument
 clause          ─ selected_by → filing ×N        # `clauses` + `filing_clauses` (v31); express ⊕ implied (`basis`); express: `document` + `pinpoint` + `excerpt`, pinpoint ∅ ⇒ 📌, excerpt ∅ ⇒ 📑 ; implied: `excerpt_id` → statement of law ⊕ ∅, that statement's pinpoint ∅ ⇒ 📍, a lead ⇒ 🔬 ; 🧐 on the clause line (#1122/#1158)
-prose-cited statement ─ cites → statement of law  # `filing_law` (v36): a Writing's own text cites it; 📜 📍 🔬 🏅 on its mockup-only *Authorities cited* line, withheld from the sent face (#1214)
+prose-cited statement ─ cites → statement of law  # `filing_law` (v36): a Writing's own text cites it; 📜 📍 🔬 🏅 on its line in the mockup-only *Authorities* section, withheld from the sent face (#1214)
 prose slot      ─ of          → filing           # `filing_prose`: one slot of a Writing's own text; no text ⇒ 🧩 `<name> not written` ; 🧐 once, on its last line (#1207)
 opposing_point  ─ answered_by → submission       # ∅ ⇒ ↩️
 anticipated_point                                # our own prediction, not theirs — existence ⇒ 🚩; no edges but the advisory rebuts link, never deployed, never read by 🂡 (#390)

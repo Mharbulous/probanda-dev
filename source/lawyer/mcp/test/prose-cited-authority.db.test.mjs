@@ -1,9 +1,9 @@
 // A Writing's prose-cited authorities (#1214; work-markers.md rows 📜 📍 🔬 🏅; filing-checklists.md
 // §13 "Authorities cited"): a statement of law the Writing's own text cites is linked to it by
-// filing_law (schema v36) and printed as its own item of the mockup header's optional "Authorities
-// cited" list (plan 2026-10-07 step 3), with the statement-line markers a doctrinal statement line
-// prints and its own 🧐. The markers count toward the declared held criteria, so the pre-send hold
-// reads them, and the sent face drops the whole header. The letter is /draft's shipped letter to
+// filing_law (schema v36) and printed as its own item of the mockup's Authorities section, after the
+// text and before the Legend, never in the header (spec 2026-11-17), with the statement-line markers
+// a doctrinal statement line prints and its own 🧐. The markers count toward the declared held
+// criteria, so the pre-send hold reads them, and the sent face drops the whole section. The letter is /draft's shipped letter to
 // opposing counsel on a proceeding with no forum.
 
 import assert from "node:assert/strict";
@@ -55,10 +55,18 @@ const held = (result) => ["excerpts", "noting-up", "primary-authority"].map((id)
 /** The mockup header, both `---` lines included. */
 const headerOf = (md) => md.slice(0, md.indexOf("\n---\n") + "\n---\n".length);
 
-/** The authority's item in the header's "Authorities cited", split into its printed sets; `glyphs`
+/** The Authorities section, its heading through to the Legend's heading or the end. */
+function authoritiesOf(md) {
+  const at = md.indexOf("\n## Authorities\n");
+  assert.ok(at !== -1, md);
+  const end = md.indexOf("\n## Legend\n", at);
+  return md.slice(at, end === -1 ? md.length : end + 1);
+}
+
+/** The authority's item in the Authorities section, split into its printed sets; `glyphs`
  * splits those sets further, for a line whose tail is markers only. */
 function citedLine(md) {
-  const m = /^ {2}- > \*Example v\. Authority\*, 2020 BCSC 1(.*?) <!-- statement_of_law_id (\d+) -->$/m.exec(headerOf(md));
+  const m = /^- > \*Example v\. Authority\*, 2020 BCSC 1(.*?) <!-- statement_of_law_id (\d+) -->$/m.exec(authoritiesOf(md));
   assert.ok(m, md);
   const sets = m[1].trim().split(" ").filter(Boolean);
   return { text: m[0], sets, get glyphs() { return sets.flatMap(splitGlyphs); }, statementId: Number(m[2]) };
@@ -90,7 +98,7 @@ async function drafted(t, { cite = true, unconfirmed = false } = {}) {
   return { g, id };
 }
 
-test("a lead cited in a letter's prose prints in the header's Authorities cited with 📜 📍 🔬 📇 🏅, the Legend lists them, and the Work Board reads excerpts and primary authority unmet", async (t) => {
+test("a lead cited in a letter's prose prints in the Authorities section, not the header, with 📜 📍 🔬 📇 🏅, the Legend lists them, and the Work Board reads excerpts and primary authority unmet", async (t) => {
   const { g, id } = await drafted(t);
   const [link] = g.query("SELECT fl.statement_id, sl.law_assertion_id, sl.verification FROM filing_law fl JOIN statements_of_law sl ON sl.id = fl.statement_id WHERE fl.filing_id = ?", [id]);
   assert.deepEqual([link.law_assertion_id, link.verification], [null, "lead"], "the script wrote the statement and its link together");
@@ -101,12 +109,13 @@ test("a lead cited in a letter's prose prints in the header's Authorities cited 
   assert.equal(line.statementId, link.statement_id);
   assert.deepEqual([...line.glyphs].sort(), ["📇", "📍", "📜", "🔬", "🏅"].sort(), line.text);
   assert.equal(line.sets.length, 1, `one statement's markers print as one fused set: ${line.text}`);
-  assert.ok(headerOf(md).includes(`\nAuthorities cited:\n${line.text}\n`), md);
-  // Plan 2026-10-07 step 3 (c): the markers sit only in the header, and the Legend still lists them.
-  const [, body, legend] = /^---\n[\s\S]*?\n---\n([\s\S]*)\n## Legend\n([\s\S]*)$/.exec(md);
+  assert.ok(md.includes(`\n## Authorities\n\n${line.text}\n\n## Legend\n`), "the section sits last, just before the Legend");
+  assert.doesNotMatch(headerOf(md), /Authorit|statement_of_law_id/);
+  // The markers sit only in the Authorities section, and the Legend still lists them.
+  const [, body, legend] = /^---\n[\s\S]*?\n---\n([\s\S]*)\n## Authorities\n[\s\S]*\n## Legend\n([\s\S]*)$/.exec(md);
   assert.ok(body.trimEnd().endsWith(TO_LINE), "the letter's text ends at its To line");
   for (const glyph of ["📜", "📍", "🔬", "📇", "🏅"]) {
-    assert.ok(!body.includes(glyph), `${glyph} sits only in the header`);
+    assert.ok(!body.includes(glyph), `${glyph} sits only in the Authorities section`);
     assert.ok(legend.includes(`| ${glyph} |`), `the Legend lists ${glyph}`);
   }
 
@@ -119,15 +128,15 @@ test("a lead cited in a letter's prose prints in the header's Authorities cited 
   ]);
   assert.deepEqual(criterionOf(result, "excerpts").items, ["Example v. Authority, 2020 BCSC 1"]);
   assert.deepEqual(criterionOf(result, "primary-authority").items, ["Example v. Authority, 2020 BCSC 1"]);
-  // Plan 2026-10-07 step 3 (d): moving Authorities cited into the header leaves open-items' count as it was.
+  // Plan 2026-10-07 step 3 (d): the authorities' lines leave open-items' count as it was.
   const openItems = criterionOf(result, "open-items");
   assert.deepEqual([openItems.state, openItems.outstanding, openItems.items], ["met", 0, []]);
 });
 
-test("the sent face drops the header's Authorities cited and keeps the signature block and the To line", async (t) => {
+test("the sent face drops the Authorities section and keeps the signature block and the To line", async (t) => {
   const { g, id } = await drafted(t);
   const face = render(g, id, "filed").documents[0].markdown;
-  assert.doesNotMatch(face, /Authorities cited|Example v\. Authority, 2020 BCSC 1 |<!--/);
+  assert.doesNotMatch(face, /Authorities|Example v\. Authority, 2020 BCSC 1 |<!--/);
   assert.ok(face.includes("Your objection came after the time Example v. Authority, 2020 BCSC 1, allows."), face);
   assert.ok(face.includes("Pat Example"), face);
   assert.ok(face.trimEnd().endsWith(TO_LINE), face);
@@ -170,7 +179,7 @@ test("quoted, pinpointed, rated, verified and noted up, the line clears the held
   );
   const cleared = render(g, id);
   const line = citedLine(letterOf(cleared));
-  assert.equal(line.text, `  - > *Example v. Authority*, 2020 BCSC 1, para. 12 🧐 <!-- statement_of_law_id ${sid} -->`);
+  assert.equal(line.text, `- > *Example v. Authority*, 2020 BCSC 1, para. 12 🧐 <!-- statement_of_law_id ${sid} -->`);
   assert.deepEqual(held(cleared), [
     ["excerpts", "met", 0],
     ["noting-up", "met", 0],
@@ -185,7 +194,7 @@ test("quoted, pinpointed, rated, verified and noted up, the line clears the held
          FROM statements_of_law WHERE id = ${sid};`
   );
   const approved = render(g, id);
-  assert.equal(citedLine(letterOf(approved)).text, `  - > *Example v. Authority*, 2020 BCSC 1, para. 12 <!-- statement_of_law_id ${sid} -->`);
+  assert.equal(citedLine(letterOf(approved)).text, `- > *Example v. Authority*, 2020 BCSC 1, para. 12 <!-- statement_of_law_id ${sid} -->`);
   assert.ok(!criterionOf(approved, "counsel-review").items.includes("Example v. Authority, 2020 BCSC 1"));
 });
 
@@ -221,7 +230,7 @@ test("a killed authority's line keeps its killed tag and prints no marker, 🧐 
   const { g, id } = await drafted(t);
   const [{ statement_id: sid }] = g.query("SELECT statement_id FROM filing_law WHERE filing_id = ?", [id]);
   await g.execute("UPDATE authorities SET killed_on = '2026-09-26' WHERE id = 4;");
-  assert.equal(citedLine(letterOf(render(g, id))).text, `  - > *Example v. Authority*, 2020 BCSC 1 (killed 2026-09-26) <!-- statement_of_law_id ${sid} -->`);
+  assert.equal(citedLine(letterOf(render(g, id))).text, `- > *Example v. Authority*, 2020 BCSC 1 (killed 2026-09-26) <!-- statement_of_law_id ${sid} -->`);
 
   await g.execute("UPDATE authorities SET killed_on = NULL, treatment = 'overruled' WHERE id = 4;");
   // ⛔ is an event marker, not a work marker, so the unapproved statement's 🧐 prints beside it, in
@@ -229,10 +238,10 @@ test("a killed authority's line keeps its killed tag and prints no marker, 🧐 
   assert.deepEqual(citedLine(letterOf(render(g, id))).sets, ["⛔🧐"]);
 });
 
-test("a confirmed Writing with no filing_law row prints no Authorities cited field", async (t) => {
+test("a confirmed Writing with no filing_law row prints no Authorities section", async (t) => {
   const { g, id } = await drafted(t, { cite: false });
   const md = letterOf(render(g, id));
-  assert.doesNotMatch(md, /Authorities cited|statement_of_law_id/);
+  assert.doesNotMatch(md, /Authorities|statement_of_law_id/);
   // The letter's text ends at its To line; only the legend follows it.
   assert.ok(md.split("\n## Legend\n")[0].trimEnd().endsWith(TO_LINE), md);
 });
@@ -242,25 +251,26 @@ test("a confirmed Writing with no filing_law row prints no Authorities cited fie
 const NOT_CONFIRMED = "Authority not confirmed: link each authority this text cites, or record that it cites none. Sending is held until then.";
 const CONFIRM = (id) => `UPDATE filings SET authority_confirmed_on = '2026-09-29' WHERE id = ${id};`;
 
-test("an unconfirmed Writing prints a plain, glyph-free item in the header's Authorities cited even with no filing_law row, and the sent face drops it", async (t) => {
+test("an unconfirmed Writing prints a plain, glyph-free item in the Authorities section even with no filing_law row, and the sent face drops it", async (t) => {
   const { g, id } = await drafted(t, { cite: false, unconfirmed: true });
   const result = render(g, id);
   const md = letterOf(result);
-  assert.ok(headerOf(md).includes(`\nAuthorities cited:\n  - ${NOT_CONFIRMED}\n`), md);
+  assert.ok(authoritiesOf(md).startsWith(`\n## Authorities\n\n- ${NOT_CONFIRMED}\n`), md);
+  assert.doesNotMatch(headerOf(md), /Authorit/);
   assert.equal(criterionOf(result, "open-items").state, "met", "the line carries no glyph, so open-items does not count it");
   const face = letterOf(render(g, id, "filed"));
-  assert.doesNotMatch(face, /Authorities cited|Authority not confirmed/);
+  assert.doesNotMatch(face, /Authorities|Authority not confirmed/);
   assert.ok(face.trimEnd().endsWith(TO_LINE), face);
 });
 
 test("the line prints above a linked authority while unconfirmed, and setting the column clears it", async (t) => {
   const { g, id } = await drafted(t, { unconfirmed: true });
   const before = letterOf(render(g, id));
-  assert.ok(headerOf(before).includes(`\nAuthorities cited:\n  - ${NOT_CONFIRMED}\n  - > *Example v. Authority*`), before);
+  assert.ok(authoritiesOf(before).startsWith(`\n## Authorities\n\n- ${NOT_CONFIRMED}\n- > *Example v. Authority*`), before);
   await g.execute(CONFIRM(id));
   const after = letterOf(render(g, id));
   assert.doesNotMatch(after, /Authority not confirmed/);
-  assert.ok(headerOf(after).includes(`\nAuthorities cited:\n  - > *Example v. Authority*`), after);
+  assert.ok(authoritiesOf(after).startsWith(`\n## Authorities\n\n- > *Example v. Authority*`), after);
 });
 
 test("record_sent holds an unconfirmed letter on authority-confirmed alone, leaves a Pre-send gate step, and sends once the column is set", async (t) => {

@@ -572,6 +572,54 @@ class Converters(unittest.TestCase):
         rows = self.q("SELECT instruction_id, status, valid_to IS NULL, prior_id FROM privileged.client_instructions ORDER BY instruction_id")
         self.assertEqual(rows, [(1, "superseded", 0, None), (2, "open", 1, 1)])
 
+    def split_email(self):
+        return self.privileged(
+            document={"title": "Fwd: Fence", "category": "solicitor_client", "date": "2026-03-02"},
+            facts=[{"source_locator": "¶1", "description": "Ada wants to settle quietly.", "category": "instructions",
+                    "date_of_fact": None}],
+            non_privileged_facts=[
+                {"source_locator": "¶4", "description": "The fence was moved on 1 February.", "category": "property",
+                 "date_of_fact": "2026-02-01", "author": "ada@plumtree.test", "sent": "Fri, 27 Feb 2026 at 14:10"},
+                {"source_locator": "¶5", "description": "We will not pay for the fence.", "category": "property",
+                 "date_of_fact": None, "notes": "UNCONFIRMED: quoted",
+                 "author": "bo@northwind.test", "sent": "Thu, 26 Feb 2026 at 08:00"}])
+
+    def main_text(self):
+        """Every text value in every main-store table."""
+        out = []
+        for (table,) in self.q("SELECT name FROM main.sqlite_master WHERE type = 'table'"):
+            for row in self.q(f'SELECT * FROM main."{table}"'):
+                out += [v for v in row if isinstance(v, str)]
+        return out
+
+    def test_a_split_email_writes_the_covering_message_privileged_and_outside_messages_to_main(self):
+        req = lambda: self.request("privileged", [self.split_email()], answers={"privilege": "yes"}, route=None)
+        self.write(ingest_privileged, req())
+        self.assertEqual(self.q("SELECT category, file_hash FROM privileged.privileged_sources"), [("solicitor_client", H)])
+        self.assertEqual(self.q("SELECT category, file_hash, parent_source_id, privilege_status, ingestion_status FROM sources"),
+                         [("correspondence", H, None, None, "complete")])
+        rows = self.q("SELECT description, date_of_fact, source_locator, notes, verified FROM facts WHERE source_id IS NOT NULL ORDER BY fact_id")
+        self.assertEqual(rows, [
+            ("The fence was moved on 1 February.", "2026-02-01", "¶4",
+             "Stated in a message from ada@plumtree.test, sent Fri, 27 Feb 2026 at 14:10.", 0),
+            ("We will not pay for the fence.", None, "¶5",
+             "UNCONFIRMED: quoted Stated in a message from bo@northwind.test, sent Thu, 26 Feb 2026 at 08:00.", 2)])
+        self.assertEqual(self.q("SELECT count(*) FROM privileged.fact_provenance WHERE source_note LIKE 'STATEMENT: Ada wants%'"), [(1,)])
+        main = self.main_text()
+        self.assertFalse([v for v in main if "settle quietly" in v or "Fwd: Fence" in v], "no covering-message text in main")
+        _, out = self.write(ingest_privileged, req())
+        self.assertEqual((out["refused"], out["named"]["prior"]), ([], "complete"))
+        self.assertEqual(self.q("SELECT (SELECT count(*) FROM sources), (SELECT count(*) FROM facts), "
+                                "(SELECT count(*) FROM privileged.privileged_sources)"), [(1, 3, 1)], "a repeat adds nothing")
+
+    def test_a_file_held_in_main_is_not_split_and_outside_facts_need_a_yes(self):
+        self.con.execute("INSERT INTO sources (category, title, file_hash) VALUES ('correspondence', 'x', ?)", (H,))
+        _, out = self.write(ingest_privileged, self.request("privileged", [self.split_email()],
+                                                            answers={"privilege": "yes"}, route=None))
+        self.assertTrue(out["refused"][0].startswith("store_change"))
+        plan = ingest_privileged.plan(self.request("privileged", [self.split_email()], answers={"privilege": "no"}, route=None))
+        self.assertIn("problems", plan)
+
     # ---------------------------------------------------------------- affidavits (Path C)
 
     def body(self, **extra):

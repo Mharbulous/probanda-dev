@@ -70,7 +70,7 @@ test("glyphs inside a fenced excerpt or an HTML comment are not on the mockup", 
 });
 
 test("a symbol that sits only in the header's optional list fields is listed (plan 2026-10-07 step 3)", () => {
-  const markdown = "---\nRevision: 1\nAuthorities cited:\n  - > *Example v. Authority*, 2020 BCSC 1 📌 <!-- statement_of_law_id 1 -->\n---\n\n# Letter\n\nPlain prose.\n";
+  const markdown = "---\nRevision: 1\nPage budget:\n  - Limit: 2 pages 📌\n---\n\n# Letter\n\nPlain prose.\n";
   assert.deepEqual(firstCells(buildLegend(markdown, "General_writing").text), ["📌"]);
 });
 

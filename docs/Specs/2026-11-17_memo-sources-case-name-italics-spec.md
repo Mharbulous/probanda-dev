@@ -1,8 +1,6 @@
 # Spec: Research memo Sources section does not italicize case names
 
-Status: proposed, 2026-11-17. Written in a matter session; implementation is handed to Claude Code.
-Plugin: `lawyer` (installed copy seen at v0.31.0; its data server reported `server_outdated` at session entry). Paths below are as seen in the installed copy and are **UNVERIFIED** against the repo unless marked otherwise.
-Related specs, same date: `2026-11-17_memo-header-authorities-list-spec.md`
+Status: proposed, 2026-11-17. Written in a matter session; implementation is handed to Claude Code. Plugin: `lawyer` (installed copy seen at v0.31.0; its data server reported `server_outdated` at session entry). Paths below are as seen in the installed copy and are UNVERIFIED against the repo unless marked otherwise. Related specs, same date: `2026-11-17_memo-header-authorities-list-spec.md`
 
 ## 1. Problem
 
@@ -20,8 +18,7 @@ In a research memo mockup (`Memorandum of Law.md`, written by `drafting_forms__r
 
 ## 3. Goal and non-goals
 
-Goal: every case name in the Sources section's case authority list is italicized in the mockup, and in any document published from it.
-Non-goals: the list's order, grouping, pinpoint collection or markers; legislation and secondary-source entries, unless they share the same formatter and the citation rule calls for italics.
+Goal: every case name in the Sources section's case authority list is italicized in the mockup, and in any document published from it. Non-goals: the list's order, grouping, pinpoint collection or markers; legislation and secondary-source entries, unless they share the same formatter and the citation rule calls for italics.
 
 ## 4. Design
 
@@ -64,3 +61,14 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 - The installed server was reported outdated: confirm HEAD still prints plain names in Sources.
 - Confirm whether the header's authority list (sibling spec) and the Sources list share a builder; if so, the sibling spec lands first.
+
+## 11. Verification against HEAD (da9d1edf, 2026-11-17)
+
+| Claim | At HEAD | Evidence |
+|---|---|---|
+| Sources prints plain case names | Holds, but the renderer does not build the list | `source/lawyer/mcp/src/submission/forms/projections.ts` `ownLines`: a `slot:sources` part prints the Writing's own `filing_prose` row as written. The three memo type files (`source/skills/legal-research/references/CAN/BC/_NoVenue/Documents/research-memo*.md`) give Sources `"source": "slot:sources"`. |
+| A Sources builder exists to route through the citation formatter | Does not hold | No code builds Sources. Its text is written by the memo writer to `source/skills/shared/research-memo-template.md` ("Each source is one bullet, `<full citation>, <each pinpoint relied on>`"), which says nothing of italics. `render-general.db.test.mjs` feeds it in as prose (`g.prose(id, "sources", ...)`). |
+| Body citation line italicizes the name | Holds | `research-propositions.ts` builds `> *${row.authority_title}*` from the stored statement's authority. |
+| Header authority list (sibling spec) shares a builder with Sources | Does not hold | The header's "Authorities cited" is built in `render-general.ts` from stored statements. Sources is a prose slot. The two specs are independent. |
+| Criterion 3, one function italicizes both places | Cannot hold literally | One place is code, the other is the writer's prose. The fix is a template rule for the writer, with the renderer unchanged. |
+| Published Word copy shows real italics | Unverified | The body citation lines carry the same `*name*` markdown, so Sources would reach Word by the same route. |

@@ -53,6 +53,25 @@ from pathlib import Path
 
 TARGET_SCHEMA_VERSION = 81
 
+# The schema's guard_filing_facts_attached_del trigger needs SQLite 3.47.0 (migrations.sql notes it at
+# that hop). An older SQLite reports "malformed database schema", which reads as damage, so every Python
+# entry point that opens a drafting database refuses first (spec 2026-11-17 drafting-records sync safety,
+# section 3.7): migrate() here, split_merge.py by importing this, and the data server's helper in
+# src/submission/backend.ts, which states the same check because it cannot import this skill's scripts.
+SQLITE_FLOOR = (3, 47, 0)
+
+
+def sqlite_too_old():
+    """The refusal message, code sqlite_too_old, when this Python's SQLite is older than SQLITE_FLOOR; else None."""
+    found = tuple(sqlite3.sqlite_version_info)
+    if found >= SQLITE_FLOOR:
+        return None
+    return (
+        f"This computer's Python uses SQLite {'.'.join(map(str, found))}, and the drafting records need SQLite "
+        f"{'.'.join(map(str, SQLITE_FLOOR))} or later. The matter's file is not damaged: nothing was read from it or "
+        "written to it. Drafting records stay closed on this computer until its Python uses a newer SQLite."
+    )
+
 _MARKER_RE = re.compile(r'^-- MIGRATE\s+(\d+)\s*->\s*(\d+)\s*$', re.MULTILINE)
 
 _MIGRATIONS_SQL_PATH = Path(__file__).resolve().parent.parent / "migrations.sql"
@@ -473,6 +492,9 @@ def migrate(
     delete-and-rerun. A pre-existing database is migrated with the defaults.
     Returns the list of (from, to) hops applied -- an empty list means the
     database was already at target_version."""
+    too_old = sqlite_too_old()
+    if too_old:
+        raise MigrateError(too_old, code="sqlite_too_old")
     migrations = _load_migrations(migrations_sql_path)
     db_existed = Path(db_path).exists()  # before connect -- connect creates the file
     con = sqlite3.connect(db_path)

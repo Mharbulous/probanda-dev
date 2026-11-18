@@ -102,6 +102,28 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: submissionDataPrefixed("split_merge"),
+      description:
+        "After a sync conflict split the matter's drafting records (sync_conflict_copies), follow /drafting-data's " +
+        "references/sync-split.md. op diff compares the two copies record by record and returns {inputs [{path, sha256}], " +
+        "differences [{id, table, key, kind only_a|only_b|differ, columns, a, b}], resolved}; it writes nothing. op merge takes " +
+        "the diff's sha256 list and decisions {id: a|b}, one per difference, each the practitioner's, and writes " +
+        "submission-merged.sqlite beside the copies; it never writes, moves or removes a copy. Refusals: split_not_two, " +
+        "split_schema_differs, split_inputs_changed, split_undecided, split_merge_unsound.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          matter_root: { type: "string" },
+          op: { type: "string", enum: ["diff", "merge"] },
+          sha256: { type: "array", items: { type: "string" } },
+          decisions: { type: "object", additionalProperties: { type: "string", enum: ["a", "b"] } },
+        },
+        required: ["matter_root", "op"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    {
       name: submissionDataPrefixed("create_writing"),
       description:
         "Create one Writing (a filings row) on a proceeding: the one door for a new Writing, because only this tool writes " +
@@ -723,13 +745,14 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       description:
         "Delete one or several mistaken jobs (tickets rows) in one call, only on the practitioner's typed instruction: a " +
         "guarded stamping write per job, all in one transaction, then a confirm-read per job. A job is deleted when it is " +
-        "queued (shelved or not), or wip and held by this session's token; the holder check and the deleted_at stamp are " +
-        "one statement. A wip job held by this session goes back to queued with its lock cleared in the same write, so a " +
-        "restore gives a Ready job with no lock. Nothing else moves: the delete is a soft deleted_at stamp, and every row " +
+        "queued (shelved or not), wip and held by this session's token, or wip under a lock idle 60 minutes or more " +
+        "(lapsed, ADR 0015); the holder check and the deleted_at stamp are one statement. A wip job goes back to queued " +
+        "with its lock cleared in the same write, another session's lapsed lock recorded as lock_lapsed in the same " +
+        "transaction, so a restore gives a Ready job with no lock. Nothing else moves: the delete is a soft deleted_at stamp, and every row " +
         "pointing at the job stays. " +
         HOLDER +
         " Per job, the outcome is read off the confirm-read: deleted (changes 1), " +
-        "held_elsewhere (wip in another session: nothing written; never re-run), refused_status (completed or superseded), " +
+        "held_elsewhere (wip in another session, not lapsed: nothing written; never re-run), refused_status (completed or superseded), " +
         "already_deleted, not_found. It moves no revision. Refusals write nothing: invalid_ticket_ids, " +
         "invalid_session_token. Returns jobs, one {ticket_id, outcome, changes, status, locked_at, rejected_at, " +
         "deleted_at, note} per id.",
@@ -754,12 +777,14 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "confirm-read. The absorbed job's undone steps are appended after the survivor's, so the survivor's done steps " +
         "keep their stamps; its scope rows and Proposal keys are copied to the survivor where the survivor lacks them; " +
         "jobs waiting on it wait on the survivor; the survivor's plan approval is cleared when steps were added; and " +
-        "the absorbed job is superseded by the survivor (superseded_by), never deleted. The survivor is Ready or held " +
-        "by this session; the absorbed job is Ready. " +
+        "the absorbed job is superseded by the survivor (superseded_by) with any lock cleared, never deleted. The survivor " +
+        "is Ready or held by this session; the absorbed job is Ready. A job whose lock has lapsed (idle 60 minutes or " +
+        "more, ADR 0015) counts as Ready: another session's lapse is recorded as lock_lapsed, and its lock on the " +
+        "survivor is released. " +
         HOLDER +
         " Outcomes: merged, or a refusal that writes nothing " +
-        "and names refused_job: held_elsewhere (in progress in another session; never re-run), held_here (the absorbed " +
-        "job is this session's own: make it the survivor), completed, superseded, shelved, deleted, different_writing " +
+        "and names refused_job: held_elsewhere (in progress in another session, not lapsed; never re-run), held_here (the " +
+        "absorbed job is this session's own, not lapsed: make it the survivor), completed, superseded, shelved, deleted, different_writing " +
         "(a different Writing, or a General Job with a Writing Job), different_proceeding, either_or (the absorbed job " +
         "has an either/or partner), blocked (either job waits on a job outside the pair that is not completed), and " +
         "no_match (a job changed between the read and the write). It moves no revision and renders nothing: re-render " +
@@ -967,11 +992,17 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "counsel_not_reconciled, on the v43 hop that drops the submission copy of counsel of record, while any counsel " +
         "offer or parties_drift row stands: the refusal names each row, nothing is written (a database older than v42 is " +
         "first taken to v42 so its parties can be linked), and each is decided by /drafting-data filing-checklists " +
-        "section 0 before migrating again.",
+        "section 0 before migrating again. REFUSED, code earlier_work_missing, when db_path is missing and a sign of earlier " +
+        "drafting work stands (a backup copy beside it, a file only drafting work writes in the matter's draft folder, or this " +
+        "computer's record of changes it saved to the file), naming each sign; and code lost_writes when the file lacks changes this " +
+        "computer saved to it, naming how many. Both refuse before anything is created or written. accept_current_file: true, passed " +
+        "only after the practitioner's yes to a plain question naming what is missing (/drafting-data references/sync-split.md), " +
+        "creates the database anyway or keeps the file as it is, and resets this computer's record to match.",
       inputSchema: {
         type: "object",
         properties: {
           db_path: { type: "string" },
+          accept_current_file: { type: "boolean" },
         },
         required: ["db_path"],
         additionalProperties: false,

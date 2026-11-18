@@ -19,9 +19,9 @@ import { basename, dirname, join } from "node:path";
 import { inOneCall } from "../call-memo.js";
 import { writeCastPage } from "../cast/cast-write.js";
 import { moveSeedsOnce, type SeedsLeft, type SeedsMove } from "../loose-threads/migrate.js";
-import { releaseLapsedLocks } from "./forms/job-activity.js";
 import type { PracticeStore } from "../practice/store.js";
 import { DataServerError, ValidationError } from "../errors.js";
+import { refuseLostWrites, refuseSyncSplit, resetWriteRecord } from "./backend.js";
 import { caseDataRootFromDbPath, findDraftDir, resolveDbPath, validateMatterRoot } from "../files/matter-root.js";
 import { resolveCaseDataRoot } from "../practice/backend.js";
 import { matter_lookup } from "../tools/practice/reads.js";
@@ -43,7 +43,7 @@ import { fetchRevision } from "./forms/query.js";
 import { type MatterDates, readMatterDates } from "./matter-dates.js";
 import { type BoardMove, DATES_NOT_READ, pagePathFor, type PagesWritten, recordPagesState, writeMatterPages } from "./matter-pages.js";
 import { type MatterTodos, readMatterTodos } from "./matter-todos.js";
-import { submissionDataMigrate } from "./migrate.js";
+import { refuseEarlierWorkMissing, submissionDataMigrate } from "./migrate.js";
 import { counselOffers, matterPartiesDrift, type CounselOffer, type PartiesDriftRow } from "./parties-drift.js";
 
 // The matter folder's leading token, e.g. "L8212" from "L8212 Northfield v. Brightwater" -- the same
@@ -324,8 +324,11 @@ function backups(dbPath: string): Set<string> {
 
 /** A first entry on a matter with no drafting database creates it at the path its pointer derives, by
  * the one migration path (a fresh create has nothing to back up, #353). Only the matter's own folder
- * may be made: a folder elsewhere that is missing means the pointer is stale, so that is refused. */
-async function createDatabase(root: string, dbPath: string): Promise<NonNullable<OpenSessionResult["migrated"]>> {
+ * may be made: a folder elsewhere that is missing means the pointer is stale, so that is refused. A sign
+ * of earlier work, in the matter's draft folder or beside the database, refuses before anything is made
+ * (spec 2026-11-17, section 3.1). */
+async function createDatabase(root: string, dbPath: string, draftDir: string | undefined, acceptCurrentFile: boolean): Promise<NonNullable<OpenSessionResult["migrated"]>> {
+  if (!acceptCurrentFile) refuseEarlierWorkMissing(dbPath, draftDir === undefined ? undefined : [draftDir]);
   const folder = dirname(dbPath);
   if (!existsSync(folder)) {
     if (dirname(folder).toLowerCase() !== root.toLowerCase()) {
@@ -333,7 +336,7 @@ async function createDatabase(root: string, dbPath: string): Promise<NonNullable
     }
     mkdirSync(folder);
   }
-  const done = await submissionDataMigrate(dbPath);
+  const done = await submissionDataMigrate(dbPath, process.env, acceptCurrentFile);
   return { from: 0, to: done.schema_version as number, backup: null, ...(Array.isArray(done.warnings) && done.warnings.length > 0 ? { warnings: done.warnings as string[] } : {}) };
 }
 
@@ -348,7 +351,10 @@ async function openSession(
   /** Passed to bootstrap, which then mints an unattended-class session token (Goal card design §5.4). */
   unattended = false,
   /** The filing to open; omitted, the first live filing with a board, else the first pre-filing proceeding. */
-  filingId?: number
+  filingId?: number,
+  /** Decision D2 (spec 2026-11-17): on the practitioner's yes, create over earlier work or keep a file that lacks
+   * this computer's writes, resetting this computer's write record to the file. */
+  acceptCurrentFile = false
 ): Promise<{ result: OpenSessionResult; dates: MatterDates; matterDescription?: string }> {
   const started = performance.now();
   const timings: PhaseTimings = [];
@@ -361,6 +367,10 @@ async function openSession(
 
   const root = await phase("matter_root", () => validateMatterRoot(matterRoot));
   const dbPath = await phase("pointer", () => resolveDbPath(root));
+  // Before anything is created, written or swept into TRASH.
+  refuseSyncSplit(dbPath);
+  if (acceptCurrentFile) resetWriteRecord(dbPath);
+  else refuseLostWrites(dbPath);
   const blocking = await phase("practice_config", () => practiceConfigBlocking(dbPath));
   const { lookup, client: identity } = await phase("matter_lookup", () => lookUpMatter(root, practiceDb, client));
   // #585: the draft folder is confined before any other work.
@@ -374,7 +384,7 @@ async function openSession(
   // returned beside the result, never in it, since the result is the tool response.
   const dates = draftDir === undefined ? undefined : await phase("dates", () => readMatterDates(practiceDb, identity.matterNo));
 
-  let migrated: OpenSessionResult["migrated"] = existsSync(dbPath) ? undefined : await phase("create_database", () => createDatabase(root, dbPath));
+  let migrated: OpenSessionResult["migrated"] = existsSync(dbPath) ? undefined : await phase("create_database", () => createDatabase(root, dbPath, draftDir, acceptCurrentFile));
   // Bootstrap writes no page: the opening below writes the pages, once.
   let result = submissionFormsBootstrap(dbPath, identity, undefined, undefined, undefined, unattended);
   let migrationRefused: string | undefined;
@@ -413,8 +423,6 @@ async function openSession(
   for (const t of result.timings) timings.push({ phase: `bootstrap: ${t.phase}`, ms: t.ms });
   const refused = result.migration_required || result.bundle_outdated;
   const threadsMoved = refused ? null : await phase("loose_threads", () => moveSeedsOnce(dbPath));
-  // ADR 0015, 2026-11-06 note: the opening's board and pages are drawn after lapsed locks are released. This session holds no job yet.
-  if (!refused) await phase("lapsed_locks", () => releaseLapsedLocks(dbPath, undefined));
   const opening: Opening =
     draftDir === undefined || todos === undefined || dates === undefined || refused ? {} : openBoard(dbPath, draftDir, identity, todos, dates, result, filingId, timings);
   // Cast of Characters spec 4.1: the matter's Cast page is written with the matter pages at session

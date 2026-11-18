@@ -67,14 +67,14 @@ FROM privileged.privileged_sources
 WHERE file_hash = ?;
 ```
 
-with `file_hash` bound twice. This is a **read-only probe**; the gate never mutates. Partition the main-store results by `parent_source_id`: child rows (`parent_source_id IS NOT NULL`) are never routing anchors because an affidavit body and its exhibits legitimately share a hash. Every privileged-store match is a routing anchor because privileged sources are not compound.
+with `file_hash` bound twice. This is a **read-only probe**; the gate never mutates. Partition the main-store results by `parent_source_id`: child rows (`parent_source_id IS NOT NULL`) are never routing anchors because an affidavit body and its exhibits legitimately share a hash. Every privileged-store match is a routing anchor because privileged sources are not compound. A privileged row and one top-level main row sharing the hash are a split email (`../../ingest-orchestrator/references/routing.md` "Path B"): one privileged-store match, whose main row holds the facts of the messages sent outside the solicitor-client relationship.
 
 - **A match carrying `[SUPERSEDED-BY:#N`:** the file is an earlier version of source N, which [`supersede-draft.md`](supersede-draft.md) kept as the source of record. Extract nothing: report it as "already held as an earlier version of source N". When that row's stored `file_path` lies outside `0. DRAFT*\Superseded\`, the move `supersede-draft.md` makes did not happen: say so, and offer it (`supersede-draft.md` §6c). The gate ends here without routing.
 - **No match, and the presented path lies under `0. DRAFT*\Superseded\`:** that folder holds only superseded versions, filed there by `supersede-draft.md`. Report the file as one case data does not hold, and stop. The gate ends here without routing.
 - **No top-level match, but an email attachment read through:** a child row with no `file_path`, whose parent is not itself a matching row, with `ingestion_status = 'complete'`. The file is a standalone copy of an attachment its email already holds (design-decisions #54). Extract nothing: report each such attachment row (title, `source_id`) and its parent email's `source_id`, say the content is already in the database, and offer `../operations/ingest-verify.md` on the parent email, whose pass covers its attachments. The gate ends here without routing.
 - **No top-level match otherwise:** route as a new document, even if child rows appear. That covers an affidavit's exhibits and a book's children, which carry a path, and an email attachment that was not read through, whose file is then read afresh.
 - **Exactly one top-level match:** use that row as the routing anchor and apply its existing status logic in Step 4.
-- **If there is more than one top-level match:** stop and report data corruption. Do not choose a survivor, mutate either row, or continue extraction. Repair requires a separate matter-scoped instruction.
+- **If there is more than one top-level match**, other than a split email: stop and report data corruption. Do not choose a survivor, mutate either row, or continue extraction. Repair requires a separate matter-scoped instruction.
 
 ---
 
@@ -89,7 +89,7 @@ Decide the destination from the probe result. Route to exactly one operation and
 | Match, `ingestion_status = 'partial'` | `../operations/ingest-verify.md` on the completed portions, **and** offer the user re-extraction of the missing exhibits/segments |
 | Match, `ingestion_status = 'failed'` | `../operations/ingest-extract.md` (re-extract from scratch — the prior attempt produced nothing trustworthy) |
 | Main-store match, `ingestion_status IS NULL` | Count existing children for the matched `source_id` across `facts`, `positions`, `relief_items`, `relief_positions`, `source_references`, and expert `witnesses.report_source_id`. If the total is **> 0** → `../operations/ingest-verify.md`; if **0** → `../operations/ingest-extract.md`. |
-| Privileged-store match | Count `privileged.fact_provenance` and current `privileged.client_instructions` rows for the matched source. If the total is **> 0** → `../operations/ingest-verify.md`; if **0** → `../operations/ingest-extract.md`. |
+| Privileged-store match | Count `privileged.fact_provenance` and current `privileged.client_instructions` rows for the matched source, and for a split email its main row's `facts`. If the total is **> 0** → `../operations/ingest-verify.md`; if **0** → `../operations/ingest-extract.md`. |
 | No top-level match, an email attachment read through (Step 3) | none: report and stop, offering `ingest-verify.md` on the parent email |
 | A match carrying `[SUPERSEDED-BY:#`, or no match under `0. DRAFT*\Superseded\` (Step 3) | none: report and stop. A superseded row whose stored path lies outside `0. DRAFT*\Superseded\` is offered its move: `../operations/supersede-draft.md` §6c on yes |
 | **No hash match** | `../operations/supersede-draft.md` first, with this file as its one newcomer and its first path segment as `scan_folder`, keeping only the pairs that name this file. When no supersession results, `../operations/ingest-extract.md` |

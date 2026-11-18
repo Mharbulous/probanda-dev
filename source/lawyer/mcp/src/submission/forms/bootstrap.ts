@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
 
 import { buildStampStatus } from "../../build-stamp.js";
+import { refuseSyncSplit } from "../backend.js";
 import { currentSchemaVersion } from "../migrate.js";
 import { bundleNextStep, renderableSchemaVersion, schemaSourceStatus } from "../schema-ceiling.js";
 import { moveCaseDataMockups } from "../writing-folder.js";
@@ -100,6 +101,7 @@ export function submissionFormsBootstrap(
   /** The matter's hearing dates, for the Work Board page alone (ADR 0013, 2026-10-04 amendment). */
   dates: MatterDates = DATES_NOT_READ
 ): BootstrapResult {
+  refuseSyncSplit(dbPath);
   if (!existsSync(dbPath)) {
     throw new ValidationError(`No drafting records found at ${dbPath}. Set the matter's drafting records up first.`);
   }

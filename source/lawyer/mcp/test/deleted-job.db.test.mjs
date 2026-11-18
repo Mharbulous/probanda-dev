@@ -264,9 +264,19 @@ test("this session's own wip job deletes back to queued with no lock, and restor
   assert.deepEqual([row(dbPath, 2).locked_by, row(dbPath, 2).locked_at], [null, null]);
 });
 
+test("another session's wip job whose lock has lapsed deletes back to queued with no lock, its lapse recorded", async (t) => {
+  const { dbPath } = await matter(t);
+  await submissionDataExecute(dbPath, "UPDATE tickets SET status = 'wip', locked_by = 'sess-b2', locked_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-61 minutes') WHERE id = 2;");
+  const deleted = await deleteJob(dbPath, 2, "sess-a1");
+  assert.equal(deleted.outcome, "deleted");
+  assert.deepEqual([row(dbPath, 2).status, row(dbPath, 2).locked_by], ["queued", null]);
+  const [lapse] = query(dbPath, "SELECT value FROM kv_store WHERE namespace = 'lock_lapsed' AND key = 'tickets:2'");
+  assert.equal(JSON.parse(lapse.value).from, "sess-b2");
+});
+
 test("another session's wip job and a completed job are refused, and nothing is written", async (t) => {
   const { dbPath } = await matter(t);
-  await submissionDataExecute(dbPath, "UPDATE tickets SET status = 'wip', locked_by = 'sess-b2', locked_at = '2026-10-05T09:00' WHERE id = 2;");
+  await submissionDataExecute(dbPath, "UPDATE tickets SET status = 'wip', locked_by = 'sess-b2', locked_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-59 minutes') WHERE id = 2;");
   const held = row(dbPath, 2);
   const completed = row(dbPath, 4);
 

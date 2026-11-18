@@ -38,19 +38,22 @@
 // case/migrate.ts: host Python's stdout otherwise defaults to the Windows
 // locale encoding, and a migration refusal can quote arbitrary text.
 
-import { existsSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, statSync } from "node:fs";
+import { basename, dirname, join } from "node:path";
 
 import { DataServerError } from "../errors.js";
+import { CASE_DATA_FOLDER } from "../files/matter-root.js";
 import { pruneBackups, timestampedBackups } from "../migrate-backups.js";
 import { type DriverResponse, MIGRATE_DRIVER, pushStaleLockWarning, throwDriverRefusal } from "../migrate-driver.js";
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { submissionDataMigrateScriptsDir } from "../repo-root.js";
-import { forgetDraftingQueries, pythonTimeoutMs, READ_TIMEOUT_MS, submissionDataQuery, WRITE_TIMEOUT_MS } from "./backend.js";
+import { forgetDraftingQueries, pythonTimeoutMs, READ_TIMEOUT_MS, refuseLostWrites, refuseSyncSplit, resetWriteRecord, submissionDataQuery, WRITE_TIMEOUT_MS } from "./backend.js";
 import { acquireDataLock } from "./lock.js";
+import { draftingWorkFiles } from "./matter-page-files.js";
 import { counselOffers, matterPartiesDrift, type CounselOffer, type PartiesDriftRow } from "./parties-drift.js";
 import { overrideActive, renderableSchemaVersion } from "./schema-ceiling.js";
+import { readWriteRecord } from "./write-record.js";
 
 // Read-only companion to MIGRATE_DRIVER (../migrate-driver.ts): reports the version the engine
 // targets, without opening a database or applying anything. TARGET_SCHEMA_VERSION
@@ -72,8 +75,19 @@ function driverFile(name: string, source: string): string {
 
 export async function submissionDataMigrate(
   dbPath: string,
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
+  /** Decision D2: the practitioner said yes to creating the file over earlier work, or to keeping a file that
+   * lacks this computer's writes. The refusal is skipped and this computer's write record reset to the file. */
+  acceptCurrentFile = false
 ): Promise<Record<string, unknown>> {
+  // A split database is never migrated, and never replaced by a fresh one.
+  refuseSyncSplit(dbPath);
+  // Nor is a missing one created over earlier work, nor one missing this computer's writes migrated
+  // (spec 2026-11-17, sections 3.1 and 3.2).
+  if (!acceptCurrentFile) {
+    if (existsSync(dbPath)) refuseLostWrites(dbPath, env);
+    else refuseEarlierWorkMissing(dbPath);
+  }
   // Never past what this bundle can read (#812): the run stops at the bundle's ceiling, and a
   // database already there is left untouched -- the engine copies aside only when it migrates.
   const engineTarget = currentSchemaVersion(env);
@@ -105,10 +119,60 @@ export async function submissionDataMigrate(
     if (lock.brokeStale) pushStaleLockWarning(result, "drafting-data", "database");
     const pruneWarnings = pruneBackups(dbPath, backupsBefore);
     if (pruneWarnings.length > 0) result.warnings = [...(Array.isArray(result.warnings) ? (result.warnings as string[]) : []), ...pruneWarnings];
+    if (acceptCurrentFile) resetWriteRecord(dbPath, env);
     return result;
   } finally {
     lock.release();
   }
+}
+
+/** A sign that a missing drafting database held earlier work: the file and what it is. */
+export interface EarlierWorkSign {
+  path: string;
+  what: string;
+}
+
+/** The matter's `0. DRAFT*` folders, for a database in a matter's own `0. CASE DATA` folder (ADR 0013); none otherwise. */
+function draftDirsOf(dbPath: string): string[] {
+  const caseData = dirname(dbPath);
+  const matter = dirname(caseData);
+  if (basename(caseData).toLowerCase() !== CASE_DATA_FOLDER.toLowerCase() || !existsSync(matter)) return [];
+  return readdirSync(matter, { withFileTypes: true }).filter((e) => e.isDirectory() && /^0\. DRAFT/i.test(e.name)).map((e) => join(matter, e.name));
+}
+
+/** Spec 2026-11-17 section 3.1: each kind of sign of earlier work, read-only. */
+const EARLIER_WORK_SIGNS: ((dbPath: string, draftDirs: string[]) => EarlierWorkSign[])[] = [
+  // The #353 copy-aside backups beside the database.
+  (dbPath) => (existsSync(dirname(dbPath)) ? readdirSync(dirname(dbPath)) : []).filter((name) => name.toLowerCase().startsWith(`${basename(dbPath).toLowerCase()}.bak-`)).sort()
+    .map((name) => ({ path: join(dirname(dbPath), name), what: "a backup copy of the drafting records" })),
+  // The files in the matter's draft folder that only a drafting session writes.
+  (_dbPath, draftDirs) => draftDirs.flatMap((dir) => draftingWorkFiles(dir)).map((path) => ({ path, what: "a file only drafting work writes" })),
+  // This computer's record of its own writes to the file (section 3.2, write-record.ts).
+  (dbPath) => {
+    const writes = readWriteRecord(dbPath)?.writes ?? 0;
+    return writes > 0 ? [{ path: dbPath, what: `this computer saved ${writes} change${writes === 1 ? "" : "s"} to this file before` }] : [];
+  },
+];
+
+/** Every sign of earlier work for a missing database at dbPath, in draftDirs (default: the matter's own draft folders). */
+export function earlierWorkSigns(dbPath: string, draftDirs: string[] = draftDirsOf(dbPath)): EarlierWorkSign[] {
+  return EARLIER_WORK_SIGNS.flatMap((signs) => signs(dbPath, draftDirs));
+}
+
+/** Refuses, code earlier_work_missing, to create a database at dbPath while any sign of earlier work stands,
+ * before anything is created, written or swept into TRASH. */
+export function refuseEarlierWorkMissing(dbPath: string, draftDirs?: string[]): void {
+  const signs = earlierWorkSigns(dbPath, draftDirs);
+  if (signs.length === 0) return;
+  throw new DataServerError(
+    `earlier_work_missing: the drafting records file ${dbPath} is missing, but this matter shows earlier drafting work: ` +
+      `${signs.map((s) => `${s.path} (${s.what})`).join("; ")}. Nothing was created or written, because a new empty file would stand in ` +
+      "for that work. Wait for the file sync to finish on this computer, then try again. If the file does not come back, look for " +
+      `${basename(dbPath)} in the sync service's version history for the folder ${dirname(dbPath)}, or in the backup copy named above, ` +
+      `and put it back as ${basename(dbPath)}. If copies of it appear instead, merge them by /drafting-data references/sync-split.md.`,
+    "earlier_work_missing",
+    { signs }
+  );
 }
 
 /** The schema hop that drops the submission copy of counsel of record (party/counsel SSOT). */

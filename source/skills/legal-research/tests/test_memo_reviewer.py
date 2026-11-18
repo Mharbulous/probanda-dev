@@ -76,7 +76,7 @@ class ScopeTestTest(unittest.TestCase):
     def test_review_line_forbids_retrieval_and_a_rewrite_reruns_nothing(self):
         step_four = flat(between(read("shared", "legal-audit-protocol.md"), "### Step 4", "### Step 5"))
         self.assertIn("cut each `identifiers` passage from the memo, move each `out_of_scope` passage to a Step 5 "
-                      "offer, rewrite a `Conclusion shape:` item's Conclusion as one paragraph, and rewrite each "
+                      "offer, rewrite a `Conclusion shape:` item's Conclusion to the template's rule, and rewrite each "
                       "`findings` item as one finding or cut the item, quoting a `partial excerpt` item's whole "
                       "paragraphs, giving a case it names as missing a tag "
                       "that finding from the court's own reasons or cutting the case.", step_four)
@@ -98,8 +98,14 @@ class ScopeTestTest(unittest.TestCase):
         self.assertIn("Audit: <one line: for the Issue,", protocol)
         self.assertIn("/ INCOMPLETE: <the research named>", protocol)
         self.assertNotIn("per issue", template)
-        self.assertIn("A Conclusion is one paragraph answering the Issue, followed, only where research is required "
-                      "(`shared/legal-audit-protocol.md` Step 4), by the open-issues paragraph", template)
+        self.assertIn("A Conclusion is one paragraph. Its first sentence answers the Issue's question as asked, giving "
+                      "no reasons, or says which part cannot yet be answered. The rest gives the reasons. It is "
+                      "followed, only where research is required (`shared/legal-audit-protocol.md` Step 4), by the "
+                      "open-issues paragraph", template)
+        answers = flat(between(read("shared", "legal-audit-protocol.md"), "**The memo always answers.**",
+                               "**Open issues.**"))
+        self.assertIn("Its Conclusion answers the Issue from the sources held.", answers)
+        self.assertNotIn("the factual comparison and the distinguishability flags", answers)
 
 
 class AgentContractTest(unittest.TestCase):
@@ -143,7 +149,7 @@ class AgentContractTest(unittest.TestCase):
                       "sentence, each numbered item and each piece of research", body)
         self.assertIn("A Conclusion sentence or a numbered item out of scope: an `out_of_scope` item, the sentence's "
                       "words or `¶<n>: <its words>`.", body)
-        self.assertIn("A Conclusion that is a list or more than one paragraph, the open-issues paragraph apart: an "
+        self.assertIn("A Conclusion whose first sentence or shape breaks the template's rule for it: an "
                       "`out_of_scope` item, `Conclusion shape: <its first words>`.", body)
         self.assertNotIn("beyond the Issue", body)
         self.assertNotIn("can the Issue, as framed, be answered without it?", body)

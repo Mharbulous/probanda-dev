@@ -19,10 +19,19 @@ import { nowMinuteSql } from "./timings.js";
  * (ADR 0015). A lock-lapse time, never a countdown. */
 export const LAPSE_AFTER_MINUTES = 60;
 
+/** How often a held job's last activity and session-active stamp move: only once the stored stamp is
+ * this many minutes or more behind now, so a touch inside the window changes no row and leaves the
+ * drafting database's file alone (spec 2026-11-17 drafting-records-sync-safety §3.6). Well under
+ * LAPSE_AFTER_MINUTES: a held job reads at most this much staler than it is. */
+export const TOUCH_EVERY_MINUTES = 15;
+
 const NAMESPACE = "last_activity";
+/** SQL true of the `tickets` row in scope when `stored` (its stamp, NULL for none) is TOUCH_EVERY_MINUTES or more behind now. */
+const due = (stored: string): string => `COALESCE(${stored}, '') <= ${nowMinuteSql(-TOUCH_EVERY_MINUTES)}`;
 const touch = (held: string, now: string): string =>
   "INSERT INTO kv_store (namespace, key, value, updated_at) " +
   `SELECT '${NAMESPACE}', 'tickets:' || id, '"' || ${now} || '"', strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM tickets WHERE id = ? AND ${held} ` +
+  `AND ${due(`(SELECT trim(value, '"') FROM kv_store WHERE namespace = '${NAMESPACE}' AND key = 'tickets:' || tickets.id)`)} ` +
   "ON CONFLICT (namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at";
 
 /** SQL for the claim number of the `tickets` row in scope (alias `t`): the kv_store value `claim_no` /
@@ -68,24 +77,29 @@ export function checkClaim(tool: string, dbPath: string, id: number, token: stri
 }
 
 /** The statements that move job `id`'s session-active stamp and last activity to now, each landing
- * only under `held` (heldBy). Appended to a tool's own write, they run in its transaction and see its
- * result. None on a database held below v80, which has no last-activity stamp. */
+ * only under `held` (heldBy) and only once that stamp is TOUCH_EVERY_MINUTES behind. Appended to a
+ * tool's own write, they run in its transaction and see its result. None on a database held below
+ * v80, which has no last-activity stamp. */
 export function touchStatements(dbPath: string, id: number, held: { sql: string; params: unknown[] }): WriteStatement[] {
   if (!hasTable(dbPath, "kv_store")) return [];
   const now = nowMinuteSql();
   return [
-    { sql: `INSERT OR REPLACE INTO db_meta (key, value) SELECT 'job_active:' || id, ${now} FROM tickets WHERE id = ? AND ${held.sql}`, params: [id, ...held.params] },
+    { sql: `INSERT OR REPLACE INTO db_meta (key, value) SELECT 'job_active:' || id, ${now} FROM tickets WHERE id = ? AND ${held.sql} AND ${due("(SELECT value FROM db_meta WHERE key = 'job_active:' || tickets.id)")}`, params: [id, ...held.params] },
     { sql: touch(held.sql, now), params: [id, ...held.params] },
   ];
 }
 
 /** Moves job `id`'s session-active stamp and last activity to now, on their own, when `token` holds its
- * lock under `claim`. False when it does not, and on a database held below v80. */
+ * lock under `claim` and they are TOUCH_EVERY_MINUTES behind. Recorded true while it holds the lock,
+ * the stamps then current within the window; false when it does not, and on a database held below v80. */
 export async function touchJob(dbPath: string, id: number, token: string, claim: number | null, env: NodeJS.ProcessEnv = process.env): Promise<{ recorded: boolean; warning?: string }> {
   const statements = touchStatements(dbPath, id, heldBy(dbPath, token, claim));
   if (statements.length === 0) return { recorded: false };
   const written = await submissionDataWriteAll(dbPath, statements, env);
-  return { recorded: written.ok && written.results[1].changes === 1, ...(written.warning ? { warning: written.warning } : {}) };
+  const moved = written.ok && written.results[1].changes === 1;
+  const held = heldBy(dbPath, token, claim);
+  const recorded = moved || (written.ok && submissionDataQuery(dbPath, `SELECT 1 FROM tickets WHERE id = ? AND ${held.sql}`, [id, ...held.params]).rows.length === 1);
+  return { recorded, ...(written.warning ? { warning: written.warning } : {}) };
 }
 
 /** Each job's last activity by id; empty on a database held below v80. */
@@ -121,7 +135,15 @@ export function lapsedClause(dbPath: string): string {
   return `(tickets.status = 'wip' AND tickets.locked_by IS NOT NULL AND tickets.rejected_at IS NULL AND ${idleClause(dbPath, LAPSE_AFTER_MINUTES)})`;
 }
 
-/** The statement that records a lapse in each matching job's history, the kv_store value `lock_lapsed` /
+/** SQL true of the `tickets` row in scope when it is held and its lock has not lapsed: what a reader of
+ * `tickets.status = 'wip'` means by "in progress". A lapsed lock stays on its row until assign_job
+ * takes the job (ADR 0015, 2026-11-17 note), so every such read uses this test. The skills' form of it
+ * is drafting-data `jobs-run.md` §4a. */
+export function heldClause(dbPath: string): string {
+  return `(tickets.status = 'wip' AND NOT ${lapsedClause(dbPath)})`;
+}
+
+/** The statement that records a lapse in the matching job's history, the kv_store value `lock_lapsed` /
  * `tickets:<id>`: the minute it was released and the holder tag it was released from. `where` is the
  * releasing write's own, so it lands exactly when that write clears a lapsed lock. */
 export function recordLapseSql(where: string): string {
@@ -136,19 +158,6 @@ export function recordLapseSql(where: string): string {
 /** What a release sets on a job's row: back to Ready, unlocked. Plan, steps, scope, proposals, answers
  * and sources are not touched, and claim_no is raised only by the next assign_job. */
 export const RELEASE_SET = "status = 'queued', locked_by = NULL, locked_at = NULL";
-
-/** Writes the release of every lapsed lock (lapsedClause) but `ownToken`'s, each with its lapse
- * recorded in its history, before a board page is written (ADR 0015, 2026-11-06 note). Reads first
- * and writes nothing when no lock has lapsed, so a repeat call writes nothing new. Returns the count released. */
-export async function releaseLapsedLocks(dbPath: string, ownToken: string | undefined, env: NodeJS.ProcessEnv = process.env): Promise<number> {
-  const where = `${lapsedClause(dbPath)} AND locked_by IS NOT ?`;
-  const params = [ownToken ?? null];
-  const [{ n }] = submissionDataQuery(dbPath, `SELECT count(*) AS n FROM tickets WHERE ${where}`, params).rows as unknown as { n: number }[];
-  if (n === 0) return 0;
-  const record = hasTable(dbPath, "kv_store") ? [{ sql: recordLapseSql(where), params }] : [];
-  const written = await submissionDataWriteAll(dbPath, [...record, { sql: `UPDATE tickets SET ${RELEASE_SET} WHERE ${where}`, params }], env);
-  return written.ok ? written.results[record.length].changes : 0;
-}
 
 /** The statement that records a reopen in the job's history, the kv_store value `reopened` /
  * `tickets:<id>`: a JSON array gaining one entry per reopen, holding the completion and plan approval
@@ -231,6 +240,6 @@ export async function submissionDataTouchJob(args: TouchJobArgs, env: NodeJS.Pro
   const { recorded, warning } = await touchJob(dbPath, id, token, claim, env);
   const warned = warning ? { warning } : {};
   return recorded
-    ? { ticket_id: id, recorded, note: `Job ${id}'s session-active stamp and last activity are now.`, ...warned }
+    ? { ticket_id: id, recorded, note: `Job ${id}'s session-active stamp and last activity are current (they move at most every ${TOUCH_EVERY_MINUTES} minutes).`, ...warned }
     : { ticket_id: id, recorded, note: `Nothing was written: job ${id} is not this session's (taken over, shelved or completed). Run the scope read and stop.`, ...warned };
 }

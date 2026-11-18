@@ -1,4 +1,4 @@
-// build-stamp: f0e6ffeaa16c
+// build-stamp: fdef7a6a7551
 
 // src/trash-cli.ts
 import { pathToFileURL } from "node:url";
@@ -360,6 +360,52 @@ def locate_case_data_dir(matter_root):
         matter_root, pointer.get('case_data_dir'), case_data_root(matter_root),
         norm_join(matter_root, LEGACY_ARTIFACTS_DIR))
     return {'case_data_dir': case_data_dir}
+
+
+# A sync conflict's copy is named '<name>-<computer name><ext>' (Microsoft's documented pattern:
+# book1-desktop-computer.xlsx beside book1.xlsx), as submission/backend.ts's split_copies reads it.
+CASE_STORES = ('main.sqlite', 'law.sqlite', 'privileged.sqlite')
+
+
+def case_split_copies(matter_root):
+    """Every sync conflict copy of a matter-data store, as full paths, found without writing. It
+    looks in the matter's own 0. CASE DATA, the stored nominee and the folder the resolver picks:
+    a split that renamed main.sqlite away turns the resolver from the folder it split in."""
+    matter_root = os.path.normpath(matter_root)
+    folders = [matter_case_data_dir(matter_root)]
+    try:
+        pointer = read_pointer(matter_root)[3]
+    except SystemExit:
+        pointer = None
+    if pointer is not None:
+        stored = pointer.get('case_data_dir')
+        if stored:
+            folders.append(os.path.normpath(stored) if is_absolute(stored) else norm_join(matter_root, stored))
+        folders.append(locate_case_data_dir(matter_root)['case_data_dir'])
+    copies, seen = [], set()
+    for folder in folders:
+        if os.path.normcase(folder) in seen or not os.path.isdir(folder):
+            continue
+        seen.add(os.path.normcase(folder))
+        names = os.listdir(folder)
+        for store in CASE_STORES:
+            stem, ext = os.path.splitext(store)
+            copies += sorted(norm_join(folder, f) for f in names if f.lower().startswith(stem + '-')
+                             and f.lower().endswith(ext) and len(f) > len(stem) + 1 + len(ext))
+    return copies
+
+
+def case_split_message(copies):
+    return ("sync_conflict_copies: the file sync has split this matter's case data: " + ", ".join(copies) +
+            " sit beside or in place of its main.sqlite, law.sqlite and privileged.sqlite. Each copy may hold "
+            "changes the others lack. Nothing was written or created. Stop matter-data work on this matter "
+            "until the practitioner has chosen which copy of each store to keep and the folder holds only the "
+            "three stores. Writes stay refused until then.")
+`;
+var SPLIT_DRIVER = case_data_resolver_py_default + LOCATE_PY + String.raw`
+
+copies = case_split_copies(json.load(sys.stdin)['matter_root'])
+print(json.dumps({'copies': copies, 'message': case_split_message(copies) if copies else None}))
 `;
 var LOCATE_DRIVER = case_data_resolver_py_default + LOCATE_PY + String.raw`
 

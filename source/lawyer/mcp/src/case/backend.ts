@@ -37,7 +37,7 @@ import { EXECUTE_TIMEOUT_MS, pythonTimeoutMs, READ_TIMEOUT_MS } from "../python-
 import { resolveShippedRoot } from "../repo-root.js";
 import { acquireCaseLock, advanceRevision, type CaseLock } from "./case-lock.js";
 import CASE_DATA_RESOLVER from "./case-data-resolver.py.js";
-import { HALF_COMMIT_PREFIX, LOCATE_PY } from "./locate.js";
+import { HALF_COMMIT_PREFIX, LOCATE_PY, refuseCaseSyncSplit } from "./locate.js";
 
 // The resolver itself comes first: the matter-data skill's bypass-free case_data_resolver.py,
 // pasted in at build time (scripts/resolver.mjs), so this helper imports nothing at run time.
@@ -247,6 +247,9 @@ def do_query(req, resolved):
     if not re.match(READ_ONLY_RE, sql):
         raise SystemExit("matter_data__query only accepts SELECT/WITH/PRAGMA statements; use matter_data__execute for writes.")
     if not os.path.exists(resolved['main_sqlite']):
+        copies = case_split_copies(req['matter_root'])
+        if copies:
+            raise SystemExit(case_split_message(copies))
         raise SystemExit(
             "No case database found: resolved main.sqlite is missing at "
             f"{resolved['main_sqlite']}. Re-run matter-data initialize for a new matter "
@@ -596,6 +599,8 @@ async function executeUnderLock(
   held?: CaseLock
 ): Promise<{ warning?: string | null }> {
   const triggersSql = caseDataTriggersSql(env);
+  // No write lands in one copy of a split store, and none creates a fresh store beside the copies.
+  refuseCaseSyncSplit(matterRoot, env);
   const lock = held ?? await acquireCaseLock(matterRoot, env);
   try {
     // A caller's last check, made once the lock is held, so nothing can change it before the write

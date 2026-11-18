@@ -103,6 +103,9 @@ class ProtocolStepSixTests(unittest.TestCase):
         order = [template.index(h) for h in ("## Sources\n\n### Statutes\n", "### Case authority\n",
                                              "### Secondary sources\n")]
         self.assertEqual(order, sorted(order))
+        # 2026-11-17: Sources printed case names plain. The writer fills the slot, so the rule is here.
+        self.assertIn("a case's style of cause in italics as on the citation lines: "
+                      "`- *Alpha v Beta*, 2020 BCCA 1, paras 5, 9`", flat(template))
         self.assertNotIn("Authorities", template)
         self.assertNotIn("Question presented", template)
 
@@ -111,7 +114,8 @@ class ProtocolStepSixTests(unittest.TestCase):
         self.assertNotIn("one bold sentence", template)
         self.assertNotIn("the one question in bold", template)
         for text in ("The Issue is the question: any context sentences, then the one question, the whole paragraph in bold.",
-                     "A Conclusion is one paragraph answering the Issue,",
+                     "A Conclusion is one paragraph. Its first sentence answers the Issue's question as asked, "
+                     "giving no reasons, or says which part cannot yet be answered. The rest gives the reasons.",
                      "Conclusion. It cites in parentheses and has no block quote.",
                      "The Rule opens with the rule itself: its first item states it."):
             self.assertIn(text, template)

@@ -81,7 +81,7 @@ SELECT source_locator FROM main.relief_items WHERE source_id = ?;
 SELECT source_locator FROM main.source_references WHERE source_id = ?;
 ```
 
-For a privileged-store match, query the source plus its current instruction rows instead; do not query or expose instruction descriptions through a main-store projection:
+For a privileged-store match, query the source plus its current instruction rows instead; do not query or expose instruction descriptions through a main-store projection. A split email (`ingest.md` Step 3) is verified as both: its main row as a main-store match, and its privileged row as below.
 
 ```sql
 SELECT source_id, proceeding_id, category, title, description, author,

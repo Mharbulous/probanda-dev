@@ -21,6 +21,7 @@ import { proceduralHistoryAppend, type ProceduralHistoryAppendArgs } from "./cas
 import { relocateSource, type RelocateSourceRequest } from "./case/relocate-source.js";
 import { housekeepingLog, type HousekeepingLogRequest } from "./case/housekeeping-log.js";
 import { repointDocuments, type RepointDocumentsRequest } from "./submission/repoint-documents.js";
+import { splitMerge, type SplitMergeRequest } from "./submission/split-merge.js";
 import { timecampingDataQuery, timecampingDataExecute, timecampingDataBulkUpsert } from "./timecamping/backend.js";
 import { timecampingCalls, type CallsArgs } from "./timecamping/calls.js";
 import { timecampingDataMigrate } from "./timecamping/migrate.js";
@@ -39,7 +40,7 @@ import { submissionDataApprovePlan, type ApprovePlanArgs } from "./submission/fo
 import { submissionDataTrackSource, type TrackSourceArgs } from "./submission/forms/track-source.js";
 import { submissionDataSetStep, type SetStepArgs } from "./submission/forms/set-step.js";
 import { submissionDataRewriteJob, type RewriteJobArgs } from "./submission/forms/rewrite-job.js";
-import { releaseLapsedLocks, submissionDataTouchJob, withJobActivity, type JobIdentity, type TouchJobArgs } from "./submission/forms/job-activity.js";
+import { submissionDataTouchJob, withJobActivity, type JobIdentity, type TouchJobArgs } from "./submission/forms/job-activity.js";
 import { submissionDataCompleteJob, type CompleteJobArgs } from "./submission/forms/complete-job.js";
 import { submissionDataAttachToBoard, type AttachToBoardArgs } from "./submission/forms/attach-to-board.js";
 import { submissionDataReleaseJob, type ReleaseJobArgs } from "./submission/forms/release-job.js";
@@ -215,6 +216,7 @@ export const dataTools: Tool<DispatchContext>[] = [
   defineTool("loose_threads__read", (args: ReadArgs) => looseThreadsRead(args)),
   defineTool("loose_threads__update", (args: UpdateArgs) => looseThreadsUpdate(args)),
   defineTool("drafting_data__repoint_documents", (args: RepointDocumentsRequest) => repointDocuments(args)),
+  defineTool("drafting_data__split_merge", (args: SplitMergeRequest) => splitMerge(args)),
   defineTool("drafting_data__create_writing", (args: CreateWritingArgs) =>
     submissionDataCreateWriting(args, {
       caseDataRoot: once(() => caseDataRootFromDbPath(args.db_path, process.env)),
@@ -242,7 +244,7 @@ export const dataTools: Tool<DispatchContext>[] = [
     (args: { db_path: string; filing_id: number; jurisdiction?: { country: string; jurisdiction: string }; remove_companion?: string }) =>
       resnapshotWriting(args.db_path, args.filing_id, { jurisdiction: args.jurisdiction, removeCompanion: args.remove_companion })
   ),
-  defineTool("drafting_data__migrate", (args: { db_path: string }) => submissionDataMigrate(args.db_path)),
+  defineTool("drafting_data__migrate", (args: { db_path: string; accept_current_file?: boolean }) => submissionDataMigrate(args.db_path, process.env, args.accept_current_file === true)),
   defineTool("drafting_data__complete_job", async (args: CompleteJobArgs & PageArgs, context: DispatchContext) => {
     const { client, todos, dates } = await pageContext(context, args, true);
     return submissionDataCompleteJob(args, client, todos?.todos, dates);
@@ -287,10 +289,10 @@ export const dataTools: Tool<DispatchContext>[] = [
   }),
   defineTool(
     "drafting_forms__open_session",
-    async (args: PageArgs & { matter_root?: string; project_id?: string; unattended?: boolean; filing_id?: number }, context: DispatchContext) => {
+    async (args: PageArgs & { matter_root?: string; project_id?: string; unattended?: boolean; filing_id?: number; accept_current_file?: boolean }, context: DispatchContext) => {
       // The Project's matter lookup shares the call's one practice snapshot; the job below starts outside it.
       const { result, dates, matterDescription } = await inOneCall(async () =>
-        submissionFormsOpenSession(await matterRootFor(args, context.practiceDb), context.practiceDb, clientContext(args), args.unattended === true, args.filing_id)
+        submissionFormsOpenSession(await matterRootFor(args, context.practiceDb), context.practiceDb, clientContext(args), args.unattended === true, args.filing_id, args.accept_current_file === true)
       );
       // #589: matter_lookup's client fields are the identity bootstrap used, so the job renders with it.
       const { client_name, client_no, matter_no } = result.matter_lookup;
@@ -503,8 +505,6 @@ async function pageContext(
   writesPage: boolean
 ): Promise<{ client: ClientContext; todos?: { todos: MatterTodos; ms: number }; dates?: MatterDates }> {
   const client = clientContext(args);
-  // ADR 0015, 2026-11-06 note: a page write first writes the release of every lapsed lock but this session's.
-  if (writesPage && args.db_path !== undefined) await releaseLapsedLocks(args.db_path, args.session_token);
   // ADR 0013, second 2026-10-04 amendment: a filing's linked deadlines are Goal criteria, so every
   // call that builds its section reads them, by the matter_no it was given, and board_summary and
   // board_card agree with the page.

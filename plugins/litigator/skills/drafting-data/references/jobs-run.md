@@ -48,6 +48,20 @@ The shelving guard stays on: a shelved job is never assigned, by take-over or ot
 
 Before either, apply §1's start-time rule: a `wip` job whose `locked_at` precedes your `bootstrapped_at` is another session's, so it takes the take-over variant and the practitioner's yes, even if its `locked_by` already equals your token.
 
+## 4a. Held, and not lapsed
+
+A `wip` job's lock lapses after 60 minutes idle (ADR 0015): every board reads it as Ready, and `drafting_data__assign_job` without `takeover` takes it. The row keeps `status = 'wip'` and its holder until that assignment, so `status = 'wip'` alone does not mean another session is working the job. Every read that treats a job as in progress, to refuse a write or to name a holder, uses this test on the `tickets` row aliased `t`, copied exactly; each such query in these references carries it and points here:
+
+```sql
+t.status = 'wip' AND NOT (t.locked_by IS NOT NULL AND t.rejected_at IS NULL
+  AND COALESCE(max(COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = 'last_activity' AND key = 'tickets:' || t.id),
+                            replace(substr(t.locked_at, 1, 16), ' ', 'T')),
+                   COALESCE((SELECT max(wait_until) FROM ticket_steps st WHERE st.ticket_id = t.id AND st.done_at IS NULL AND st.status = 'waiting'), ''),
+                   '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-60 minutes'), 0))
+```
+
+The job's idle time runs from its last activity (§6a), else its lock, or from a later wake-up minute of a ⏳ step not yet done. A guard on this session's own token (`locked_by = 'sess-a1'`) is a holder guard, not this test, and stays as written.
+
 ## 5. Plan approval
 
 **The guard rides every statement in the script** — the rule §3a states, for the same reason: `drafting_data__execute` runs the script in one transaction and rolls back on an exception, and a guarded write matching zero rows is not one, so an unguarded statement beside a guarded one commits alone. The predicate is different here. §3a's job has no holder; this one is `wip` under this session's own lock, so what each statement proves is that the lock is still this session's — `locked_by = 'sess-a1'`, your own `session_token` (§1), written as the literal value, never a name you invented. That one clause is the whole guard: the CHECK ties `status = 'wip'` to a non-NULL `locked_by`, so it refuses every way a held job can leave this session between the assigning write and this one — a take-over (§4), which writes another session's token, and §10a's in-progress shelving, which clears the lock, as does a successor's completion (§9) after a take-over. No `rejected_at` clause is needed beside it, because no script in the job checklist leaves this session's token on a shelved row.

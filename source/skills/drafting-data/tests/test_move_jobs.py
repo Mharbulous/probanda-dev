@@ -2,7 +2,7 @@
 
 Each documented script is run as written against a migrated database: the whole-board move takes
 board 7's queued jobs to board 8 and keeps their edges, a job in progress on
-board 7 refuses it, and a note-up job, a job keyed on the Writing's own rows, a deleted job and a
+board 7 refuses it (jobs-run.md §4a's held test), a job whose lock has lapsed moves released, and a note-up job, a job keyed on the Writing's own rows, a deleted job and a
 completed job stay. §9a's close of board 7 then supersedes none of the moved jobs. The amended
 "What never changes" sentence of jobs-create.md §3a and the pointers at §10c are pinned too.
 
@@ -69,6 +69,11 @@ def scripts_10c():
     return re.findall(r"```sql\n(.+?)\n```", section_10c(), re.DOTALL)
 
 
+# jobs-run.md §4a's held test, which every in-progress guard carries exactly.
+HELD = next(b for b in re.findall(r"```sql\n(.+?)\n```", (SKILL / "references" / "jobs-run.md").read_text(encoding="utf-8"), re.DOTALL)
+            if b.startswith("t.status = 'wip' AND NOT ("))
+
+
 def close_script_9a():
     section = JOBS_CLOSEOUT.read_text(encoding="utf-8").split("## 9a.", 1)[1].split("\n## ", 1)[0]
     return re.findall(r"```sql\n(.+?)\n```", section, re.DOTALL)[1]
@@ -127,8 +132,8 @@ class MoveJobsTests(unittest.TestCase):
         self.assertEqual({row[0] for row in self.con.execute(stays_read)}, {43, 44})
 
     def test_a_job_in_progress_on_the_source_refuses_the_move(self):
-        self.con.execute("UPDATE tickets SET status = 'wip', locked_by = 'sess-b2', locked_at = '2026-10-19T10:00' "
-                         "WHERE id = 41")
+        self.con.execute("UPDATE tickets SET status = 'wip', locked_by = 'sess-b2', "
+                         "locked_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-59 minutes') WHERE id = 41")
         self.con.commit()
         _, move, one, _ = scripts_10c()
         self.assertEqual(self.run_script(move), 0)
@@ -136,6 +141,17 @@ class MoveJobsTests(unittest.TestCase):
         self.assertEqual(self.board_of(42), 7)
         wip_read = scripts_10c()[0].split(";")[0]
         self.assertEqual([row[0] for row in self.con.execute(wip_read)], [41])
+
+    def test_a_job_whose_lock_has_lapsed_moves_released(self):
+        self.con.execute("UPDATE tickets SET status = 'wip', locked_by = 'sess-b2', "
+                         "locked_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-61 minutes') WHERE id = 41")
+        self.con.commit()
+        wip_read = scripts_10c()[0].split(";")[0]
+        self.assertEqual(self.con.execute(wip_read).fetchall(), [])
+        _, move, _, _ = scripts_10c()
+        self.run_script(move)
+        self.assertEqual(self.con.execute("SELECT filing_id, status, locked_by, locked_at FROM tickets WHERE id = 41").fetchone(),
+                         (8, "queued", None, None))
 
     def test_the_one_job_move_takes_only_that_job(self):
         one = scripts_10c()[2]
@@ -186,7 +202,7 @@ class SectionTextTests(unittest.TestCase):
         statements = [s for s in move.split(";") if s.strip()]
         self.assertEqual(len(statements), 1)
         for statement in statements:
-            self.assertIn("NOT EXISTS (SELECT 1 FROM tickets w WHERE w.filing_id = 7 AND w.status = 'wip')", statement)
+            self.assertIn(flat("NOT EXISTS (SELECT 1 FROM tickets t WHERE t.filing_id = 7 AND " + HELD + ")"), flat(statement))
 
 
 if __name__ == "__main__":

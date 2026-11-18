@@ -100,7 +100,7 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, rende
   // A job locked before its database held the stamp has none yet: its lock is its last activity.
   const lastActivity = (t: (typeof heldTickets)[number]) => activityById.get(t.id) ?? t.locked_at;
   // A lapsed lock reads as released everywhere below: Ready, Blocked or Bring Forward, holding no
-  // material and no either/or partner, until a page write or assign_job releases it (ADR 0015).
+  // material and no either/or partner, until assign_job takes it (ADR 0015).
   const released = <T extends (typeof heldTickets)[number]>(t: T) => ({ ...t, status: "queued" as const, locked_by: null, locked_at: null });
   const timed = (t: (typeof heldTickets)[number]) => ({ ...t, last_activity_at: lastActivity(t), steps: stepsByTicket.get(t.id) ?? [] });
   const proceedingTickets = heldTickets.map((t) => (lockLapsed(timed(t), rendered) ? released(t) : t));

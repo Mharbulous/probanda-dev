@@ -371,14 +371,24 @@ UPDATE filings SET entered_on = '2026-09-19' WHERE id = 7;
 UPDATE filings SET entered_on = NULL WHERE id = 7;   -- undo
 UPDATE filings SET retired_on = '2026-09-08', retirement_reason = 'appeal_expired'
   WHERE id = 7
-    AND NOT EXISTS (SELECT 1 FROM tickets WHERE filing_id = 7 AND status = 'wip');
+    AND NOT EXISTS (SELECT 1 FROM tickets t WHERE t.filing_id = 7
+      AND t.status = 'wip' AND NOT (t.locked_by IS NOT NULL AND t.rejected_at IS NULL
+        AND COALESCE(max(COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = 'last_activity' AND key = 'tickets:' || t.id),
+                                  replace(substr(t.locked_at, 1, 16), ' ', 'T')),
+                         COALESCE((SELECT max(wait_until) FROM ticket_steps st WHERE st.ticket_id = t.id AND st.done_at IS NULL AND st.status = 'waiting'), ''),
+                         '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-60 minutes'), 0)));
 UPDATE filings SET retired_on = '2026-09-25', retirement_reason = 'delivered'
   WHERE id = 8
-    AND NOT EXISTS (SELECT 1 FROM tickets WHERE filing_id = 8 AND status = 'wip');
+    AND NOT EXISTS (SELECT 1 FROM tickets t WHERE t.filing_id = 8
+      AND t.status = 'wip' AND NOT (t.locked_by IS NOT NULL AND t.rejected_at IS NULL
+        AND COALESCE(max(COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = 'last_activity' AND key = 'tickets:' || t.id),
+                                  replace(substr(t.locked_at, 1, 16), ' ', 'T')),
+                         COALESCE((SELECT max(wait_until) FROM ticket_steps st WHERE st.ticket_id = t.id AND st.done_at IS NULL AND st.status = 'waiting'), ''),
+                         '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-60 minutes'), 0)));
 UPDATE filings SET retired_on = NULL, retirement_reason = NULL WHERE id = 7;   -- recovery
 ```
 
-That `NOT EXISTS` is what refuses a retirement on a Writing another session is working; `references/jobs-closeout.md` §9a carries the rest of the retirement script, which puts the same clause on every statement, and its confirm-read. The recovery line takes no such clause — recovery reopens a Writing and has no equivalent precondition.
+That `NOT EXISTS` is what refuses a retirement on a Writing another session is working, by `jobs-run.md` §4a's held test, so a job whose lock has lapsed does not refuse it; `references/jobs-closeout.md` §9a carries the rest of the retirement script, which puts the same clause on every statement, and its confirm-read. The recovery line takes no such clause — recovery reopens a Writing and has no equivalent precondition.
 
 **Setting `filed_on` freezes that Writing's exhibits (schema v24, #712).** Three guard triggers refuse every insert, update and delete on a filed Writing's `filing_documents` rows. The only order that works is therefore **draft → link the exhibits → set `filed_on`**; linking one afterwards aborts with `a filed filing's exhibits do not change (#712)`. That is the freeze doing its job, not a defect: a VanIAC package's `Ex. N` is the document's position in one proceeding-wide ordered list derived at render time, so if a filed round's rows could still move, a later round's numbers would drift away from the paper already delivered. Clearing a `filed_on` set in error is an `UPDATE` on `filings`, which the guards do not touch, so the Writing reopens and its exhibits become editable again.
 
@@ -541,7 +551,7 @@ INSERT INTO filing_law (filing_id, statement_id) VALUES (7, last_insert_rowid())
 
 - **Authority confirmed** (schema v40, #1231). `filings.authority_confirmed_on` (a date, NULL until set) records that the Writing links every authority its text cites, or cites none. Nothing infers it from prose: a session sets it. The write that records a letter's statement of law sets it in the same script (`UPDATE filings SET authority_confirmed_on = '<today, YYYY-MM-DD>' WHERE id = 7;`), and a letter that cites no case sets it once when it is written. Every Writing that existed at v40 reads NULL, so an unsent one is held until a session sets it, and the mockup says so (below). The pre-send hold reads it live after `currency` (`references/jobs-gate.md` §14a), for an unsent Writing that needs no forum parts; a venue's `letter` is outside it. A sent Writing is never held on it: `record_sent` refuses one already sent, and v37 freezes its `filing_law`. A Writing whose layout declares `noting-up`, as every shipped letter and memo type does, is outside it too: the citation scan (§6b) computes whether its text cites an authority no row tracks, so no session sets the column for it.
 
-**On the mockup.** Under the heading *Authorities cited*, after the `To:` and `cc:` lines, first, while `authority_confirmed_on` is NULL on an unsent Writing that needs no forum parts and declares `primary-authority` and not `noting-up`, a plain line with no glyph saying the authority is not confirmed (so `open-items` does not count it, and the heading prints even with no linked statement), then one line per linked statement: the authority's citation, with ` (killed <date>)` when the authority is killed, then the statement-line markers a doctrinal statement line prints (📜 📍 🔬 📇 🏅 👃, or ⛔, with 👃 when doubted, for an overruled authority; `work-markers.md`), then the statement's own 🧐 once no work marker is left on the line. A lead prints there, because the section reaches no sent face. A killed authority's line prints no marker, 🧐 included. The whole section is rendered for the human and withheld from the sent face. It stays live after sending: v37 freezes which statements a sent Writing links, but not the statements or their authorities, so noting-up done later, an overruling say, shows on the sent Writing's mockup (#1227). Its markers count toward the declared `primary-authority`, `excerpts` and `noting-up` criteria, so the pre-send hold reads them.
+**On the mockup.** In the section headed *Authorities*, at the bottom of the mockup after the `To:` and `cc:` lines and before the Legend, never in the header, first, while `authority_confirmed_on` is NULL on an unsent Writing that needs no forum parts and declares `primary-authority` and not `noting-up`, a plain line with no glyph saying the authority is not confirmed (so `open-items` does not count it, and the heading prints even with no linked statement), then one line per linked statement: the authority's citation, with ` (killed <date>)` when the authority is killed, then the statement-line markers a doctrinal statement line prints (📜 📍 🔬 📇 🏅 👃, or ⛔, with 👃 when doubted, for an overruled authority; `work-markers.md`), then the statement's own 🧐 once no work marker is left on the line. A lead prints there, because the section reaches no sent face. A killed authority's line prints no marker, 🧐 included. The whole section is rendered for the human and withheld from the sent face. It stays live after sending: v37 freezes which statements a sent Writing links, but not the statements or their authorities, so noting-up done later, an overruling say, shows on the sent Writing's mockup (#1227). Its markers count toward the declared `primary-authority`, `excerpts` and `noting-up` criteria, so the pre-send hold reads them.
 
 ## 14. Board attachments (schema v67)
 

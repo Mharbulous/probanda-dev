@@ -60,8 +60,10 @@ const MOCKUP_ONLY_HEADINGS = [
   "Points not yet answered",
   "Court rules not in this appendix",
   "Page budget",
-  // The general renderer's Layout confirmation, Blind copies, Authorities cited and Page budget are
-  // optional header fields (render-general.ts), which FRONTMATTER_RE drops with the header.
+  // The general renderer's Layout confirmation, Blind copies and Page budget are optional header
+  // fields (render-general.ts), which FRONTMATTER_RE drops with the header. Its Authorities section,
+  // the prose-cited statements of law, follows the Writing's text (render-general.ts).
+  "Authorities",
   // The legend of the symbols on a mockup, its last section (forms/legend.ts).
   "Legend",
 ];
@@ -156,7 +158,7 @@ const STRUCK_LINE_RE = /^[ \t]*~~.*~~[ \t]*\n?/gm;
 // each match records its own level N and strips through to the next heading of level <= N (or
 // EOF) -- for an existing level-2 section this reproduces the old "next ## " behavior exactly,
 // since a level-2 section's own ### subheadings all have level > 2 and stay swallowed.
-function stripSections(markdown: string): string {
+export function stripSections(markdown: string): string {
   let out = markdown;
   for (const heading of MOCKUP_ONLY_HEADINGS) {
     const startRe = new RegExp(`\\n(#{2,6}) ${heading}\\n`);

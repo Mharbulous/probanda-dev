@@ -34,7 +34,8 @@
 // call (issue #517; see sidecarQuery). case/ and practice/ backends still
 // spawn per call. `execute` stays one spawn per call, under the data lock.
 
-import { join } from "node:path";
+import { existsSync, readdirSync } from "node:fs";
+import { basename, dirname, extname, join } from "node:path";
 import { MessageChannel, type MessagePort, receiveMessageOnPort, Worker } from "node:worker_threads";
 
 import { forgetPerCall, oncePerCall } from "../call-memo.js";
@@ -45,9 +46,95 @@ import { pythonTimeoutMs as namespaceTimeoutMs, READ_TIMEOUT_MS, WRITE_TIMEOUT_M
 import { stagedStorePython } from "../staged-store.js";
 import { RESEARCH_JOB_PREFIX } from "./forms/research-job.js";
 import { acquireDataLock } from "./lock.js";
+import { lostWritesMessage, readWriteRecord, saveWriteRecord, type WriteRecord, writerFor, writesKey } from "./write-record.js";
+
+// The names a copy of submission.sqlite takes beside it, matched here and by split_copies below, which
+// must stay identical (spec 2026-11-17 drafting-records sync safety, section 3.3), case-insensitively:
+// - `submission-<computer name>.sqlite`: Microsoft's sync conflict copy, the computer name added to the file
+//   name (Microsoft support article fd47ce5e-8dd0-465e-9e3a-461e1a3cf613, "Duplicate files in" Microsoft's
+//   cloud storage: book1-desktop-computer.xlsx beside book1.xlsx).
+// - `submission (<anything>).sqlite`: Dropbox's conflicted copy, its name holding the editor's name,
+//   "conflicted copy" and the date in parentheses (Dropbox, "What's a conflicted copy?",
+//   help.dropbox.com/organize/conflicted-copy), and the numbered copy `submission (1).sqlite` that Windows
+//   makes when both files are kept (Microsoft, The Old New Thing, 2019-06-04, "In the file copy conflict
+//   dialog, what happened to the option to copy the new file with a numeric suffix?": "the copied file
+//   will have a number added to its name") and other sync tools make.
+// - `submission - Copy.sqlite` and `submission - Copy (2).sqlite`: File Explorer's copy within one folder.
+//   No Microsoft page states this name; it is the default of Explorer's NamingTemplates CopyNameTemplate
+//   ("%s - Copy"), as reported by winaero.com and Microsoft Q&A threads.
+// Never a copy: the #353 backups `submission.sqlite.bak-*` and the staging sibling
+// `coclerk_submission_replace_*` (staged-store.ts), whose names this pattern cannot match.
+const SPLIT_REMEDY =
+  "Each copy may hold changes the others lack. Nothing was written or created. Stop drafting work on this matter and follow " +
+  "/drafting-data references/sync-split.md: drafting_data__split_merge compares two copies, and the practitioner decides each difference. " +
+  "Writes stay refused until that folder holds only the one file.";
+
+/** The sync conflict copies beside dbPath, by name. */
+export function syncSplitCopies(dbPath: string): string[] {
+  const dir = dirname(dbPath);
+  const ext = extname(dbPath).toLowerCase();
+  const stem = basename(dbPath).slice(0, -ext.length || undefined).toLowerCase();
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((f) => {
+      const name = f.toLowerCase();
+      if (!name.startsWith(stem) || !name.endsWith(ext)) return false;
+      return /^(?:-.+| - copy(?: \(\d+\))?| \(.+\))$/.test(name.slice(stem.length, name.length - ext.length));
+    })
+    .sort();
+}
+
+/** Refuses, code sync_conflict_copies, while sync conflict copies sit beside dbPath, naming them. */
+export function refuseSyncSplit(dbPath: string): void {
+  const copies = syncSplitCopies(dbPath);
+  if (copies.length === 0) return;
+  const where = existsSync(dbPath) ? "beside it are" : "it is missing, and in its place are";
+  throw new DataServerError(
+    `sync_conflict_copies: the file sync has split the drafting records at ${dbPath}: ${where} ${copies.join(", ")}. ${SPLIT_REMEDY}`,
+    "sync_conflict_copies",
+    { copies: copies.map((c) => join(dirname(dbPath), c)) }
+  );
+}
 
 const PY_HELPER = String.raw`
 import json, os, re, shutil, sqlite3, sys, tempfile, traceback
+
+
+SPLIT_REMEDY = ${JSON.stringify(SPLIT_REMEDY)}
+
+
+def split_copies(db_path):
+    folder, name = os.path.split(db_path)
+    stem, ext = os.path.splitext(name.lower())
+    if not os.path.isdir(folder):
+        return []
+    return sorted(f for f in os.listdir(folder) if f.lower().startswith(stem) and f.lower().endswith(ext)
+                  and re.fullmatch(r'-.+| - copy(?: \(\d+\))?| \(.+\)', f.lower()[len(stem):len(f) - len(ext)]))
+
+
+# refuseSyncSplit above, for the helper's own calls: no write lands in one copy of a split database.
+def refuse_split(db_path):
+    copies = split_copies(db_path)
+    if copies:
+        where = "beside it are" if os.path.exists(db_path) else "it is missing, and in its place are"
+        raise SystemExit(f"sync_conflict_copies: the file sync has split the drafting records at {db_path}: {where} {', '.join(copies)}. {SPLIT_REMEDY}")
+
+
+# The drafting schema needs SQLite 3.47.0; an older one reports "malformed database schema", which reads
+# as damage (spec 2026-11-17 drafting-records sync safety, section 3.7). The /drafting-data skill's
+# migrate_engine.py holds the same check for its scripts: this server cannot import them, so it is
+# stated once here, for every op of this helper and every query of the sidecar.
+SQLITE_FLOOR = (3, 47, 0)
+
+
+def sqlite_too_old():
+    found = tuple(sqlite3.sqlite_version_info)
+    if found >= SQLITE_FLOOR:
+        return None
+    return {"refused": "sqlite_too_old", "message": (
+        f"This computer's Python uses SQLite {'.'.join(map(str, found))}, and the drafting records need SQLite "
+        f"{'.'.join(map(str, SQLITE_FLOOR))} or later. The matter's file is not damaged: nothing was read from it or "
+        "written to it. Drafting records stay closed on this computer until its Python uses a newer SQLite.")}
 
 
 # Leading whitespace, '--' line comments and '/* */' block comments are
@@ -59,14 +146,18 @@ READ_ONLY_RE = r'(?is)^(?:\s|--[^\n]*(?:\n|$)|/\*(?:(?!\*/).)*\*/)*(select|with|
 
 
 def do_query(req):
+    too_old = sqlite_too_old()
+    if too_old:
+        return too_old
     db_path = req['db_path']
     sql = req['sql'].strip()
     if not re.match(READ_ONLY_RE, sql):
         raise SystemExit("drafting_data__query only accepts SELECT/WITH/PRAGMA statements; use drafting_data__execute for writes.")
     if not os.path.exists(db_path):
+        refuse_split(db_path)
         raise SystemExit(
             f"No submission database found at {db_path}. Run drafting_data__migrate first.")
-    uri = 'file:' + db_path.replace('\\', '/').replace('?', '%3f').replace('#', '%23') + '?mode=ro'
+    uri ='file:' + db_path.replace('\\', '/').replace('?', '%3f').replace('#', '%23') + '?mode=ro'
     con = sqlite3.connect(uri, uri=True)
     try:
         cur = con.execute(sql, req.get('params') or [])
@@ -176,6 +267,52 @@ def seed_rows(con):
     return con.execute("SELECT * FROM seeds ORDER BY id").fetchall() if held else []
 
 
+# A transaction that changed no row and no schema leaves the live file alone (committed False), so a
+# sync service never sees a write that did nothing as new work. total_changes counts rows changed by
+# triggers too. It does not count DDL or a user_version move, which the schema mark catches.
+def schema_mark(con):
+    return (con.execute("PRAGMA schema_version").fetchone()[0], con.execute("PRAGMA user_version").fetchone()[0])
+
+
+def changed(con, mark):
+    return con.total_changes > 0 or schema_mark(con) != mark
+
+
+# The lost-write check (spec 2026-11-17 drafting-records sync safety, section 3.2, and write-record.ts): the
+# live file's count for this computer's writer, against the count this computer remembers. Read before
+# anything is staged; returns how many of this computer's writes the file lacks, or 0.
+def writes_missing(req):
+    writer = req.get('writer')
+    if not writer or writer['writes'] <= 0 or not os.path.exists(req['db_path']):
+        return 0
+    uri = 'file:' + req['db_path'].replace('\\', '/').replace('?', '%3f').replace('#', '%23') + '?mode=ro'
+    con = sqlite3.connect(uri, uri=True)
+    try:
+        row = con.execute("SELECT value FROM db_meta WHERE key = ?", ('writes:' + writer['id'],)).fetchone()
+    finally:
+        con.close()
+    return max(0, writer['writes'] - (int(row[0]) if row else 0))
+
+
+# A write that commits also sets this computer's count in db_meta, on the staged copy before it replaces the
+# live file, so the file and the count land together or not at all. A write that changed nothing counts nothing.
+def counted(req, mutate):
+    writer = req.get('writer')
+    if not writer:
+        return mutate
+
+    def run(con):
+        out, committed = mutate(con)
+        if committed:
+            count = writer['writes'] + 1
+            con.execute("INSERT INTO db_meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                        ('writes:' + writer['id'], str(count)))
+            con.commit()
+            out = {**out, "writer_writes": count}
+        return out, committed
+    return run
+
+
 def do_execute(req):
     guarded = req.get('guard_jobs')
     if guarded and re.search(SEEDS_WRITE_RE, req['sql_script']):
@@ -187,6 +324,7 @@ def do_execute(req):
         done = job_ids(con, "'completed'") if guarded else set()
         seeds = seed_rows(con) if guarded else None
         research = research_rows(con) if guarded else None
+        mark = schema_mark(con)
         try:
             con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
         except Exception:
@@ -211,14 +349,15 @@ def do_execute(req):
             raise SystemExit(refused)
         if guarded and seed_rows(con) != seeds:
             raise SystemExit(SEEDS_REFUSED)
-        return {"ok": True, "changes": con.total_changes}, True
-    return staged_write(req, 'execute', mutate)
+        return {"ok": True, "changes": con.total_changes}, changed(con, mark)
+    return staged_write(req, 'execute', counted(req, mutate))
 
 
 def do_write(req):
     # One parameterized statement, staged exactly as do_execute stages a script, so a value
     # (a JSON snapshot full of quotes) is bound rather than spliced into SQL text.
     def mutate(con):
+        mark = schema_mark(con)
         con.execute("BEGIN")
         try:
             cur = con.execute(req['sql'], req.get('params') or [])
@@ -228,8 +367,8 @@ def do_write(req):
             if con.in_transaction:
                 con.execute("ROLLBACK")
             raise
-        return out, True
-    return staged_write(req, 'write', mutate, isolation_level=None)
+        return out, changed(con, mark)
+    return staged_write(req, 'write', counted(req, mutate), isolation_level=None)
 
 
 def do_write_all(req):
@@ -241,6 +380,7 @@ def do_write_all(req):
     def mutate(con):
         if req.get('foreign_keys_off'):
             con.execute("PRAGMA foreign_keys = OFF")
+        mark = schema_mark(con)
         con.execute("BEGIN")
         results = []
         try:
@@ -257,8 +397,8 @@ def do_write_all(req):
             if con.in_transaction:
                 con.execute("ROLLBACK")
             raise
-        return {"ok": True, "results": results}, True
-    return staged_write(req, 'write', mutate, isolation_level=None)
+        return {"ok": True, "results": results}, changed(con, mark)
+    return staged_write(req, 'write', counted(req, mutate), isolation_level=None)
 
 
 def do_trial(req):
@@ -326,6 +466,13 @@ def do_trial(req):
 def main():
     req = json.load(sys.stdin)
     op = req['op']
+    too_old = sqlite_too_old()
+    if too_old:
+        return too_old
+    refuse_split(req['db_path'])
+    missing = writes_missing(req) if op in ('execute', 'write', 'write_all') else 0
+    if missing:
+        return {"writes_missing": missing}
     if op == 'execute':
         return do_execute(req)
     if op == 'write':
@@ -450,6 +597,8 @@ interface QueryRequest {
 interface ExecuteRequest {
   op: "execute";
   db_path: string;
+  /** This computer's write record (write-record.ts), added by runWrite. */
+  writer?: WriteRecord;
   sql_script: string;
   /** Refuse a job move (JOB_MOVES above): set by the drafting_data__execute tool, never by a fixture seed. */
   guard_jobs?: boolean;
@@ -458,6 +607,8 @@ interface ExecuteRequest {
 interface WriteRequest {
   op: "write";
   db_path: string;
+  /** This computer's write record (write-record.ts), added by runWrite. */
+  writer?: WriteRecord;
   sql: string;
   params: unknown[];
 }
@@ -473,6 +624,8 @@ export interface WriteStatement {
 interface WriteAllRequest {
   op: "write_all";
   db_path: string;
+  /** This computer's write record (write-record.ts), added by runWrite. */
+  writer?: WriteRecord;
   statements: WriteStatement[];
   foreign_keys_off?: boolean;
 }
@@ -566,7 +719,7 @@ function sidecarQuery(request: QueryRequest): Record<string, unknown> {
     if (typeof out.error === "string") {
       throw new ValidationError(`drafting-data sqlite helper (${reply.py}) failed: ${out.error}`);
     }
-    return out;
+    return refusedOrResult(out);
   }
   discardSidecar();
   if (reply?.kind === "no_python") {
@@ -588,13 +741,51 @@ function runHelper(request: ExecuteRequest | WriteRequest | WriteAllRequest | Tr
   forgetDraftingQueries(request.db_path);
   // The budget stops a hung copy-back from holding the server forever. replace_live renames a
   // flushed sibling over db_path, so a kill at any point leaves db_path whole, old or new.
-  return runPythonDriver({
+  return refusedOrResult(runPythonDriver({
     label: "drafting-data sqlite helper",
     driver: helperFile(),
     payload: JSON.stringify(request),
     env,
     timeoutMs: pythonTimeoutMs(env, WRITE_TIMEOUT_MS),
-  }) as Record<string, unknown>;
+  }) as Record<string, unknown>);
+}
+
+/** A committing write, checked and counted against this computer's write record (write-record.ts): refused
+ * lost_writes, before anything is staged, when the live file lacks writes this computer made; the record is
+ * stored only after the live file was replaced. Run under the data lock. */
+function runWrite(request: ExecuteRequest | WriteRequest | WriteAllRequest, env: NodeJS.ProcessEnv): Record<string, unknown> {
+  const writer = writerFor(request.db_path, env);
+  const { writes_missing: missing, writer_writes: count, ...out } = runHelper({ ...request, writer }, env);
+  if (typeof missing === "number") throw new DataServerError(lostWritesMessage(request.db_path, missing), "lost_writes", { missing });
+  if (typeof count === "number") saveWriteRecord(request.db_path, { id: writer.id, writes: count }, env);
+  return out;
+}
+
+/** This computer's count as the file at dbPath holds it (0 when absent). */
+function fileWrites(dbPath: string, record: WriteRecord): number {
+  const [row] = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = ?", [writesKey(record.id)]).rows as { value?: string }[];
+  return row === undefined ? 0 : Number(row.value);
+}
+
+/** Refuses, code lost_writes, when the existing file at dbPath lacks writes this computer made (session entry, migrate). */
+export function refuseLostWrites(dbPath: string, env: NodeJS.ProcessEnv = process.env): void {
+  const record = readWriteRecord(dbPath, env);
+  if (record === null || record.writes <= 0 || !existsSync(dbPath)) return;
+  const missing = record.writes - fileWrites(dbPath, record);
+  if (missing > 0) throw new DataServerError(lostWritesMessage(dbPath, missing), "lost_writes", { missing });
+}
+
+/** Decision D2 (accept_current_file): this computer's record is set to what the file at dbPath now holds. */
+export function resetWriteRecord(dbPath: string, env: NodeJS.ProcessEnv = process.env): void {
+  const record = readWriteRecord(dbPath, env);
+  if (record === null) return;
+  saveWriteRecord(dbPath, { id: record.id, writes: existsSync(dbPath) ? fileWrites(dbPath, record) : 0 }, env);
+}
+
+/** Throws the helper's coded refusal (sqlite_too_old), or returns its result. */
+function refusedOrResult(out: Record<string, unknown>): Record<string, unknown> {
+  if (typeof out.refused === "string") throw new DataServerError(String(out.message), out.refused);
+  return out;
 }
 
 /** A query's key in the call memo: `drafting-query`, then the database, the SQL and its parameters. */
@@ -652,7 +843,7 @@ export async function submissionDataExecute(
 ): Promise<{ ok: true; changes: number; warning?: string }> {
   const lock = await acquireDataLock(dbPath, env);
   try {
-    const result = withAttachHint(() => runHelper({ op: "execute", db_path: dbPath, sql_script: sqlScript, guard_jobs: guardJobs }, env)) as { ok: true; changes: number };
+    const result = withAttachHint(() => runWrite({ op: "execute", db_path: dbPath, sql_script: sqlScript, guard_jobs: guardJobs }, env)) as { ok: true; changes: number };
     const withWarning: { ok: true; changes: number; warning?: string } = { ...result };
     if (lock.brokeStale) {
       // A stale lock this long almost certainly means a crashed migrate or
@@ -681,7 +872,7 @@ export async function submissionDataWrite(
 ): Promise<{ ok: true; rowid: number; changes: number; warning?: string }> {
   const lock = await acquireDataLock(dbPath, env);
   try {
-    const result = runHelper({ op: "write", db_path: dbPath, sql, params }, env) as { ok: true; rowid: number; changes: number };
+    const result = runWrite({ op: "write", db_path: dbPath, sql, params }, env) as { ok: true; rowid: number; changes: number };
     return lock.brokeStale
       ? {
           ...result,
@@ -713,7 +904,7 @@ export async function submissionDataWriteAll(
 ): Promise<WriteAllResult> {
   const lock = await acquireDataLock(dbPath, env);
   try {
-    const result = runHelper({ op: "write_all", db_path: dbPath, statements, ...(options.foreignKeysOff ? { foreign_keys_off: true } : {}) }, env) as WriteAllResult;
+    const result = runWrite({ op: "write_all", db_path: dbPath, statements, ...(options.foreignKeysOff ? { foreign_keys_off: true } : {}) }, env) as WriteAllResult;
     return lock.brokeStale
       ? {
           ...result,

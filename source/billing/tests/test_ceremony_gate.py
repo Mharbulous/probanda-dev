@@ -49,8 +49,15 @@ def test_subagent_skill_call_does_not_count(tmp_path):
     assert decision(tmp_path, [skill_call("timecamping", sidechain=True)]) is None
 
 
-def test_missing_transcript_fails_closed(tmp_path):
-    assert decision(tmp_path, None) == "deny"
+def test_missing_transcript_allows(tmp_path):
+    assert decision(tmp_path, None) is None
+
+
+def test_transcript_path_that_does_not_exist_allows(tmp_path):
+    payload = {"hook_event_name": "PreToolUse", "tool_name": "AskUserQuestion", "tool_input": {},
+               "transcript_path": str(tmp_path / "absent.jsonl")}
+    result = run_hook(HOOK, payload, text=True)
+    assert result.returncode == 0 and not result.stdout.strip(), result.stdout + result.stderr
 
 
 def test_registered_on_the_widget():

@@ -98,7 +98,7 @@ test("a case brief's saved file is the brief alone: no party, marker, trace comm
   assert.equal("mockup_only_lines" in saved, false, "only a memo's result carries these");
   assert.equal(render.parties_drift[0].name, "Working Matter Client Ltd", "the session still sees the drift");
   assert.ok(text.startsWith("## Case\n"), text);
-  assert.doesNotMatch(text, /Working Matter Client|L9999|Legend|research lawyer|drafter|statement_of_law_id|<!--|mockup-only|Authorities cited/);
+  assert.doesNotMatch(text, /Working Matter Client|L9999|Legend|research lawyer|drafter|statement_of_law_id|<!--|mockup-only|Authorities/);
   assert.doesNotMatch(text, /\p{Extended_Pictographic}/u, text);
   for (const part of ["Facts", "Procedural history", "Issues", "Holding", "Ratio decidendi", "Obiter dicta", "Disposition"]) assert.match(text, new RegExp(`^## ${part}$`, "m"));
   assert.match(text, /^> \*Alpha v Beta\*, 2020 BCCA 1, para\. 5$/m, text);

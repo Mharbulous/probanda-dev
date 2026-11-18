@@ -1,12 +1,15 @@
-// A lapsed lock is written back as released whenever a board page is written (job-activity.ts
-// releaseLapsedLocks, ADR 0015's 2026-11-06 note), and a page drawn before the lapse switches the job
-// by its own clock once the lapse minute it was given passes (ticket-category.ts lapsesAt).
+// A lapsed lock is released only by the assign_job that takes the job (ADR 0015's 2026-11-17 note,
+// spec 2026-11-17 drafting-records-sync-safety criterion 8): session entry and page writes leave the
+// row as it is, every board reads the job as Ready, and the skills' held test (drafting-data
+// jobs-run.md §4a) lets a retirement through. A page drawn before the lapse switches the job by its own
+// clock once the lapse minute it was given passes (ticket-category.ts lapsesAt).
 
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { runInNewContext } from "node:vm";
 import test, { after } from "node:test";
 
@@ -17,7 +20,7 @@ after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, 
 
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
-const { releaseLapsedLocks } = await import("../build/submission/forms/job-activity.js");
+const { heldClause } = await import("../build/submission/forms/job-activity.js");
 const { buildProceedingBoard } = await import("../build/submission/forms/build-proceeding-board.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 const { callTool, createDispatchContext } = await import("../build/index.js");
@@ -68,42 +71,6 @@ async function fixture(t, lockedAt = "2026-10-01 09:00") {
   return m;
 }
 
-test("a lock idle 61 minutes is released with its plan and done steps kept and the lapse recorded; assign_job then takes it as a fresh claim", async (t) => {
-  const m = await fixture(t);
-  await stamp(m.dbPath, 2, 61);
-  await stamp(m.dbPath, 3, 5);
-  assert.equal(await releaseLapsedLocks(m.dbPath, "sess-own"), 1);
-  assert.deepEqual(row(m.dbPath, 2), { status: "queued", locked_by: null, locked_at: null, plan_approved_at: "2026-10-01 08:30" });
-  assert.deepEqual(query(m.dbPath, "SELECT ordinal, done_at FROM ticket_steps WHERE ticket_id = 2 ORDER BY ordinal"), [
-    { ordinal: 1, done_at: "2026-10-01 08:45" },
-    { ordinal: 2, done_at: null },
-  ]);
-  assert.equal(JSON.parse(kv(m.dbPath, "lock_lapsed", 2).value).from, "ss-other");
-  const assigned = await callTool({}, "drafting_data__assign_job", { db_path: m.dbPath, ticket_id: 2, session_token: "sess-new" });
-  assert.equal(assigned.outcome, "assigned");
-  assert.equal(assigned.claim_no, 4);
-});
-
-test("a lock idle 59 minutes, and this session's own lapsed lock, are not touched", async (t) => {
-  const m = await fixture(t);
-  await stamp(m.dbPath, 2, 59);
-  await stamp(m.dbPath, 3, 61);
-  assert.equal(await releaseLapsedLocks(m.dbPath, "sess-own"), 0);
-  assert.equal(row(m.dbPath, 2).locked_by, "sess-other");
-  assert.equal(row(m.dbPath, 3).locked_by, "sess-own");
-  assert.equal(kv(m.dbPath, "lock_lapsed", 2), undefined);
-  assert.equal(kv(m.dbPath, "lock_lapsed", 3), undefined);
-});
-
-test("a second release writes nothing new", async (t) => {
-  const m = await fixture(t);
-  await stamp(m.dbPath, 3, 5);
-  assert.equal(await releaseLapsedLocks(m.dbPath, undefined), 1);
-  const first = kv(m.dbPath, "lock_lapsed", 2);
-  assert.equal(await releaseLapsedLocks(m.dbPath, undefined), 0);
-  assert.deepEqual(kv(m.dbPath, "lock_lapsed", 2), first);
-});
-
 async function practiceContext(t) {
   const practicePath = join(tmpdir(), `coclerk-release-lapsed-practice-${randomUUID()}.db`);
   t.after(() => rmSync(practicePath, { recursive: true, force: true }));
@@ -112,21 +79,103 @@ async function practiceContext(t) {
   return context;
 }
 
-test("open_session releases every lapsed lock before it draws the board", async (t) => {
-  const m = await fixture(t);
-  const context = await practiceContext(t);
-  const opened = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
-  assert.ok(opened.timings.some((p) => p.phase === "lapsed_locks"));
-  assert.equal(row(m.dbPath, 2).status, "queued");
-  assert.equal(row(m.dbPath, 3).status, "queued");
+/** The SQL blocks of a drafting-data reference, in order, with jobs-run.md §4a's held test checked
+ * to be copied exactly wherever the block carries its first line. */
+const REFERENCES = join(dirname(fileURLToPath(import.meta.url)), "../../../skills/drafting-data/references");
+const sqlBlocks = (name) => [...readFileSync(join(REFERENCES, name), "utf-8").matchAll(/```sql\r?\n([\s\S]*?)```/g)].map((m) => m[1]);
+const flat = (text) => text.split(/\s+/).join(" ").trim();
+const HELD = flat(sqlBlocks("jobs-run.md").find((b) => b.startsWith("t.status = 'wip' AND NOT (")));
+
+test("every in-progress read in the drafting-data references carries jobs-run.md §4a's held test exactly", () => {
+  let copies = 0;
+  for (const name of ["jobs-closeout.md", "filing-checklists.md", "paragraph-revision.md"]) {
+    for (const block of sqlBlocks(name).map(flat)) {
+      for (let at = block.indexOf("t.status = 'wip' AND NOT ("); at !== -1; at = block.indexOf("t.status = 'wip' AND NOT (", at + 1)) {
+        assert.equal(block.slice(at, at + HELD.length), HELD, name);
+        copies += 1;
+      }
+    }
+  }
+  assert.equal(copies, 11, "jobs-closeout §9a and §10c: 3 each, filing-checklists: 2, paragraph-revision: 3");
 });
 
-test("a render that writes pages releases another session's lapsed lock and leaves its own", async (t) => {
+test("session entry with another session's lock 61 minutes idle writes nothing, and the board shows the job Ready", async (t) => {
+  const m = await fixture(t);
+  await stamp(m.dbPath, 2, 61);
+  await submissionDataExecute(m.dbPath, "UPDATE tickets SET status = 'queued', locked_by = NULL, locked_at = NULL WHERE id = 3");
+  const context = await practiceContext(t);
+  await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+  const bytes = readFileSync(m.dbPath);
+  const mtime = statSync(m.dbPath).mtimeMs;
+  const opened = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+  assert.ok(!opened.timings.some((p) => p.phase === "lapsed_locks"));
+  assert.ok(readFileSync(m.dbPath).equals(bytes), "the database's bytes are unchanged");
+  assert.equal(statSync(m.dbPath).mtimeMs, mtime, "the database's modification time is unchanged");
+  assert.deepEqual(row(m.dbPath, 2), { status: "wip", locked_by: "sess-other", locked_at: "2026-10-01 09:00", plan_approved_at: "2026-10-01 08:30" });
+  assert.equal(kv(m.dbPath, "lock_lapsed", 2), undefined);
+  assert.equal(drawnCards(pagePath(m)).cards.get(2), "ready");
+});
+
+test("assign_job takes the lapsed job, records lock_lapsed, and keeps its plan and done steps", async (t) => {
+  const m = await fixture(t);
+  await stamp(m.dbPath, 2, 61);
+  const assigned = await callTool({}, "drafting_data__assign_job", { db_path: m.dbPath, ticket_id: 2, session_token: "sess-new" });
+  assert.equal(assigned.outcome, "assigned");
+  assert.equal(assigned.claim_no, 4);
+  assert.equal(row(m.dbPath, 2).locked_by, "sess-new");
+  assert.equal(row(m.dbPath, 2).plan_approved_at, "2026-10-01 08:30");
+  assert.equal(JSON.parse(kv(m.dbPath, "lock_lapsed", 2).value).from, "ss-other");
+  assert.deepEqual(query(m.dbPath, "SELECT ordinal, done_at FROM ticket_steps WHERE ticket_id = 2 ORDER BY ordinal"), [
+    { ordinal: 1, done_at: "2026-10-01 08:45" },
+    { ordinal: 2, done_at: null },
+  ]);
+});
+
+/** jobs-closeout.md §9a's read-first and retirement script, as documented, for Writing 1. */
+const retirement = () => {
+  const blocks = sqlBlocks("jobs-closeout.md");
+  const readFirst = blocks.find((b) => b.startsWith("SELECT t.id, t.title, t.locked_by, t.locked_at FROM tickets t WHERE t.filing_id = 7")).replaceAll("= 7", "= 1");
+  const script = blocks.find((b) => b.startsWith("UPDATE filings SET retired_on")).replaceAll("= 7", "= 1");
+  return { readFirst, script };
+};
+
+test("closing a Writing whose only wip job has lapsed is not blocked, and supersedes that job", async (t) => {
+  const m = await fixture(t);
+  await stamp(m.dbPath, 2, 61);
+  await submissionDataExecute(m.dbPath, "UPDATE tickets SET status = 'queued', locked_by = NULL, locked_at = NULL WHERE id = 3");
+  const { readFirst, script } = retirement();
+  assert.deepEqual(query(m.dbPath, readFirst), []);
+  await submissionDataExecute(m.dbPath, script);
+  assert.equal(query(m.dbPath, "SELECT retired_on FROM filings WHERE id = 1")[0].retired_on, "2026-09-08");
+  assert.deepEqual(row(m.dbPath, 2), { status: "superseded", locked_by: null, locked_at: null, plan_approved_at: "2026-10-01 08:30" });
+});
+
+test("a job held under 60 minutes still refuses the close", async (t) => {
+  const m = await fixture(t);
+  await stamp(m.dbPath, 2, 59);
+  await stamp(m.dbPath, 3, 61);
+  const { readFirst, script } = retirement();
+  assert.deepEqual(query(m.dbPath, readFirst).map((r) => r.id), [2]);
+  await submissionDataExecute(m.dbPath, script);
+  assert.equal(query(m.dbPath, "SELECT retired_on FROM filings WHERE id = 1")[0].retired_on, null);
+  assert.equal(row(m.dbPath, 2).status, "wip");
+});
+
+test("heldClause, the server's held test, reads a lock idle 59 minutes as held and one idle 61 minutes as not", async (t) => {
+  const m = await fixture(t);
+  await stamp(m.dbPath, 2, 59);
+  await stamp(m.dbPath, 3, 61);
+  assert.deepEqual(query(m.dbPath, `SELECT id FROM tickets WHERE ${heldClause(m.dbPath)} ORDER BY id`), [{ id: 2 }]);
+  const { readFirst } = retirement();
+  assert.deepEqual(query(m.dbPath, readFirst).map((r) => r.id), [2], "the skills' held test agrees");
+});
+
+test("a render that writes pages leaves another session's lapsed lock on its row", async (t) => {
   const m = await fixture(t);
   const context = await practiceContext(t);
   await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: m.draft, session_token: "sess-own", documents: ["Work_board"] });
-  assert.equal(row(m.dbPath, 2).locked_by, null);
-  assert.equal(row(m.dbPath, 3).locked_by, "sess-own");
+  assert.equal(row(m.dbPath, 2).locked_by, "sess-other");
+  assert.equal(kv(m.dbPath, "lock_lapsed", 2), undefined);
 });
 
 test("board_card is read-only: a lapsed job shows in Ready and its row stays held", async (t) => {

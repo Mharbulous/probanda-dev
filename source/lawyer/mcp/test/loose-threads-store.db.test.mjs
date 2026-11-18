@@ -177,9 +177,10 @@ test("move takes a board's open threads to a live board of their proceeding, and
     INSERT INTO seeds (id, proceeding_id, filing_id, created, surfaced_by, idea, discarded_at) VALUES (3, 1, 7, '2026-10-01T10:00', 'noticed', 'Open.', NULL), (4, 1, 7, '2026-10-01T10:01', 'noticed', 'Discarded.', '2026-10-02T09:00');`);
   await moveSeedsOnce(dbPath);
   await assert.rejects(looseThreadsUpdate({ db_path: dbPath, action: "move", from_filing_id: 7, filing_id: 9 }), /no live Writing/);
-  await submissionDataExecute(dbPath, "UPDATE tickets SET filing_id = 7, status = 'wip', locked_by = 's', locked_at = '2026-10-01T09:00' WHERE id = 10;");
+  await submissionDataExecute(dbPath, "UPDATE tickets SET filing_id = 7, status = 'wip', locked_by = 's', locked_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-59 minutes') WHERE id = 10;");
   await assert.rejects(looseThreadsUpdate({ db_path: dbPath, action: "move", from_filing_id: 7, filing_id: 8 }), /job in progress/);
-  await submissionDataExecute(dbPath, "UPDATE tickets SET filing_id = NULL, status = 'queued', locked_by = NULL, locked_at = NULL WHERE id = 10;");
+  // A lock idle 60 minutes or more has lapsed (ADR 0015's 2026-11-17 note): the job is not in progress.
+  await submissionDataExecute(dbPath, "UPDATE tickets SET locked_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-61 minutes') WHERE id = 10;");
   assert.deepEqual(await looseThreadsUpdate({ db_path: dbPath, action: "move", from_filing_id: 7, filing_id: 8 }), { updated: [3] });
   assert.deepEqual(readThreads(dbPath).map((x) => [x.id, x.filing_id]), [[3, 8], [4, 7]]);
 });

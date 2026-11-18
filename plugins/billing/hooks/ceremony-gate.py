@@ -8,8 +8,9 @@ shown, so in a session (not a subagent) that has invoked the timecamping skill t
 The evidence is the harness transcript, which the session being checked cannot write. A refusal is
 quoted to the practitioner, so it is in plain words (shared/internals-confidentiality.md).
 
-Refuses by a JSON permissionDecision on stdout, exit 0; allows by exiting 0 silently. Fails CLOSED
-on a missing transcript or its own error.
+Refuses by a JSON permissionDecision on stdout, exit 0; allows by exiting 0 silently. Refuses only
+on evidence: with no transcript_path, or none that exists (a Cowork or bridged session's payload),
+it allows. Fails CLOSED on its own error, such as a transcript that exists but cannot be read.
 """
 import sys
 from pathlib import Path
@@ -45,13 +46,9 @@ def opened(rec):
         for p in content or [])
 
 
-def opened_timecamping(path):
-    return any(opened(rec) for rec in records(path))
-
-
 def main():
     transcript = hook_io.payload().get("transcript_path") or ""
-    if not transcript or opened_timecamping(transcript):
+    if transcript and Path(transcript).is_file() and any(opened(rec) for rec in records(transcript)):
         return hook_io.deny(REFUSAL)
     return 0
 

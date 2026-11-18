@@ -29,8 +29,8 @@ async function jobs(t) {
      INSERT INTO tickets ${COLS}, plan_approved_at) VALUES (1, 1, 1, 'Set the hearing down', 'File a notice of hearing.', 'queued', 'work', 'L8470|x', '2026-10-01T09:00', '2026-10-01T09:06');
      INSERT INTO tickets ${COLS}) VALUES (2, 1, 1, 'Fill out the notice of hearing', 'Fill the form step by step.', 'queued', 'work', 'L8470|x', '2026-10-01T09:00');
      INSERT INTO tickets ${COLS}) VALUES (3, 1, 1, 'Serve the notice', 'Serve it.', 'queued', 'work', 'L8470|x', '2026-10-01T09:00');
-     INSERT INTO tickets ${COLS}, locked_by, locked_at, plan_approved_at) VALUES (4, 1, 1, 'Held here', 'Do it.', 'wip', 'work', 'L8470|x', '2026-10-01T09:00', 'sess-a1', '2026-10-01T09:05', '2026-10-01T09:06');
-     INSERT INTO tickets ${COLS}, locked_by, locked_at) VALUES (5, 1, 1, 'Held elsewhere', 'Do it.', 'wip', 'work', 'L8470|x', '2026-10-01T09:00', 'sess-other', '2026-10-01T09:05');
+     INSERT INTO tickets ${COLS}, locked_by, locked_at, plan_approved_at) VALUES (4, 1, 1, 'Held here', 'Do it.', 'wip', 'work', 'L8470|x', '2026-10-01T09:00', 'sess-a1', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-5 minutes'), '2026-10-01T09:06');
+     INSERT INTO tickets ${COLS}, locked_by, locked_at) VALUES (5, 1, 1, 'Held elsewhere', 'Do it.', 'wip', 'work', 'L8470|x', '2026-10-01T09:00', 'sess-other', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-5 minutes'));
      INSERT INTO tickets ${COLS}, completed_at) VALUES (6, 1, 1, 'Completed', 'Do it.', 'completed', 'work', 'L8470|x', '2026-10-01T09:00', '2026-10-01T09:20');
      INSERT INTO tickets ${COLS}) VALUES (7, 1, 2, 'Other Writing', 'Do it.', 'queued', 'work', 'L8470|x', '2026-10-01T09:00');
      INSERT INTO tickets ${COLS}) VALUES (8, 2, 3, 'Other proceeding', 'Do it.', 'queued', 'work', 'L8470|x', '2026-10-01T09:00');
@@ -139,6 +139,46 @@ test("a survivor this session holds keeps its lock and done steps", async (t) =>
   assert.deepEqual(steps(dbPath, 4).map((s) => [s.ordinal, s.done_at]), [[1, "2026-10-01T09:07"], [2, null], [3, null], [4, null]]);
   const [survivor] = query(dbPath, "SELECT status, locked_by, plan_approved_at FROM tickets WHERE id = 4");
   assert.deepEqual(survivor, { status: "wip", locked_by: "sess-a1", plan_approved_at: null });
+});
+
+/** Job `id`'s lock, moved to `minutes` ago by hand, with no later activity: idle 61 minutes has lapsed (ADR 0015). */
+const idle = (dbPath, id, minutes) =>
+  submissionDataExecute(dbPath, `UPDATE tickets SET locked_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-${minutes} minutes') WHERE id = ${id}`);
+const lapse = (dbPath, id) => query(dbPath, "SELECT value FROM kv_store WHERE namespace = 'lock_lapsed' AND key = ?", [`tickets:${id}`])[0];
+
+test("another session's job whose lock has lapsed is absorbed: superseded, its lock cleared and its lapse recorded", async (t) => {
+  const dbPath = await jobs(t);
+  await idle(dbPath, 5, 61);
+  const result = await merge(dbPath, { absorbed_id: 5 });
+  assert.equal(result.outcome, "merged");
+  assert.deepEqual(query(dbPath, "SELECT status, superseded_by, locked_by, locked_at FROM tickets WHERE id = 5")[0], { status: "superseded", superseded_by: 1, locked_by: null, locked_at: null });
+  assert.equal(JSON.parse(lapse(dbPath, 5).value).from, "ss-other");
+});
+
+test("a survivor whose lock has lapsed in another session is released by the merge, its lapse recorded", async (t) => {
+  const dbPath = await jobs(t);
+  await idle(dbPath, 5, 61);
+  const result = await merge(dbPath, { survivor_id: 5 });
+  assert.equal(result.outcome, "merged");
+  assert.deepEqual(query(dbPath, "SELECT status, locked_by, locked_at FROM tickets WHERE id = 5")[0], { status: "queued", locked_by: null, locked_at: null });
+  assert.equal(JSON.parse(lapse(dbPath, 5).value).from, "ss-other");
+  assert.deepEqual(steps(dbPath, 5).map((s) => s.text), ["Fill Part 1.", "Fill Part 2."]);
+});
+
+test("a survivor this session holds keeps its lock however long it was idle, and no lapse is recorded", async (t) => {
+  const dbPath = await jobs(t);
+  await idle(dbPath, 4, 61);
+  assert.equal((await merge(dbPath, { survivor_id: 4 })).outcome, "merged");
+  assert.deepEqual(query(dbPath, "SELECT status, locked_by FROM tickets WHERE id = 4")[0], { status: "wip", locked_by: "sess-a1" });
+  assert.equal(lapse(dbPath, 4), undefined);
+});
+
+test("this session's own job whose lock has lapsed can be absorbed", async (t) => {
+  const dbPath = await jobs(t);
+  await idle(dbPath, 4, 61);
+  const result = await merge(dbPath, { absorbed_id: 4 });
+  assert.equal(result.outcome, "merged");
+  assert.deepEqual(query(dbPath, "SELECT status, locked_by FROM tickets WHERE id = 4")[0], { status: "superseded", locked_by: null });
 });
 
 test("two General Jobs of one proceeding merge", async (t) => {
