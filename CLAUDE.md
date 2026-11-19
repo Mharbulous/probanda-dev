@@ -32,6 +32,10 @@ The fork `Mharbulous/TokenEconomizer` is the source of record for the Python and
 
 `public/` is the Public Folder: the only source of the public repository, so it holds only Shared Information (Commandment 2). A skill lives under `public/plugins/<plugin>/skills/` or under `source/skills/`, never both. `python scripts/check_public_tree.py` checks the folder. Its files are approved with `python scripts/approve_public.py` and published by starting the `publish-public` workflow. Each publication adds a top entry to `public/CHANGELOG.md`, a `## ` heading of 10 to 72 characters followed by `- ` bullets naming what it improves or adds. It is approved with the files, and the workflow uses it as the public commit message. A person confirms each approval and each publication: a hook makes the app ask before either runs. Nobody edits the public repository by hand.
 
+## Supabase
+
+This repository's Supabase project is `Probanda` (ref `nbzkuhgiqscjkypedqff`) in the `Mharbulous` organization. Reach it only through the `supabase` server in `.mcp.json`, which is locked to that project. The account-wide Supabase connector (tools `mcp__c2e0eec9-3d82-4a9f-a49f-d44e1f7a126c__*`) signs in to probanda-web's separate Supabase account, whose project `Probanda Web` (ref `grdjzhzmkmqjybkqmrul`) is never touched from here, so `.claude/settings.json` denies its tools.
+
 ## The move from CoClerk
 
 The source moved here from CoClerk and is no longer edited there. The `researcher` plugin carries legal-commons' read side only: its gatekeeper skill, the `tech-support` agent, the pool read tools that `research-agent` holds, and its MCP server under the key `commons`. The push skills (`consolidation-push`, `rule-sharing`) are not part of Probanda, and `source/researcher/hooks/commons-read-only.py` refuses the commons write tools. No shipped file hands off to either skill.

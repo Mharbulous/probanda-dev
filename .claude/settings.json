@@ -4,7 +4,8 @@
   },
   "permissions": {
     "deny": [
-      "Edit(/COMMANDMENTS.md)"
+      "Edit(/COMMANDMENTS.md)",
+      "mcp__c2e0eec9-3d82-4a9f-a49f-d44e1f7a126c"
     ]
   },
   "hooks": {
