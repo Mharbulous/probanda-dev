@@ -1,4 +1,4 @@
-// build-stamp: a4080160def5
+// build-stamp: 3d3cd6e63064
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -108576,7 +108576,7 @@ function pluginManifest(installRoot) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "a4080160def5";
+var BUILD_STAMP = false ? null : "3d3cd6e63064";
 
 // src/local-page/listener.ts
 import { createServer, get } from "node:http";
@@ -108871,6 +108871,15 @@ var ACTS = {
     act: (f3) => `move ${v(f3.expected_count)} duplicate email copies, listed in plan ${v(f3.plan_id)}, to Trash`,
     understand: "They can be recovered from Trash, but the mail server may empty Trash on its own schedule.",
     warning: "**This step moves email to Trash: it can be recovered from there until the mail server empties Trash on its own schedule.**"
+  },
+  "drafting_data__merge_milestones": {
+    act: (f3) => {
+      const boards = (Array.isArray(f3.boards) ? f3.boards : []).map((b3) => b3?.filing_id !== void 0 ? `Work Board ${v(b3.filing_id)}` : `the board of proceeding ${v(b3?.proceeding_id)}`);
+      const goal = typeof f3.goal_statement === "string" && f3.goal_statement.trim() ? `with this one goal: "${v(f3.goal_statement)}"` : "with no goal yet, to be agreed later";
+      return `merge ${boards.join(" and ")} into one Work Board, ${goal}`;
+    },
+    understand: "Each Writing stays a separate filing with its own documents and numbering. Only the Work Board page, its view pages and its goal combine.",
+    warning: "**This step joins two Work Boards into one. Probanda has no step that separates them again.**"
   }
 };
 var APPROVAL_TOOLS = Object.keys(ACTS);
