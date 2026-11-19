@@ -1,6 +1,6 @@
 import { COMPANIONS } from "../knowledge/companions.js";
 import { AUDIENCES } from "../knowledge/venues-kinds.js";
-import { type ToolDefinition, SQL_PARAMS } from "./shared.js";
+import { APPROVAL_NEEDED, type ToolDefinition, SQL_PARAMS } from "./shared.js";
 
 function submissionDataPrefixed(name: string): string {
   return `drafting_data__${name}`;
@@ -204,10 +204,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "show the practitioner both boards' statements of goals (drafting_forms__board_card's goals lane) side by side, " +
         "propose one combined goal as the reply's only fenced code block, and in the same turn ask whether to merge them " +
         "with that goal, saying that each Writing stays a separate filing with its own documents and numbering and " +
-        "that only the Work Board page, view pages and goal combine; call this only after their next turn is a bare " +
-        "yes, or their own goal sentence, and pass confirmed: true. goal_statement is the merged board's one goal, " +
-        "the fenced block character for character or the practitioner's sentence; it is written as confirmed and " +
-        "passes the practitioner-words gate as drafting_data__set_board_goal's confirmed statement does. " +
+        "that only the Work Board page, view pages and goal combine; once they agree, pass confirmed: true. " +
+        "goal_statement is the merged board's one goal, the fenced block character for character or the practitioner's " +
+        "own sentence; it is written as confirmed." + APPROVAL_NEEDED + " " +
         "goal_description, only with it, is the line the closed Goal card shows. A goal naming drafting, or a " +
         "description joining several goals, is still written, and the note ends with a framing warning to relay " +
         "once. Without goal_statement the board's goal status is needs_consolidation, and the next /draft opening " +

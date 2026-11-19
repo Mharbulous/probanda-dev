@@ -3,6 +3,7 @@ import { dirname } from "node:path";
 import { DataServerError, ValidationError } from "./errors.js";
 import { buildToolDefinitions } from "./schema-gen.js";
 import { defineTool, dispatchFrom, jsonText, type Tool } from "./tool-list.js";
+import { gated } from "./approval/gate.js";
 import type { ToolInput } from "./validate.js";
 import type { PracticeStore } from "./practice/store.js";
 import { callPracticeTool, practiceTools } from "./tools/practice/index.js";
@@ -222,7 +223,7 @@ export const dataTools: Tool<DispatchContext>[] = [
       caseDataRoot: once(() => caseDataRootFromDbPath(args.db_path, process.env)),
     })),
   defineTool("drafting_data__create_milestone", (args: CreateMilestoneArgs) => submissionDataCreateMilestone(args)),
-  defineTool("drafting_data__merge_milestones", (args: MergeMilestonesArgs) => submissionDataMergeMilestones(args)),
+  gated("drafting_data__merge_milestones", (args) => submissionDataMergeMilestones(args as unknown as MergeMilestonesArgs)),
   defineTool("drafting_data__record_sent", (args: RecordSentArgs) => submissionDataRecordSent(args)),
   defineTool("drafting_data__record_filed", (args: RecordFiledArgs) => submissionDataRecordFiled(args)),
   defineTool("drafting_data__record_served", (args: RecordServedArgs) => submissionDataRecordServed(args)),

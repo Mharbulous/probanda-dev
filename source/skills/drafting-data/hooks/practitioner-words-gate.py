@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Refuse a paragraph revision, a confirmed statement of goals, a merge of Work Boards or of jobs, or a reopen of a completed job the practitioner did not approve (#784).
+"""Refuse a paragraph revision, a confirmed statement of goals, a merge of jobs, or a reopen of a completed job the practitioner did not approve (#784).
 
 Hook event: PreToolUse on drafting_data__execute, drafting_data__set_board_goal,
-drafting_data__merge_milestones, drafting_data__merge_jobs, drafting_data__assign_job with reopen
+drafting_data__merge_jobs, drafting_data__assign_job with reopen
 (a merge or a reopen passes only when the last practitioner turn is a bare yes) and drafting_forms__apply_edit.
 A job's title, intent and steps, and a marker suppression's note, are not read: their wording
 needs no practitioner approval (docs/Specs/2026-10-20_approved-research-issues-pass-job-words-gate-spec.md).
@@ -74,11 +74,9 @@ is a bare yes (APPROVALS, the whole turn), as an on-the-fly revision is approved
 declined write passes unchecked: the tool records an inferred statement as the session's wording,
 never as confirmed, and a declined one carries no statement.
 
-A merge of two Work Boards with a goal_statement, the merged board's one goal written as confirmed
-(docs/ADRs/0010, 2026-10-22 goals amendment), passes when the practitioner's last turn holds that
-statement as an unbroken run: they typed their own goal in answer to the merge question. Otherwise
-the statement must pass the check a confirmed statement of goals passes, and the last turn must be
-a bare yes, so one bare yes to the shown statement confirms both the merge and the goal.
+A merge of two Work Boards is not checked here: drafting_data__merge_milestones serves its own
+Approve page on the practitioner's computer (lawyer's mcp/src/approval/gate.ts), which works where no
+transcript reaches the hook and for a call a subagent makes.
 
 drafting_forms__apply_edit writes the statements of one drafting_forms__preview_edit preview, a quick
 edit (paragraph-revision.md section 8). The gate reads that preview's own result in this session's
@@ -128,11 +126,9 @@ REVISION_CLOSING = ("An on-the-fly revision writes one paragraph the practitione
                     "yes typed as that turn. One approval admits one write. The revised text recorded is exactly the "
                     "text written into the paragraph, and keeping the current wording records the old text unchanged.")
 GOAL_TOOL = "drafting_data__set_board_goal"  # a Work Board's statement of goals
-MERGE_TOOL = "drafting_data__merge_milestones"  # two Work Boards joined on the practitioner's yes
 MERGE_JOBS_TOOL = "drafting_data__merge_jobs"  # a duplicate job merged into another on the practitioner's yes
 ASSIGN_TOOL = "drafting_data__assign_job"  # with reopen: a completed job reopened on the practitioner's yes
 GOAL_FIELD = "the statement of goals"
-MERGE_GOAL_FIELD = "the merged board's statement of goals"
 PREVIEW_TOOL = "drafting_forms__preview_edit"
 APPLY_TOOL = "drafting_forms__apply_edit"  # a quick edit's write (paragraph-revision.md section 8)
 APPLY_CLOSING = ("A quick edit is applied after the practitioner saw its preview: the session's reply before their last turn "
@@ -584,26 +580,6 @@ def bare_yes(payload, needs, how):
                   f"{how}, and call the tool only after the practitioner's next turn is a bare yes.")
 
 
-def merge_boards(payload):
-    """A merge of two Work Boards (docs/ADRs/0010), after the session showed both boards' statements
-    of goals and asked whether they cohere. A goal_statement held by the last turn passes; any other
-    passes goal_failure and then needs the bare yes."""
-    statement = (payload.get("tool_input") or {}).get("goal_statement")
-    path = payload.get("transcript_path") or ""
-    if isinstance(statement, str) and statement.strip() and path:
-        try:
-            turns, last_raw, last_fences, _ = read_transcript(path)
-        except OSError as exc:
-            return refuse(f"cannot read the session transcript at {path}: {exc}")
-        if turns and norm(statement) in norm(turns[-1]):
-            return 0
-        failure = goal_failure(statement, MERGE_GOAL_FIELD, turns, last_raw, last_fences)
-        if failure is not None:
-            return refuse(failure + " Or merge with no statement of goals, which leaves the board needing one.")
-    return bare_yes(payload, "a merge of two Work Boards needs the practitioner's confirmation that their goals overlap "
-                    "or cohere", "Show both boards' statements of goals side by side, ask whether to merge them")
-
-
 def merge_jobs(payload):
     """A merge of a duplicate job into another (jobs-closeout.md §9c), after the session named both
     jobs and the combined steps and asked whether to merge them."""
@@ -616,8 +592,6 @@ def main():
     payload = hook_io.payload()
     if (payload.get("tool_name") or "").endswith(GOAL_TOOL):
         return board_goal(payload)
-    if (payload.get("tool_name") or "").endswith(MERGE_TOOL):
-        return merge_boards(payload)
     if (payload.get("tool_name") or "").endswith(MERGE_JOBS_TOOL):
         return merge_jobs(payload)
     if (payload.get("tool_name") or "").endswith(ASSIGN_TOOL):

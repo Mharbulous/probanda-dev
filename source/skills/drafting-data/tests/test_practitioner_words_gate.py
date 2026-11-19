@@ -530,63 +530,6 @@ class FactMoveTest(GateTestCase):
                            "cannot read the paragraph revision", "the fact a move names")
 
 
-class MergeMilestonesGateTest(unittest.TestCase):
-    """docs/ADRs/0010: a merge of two Work Boards passes only on the practitioner's bare yes."""
-
-    def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
-        self.transcript = Path(self.tmp.name) / "session.jsonl"
-
-    def tearDown(self):
-        self.tmp.cleanup()
-
-    def run_merge(self, *lines, **extra):
-        self.transcript.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
-        payload = {"hook_event_name": "PreToolUse", "session_id": "s-1",
-                   "tool_name": "mcp__plugin_lawyer_data__drafting_data__merge_milestones",
-                   "tool_input": {"db_path": "C:/matter/submission.sqlite", "boards": [{"filing_id": 1}, {"filing_id": 3}],
-                                  "confirmed": True, "session_token": "tok", **extra},
-                   "transcript_path": str(self.transcript)}
-        return run_hook(SCRIPT, payload, timeout=None)
-
-    def test_passes_after_a_bare_yes(self):
-        result = self.run_merge(turn_line("merge the stay boards"), reply_line("Goal 12: ... Goal 15: ... Merge them?"), turn_line("yes"))
-        self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_refuses_without_a_bare_yes(self):
-        for last in ("merge them if the goals fit", "no"):
-            with self.subTest(last=last):
-                result = self.run_merge(reply_line("Goal 12: ... Goal 15: ... Merge them?"), turn_line(last))
-                self.assertEqual(result.returncode, 2)
-                self.assertIn("their last turn is not a bare yes", result.stderr.decode("utf-8"))
-
-    GOAL = "Obtain an order for a verified list of documents."
-
-    def test_a_goal_shown_as_the_one_fenced_block_passes_on_a_bare_yes(self):
-        result = self.run_merge(reply_line(f"Goal 12: ... Goal 15: ...\n```\n{self.GOAL}\n```\nMerge them with that goal?"),
-                                turn_line("yes"), goal_statement=self.GOAL)
-        self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_the_practitioners_own_goal_typed_as_the_answer_passes(self):
-        result = self.run_merge(reply_line("```\nSomething else.\n```\nMerge them with that goal?"),
-                                turn_line(f"Merge, but the goal is: {self.GOAL}"), goal_statement=self.GOAL)
-        self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_a_goal_neither_shown_nor_said_is_refused_even_on_a_bare_yes(self):
-        result = self.run_merge(reply_line("```\nSomething else.\n```\nMerge them with that goal?"),
-                                turn_line("yes"), goal_statement=self.GOAL)
-        self.assertEqual(result.returncode, 2)
-        stderr = result.stderr.decode("utf-8")
-        self.assertIn(GOAL_REFUSAL, stderr)
-        self.assertIn("the merged board's statement of goals", stderr)
-
-    def test_a_goal_said_earlier_still_needs_the_bare_yes_to_merge(self):
-        result = self.run_merge(turn_line(f"the goal is {self.GOAL}"), reply_line("Merge them with that goal?"),
-                                turn_line("maybe later"), goal_statement=self.GOAL)
-        self.assertEqual(result.returncode, 2)
-        self.assertIn("their last turn is not a bare yes", result.stderr.decode("utf-8"))
-
-
 class MergeJobsGateTest(unittest.TestCase):
     """jobs-closeout.md §9c: a merge of two jobs passes only on the practitioner's bare yes."""
 
@@ -738,8 +681,10 @@ class PluginRegistrationTests(unittest.TestCase):
         self.assertEqual(len(entries), 1)
         matcher = re.compile(entries[0]["matcher"])
         for prefix in ("mcp__plugin_lawyer_data__", "mcp__remote-devices__plugin_lawyer_data__"):
-            for tool in ("execute", "set_board_goal", "merge_milestones", "merge_jobs", "assign_job"):
+            for tool in ("execute", "set_board_goal", "merge_jobs", "assign_job"):
                 self.assertTrue(matcher.fullmatch(prefix + "drafting_data__" + tool), prefix + tool)
+            # A Work Board merge checks its own approval on the server (mcp/src/approval/gate.ts).
+            self.assertFalse(matcher.fullmatch(prefix + "drafting_data__merge_milestones"), prefix + "merge_milestones")
             self.assertTrue(matcher.fullmatch(prefix + "drafting_forms__apply_edit"), prefix + "apply_edit")
         self.assertFalse(matcher.fullmatch("mcp__plugin_lawyer_data__drafting_forms__preview_edit"))
         self.assertFalse(matcher.fullmatch("mcp__plugin_lawyer_data__drafting_data__query"))

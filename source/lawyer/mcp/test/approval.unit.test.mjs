@@ -57,7 +57,7 @@ const click = (url, nonce, extra = {}) => send(url, {
 });
 
 test("the sentences and the proof agree with the approval hook's", () => {
-  assert.deepEqual([...APPROVAL_TOOLS].sort(), Object.keys(SAMPLES).sort());
+  for (const tool of Object.keys(SAMPLES)) assert.ok(APPROVAL_TOOLS.includes(tool), tool);
   const script = [
     "import json, sys",
     `sys.path.insert(0, ${JSON.stringify(SHARED_SCRIPTS)})`,
@@ -68,13 +68,14 @@ test("the sentences and the proof agree with the approval hook's", () => {
     "    name = 'mcp__plugin_lawyer_contacts-calendars-email__' + tool",
     "    out[tool] = {'first_line': g.first_line(name, args), 'refusal': g.refusal(name, args, '0' * 64, 'x'),",
     "                 'proof': g.proof(g.own_check(name), args, secret)}",
-    "print(json.dumps(out))",
+    "print(json.dumps({'own': list(g.CHECKS_OWN_APPROVAL), 'out': out}))",
   ].join("\n");
   // The machine's own APPDATA: Windows' python launcher keeps its settings there.
   const env = { ...process.env, APPDATA: SAVED.APPDATA };
   if (SAVED.APPDATA === undefined) delete env.APPDATA;
-  const python = JSON.parse(execFileSync(process.env.COCLERK_PYTHON || "python", ["-c", script, SECRET.toString("hex")],
+  const { own, out: python } = JSON.parse(execFileSync(process.env.COCLERK_PYTHON || "python", ["-c", script, SECRET.toString("hex")],
     { input: JSON.stringify(SAMPLES), encoding: "utf-8", env }));
+  assert.deepEqual(Object.keys(SAMPLES).sort(), [...own].sort(), "every tool the hook also gates has a sample");
   for (const [tool, args] of Object.entries(SAMPLES)) {
     assert.equal(firstLine(tool, args), python[tool].first_line, tool);
     assert.ok(python[tool].refusal.includes(warning(tool)), `${tool}: warning`);
@@ -137,4 +138,25 @@ test("only the newest page link works, and a click is kept when the approved cal
   await assert.rejects(tool.handler(call), /did not answer/);
   fail = false;
   assert.deepEqual(await tool.handler(call), { moved: true });
+});
+
+test("a Work Board merge is approved on the page alone, by its boards and goal, whoever then makes the call", async () => {
+  const runs = [];
+  const MERGE = "drafting_data__merge_milestones";
+  const tool = gated(MERGE, async (args) => (runs.push(args), { merged: true }));
+  const call = { db_path: "C:/m/submission.sqlite", boards: [{ filing_id: 12 }, { proceeding_id: 4 }], confirmed: true,
+    session_token: "tok", goal_statement: "Obtain  an order for documents." };
+  const needed = await tool.handler(call);
+  assert.equal(needed.status, "approval_needed", "confirmed: true alone changes nothing");
+  assert.deepEqual(runs, []);
+  const page = await send(needed.url);
+  assert.ok(page.body.includes("This step: merge Work Board 12 and the board of proceeding 4 into one Work Board, " +
+    "with this one goal: &#34;Obtain an order for documents.&#34;"), page.body);
+  assert.ok(page.body.includes("Probanda has no step that separates them again."));
+  assert.equal((await click(needed.url, nonceOf(page.body))).status, 200);
+  assert.equal((await tool.handler({ ...call, goal_statement: "Another goal." })).status, "approval_needed",
+    "the click approves only the goal shown");
+  // A subagent handed the approval makes the same call: the tool checks the call, not who makes it.
+  assert.deepEqual(await tool.handler({ ...call }), { merged: true });
+  assert.deepEqual(runs, [call]);
 });

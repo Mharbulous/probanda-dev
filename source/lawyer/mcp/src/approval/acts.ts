@@ -1,6 +1,7 @@
-// What the approval page says about each tool that checks its own approval (gate.ts). The
-// sentences are copies of ACTS and REVERSIBLE in source/skills/shared/scripts/approval_gate.py,
-// which stays their source: test/approval.unit.test.mjs fails when a copy differs.
+// What the approval page says about each tool that checks its own approval (gate.ts). For a tool
+// the approval hook also gates (approval_gate.py's CHECKS_OWN_APPROVAL), the sentences are copies of
+// its ACTS and REVERSIBLE, which stay their source: test/approval.unit.test.mjs fails when a copy
+// differs. drafting_data__merge_milestones is approved on the page alone.
 
 type Fields = Record<string, unknown>;
 
@@ -21,6 +22,18 @@ const ACTS: Record<string, Act> = {
     understand: "They can be recovered from Trash, but the mail server may empty Trash on its own schedule.",
     warning: "**This step moves email to Trash: it can be recovered from there until the mail server empties " +
       "Trash on its own schedule.**",
+  },
+  "drafting_data__merge_milestones": {
+    act: (f) => {
+      const boards = (Array.isArray(f.boards) ? f.boards : []).map((b: Fields) =>
+        b?.filing_id !== undefined ? `Work Board ${v(b.filing_id)}` : `the board of proceeding ${v(b?.proceeding_id)}`);
+      const goal = typeof f.goal_statement === "string" && f.goal_statement.trim()
+        ? `with this one goal: "${v(f.goal_statement)}"` : "with no goal yet, to be agreed later";
+      return `merge ${boards.join(" and ")} into one Work Board, ${goal}`;
+    },
+    understand: "Each Writing stays a separate filing with its own documents and numbering. Only the Work Board page, " +
+      "its view pages and its goal combine.",
+    warning: "**This step joins two Work Boards into one. Probanda has no step that separates them again.**",
   },
 };
 
