@@ -20,6 +20,7 @@ const { PAGES_STATE_FILE } = await import("../build/submission/matter-pages.js")
 const { RECORDS_FOLDER } = await import("../build/submission/render-manifest.js");
 const { VIEW_PAGES } = await import("../build/submission/view-pages.js");
 const { callTool } = await import("../build/dispatch.js");
+const { submissionDataMergeMilestones } = await import("../build/submission/forms/merge-milestones.js");
 const { awaitBackgroundJobs } = await import("../build/submission/render-job.js");
 const { readBoardData, ASHBOURNE } = await import("./fixtures/forms-render-seeds.mjs");
 
@@ -194,7 +195,8 @@ test("a view on one board leaves another board's thumbnails never viewed", async
 
 test("on a merged board a record by the absorbed Writing's paths lands on the survivor's row", async (t) => {
   const m = await fixture(t);
-  await callTool({}, "drafting_data__merge_milestones", { db_path: m.dbPath, boards: [{ filing_id: 1 }, { filing_id: 2 }], confirmed: true, session_token: TOKEN });
+  // The backend merges directly: the tool's approval gate is tested in approval.unit.test.mjs.
+  await submissionDataMergeMilestones({ db_path: m.dbPath, boards: [{ filing_id: 1 }, { filing_id: 2 }], confirmed: true, session_token: TOKEN });
   render(m, 1);
   const absorbed = render(m, 2);
   const [doc] = docPaths(absorbed);
