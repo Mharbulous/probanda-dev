@@ -23,6 +23,7 @@ const { submissionDataExecute, submissionDataQuery } = await import("../build/su
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 const { submissionFormsBoardCard } = await import("../build/submission/matter-pages.js");
 const { callTool } = await import("../build/dispatch.js");
+const { submissionDataMergeMilestones } = await import("../build/submission/forms/merge-milestones.js");
 const { awaitBackgroundJobs } = await import("../build/submission/render-job.js");
 const { materialFactsData, proceduralHistoryData } = await import("../build/submission/forms/facts-pages.js");
 const { readBoardData, ASHBOURNE } = await import("./fixtures/forms-render-seeds.mjs");
@@ -33,8 +34,9 @@ const TOKEN = "tok-merge";
 const code = (expected, message) => (err) => err.code === expected && (message === undefined || message.test(err.message));
 const query = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, params).rows;
 const metaRows = (dbPath, glob) => query(dbPath, "SELECT key, value FROM db_meta WHERE key GLOB ? ORDER BY key", [glob]);
-const merge = (dbPath, boards, confirmed = true, extra = {}) =>
-  callTool({}, "drafting_data__merge_milestones", { db_path: dbPath, boards, confirmed, session_token: TOKEN, ...extra });
+// The merge runs through its backend, past the approval gate, which approval.unit.test.mjs tests.
+const merge = async (dbPath, boards, confirmed = true, extra = {}) =>
+  submissionDataMergeMilestones({ db_path: dbPath, boards, confirmed, session_token: TOKEN, ...extra });
 const setGoal = (dbPath, board, statement, extra = {}) =>
   callTool({}, "drafting_data__set_board_goal", { db_path: dbPath, ...board, statement, status: "inferred", session_token: TOKEN, ...extra });
 const render = (m, filingId) => submissionFormsRender(m.dbPath, filingId, ASHBOURNE, "mockup", undefined, undefined, undefined, NOW, TOKEN, m.draft);
