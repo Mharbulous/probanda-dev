@@ -229,12 +229,13 @@ export const SYMBOLS: readonly SymbolRow[] = [
     actor: "drafter",
     slug: "testimony-pinpoint", title: "Locate the testimony pinpoint",
     condition:
-      "statement of fact with `instrument` set ∧ `pinpoint` ∅ — the instrument's paragraph, on an " +
-      "exhibit-backed statement too (*Affidavit #1 of A. Marlowe, para 3*); no instrument (✍️, oral): nothing " +
-      "to locate. Also admission past 🤝 ⊕ ⏰ (derived state, table 1b — holds through 🕹️ and ✅) ∧ " +
+      "statement of fact with `instrument` set ∧ the instrument's `execution` set ∧ `pinpoint` ∅ — the instrument's " +
+      "paragraph, on an exhibit-backed statement too (*Affidavit #1 of A. Marlowe, para 3*). Before execution the " +
+      "citation prints the linked paragraph's number as the draft now orders it, and ✍️ covers a statement with no " +
+      "paragraph; no instrument (oral): nothing to locate. Also admission past 🤝 ⊕ ⏰ (derived state, table 1b — holds through 🕹️ and ✅) ∧ " +
       "`instrument`/`response` set ∧ its pinpoint ∅ where `method` is `interrogatories` ⊕ `oral`. Unordered " +
       "with 💬 ⊕ 📑 and 📌",
-    history: "v1; admissions v5; split off 📍 (#511)",
+    history: "v1; admissions v5; split off 📍 (#511); waits for execution since the NoA proof ladder (2026-11-20)",
   },
   {
     glyph: "🔬", name: "scrutinize", group: "work",
@@ -392,11 +393,11 @@ export const SYMBOLS: readonly SymbolRow[] = [
     work: "interview the witness",
     actor: "investigator",
     slug: "interview", title: "Interview",
-    condition: "`statement.interviewed=0`",
-    history: "v3 (`sworn_status` struck); plain name was *talk to witness*",
+    condition: "`statement.interviewed=0` ∧ `statement.instrument` ∅ — a linked instrument skips the interview",
+    history: "v3 (`sworn_status` struck); plain name was *talk to witness*; silent once an instrument is linked (NoA proof ladder, 2026-11-20)",
   },
   {
-    glyph: "✍️", name: "draft it", group: "work",
+    glyph: "🗒️", name: "draft it", group: "work",
     meaning: "the witness is interviewed, but the account is not yet written",
     work: "write the oral account",
     actor: "drafter",
@@ -404,7 +405,28 @@ export const SYMBOLS: readonly SymbolRow[] = [
     condition: "`interviewed=1` ∧ `statement.instrument` ∅",
     history:
       "v3 — `instrument` is the statement's own pointer (the old paragraph link / `affidavit_document_id` " +
-      "collapsed into it)",
+      "collapsed into it); was ✍️ until the NoA proof ladder (2026-11-20)",
+  },
+  {
+    glyph: "✍️", name: "write the paragraph", group: "work",
+    meaning: "the witness's instrument is begun, but no paragraph of it states this yet",
+    work: "write the paragraph in the witness's instrument",
+    actor: "drafter",
+    slug: "write-paragraph", title: "Write the paragraphs",
+    condition:
+      "`statement.instrument` set ∧ the instrument's `instrument` kind set ∧ its `execution` ∅ ∧ no " +
+      "`paragraph_statements_of_fact` row links this statement to a `statement_paragraphs` row of the instrument",
+    history: "derived, no column (NoA proof ladder, 2026-11-20); keyed on the instrument document",
+  },
+  {
+    glyph: "📝", name: "paragraph written", group: "work",
+    meaning: "this paragraph is written, but the rest of the witness's instrument is not yet",
+    work: "finish the instrument's other paragraphs",
+    actor: "drafter",
+    condition:
+      "`statement.instrument` set ∧ its `execution` ∅ ∧ a paragraph of it links this statement ∧ another " +
+      "statement with the same `instrument` has none. Generates nothing: the other statements' ✍️ is the work",
+    history: "derived, no column (NoA proof ladder, 2026-11-20)",
   },
   {
     glyph: "🖋️", name: "sign it", group: "work",
@@ -413,8 +435,9 @@ export const SYMBOLS: readonly SymbolRow[] = [
     actor: "witness; the drafter obtains it",
     slug: "sign-it", title: "Get it signed",
     condition:
-      "the statement's `instrument` is an unsigned `witness_statement` — read from its execution; ≥1 paragraph " +
-      "linked (#329). 🖋️⊕✒️ by instrument",
+      "the statement's `instrument` is an unsigned `witness_statement` — read from its execution — and every " +
+      "statement with that `instrument` has a paragraph of it linked (#329; the whole instrument since the NoA " +
+      "proof ladder, 2026-11-20). 🖋️⊕✒️ by instrument",
     history: "v3 (`witness_statements` folded into `documents` — #327/#328)",
   },
   {
@@ -423,7 +446,10 @@ export const SYMBOLS: readonly SymbolRow[] = [
     work: "get it sworn",
     actor: "deponent and commissioner; the drafter obtains it",
     slug: "swear-it", title: "Get it sworn",
-    condition: "the statement's `instrument` is an unsworn `affidavit` (`deponent` set ⇔ instrument)",
+    condition:
+      "the statement's `instrument` is an unsworn `affidavit` (`deponent` set ⇔ instrument) and every statement " +
+      "with that `instrument` has a paragraph of it linked (NoA proof ladder, 2026-11-20). On the Notice of " +
+      "Application's Part 4 the affidavit's own line prints ✒️ on the same test, ✍️ while any of its statements has no paragraph",
     history: "v3; deponent gate — bare `sworn_on` ∅ is true of every contract",
   },
   {
@@ -910,6 +936,11 @@ export const PLACEMENTS: readonly PlacementRow[] = [
     glyph: "👤", documents: ["Evidence_index", "Notice_of_application"], line: "a document's own line",
     text: "no witness tenders this document and no admission covers it: find the tendering witness or record the admission",
   },
+  // The proof ladder's rungs print on each statement's own citation line under the fact, not on the fact's line.
+  ...["🗣️", "🗒️", "✍️", "📝", "🖋️", "✒️"].map((glyph): PlacementRow => ({
+    glyph, documents: ["Notice_of_application"], line: "Part 2 citation line",
+    text: "in Part 2, the rung one witness's statement has reached, printed on that statement's own citation line beneath the fact",
+  })),
   { glyph: "🧩", documents: ["Witness_statement"], text: "as a whole line, no facts are attributed to this witness; after a paragraph, no fact is linked to it" },
   { glyph: "🧩", documents: ["General_writing"], text: "a part not written, a section with nothing in it yet, no signer chosen, or no To recipient" },
 ];

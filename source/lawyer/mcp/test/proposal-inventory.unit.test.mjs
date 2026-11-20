@@ -96,7 +96,7 @@ test("a Proposal's title is its work name and label, and a note-up keeps its lon
 });
 
 test("a witnesses-keyed Proposal counts its distinct statements and keeps the count out of the item", () => {
-  const { proposals } = derive([witness("draft-it", "✍️", 3, 7), witness("draft-it", "✍️", 3, 9), witness("draft-it", "✍️", 3, 7)]);
+  const { proposals } = derive([witness("draft-it", "🗒️", 3, 7), witness("draft-it", "🗒️", 3, 9), witness("draft-it", "🗒️", 3, 7)]);
   assert.equal(proposals.length, 1);
   assert.equal(proposals[0].count, 2);
   assert.equal(proposals[0].item, "M. Reyes");
@@ -122,9 +122,9 @@ test("🥈 is the rung only until 📖 prints on the same law assertion", () => 
   ]);
 });
 
-test("✍️ is the rung only until 🗣️ prints on the same witness", () => {
-  assert.deepEqual(keysOf(derive([witness("draft-it", "✍️", 3, 7)])), ["draft-it:witnesses:3"]);
-  assert.deepEqual(keysOf(derive([witness("draft-it", "✍️", 3, 7), witness("interview", "🗣️", 3, 7)])), ["interview:witnesses:3"]);
+test("🗒️ is the rung only until 🗣️ prints on the same witness", () => {
+  assert.deepEqual(keysOf(derive([witness("draft-it", "🗒️", 3, 7)])), ["draft-it:witnesses:3"]);
+  assert.deepEqual(keysOf(derive([witness("draft-it", "🗒️", 3, 7), witness("interview", "🗣️", 3, 7)])), ["interview:witnesses:3"]);
 });
 
 test("🖋️ is held by 🗣️ on any witness of the instrument, and current when none of them owes one", () => {
@@ -133,12 +133,12 @@ test("🖋️ is held by 🗣️ on any witness of the instrument, and current w
   assert.deepEqual(keysOf(derive([...twoWitnesses, witness("interview", "🗣️", 2, 7)])), ["interview:witnesses:2"]);
 });
 
-test("🧷 is held by 🖋️ on its instrument and by 🗣️ or ✍️ on its witness", () => {
+test("🧷 is held by 🖋️ on its instrument and by 🗣️ or 🗒️ on its witness", () => {
   const pin = statement("testimony-pinpoint", "🧷", 5, 3, 6);
   assert.deepEqual(keysOf(derive([pin])), ["testimony-pinpoint:statements_of_fact:5"]);
   assert.deepEqual(keysOf(derive([pin, instrument("sign-it", "🖋️", 6, 3)])), ["sign-it:documents:6"]);
   assert.deepEqual(keysOf(derive([pin, witness("interview", "🗣️", 3, 5)])), ["interview:witnesses:3"]);
-  assert.deepEqual(keysOf(derive([pin, witness("draft-it", "✍️", 3, 5)])), ["draft-it:witnesses:3"]);
+  assert.deepEqual(keysOf(derive([pin, witness("draft-it", "🗒️", 3, 5)])), ["draft-it:witnesses:3"]);
 });
 
 test("📇 is the rung only when some statement of the authority has cleared 📜 📍 🔬", () => {

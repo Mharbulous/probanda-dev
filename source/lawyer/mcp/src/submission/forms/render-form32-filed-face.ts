@@ -22,7 +22,7 @@ import type { PublishWarning } from "../publish-sidecar.js";
 import { passesBriefOnlyCap } from "./brief-only-cap.js";
 import { formatTimeEstimate, pushExcerptBlockquote, STANDARD_MATERIAL_LINES } from "./components.js";
 import { CITATION_MISSING, printedPinpoint } from "./law-statement-line.js";
-import { exhibitNumbersFromOrderedIds, fetchDocumentLabels, fetchFilingDocuments, type FilingDocumentRow } from "./exhibit-documents.js";
+import { affidavitName, exhibitNumbersFromOrderedIds, fetchCitationLabels, fetchFilingDocuments, unattachedAffidavits } from "./exhibit-documents.js";
 import { fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions, type LawAssertionRow } from "./submission-reads.js";
 import { fetchOrdersSought } from "./orders-sought.js";
 import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
@@ -122,9 +122,9 @@ function fetchAffidavitFields(dbPath: string, documentIds: number[]): Map<number
  * "[date]", which asm32's verify reports as a warning. With no deponent recorded the label stands
  * in for "Affidavit #<n> of <name>".
  */
-function affidavitLine(d: FilingDocumentRow, a: AffidavitFieldsRow | undefined): string {
+function affidavitLine(d: { label: string; document_date: string | null }, a: AffidavitFieldsRow | undefined): string {
   const made = a?.execution ?? (a?.instrument === "affidavit" ? null : d.document_date);
-  const who = a?.deponent_name ? `Affidavit${a.affidavit_number ? ` #${a.affidavit_number}` : ""} of ${a.deponent_name}` : d.label;
+  const who = affidavitName(d.label, a?.affidavit_number ?? null, a?.deponent_name ?? null);
   return `${who}, made ${made ? longDate(made) : "[date]"}`;
 }
 
@@ -277,7 +277,7 @@ export function renderForm32FiledFace(ctx: RenderContext, warnings?: PublishWarn
     if (s.exhibit_id !== null) referencedDocIds.add(s.exhibit_id);
     if (s.instrument_id !== null) referencedDocIds.add(s.instrument_id);
   }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const labelMap = fetchCitationLabels(ctx.dbPath, [...referencedDocIds]);
 
   const lines: string[] = [];
   lines.push("---");
@@ -409,12 +409,16 @@ export function renderForm32FiledFace(ctx: RenderContext, warnings?: PublishWarn
 
   lines.push("## Part 4");
   lines.push("");
-  const affidavitFields = fetchAffidavitFields(ctx.dbPath, materials.map((d) => d.document_id));
+  // A drafted affidavit a Part 2 statement cites but no filing_documents row selects is listed after
+  // the selected documents, as the mockup lists it, so no exhibit number moves.
+  const unattached = unattachedAffidavits(materials.map((d) => d.document_id), part2Statements);
+  const affidavitFields = fetchAffidavitFields(ctx.dbPath, [...materials.map((d) => d.document_id), ...unattached]);
   materials.forEach((d) => {
     const a = affidavitFields.get(d.document_id);
     if (d.role === "affidavit" || a?.instrument === "affidavit") lines.push(`- ${affidavitLine(d, a)}`);
     else lines.push(`- ${d.label}${materialDateSuffix(d.label, d.document_date)}`);
   });
+  for (const id of unattached) lines.push(`- ${affidavitLine({ label: labelMap.get(id) ?? "", document_date: null }, affidavitFields.get(id))}`);
   // The pleadings line always prints, so Part 4 is never empty and never "Nil.". The other
   // standard line, "Such further affidavits ... as this honourable court may allow", identifies no
   // document, which Form 32's Part 4 instruction requires of each entry, so the filed face drops it.

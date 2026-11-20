@@ -208,16 +208,16 @@ test("emits a form-32.md that validate32 accepts, matching the reviewed data", a
         ">> Order of Associate Judge Lin, 2 July 2026, para 1",
       ].join("\n")
     );
-    // The statement citation line is the mockup's own, less indent and trace, under the ">> "
-    // marker. The court-record line names its document (spec 2026-10-09, §4.3), so it is not the
-    // mockup's parenthesized pinpoint.
+    // The statement citation line is the mockup's own, less indent, markers and trace, under the ">> "
+    // marker. A mockup-only line (fact 1's bare 👤) has no filed twin. The court-record line names its
+    // document (spec 2026-10-09, §4.3), so it is not the mockup's parenthesized pinpoint.
     const mockup = submissionFormsRender(f.dbPath, 1, {}, "mockup").documents.find((d) => d.document_type === "Notice_of_application").markdown;
     const mockupCitations = mockup
       .split("## PART 2: FACTUAL BASIS")[1]
       .split("## PART 3")[0]
       .split("\n")
-      .filter((l) => l.startsWith("   > "))
-      .map((l) => l.slice(3).replace(/ <!-- fact \d+ -->$/, ""));
+      .filter((l) => l.startsWith("   > ") && !l.includes("<!-- mockup-only -->"))
+      .map((l) => l.slice(3).replace(/ <!-- fact \d+ -->$/, "").replace(/(?: [^\x00-\x7F]+)+$/u, ""));
     const filedCitations = part2Body.split("\n").filter((l) => l.startsWith(">> "));
     assert.equal(filedCitations.length, mockupCitations.length, "expected one filed Part 2 citation line per mockup citation line");
     assert.equal(filedCitations[0], mockupCitations[0].replace(/^> /, ">> "), "expected the filed statement citation line to be the mockup's");

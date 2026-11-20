@@ -67,8 +67,8 @@ test("renders BCSC Form 32 notice of application", async () => {
         VALUES (1, 1, 'P. Inspector', 'property inspector'), (2, 1, 'Q. Neighbour', 'neighbouring occupant');
 
       -- Issue #364: statement 1's instrument, an already-sworn affidavit --
-      -- execution set so statementOfFactMarkers' ✍️/✒️ branches are unaffected
-      -- (interviewed=1 + instrument set + execution set already skips both);
+      -- execution set so statementOfFactMarkers' proof ladder prints no rung
+      -- (an executed instrument owes none);
       -- the only new glyph this adds to fact 2's line is 🏆 (unmarked copy),
       -- isolating PART 2's own tokens-loop wiring from the pre-existing
       -- sign-it ladder.
@@ -216,9 +216,14 @@ test("renders BCSC Form 32 notice of application", async () => {
       "expected fact 1's postulate to render once, not once per filing_facts pointer row"
     );
 
-    const fact2Line = noticeOfApplication
-      .split("\n")
-      .find((l) => l.includes("The property was inspected and found vacant"));
+    // A Part 2 paragraph whole: the bare postulate and the citation lines beneath it, which carry its markers.
+    const paragraphOf = (n) => {
+      const lines = part2Section.split("\n");
+      const start = lines.findIndex((l) => l.startsWith(`${n}. `));
+      const end = lines.findIndex((l, i) => i > start && !l.startsWith("   "));
+      return lines.slice(start, end === -1 ? undefined : end).join("\n");
+    };
+    const fact2Line = paragraphOf(2);
     const pinpointGlyphCount = (fact2Line.match(/🧷/g) ?? []).length;
     assert.equal(
       pinpointGlyphCount,
@@ -235,7 +240,7 @@ test("renders BCSC Form 32 notice of application", async () => {
     // fact 2's pinpointGlyphCount assertion above is the same-query-path control: it proves PART 2's
     // fetchStatementsOfFact really returns statements and really emits pins, so a silent empty result
     // cannot make the guard assertion below pass vacuously.
-    const fact1Line = part2Section.split("\n").find((l) => l.startsWith("1. "));
+    const fact1Line = paragraphOf(1);
     assert.doesNotMatch(fact1Line, /🧷|📌/, "expected the fact-side pins silenced by the unless-admitted guard");
     // Fact 1 is in PART 2, so PART 3 names its paragraph number instead of re-printing it with its
     // statement 3 beneath (the submission is form-only here, so this document is its one surface).
@@ -309,12 +314,13 @@ test("renders BCSC Form 32 notice of application", async () => {
     assert.match(doc7Line, /🙅🏻‍♂️👤/, "expected the denied admission's event glyph to prefix 👤 in Part 4, fused as one set, mirroring the Evidence Index");
     const doc1Line = part4Section.split("\n").find((l) => l.includes("Draft default judgment"));
     assert.doesNotMatch(doc1Line, /👤/, "expected no exhibit-side marker on a role='order' attachment -- excluded from the dual-approved role scope (#398)");
-    // The standard closing lines number on from the documents and carry no marker and no trace,
+    // The standard closing lines number on from the documents (the three selected, then the two
+    // affidavits Part 2 cites that no filing_documents row selects) and carry no marker and no trace,
     // while a real document keeps its 🏆.
     const part4Numbered = part4Section.split("## ")[0].split("\n").filter((l) => /^\d+\. /.test(l));
     assert.deepEqual(
       part4Numbered.slice(-2),
-      ["4. Pleadings filed in this proceeding", "5. Such further affidavits or filed court documents as this honourable court may allow"],
+      ["6. Pleadings filed in this proceeding", "7. Such further affidavits or filed court documents as this honourable court may allow"],
       "expected the two standard closing lines last in Part 4, unmarked and untraced"
     );
     assert.match(doc1Line, /🏆/, "expected a real listed document to keep its 🏆");

@@ -302,11 +302,12 @@ export function exhibitPinpointMarker(exhibitId: number | null, exhibitPinpoint:
   return exhibitId !== null && (exhibitPinpoint === null || exhibitPinpoint === "") ? "📌" : "";
 }
 
-/** 🧷 testimony pinpoint missing (work-markers.md row 🧷): the locator into the witness's own
- * instrument, on an exhibit-backed statement too. No instrument (✍️, oral) means nothing to
- * locate, so the link gates the glyph. */
-export function testimonyPinpointMarker(instrument: number | null, pinpoint: string | null): string {
-  return instrument !== null && (pinpoint === null || pinpoint === "") ? "🧷" : "";
+/** 🧷 testimony pinpoint missing (symbol-table.ts row 🧷): the locator into the witness's own
+ * instrument, on an exhibit-backed statement too. Only once the instrument is executed: before
+ * that the pinpoint is derived from the linked paragraph (effectivePinpoint, statement-lines.ts),
+ * and ✍️ covers a statement with none. No instrument (oral) means nothing to locate. */
+export function testimonyPinpointMarker(instrument: number | null, pinpoint: string | null, execution: string | null): string {
+  return instrument !== null && execution !== null && (pinpoint === null || pinpoint === "") ? "🧷" : "";
 }
 
 /** An exhibit letter's place in A..Z then AA..ZZ, or -1 when it is not 1-2 uppercase letters. */
@@ -790,21 +791,23 @@ export interface StatementOfFactRow {
   instrument_id: number | null; // statements_of_fact.instrument -- the vehicle document, if any
   instrument_kind: "witness_statement" | "affidavit" | null; // that document's documents.instrument
   instrument_execution: string | null; // that document's documents.execution -- null = unsigned/unsworn
+  has_paragraph: boolean; // a paragraph of the instrument is linked to this statement
+  instrument_drafted: boolean; // every statement on the instrument has a paragraph of it linked
   fact_court_record_linked: boolean; // issue #360/#362: facts.court_record IS NOT NULL
   fact_admitted_by_all_opposing: boolean; // issue #345: derived per-fact coverage, see admittedAgainstAllOpposing
 }
 
-/** 🗣️ talk to witness / ✍️ draft it / 🖋️ sign it / ✒️ swear it, gated by the unless-admitted guard (schema v3 #328/#320: sworn_status retired, written/executed derive from the instrument link). */
+/** The proof ladder, one rung per statement (the earliest unmet), gated by the unless-admitted
+ * guard: 🗣️ interview, 🗒️ write the account, ✍️ write the paragraph, 📝 the rest of the instrument
+ * still being written, then 🖋️ sign it / ✒️ swear it. An executed instrument owes none of them. A
+ * linked document that is not an instrument drafted here (no instrument kind) owes none either. */
 export function statementOfFactMarkers(row: StatementOfFactRow): string {
   if (isAdmittedGuard(row.fact_court_record_linked, row.fact_admitted_by_all_opposing)) return "";
-  const out: string[] = [];
-  if (row.interviewed === 0) out.push("🗣️");
-  if (row.interviewed === 1 && row.instrument_id === null) out.push("✍️");
-  if (row.instrument_id !== null && row.instrument_execution === null) {
-    if (row.instrument_kind === "witness_statement") out.push("🖋️");
-    if (row.instrument_kind === "affidavit") out.push("✒️");
-  }
-  return out.join(" ");
+  if (row.instrument_id === null) return row.interviewed === 0 ? "🗣️" : "🗒️";
+  if (row.instrument_execution !== null || row.instrument_kind === null) return "";
+  if (!row.has_paragraph) return "✍️";
+  if (!row.instrument_drafted) return "📝";
+  return row.instrument_kind === "witness_statement" ? "🖋️" : "✒️";
 }
 
 // --- Admission ladder (issue #344) ------------------------------------

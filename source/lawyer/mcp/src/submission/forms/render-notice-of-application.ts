@@ -12,11 +12,11 @@ import {
   styleOfProceedingCaption,
   type CaptionParty,
 } from "./components.js";
-import { courtRecordCitation, courtRecordPinpointMarker, dedupeLineMarkers, doubtMarker, exhibitPinpointMarker, gapMarker, isAdmittedGuard, isExhibitTenderRole, looseThreadMarker, noWitnessMarker, suppressMarker, printMarkerSets, statementOfFactMarkers, testimonyPinpointMarker, unservedPetitumMarker, unsponsoredExhibitMarker } from "./markers.js";
+import { courtRecordCitation, courtRecordPinpointMarker, dedupeLineMarkers, doubtMarker, exhibitPinpointMarker, gapMarker, isAdmittedGuard, isExhibitTenderRole, looseThreadMarker, MOCKUP_ONLY_TAG, noWitnessMarker, suppressMarker, printMarkerSets, statementOfFactMarkers, testimonyPinpointMarker, unservedPetitumMarker, unsponsoredExhibitMarker } from "./markers.js";
 import { recordCriterionGlyphs, recordFactStatementGlyphs, recordGlyphs, recordJurisdictionLadder } from "./proposal-inventory.js";
 import { captionHeadingFor, opposingPartyIds } from "./query.js";
-import { exhibitNumbersFromOrderedIds, fetchDocumentLabels, fetchFilingDocuments, fetchNotBestCopyMarkers } from "./exhibit-documents.js";
-import { factStatementCitationLine } from "./statement-lines.js";
+import { exhibitNumbersFromOrderedIds, fetchCitationLabels, fetchFilingDocuments, fetchNotBestCopyMarkers, unattachedAffidavits } from "./exhibit-documents.js";
+import { factStatementCitationLine, ladderRow } from "./statement-lines.js";
 import { fetchDeployedIds, fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions } from "./submission-reads.js";
 import { fetchDocumentTenderStatus } from "./document-tenders.js";
 import { fetchFactAdmissionAnnotations } from "./admission-annotations.js";
@@ -63,6 +63,39 @@ function fetchWitnessBackedFlags(dbPath: string, factIds: number[]): Map<number,
     factIds
   );
   return new Map(found.map((r) => [r.fact_id, r.has_statement === 1]));
+}
+
+interface AffidavitState {
+  id: number;
+  label: string;
+  instrument: string | null;
+  execution: string | null;
+  has_statement: number;
+  has_unwritten: number;
+}
+
+/** Each document's instrument kind and execution, and for its statements whether any is linked
+ * and whether any has no paragraph of it yet: Part 4's affidavit date and marker. */
+function fetchAffidavitStates(dbPath: string, documentIds: number[]): Map<number, AffidavitState> {
+  if (documentIds.length === 0) return new Map();
+  const found = rows<AffidavitState>(
+    dbPath,
+    `SELECT d.id, d.label, d.instrument, d.execution,
+            EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.instrument = d.id) AS has_statement,
+            EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.instrument = d.id AND NOT EXISTS(
+              SELECT 1 FROM paragraph_statements_of_fact psf JOIN statement_paragraphs sp ON sp.id = psf.statement_paragraph_id
+              WHERE psf.statement_of_fact_id = sof.id AND sp.document_id = d.id)) AS has_unwritten
+     FROM documents d WHERE d.id IN (${documentIds.map(() => "?").join(",")})`,
+    documentIds
+  );
+  return new Map(found.map((a) => [a.id, a]));
+}
+
+/** An unsworn drafted affidavit's Part 4 marker: ✍️ while a statement on it has no paragraph, ✒️
+ * once every one has, none once sworn or with no statement linked yet. */
+function affidavitMarker(a: AffidavitState | undefined): string {
+  if (a === undefined || a.instrument !== "affidavit" || a.execution !== null || a.has_statement === 0) return "";
+  return a.has_unwritten === 1 ? "✍️" : "✒️";
 }
 
 export function renderNoticeOfApplication(ctx: RenderContext): string {
@@ -121,7 +154,7 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
     if (s.exhibit_id !== null) referencedDocIds.add(s.exhibit_id);
     if (s.instrument_id !== null) referencedDocIds.add(s.instrument_id);
   }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const labelMap = fetchCitationLabels(ctx.dbPath, [...referencedDocIds]);
   const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
 
   const lines: string[] = [];
@@ -255,18 +288,9 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
       statementSets.push(statementTokens);
       if (!guarded) {
         statementTokens.push(exhibitPinpointMarker(s.exhibit_id, s.exhibit_pinpoint));
-        statementTokens.push(testimonyPinpointMarker(s.instrument_id, s.pinpoint));
+        statementTokens.push(testimonyPinpointMarker(s.instrument_id, s.pinpoint, s.instrument_execution));
       }
-      statementTokens.push(
-        statementOfFactMarkers({
-          interviewed: s.interviewed,
-          instrument_id: s.instrument_id,
-          instrument_kind: s.instrument_kind,
-          instrument_execution: s.instrument_execution,
-          fact_court_record_linked: courtRecordLinked,
-          fact_admitted_by_all_opposing: admitted,
-        })
-      );
+      statementTokens.push(statementOfFactMarkers(ladderRow(s, courtRecordLinked, admitted)));
       // 👃 and 🏆 are this statement's tokens too, so the recorder sees them (Goal card design
       // §2.7). They still join the line last, in the order they always printed.
       statementTokens.push(doubtMarker(s.doubt));
@@ -288,19 +312,36 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
     stmts.forEach((s, i) => {
       if (s.purpose !== "impeachment") statementSets[i].push(reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "statements_of_fact", s.id, `${s.witness_name}: ${f.postulate}`));
     });
-    // One set per object: the fact's, the pointer row's 🧵, and each statement's. Identical sets
-    // print once, so two statements both owing only a pinpoint show one 🧷 (or one 📌) (issue 322).
-    const glyphs = printMarkerSets([dedupeLineMarkers([witnessMarker, courtRecordPin, factReview]), looseThread, ...statementSets.map(dedupeLineMarkers)]);
-    // Citation lines: the court record's, then one per statement the forum may read (never an
-    // impeachment one). render-form32-filed-face.ts prints the same lines, unindented and untraced.
-    const citationLines = [
-      ...(courtRecordCite ? [`> ${courtRecordCite}`] : []),
-      ...stmts.filter((s) => s.purpose !== "impeachment").flatMap((s) => factStatementCitationLine(exhibitMap, labelMap, s) ?? []),
-    ];
+    // The postulate prints bare. Beneath it: the court record's citation line, then one line per
+    // statement the forum may read (never an impeachment one), each carrying its own marker set, so
+    // each witness's rung of the proof ladder shows on its own line. A statement with nothing to cite
+    // yet (no instrument, no exhibit) prints its witness's name on a mockup-only line, and so does
+    // the bare "> 👤" of a fact with no statement. The fact's own set and 🧵 (and any impeachment
+    // statement's set) ride the first line. render-form32-filed-face.ts prints the same citations,
+    // unindented and untraced. Identical sets on one line print once (issue 322).
+    const cited: { text: string; sets: string[]; mockupOnly: boolean }[] = [];
+    if (courtRecordCite) cited.push({ text: `> ${courtRecordCite}`, sets: [], mockupOnly: false });
+    const firstSets: string[] = [dedupeLineMarkers([witnessMarker, courtRecordPin, factReview]), looseThread];
+    stmts.forEach((s, i) => {
+      const set = dedupeLineMarkers(statementSets[i]);
+      if (s.purpose === "impeachment") {
+        firstSets.push(set);
+        return;
+      }
+      const citation = factStatementCitationLine(exhibitMap, labelMap, s);
+      cited.push(citation === null ? { text: `> ${s.witness_name}`, sets: [set], mockupOnly: true } : { text: citation, sets: [set], mockupOnly: false });
+    });
+    if (cited.length === 0 && witnessMarker) cited.push({ text: ">", sets: [], mockupOnly: true });
+    if (cited.length > 0) cited[0].sets.unshift(...firstSets);
+    const postulateGlyphs = cited.length > 0 ? "" : printMarkerSets(firstSets);
     const trace = `<!-- fact ${partNum} -->`;
-    lines.push(`${partNum}. ${f.postulate}${glyphs ? ` ${glyphs}` : ""}${citationLines.length > 0 ? "" : ` ${trace}`}`);
-    // One trace per paragraph, on its last line.
-    citationLines.forEach((c, i) => lines.push(`   ${c}${i === citationLines.length - 1 ? ` ${trace}` : ""}`));
+    lines.push(`${partNum}. ${f.postulate}${postulateGlyphs ? ` ${postulateGlyphs}` : ""}${cited.length > 0 ? "" : ` ${trace}`}`);
+    // One trace per paragraph, on its last line, before a mockup-only tag so the filed face drops the whole line.
+    cited.forEach((c, i) => {
+      const glyphs = printMarkerSets(c.sets);
+      const tail = [glyphs, i === cited.length - 1 ? trace : "", c.mockupOnly ? MOCKUP_ONLY_TAG : ""].filter(Boolean).join(" ");
+      lines.push(`   ${c.text}${tail ? ` ${tail}` : ""}`);
+    });
   }
   lines.push("");
 
@@ -372,6 +413,16 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
     docs.map((d) => d.document_id),
     ctx.rendered.slice(0, 10)
   );
+  // A drafted affidavit: dated by its execution (undated until sworn), and while unsworn marked ✍️
+  // while any statement on it has no paragraph of it, else ✒️ (symbol-table.ts ✒️ row). One that a
+  // Part 2 statement cites but no filing_documents row selects is listed after the selected ones,
+  // so no exhibit number moves; render-form32-filed-face.ts lists it the same way.
+  const unattached = unattachedAffidavits(docs.map((d) => d.document_id), statementsOfFact);
+  const affidavits = fetchAffidavitStates(ctx.dbPath, [...docs.map((d) => d.document_id), ...unattached]);
+  const affidavitDate = (id: number, documentDate: string | null) => {
+    const a = affidavits.get(id);
+    return a?.instrument === "affidavit" ? a.execution : documentDate;
+  };
   docs.forEach((d, i) => {
     const copy = copyMarkers.get(d.document_id) ?? "";
     let tenderMarkers = "";
@@ -383,11 +434,18 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
     const markers = [tenderMarkers, copy].filter(Boolean).join(" ");
     recordCriterionGlyphs(ctx.inventory, markers, ["👤", "🏆"], { table: "documents", id: d.document_id, item: d.label });
     // All the document's own markers, the spent rungs prefixing the 👤 they route: one set.
-    const printed = printMarkerSets([markers]);
-    lines.push(`${i + 1}. ${d.label}${materialDateSuffix(d.label, d.document_date)}${printed ? ` ${printed}` : ""} <!-- document ${i + 1} -->`);
+    const printed = printMarkerSets([markers, affidavitMarker(affidavits.get(d.document_id))]);
+    lines.push(`${i + 1}. ${d.label}${materialDateSuffix(d.label, affidavitDate(d.document_id, d.document_date))}${printed ? ` ${printed}` : ""} <!-- document ${i + 1} -->`);
+  });
+  unattached.forEach((id, j) => {
+    const a = affidavits.get(id);
+    const n = docs.length + j + 1;
+    const label = a?.label ?? "";
+    const printed = printMarkerSets([affidavitMarker(a)]);
+    lines.push(`${n}. ${label}${materialDateSuffix(label, a?.execution ?? null)}${printed ? ` ${printed}` : ""} <!-- document ${n} -->`);
   });
   // The standard closing lines: template text, so no marker, no criterion glyph and no trace.
-  STANDARD_MATERIAL_LINES.forEach((text, i) => lines.push(`${docs.length + i + 1}. ${text}`));
+  STANDARD_MATERIAL_LINES.forEach((text, i) => lines.push(`${docs.length + unattached.length + i + 1}. ${text}`));
   lines.push("");
 
   lines.push(checkboxOrderBlock([]));

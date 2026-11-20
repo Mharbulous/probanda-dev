@@ -194,7 +194,7 @@ export async function seedVaniacProceeding(dbPath) {
     -- a paragraph links to the witness's statement of fact, not the fact
     -- directly (schema v3, #328): paragraph 2 stays deliberately unlinked
     -- to exercise the gap marker. Statement 1 cites through the instrument
-    -- (pinpoint 'para 1', the paragraph linked below) to the exhibit
+    -- (the paragraph linked below, printed para. 1 while the statement is unsigned) to the exhibit
     -- (exhibit_pinpoint 's. 2.3' into the same document the Evidence Index
     -- numbers Ex. 1) -- the SSOT's own example shape, and the Ex.-N citation
     -- path end to end.
@@ -235,7 +235,7 @@ export async function seedVaniacProceeding(dbPath) {
     -- nothing to locate -- plus doubt
     -- (schema v10, #380 -- was facts.posture) to exercise 👃 on the
     -- statement line; statement 4 (interviewed=1, pinpoint captured)
-    -- exercises ✍️ alone.
+    -- exercises 🗒️ alone.
     INSERT INTO witnesses (id, proceeding_id, name, relationship) VALUES (3, 1, 'M. Reyes', 'site supervisor');
     INSERT INTO documents (id, proceeding_id, label, instrument, deponent, execution, signed_at)
       VALUES (5, 1, 'Witness Statement of M. Reyes', 'witness_statement', 3, NULL, NULL);
@@ -385,7 +385,7 @@ export async function seedVaniacProceeding(dbPath) {
     -- Phase C (#777): an exhibit-backed statement with no instrument and no exhibit_pinpoint. Before
     -- Phase B this shape rendered 📍; after the #511 split it rendered no locator at all, because no
     -- renderer query selected exhibit_pinpoint. It owes 📌 (work-markers.md row 📌; §5 "📌 still fires
-    -- if an exhibit is set"), and ✍️ (interviewed, no instrument). exhibit_excerpt is captured so the
+    -- if an exhibit is set"), and 🗒️ (interviewed, no instrument). exhibit_excerpt is captured so the
     -- line isolates the pin; the fence quotes the exhibit, not testimony. Document 7 is Ex. 3.
     INSERT INTO facts (id, proceeding_id, postulate)
       VALUES (13, 1, 'Overtime for the final week was recorded in the Site Diary.');
@@ -753,7 +753,7 @@ export async function seedProposalCases(dbPath) {
     -- the witness or instrument rung holds the locator back: this statement's 🧷 and 💬 are both
     -- current. It is drafted into a paragraph of that statement, which keeps it off the "not yet
     -- in this statement" list -- an unlinked statement is read as instrument-less and would fire
-    -- ✍️ on the witness, holding both locators back. Rested on by deployed submission 2, which
+    -- 🗒️ on the witness, holding both locators back. Rested on by deployed submission 2, which
     -- already carries facts -- submission 1 stays fact-free so its own 🧾 keeps printing.
     INSERT INTO facts (id, proceeding_id, postulate)
       VALUES (14, 1, 'The change order for the final week was counter-signed before the work began.');

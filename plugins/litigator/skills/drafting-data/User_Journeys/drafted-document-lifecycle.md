@@ -14,7 +14,7 @@ schema:
 machinery:
   - affidavit-drafting / assembly (Word draft → print-ready PDF → exhibits attached → exhibit stamps)
   - renderer: ✒️ swear it reads affidavit_sworn_on
-work_markers: ✒️ swear it (formerly 🗒️ awaiting signature — struck 2026-08-19, work-markers.md table 6)
+work_markers: ✒️ swear it, once every statement of fact on the affidavit has its paragraph (formerly 🗒️ awaiting signature — struck 2026-08-19; 🗒️ returned 2026-11-20 as *draft it*, work-markers.md §6)
 documents: every affidavit in Form 32 Part 4; any firm-authored document that is executed and filed
 source: issue 301 grilling, 2026-08-19 (effort owner's description)
 status: verified (#305, 2026-08-19; the stage-column add-back question stands)

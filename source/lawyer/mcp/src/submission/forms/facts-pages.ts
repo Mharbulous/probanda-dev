@@ -165,7 +165,7 @@ function citeOf(s: StatementRow): string | null {
   const labels = new Map<number, string>();
   if (s.instrument !== null && s.instrument_label !== null) labels.set(s.instrument, s.instrument_label);
   if (s.exhibit_id !== null && s.exhibit_label !== null) labels.set(s.exhibit_id, s.exhibit_label);
-  const line = factStatementCitationLine(new Map(), labels, { instrument_id: s.instrument, pinpoint: s.pinpoint, exhibit_id: s.exhibit_id, exhibit_pinpoint: s.exhibit_pinpoint });
+  const line = factStatementCitationLine(new Map(), labels, { instrument_id: s.instrument, instrument_execution: null, pinpoint: s.pinpoint, paragraph_numbers: null, exhibit_id: s.exhibit_id, exhibit_pinpoint: s.exhibit_pinpoint });
   return line === null ? null : line.replace(/^> /, "");
 }
 

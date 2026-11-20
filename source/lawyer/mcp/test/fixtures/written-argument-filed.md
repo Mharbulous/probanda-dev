@@ -39,7 +39,7 @@
    the Purchaser shall pay the Balance in full on the Closing Date
    ```
 
-   > Witness Statement of A. Renwick, para 1, Ex. 1, s. 2.3
+   > Witness Statement of A. Renwick, para. 1, Ex. 1, s. 2.3
 
 6. The delivery schedule required completion by the final week.
 

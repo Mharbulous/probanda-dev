@@ -2,6 +2,7 @@
 
 import { courtRecordDocumentColumns, excerptSpeakerColumn, linkedProvisionsColumn, noFactsNeededColumn, noLawNeededColumn, servedOrderWordingsColumn, settledOnColumn, treatmentNoteColumn } from "./query.js";
 import { rows } from "../query-rows.js";
+import { STATEMENT_PARAGRAPH_COLUMNS, type StatementParagraphState } from "./filing-facts.js";
 
 export interface SubmissionRow {
   id: number;
@@ -58,7 +59,7 @@ export interface SubmissionFactRow {
 }
 
 /** statements_of_fact row (schema v4, #321): `excerpt` is the fact-side twin of statements_of_law.excerpt. instrument_kind/instrument_execution come from the document the statement's instrument points at -- mirrors render-notice-of-application.ts's PART 2 fetchStatementsOfFact join. purpose (schema v10, #380 -- was disposition) drives the brief-only cap: 'impeachment' never rides into a deployed document. */
-export interface FactStatementRow {
+export interface FactStatementRow extends StatementParagraphState {
   fact_id: number;
   statement_id: number;
   /** statements_of_fact.witness_id (NOT NULL) and the witness's own name -- 🗣️/✍️ key on the
@@ -144,7 +145,8 @@ export function fetchFactStatements(dbPath: string, factIds: number[]): FactStat
     `SELECT sof.fact_id, sof.id AS statement_id, sof.instrument AS instrument_id,
             sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
             doc.instrument AS instrument_kind, doc.execution AS instrument_execution,
-            sof.exhibit_id, sof.exhibit_excerpt, sof.exhibit_pinpoint, sof.pinpoint, sof.excerpt, sof.interviewed, sof.purpose, sof.doubt
+            sof.exhibit_id, sof.exhibit_excerpt, sof.exhibit_pinpoint, sof.pinpoint, sof.excerpt, sof.interviewed, sof.purpose, sof.doubt,
+            ${STATEMENT_PARAGRAPH_COLUMNS}
      FROM statements_of_fact sof
      JOIN witnesses w ON w.id = sof.witness_id
      LEFT JOIN documents doc ON doc.id = sof.instrument

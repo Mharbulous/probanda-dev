@@ -38,8 +38,8 @@ Date: ________________
 ## Facts attributed to this witness, not yet in this statement
 
 - The crew worked overtime during the final week of the project. 🗣️👃 <!-- statement_of_fact_id 3 -->
-- Overtime hours were logged in the site diary. ✍️ <!-- statement_of_fact_id 4 -->
-- Overtime for the final week was recorded in the Site Diary. 📌✍️ <!-- statement_of_fact_id 7 -->
+- Overtime hours were logged in the site diary. 🗒️ <!-- statement_of_fact_id 4 -->
+- Overtime for the final week was recorded in the Site Diary. 📌🗒️ <!-- statement_of_fact_id 7 -->
 
 ## Legend
 
@@ -51,4 +51,4 @@ Date: ________________
 | 👃 | statement of law line | dubious: the legal basis is doubted; the research lawyer checks it | |
 | 👃 | statement of law line, where scrutiny failed | the research lawyer found the excerpt does not support the proposition or is not the court's own reasoning; the practitioner decides to change it, keep it over the finding, or drop it, and counsel confirms | |
 | 🗣️ | interview | the identified witness is not yet interviewed | interview the witness (investigator) |
-| ✍️ | draft it | the witness is interviewed, but the account is not yet written | write the oral account (drafter) |
+| 🗒️ | draft it | the witness is interviewed, but the account is not yet written | write the oral account (drafter) |

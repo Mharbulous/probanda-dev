@@ -54,7 +54,7 @@ Rendered: <TIMESTAMP>
    the Purchaser shall pay the Balance in full on the Closing Date
    ```
 
-   > Witness Statement of A. Renwick, para 1, Ex. 1, s. 2.3 🖋️🏆 <!-- statement_of_fact_id 1 -->
+   > Witness Statement of A. Renwick, para. 1, Ex. 1, s. 2.3 🖋️🏆 <!-- statement_of_fact_id 1 -->
 
 6. The delivery schedule required completion by the final week. 🧐 <!-- fact_id 11 -->
 
@@ -68,7 +68,7 @@ Rendered: <TIMESTAMP>
    Week 12: crew on site until 21:00 each day
    ```
 
-   > Ex. 3 📌✍️ <!-- statement_of_fact_id 7 -->
+   > Ex. 3 📌🗒️ <!-- statement_of_fact_id 7 -->
 
 9. point of law not yet researched 🔬🥈 <!-- law_assertion_id 3 -->
 
@@ -100,7 +100,7 @@ Rendered: <TIMESTAMP>
 | 🔬 | clause line | this implied clause cites a lead not yet verified | |
 | ↩️ | rebuttal needed | their statement, of fact or law, is unanswered | answer it (drafter) |
 | 👤 | get a witness | nobody is identified to prove this fact, as against this party | find a witness (investigator) |
-| ✍️ | draft it | the witness is interviewed, but the account is not yet written | write the oral account (drafter) |
+| 🗒️ | draft it | the witness is interviewed, but the account is not yet written | write the oral account (drafter) |
 | 🖋️ | sign it | the witness statement is unsigned; the work is ours, nothing waits | get it signed (witness; the drafter obtains it) |
 | 🥈 | only secondary | the best support for this proposition is secondary; none primary | get primary authority (research lawyer) |
 | 🏅 | unrated | a statement of law carries no rating as primary, secondary or tertiary | rate the authorities held (research lawyer) |

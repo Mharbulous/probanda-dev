@@ -41,14 +41,14 @@ facts
       ├─ statements (×N)
       │  ├─ excerpt          # ∅ with exhibit ∅ ⇒ 💬
       │  ├─ exhibit_excerpt  # ∅ with exhibit set ⇒ 📑 (v25, #502)
-      │  ├─ pinpoint         # into instrument ; ∅ with instrument set ⇒ 🧷
+      │  ├─ pinpoint         # into instrument ; ∅ with instrument executed ⇒ 🧷 ; before execution the citation prints the linked paragraph's number instead
       │  ├─ exhibit_pinpoint # into exhibit ; ∅ with exhibit set ⇒ 📌 (v25, #502)
       │  ├─ doubt            # ≠∅ ⇒ 👃
       │  ├─ witness          # → witness (NOT NULL — #320/#328)
-      │  ├─ instrument       # → document(instrument) ⊕ ∅ ; ∅ ∧ interviewed ⇒ ✍️ ; its execution ⇒ 🖋️ ⊕ ✒️
+      │  ├─ instrument       # → document(instrument) ⊕ ∅ ; ∅ ∧ interviewed ⇒ 🗒️ ; set, unexecuted: no paragraph of it linked ⇒ ✍️, linked but a sibling statement's not ⇒ 📝, all linked ⇒ 🖋️ ⊕ ✒️
       │  ├─ exhibit          # → document ⊕ ∅ (the document this statement tenders as proof — #330)
       │  ├─ (basis_of_knowledge) # 👀 ⊕ ℹ️ — transmission, untracked (no column); renamed off `source` 2026-09-20 (#718) so the fact and law nodes stop sharing a name
-      │  ├─ interviewed      # 0 ⊕ 1 ; 0 ⇒ 🗣️
+      │  ├─ interviewed      # 0 ⊕ 1 ; 0 ∧ instrument ∅ ⇒ 🗣️ (a linked instrument skips the interview)
       │  └─ purpose          # impeachment ⇒ 🤥 (printed on no page)
       └─ admissions (×N)     # ∄ law ; one row per party per method
          ├─ party            # → party ; UNIQUE(assertion, party, method)
@@ -115,7 +115,7 @@ document (×N)                # instrument (the witness's vehicle ⊕ the admiss
 ├─ served_on                 # 📅 ⊕ ∅ ; ∅ ∧ is some admissions.instrument ⇒ 🎾 (never bare)
 ├─ instrument                # ∅ ⊕ witness_statement ⊕ affidavit
 ├─ deponent                  # → witness ⇔ instrument
-├─ execution                 # 🖋️ ⊕ ✒️ ↦ executed ; ✍️ sits on the statement (no instrument yet)
+├─ execution                 # 🖋️ ⊕ ✒️ ↦ executed ; 🗒️ ✍️ 📝 sit on the statement (no instrument yet, or one still being drafted) ; dates the affidavit on the Notice of Application's Part 4, undated while ∅
 ├─ exhibit_letters           # the sworn version's exhibit letters as letters and ranges (e.g. A-J, or A-J, L), set with execution ; ∅ only while unknown ; read by a court-record fact's 📌 (v56)
 ├─ (exhibited_by)            # → document(instrument) ×N — untracked: read off each statement's instrument + exhibit pair
 └─ (tendered)                # derived: ∃ statement.exhibit ∨ admissions.exhibit → it ; ∅ ∧ a filing selects it ⇒ 👤 on its own line (#330)
@@ -225,7 +225,7 @@ One derived state per party per method per assertion per moment, from the `admis
 | Transmission | hands between thing and forum | `statement.basis_of_knowledge`: 👀 personal knowledge ⊕ ℹ️ information and belief (hearsay) — untracked today | ∄ — a case citing an earlier case for the same principle is still 🥇 (Class) |
 | Class | what speaks — the law itself, or writing about it? | ∄ — a witness has no class | `statement.source`: 🥇 primary ⊕ 🥈 secondary ⊕ 🥉 tertiary ; ∅ ⇒ 🏅 — read off `authority.kind` |
 | Inference | proves without inferential step? | direct ⊕ circumstantial — untracked | (on point ⊕ analogous) — untracked |
-| Execution | forum-accepted form? | statement `instrument` ∅ ⇒ ✍️ ; `document.execution` 🖋️ ⊕ ✒️ | 🔬 is the law-side rung: `statement.verification` lead ↔ an unexecuted instrument |
+| Execution | forum-accepted form? | statement `instrument` ∅ ⇒ 🗒️ ; instrument being drafted ⇒ ✍️ ⊕ 📝 ; `document.execution` 🖋️ ⊕ ✒️ | 🔬 is the law-side rung: `statement.verification` lead ↔ an unexecuted instrument |
 | Weight | must tribunal accept it? | (rhyme only: admission ⊕ court record = conclusive proof) | `weight`: binding ⊕ persuasive |
 
 Two ladders, opposite directions (practitioner, 2026-09-20, [#718](https://github.com/Mharbulous/CoClerk/issues/718)). Fact — **direct evidence > circumstantial evidence > hearsay evidence**: every hand between the thing and the forum weakens the account; a witness relaying another's observation is ℹ️ however direct the informant's observation was; ℹ️ is licensed only by naming the informant. Law — **primary authority > secondary authority > tertiary authority**: a later case that cites an earlier case for the same principle is 🥇 for it, and the stronger for citing its predecessor — the citing court's adoption is added, nothing is lost; 🥈 is never earned by quoting. The fact words span two axes (Direct — one word, two axes): *direct / circumstantial* is inference, *personal knowledge / hearsay* is transmission; the three-word order is the practitioner's ranking of evidential value, not a third column. Vocabulary never crosses domains: a case is never *hearsay* for quoting a case; a witness is never *secondary*. Execution keeps its shared shape: sworn ↔ verified, unsworn ↔ lead.

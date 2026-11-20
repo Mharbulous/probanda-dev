@@ -52,7 +52,7 @@ const { submissionFormsRender } = await import("../build/submission/forms.js");
 // references/work-markers.md and drafting-data/references/filing-checklists.md
 // §5) a clean render must contain none of, EXCEPT 🧵 and 🧾 (see file header) --
 // checked for separately, and deliberately, per venue-form document below.
-const ALL_MARKER_GLYPHS = ["🧩", "🏷️", "🕵️", "⬜", "🏛️", "📖", "🔬", "📜", "📑", "💬", "📍", "📌", "🧷", "📇", "👤", "🗣️", "✍️", "🖋️", "✒️", "🚧", "⚠️", "🚨", "⛔", "🕰️", "🂡", "🤥", "🚩", "🦵", "👃", "↩️", "🥈", "🥉", "🏅"];
+const ALL_MARKER_GLYPHS = ["🧩", "🏷️", "🕵️", "⬜", "🏛️", "📖", "🔬", "📜", "📑", "💬", "📍", "📌", "🧷", "📇", "👤", "🗣️", "🗒️", "✍️", "📝", "🖋️", "✒️", "🚧", "⚠️", "🚨", "⛔", "🕰️", "🂡", "🤥", "🚩", "🦵", "👃", "↩️", "🥈", "🥉", "🏅"];
 
 function assertRendersClean(label, text) {
   const found = ALL_MARKER_GLYPHS.filter((g) => text.includes(g));

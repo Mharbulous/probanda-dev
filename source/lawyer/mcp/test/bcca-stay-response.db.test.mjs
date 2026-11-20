@@ -19,7 +19,7 @@ const { assertFiledFaceDocumentsClean } = await import("./helpers/filed-face-sca
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsEmitBccaBook, submissionFormsRender } = await import("../build/submission/forms.js");
 
-const ALL_MARKER_GLYPHS = ["🧩", "🏷️", "🕵️", "⬜", "🏛️", "📖", "🔬", "📜", "📑", "💬", "📍", "📌", "🧷", "📇", "👤", "🗣️", "✍️", "🖋️", "✒️", "🚧", "⚠️", "🚨", "⛔", "🕰️", "🂡", "🤥", "🚩", "🦵", "👃", "↩️", "🧵", "🧾", "🥈", "🥉", "🏅"];
+const ALL_MARKER_GLYPHS = ["🧩", "🏷️", "🕵️", "⬜", "🏛️", "📖", "🔬", "📜", "📑", "💬", "📍", "📌", "🧷", "📇", "👤", "🗣️", "🗒️", "✍️", "📝", "🖋️", "✒️", "🚧", "⚠️", "🚨", "⛔", "🕰️", "🂡", "🤥", "🚩", "🦵", "👃", "↩️", "🧵", "🧾", "🥈", "🥉", "🏅"];
 
 function fixture() {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-submission-bcca-"));

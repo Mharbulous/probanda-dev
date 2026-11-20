@@ -50,7 +50,29 @@ export function fetchFacts(dbPath: string, filingId: number, part: string): Fact
   );
 }
 
-export interface StatementOfFactRow {
+/** A statements_of_fact row's paragraph state in its own instrument, as select-list columns over
+ * the alias `sof`: whether a paragraph of the instrument is linked to it, whether every statement on
+ * the instrument has one (the proof ladder's 📝 / ✒️ split), and the linked paragraphs' printed
+ * numbers ("3,5", unordered; by ordinal, then id, as the instrument's mockup numbers them). */
+export const STATEMENT_PARAGRAPH_COLUMNS = `EXISTS(SELECT 1 FROM paragraph_statements_of_fact psf JOIN statement_paragraphs sp ON sp.id = psf.statement_paragraph_id
+              WHERE psf.statement_of_fact_id = sof.id AND sp.document_id = sof.instrument) AS has_paragraph,
+            (sof.instrument IS NOT NULL AND NOT EXISTS(
+              SELECT 1 FROM statements_of_fact o WHERE o.instrument = sof.instrument AND NOT EXISTS(
+                SELECT 1 FROM paragraph_statements_of_fact psf JOIN statement_paragraphs sp ON sp.id = psf.statement_paragraph_id
+                WHERE psf.statement_of_fact_id = o.id AND sp.document_id = o.instrument))) AS instrument_drafted,
+            (SELECT GROUP_CONCAT((SELECT COUNT(*) FROM statement_paragraphs s2
+                                  WHERE s2.document_id = sp.document_id AND (s2.ordinal < sp.ordinal OR (s2.ordinal = sp.ordinal AND s2.id <= sp.id))))
+             FROM paragraph_statements_of_fact psf JOIN statement_paragraphs sp ON sp.id = psf.statement_paragraph_id
+             WHERE psf.statement_of_fact_id = sof.id AND sp.document_id = sof.instrument) AS paragraph_numbers`;
+
+/** The paragraph state STATEMENT_PARAGRAPH_COLUMNS reads, as the database returns it. */
+export interface StatementParagraphState {
+  has_paragraph: number;
+  instrument_drafted: number;
+  paragraph_numbers: string | null;
+}
+
+export interface StatementOfFactRow extends StatementParagraphState {
   id: number;
   fact_id: number;
   pinpoint: string | null;
@@ -78,7 +100,8 @@ export function fetchStatementsOfFact(dbPath: string, factIds: number[]): Statem
     dbPath,
     `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
             sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
-            doc.instrument AS instrument_kind, doc.execution AS instrument_execution
+            doc.instrument AS instrument_kind, doc.execution AS instrument_execution,
+            ${STATEMENT_PARAGRAPH_COLUMNS}
      FROM statements_of_fact sof
      JOIN witnesses w ON w.id = sof.witness_id
      LEFT JOIN documents doc ON doc.id = sof.instrument

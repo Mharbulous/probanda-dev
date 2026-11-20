@@ -199,8 +199,8 @@ test("the Notice of Application lists each supporting affidavit in Part 4", asyn
     await seedNoticeWithAffidavits(f.dbPath);
     const noa = markdownOf(submissionFormsRender(f.dbPath, 1, CLIENT), "Notice of Application.md");
     const part4 = noa.slice(noa.indexOf("## PART 4: MATERIAL TO BE RELIED ON"));
-    assert.match(part4, /^2\. Affidavit #1 of R\. Deponent .*<!-- document 2 -->$/m);
-    assert.match(part4, /^3\. Affidavit #2 of R\. Deponent .*<!-- document 3 -->$/m);
+    assert.match(part4, /^2\. Affidavit #1 of R\. Deponent 🏆 ✒️ <!-- document 2 -->$/m, "unsworn and fully drafted, so undated with ✒️");
+    assert.match(part4, /^3\. Affidavit #2 of R\. Deponent, dated August 1, 2026 🏆 <!-- document 3 -->$/m, "sworn, so dated by its execution");
     assert.doesNotMatch(part4, /First Amending Agreement|Invoice 1001/, "expected the exhibits listed through the affidavit alone");
   } finally {
     f.cleanup();

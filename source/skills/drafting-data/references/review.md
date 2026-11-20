@@ -1,6 +1,6 @@
 # Counsel's review records
 
-Owned by `/drafting-data`. Two tables hold counsel's review: `review_approvals` and `review_points` (schema v27). Both are exempt from the `filing-checklists.md` §8 revision bump: neither carries a revision trigger. `review_approvals` is append-only: no UPDATE and no DELETE, anywhere. The marker rule lives in `work-markers.md` row 🧐. This file holds the storage rules.
+Owned by `/drafting-data`. Two tables hold counsel's review: `review_approvals` and `review_points` (schema v27). Both are exempt from the `filing-checklists.md` §8 revision bump: neither carries a revision trigger. `review_approvals` is append-only: no UPDATE and no DELETE, anywhere. The marker rule lives in the 🧐 row of `source/lawyer/mcp/src/submission/forms/symbol-table.ts`, under the rules in `work-markers.md`. This file holds the storage rules.
 
 ## Snapshot fields
 

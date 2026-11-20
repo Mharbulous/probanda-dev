@@ -17,7 +17,7 @@ import {
   type WitnessFactRow,
 } from "./witness-statement-reads.js";
 
-/** Fact-side ladder for a statement of fact not yet linked to any paragraph of its witness statement (work-markers.md 1a: 🗣️ talk to witness / ✍️ draft it -- never 🖋️/✒️, since "unlinked" means not yet written in this instrument; instrument_id: null makes that structural, not a convention to remember). 🧷 never rides here: the instrument is null by construction. 📌 does (Phase C, #777): an exhibit can be linked before the statement is drafted into the instrument, and §5 says 📌 still fires with no instrument. Build #329, decision #320. */
+/** Fact-side ladder for a statement of fact not yet linked to any paragraph of its witness statement (symbol-table.ts: 🗣️ interview / 🗒️ write the account -- never ✍️/📝/🖋️/✒️, since "unlinked" means not yet written in this instrument; instrument_id: null makes that structural, not a convention to remember). 🧷 never rides here: the instrument is null by construction. 📌 does (Phase C, #777): an exhibit can be linked before the statement is drafted into the instrument, and §5 says 📌 still fires with no instrument. Build #329, decision #320. */
 function unlinkedFactMarkers(f: WitnessFactRow, admitted: boolean): string {
   const courtRecordLinked = f.fact_court_record !== null;
   if (isAdmittedGuard(courtRecordLinked, admitted)) return doubtMarker(f.doubt);
@@ -28,6 +28,8 @@ function unlinkedFactMarkers(f: WitnessFactRow, admitted: boolean): string {
       instrument_id: null,
       instrument_kind: null,
       instrument_execution: null,
+      has_paragraph: false,
+      instrument_drafted: false,
       fact_court_record_linked: courtRecordLinked,
       fact_admitted_by_all_opposing: admitted,
     }),

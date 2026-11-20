@@ -11,6 +11,42 @@ export function fetchDocumentLabels(dbPath: string, documentIds: number[]): Map<
   return new Map(found.map((d) => [d.id, d.label]));
 }
 
+/** "Affidavit #<n> of <deponent>" for a document with a deponent recorded (the number left out when
+ * none is recorded), else the document's own label. One composition for every place an affidavit is
+ * named: Form 32's Part 4 line and the Part 2 citation, in the mockup and the filed face alike. */
+export function affidavitName(label: string, affidavitNumber: string | null, deponentName: string | null): string {
+  return deponentName ? `Affidavit${affidavitNumber ? ` #${affidavitNumber}` : ""} of ${deponentName}` : label;
+}
+
+/** The drafted affidavits a filing's statements cite (impeachment ones aside) that none of its
+ * selected documents is, in the order first cited. Form 32's Part 4 lists them after the selected
+ * documents, in the mockup and the filed face alike. */
+export function unattachedAffidavits(
+  selectedIds: readonly number[],
+  statements: readonly { instrument_id: number | null; instrument_kind: string | null; purpose: string | null }[]
+): number[] {
+  const selected = new Set(selectedIds);
+  const out: number[] = [];
+  for (const s of statements) {
+    if (s.instrument_id === null || s.instrument_kind !== "affidavit" || s.purpose === "impeachment") continue;
+    if (!selected.has(s.instrument_id) && !out.includes(s.instrument_id)) out.push(s.instrument_id);
+  }
+  return out;
+}
+
+/** fetchDocumentLabels, with each affidavit named by affidavitName: the labels a Notice of
+ * Application cites its documents by. */
+export function fetchCitationLabels(dbPath: string, documentIds: number[]): Map<number, string> {
+  if (documentIds.length === 0) return new Map();
+  const placeholders = documentIds.map(() => "?").join(",");
+  const found = rows<{ id: number; label: string; affidavit_number: string | null; deponent_name: string | null }>(
+    dbPath,
+    `SELECT d.id, d.label, d.affidavit_number, w.name AS deponent_name FROM documents d LEFT JOIN witnesses w ON w.id = d.deponent WHERE d.id IN (${placeholders})`,
+    documentIds
+  );
+  return new Map(found.map((d) => [d.id, affidavitName(d.label, d.affidavit_number, d.deponent_name)]));
+}
+
 /** Per-document 🏆 map for one proceeding (issue #364) -- proceeding-wide, not
  * filing-scoped, so a sibling copy marked best elsewhere in the proceeding
  * still clears a group even when that sibling isn't referenced by this render. */

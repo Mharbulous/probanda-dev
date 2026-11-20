@@ -43,12 +43,13 @@ This matter is within the jurisdiction of an associate judge.
 
 ## PART 2: FACTUAL BASIS
 
-1. Corbin Vasey has not filed a response to civil claim. 🧐
-   > Affidavit of Q. Neighbour <!-- fact 1 -->
-2. The property was inspected and found vacant on the relevant date. 🧵 🧷🏆 📌✍️
-   > Affidavit of P. Inspector
-   > Ex. 2 <!-- fact 2 -->
-3. The final walkthrough occurred before handover. 🙅🏻‍♂️👤 🧵 <!-- fact 3 -->
+1. Corbin Vasey has not filed a response to civil claim.
+   > Affidavit of Q. Neighbour 🧐 <!-- fact 1 -->
+2. The property was inspected and found vacant on the relevant date.
+   > Affidavit of P. Inspector 🧵 🧷🏆
+   > Ex. 2 📌🗒️ <!-- fact 2 -->
+3. The final walkthrough occurred before handover.
+   > 🙅🏻‍♂️👤 🧵 <!-- fact 3 --> <!-- mockup-only -->
 
 ## PART 3: LEGAL BASIS
 
@@ -68,8 +69,10 @@ This matter is within the jurisdiction of an associate judge.
 1. Draft default judgment 🏆 <!-- document 1 -->
 2. Inspection Report, dated May 15, 2026 <!-- document 2 -->
 3. Unsourced site photograph 🙅🏻‍♂️👤 <!-- document 3 -->
-4. Pleadings filed in this proceeding
-5. Such further affidavits or filed court documents as this honourable court may allow
+4. Affidavit of Q. Neighbour, dated June 2, 2026 <!-- document 4 -->
+5. Affidavit of P. Inspector, dated June 1, 2026 <!-- document 5 -->
+6. Pleadings filed in this proceeding
+7. Such further affidavits or filed court documents as this honourable court may allow
 
 [ ] The order(s) set out in Part 1 of this notice were made in the terms requested in Part 1 of this notice.
 [ ] The order(s) set out in Part 1 of this notice were made with the following variations and additional terms:
@@ -89,7 +92,8 @@ Signature of B. Counsel, lawyer for the Plaintiff, Wren Halloway
 | 🧷 | testimony pinpoint missing | no locator into the witness's instrument | find the paragraph in the witness's instrument (drafter) |
 | 👤 | get a witness | nobody is identified to prove this fact, as against this party | find a witness (investigator) |
 | 👤 | a document's own line | no witness tenders this document and no admission covers it: find the tendering witness or record the admission | |
-| ✍️ | draft it | the witness is interviewed, but the account is not yet written | write the oral account (drafter) |
+| 🗒️ | draft it | the witness is interviewed, but the account is not yet written | write the oral account (drafter) |
+| 🗒️ | Part 2 citation line | in Part 2, the rung one witness's statement has reached, printed on that statement's own citation line beneath the fact | |
 | 🏅 | unrated | a statement of law carries no rating as primary, secondary or tertiary | rate the authorities held (research lawyer) |
 | 🏅 | statement of law line | this statement carries no rating | |
 | 🏅 | proposition line | no statement is rated primary and at least one is unrated, so the rung cannot be told; it is not a lower rank | |

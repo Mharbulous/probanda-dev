@@ -67,21 +67,25 @@ test("exhibitPinpointMarker -- no exhibit means nothing to locate", () => {
   assert.equal(exhibitPinpointMarker(null, null), "");
 });
 
-test("testimonyPinpointMarker -- 🧷 fires on a linked instrument with no locator", () => {
-  assert.equal(testimonyPinpointMarker(3, null), "🧷");
-  assert.equal(testimonyPinpointMarker(3, ""), "🧷");
-  assert.equal(testimonyPinpointMarker(3, "para 3"), "");
+test("testimonyPinpointMarker -- 🧷 fires on a linked, executed instrument with no locator", () => {
+  assert.equal(testimonyPinpointMarker(3, null, "2026-06-01"), "🧷");
+  assert.equal(testimonyPinpointMarker(3, "", "2026-06-01"), "🧷");
+  assert.equal(testimonyPinpointMarker(3, "para 3", "2026-06-01"), "");
 });
 
-test("testimonyPinpointMarker -- no instrument (✍️, oral) means nothing to locate", () => {
-  assert.equal(testimonyPinpointMarker(null, null), "");
+test("testimonyPinpointMarker -- before execution the paragraph supplies the locator, so 🧷 waits", () => {
+  assert.equal(testimonyPinpointMarker(3, null, null), "");
+});
+
+test("testimonyPinpointMarker -- no instrument (oral) means nothing to locate", () => {
+  assert.equal(testimonyPinpointMarker(null, null, "2026-06-01"), "");
 });
 
 // work-markers.md §2: 📍 ⊕ 📌 ⊕ 🧷 per locator, ∨ per line -- an exhibit-backed statement of
 // fact can owe both its exhibit's locator and its instrument's at once ("Affidavit #1 of
 // A. Marlowe, para 3, Ex. A, s. 2.3").
 test("a statement owing both locators renders 📌 🧷 on one line", () => {
-  assert.equal(dedupeLineMarkers([exhibitPinpointMarker(1, null), testimonyPinpointMarker(3, null)]), "📌 🧷");
+  assert.equal(dedupeLineMarkers([exhibitPinpointMarker(1, null), testimonyPinpointMarker(3, null, "2026-06-01")]), "📌 🧷");
 });
 
 // Issue #322: the fact's line renders the pinpoint glyph once, not once per statement.
@@ -90,7 +94,7 @@ test("a statement owing both locators renders 📌 🧷 on one line", () => {
 // forms-render-bcsc.db.test.mjs no longer exercises it (after the #511 basis split only one
 // of that fixture's two statements has an instrument at all).
 test("issue #322 -- two statements each owing 🧷 collapse to one glyph on the fact's line", () => {
-  assert.equal(dedupeLineMarkers([testimonyPinpointMarker(3, null), testimonyPinpointMarker(4, null)]), "🧷");
+  assert.equal(dedupeLineMarkers([testimonyPinpointMarker(3, null, "2026-06-01"), testimonyPinpointMarker(4, null, "2026-06-01")]), "🧷");
 });
 
 test("ALL_MARKER_GLYPHS carries every split glyph, so none leaks onto a filed face", () => {

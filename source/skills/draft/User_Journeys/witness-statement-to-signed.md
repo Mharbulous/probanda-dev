@@ -19,13 +19,13 @@ source: effort owner's flow selection, 2026-08-23; step 7 amended 2026-09-13 so 
 
    > Jesse Marlowe can speak to that — he was on the site that week.
 
-3. **Assistant:** records the attribution through `/drafting-data`, regenerates, and presents the witness-statement mockup as a file card (`shared/present-files.md`). No approval pause before writing or rendering. The fact now sits in the statement's trailing to-do subsection at 🗣️ *talk to witness* — attributed, not yet interviewed. The statement itself shows no *sign it*: nothing has been drafted, so there is nothing to sign (see the paired data journey, `source/skills/drafting-data/User_Journeys/fact-work-on-the-witness-statement.md`).
+3. **Assistant:** records the attribution through `/drafting-data`, regenerates, and presents the witness-statement mockup as a file card (`shared/present-files.md`). No approval pause before writing or rendering. The fact now sits in the statement's trailing to-do subsection at 🗣️ *interview* — attributed, not yet interviewed. The statement itself shows no *sign it*: nothing has been drafted, so there is nothing to sign (see the paired data journey, `source/skills/drafting-data/User_Journeys/fact-work-on-the-witness-statement.md`).
 
 4. **Practitioner:** conducts the interview away from the assistant — days later, in a new session — and returns with the account.
 
    > I spoke with Jesse. Here's what he actually saw...
 
-5. **Assistant:** stores the oral account, marks the interview done, regenerates. The rung advances to ✍️ *draft it* — the account exists, no paragraph carries it yet.
+5. **Assistant:** stores the oral account, marks the interview done, regenerates. The rung advances to 🗒️ *draft it* — the account exists, no instrument carries it yet. Once the statement is linked to the witness's instrument, the rung is ✍️ *write the paragraph* until a paragraph of it carries the fact.
 
 6. **Practitioner:** asks for the statement to be drafted.
 
@@ -33,7 +33,7 @@ source: effort owner's flow selection, 2026-08-23; step 7 amended 2026-09-13 so 
 
    > The account doesn't say what day Jesse saw the crane arrive, and the delivery-date fact needs it. Did he tell you?
 
-   Only then does it write the confirmed paragraphs and links through `/drafting-data`, regenerate, and present the mockup. Any 🧩 *gap* on a drafted paragraph with no fact behind it closes as facts get attributed. With at least one paragraph linked, the statement's own line now reads 🖋️ *sign it* — or ✒️ *swear it* where the instrument is an affidavit — reachable for the first time.
+   Only then does it write the confirmed paragraphs and links through `/drafting-data`, regenerate, and present the mockup. Any 🧩 *gap* on a drafted paragraph with no fact behind it closes as facts get attributed. With at least one paragraph linked, the statement's own line now reads 🖋️ *sign it* — or ✒️ *swear it* where the instrument is an affidavit — reachable for the first time. On each fact's line the rung is 📝 *paragraph written* while another fact for the same instrument still has no paragraph, and 🖋️ ⊕ ✒️ once every one has.
 
 8. **Practitioner:** reviews the mockup, asks for wording changes the same way they asked for the draft. **Assistant:** writes, regenerates, presents — no separate revision mode. This review pass is also where exhibits meet witnesses: a paragraph that tenders a document is how the exhibit gets its sponsor (see `source/skills/drafting-data/User_Journeys/tender-an-exhibit-through-a-witness.md`).
 
@@ -45,7 +45,7 @@ source: effort owner's flow selection, 2026-08-23; step 7 amended 2026-09-13 so 
 
 ## Principles this journey encodes
 
-- **The mockup is the ladder.** Every session opens on the regenerated mockup, and the marker on each line is the one next action — 👤, 🗣️, ✍️, 🖋️ ⊕ ✒️ — without opening anything else or keeping a separate task list.
+- **The mockup is the ladder.** Every session opens on the regenerated mockup, and the marker on each line is the one next action — 👤, 🗣️, 🗒️, ✍️, 📝, 🖋️ ⊕ ✒️ — without opening anything else or keeping a separate task list.
 - **The assistant records rungs; the practitioner climbs them.** Interviewing the witness and obtaining the signature happen in the world, away from the assistant. The assistant's job is to store what the practitioner brings back, regenerate, and show the new rung — never to invent an account or backfill one. Paragraph breaks and fact links are read back for confirmation before they are written, and a silence in the account is asked about, never filled.
 - **Nothing to sign until something is drafted.** *Sign it* becomes reachable only once at least one paragraph is linked to a fact — the mockup never asks a witness to execute an empty statement.
 - **Write, render, no gate.** Every practitioner instruction lands in the database and comes back as a fresh mockup file card in the same turn. The mockup carries the review; conversation never substitutes for it.

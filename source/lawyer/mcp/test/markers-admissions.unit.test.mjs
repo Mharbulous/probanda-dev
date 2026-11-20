@@ -19,6 +19,7 @@ const {
   courtRecordCitation,
   citedExhibitLetters,
   swornExhibitLetters,
+  statementOfFactMarkers,
 } = await import("../build/submission/forms/markers.js");
 
 const TODAY = "2026-08-23";
@@ -604,4 +605,47 @@ test("courtRecordCitation -- link set, pinpoint empty string stays silent", () =
 
 test("courtRecordCitation -- no link stays silent regardless of pinpoint", () => {
   assert.equal(courtRecordCitation(null, "para 4"), "");
+});
+
+
+// The proof ladder (Notice of Application proof-ladder plan): one rung per statement of fact, the
+// earliest unmet, behind the unless-admitted guard.
+function ladder(overrides = {}) {
+  return statementOfFactMarkers({
+    interviewed: 0,
+    instrument_id: null,
+    instrument_kind: null,
+    instrument_execution: null,
+    has_paragraph: false,
+    instrument_drafted: false,
+    fact_court_record_linked: false,
+    fact_admitted_by_all_opposing: false,
+    ...overrides,
+  });
+}
+
+test("proof ladder -- each stage prints its one rung", () => {
+  assert.equal(ladder(), "🗣️");
+  assert.equal(ladder({ interviewed: 1 }), "🗒️");
+  const affidavit = { instrument_id: 5, instrument_kind: "affidavit" };
+  assert.equal(ladder({ ...affidavit }), "✍️", "an instrument skips the interview");
+  assert.equal(ladder({ ...affidavit, interviewed: 1 }), "✍️");
+  assert.equal(ladder({ ...affidavit, has_paragraph: true }), "📝");
+  assert.equal(ladder({ ...affidavit, has_paragraph: true, instrument_drafted: true }), "✒️");
+  assert.equal(ladder({ instrument_id: 6, instrument_kind: "witness_statement", has_paragraph: true, instrument_drafted: true }), "🖋️");
+  assert.equal(ladder({ ...affidavit, has_paragraph: true, instrument_drafted: true, instrument_execution: "2026-06-01" }), "");
+});
+
+test("proof ladder -- an executed instrument owes no rung, paragraphs or not", () => {
+  assert.equal(ladder({ instrument_id: 5, instrument_kind: "affidavit", instrument_execution: "2026-06-01" }), "");
+});
+
+test("proof ladder -- a linked document that is not a drafted instrument owes no rung", () => {
+  assert.equal(ladder({ instrument_id: 5, instrument_kind: null }), "");
+});
+
+test("proof ladder -- the unless-admitted guard silences every rung", () => {
+  assert.equal(ladder({ fact_court_record_linked: true }), "");
+  assert.equal(ladder({ interviewed: 1, fact_admitted_by_all_opposing: true }), "");
+  assert.equal(ladder({ instrument_id: 5, instrument_kind: "affidavit", fact_admitted_by_all_opposing: true }), "");
 });

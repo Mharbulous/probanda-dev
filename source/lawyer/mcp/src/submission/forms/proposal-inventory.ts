@@ -31,7 +31,7 @@ export type ProposalSlug =
   | "doctrinal-basis" | "primary-authority" | "jurisdictional-basis"
   | "authority-excerpt" | "authority-pinpoint" | "scrutinize" | "note-up" | "authority-rating"
   | "exhibit-excerpt" | "testimony-excerpt" | "exhibit-pinpoint" | "testimony-pinpoint"
-  | "interview" | "draft-it" | "sign-it" | "swear-it" | "serve-it" | "enter-it"
+  | "interview" | "draft-it" | "write-paragraph" | "sign-it" | "swear-it" | "serve-it" | "enter-it"
   | "factual-basis" | "proposition" | "unserved-petitum" | "loose-thread" | "not-recorded" | "unchosen" | "choose-template";
 
 /** The glyphs a Goal-card criterion counts although they never generate a Proposal (Goal card
@@ -103,7 +103,7 @@ const CARD_ORDER: readonly ProposalSlug[] = [
   "doctrinal-basis", "primary-authority", "jurisdictional-basis",
   "authority-excerpt", "authority-pinpoint", "scrutinize", "note-up", "authority-rating",
   "exhibit-excerpt", "testimony-excerpt", "exhibit-pinpoint", "testimony-pinpoint",
-  "interview", "draft-it", "sign-it", "swear-it", "serve-it", "enter-it",
+  "interview", "draft-it", "write-paragraph", "sign-it", "swear-it", "serve-it", "enter-it",
   "factual-basis", "proposition", "unserved-petitum", "loose-thread", "not-recorded", "unchosen", "choose-template",
 ];
 
@@ -301,7 +301,8 @@ export function recordJurisdictionLadder(
 }
 
 /** One statement-of-fact line's three keyed rows (design §4): the capture and locator glyphs on
- * the statement, 🗣️/✍️ on the witness, 🖋️/✒️ on the instrument document. Shared by every fact
+ * the statement, 🗣️/🗒️ on the witness, ✍️/🖋️/✒️ on the instrument document. 📝 is recorded
+ * nowhere: the sibling statements' ✍️ is the work that clears it. Shared by every fact
  * line that prints them -- the shared submission body, and the Notice of Application, Application
  * Response and BCCA fact parts. 👃 and 🏆 never generate, and are recorded for the Evidence
  * criterion (Goal card design §2.7): 👃 on the statement, 🏆 on the instrument whose copy it marks. */
@@ -330,7 +331,7 @@ export function recordFactStatementGlyphs(
     ...instrument,
   });
   recordCriterionGlyphs(inv, glyphs, ["👃"], { table: "statements_of_fact", id: row.statement_id, item: statementItem, instance: "fact" });
-  recordGlyphs(inv, glyphs, ["🗣️", "✍️"], {
+  recordGlyphs(inv, glyphs, ["🗣️", "🗒️"], {
     table: "witnesses",
     id: row.witness_id,
     item: row.witness_name,
@@ -338,7 +339,7 @@ export function recordFactStatementGlyphs(
     ...instrument,
   });
   if (row.instrument_id !== null) {
-    recordGlyphs(inv, glyphs, ["🖋️", "✒️"], {
+    recordGlyphs(inv, glyphs, ["✍️", "🖋️", "✒️"], {
       table: "documents",
       id: row.instrument_id,
       item: row.instrument_label ?? "",

@@ -1,7 +1,34 @@
 // One fact or law statement's printed lines: its citation, its markers and its verbatim excerpt.
 
 import { dedupeLineMarkers, doubtMarker, exhibitPinpointMarker, factExcerptMarker, isAdmittedGuard, statementOfFactMarkers, testimonyPinpointMarker } from "./markers.js";
+import type { StatementOfFactRow as LadderRow } from "./markers.js";
 import type { FactStatementRow } from "./submission-reads.js";
+
+/** The fields of a read statement row the proof ladder and the live pinpoint need. */
+type StatementState = Pick<FactStatementRow, "interviewed" | "instrument_id" | "instrument_kind" | "instrument_execution" | "has_paragraph" | "instrument_drafted">;
+
+/** One read statement row as the proof ladder's input (markers.ts statementOfFactMarkers). */
+export function ladderRow(s: StatementState, courtRecordLinked: boolean, admitted: boolean): LadderRow {
+  return {
+    interviewed: s.interviewed,
+    instrument_id: s.instrument_id,
+    instrument_kind: s.instrument_kind,
+    instrument_execution: s.instrument_execution,
+    has_paragraph: s.has_paragraph === 1,
+    instrument_drafted: s.instrument_drafted === 1,
+    fact_court_record_linked: courtRecordLinked,
+    fact_admitted_by_all_opposing: admitted,
+  };
+}
+
+/** The pinpoint a statement is cited by. Until its instrument is executed, the linked paragraphs'
+ * numbers as the instrument now prints them ("para. 3", "paras. 3, 5"), so reordering the draft moves
+ * the citation with it. Once executed, or with no paragraph linked, the stored pinpoint. */
+export function effectivePinpoint(s: Pick<FactStatementRow, "instrument_id" | "instrument_execution" | "pinpoint" | "paragraph_numbers">): string | null {
+  if (s.instrument_id === null || s.instrument_execution !== null || !s.paragraph_numbers) return s.pinpoint;
+  const numbers = s.paragraph_numbers.split(",").map(Number).sort((a, b) => a - b);
+  return numbers.length === 1 ? `para. ${numbers[0]}` : `paras. ${numbers.join(", ")}`;
+}
 
 /** Citation as its own blockquote line (ticket 2026-08-31 -- previously folded into the excerpt's
  * parenthetical by the now-removed factStatementCitation). Returns null when there is nothing to
@@ -14,17 +41,16 @@ import type { FactStatementRow } from "./submission-reads.js";
 export function factStatementCitationLine(
   exhibitMap: Map<number, number>,
   labelMap: Map<number, string>,
-  s: Pick<FactStatementRow, "instrument_id" | "pinpoint" | "exhibit_id" | "exhibit_pinpoint">,
+  s: Pick<FactStatementRow, "instrument_id" | "instrument_execution" | "pinpoint" | "paragraph_numbers" | "exhibit_id" | "exhibit_pinpoint">,
   prefix = "> "
 ): string | null {
   const parts: string[] = [];
+  const pinpoint = effectivePinpoint(s);
   if (s.instrument_id !== null) {
     const instrumentLabel = labelMap.get(s.instrument_id);
     if (instrumentLabel !== undefined) parts.push(instrumentLabel);
-    if (s.pinpoint) parts.push(s.pinpoint);
-  } else if (s.pinpoint) {
-    parts.push(s.pinpoint);
   }
+  if (pinpoint) parts.push(pinpoint);
   if (s.exhibit_id !== null) {
     const num = exhibitMap.get(s.exhibit_id);
     const exhibitLabel = num !== undefined ? `Ex. ${num}` : labelMap.get(s.exhibit_id);
@@ -44,15 +70,8 @@ export function factStatementMarkers(s: FactStatementRow, courtRecordLinked: boo
   return dedupeLineMarkers([
     factExcerptMarker(s),
     exhibitPinpointMarker(s.exhibit_id, s.exhibit_pinpoint),
-    testimonyPinpointMarker(s.instrument_id, s.pinpoint),
-    statementOfFactMarkers({
-      interviewed: s.interviewed,
-      instrument_id: s.instrument_id,
-      instrument_kind: s.instrument_kind,
-      instrument_execution: s.instrument_execution,
-      fact_court_record_linked: courtRecordLinked,
-      fact_admitted_by_all_opposing: admitted,
-    }),
+    testimonyPinpointMarker(s.instrument_id, s.pinpoint, s.instrument_execution),
+    statementOfFactMarkers(ladderRow(s, courtRecordLinked, admitted)),
     doubtMarker(s.doubt),
     copyMarker,
   ]);

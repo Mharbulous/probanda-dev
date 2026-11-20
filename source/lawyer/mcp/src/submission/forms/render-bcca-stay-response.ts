@@ -74,6 +74,7 @@ import {
 import { fetchRhetoric, interleave, renderRhetoricLine, type RhetoricRow } from "./render-rhetoric.js";
 import { factsPart, fetchFacts, fetchStatementsOfFact, type FactRow, type StatementOfFactRow } from "./filing-facts.js";
 import { filingFrontmatter } from "./filing-frontmatter.js";
+import { ladderRow } from "./statement-lines.js";
 import { rows } from "../query-rows.js";
 
 /** Statement-of-Facts paragraphs for part2-slot facts, numbered from startPara + 1, each with its
@@ -122,18 +123,9 @@ export function renderFactParagraphs(
       const statementTokens: string[] = [];
       if (!guarded) {
         statementTokens.push(exhibitPinpointMarker(s.exhibit_id, s.exhibit_pinpoint));
-        statementTokens.push(testimonyPinpointMarker(s.instrument_id, s.pinpoint));
+        statementTokens.push(testimonyPinpointMarker(s.instrument_id, s.pinpoint, s.instrument_execution));
       }
-      statementTokens.push(
-        statementOfFactMarkers({
-          interviewed: s.interviewed,
-          instrument_id: s.instrument_id,
-          instrument_kind: s.instrument_kind,
-          instrument_execution: s.instrument_execution,
-          fact_court_record_linked: courtRecordLinked,
-          fact_admitted_by_all_opposing: admitted,
-        })
-      );
+      statementTokens.push(statementOfFactMarkers(ladderRow(s, courtRecordLinked, admitted)));
       tokens.push(...statementTokens);
       recordFactStatementGlyphs(
         inventory,

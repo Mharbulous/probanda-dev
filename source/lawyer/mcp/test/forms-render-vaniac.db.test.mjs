@@ -88,8 +88,8 @@ test("renders the VanIAC submissions package (written argument, witness statemen
     assert.match(submission2Block, /the Purchaser shall pay the Balance in full on the Closing Date/, "expected the fact's statement excerpt as a fenced quote");
     assert.match(
       submission2Block,
-      /> Witness Statement of A\. Renwick, para 1, Ex\. 1, s\. 2\.3/,
-      "expected the citation to cite through the instrument to the exhibit the Evidence Index numbers Ex. 1"
+      /> Witness Statement of A\. Renwick, para\. 1, Ex\. 1, s\. 2\.3/,
+      "expected the citation to cite through the instrument, at the linked paragraph's live number while it is unsigned, to the exhibit the Evidence Index numbers Ex. 1"
     );
     assert.match(submission2Block, /🖋️/, "expected the unsigned-witness-statement marker on the fact's statement line");
     assert.doesNotMatch(submission2Block, /a reserved account not yet deployed/, "expected the reserved statement of fact to be excluded from the inline body");
@@ -166,9 +166,9 @@ test("renders the VanIAC submissions package (written argument, witness statemen
     // Schema v10 (#380): facts.posture retired -- doubt (statements_of_fact.doubt)
     // is now statement-level, rendering 👃 instead of a prose parenthetical.
     assert.match(mReyesSubsection, /The crew worked overtime during the final week of the project\. 🗣️👃/, "expected the not-yet-interviewed row's rung plus the doubt marker");
-    assert.match(mReyesSubsection, /Overtime hours were logged in the site diary\. ✍️/, "expected the interviewed-with-pinpoint row's rung");
+    assert.match(mReyesSubsection, /Overtime hours were logged in the site diary\. 🗒️/, "expected the interviewed-with-pinpoint row's rung");
     // Phase C defect 4 (#777): an unlinked statement owes 📌 when an exhibit is set, never 🧷.
-    assert.match(mReyesSubsection, /Overtime for the final week was recorded in the Site Diary\. 📌✍️/, "expected the exhibit pin beside ✍️ on the unlinked row");
+    assert.match(mReyesSubsection, /Overtime for the final week was recorded in the Site Diary\. 📌🗒️/, "expected the exhibit pin beside 🗒️ on the unlinked row");
     assertMatchesGolden("witness-statement-unlinked-facts", mReyes);
 
     const kBell = replaceStamp(findFile(baseDir, "Witness Statement - K. Bell.md"));

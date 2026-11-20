@@ -2215,11 +2215,14 @@ function lineWith(markdown, trace) {
   return line;
 }
 
-/** The Notice of Application's Part 2 paragraph line itself -- its `<!-- fact N -->` trace rides the last citation line beneath it. */
-function part2ParagraphLine(markdown, n) {
-  const line = markdown.split("## PART 2: FACTUAL BASIS")[1].split("\n").find((l) => l.startsWith(`${n}. `));
-  assert.ok(line !== undefined, `expected Part 2 paragraph ${n}`);
-  return line;
+/** The Notice of Application's Part 2 paragraph n whole: its bare postulate line and the citation
+ * lines beneath it, which carry its markers (the `<!-- fact N -->` trace rides the last of them). */
+function part2Paragraph(markdown, n) {
+  const lines = markdown.split("## PART 2: FACTUAL BASIS")[1].split("## PART 3")[0].split("\n");
+  const start = lines.findIndex((l) => l.startsWith(`${n}. `));
+  assert.ok(start !== -1, `expected Part 2 paragraph ${n}`);
+  const end = lines.findIndex((l, i) => i > start && !l.startsWith("   "));
+  return lines.slice(start, end === -1 ? undefined : end).join("\n");
 }
 
 const reviewEntries = (inventory, doc) => inventory.filter((e) => e.marker === "🧐" && e.doc === doc);
@@ -2263,9 +2266,10 @@ test("final review: a lead reads 🔬 with no 🧐, and once verified every clea
     assert.match(markdownOf(result, "Written_arguments"), /🧐 <!-- statement_of_law_id 1 -->$/m);
     assert.ok(reviewEntries(inventory, "Written_arguments").some((e) => e.table === "statements_of_law" && e.id === 1));
 
-    // Part 2's merged line prints 🧐 once and records it on the fact and on its statement. Part 3
-    // names fact 1 by its Part 2 paragraph number instead of re-printing it, so it records neither.
-    assert.equal(part2ParagraphLine(noa, 1).match(/🧐/g)?.length, 1);
+    // Part 2's paragraph prints 🧐 once, on its one citation line, and records it on the fact and on
+    // its statement. Part 3 names fact 1 by its Part 2 paragraph number instead of re-printing it, so
+    // it records neither.
+    assert.equal(part2Paragraph(noa, 1).match(/🧐/g)?.length, 1);
     assert.equal(onNoa.filter((e) => e.table === "facts" && e.id === 1).length, 1, "only Part 2 records the fact");
     assert.equal(onNoa.filter((e) => e.table === "statements_of_fact" && e.id === 1).length, 1, "only Part 2 records the statement");
   } finally {
@@ -2273,10 +2277,10 @@ test("final review: a lead reads 🔬 with no 🧐, and once verified every clea
   }
 });
 
-// The predicate is scoped to the object's line (work-markers.md row 🧐): on Part 2's merged line a
-// statement of fact's work marker holds the postulate's 🧐 back too, although the postulate owes
-// nothing itself. 💬 never prints on that line (the excerpt is Part 3's), so the statement owes 🧷.
-test("final review: on a merged Notice of Application fact line, a statement's work marker holds the postulate's 🧐 back", async () => {
+// The review unit is the paragraph (counsel-review.md): in Part 2 a statement of fact's work marker
+// holds the postulate's 🧐 back too, although the postulate owes nothing itself. 💬 never prints in
+// Part 2 (the excerpt is Part 3's), so the statement, its affidavit sworn, owes 🧷.
+test("final review: in a Notice of Application fact paragraph, a statement's work marker holds the postulate's 🧐 back", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -2285,18 +2289,18 @@ test("final review: on a merged Notice of Application fact line, a statement's w
     const result = submissionFormsRender(f.dbPath, 1, ASHBOURNE);
     const noa = markdownOf(result, "Notice_of_application");
 
-    const merged = part2ParagraphLine(noa, 1);
+    const merged = part2Paragraph(noa, 1);
     assert.match(merged, /🧷/);
-    assert.doesNotMatch(merged, /🧐/, "the statement's 🧷 is on the postulate's line, so the postulate prints no 🧐");
+    assert.doesNotMatch(merged, /🧐/, "the statement's 🧷 is in the postulate's paragraph, so the postulate prints no 🧐");
 
     // Part 3 no longer re-prints fact 1 on lines of its own: it names the Part 2 paragraph number on
-    // the contention line. So the merged line is the postulate's only line on the form, and its 🧷
+    // the contention line. So the Part 2 paragraph is the postulate's only place on the form, and its 🧷
     // holds 🧐 back for both objects: the 🧐 Part 3 alone used to produce is gone, and with it that
     // object's counsel-review item on the Goal card.
     assert.ok(!noa.includes("<!-- fact_id 1 -->"), "expected no Part 3 line for a fact already in Part 2");
     assert.match(lineWith(noa, "<!-- submission_id 1 -->"), /<!-- supporting fact paragraphs: 1 -->/);
     const onNoa = reviewEntries(inventoryOf(result), "Notice_of_application");
-    assert.equal(onNoa.filter((e) => e.table === "facts" && e.id === 1).length, 0, "the merged line's 🧷 holds the fact's 🧐 back");
+    assert.equal(onNoa.filter((e) => e.table === "facts" && e.id === 1).length, 0, "the paragraph's 🧷 holds the fact's 🧐 back");
     assert.equal(onNoa.filter((e) => e.table === "statements_of_fact" && e.id === 1).length, 0);
   } finally {
     f.cleanup();
@@ -2892,11 +2896,12 @@ test("goal: a court-record fact citing Exhibits K-M of an affidavit sworn with A
          VALUES (1, 1, '${postulate}', 2, 'Affidavit #2 of S. Deponent, Exhibits K-M');
        INSERT INTO filing_facts (filing_id, fact_id, document, part, ordinal) VALUES (1, 1, 'form', 'part2', 1);`
     );
+    // The fact's paragraph: its markers print on the court record's citation line beneath the postulate.
     const factLine = () => {
       const noa = submissionFormsRender(f.dbPath, 1, ASHBOURNE).documents.find((d) => d.document_type === "Notice_of_application");
-      const line = noa.markdown.split("\n").find((l) => l.startsWith(`1. ${postulate}`));
-      assert.ok(line, noa.markdown);
-      return line;
+      const paragraph = part2Paragraph(noa.markdown, 1);
+      assert.ok(paragraph.startsWith(`1. ${postulate}`), noa.markdown);
+      return paragraph;
     };
 
     // The seed's own document owes an evidence item too, so the fact is checked by name.

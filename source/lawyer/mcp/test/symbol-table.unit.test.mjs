@@ -37,10 +37,10 @@ test("the table has one row per glyph in ALL_MARKER_GLYPHS, and no duplicates", 
   assert.deepEqual([...glyphs].sort(), [...ALL_MARKER_GLYPHS].sort());
 });
 
-test("the work rows are WORK_MARKER_GLYPHS, and the groups count 31 work, 14 event, 3 hold", () => {
+test("the work rows are WORK_MARKER_GLYPHS, and the groups count 33 work, 14 event, 3 hold", () => {
   const of = (group) => SYMBOLS.filter((s) => s.group === group).map((s) => s.glyph);
   assert.deepEqual([...of("work")].sort(), [...WORK_MARKER_GLYPHS].sort());
-  assert.deepEqual([of("work").length, of("event").length, of("hold").length], [31, 14, 3]);
+  assert.deepEqual([of("work").length, of("event").length, of("hold").length], [33, 14, 3]);
 });
 
 test("ALL_MARKER_GLYPHS and WORK_MARKER_GLYPHS, derived from the table, hold the members of the hand-written lists they replaced", () => {
@@ -49,10 +49,13 @@ test("ALL_MARKER_GLYPHS and WORK_MARKER_GLYPHS, derived from the table, hold the
     "🙅🏻‍♂️", "🧩", "🏷️", "🕵️", "⬜", "🏛️", "🚧", "📖", "🔬", "🥈", "🥉", "🏅", "📜", "📑", "💬", "📍",
     "📌", "🧷", "↩️", "📇", "⚠️", "🚨", "⛔", "🕰️", "🏆", "🤥", "🂡", "🚩", "🦵", "🧵", "🧾", "📚",
     "👃", "👤", "🤫", "🗣️", "✍️", "🖋️", "✒️", "🎾", "⏳", "🫸", "🤷", "⏰", "⚡️", "🤝", "🕹️", "🧐",
+    // The proof ladder's two added rungs (2026-11-20).
+    "🗒️", "📝",
   ];
   const workMarkerGlyphs = [
     "🧩", "🏛️", "📖", "📜", "📑", "💬", "📍", "📌", "🧷", "🔬", "↩️", "👃", "📇", "🏷️", "🕵️",
     "⬜", "👤", "🗣️", "✍️", "🖋️", "✒️", "🎾", "🕹️", "🥉", "🥈", "🏅", "🦵", "🧵", "🧾", "📚", "🧐",
+    "🗒️", "📝",
   ];
   assert.equal(ALL_MARKER_GLYPHS.length, allMarkerGlyphs.length);
   assert.deepEqual([...ALL_MARKER_GLYPHS].sort(), [...allMarkerGlyphs].sort());
@@ -93,6 +96,7 @@ test("WORK_NAMES and GLYPH_SLUGS, derived from the table, equal the hand-written
     ["testimony-pinpoint", "Locate the testimony pinpoint"],
     ["interview", "Interview"],
     ["draft-it", "Draft the statement"],
+    ["write-paragraph", "Write the paragraphs"],
     ["sign-it", "Get it signed"],
     ["swear-it", "Get it sworn"],
     ["serve-it", "Serve"],
@@ -120,7 +124,8 @@ test("WORK_NAMES and GLYPH_SLUGS, derived from the table, equal the hand-written
     ["📌", "exhibit-pinpoint"],
     ["🧷", "testimony-pinpoint"],
     ["🗣️", "interview"],
-    ["✍️", "draft-it"],
+    ["🗒️", "draft-it"],
+    ["✍️", "write-paragraph"],
     ["🖋️", "sign-it"],
     ["✒️", "swear-it"],
     ["🎾", "serve-it"],

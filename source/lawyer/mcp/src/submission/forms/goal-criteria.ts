@@ -65,7 +65,7 @@ const EVIDENCE: StockCriterion = {
   id: "evidence",
   text: "Every fact is proved by evidence in hand",
   members: anyOf(
-    slugs("exhibit-excerpt", "testimony-excerpt", "exhibit-pinpoint", "testimony-pinpoint", "interview", "draft-it", "sign-it", "swear-it", "serve-it", "enter-it"),
+    slugs("exhibit-excerpt", "testimony-excerpt", "exhibit-pinpoint", "testimony-pinpoint", "interview", "draft-it", "write-paragraph", "sign-it", "swear-it", "serve-it", "enter-it"),
     glyph("👤"),
     glyph("👃", "fact"),
     glyph("🏆"),
