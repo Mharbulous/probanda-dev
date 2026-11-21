@@ -37,7 +37,9 @@ For each item it reads the whole paragraph at the pinpoint, decides from the cou
 
 For an `inferred:` item, the checker judges only this decision's part: each `From:` item drawn from this decision is classified correctly, and the verdict `court_states_it` is returned, with its pinpoint, when this decision states the rule outright, so the memo should use the court's own words. Whether the facts and applications together entail the inferred rule is not judged here (§9).
 
-Each non-`ok` verdict carries the item's `¶<n>` and one line saying what is wrong. A `reworded` field may offer the item's sentence trimmed to what the paragraph supports, never new law.
+**Adapted to the practitioner's ruling, 2026-11-20 (it overrides the paragraph above).** An inferred proposition has no `From:` list. It has the normal item shape, cites this decision directly, and its excerpt is the whole paragraph where the court applies the law, so the checker receives it like any other item. For an `inferred:` item the checker checks that the excerpt is verbatim, whole and at the pinpoint; that the paragraph is the court applying law, not stating it or only finding facts (`wrong_category` otherwise); that the sentence stays within what that application supports (`unsupported` or `overstated`), comparing the text only and stating no law; and returns `court_states_it` with the pinpoint where this decision states the rule outright. The input carries no `From:` list and nothing in the agent or its tests handles one.
+
+Each non-`ok` verdict carries the item's `¶<n>` and one line saying what is wrong. A `reworded` field may offer the item's sentence trimmed to what the paragraph supports, never new law. (Not built: the gate re-invokes the audit agent to rewrite, so a suggested wording would be a second author. Each item gets one verdict, the first that applies in the agent's order.)
 
 Output: one JSON object `{authority, verdict: complete|send_back, items: [{para, verdict, why, belongs_in?, pinpoint?}], unreadable?}`. A decision it cannot read returns `unreadable: <error>` and no verdicts. The agent states no law: it compares the memo's sentence with the decision's text only.
 
@@ -83,6 +85,8 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - Who judges whether an inferred proposition follows from its `From:` items, which may come from several decisions: `memo-reviewer` on the memo's words, one more single call, or the practitioner? This spec leaves it to the memo-reviewer spec.
 - Model for the agent: `opus`, as `memo-reviewer`, or cheaper, given one instance per authority?
 - What happens to an authority whose decision text is not on disk: an `unreadable` return that the gate treats as a required `needs_download`?
+
+**Answers, 2026-11-20.** Option 1, a new agent (§11). The inferred-item question is moot under the practitioner's ruling of 2026-11-20 (definitions spec §4 and §9): an inferred item has no `From:` list and cites one decision, so this agent checks it against that decision and nothing remains to judge across decisions (§4, adapted). Model `opus`, as `memo-reviewer`. A decision that cannot be read returns `unreadable` with no items; the gate spec treats it as `needs_download`, and this change does not wire the gate.
 
 ## 10. Verify against HEAD before building
 

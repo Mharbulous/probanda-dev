@@ -45,7 +45,7 @@ class DutyTwoTests(unittest.TestCase):
         self.assertIn("The agent reads a scanned page only from its images", duty)
 
     def test_the_agents_hold_the_narrow_tool_and_not_the_whole_matter_one(self):
-        for agent in ("research-agent", "memo-reviewer", "brief-reviewer"):
+        for agent in ("research-agent", "memo-reviewer", "brief-reviewer", "authority-checker"):
             text = (REPO_ROOT / "source" / "researcher" / "agents" / f"{agent}.md").read_text(encoding="utf-8")
             front = text.split("---")[1]
             for prefix in ("mcp__plugin_lawyer_data__", "mcp__remote-devices__plugin_lawyer_data__"):

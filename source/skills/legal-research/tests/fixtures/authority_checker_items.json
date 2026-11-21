@@ -1,0 +1,97 @@
+{
+  "authority": "Harlow v. Fenwick Township, 2031 XXSC 77",
+  "decision": "authority_checker_decision.md",
+  "items": [
+    {
+      "para": "¶1", "section": "Rule",
+      "sentence": "An enforcement term directing the police to arrest and remove persons who breach an injunction is extraordinary, and is included only where there is evidence that the order will otherwise not be obeyed and that the ordinary contempt process will not suffice.",
+      "pinpoint": "para 12",
+      "excerpt": "An enforcement term directing the police to arrest and remove persons who breach an injunction is extraordinary. It is included only where there is evidence that the order will otherwise not be obeyed and that the ordinary contempt process will not suffice.",
+      "expect": {"verdict": "ok"}
+    },
+    {
+      "para": "¶2", "section": "Rule",
+      "sentence": "Protesters who return after being asked to leave obstruct the road.",
+      "pinpoint": "para 8",
+      "excerpt": "The respondents erected a barrier across the north access road on three occasions between March and May, and on each occasion remained after being asked to leave.",
+      "expect": {"verdict": "wrong_category", "belongs_in": "fact"}
+    },
+    {
+      "para": "¶3", "section": "Application",
+      "sentence": "law-applied: The court held that an enforcement term is extraordinary and included only where the order will otherwise not be obeyed and contempt will not suffice.",
+      "pinpoint": "para 12",
+      "excerpt": "An enforcement term directing the police to arrest and remove persons who breach an injunction is extraordinary. It is included only where there is evidence that the order will otherwise not be obeyed and that the ordinary contempt process will not suffice.",
+      "expect": {"verdict": "wrong_category", "belongs_in": "proposition"}
+    },
+    {
+      "para": "¶4", "section": "Rule",
+      "sentence": "A court may limit an enforcement term to a defined area and period, and the term was limited to the one road where the barrier stood, for six months.",
+      "pinpoint": "para 18",
+      "excerpt": "A court may limit an enforcement term to a defined area and period. The barrier stood only on the north access road, and I limit the term to that road for six months.",
+      "expect": {"verdict": "mixed_excerpt"}
+    },
+    {
+      "para": "¶5", "section": "Rule",
+      "sentence": "In Harlow the court stated that an enforcement term is extraordinary and needs evidence that the order will otherwise be disobeyed and that contempt will not suffice.",
+      "pinpoint": "para 12",
+      "excerpt": "An enforcement term directing the police to arrest and remove persons who breach an injunction is extraordinary. It is included only where there is evidence that the order will otherwise not be obeyed and that the ordinary contempt process will not suffice.",
+      "expect": {"verdict": "sentence_drift"}
+    },
+    {
+      "para": "¶6", "section": "Rule",
+      "sentence": "An injunction never issues against unnamed persons.",
+      "pinpoint": "para 15",
+      "excerpt": "In Abbott v. Birch, 2019 XXCA 101, the court said that an injunction should never issue against unnamed persons. Neither party addressed that decision, and I need not decide whether it applies here.",
+      "expect": {"verdict": "wrong_voice"}
+    },
+    {
+      "para": "¶7", "section": "Application",
+      "sentence": "fact: The respondents blocked the north access road four times between March and May.",
+      "pinpoint": "para 8",
+      "excerpt": "The respondents erected a barrier across the north access road on four occasions between March and May, and on each occasion remained after being asked to leave.",
+      "expect": {"verdict": "misquoted"}
+    },
+    {
+      "para": "¶8", "section": "Rule",
+      "sentence": "An enforcement term directing the police to arrest and remove persons who breach an injunction is extraordinary.",
+      "pinpoint": "para 12",
+      "excerpt": "An enforcement term directing the police to arrest and remove persons who breach an injunction is extraordinary.",
+      "expect": {"verdict": "partial_excerpt"}
+    },
+    {
+      "para": "¶9", "section": "Application",
+      "sentence": "law-applied: The court included the enforcement term because the respondents had damaged township property.",
+      "pinpoint": "para 13",
+      "excerpt": "Here, the respondents returned to the road three times after being asked to leave, and the township's two contempt applications did not end the obstruction. The ordinary contempt process has not sufficed, and I include the enforcement term.",
+      "expect": {"verdict": "unsupported"}
+    },
+    {
+      "para": "¶10", "section": "Rule",
+      "sentence": "An enforcement term is included whenever there is evidence that the order will otherwise not be obeyed.",
+      "pinpoint": "para 12",
+      "excerpt": "An enforcement term directing the police to arrest and remove persons who breach an injunction is extraordinary. It is included only where there is evidence that the order will otherwise not be obeyed and that the ordinary contempt process will not suffice.",
+      "expect": {"verdict": "overstated"}
+    },
+    {
+      "para": "¶11", "section": "Rule",
+      "sentence": "inferred: An enforcement term is included where the ordinary contempt process has not ended a breach of the injunction.",
+      "pinpoint": "para 13",
+      "excerpt": "Here, the respondents returned to the road three times after being asked to leave, and the township's two contempt applications did not end the obstruction. The ordinary contempt process has not sufficed, and I include the enforcement term.",
+      "expect": {"verdict": "court_states_it", "pinpoint": "para 12"}
+    },
+    {
+      "para": "¶12", "section": "Rule",
+      "sentence": "inferred: Where a respondent gives no undertaking to stay away and the risk of renewed obstruction is real, an injunction may be granted for the full term sought.",
+      "pinpoint": "para 20",
+      "excerpt": "The respondents gave no undertaking to stay off the road, and their spokesperson told the court they would return. Without an undertaking the risk of renewed obstruction is real, and I grant the injunction for the full term sought rather than the shorter term the respondents proposed.",
+      "expect": {"verdict": "ok"}
+    },
+    {
+      "para": "¶13", "section": "Application",
+      "sentence": "fact: The respondents erected a barrier across the north access road three times between March and May and stayed each time after being asked to leave.",
+      "pinpoint": "para 8",
+      "excerpt": "The respondents erected a barrier across the north access road on three occasions between March and May, and on each occasion remained after being asked to leave.",
+      "expect": {"verdict": "ok"}
+    }
+  ]
+}
