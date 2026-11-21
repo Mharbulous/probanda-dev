@@ -5,6 +5,7 @@ terms:
   - Affiliation
   - Alias
   - Apparatus
+  - Applied law
   - Argument
   - Asserted Cause of Action
   - Assign
@@ -31,6 +32,7 @@ terms:
   - Constraint line
   - Contact
   - Contention
+  - Context fact
   - Copy (file)
   - Copy (within a bundle)
   - Counsel of record
@@ -69,6 +71,7 @@ terms:
   - Free-form writing
   - General Job
   - Hunch
+  - Inferred proposition
   - Instrument
   - Issue
   - Item
@@ -116,6 +119,7 @@ terms:
   - Proof
   - Proposal
   - Proposition
+  - Proposition (memo)
   - Provenance
   - Publisher map
   - Qualified admission
@@ -195,6 +199,9 @@ Another recorded spelling of a participant's name, or a **file code**: the autho
 **Apparatus**:
 Pages in a bundle that are not documents: cover page, index or table of contents, exhibit stamp sheet, envelope, fax cover, a one-page table of authorities. Reported for the page map, never extracted, never given a row.
 _Avoid_: ignore (the walker's verb, not the noun); boilerplate (that is text inside a document, not pages outside one).
+
+**Applied law**:
+A research memo's Application item whose excerpt is the court applying a rule to the facts it found to reach a holding, its sentence opening `law-applied:`. Defined in `source/skills/shared/research-memo-template.md`, "Item vocabulary".
 
 **Argument**:
 A contention's support: the postulates it rests on and the propositions it requires, each supported in its own domain only — neither link required. Not the **Written Argument**.
@@ -301,6 +308,9 @@ _Avoid_: party (a role in a proceeding, recorded in matter-data); participant (a
 **Contention**:
 A submission's assertion: law applied to fact — the position one side argues for, in the lawyer's wording. Never a bare postulate or a bare proposition. Also called an **application paragraph**, the practitioner's name for a contention that does this job: it links at least one fact and one proposition and argues the connection between them (🧾 and 📚 flag a missing link).
 _Avoid_: theory, thesis; proposition (law alone); point (an opposing point is theirs).
+
+**Context fact**:
+A research memo's Application item whose excerpt states a fact the court found about the case before it, its sentence opening `fact:`. Never a **Fact** of the working matter. Defined in `source/skills/shared/research-memo-template.md`, "Item vocabulary".
 
 **Copy (file)**:
 A new file holding the same bytes as an existing one, while the original stays where it was. Probanda tells the practitioner it made a copy, in that word. It never calls a copy a move, and it never meets a request to move a file with a copy.
@@ -448,6 +458,9 @@ _Avoid_: proceeding-scoped job, proceeding-wide job (design prose only); shared 
 **Hunch**:
 A first impression drawn only from what the model already knew before the session began — nothing in the session (no file, tool result, or line of conversation) was consulted. For a view of the law, every impression outside the research-agent is a hunch, whatever it rests on.
 _Avoid_: guess, gut feeling, "I think" with no label; hunch for an answer formed after reading the files (that is a **Recommendation**, except for a view of the law).
+
+**Inferred proposition**:
+A research memo's Rule item, its sentence opening `inferred:`, that states a rule the court applied without stating it well, cited at the paragraph where the court applies it. It is the memo's inference, never the court's own statement of the rule. Defined in `source/skills/shared/research-memo-template.md`, "Item vocabulary".
 
 **Instrument**:
 The executed or served document through which something reaches the forum — two vehicles, both fact-domain. The **witness's instrument** carries a witness's words: an affidavit or a witness statement (`statement.instrument`); execution is the signing or swearing (🖋️ sign it ⊕ ✒️ swear it), and an account with no instrument yet is ✍️ draft it. The **admission instrument** is the document through which an admission is sought from a party — notice to admit, pleading, interrogatories, or the examination transcript (`admissions.instrument`); its work is service (🎾). Fact domain only: published law arrives already executed.
@@ -655,6 +668,9 @@ _Avoid_: seed; offer; suggestion; candidate; draft job.
 **Proposition**:
 What an authority asserts as law: a consequence, and the conditions it follows from where the authority states any. It may have no conditions. In the pool it is one record, read with its links: the clause that is its **Consequence** and the clauses that are its conditions, each an **Element**, an **Exception** or a **Factor**. The record is named `test` whatever its size, and has one consequence, so one record is one proposition, however many principles state it. A proposition with two or more elements or factors is a **Test**. One with fewer is called a proposition and not a test. A **Rationale** is the "because" beside a proposition and is not part of it. A proposition's authority and pinpoint are reached through each **Principle** that states it. In a draft, a proposition is the one sentence that states this, and each **Statement of law** hangs from it. Its fact-domain twin is a **Postulate**.
 _Avoid_: proposition for a factual assertion (a **Postulate**); proposition to mean proposal; holding; principle.
+
+**Proposition (memo)**:
+A research memo's Rule or Explanation item whose excerpt is the court's general statement of a rule of law, restated in the present tense and in general terms. Stored as a statement of law, not as the pool's **Proposition** record. Defined in `source/skills/shared/research-memo-template.md`, "Item vocabulary".
 
 **Provenance**:
 Where a fact was learned; this may be privileged (e.g. a client interview) even when the fact itself is later provable through non-privileged means. A fact can have provenance without evidence — that is a trial-prep gap (a fact you know how you learned, but cannot yet prove admissibly).

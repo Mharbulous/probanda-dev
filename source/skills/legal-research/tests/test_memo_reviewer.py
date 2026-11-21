@@ -99,8 +99,8 @@ class ScopeTestTest(unittest.TestCase):
         self.assertIn("/ INCOMPLETE: <the research named>", protocol)
         self.assertNotIn("per issue", template)
         self.assertIn("A Conclusion is one paragraph. Its first sentence answers the Issue's question as asked, giving "
-                      "no reasons, or says which part cannot yet be answered. The rest gives the reasons. It is "
-                      "followed, only where research is required (`shared/legal-audit-protocol.md` Step 4), by the "
+                      "no reasons, or says which part cannot yet be answered. The rest gives the reasons.", template)
+        self.assertIn("and narrates no decision. It is followed, only where research is required (`shared/legal-audit-protocol.md` Step 4), by the "
                       "open-issues paragraph", template)
         answers = flat(between(read("shared", "legal-audit-protocol.md"), "**The memo always answers.**",
                                "**Open issues.**"))

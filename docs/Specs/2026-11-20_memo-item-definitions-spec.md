@@ -32,10 +32,10 @@ Add to `shared/research-memo-template.md`, before "Body", a block "Item vocabula
 - **Context fact** (Application, `fact:`): a fact the court found, past tense. It states no rule and no holding.
 - **Applied law** (Application, `law-applied:`): a holding, past tense: the rule applied, to which found facts, and the result.
 - **A mixed excerpt** (a paragraph doing more than one of these) is cited once for each thing it does, each time with the whole paragraph and a sentence that states only that category's content.
-- **Inferred proposition** (Rule, opening `inferred:`): where the court states the applicable rule poorly or not at all, the memo states the rule itself, in general terms, and lists the items it is inferred from as `From: ¶<a>, ¶<b>`. It has no excerpt of its own, is the memo's inference and never the court's holding, and comes after the court's own propositions. Where a court states the rule, that statement is used and nothing is inferred. Only the research agent writes one.
-- **Storage.** Each numbered item is stored as a statement of law, an excerpt at a pinpoint; the memo's words for the sentence are "proposition" and "finding".
+- **Inferred proposition** (Rule, opening `inferred:`): where the court states the facts and applies the law without stating the rule, or states it poorly, the memo states the rule itself, in the present tense and in general terms. Its authority is the decision, and its pinpoint and excerpt are the whole paragraph where the court applies the law. It is the memo's inference and is never presented as the court's own statement of the rule. It comes after the court's own propositions. Where a court states the rule, that statement is used and nothing is inferred. (Practitioner's decision, 2026-11-20. It replaces the earlier design of an item with no excerpt and a `From: ¶<a>, ¶<b>` list.)
+- **Storage.** Each numbered item, an inferred one included, is stored as a statement of law, an excerpt at a pinpoint. The memo's words for the sentence are "proposition" and "finding". The `inferred:` opening is the inferred item's only marker, and no new marker is added (practitioner's decision, 2026-11-20).
 
-Reword the item shape's sentence to `<one sentence: the proposition (Rule, Explanation), or the finding (Application)>`. Add the inferred item's shape: `<n>. inferred: <one sentence>` then `   From: ¶<a>[, ¶<b>]`.
+Reword the item shape's sentence to `<one sentence: the proposition (Rule, Explanation), or the finding (Application)>`. The inferred item has the same shape, its sentence opening `inferred:`.
 
 Conclusion: the reasons restate propositions in the memo's general words, each cited in parentheses; an inferred one is said to be inferred. They narrate no decision (see §9).
 
@@ -45,9 +45,9 @@ Reviewers and agents cite the block by reading the template, as `memo-reviewer` 
 
 ## 5. Constraints that must still hold
 
-- The ICRA, IRAC and CREAC section order and the fixed item shape (Authority, Citation, Kind, Pinpoint, verbatim excerpt) hold for every item except an inferred one.
+- The ICRA, IRAC and CREAC section order and the fixed item shape (Authority, Citation, Kind, Pinpoint, verbatim excerpt) hold for every item, an inferred one included.
 - The "Whose reasons are they?" recital rule is unchanged: support comes only from the court's own reasons.
-- An inferred proposition is never presented as a court's holding and never cited as an authority's pinpoint.
+- An inferred proposition is cited at the paragraph where the court applies the law, and is never presented as the court's own statement of the rule (practitioner's decision, 2026-11-20, replacing "never cited as an authority's pinpoint").
 - The memo stays generic, with no fact of the working matter.
 - Memos saved before this change still render and re-render.
 - The persist step's storage still works for non-inferred items unchanged.
@@ -82,7 +82,7 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 9. Open questions
 
-- Can the persist step store an item with no excerpt of its own (the inferred proposition)? If not, does it store it as a lead tied to its From items, and how does the mockup mark it so the practitioner sees it is inferred? Verify the storage and marker rules before choosing; do not invent a new marker without the practitioner.
+- Can the persist step store an item with no excerpt of its own (the inferred proposition)? If not, does it store it as a lead tied to its From items, and how does the mockup mark it so the practitioner sees it is inferred? Verify the storage and marker rules before choosing; do not invent a new marker without the practitioner. **Decided by the practitioner, 2026-11-20:** an inferred proposition still has an authority, the paragraph where the court applies the law, so it has an excerpt. It is stored like any other item, one statement-of-law row at that paragraph, and its `inferred:` opening is its only marker. No storage change and no new marker. The verification below (§11) found that an item with no authority could not be stored, which this decision makes moot.
 - A paragraph that mixes categories is cited whole once per category (above). Does the whole-paragraph excerpt rule allow the same paragraph twice in one memo?
 - May a Conclusion's reasons mention a decision's facts where a distinction turns on them, or never? This spec proposes never.
 - Do CREAC Explanation items follow the proposition definition? This spec proposes yes.

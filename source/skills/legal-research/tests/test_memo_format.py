@@ -24,7 +24,7 @@ TYPES = Path(__file__).resolve().parents[1] / "references" / "CAN" / "BC" / "_No
 NL = chr(10)
 FENCE_END = NL + "```"
 ITEM = """```
-<n>. <one sentence: what the excerpt says>
+<n>. <one sentence: the proposition (Rule, Explanation), or the finding (Application)>
    Authority: <style of cause or title>
    Citation: <citation>
    Kind: <case / statute / regulation / rule / doctrine>, <primary / secondary>
@@ -124,13 +124,35 @@ class ProtocolStepSixTests(unittest.TestCase):
     def test_application_is_one_finding_per_item_grouped_by_case(self):
         template = flat(read("research-memo-template.md"))
         self.assertIn("The Application: one sub-section per case, its items together. Each item is one finding of "
-                      "that court, its sentence opening `fact:` or `law-applied:` (the law applied to the facts to "
-                      "reach a holding), from the court's own reasons (`shared/legal-audit-protocol.md` Step 2).",
-                      template)
+                      "that court, its sentence opening `fact:` or `law-applied:`, from the court's own reasons "
+                      "(`shared/legal-audit-protocol.md` Step 2).", template)
         self.assertIn("Each case has at least one `fact:` item and at least one `law-applied:` item, the facts being "
                       "those that court applied the law to.", template)
         self.assertNotIn("how each cited authority applied the rule", template)
         self.assertNotIn("closest to a stated generic pattern", flat(step_six()))
+
+    def test_items_are_classified_by_the_excerpt_into_one_vocabulary(self):
+        # 2026-11-20: Rule items narrated what a court found or did. Each excerpt is classified by the
+        # court's own words, and an unstated rule is inferred at the paragraph applying it (practitioner).
+        template = read("research-memo-template.md")
+        self.assertNotIn("what the excerpt says", template)
+        block = flat(between(template, "**Item vocabulary.**", "In every format:"))
+        self.assertIn("Each excerpt is classified by what the court's own words in it do", block)
+        self.assertIn("never changes it", block)
+        for term in ("**Proposition** (Rule, Explanation)", "**Context fact** (Application, `fact:`)",
+                     "**Applied law** (Application, `law-applied:`)", "**Mixed excerpt**",
+                     "**Inferred proposition** (Rule, after the court's own propositions)"):
+            self.assertIn(term, block)
+        inferred = block[block.index("**Inferred proposition**"):]
+        self.assertIn("the sentence opens `inferred:`", inferred)
+        self.assertIn("the excerpt is the whole paragraph where the court applies it", inferred)
+        self.assertIn("never presented as the court's own statement of the rule", inferred)
+        self.assertNotIn("From:", template, "an inferred item has the ordinary shape")
+        self.assertEqual(template.count("**Item vocabulary.**"), 1)
+
+    def test_conclusion_reasons_restate_propositions_and_narrate_no_decision(self):
+        self.assertIn("The rest gives the reasons. Each reason restates a proposition in the memo's general words, "
+                      "says so when it is inferred, and narrates no decision.", flat(read("research-memo-template.md")))
 
     def test_numbered_sections_are_items_numbered_through_the_memo(self):
         template = read("research-memo-template.md")
