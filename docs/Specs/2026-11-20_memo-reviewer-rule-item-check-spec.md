@@ -70,3 +70,16 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - That the quoted step 3 and step 4 lines in `memo-reviewer.md` still read as quoted.
 - That the template's Item vocabulary and the inferred item's shape exist at HEAD or land first; this spec cannot land before them.
 - The fixture and test layout for `memo-reviewer`.
+
+## 11. Verification against HEAD (a40b8614, 2026-11-20)
+
+| Check (§10) | Finding at HEAD |
+|---|---|
+| Where the agent is authored | `source/researcher/agents/memo-reviewer.md`, shipped by `researcher` (`source/assignment.json`). |
+| Step 3 and step 4 as quoted | Both still read as quoted (lines 46 and 47). Step 4's sub-bullets also send back an Application case with no `fact:` or no `law-applied:` item, and any item with a partial excerpt (lines 48-49). No step checks a Rule or Explanation item. |
+| Step 1, Conclusion shape, description | Step 1 tests the Issue by rules A to D (line 41). Step 2's second sentence sends back a Conclusion "whose first sentence or shape breaks the template's rule for it" as an `out_of_scope` item, `Conclusion shape: <its first words>` (line 43). The description reads "an Issue, Conclusion, Application finding or excerpt that breaks the template's rules" (lines 7-8). |
+| Item vocabulary | Landed in a40b8614: `source/skills/shared/research-memo-template.md` lines 131-146 define Proposition, Context fact, Applied law, Mixed excerpt and Inferred proposition. |
+| Inferred item's shape | The normal item shape (Authority, Citation, Kind, Pinpoint, verbatim excerpt), its sentence opening `inferred:` and stating the rule in the present tense and general terms, its excerpt the whole paragraph where the court applies the rule, placed in the Rule after the court's own propositions (template lines 142-146). It has no `From:` list (definitions spec §4, §9). |
+| Conclusion rule | Template lines 164-169: each reason "restates a proposition in the memo's general words, says so when it is inferred, and narrates no decision". |
+| How a `Conclusion shape:` item is acted on | `shared/legal-audit-protocol.md` line 294: the audit rewrites "a `Conclusion shape:` item's Conclusion to the template's rule". A new label would need a matching rewrite instruction there. |
+| Fixture and test layout | `source/skills/legal-research/tests/test_memo_reviewer.py`: unittest text pins on the agent, the protocol, the template and `shared/legal-research.md`, run as `python <path>`. No fixture memos and no harness that runs an agent exist in the repo. |
