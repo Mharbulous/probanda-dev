@@ -1,4 +1,4 @@
-// build-stamp: e57d292408e7
+// build-stamp: 2be72ad752d1
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75267,7 +75267,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "e57d292408e7";
+var BUILD_STAMP = false ? null : "2be72ad752d1";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -88068,8 +88068,8 @@ var SYMBOLS = [
     actor: "drafter",
     slug: "testimony-pinpoint",
     title: "Locate the testimony pinpoint",
-    condition: "statement of fact with `instrument` set \u2227 `pinpoint` \u2205 \u2014 the instrument's paragraph, on an exhibit-backed statement too (*Affidavit #1 of A. Marlowe, para 3*); no instrument (\u270D\uFE0F, oral): nothing to locate. Also admission past \u{1F91D} \u2295 \u23F0 (derived state, table 1b \u2014 holds through \u{1F579}\uFE0F and \u2705) \u2227 `instrument`/`response` set \u2227 its pinpoint \u2205 where `method` is `interrogatories` \u2295 `oral`. Unordered with \u{1F4AC} \u2295 \u{1F4D1} and \u{1F4CC}",
-    history: "v1; admissions v5; split off \u{1F4CD} (#511)"
+    condition: "statement of fact with `instrument` set \u2227 the instrument's `execution` set \u2227 `pinpoint` \u2205 \u2014 the instrument's paragraph, on an exhibit-backed statement too (*Affidavit #1 of A. Marlowe, para 3*). Before execution the citation prints the linked paragraph's number as the draft now orders it, and \u270D\uFE0F covers a statement with no paragraph; no instrument (oral): nothing to locate. Also admission past \u{1F91D} \u2295 \u23F0 (derived state, table 1b \u2014 holds through \u{1F579}\uFE0F and \u2705) \u2227 `instrument`/`response` set \u2227 its pinpoint \u2205 where `method` is `interrogatories` \u2295 `oral`. Unordered with \u{1F4AC} \u2295 \u{1F4D1} and \u{1F4CC}",
+    history: "v1; admissions v5; split off \u{1F4CD} (#511); waits for execution since the NoA proof ladder (2026-11-20)"
   },
   {
     glyph: "\u{1F52C}",
@@ -88171,11 +88171,11 @@ var SYMBOLS = [
     actor: "investigator",
     slug: "interview",
     title: "Interview",
-    condition: "`statement.interviewed=0`",
-    history: "v3 (`sworn_status` struck); plain name was *talk to witness*"
+    condition: "`statement.interviewed=0` \u2227 `statement.instrument` \u2205 \u2014 a linked instrument skips the interview",
+    history: "v3 (`sworn_status` struck); plain name was *talk to witness*; silent once an instrument is linked (NoA proof ladder, 2026-11-20)"
   },
   {
-    glyph: "\u270D\uFE0F",
+    glyph: "\u{1F5D2}\uFE0F",
     name: "draft it",
     group: "work",
     meaning: "the witness is interviewed, but the account is not yet written",
@@ -88184,7 +88184,29 @@ var SYMBOLS = [
     slug: "draft-it",
     title: "Draft the statement",
     condition: "`interviewed=1` \u2227 `statement.instrument` \u2205",
-    history: "v3 \u2014 `instrument` is the statement's own pointer (the old paragraph link / `affidavit_document_id` collapsed into it)"
+    history: "v3 \u2014 `instrument` is the statement's own pointer (the old paragraph link / `affidavit_document_id` collapsed into it); was \u270D\uFE0F until the NoA proof ladder (2026-11-20)"
+  },
+  {
+    glyph: "\u270D\uFE0F",
+    name: "write the paragraph",
+    group: "work",
+    meaning: "the witness's instrument is begun, but no paragraph of it states this yet",
+    work: "write the paragraph in the witness's instrument",
+    actor: "drafter",
+    slug: "write-paragraph",
+    title: "Write the paragraphs",
+    condition: "`statement.instrument` set \u2227 the instrument's `instrument` kind set \u2227 its `execution` \u2205 \u2227 no `paragraph_statements_of_fact` row links this statement to a `statement_paragraphs` row of the instrument",
+    history: "derived, no column (NoA proof ladder, 2026-11-20); keyed on the instrument document"
+  },
+  {
+    glyph: "\u{1F4DD}",
+    name: "paragraph written",
+    group: "work",
+    meaning: "this paragraph is written, but the rest of the witness's instrument is not yet",
+    work: "finish the instrument's other paragraphs",
+    actor: "drafter",
+    condition: "`statement.instrument` set \u2227 its `execution` \u2205 \u2227 a paragraph of it links this statement \u2227 another statement with the same `instrument` has none. Generates nothing: the other statements' \u270D\uFE0F is the work",
+    history: "derived, no column (NoA proof ladder, 2026-11-20)"
   },
   {
     glyph: "\u{1F58B}\uFE0F",
@@ -88195,7 +88217,7 @@ var SYMBOLS = [
     actor: "witness; the drafter obtains it",
     slug: "sign-it",
     title: "Get it signed",
-    condition: "the statement's `instrument` is an unsigned `witness_statement` \u2014 read from its execution; \u22651 paragraph linked (#329). \u{1F58B}\uFE0F\u2295\u2712\uFE0F by instrument",
+    condition: "the statement's `instrument` is an unsigned `witness_statement` \u2014 read from its execution \u2014 and every statement with that `instrument` has a paragraph of it linked (#329; the whole instrument since the NoA proof ladder, 2026-11-20). \u{1F58B}\uFE0F\u2295\u2712\uFE0F by instrument",
     history: "v3 (`witness_statements` folded into `documents` \u2014 #327/#328)"
   },
   {
@@ -88207,7 +88229,7 @@ var SYMBOLS = [
     actor: "deponent and commissioner; the drafter obtains it",
     slug: "swear-it",
     title: "Get it sworn",
-    condition: "the statement's `instrument` is an unsworn `affidavit` (`deponent` set \u21D4 instrument)",
+    condition: "the statement's `instrument` is an unsworn `affidavit` (`deponent` set \u21D4 instrument) and every statement with that `instrument` has a paragraph of it linked (NoA proof ladder, 2026-11-20). On the Notice of Application's Part 4 the affidavit's own line prints \u2712\uFE0F on the same test, \u270D\uFE0F while any of its statements has no paragraph",
     history: "v3; deponent gate \u2014 bare `sworn_on` \u2205 is true of every contract"
   },
   {
@@ -88579,6 +88601,13 @@ var PLACEMENTS = [
     line: "a document's own line",
     text: "no witness tenders this document and no admission covers it: find the tendering witness or record the admission"
   },
+  // The proof ladder's rungs print on each statement's own citation line under the fact, not on the fact's line.
+  ...["\u{1F5E3}\uFE0F", "\u{1F5D2}\uFE0F", "\u270D\uFE0F", "\u{1F4DD}", "\u{1F58B}\uFE0F", "\u2712\uFE0F"].map((glyph2) => ({
+    glyph: glyph2,
+    documents: ["Notice_of_application"],
+    line: "Part 2 citation line",
+    text: "in Part 2, the rung one witness's statement has reached, printed on that statement's own citation line beneath the fact"
+  })),
   { glyph: "\u{1F9E9}", documents: ["Witness_statement"], text: "as a whole line, no facts are attributed to this witness; after a paragraph, no fact is linked to it" },
   { glyph: "\u{1F9E9}", documents: ["General_writing"], text: "a part not written, a section with nothing in it yet, no signer chosen, or no To recipient" }
 ];
@@ -88891,8 +88920,8 @@ function authorityPinpointMarker(pinpoint) {
 function exhibitPinpointMarker(exhibitId, exhibitPinpoint) {
   return exhibitId !== null && (exhibitPinpoint === null || exhibitPinpoint === "") ? "\u{1F4CC}" : "";
 }
-function testimonyPinpointMarker(instrument, pinpoint) {
-  return instrument !== null && (pinpoint === null || pinpoint === "") ? "\u{1F9F7}" : "";
+function testimonyPinpointMarker(instrument, pinpoint, execution) {
+  return instrument !== null && execution !== null && (pinpoint === null || pinpoint === "") ? "\u{1F9F7}" : "";
 }
 function exhibitLetterIndex(letter) {
   if (!/^[A-Z]{1,2}$/.test(letter)) return -1;
@@ -89165,14 +89194,11 @@ function unsponsoredExhibitMarker(hasTender) {
 }
 function statementOfFactMarkers(row2) {
   if (isAdmittedGuard(row2.fact_court_record_linked, row2.fact_admitted_by_all_opposing)) return "";
-  const out = [];
-  if (row2.interviewed === 0) out.push("\u{1F5E3}\uFE0F");
-  if (row2.interviewed === 1 && row2.instrument_id === null) out.push("\u270D\uFE0F");
-  if (row2.instrument_id !== null && row2.instrument_execution === null) {
-    if (row2.instrument_kind === "witness_statement") out.push("\u{1F58B}\uFE0F");
-    if (row2.instrument_kind === "affidavit") out.push("\u2712\uFE0F");
-  }
-  return out.join(" ");
+  if (row2.instrument_id === null) return row2.interviewed === 0 ? "\u{1F5E3}\uFE0F" : "\u{1F5D2}\uFE0F";
+  if (row2.instrument_execution !== null || row2.instrument_kind === null) return "";
+  if (!row2.has_paragraph) return "\u270D\uFE0F";
+  if (!row2.instrument_drafted) return "\u{1F4DD}";
+  return row2.instrument_kind === "witness_statement" ? "\u{1F58B}\uFE0F" : "\u2712\uFE0F";
 }
 function classifyAdmission(row2) {
   if (row2.method === "pleading" && row2.answer === null) {
@@ -89396,6 +89422,7 @@ var CARD_ORDER = [
   "testimony-pinpoint",
   "interview",
   "draft-it",
+  "write-paragraph",
   "sign-it",
   "swear-it",
   "serve-it",
@@ -89496,7 +89523,7 @@ function recordFactStatementGlyphs(inv, glyphs, row2, factPostulate) {
     ...instrument
   });
   recordCriterionGlyphs(inv, glyphs, ["\u{1F443}"], { table: "statements_of_fact", id: row2.statement_id, item: statementItem, instance: "fact" });
-  recordGlyphs(inv, glyphs, ["\u{1F5E3}\uFE0F", "\u270D\uFE0F"], {
+  recordGlyphs(inv, glyphs, ["\u{1F5E3}\uFE0F", "\u{1F5D2}\uFE0F"], {
     table: "witnesses",
     id: row2.witness_id,
     item: row2.witness_name,
@@ -89504,7 +89531,7 @@ function recordFactStatementGlyphs(inv, glyphs, row2, factPostulate) {
     ...instrument
   });
   if (row2.instrument_id !== null) {
-    recordGlyphs(inv, glyphs, ["\u{1F58B}\uFE0F", "\u2712\uFE0F"], {
+    recordGlyphs(inv, glyphs, ["\u270D\uFE0F", "\u{1F58B}\uFE0F", "\u2712\uFE0F"], {
       table: "documents",
       id: row2.instrument_id,
       item: row2.instrument_label ?? "",
@@ -91916,15 +91943,31 @@ async function knowledgeRetire(args, seams = {}) {
 }
 
 // src/submission/forms/statement-lines.ts
+function ladderRow(s3, courtRecordLinked, admitted) {
+  return {
+    interviewed: s3.interviewed,
+    instrument_id: s3.instrument_id,
+    instrument_kind: s3.instrument_kind,
+    instrument_execution: s3.instrument_execution,
+    has_paragraph: s3.has_paragraph === 1,
+    instrument_drafted: s3.instrument_drafted === 1,
+    fact_court_record_linked: courtRecordLinked,
+    fact_admitted_by_all_opposing: admitted
+  };
+}
+function effectivePinpoint(s3) {
+  if (s3.instrument_id === null || s3.instrument_execution !== null || !s3.paragraph_numbers) return s3.pinpoint;
+  const numbers = s3.paragraph_numbers.split(",").map(Number).sort((a3, b3) => a3 - b3);
+  return numbers.length === 1 ? `para. ${numbers[0]}` : `paras. ${numbers.join(", ")}`;
+}
 function factStatementCitationLine(exhibitMap, labelMap, s3, prefix = "> ") {
   const parts = [];
+  const pinpoint = effectivePinpoint(s3);
   if (s3.instrument_id !== null) {
     const instrumentLabel = labelMap.get(s3.instrument_id);
     if (instrumentLabel !== void 0) parts.push(instrumentLabel);
-    if (s3.pinpoint) parts.push(s3.pinpoint);
-  } else if (s3.pinpoint) {
-    parts.push(s3.pinpoint);
   }
+  if (pinpoint) parts.push(pinpoint);
   if (s3.exhibit_id !== null) {
     const num2 = exhibitMap.get(s3.exhibit_id);
     const exhibitLabel = num2 !== void 0 ? `Ex. ${num2}` : labelMap.get(s3.exhibit_id);
@@ -91938,15 +91981,8 @@ function factStatementMarkers(s3, courtRecordLinked, admitted, copyMarker) {
   return dedupeLineMarkers([
     factExcerptMarker(s3),
     exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint),
-    testimonyPinpointMarker(s3.instrument_id, s3.pinpoint),
-    statementOfFactMarkers({
-      interviewed: s3.interviewed,
-      instrument_id: s3.instrument_id,
-      instrument_kind: s3.instrument_kind,
-      instrument_execution: s3.instrument_execution,
-      fact_court_record_linked: courtRecordLinked,
-      fact_admitted_by_all_opposing: admitted
-    }),
+    testimonyPinpointMarker(s3.instrument_id, s3.pinpoint, s3.instrument_execution),
+    statementOfFactMarkers(ladderRow(s3, courtRecordLinked, admitted)),
     doubtMarker(s3.doubt),
     copyMarker
   ]);
@@ -91970,6 +92006,28 @@ function fetchDocumentLabels(dbPath, documentIds) {
   const placeholders = documentIds.map(() => "?").join(",");
   const found2 = rows(dbPath, `SELECT id, label FROM documents WHERE id IN (${placeholders})`, documentIds);
   return new Map(found2.map((d3) => [d3.id, d3.label]));
+}
+function affidavitName(label2, affidavitNumber, deponentName) {
+  return deponentName ? `Affidavit${affidavitNumber ? ` #${affidavitNumber}` : ""} of ${deponentName}` : label2;
+}
+function unattachedAffidavits(selectedIds, statements) {
+  const selected = new Set(selectedIds);
+  const out = [];
+  for (const s3 of statements) {
+    if (s3.instrument_id === null || s3.instrument_kind !== "affidavit" || s3.purpose === "impeachment") continue;
+    if (!selected.has(s3.instrument_id) && !out.includes(s3.instrument_id)) out.push(s3.instrument_id);
+  }
+  return out;
+}
+function fetchCitationLabels(dbPath, documentIds) {
+  if (documentIds.length === 0) return /* @__PURE__ */ new Map();
+  const placeholders = documentIds.map(() => "?").join(",");
+  const found2 = rows(
+    dbPath,
+    `SELECT d.id, d.label, d.affidavit_number, w.name AS deponent_name FROM documents d LEFT JOIN witnesses w ON w.id = d.deponent WHERE d.id IN (${placeholders})`,
+    documentIds
+  );
+  return new Map(found2.map((d3) => [d3.id, affidavitName(d3.label, d3.affidavit_number, d3.deponent_name)]));
 }
 function fetchNotBestCopyMarkers(dbPath, proceedingId) {
   return notBestCopyMarkers(
@@ -92102,6 +92160,57 @@ function fetchFactAdmissionCoverage(dbPath, factIds, opposingIds, today3) {
   return fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today3).admittedFactIds;
 }
 
+// src/submission/forms/filing-facts.ts
+var FACTS_PART = /* @__PURE__ */ new Map([
+  ["notice_of_application", "part2"],
+  ["application_response", "part4"],
+  ["bcca_stay_response", "part2"],
+  ["bcca_factum", "part2"]
+]);
+function factsPart(kind) {
+  const part = FACTS_PART.get(kind);
+  if (part === void 0) throw new Error(`No facts Part is registered for kind ${kind}`);
+  return part;
+}
+function fetchFacts(dbPath, filingId, part) {
+  return rows(
+    dbPath,
+    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.id AS pointer_id, ff.ordinal AS filing_ordinal
+     FROM filing_facts ff
+     JOIN facts f ON f.id = ff.fact_id
+     LEFT JOIN documents cr ON cr.id = f.court_record
+     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = ?
+     ORDER BY ff.ordinal`,
+    [filingId, part]
+  );
+}
+var STATEMENT_PARAGRAPH_COLUMNS = `EXISTS(SELECT 1 FROM paragraph_statements_of_fact psf JOIN statement_paragraphs sp ON sp.id = psf.statement_paragraph_id
+              WHERE psf.statement_of_fact_id = sof.id AND sp.document_id = sof.instrument) AS has_paragraph,
+            (sof.instrument IS NOT NULL AND NOT EXISTS(
+              SELECT 1 FROM statements_of_fact o WHERE o.instrument = sof.instrument AND NOT EXISTS(
+                SELECT 1 FROM paragraph_statements_of_fact psf JOIN statement_paragraphs sp ON sp.id = psf.statement_paragraph_id
+                WHERE psf.statement_of_fact_id = o.id AND sp.document_id = o.instrument))) AS instrument_drafted,
+            (SELECT GROUP_CONCAT((SELECT COUNT(*) FROM statement_paragraphs s2
+                                  WHERE s2.document_id = sp.document_id AND (s2.ordinal < sp.ordinal OR (s2.ordinal = sp.ordinal AND s2.id <= sp.id))))
+             FROM paragraph_statements_of_fact psf JOIN statement_paragraphs sp ON sp.id = psf.statement_paragraph_id
+             WHERE psf.statement_of_fact_id = sof.id AND sp.document_id = sof.instrument) AS paragraph_numbers`;
+function fetchStatementsOfFact(dbPath, factIds) {
+  if (factIds.length === 0) return [];
+  const placeholders = factIds.map(() => "?").join(",");
+  return rows(
+    dbPath,
+    `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
+            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
+            doc.instrument AS instrument_kind, doc.execution AS instrument_execution,
+            ${STATEMENT_PARAGRAPH_COLUMNS}
+     FROM statements_of_fact sof
+     JOIN witnesses w ON w.id = sof.witness_id
+     LEFT JOIN documents doc ON doc.id = sof.instrument
+     WHERE sof.fact_id IN (${placeholders})`,
+    factIds
+  );
+}
+
 // src/submission/forms/submission-reads.ts
 function fetchSubmissions(dbPath, filingId, document2) {
   return rows(
@@ -92156,7 +92265,8 @@ function fetchFactStatements(dbPath, factIds) {
     `SELECT sof.fact_id, sof.id AS statement_id, sof.instrument AS instrument_id,
             sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
             doc.instrument AS instrument_kind, doc.execution AS instrument_execution,
-            sof.exhibit_id, sof.exhibit_excerpt, sof.exhibit_pinpoint, sof.pinpoint, sof.excerpt, sof.interviewed, sof.purpose, sof.doubt
+            sof.exhibit_id, sof.exhibit_excerpt, sof.exhibit_pinpoint, sof.pinpoint, sof.excerpt, sof.interviewed, sof.purpose, sof.doubt,
+            ${STATEMENT_PARAGRAPH_COLUMNS}
      FROM statements_of_fact sof
      JOIN witnesses w ON w.id = sof.witness_id
      LEFT JOIN documents doc ON doc.id = sof.instrument
@@ -93618,46 +93728,6 @@ function fetchOpposingPoints(dbPath, proceedingId) {
   );
 }
 
-// src/submission/forms/filing-facts.ts
-var FACTS_PART = /* @__PURE__ */ new Map([
-  ["notice_of_application", "part2"],
-  ["application_response", "part4"],
-  ["bcca_stay_response", "part2"],
-  ["bcca_factum", "part2"]
-]);
-function factsPart(kind) {
-  const part = FACTS_PART.get(kind);
-  if (part === void 0) throw new Error(`No facts Part is registered for kind ${kind}`);
-  return part;
-}
-function fetchFacts(dbPath, filingId, part) {
-  return rows(
-    dbPath,
-    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.id AS pointer_id, ff.ordinal AS filing_ordinal
-     FROM filing_facts ff
-     JOIN facts f ON f.id = ff.fact_id
-     LEFT JOIN documents cr ON cr.id = f.court_record
-     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = ?
-     ORDER BY ff.ordinal`,
-    [filingId, part]
-  );
-}
-function fetchStatementsOfFact(dbPath, factIds) {
-  if (factIds.length === 0) return [];
-  const placeholders = factIds.map(() => "?").join(",");
-  return rows(
-    dbPath,
-    `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
-            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
-            doc.instrument AS instrument_kind, doc.execution AS instrument_execution
-     FROM statements_of_fact sof
-     JOIN witnesses w ON w.id = sof.witness_id
-     LEFT JOIN documents doc ON doc.id = sof.instrument
-     WHERE sof.fact_id IN (${placeholders})`,
-    factIds
-  );
-}
-
 // src/submission/forms/filing-frontmatter.ts
 function filingFrontmatter(proceeding2, ctx, documentType) {
   const fields2 = {
@@ -93705,18 +93775,9 @@ function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFac
       const statementTokens = [];
       if (!guarded) {
         statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
-        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
+        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint, s3.instrument_execution));
       }
-      statementTokens.push(
-        statementOfFactMarkers({
-          interviewed: s3.interviewed,
-          instrument_id: s3.instrument_id,
-          instrument_kind: s3.instrument_kind,
-          instrument_execution: s3.instrument_execution,
-          fact_court_record_linked: courtRecordLinked,
-          fact_admitted_by_all_opposing: admitted
-        })
-      );
+      statementTokens.push(statementOfFactMarkers(ladderRow(s3, courtRecordLinked, admitted)));
       tokens2.push(...statementTokens);
       recordFactStatementGlyphs(
         inventory,
@@ -94763,18 +94824,9 @@ function renderApplicationResponse(ctx) {
       statementSets.push(statementTokens);
       if (!guarded) {
         statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
-        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
+        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint, s3.instrument_execution));
       }
-      statementTokens.push(
-        statementOfFactMarkers({
-          interviewed: s3.interviewed,
-          instrument_id: s3.instrument_id,
-          instrument_kind: s3.instrument_kind,
-          instrument_execution: s3.instrument_execution,
-          fact_court_record_linked: courtRecordLinked,
-          fact_admitted_by_all_opposing: admitted
-        })
-      );
+      statementTokens.push(statementOfFactMarkers(ladderRow(s3, courtRecordLinked, admitted)));
       statementTokens.push(doubtMarker(s3.doubt));
       if (s3.instrument_id !== null) statementTokens.push(copyMarkers.get(s3.instrument_id) ?? "");
       tokens2.push(...statementTokens);
@@ -95687,6 +95739,24 @@ function fetchWitnessBackedFlags(dbPath, factIds) {
   );
   return new Map(found2.map((r3) => [r3.fact_id, r3.has_statement === 1]));
 }
+function fetchAffidavitStates(dbPath, documentIds) {
+  if (documentIds.length === 0) return /* @__PURE__ */ new Map();
+  const found2 = rows(
+    dbPath,
+    `SELECT d.id, d.label, d.instrument, d.execution,
+            EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.instrument = d.id) AS has_statement,
+            EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.instrument = d.id AND NOT EXISTS(
+              SELECT 1 FROM paragraph_statements_of_fact psf JOIN statement_paragraphs sp ON sp.id = psf.statement_paragraph_id
+              WHERE psf.statement_of_fact_id = sof.id AND sp.document_id = d.id)) AS has_unwritten
+     FROM documents d WHERE d.id IN (${documentIds.map(() => "?").join(",")})`,
+    documentIds
+  );
+  return new Map(found2.map((a3) => [a3.id, a3]));
+}
+function affidavitMarker(a3) {
+  if (a3 === void 0 || a3.instrument !== "affidavit" || a3.execution !== null || a3.has_statement === 0) return "";
+  return a3.has_unwritten === 1 ? "\u270D\uFE0F" : "\u2712\uFE0F";
+}
 function renderNoticeOfApplication(ctx) {
   const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
   const applicant = ctx.parties.find((p3) => p3.is_applicant === 1) ?? ctx.parties.find((p3) => p3.is_client === 1);
@@ -95731,7 +95801,7 @@ function renderNoticeOfApplication(ctx) {
     if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
     if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
   }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const labelMap = fetchCitationLabels(ctx.dbPath, [...referencedDocIds]);
   const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
   const lines2 = [];
   lines2.push(filingFrontmatter(ctx.proceeding, ctx, "Notice_of_application"));
@@ -95825,18 +95895,9 @@ function renderNoticeOfApplication(ctx) {
       statementSets.push(statementTokens);
       if (!guarded) {
         statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
-        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
+        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint, s3.instrument_execution));
       }
-      statementTokens.push(
-        statementOfFactMarkers({
-          interviewed: s3.interviewed,
-          instrument_id: s3.instrument_id,
-          instrument_kind: s3.instrument_kind,
-          instrument_execution: s3.instrument_execution,
-          fact_court_record_linked: courtRecordLinked,
-          fact_admitted_by_all_opposing: admitted
-        })
-      );
+      statementTokens.push(statementOfFactMarkers(ladderRow(s3, courtRecordLinked, admitted)));
       statementTokens.push(doubtMarker(s3.doubt));
       if (s3.instrument_id !== null) statementTokens.push(copyMarkers.get(s3.instrument_id) ?? "");
       tokens2.push(...statementTokens);
@@ -95852,14 +95913,28 @@ function renderNoticeOfApplication(ctx) {
     stmts.forEach((s3, i3) => {
       if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
     });
-    const glyphs = printMarkerSets([dedupeLineMarkers([witnessMarker, courtRecordPin, factReview]), looseThread, ...statementSets.map(dedupeLineMarkers)]);
-    const citationLines = [
-      ...courtRecordCite ? [`> ${courtRecordCite}`] : [],
-      ...stmts.filter((s3) => s3.purpose !== "impeachment").flatMap((s3) => factStatementCitationLine(exhibitMap, labelMap, s3) ?? [])
-    ];
+    const cited2 = [];
+    if (courtRecordCite) cited2.push({ text: `> ${courtRecordCite}`, sets: [], mockupOnly: false });
+    const firstSets = [dedupeLineMarkers([witnessMarker, courtRecordPin, factReview]), looseThread];
+    stmts.forEach((s3, i3) => {
+      const set = dedupeLineMarkers(statementSets[i3]);
+      if (s3.purpose === "impeachment") {
+        firstSets.push(set);
+        return;
+      }
+      const citation = factStatementCitationLine(exhibitMap, labelMap, s3);
+      cited2.push(citation === null ? { text: `> ${s3.witness_name}`, sets: [set], mockupOnly: true } : { text: citation, sets: [set], mockupOnly: false });
+    });
+    if (cited2.length === 0 && witnessMarker) cited2.push({ text: ">", sets: [], mockupOnly: true });
+    if (cited2.length > 0) cited2[0].sets.unshift(...firstSets);
+    const postulateGlyphs = cited2.length > 0 ? "" : printMarkerSets(firstSets);
     const trace = `<!-- fact ${partNum} -->`;
-    lines2.push(`${partNum}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${citationLines.length > 0 ? "" : ` ${trace}`}`);
-    citationLines.forEach((c3, i3) => lines2.push(`   ${c3}${i3 === citationLines.length - 1 ? ` ${trace}` : ""}`));
+    lines2.push(`${partNum}. ${f3.postulate}${postulateGlyphs ? ` ${postulateGlyphs}` : ""}${cited2.length > 0 ? "" : ` ${trace}`}`);
+    cited2.forEach((c3, i3) => {
+      const glyphs = printMarkerSets(c3.sets);
+      const tail = [glyphs, i3 === cited2.length - 1 ? trace : "", c3.mockupOnly ? MOCKUP_ONLY_TAG : ""].filter(Boolean).join(" ");
+      lines2.push(`   ${c3.text}${tail ? ` ${tail}` : ""}`);
+    });
   }
   lines2.push("");
   lines2.push("## PART 3: LEGAL BASIS");
@@ -95900,6 +95975,12 @@ function renderNoticeOfApplication(ctx) {
     docs.map((d3) => d3.document_id),
     ctx.rendered.slice(0, 10)
   );
+  const unattached = unattachedAffidavits(docs.map((d3) => d3.document_id), statementsOfFact);
+  const affidavits = fetchAffidavitStates(ctx.dbPath, [...docs.map((d3) => d3.document_id), ...unattached]);
+  const affidavitDate = (id, documentDate) => {
+    const a3 = affidavits.get(id);
+    return a3?.instrument === "affidavit" ? a3.execution : documentDate;
+  };
   docs.forEach((d3, i3) => {
     const copy = copyMarkers.get(d3.document_id) ?? "";
     let tenderMarkers = "";
@@ -95909,10 +95990,17 @@ function renderNoticeOfApplication(ctx) {
     }
     const markers = [tenderMarkers, copy].filter(Boolean).join(" ");
     recordCriterionGlyphs(ctx.inventory, markers, ["\u{1F464}", "\u{1F3C6}"], { table: "documents", id: d3.document_id, item: d3.label });
-    const printed = printMarkerSets([markers]);
-    lines2.push(`${i3 + 1}. ${d3.label}${materialDateSuffix(d3.label, d3.document_date)}${printed ? ` ${printed}` : ""} <!-- document ${i3 + 1} -->`);
+    const printed = printMarkerSets([markers, affidavitMarker(affidavits.get(d3.document_id))]);
+    lines2.push(`${i3 + 1}. ${d3.label}${materialDateSuffix(d3.label, affidavitDate(d3.document_id, d3.document_date))}${printed ? ` ${printed}` : ""} <!-- document ${i3 + 1} -->`);
   });
-  STANDARD_MATERIAL_LINES.forEach((text11, i3) => lines2.push(`${docs.length + i3 + 1}. ${text11}`));
+  unattached.forEach((id, j3) => {
+    const a3 = affidavits.get(id);
+    const n3 = docs.length + j3 + 1;
+    const label2 = a3?.label ?? "";
+    const printed = printMarkerSets([affidavitMarker(a3)]);
+    lines2.push(`${n3}. ${label2}${materialDateSuffix(label2, a3?.execution ?? null)}${printed ? ` ${printed}` : ""} <!-- document ${n3} -->`);
+  });
+  STANDARD_MATERIAL_LINES.forEach((text11, i3) => lines2.push(`${docs.length + unattached.length + i3 + 1}. ${text11}`));
   lines2.push("");
   lines2.push(checkboxOrderBlock([]));
   lines2.push("");
@@ -96527,7 +96615,7 @@ var EVIDENCE = {
   id: "evidence",
   text: "Every fact is proved by evidence in hand",
   members: anyOf(
-    slugs("exhibit-excerpt", "testimony-excerpt", "exhibit-pinpoint", "testimony-pinpoint", "interview", "draft-it", "sign-it", "swear-it", "serve-it", "enter-it"),
+    slugs("exhibit-excerpt", "testimony-excerpt", "exhibit-pinpoint", "testimony-pinpoint", "interview", "draft-it", "write-paragraph", "sign-it", "swear-it", "serve-it", "enter-it"),
     glyph("\u{1F464}"),
     glyph("\u{1F443}", "fact"),
     glyph("\u{1F3C6}"),
@@ -99419,7 +99507,7 @@ function citeOf(s3) {
   const labels = /* @__PURE__ */ new Map();
   if (s3.instrument !== null && s3.instrument_label !== null) labels.set(s3.instrument, s3.instrument_label);
   if (s3.exhibit_id !== null && s3.exhibit_label !== null) labels.set(s3.exhibit_id, s3.exhibit_label);
-  const line = factStatementCitationLine(/* @__PURE__ */ new Map(), labels, { instrument_id: s3.instrument, pinpoint: s3.pinpoint, exhibit_id: s3.exhibit_id, exhibit_pinpoint: s3.exhibit_pinpoint });
+  const line = factStatementCitationLine(/* @__PURE__ */ new Map(), labels, { instrument_id: s3.instrument, instrument_execution: null, pinpoint: s3.pinpoint, paragraph_numbers: null, exhibit_id: s3.exhibit_id, exhibit_pinpoint: s3.exhibit_pinpoint });
   return line === null ? null : line.replace(/^> /, "");
 }
 function boardFacts(ctx) {
@@ -104579,6 +104667,8 @@ function unlinkedFactMarkers(f3, admitted) {
       instrument_id: null,
       instrument_kind: null,
       instrument_execution: null,
+      has_paragraph: false,
+      instrument_drafted: false,
       fact_court_record_linked: courtRecordLinked,
       fact_admitted_by_all_opposing: admitted
     }),
@@ -105087,7 +105177,7 @@ function fetchAffidavitFields(dbPath, documentIds) {
 }
 function affidavitLine(d3, a3) {
   const made = a3?.execution ?? (a3?.instrument === "affidavit" ? null : d3.document_date);
-  const who = a3?.deponent_name ? `Affidavit${a3.affidavit_number ? ` #${a3.affidavit_number}` : ""} of ${a3.deponent_name}` : d3.label;
+  const who = affidavitName(d3.label, a3?.affidavit_number ?? null, a3?.deponent_name ?? null);
   return `${who}, made ${made ? longDate(made) : "[date]"}`;
 }
 function frontmatterValue(value2) {
@@ -105181,7 +105271,7 @@ function renderForm32FiledFace(ctx, warnings) {
     if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
     if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
   }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const labelMap = fetchCitationLabels(ctx.dbPath, [...referencedDocIds]);
   const lines2 = [];
   lines2.push("---");
   const frontmatterFields = [
@@ -105289,12 +105379,14 @@ function renderForm32FiledFace(ctx, warnings) {
   lines2.push("");
   lines2.push("## Part 4");
   lines2.push("");
-  const affidavitFields = fetchAffidavitFields(ctx.dbPath, materials.map((d3) => d3.document_id));
+  const unattached = unattachedAffidavits(materials.map((d3) => d3.document_id), part2Statements);
+  const affidavitFields = fetchAffidavitFields(ctx.dbPath, [...materials.map((d3) => d3.document_id), ...unattached]);
   materials.forEach((d3) => {
     const a3 = affidavitFields.get(d3.document_id);
     if (d3.role === "affidavit" || a3?.instrument === "affidavit") lines2.push(`- ${affidavitLine(d3, a3)}`);
     else lines2.push(`- ${d3.label}${materialDateSuffix(d3.label, d3.document_date)}`);
   });
+  for (const id of unattached) lines2.push(`- ${affidavitLine({ label: labelMap.get(id) ?? "", document_date: null }, affidavitFields.get(id))}`);
   lines2.push(`- ${STANDARD_MATERIAL_LINES[0]}`);
   const names = authorityNamePattern(ctx.dbPath, ctx.filing.proceeding_id);
   if (names !== null) for (let i3 = bodyStart; i3 < lines2.length; i3++) lines2[i3] = italicizeNames(lines2[i3], names);
