@@ -1,4 +1,4 @@
-// build-stamp: 49007ade4f7e
+// build-stamp: 150c1a6ef375
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75267,7 +75267,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "49007ade4f7e";
+var BUILD_STAMP = false ? null : "150c1a6ef375";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -92026,10 +92026,12 @@ function fetchCitationLabels(dbPath, documentIds) {
   const placeholders = documentIds.map(() => "?").join(",");
   const found2 = rows(
     dbPath,
-    `SELECT d.id, d.label, d.affidavit_number, w.name AS deponent_name FROM documents d LEFT JOIN witnesses w ON w.id = d.deponent WHERE d.id IN (${placeholders})`,
+    `SELECT d.id, d.label, d.instrument, d.affidavit_number, w.name AS deponent_name FROM documents d LEFT JOIN witnesses w ON w.id = d.deponent WHERE d.id IN (${placeholders})`,
     documentIds
   );
-  return new Map(found2.map((d3) => [d3.id, affidavitName(d3.label, d3.affidavit_number, d3.deponent_name)]));
+  return new Map(
+    found2.map((d3) => [d3.id, d3.instrument === "witness_statement" ? d3.label : affidavitName(d3.label, d3.affidavit_number, d3.deponent_name)])
+  );
 }
 function fetchNotBestCopyMarkers(dbPath, proceedingId) {
   return notBestCopyMarkers(

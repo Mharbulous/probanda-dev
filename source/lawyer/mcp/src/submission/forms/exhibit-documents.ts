@@ -35,16 +35,20 @@ export function unattachedAffidavits(
 }
 
 /** fetchDocumentLabels, with each affidavit named by affidavitName: the labels a Notice of
- * Application cites its documents by. */
+ * Application cites its documents by. A witness statement also carries its witness in `deponent`
+ * but is no affidavit, so it keeps its own label; a document with a deponent and no `instrument`
+ * (a court-file affidavit) is still named as an affidavit. */
 export function fetchCitationLabels(dbPath: string, documentIds: number[]): Map<number, string> {
   if (documentIds.length === 0) return new Map();
   const placeholders = documentIds.map(() => "?").join(",");
-  const found = rows<{ id: number; label: string; affidavit_number: string | null; deponent_name: string | null }>(
+  const found = rows<{ id: number; label: string; instrument: string | null; affidavit_number: string | null; deponent_name: string | null }>(
     dbPath,
-    `SELECT d.id, d.label, d.affidavit_number, w.name AS deponent_name FROM documents d LEFT JOIN witnesses w ON w.id = d.deponent WHERE d.id IN (${placeholders})`,
+    `SELECT d.id, d.label, d.instrument, d.affidavit_number, w.name AS deponent_name FROM documents d LEFT JOIN witnesses w ON w.id = d.deponent WHERE d.id IN (${placeholders})`,
     documentIds
   );
-  return new Map(found.map((d) => [d.id, affidavitName(d.label, d.affidavit_number, d.deponent_name)]));
+  return new Map(
+    found.map((d) => [d.id, d.instrument === "witness_statement" ? d.label : affidavitName(d.label, d.affidavit_number, d.deponent_name)])
+  );
 }
 
 /** Per-document 🏆 map for one proceeding (issue #364) -- proceeding-wide, not
