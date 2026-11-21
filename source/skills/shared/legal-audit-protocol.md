@@ -292,7 +292,7 @@ else in the memo defers to further research, offers research or names a tier not
 prompt's `Review:` line is memo-reviewer's verdict on your last memo: treat each `required` item
 as required, cut each `identifiers` passage from the memo, move each `out_of_scope` passage to
 a Step 5 offer, rewrite a `Conclusion shape:` item's Conclusion to the template's rule, and rewrite
-each `findings` item as one finding or cut the item, quoting a `partial excerpt` item's
+each `findings` item as one proposition or finding or cut the item, quoting a `partial excerpt` item's
 whole paragraphs, giving a case it names as missing a tag
 that finding from the court's own reasons or cutting the case. With any `Review:` but `none`, return no
 `needs_download` or `needs_note_up`. A `Review:` with no `required` item asks only for a

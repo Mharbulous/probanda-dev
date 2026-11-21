@@ -121,9 +121,9 @@ permitted to make statements of law.
    `needs_note_up` citations, and re-invoke the agent once, without
    stopping, with the template's `Re-invocation: yes` field naming that dispatch's
    status line and every citation it did not retrieve. Then have `researcher:memo-reviewer`
-   check the memo and run each piece of research it sends back, re-invoking the agent on each
-   send-back, at most three reviews, by the doctrine's "On a held job, an open tier is not an
-   answer" and "memo-reviewer checks every memo before it is saved": each piece of research
+   and one `researcher:authority-checker` per cited case check the memo and run each piece of
+   research they send back, re-invoking the agent on each send-back, at most three reviews, by
+   the doctrine's "On a held job, an open tier is not an answer" and "memo-reviewer checks every memo before it is saved": each piece of research
    becomes a step on the held job. Then save the
    memo the loop ends on to the matter's `6. LAW\<issue>\` folder, relay its `Audit:` line and the saved memo as its file card (`shared/present-files.md`),
    never the finding in any words, and ingest what it cites. Relay nothing of the dispatches

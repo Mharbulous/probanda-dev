@@ -77,7 +77,7 @@ class ScopeTestTest(unittest.TestCase):
         step_four = flat(between(read("shared", "legal-audit-protocol.md"), "### Step 4", "### Step 5"))
         self.assertIn("cut each `identifiers` passage from the memo, move each `out_of_scope` passage to a Step 5 "
                       "offer, rewrite a `Conclusion shape:` item's Conclusion to the template's rule, and rewrite each "
-                      "`findings` item as one finding or cut the item, quoting a `partial excerpt` item's whole "
+                      "`findings` item as one proposition or finding or cut the item, quoting a `partial excerpt` item's whole "
                       "paragraphs, giving a case it names as missing a tag "
                       "that finding from the court's own reasons or cutting the case.", step_four)
         self.assertIn("With any `Review:` but `none`, return no `needs_download` or `needs_note_up`.", step_four)
@@ -253,7 +253,8 @@ class GateLoopTest(unittest.TestCase):
         self.assertIn("re-invoke the agent with `Review:` the reviewer's JSON", self.rule)
         self.assertIn("`send_back` with `identifiers` or `out_of_scope` items: to rewrite the memo without them.",
                       self.rule)
-        self.assertIn("`send_back` with `findings` items: to rewrite each as one finding, or cut the item, and to "
+        self.assertIn("`send_back` with `findings` items: to rewrite each as one proposition or finding, or cut the "
+                      "item, and to "
                       "give each case named as missing a tag that finding from that court's reasons, or cut the case.",
                       self.rule)
         self.assertIn("When the third review accepts nothing, re-invoke the agent once with it to write the memo "
@@ -270,8 +271,9 @@ class GateLoopTest(unittest.TestCase):
         self.assertNotIn("without another review", self.rule)
 
     def test_a_return_that_is_not_the_json_saves_nothing(self):
-        self.assertIn("A return that is not its JSON object (`verdict`, `required`, `out_of_scope`, `identifiers`, "
-                      "`findings`), `rules unavailable` included, saves nothing: stop and relay it verbatim.", self.rule)
+        self.assertIn("A return that is not its JSON object (memo-reviewer's `verdict`, `required`, `out_of_scope`, "
+                      "`identifiers`, `findings`, a checker's `authority`, `verdict`, `items`), `rules unavailable` "
+                      "included, saves nothing: stop and relay it verbatim.", self.rule)
         for key in ("`verdict`", "`required`", "`out_of_scope`", "`identifiers`", "`findings`"):
             self.assertIn(key, self.rule)
 
@@ -291,7 +293,7 @@ class GateLoopTest(unittest.TestCase):
     def test_re_invocation_is_yes_on_every_re_invocation(self):
         self.assertIn("`Re-invocation` is `no` on the first spawn and `yes` on every re-invocation below: `yes: review`\n"
                       "when no Chrome-mode law-getter ran for it.", self.text)
-        self.assertIn("/ yes: review\nReview: <memo-reviewer's last JSON, verbatim> / none\n", self.text)
+        self.assertIn("/ yes: review\nReview: <the last review's JSON> / none\n", self.text)
 
     def test_a_question_holds_one_question_and_is_reworded_first(self):
         rule = flat(between(self.text, "**A research question holds one question.**", "**A new question is"))

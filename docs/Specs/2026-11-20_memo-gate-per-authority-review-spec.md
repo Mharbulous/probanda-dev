@@ -23,7 +23,7 @@ Goal: in the review loop, after the research agent returns a memo and with `memo
 In `shared/legal-research.md`, "memo-reviewer checks every memo", add one paragraph:
 
 - For each return that carries a memo, the gate reads the memo's numbered items and groups them by their `Citation:` line. Each distinct case (kind `case`) is one authority; statutes, regulations, rules and doctrine are not.
-- It dispatches one `authority-checker` per authority, in one parallel batch with `memo-reviewer`, giving each the authority's citation, its decision text path(s) from `6. LAW`, every item citing it and each `inferred:` item whose `From:` list draws on it (an inferred item has no `Citation:` of its own, so it is not itself an authority). A decision not on disk is a `needs_download` for `law-getter` first, as the gate already handles.
+- It dispatches one `authority-checker` per authority, in one parallel batch with `memo-reviewer`, giving each the authority's citation, its decision text path(s) from `6. LAW` and every item citing it. **Adapted to the practitioner's ruling of 2026-11-20** (`2026-11-20_memo-item-definitions-spec.md` §4 and §9): an inferred proposition has no `From:` list. It has the normal item shape with its own `Citation:`, at the paragraph where the court applies the law, so grouping by `Citation:` already puts it with its case and the earlier `From:` handling is dropped. A checker's `court_states_it` sends the item back to be restated from the court's own words at the pinpoint it names. A decision not on disk, or a checker's `unreadable`, is a `needs_download` for `law-getter` first, as the gate already handles.
 - A round is `memo-reviewer` plus every checker. The send-back is the union of their findings: each non-`ok` verdict becomes a `findings` entry in `Review:`, `¶<n>: <why>`, naming `belongs_in` for a wrong category. The research agent then re-files each excerpt in the category the checker names, and states a proposition as `inferred:` only where the checker found the court silent or unclear. The three-review limit counts rounds.
 - A memo whose last round still has checker findings is saved `INCOMPLETE`, naming them, as the loop already does for `memo-reviewer`'s.
 - The relay says nothing of the checkers except one status line per round ("n authorities checked, m sent back") and any stop.
@@ -68,8 +68,9 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 9. Open questions
 
-- Is there a cap on parallel checker instances (a memo may cite many cases)? This spec proposes none beyond the host's.
-- Does the same gate path serve `/case-brief` or the proposition-level note-up? This spec covers research memos only.
+- Is there a cap on parallel checker instances (a memo may cite many cases)? This spec proposes none beyond the host's. **Adopted:** no cap beyond the host's.
+- Does the same gate path serve `/case-brief` or the proposition-level note-up? This spec covers research memos only. **Adopted:** research memos only.
+- How does an inferred item reach its checker without a `Citation:`? **Moot, by the practitioner's ruling of 2026-11-20** (`2026-11-20_memo-item-definitions-spec.md` §4 and §9): an inferred item carries its own `Citation:` and has no `From:` list, so the grouping rule covers it. §4 records the adaptation.
 
 ## 10. Verify against HEAD before building
 

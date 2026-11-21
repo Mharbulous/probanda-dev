@@ -274,7 +274,8 @@ class DoctrineTests(unittest.TestCase):
                 self.assertIn("whatever its other gaps", text)
                 self.assertIn("hand-off packet on an issue of the question", text)
                 self.assertNotIn("only gap", text)
-        self.assertIn("Then have `researcher:memo-reviewer` check the memo and run each piece of research it sends back",
+        self.assertIn("Then have `researcher:memo-reviewer` and one `researcher:authority-checker` per cited case "
+                      "check the memo and run each piece of research they send back",
                       flat(read(SKILL_ROOT / "SKILL.md")))
 
     def test_westlaw_unreachable_is_a_stop_never_a_canlii_fallback(self):
