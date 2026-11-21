@@ -76,3 +76,16 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - That the quoted lines in `legal-research.md` and `SKILL.md` step 5 still read as quoted.
 - That `authority-checker` and the template's Item vocabulary exist at HEAD or land first (§ related specs); this spec cannot land before `authority-checker`.
 - The test layout under `legal-research/tests/`.
+
+## 11. Verification against HEAD (6fb68892, 2026-11-20)
+
+| Check (§10) | Finding at HEAD |
+|---|---|
+| `legal-research.md` review section | Reads as quoted: "Spawn `researcher:memo-reviewer` on every return that carries a memo" and "It reviews one question at most three times" (`source/skills/shared/legal-research.md` lines 408-413). Only memo-reviewer's JSON (`verdict`, `required`, `out_of_scope`, `identifiers`, `findings`) feeds `Review:` (line 296, line 414-416). Its `findings` send-back reads "to rewrite each as one finding, or cut the item" (line 421), and `legal-audit-protocol.md` Step 4's counterpart "rewrite each `findings` item as one finding or cut the item" (line 295). |
+| `SKILL.md` step 5 | Reads as quoted: "Then have `researcher:memo-reviewer` check the memo and run each piece of research it sends back, re-invoking the agent on each send-back, at most three reviews" (`source/skills/legal-research/SKILL.md` lines 123-125). |
+| "Main session only. The gate spawns agents" | In `legal-research/SKILL.md` line 42, not in `shared/legal-research.md` as §2 says. The constraint holds either way. |
+| REGRESSION-PRONE note | `legal-research/SKILL.md` line 11, as quoted. |
+| `authority-checker` | Landed in 6fb68892: `source/researcher/agents/authority-checker.md`, shipped by `researcher`. Inputs `Matter root:`, `Authority:`, `Decision:`, `Decision text:`, `Items:` (`¶<n>`, section, sentence with its tag, pinpoint, excerpt). Returns `{authority, verdict: complete/send_back, items: [{para, verdict, why, belongs_in?, pinpoint?}], unreadable?}` or `rules unavailable: <error>`. |
+| Item vocabulary | Landed in a40b8614: `source/skills/shared/research-memo-template.md` lines 131-146. Every item, an `inferred:` one included, has the item shape with its own `Citation:` and `Kind:` lines (lines 119-126). No `From:` list exists at HEAD. |
+| memo-reviewer Rule check | Landed in 93d76aa6: `source/researcher/agents/memo-reviewer.md` step 4 reports a Rule or Explanation item that is not a proposition as a `findings` item. |
+| Test layout | `source/skills/legal-research/tests/`: one `unittest` file per concern, each reading source text from the repo root (`parents[4]`). The review loop is pinned by `test_memo_reviewer.py` (`GateLoopTest`, which quotes the `findings` send-back and the not-JSON stop verbatim), the agent by `test_authority_checker.py` with fixtures under `tests/fixtures/`. |
