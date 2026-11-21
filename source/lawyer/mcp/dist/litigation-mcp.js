@@ -1,4 +1,4 @@
-// build-stamp: 2be72ad752d1
+// build-stamp: 49007ade4f7e
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75267,7 +75267,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "2be72ad752d1";
+var BUILD_STAMP = false ? null : "49007ade4f7e";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -89695,7 +89695,9 @@ var UNATTENDED_ELIGIBLE = /* @__PURE__ */ new Map([
   ["\u2B1C", []],
   ["\u{1F464}", []],
   ["\u{1F5E3}\uFE0F", []],
+  ["\u{1F5D2}\uFE0F", []],
   ["\u270D\uFE0F", []],
+  ["\u{1F4DD}", []],
   ["\u{1F58B}\uFE0F", []],
   ["\u2712\uFE0F", []],
   ["\u{1F3BE}", []],
