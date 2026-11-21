@@ -293,7 +293,7 @@ Secondary: <title>: filed <path>, dated <marker>, from <publisher_host> / not re
 6. LAW listing and extracted text: <the listing, and the text or text path of each file extracted>
 Note-up: <citation>: <citation-checker's lines for it> / <citation>: not run: <citation-checker's status line> / none
 Re-invocation: no / yes: Westlaw did not return <citations, or none>; law-getter: <its status line, or practitioner declined> / yes: review
-Review: <memo-reviewer's last JSON, verbatim> / none
+Review: <the last review's JSON> / none
 Last status: <the saved memo's Status value> / none
 Approve: yes / no
 Note up paragraphs: <the saved memo's path>: <n>[, <n>] / none
@@ -410,20 +410,29 @@ on every return that carries a memo, with the spawn prompt's `Question:`, `Job q
 `Facts:`, `Matter:`, `Asked by:` and `Origin:` lines, `Matter root:` the matter folder's host path,
 `Memo:` the return's `Memo scratch:` path and `Notes:` its `Notes scratch:` path. It reads both
 itself. Where a save was refused and the return gives that section in place of its path, give
-that section. It reviews one question at most three times. A return that is not its
-JSON object (`verdict`, `required`, `out_of_scope`, `identifiers`, `findings`), `rules unavailable`
-included, saves nothing: stop and relay it verbatim. On the object, re-invoke the agent with
-`Review:` the reviewer's JSON:
+that section. In the same parallel batch, read the memo's numbered items, group them by
+`Citation:`, and spawn one `researcher:authority-checker` per citation of `Kind: case`, with
+`Matter root:`, `Authority:` the citation, `Decision:` and `Decision text:` its file and its
+extracted text in `6. LAW`, and `Items:` each item citing it (`¶<n>`, section, sentence with its
+tag, pinpoint, excerpt). A decision not on disk, or a checker's `unreadable`, is a
+`needs_download` run by the rule above. The batch is one review. It reviews one question at most
+three times. Of the checkers the practitioner hears only `<n> authorities checked, <m> sent back`,
+once per review. A return that is not its JSON object (memo-reviewer's `verdict`, `required`,
+`out_of_scope`, `identifiers`, `findings`, a checker's `authority`, `verdict`, `items`), `rules unavailable`
+included, saves nothing: stop and relay it verbatim. Add each checker item not `ok` to the
+reviewer's `findings` as `¶<n>: <why>`, with `file it as <belongs_in>` or `restate it from the
+court's words at <pinpoint>` where given, and make the reviewer's `verdict` `send_back` if any
+checker's is. Then re-invoke the agent with `Review:` the reviewer's JSON:
 
 - `send_back` with `required` items: each is research the Issue cannot be answered without,
   run by the rule above first.
 - `send_back` with `identifiers` or `out_of_scope` items: to rewrite the memo without them.
-- `send_back` with `findings` items: to rewrite each as one finding, or cut the item, and to
+- `send_back` with `findings` items: to rewrite each as one proposition or finding, or cut the item, and to
   give each case named as missing a tag that finding from that court's reasons, or cut the case.
 - `send_back` whose only items are `required` research this session cannot run: to name it
   in the open-issues paragraph, unless the memo already does.
 
-Spawn memo-reviewer again on each new return. Save a return only once a review accepts it:
+Run the review again on each new return. Save a return only once a review accepts it:
 `complete`, or a `send_back` whose only items are `required` research this session cannot
 run, each named in the memo's open-issues paragraph. When the
 third review accepts nothing, re-invoke the agent once with it to write the memo `INCOMPLETE`,

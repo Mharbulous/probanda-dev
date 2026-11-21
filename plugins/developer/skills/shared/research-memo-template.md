@@ -117,7 +117,7 @@ a paragraph number names one item. Each item holds one proposition or finding, f
 of one authority, in exactly this shape:
 
 ```
-<n>. <one sentence: what the excerpt says>
+<n>. <one sentence: the proposition (Rule, Explanation), or the finding (Application)>
    Authority: <style of cause or title>
    Citation: <citation>
    Kind: <case / statute / regulation / rule / doctrine>, <primary / secondary>
@@ -127,6 +127,23 @@ of one authority, in exactly this shape:
 
 The pinpoint and passage follow `shared/legal-audit-protocol.md`, "Excerpts". A point two authorities support is two items. Each item supports a sentence of a Conclusion:
 an item that supports none is out of scope (`shared/legal-audit-protocol.md` Step 4).
+
+**Item vocabulary.** Each excerpt is classified by what the court's own words in it do, and the
+item's sentence follows that category and never changes it.
+
+- **Proposition** (Rule, Explanation): the court's general statement of a rule of law. Its
+  sentence restates it in the present tense and in general terms, naming no court, party or decision.
+- **Context fact** (Application, `fact:`): a fact the court found about the case, in the past
+  tense. It states no rule and no holding.
+- **Applied law** (Application, `law-applied:`): a holding, in the past tense: the rule the court
+  applied, to which found facts, and the result.
+- **Mixed excerpt**: a paragraph doing more than one of these is cited once for each, whole each
+  time, and each sentence states only that category's content.
+- **Inferred proposition** (Rule, after the court's own propositions): where the court applies a
+  rule it states poorly or not at all, the sentence opens `inferred:` and states the rule in the
+  present tense and in general terms, and the excerpt is the whole paragraph where the court applies
+  it. It is the memo's inference, never presented as the court's own statement of the rule, and none
+  is written where the court states the rule.
 
 In every format:
 
@@ -145,12 +162,13 @@ In every format:
   verbatim if it meets rules A to D. If not, return no memo but one rewording proposal
   (`shared/legal-research.md`, "A research question holds one question").
 - A Conclusion is one paragraph. Its first sentence answers the Issue's question as asked,
-  giving no reasons, or says which part cannot yet be answered. The rest gives the reasons. It is
+  giving no reasons, or says which part cannot yet be answered. The rest gives the reasons. Each
+  reason restates a proposition in the memo's general words, says so when it is inferred, and
+  narrates no decision. It is
   followed, only where research is required (`shared/legal-audit-protocol.md` Step 4), by the
   open-issues paragraph, after the last Conclusion. It cites in parentheses and has no block quote.
 - The Rule opens with the rule itself: its first item states it.
 - The Application: one sub-section per case, its items together. Each item is one finding of
-  that court, its sentence opening `fact:` or `law-applied:` (the law applied to the facts to
-  reach a holding), from the court's own reasons (`shared/legal-audit-protocol.md` Step 2).
+  that court, its sentence opening `fact:` or `law-applied:`, from the court's own reasons (`shared/legal-audit-protocol.md` Step 2).
   Each case has at least one `fact:` item and at least one `law-applied:` item, the facts being
   those that court applied the law to.
