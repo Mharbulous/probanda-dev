@@ -39,7 +39,7 @@ test("events and holds do not hold 🧐 back", () => {
 test("🧐 is a filed-face-stripped, non-generating 1a glyph", () => {
   assert.ok(ALL_MARKER_GLYPHS.includes("🧐"), "ALL_MARKER_GLYPHS carries 🧐, so the filed face strips it");
   for (const g of WORK_MARKER_GLYPHS) assert.ok(ALL_MARKER_GLYPHS.includes(g), `${g} is in WORK_MARKER_GLYPHS but not ALL_MARKER_GLYPHS`);
-  assert.equal(WORK_MARKER_GLYPHS.length, 31, "work-markers.md table 1a holds 31 work glyphs");
+  assert.equal(WORK_MARKER_GLYPHS.length, 33, "work-markers.md table 1a holds 33 work glyphs");
   assert.ok(NON_GENERATING_GLYPHS.includes("🧐"));
   assert.equal(GLYPH_SLUGS.has("🧐"), false, "🧐 generates no Proposal");
 });
