@@ -28,7 +28,8 @@ const writes = await import("../build/tools/practice/writes.js");
 const { awaitBackgroundJobs } = await import("../build/submission/render-job.js");
 const { readBoardData, ASHBOURNE } = await import("./fixtures/forms-render-seeds.mjs");
 
-/** The local minute `minutes` before now, as the server stamps it. */
+/** The local minute `minutes` before now, as the server stamps it. A held stamp stays at least one
+ * minute short of the lapse, so a minute boundary between the stamp and the read cannot lapse it. */
 function ago(minutes, sep = "T") {
   const d = new Date(Date.now() - minutes * 60_000);
   const two = (n) => String(n).padStart(2, "0");
@@ -152,7 +153,7 @@ test("closing a Writing whose only wip job has lapsed is not blocked, and supers
 
 test("a job held under 60 minutes still refuses the close", async (t) => {
   const m = await fixture(t);
-  await stamp(m.dbPath, 2, 59);
+  await stamp(m.dbPath, 2, 58);
   await stamp(m.dbPath, 3, 61);
   const { readFirst, script } = retirement();
   assert.deepEqual(query(m.dbPath, readFirst).map((r) => r.id), [2]);
@@ -161,13 +162,22 @@ test("a job held under 60 minutes still refuses the close", async (t) => {
   assert.equal(row(m.dbPath, 2).status, "wip");
 });
 
-test("heldClause, the server's held test, reads a lock idle 59 minutes as held and one idle 61 minutes as not", async (t) => {
+test("heldClause, the server's held test, reads a lock idle 58 minutes as held and one idle 61 minutes as not", async (t) => {
   const m = await fixture(t);
-  await stamp(m.dbPath, 2, 59);
+  await stamp(m.dbPath, 2, 58);
   await stamp(m.dbPath, 3, 61);
   assert.deepEqual(query(m.dbPath, `SELECT id FROM tickets WHERE ${heldClause(m.dbPath)} ORDER BY id`), [{ id: 2 }]);
   const { readFirst } = retirement();
   assert.deepEqual(query(m.dbPath, readFirst).map((r) => r.id), [2], "the skills' held test agrees");
+});
+
+test("heldClause's held case still reads held when the read lands in the next clock minute", async (t) => {
+  const m = await fixture(t);
+  await stamp(m.dbPath, 2, 58);
+  await stamp(m.dbPath, 3, 61);
+  const later = Date.now() + 60_000;
+  t.mock.method(Date, "now", () => later);
+  assert.deepEqual(query(m.dbPath, `SELECT id FROM tickets WHERE ${heldClause(m.dbPath)} ORDER BY id`), [{ id: 2 }]);
 });
 
 test("a render that writes pages leaves another session's lapsed lock on its row", async (t) => {
