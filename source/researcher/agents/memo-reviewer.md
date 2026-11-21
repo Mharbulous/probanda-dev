@@ -5,7 +5,7 @@ description: >
   it. Applies the scope test to each Conclusion sentence, each numbered item and each piece of open
   research: research the Issue cannot be answered without is sent back, and so is text answering a
   question the Issue does not ask. Also sends back anything of the working matter, and an Issue, Conclusion,
-  Application finding or excerpt that breaks the template's rules.
+  Rule item, Application finding or excerpt that breaks the template's rules.
   Returns strict JSON. Read-only: writes nothing and states no law. Dispatched by the
   /legal-research gate, once per memo it returns.
 model: opus
@@ -40,11 +40,14 @@ Before reviewing, read with `skill_source__read` (in a Cowork Project session it
 
 1. Test the memo's Issue by the template's rules A to D, whatever its source: an Issue that fails one is an `identifiers` item, `Issue: <its words>`.
 2. Apply Step 4's scope test and the template's rule on what an item supports to each Conclusion sentence, each numbered item and each piece of research the memo or the notes leave open (each question in the open-issues paragraph and each `gap:` line). Research already run is never `required`: where it found nothing, `No authority located in <the tiers searched>.` is the answer.
-   - A Conclusion sentence or a numbered item out of scope: an `out_of_scope` item, the sentence's words or `¶<n>: <its words>`. A Conclusion whose first sentence or shape breaks the template's rule for it: an `out_of_scope` item, `Conclusion shape: <its first words>`.
+   - A Conclusion sentence or a numbered item out of scope: an `out_of_scope` item, the sentence's words or `¶<n>: <its words>`. A Conclusion whose first sentence, shape or reasons break the template's rule for it (a reason that narrates a decision, or states an inferred proposition without saying so, included): an `out_of_scope` item for each break, `Conclusion shape: <the words that break it>`.
    - Research required: a `required` item, with the issue, the research that would close it in one of the tier forms of Step 4's `gap:` line, and one line on why the Issue cannot be answered without it.
    - Research not required: an `out_of_scope` item, quoting the memo's words, when the memo itself raises it, and nothing when only a `gap:` line or a Step 5 offer raises it.
 3. Quote from the memo each party, counsel, practitioner, matter number, date, amount or document of the working matter it names, and each fact of the working matter it states: an `identifiers` item each. Here too, quote words from a numbered item as `¶<n>: <its words>`, so the gate can name the item.
-4. Quote each Application item that holds more than one finding, or that is neither a finding of fact nor the law applied to the facts by that item's court (`shared/research-memo-template.md`): a `findings` item each, `¶<n>: <its words>`.
+4. Quote each numbered item that breaks the Item vocabulary of `shared/research-memo-template.md` for its section: a `findings` item each, `¶<n>: <its words>`. That is:
+   - An Application item that holds more than one finding, or that is neither a finding of fact nor the law applied to the facts by that item's court.
+   - A Rule or Explanation item whose sentence is not a proposition: it names a particular court, judge, counsel, party or decision, says what anyone held, stated, found, adopted, recited or relayed, or states a fact found or a holding.
+   - An `inferred:` item outside the Rule, before one of the court's own propositions in the Rule, or whose sentence fails the same test.
    - A case in Application with no `fact:` item or no `law-applied:` item: a `findings` item, `<the case>: no <the missing tag> item`.
    - Any numbered item whose case excerpt or pinpoint is a sub-paragraph or part of a paragraph (`shared/legal-audit-protocol.md`, "Excerpts"): a `findings` item, `¶<n>: partial excerpt`.
 

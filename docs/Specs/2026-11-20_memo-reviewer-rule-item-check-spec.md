@@ -17,7 +17,11 @@ Status: proposed, 2026-11-20 (revised the same day after the practitioner's clar
 
 ## 3. Goal and non-goals
 
-Goal: `memo-reviewer` sends back (a) every Rule or Explanation item whose sentence reads as a context fact or applied law, or narrates a court, instead of a proposition; (b) every `inferred:` item that cites no `From:` items, cites one that does not exist or is not a `fact:` or `law-applied:` item, or sits before the court's own propositions; and (c) a Conclusion whose reasons narrate decisions. Non-goals: reading decisions or deciding what an excerpt does in the court's words (the `authority-checker`); defining the terms (the definitions spec); changing the review limit or the JSON shape.
+Goal: `memo-reviewer` sends back (a) every Rule or Explanation item whose sentence reads as a context fact or applied law, or narrates a court, instead of a proposition; (b) every `inferred:` item that cites no `From:` items, cites one that does not exist or is not a `fact:` or `law-applied:` item, or sits before the court's own propositions; and (c) a Conclusion whose reasons narrate decisions.
+
+**Adapted to the practitioner's ruling of 2026-11-20** (definitions spec §4, §9), which overrides this spec where they differ: an inferred proposition has no `From:` list. It has the normal item shape, its excerpt is the whole paragraph where the court applies the law, and its sentence opens `inferred:` and states the rule in general terms, in the present tense, after the court's own propositions. Goal (b) is therefore: send back an `inferred:` item that is outside the Rule, that precedes one of the court's own propositions in the Rule, or whose sentence is not a general proposition by the same surface test as other Rule items. Every `From:` check is dropped.
+
+Non-goals: reading decisions or deciding what an excerpt does in the court's words (the `authority-checker`); defining the terms (the definitions spec); changing the review limit or the JSON shape.
 
 ## 4. Design
 
@@ -26,6 +30,12 @@ Add one step to the Review list, after step 4:
 5. Quote each Rule and Explanation item whose sentence is not a proposition as the template's Item vocabulary defines it, because it names a court, judge, counsel, party or decision, says what anyone held, stated, found, adopted, recited or relayed, or states a fact found or a holding: a `findings` item, `¶<n>: <its words>`, noting it reads as a context fact or applied law. Quote each `inferred:` item that has no `From:` list, whose `From:` names an item that does not exist or is not a `fact:` or `law-applied:` item, or that precedes a court's proposition: a `findings` item, `¶<n>: <its words>`. Quote, as an `out_of_scope` item `Conclusion narrates: <its words>`, each Conclusion sentence that narrates a decision's facts or procedure rather than restating a proposition with its pinpoint, and each inferred proposition the Conclusion states without saying it is inferred.
 
 The step names the template block by reference and copies no definition. The description line gains "Rule item" beside "Application finding". The `Memo:` input line stays.
+
+**As built (2026-11-20).** Streamlined into the existing steps instead of a new step 5, after the ruling above:
+
+- Step 4 now opens "Quote each numbered item that breaks the Item vocabulary of `shared/research-memo-template.md` for its section", and lists three cases: the Application test as before, a Rule or Explanation item whose sentence is not a proposition (the surface test above, naming a *particular* court, judge, counsel, party or decision, so that "a court may" passes), and an `inferred:` item outside the Rule, before one of the court's own propositions, or whose sentence fails the same test. No `From:` check.
+- The narrating Conclusion is folded into step 2's existing `Conclusion shape:` item rather than a new `Conclusion narrates:` label: a Conclusion whose first sentence, shape or reasons break the template's rule (a reason that narrates a decision, or states an inferred proposition without saying so, included) is an `out_of_scope` item for each break, `Conclusion shape: <the words that break it>`. `shared/legal-audit-protocol.md` Step 4 already tells the audit to rewrite a `Conclusion shape:` item's Conclusion to the template's rule, so no new label needs a matching rewrite instruction there.
+- The description gains "Rule item". The `findings` entry keeps its `¶<n>: <its words>` shape, with no "reads as a context fact" note, so the JSON shape is unchanged.
 
 This is a surface check from the memo's words alone. Whether an excerpt is in the right category in the court's words, and whether the cited paragraphs support the item, is the `authority-checker`'s.
 
@@ -61,9 +71,9 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 9. Open questions
 
-- Is a Conclusion that narrates reported through `out_of_scope` (as above) or through `findings`? This spec proposes `out_of_scope`, beside the existing `Conclusion shape` entry.
-- Should this reviewer also judge whether an inferred proposition follows from its `From:` items (a logic check on the memo's own words, stating no law), or is that left to the practitioner? This spec proposes the reviewer flags it only when the proposition adds a condition no `From:` item mentions.
-- Is the Conclusion test conditional on the definitions spec's answer to whether reasons may mention a decision's facts?
+- Is a Conclusion that narrates reported through `out_of_scope` (as above) or through `findings`? This spec proposes `out_of_scope`, beside the existing `Conclusion shape` entry. **Adopted, 2026-11-20:** `out_of_scope`, under the existing `Conclusion shape:` label (§4, "As built").
+- Should this reviewer also judge whether an inferred proposition follows from its `From:` items (a logic check on the memo's own words, stating no law), or is that left to the practitioner? This spec proposes the reviewer flags it only when the proposition adds a condition no `From:` item mentions. **Fallen away, 2026-11-20:** under the practitioner's ruling an inferred proposition has no `From:` list. Whether its paragraph supports it is the `authority-checker`'s.
+- Is the Conclusion test conditional on the definitions spec's answer to whether reasons may mention a decision's facts? **Settled, 2026-11-20:** no. The template now says each reason "narrates no decision", so the test applies unconditionally.
 
 ## 10. Verify against HEAD before building
 

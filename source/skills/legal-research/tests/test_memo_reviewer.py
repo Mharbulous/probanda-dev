@@ -149,15 +149,39 @@ class AgentContractTest(unittest.TestCase):
                       "sentence, each numbered item and each piece of research", body)
         self.assertIn("A Conclusion sentence or a numbered item out of scope: an `out_of_scope` item, the sentence's "
                       "words or `¶<n>: <its words>`.", body)
-        self.assertIn("A Conclusion whose first sentence or shape breaks the template's rule for it: an "
-                      "`out_of_scope` item, `Conclusion shape: <its first words>`.", body)
+        self.assertIn("A Conclusion whose first sentence, shape or reasons break the template's rule for it (a reason "
+                      "that narrates a decision, or states an inferred proposition without saying so, included): an "
+                      "`out_of_scope` item for each break, `Conclusion shape: <the words that break it>`.", body)
         self.assertNotIn("beyond the Issue", body)
         self.assertNotIn("can the Issue, as framed, be answered without it?", body)
         self.assertIn("You judge only what the Issue asks, whether a passage answers that", body)
         self.assertIn("The verdict is `send_back` when `required`, `out_of_scope`, `identifiers` or `findings` holds "
                       "anything", body)
-        self.assertIn("Quote each Application item that holds more than one finding, or that is neither a finding of "
-                      "fact nor the law applied to the facts by that item's court", body)
+        self.assertIn("An Application item that holds more than one finding, or that is neither a finding of "
+                      "fact nor the law applied to the facts by that item's court.", body)
+
+    def test_every_rule_item_is_tested_against_the_item_vocabulary(self):
+        # Step 4 tests each numbered item against the template's Item vocabulary by reference, so the
+        # definitions live only in the template. A Rule item that narrates a court, and an inferred
+        # item out of place or not general, are findings; an inferred item has no From: list.
+        body = flat(self.agent)
+        self.assertIn("4. Quote each numbered item that breaks the Item vocabulary of "
+                      "`shared/research-memo-template.md` for its section: a `findings` item each, `¶<n>: <its words>`.",
+                      body)
+        self.assertIn("A Rule or Explanation item whose sentence is not a proposition: it names a particular court, "
+                      "judge, counsel, party or decision, says what anyone held, stated, found, adopted, recited or "
+                      "relayed, or states a fact found or a holding.", body)
+        self.assertIn("An `inferred:` item outside the Rule, before one of the court's own propositions in the Rule, "
+                      "or whose sentence fails the same test.", body)
+        self.assertIn("Rule item, Application finding or excerpt that breaks the template's rules", flat(self.front))
+        self.assertNotIn("From:", self.agent)
+        template = flat(read("shared", "research-memo-template.md"))
+        self.assertIn("**Item vocabulary.**", template)
+        # The agent cites the block and copies none of its definitions.
+        for definition in ("**Proposition**", "**Context fact**", "**Applied law**", "**Inferred proposition**",
+                           "the court's general statement of a rule of law"):
+            self.assertIn(definition, template)
+            self.assertNotIn(definition, self.agent)
 
     def test_an_unpaired_case_is_a_findings_item(self):
         # A case cited in Application by a fact: item alone, or a law-applied: item alone, is
