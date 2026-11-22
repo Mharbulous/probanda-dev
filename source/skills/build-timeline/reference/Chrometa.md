@@ -10,7 +10,7 @@ Invoking that query also bypasses **Step 1** (resolve target range) — the rang
 
 **Fixed range.** Local `[2019-01-01T00:00:00, 2020-04-01T00:00:00)` in `probanda.json → time_tracking.timezone` (default `"America/Vancouver"`), converted to UTC the same way Step 1 converts a requested date. `source:chrometa:ranges` is set to this full window, not just the dates that happen to have rows — so a later coverage check knows the window was checked, not merely un-fetched. The export's actual data extent (2019-01-02 to 2020-02-14) is narrower than the nominal window; the sibling March 2020 monthly export exists but is empty (headers only on every sheet) — the consolidated file is complete for the window, no second file is needed.
 
-**Source file:** `C:\Users\Brahm\Sync\ADMIN\TIME TRACKING\Chrometa Time Records\Consolidated Time Summaries.xlsx`, sheet `Sheet2`. If the file is missing, unreadable, or the sheet is absent, fail clearly — this query is explicit and on-demand, never silently degraded the way an automatic per-date fetch is allowed to skip a source.
+**Source file:** `%USERPROFILE%\Sync\ADMIN\TIME TRACKING\Chrometa Time Records\Consolidated Time Summaries.xlsx`, sheet `Sheet2`. If the file is missing, unreadable, or the sheet is absent, fail clearly — this query is explicit and on-demand, never silently degraded the way an automatic per-date fetch is allowed to skip a source.
 
 ## Source columns
 

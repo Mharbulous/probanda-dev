@@ -32,9 +32,13 @@ NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 RNS = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
 PKG_RELS = "{http://schemas.openxmlformats.org/package/2006/relationships}"
 
-DEFAULT_XLSX = (
-    r"C:\Users\Brahm\Sync\ADMIN\TIME TRACKING\Chrometa Time Records"
-    r"\Consolidated Time Summaries.xlsx"
+DEFAULT_XLSX = os.path.join(
+    os.path.expanduser("~"),
+    "Sync",
+    "ADMIN",
+    "TIME TRACKING",
+    "Chrometa Time Records",
+    "Consolidated Time Summaries.xlsx",
 )
 DEFAULT_SHEET = "Sheet2"
 DEFAULT_TIMEZONE = "America/Vancouver"
@@ -84,7 +88,7 @@ def read_shared_strings(zf):
         return []
     out = []
     with zf.open("xl/sharedStrings.xml") as fh:
-        for _, el in ET.iterparse(fh, events=("end",)):
+        for _, el in ET.iterparse(fh, events=("end",)):  # nosec B314
             if el.tag == NS + "si":
                 out.append("".join(t.text or "" for t in el.iter(NS + "t")))
                 el.clear()
@@ -93,8 +97,8 @@ def read_shared_strings(zf):
 
 def find_sheet_part(zf, sheet_name):
     """Map a sheet's display name to its part path via workbook.xml + rels."""
-    book = ET.fromstring(zf.read("xl/workbook.xml"))
-    rels = ET.fromstring(zf.read("xl/_rels/workbook.xml.rels"))
+    book = ET.fromstring(zf.read("xl/workbook.xml"))  # nosec B314
+    rels = ET.fromstring(zf.read("xl/_rels/workbook.xml.rels"))  # nosec B314
     targets = {r.get("Id"): r.get("Target") for r in rels.iter(PKG_RELS + "Relationship")}
     for sheet in book.iter(NS + "sheet"):
         if sheet.get("name") == sheet_name:
@@ -167,7 +171,7 @@ def parse_rows(zf, sheet_part, shared, zone):
     footer_skipped = 0
     records = []
     with zf.open(sheet_part) as fh:
-        for _, el in ET.iterparse(fh, events=("end",)):
+        for _, el in ET.iterparse(fh, events=("end",)):  # nosec B314
             if el.tag != NS + "row":
                 continue
             row_no = int(el.get("r"))
@@ -195,7 +199,9 @@ def parse_rows(zf, sheet_part, shared, zone):
             # the `:` id separator, so the composite is hashed, not embedded.
             composite = "%s|%s|%s|%s" % (start_ts, end_ts, activity, client)
             records.append({
-                "native_id": hashlib.sha1(composite.encode("utf-8")).hexdigest()[:16],
+                "native_id": hashlib.sha1(
+                    composite.encode("utf-8"), usedforsecurity=False
+                ).hexdigest()[:16],
                 "start_local": start_local,
                 "end_local": end_local,
                 "start_ts": start_ts,
