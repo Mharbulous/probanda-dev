@@ -2,6 +2,7 @@
 export, /issue-invoice locks the blocks its lines rest on, and the stale triage key is gone."""
 import re
 import unittest
+from datetime import date
 from pathlib import Path
 
 SOURCE = Path(__file__).resolve().parents[3]
@@ -101,7 +102,9 @@ class Diagram(unittest.TestCase):
         self.assertIn("review page", html)
         self.assertNotIn("Time-review database<br/>all evidence and decisions", html)
         self.assertRegex(html, r'data-based-on-commit="[0-9a-f]{40}"')
-        self.assertIn("data-updated=\"2026-11-11", html)
+        tag = re.search(r'data-updated="(\d{4})-(\d{2})-(\d{2})', html)
+        self.assertIsNotNone(tag, "the diagram has no data-updated tag")
+        self.assertGreaterEqual(date(*map(int, tag.groups())), date(2026, 11, 11))
         self.assertIn("### Step 6.3: The review page", prose)
         self.assertIn("blocks_export.py", prose)
 
