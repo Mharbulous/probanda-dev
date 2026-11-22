@@ -2,8 +2,16 @@
 name: ar-follow-up
 disable-model-invocation: true
 description: >
-  Track accounts receivable and flag clients needing a money conversation — outstanding invoices,
-  depleted retainers, and upcoming retainer top-ups.
+  Use when tracking accounts receivable or checking what clients owe —
+  consolidates unpaid invoices, unbilled WIP, depleted retainers, and upcoming
+  court-date retainer top-ups into one prioritized ask per client.
+metadata:
+  author: Probanda
+  tags:
+    - billing
+    - accounts-receivable
+    - retainers
+    - legal-practice
 ---
 
 <!-- billing v0.7.3 -->
@@ -22,242 +30,214 @@ description: >
 
 | Section | Read when |
 |---|---|
-| Design Principles | Always |
-| Data Sources (Read-Only) | Before querying any upstream data, or when a source is missing |
+| Purpose & Design Principles | Always |
+| Prerequisites & Data Sources | Before querying upstream data, or when a source is missing |
 | Owned State: Payment-in-Flight | Recording a payment-in-flight, or applying suppression and the clearing window |
-| Workflow: Generate AR List | The practitioner asks who needs a money conversation, or asks for the AR list |
-| Workflow: Record Payment-in-Flight | The practitioner says a client has sent payment |
-| Workflow: Check Single Client | The practitioner asks what a client owes, or for a file's financial picture |
-| Queries | Mapping a practitioner question to the workflow or operation to run |
+| Instructions | Running the AR list, recording payment-in-flight, checking one client, or mapping queries |
+| Examples | Formatting the AR list or a single-client breakdown |
 | Integration with Other Skills | Before relying on another skill's data |
+| Limitations & Troubleshooting | When a source is missing, a write fails, or a request is out of scope |
 | Anti-Patterns | Always, before presenting any result |
 
 # AR Follow-Up
 
+## Purpose
+
 Produce a prioritized list of clients who need a money conversation, consolidating all outstanding amounts into a single ask per client, timed to the court calendar.
 
-## Design Principles
+Read `vision.md` for the full design philosophy. Five principles govern every output:
 
-Read `vision.md` for the full design philosophy. The five principles that govern every output:
-
-1. **One Conversation, One Number** — Never surface a client for just one component when other amounts are outstanding. Consolidate invoices + WIP + retainer shortfall + court-date increases into one total.
+1. **One Conversation, One Number** — Never surface a client for one component when other amounts are outstanding. Consolidate invoices + WIP + retainer shortfall + court-date increases into one total.
 2. **Time the Ask to the Calendar** — Prioritize by court date proximity, not amount owed.
 3. **Suppress During Clearing** — When payment-in-flight is recorded, suppress all reminders for that client until cleared or expired.
 4. **Advise on Policy, Not Exceptions** — State what retainer policy requires. Never advise whether to make exceptions.
 5. **Show the Math** — Every recommendation cites its components so the practitioner can verify before calling.
 
-## Data Sources (Read-Only)
+## Prerequisites
 
-This skill reads from upstream skills via ``practice-data``. It does not own or modify upstream data.
+This skill reads upstream data exclusively via ``practice-data`` operations (it never connects to a database or parses accounting CSVs directly) and owns payment-in-flight tracking via ``practice-data``'s `manage-payment-in-flight` operation.
 
-| Source | What it provides |
-|--------|-----------------|
+| Upstream Source | What it provides |
+|---|---|
 | retainer-tracking | Current trust balance per matter |
-| `ar-data` | WIP hours per matter, counting time since that matter's billing cutoff |
+| `ar-data` | WIP hours per matter since that matter's billing cutoff |
 | docket-clerk (agent) | Upcoming court dates |
 | invoice-tracking | Outstanding invoices |
 
-All data accessed via ``practice-data`` operations — this skill never connects to the database directly.
-
-**Graceful degradation:** When upstream data is unavailable (not yet initialized, no rows, or skill not yet implemented), include what is available and note what is missing. Never fail entirely because one source is absent. Example: if no court dates exist, skip calendar-based prioritization and fall back to amount-based ordering, noting "Court date data unavailable — prioritized by amount only."
+**Graceful degradation:** When an upstream source is unavailable (not yet initialized, no rows, or not yet implemented), include available data and note what is missing. Never fail entirely because one source is absent (e.g., if court dates are unavailable, fall back to retainer status and amount ordering and note `"Court date data unavailable — prioritized by retainer status and amount only."`).
 
 ## Owned State: Payment-in-Flight
 
-This skill owns payment-in-flight tracking via ``practice-data``'s `manage-payment-in-flight` operation. Payment items are defined by ``practice-data``.
+Payment-in-flight records are managed through ``practice-data``'s `manage-payment-in-flight` operation.
 
-**If recording a payment-in-flight fails:** nothing was saved. If Probanda's Cloud refused it, relay its question to the practitioner; if the cloud could not be reached, say so, and skip suppression logic for that payment. The AR list still functions — it just cannot suppress clients with pending payments.
+- **Default clearing window:** **5 business days** from `recorded_at` (practitioner can override when recording).
+- **Expiry:** A payment-in-flight expires and the client resurfaces when:
+  - The clearing window elapses before a deposit is confirmed, OR
+  - The next retainer-tracking CSV import shows the deposit (retainer-tracking confirms; this skill does not verify deposits).
 
-### Clearing Window
+## Instructions
 
-Default clearing window: **5 business days** from `recorded_at`. The practitioner can override when recording.
+### Generate AR List
 
-A payment-in-flight expires (and the client resurfaces) when:
-- The clearing window passes without confirmation, OR
-- The next retainer-tracking CSV import shows the deposit (retainer-tracking confirms; this skill does not verify deposits)
+1. Query upstream data sources via ``practice-data``
+2. Build a consolidated record for each client with any outstanding amount
+3. Apply retainer policy rules and payment-in-flight suppression
+4. Prioritize the list by court-date urgency
+5. Present results with component math and suppressed clients listed at the bottom
 
-## Workflow: Generate AR List
+#### Step 1: Query Data Sources
 
-1. Query each data source (see queries below)
-2. For each client with any outstanding amount, build a consolidated record
-3. Apply payment-in-flight suppression
-4. Prioritize the list
-5. Present results
+Invoke ``practice-data`` `ar-data` to retrieve all non-closed billable matters (funded or not — it does not filter by trust balance) with:
+- Matter description, identifiers, client name, and client number
+- Trust balance and last update date (presented as positive numbers; zero = depleted, non-zero = funded; confirm sign convention via ``practice-data``)
+- WIP hours and entry count since the matter's billing cutoff, plus `cutoff_date` and `cutoff_source` (`date_to`, `issue_date`, or null when no invoices exist)
+- Payment-in-flight status (amount, recorded date, expected clearing date); if unavailable, set a flag to skip suppression
 
-### Step 1: Query Data Sources
+#### Step 2: Build Consolidated Client Records
 
-Invoke ``practice-data`` `ar-data` operation to retrieve all non-closed matters with:
-- Matter description and identifiers
-- Client name and number
-- Trust balance and last update date
-- WIP hours and entry count, counting only time since the matter's billing cutoff
-- The billing cutoff used (`cutoff_date`) and where it came from (`cutoff_source`: `date_to`, `issue_date`, or null when the matter has no invoices on record)
-- Payment-in-flight status (amount, recorded date, expected clearing date)
-
-The operation returns every non-closed billable matter, funded or not. It does not filter by trust balance. Sorting matters into funded, low and depleted happens in Steps 3 and 4, from each matter's trust balance. If payment-in-flight data is unavailable, the operation returns results without it — set a flag so suppression logic is skipped.
-
-**Sign convention:** Trust balances are presented as positive numbers to the user. A zero balance means depleted; a non-zero balance means funded. Check the sign convention via ``practice-data``.
-
-### Step 2: Build Consolidated Client Records
-
-Group all data by client. For each client, compute:
+Group by client and compute:
 
 | Component | Source | Calculation |
-|-----------|--------|-------------|
+|---|---|---|
 | Outstanding invoices | invoice-tracking | Sum of unpaid invoice amounts |
-| Unbilled WIP | `ar-data` | Hours since the billing cutoff × hourly rate (ask practitioner for rate if unknown) |
+| Unbilled WIP | `ar-data` | Hours since billing cutoff × hourly rate (ask practitioner if rate unknown) |
 | Current trust balance | retainer-tracking | Amount currently held in trust |
 | Retainer shortfall | Retainer policy | Required retainer minus current trust balance |
 | Court-date increase | docket-clerk (agent) | Additional retainer required for upcoming hearing/trial |
 | **Total ask** | All above | Outstanding invoices + unbilled WIP + retainer shortfall + court-date increase |
 
-If a component is unavailable, omit it from the total and note it in the output.
+Omit unavailable components from the total and note them. Always state the WIP period (`cutoff_date`):
+- If `cutoff_source` is `issue_date`, add: `"Cutoff based on invoice issue date — actual billing period end may differ."`
+- If cutoff is null, add: `"no invoices on record, all time shown"`.
 
-**Unbilled WIP states its period.** Show the WIP figure with the date it runs from (`cutoff_date`). When `cutoff_source` is `issue_date`, add: "Cutoff based on invoice issue date — actual billing period end may differ." When the cutoff is null, add: "no invoices on record, all time shown".
+#### Step 3: Retainer Policy Rules
 
-### Step 3: Retainer Policy Rules
+Apply BC litigation retainer defaults (practitioner can override any threshold per matter):
 
-Apply BC litigation retainer policy to determine required retainer level. These defaults reflect typical BC Supreme Court timelines — the practitioner can override any threshold per matter.
+| Upcoming event | Default requirement | Request window | Due by | Rationale |
+|---|---|---|---|---|
+| Trial | Practitioner-defined per matter (no default — ask) | 120+ days before trial | 90 days before trial | 90-day window allows withdrawal application if unfunded; 120-day request gives 30 days to clear |
+| Hearing (per day) | CAD 5,000/hearing-day | 28+ days before hearing | 14 days before hearing | 14-day due date allows 10-business-day clearing plus buffer |
+| No upcoming dates | CAD 3,000 base retainer | When trust reaches CAD 0 | Ongoing | Covers routine disbursements and 10–15 hours of work |
 
-| Upcoming event | Default retainer requirement | Request window | Due by | Rationale |
-|---------------|----------------------------|----------------|--------|-----------|
-| Trial | Practitioner-defined per matter (no default — ask) | 120+ days before trial | 90 days before trial | 90-day window allows time for withdrawal application if client does not fund; 120-day request gives 30 days for the client to respond and funds to clear |
-| Hearing (per day) | $5,000/hearing-day | 28+ days before hearing | 14 days before hearing | 14-day due date allows a 10-business-day clearing window plus buffer; 28-day request gives the client 14 days to act |
-| No upcoming dates | $3,000 base retainer (practitioner-adjustable) | When trust reaches $0 | Ongoing | Minimum working retainer to cover routine disbursements and 10-15 hours of work at typical rates |
+If no per-matter trial retainer is set, do not guess — ask: `"Trial retainer amount not set for [matter]. What amount should I use for future calculations?"`
 
-**When the practitioner has not set a per-matter trial retainer amount:** prompt them to specify one rather than guessing. State: "Trial retainer amount not set for [matter]. What amount should I use for future calculations?"
+State the applicable policy (never advise on exceptions):
+- **Retainer funded, no action needed** — trust covers requirements
+- **Retainer low, replenishment recommended** — below required level, work can continue
+- **Retainer depleted, policy requires cease work** — `regular_trust = 0`, no payment in flight
+- **Consider withdrawal** — retainer depleted and client unresponsive to prior requests
 
-**Policy advisory** — based on the financial picture, state the applicable policy:
+#### Step 4: Prioritization
 
-- **Retainer funded, no action needed** — trust balance covers requirements
-- **Retainer low, replenishment recommended** — trust balance below required level but work can continue
-- **Retainer depleted, policy requires cease work** — `regular_trust = 0`, no payment in flight. State the policy; do not advise on exceptions.
-- **Consider withdrawal** — retainer depleted AND client unresponsive to prior requests. State policy only.
-
-### Step 4: Prioritization
-
-Rank clients by urgency, not amount. Calendar proximity always outranks dollar amounts — a $3,000 shortfall with a hearing in 2 weeks outranks a $10,000 balance with no upcoming dates.
+Calendar proximity always outranks dollar amounts (e.g., a CAD 3,000 shortfall with a hearing in 2 weeks outranks a CAD 10,000 balance with no upcoming dates). Assign `(tier, sort_key_1, sort_key_2)` and sort once (see `references/prioritization.md` for the Python `priority_key` reference):
 
 | Tier | Criteria | Sort keys (within tier) |
-|------|----------|------------------------|
-| 1 | Court date within 30 days + retainer shortfall | Days to court date ASC, then total ask DESC |
-| 2 | Court date within 120 days + retainer shortfall | Days to court date ASC, then total ask DESC |
-| 3 | Retainer depleted ($0 trust), no court date | Total ask DESC |
-| 4 | Retainer low (below policy threshold), no court date | Shortfall as % of required DESC |
+|---|---|---|
+| 1 | Court date within 30 days + retainer shortfall | Days to court date ASC, total ask DESC |
+| 2 | Court date within 120 days + retainer shortfall | Days to court date ASC, total ask DESC |
+| 3 | Retainer depleted (CAD 0 trust), no court date | Total ask DESC |
+| 4 | Retainer low (below policy threshold), no court date | Shortfall % of required DESC |
 | 5 | Unbilled WIP only (retainer adequate) | WIP amount DESC |
 | 6 | Outstanding invoices only | Invoice age DESC (oldest first) |
 
-**Implementation:** Assign each client a `(tier, sort_key_1, sort_key_2)` tuple and sort once. A single `sorted()` call with this composite key produces the final list — no multi-pass sorting needed.
+When court dates are unavailable, skip tiers 1–2 and note that prioritization reflects retainer status and amount only.
 
-```python
-# Example: tier assignment + sort
-def priority_key(client):
-    if client['nearest_court_days'] is not None and client['nearest_court_days'] <= 30 and client['shortfall'] > 0:
-        return (1, client['nearest_court_days'], -client['total_ask'])
-    elif client['nearest_court_days'] is not None and client['nearest_court_days'] <= 120 and client['shortfall'] > 0:
-        return (2, client['nearest_court_days'], -client['total_ask'])
-    elif client['trust_balance'] == 0:
-        return (3, -client['total_ask'], 0)
-    elif client['shortfall'] > 0:
-        return (4, -client['shortfall_pct'], 0)
-    elif client['wip_amount'] > 0:
-        return (5, -client['wip_amount'], 0)
-    else:
-        return (6, -client['invoice_age_days'], 0)
+### Record Payment-in-Flight
 
-ranked = sorted(clients_with_amounts, key=priority_key)
-```
+When the practitioner says a client has sent payment (e.g., `"Smith sent an e-transfer for CAD 2,500"`):
+1. Resolve the matter by client name or number.
+2. Record via ``practice-data`` `manage-payment-in-flight` (`record`): amount, `recorded_at = now`, `expected_clear_by = now + 5 business days`.
+3. Confirm: `"Recorded: Smith (C1234) — CAD 2,500 payment in flight. Suppressing reminders until [clear-by date]. The next trust CSV import will confirm when it clears."`
 
-**When court dates are unavailable:** Skip tiers 1-2 entirely and note "Court date data unavailable — prioritized by retainer status and amount only." Clients that would otherwise be tier 1-2 fall to tier 3 or 4 based on their retainer status.
+### Check Single Client
 
-### Step 5: Present Results
+When asked `"what does Smith owe?"` or `"financial picture for file L8948"`:
+1. Query all data sources for that client/matter.
+2. Build the consolidated record (same as Step 2).
+3. Present the full breakdown with every component and the math (see `## Examples` and `references/prioritization.md`).
 
-```
+### Queries
+
+| Question | Action |
+|---|---|
+| Who needs a money conversation? / Show the AR list | Full AR list workflow |
+| What does [client] owe? / Financial picture for [file] | Single client workflow |
+| [Client] sent payment of CAD X | Record payment-in-flight |
+| Has [client]'s payment cleared? | Check `manage-payment-in-flight` status; if none, say `"No payment-in-flight recorded. Check retainer-tracking for the latest trust balance."` |
+| Clear [client]'s payment-in-flight | Mark cleared via `manage-payment-in-flight` (note: retainer-tracking's next CSV import normally handles this automatically) |
+| Which files are at risk for [upcoming hearing/trial]? | AR list filtered to clients with court dates |
+
+## Examples
+
+### AR List Output
+
+Always list suppressed clients at the bottom so the practitioner knows they are held:
+
+```text
 AR Follow-Up — [Date]
 Data as of: trust balances [last_trust_date], WIP [latest time entry date]
 [Note any missing data sources]
 
-Priority  Client              Total Ask    Breakdown                           Due By      Policy
-───────── ─────────────────── ──────────── ─────────────────────────────────── ─────────── ──────────────────
-1         Smith (C1234)       $8,200       $800 invoice + $2,400 WIP          2026-05-15  Cease work pending
-                                           (since 2026-03-01) +                           replenishment
-                                           $5,000 trial retainer
-2         Doe (C5678)         $5,000       $5,000 hearing retainer            2026-04-28  Replenishment needed
-                                           (trust: $0)
-3         Jones (C9012)       $3,000       $3,000 base retainer               —           Replenishment needed
-                                           (trust: $0, no court dates)
+Priority  Client        Total Ask    Breakdown                                            Due By      Policy
+───────── ───────────── ──────────── ──────────────────────────────────────────────────── ─────────── ───────────────────────
+1         Smith (C1234) CAD 8,200    CAD 800 invoice + CAD 2,400 WIP (since 2026-03-01)   2026-05-15  Cease work pending
+                                     + CAD 5,000 trial retainer                                       replenishment
+2         Doe (C5678)   CAD 5,000    CAD 5,000 hearing retainer (trust: CAD 0)            2026-04-28  Replenishment needed
+3         Jones (C9012) CAD 3,000    CAD 3,000 base retainer (trust: CAD 0, no dates)     —           Replenishment needed
 
-[Suppressed: Lee (C3456) — payment-in-flight $2,500, recorded 2026-04-12, clears by 2026-04-19]
+[Suppressed: Lee (C3456) — payment-in-flight CAD 2,500, recorded 2026-04-12, clears by 2026-04-19]
 ```
 
-Always show the suppressed clients at the bottom so the practitioner knows they exist but are being held.
+### Single-Client Financial Picture
 
-## Workflow: Record Payment-in-Flight
-
-When the practitioner says a client has sent payment (e.g., "Smith sent an e-transfer for $2,500"):
-
-1. Resolve the matter by client name or number
-2. Record the payment in flight through ``practice-data`` `manage-payment-in-flight` (`record`): amount, `recorded_at = now`, `expected_clear_by = now + 5 business days`
-3. Confirm: "Recorded: Smith (C1234) — $2,500 payment in flight. Suppressing reminders until [clear-by date]. The next trust CSV import will confirm when it clears."
-
-## Workflow: Check Single Client
-
-When asked "what does Smith owe?" or "financial picture for file L8948":
-
-1. Query all data sources for that client/matter
-2. Build the consolidated record (same as Step 2 above)
-3. Present the full breakdown with all components and the math
-
-```
+```text
 Smith (C1234) — File L8948 (Smith v Jones)
 
-Current trust balance:     $0.00 (depleted, as of 2026-04-01)
-Outstanding invoices:      $800.00 (Invoice #1234, issued 2026-03-15)
-Unbilled WIP:             $2,400.00 (12.0 hrs @ $200/hr, since 2026-03-01)
-Retainer required:         $5,000.00 (trial 2026-08-15 — $5,000/day x 1 day)
-                          ──────────
-Total ask:                 $8,200.00
+Current trust balance:     CAD 0.00 (depleted, as of 2026-04-01)
+Outstanding invoices:      CAD 800.00 (Invoice #1234, issued 2026-03-15)
+Unbilled WIP:              CAD 2,400.00 (12.0 hrs @ CAD 200/hr, since 2026-03-01)
+Retainer required:         CAD 5,000.00 (trial 2026-08-15 — CAD 5,000/day x 1 day)
+                           ────────────
+Total ask:                 CAD 8,200.00
 Due by:                    2026-05-15 (90 days before trial)
 
 Policy: Retainer depleted. Cease work pending replenishment. Trial in 123 days.
-
 Payment-in-flight:         None
 ```
 
-When the cutoff came from an invoice issue date, or the matter has no invoices, the WIP line reads:
-
-```
-Unbilled WIP:             $2,400.00 (12.0 hrs @ $200/hr, since 2026-03-01)
-                          Cutoff based on invoice issue date — actual billing period end may differ.
-Unbilled WIP:             $2,400.00 (12.0 hrs @ $200/hr; no invoices on record, all time shown)
-```
-
-## Queries
-
-| Question | Action |
-|----------|--------|
-| Who needs a money conversation? | Full AR list workflow |
-| Show the AR list | Full AR list workflow |
-| What does [client] owe? | Single client workflow |
-| Financial picture for [file] | Single client workflow |
-| [Client] sent payment of $X | Record payment-in-flight |
-| Has [client]'s payment cleared? | Invoke ``practice-data`` `manage-payment-in-flight` to check status. If pending, show status. If no record, say "No payment-in-flight recorded. Check retainer-tracking for the latest trust balance." |
-| Clear [client]'s payment-in-flight | Invoke ``practice-data`` `manage-payment-in-flight` to mark cleared. Note: normally retainer-tracking's next CSV import handles this automatically. |
-| Which files are at risk for [upcoming hearing/trial]? | AR list filtered to clients with court dates |
+See `references/prioritization.md` for `issue_date` and no-invoice WIP line formatting.
 
 ## Integration with Other Skills
 
 | Skill | Relationship |
-|-------|-------------|
+|---|---|
 | **retainer-tracking** | Provides current trust balances and confirms deposits via CSV import |
 | **docket-clerk** (agent) | Provides court dates for calendar-based prioritization |
 | **invoice-tracking** | Provides outstanding invoice data |
-| **practice-data** | Owns schema and path resolution. Payment-in-flight operations: `manage-payment-in-flight`. |
+| **practice-data** | Owns schema, path resolution, and `manage-payment-in-flight` |
+
+## Limitations
+
+- **Read-only on upstream data:** Cannot import trust CSVs, modify invoices, or confirm bank deposits (retainer-tracking confirms cleared deposits).
+- **No client correspondence:** Surfaces who to ask, how much, and when — does not draft retainer letters or emails.
+- **Policy only, no exception advice:** Reports what retainer policy requires; exception decisions belong to the practitioner.
+- **Bound by upstream freshness:** Accuracy depends on the latest trust import, invoice import, time entries, and court dates.
+
+## Troubleshooting
+
+| Symptom / Error | Cause | Solution |
+|---|---|---|
+| Payment-in-flight record fails to save | Probanda's Cloud refused the write, or cloud is unreachable | Nothing was saved. Relay the cloud's question if refused, or report that the cloud could not be reached and skip suppression for that payment; the AR list still runs. |
+| Court date data missing | `docket-clerk` has no rows or is unavailable | Skip tiers 1–2, prioritize by retainer status and amount, and note court dates are unavailable. |
+| Trial retainer amount unknown | No per-matter trial retainer configured | Prompt the practitioner for the amount instead of assuming a default. |
+| Hourly rate missing for WIP | Matter has WIP hours but no rate on record | Ask the practitioner for the hourly rate before totalling unbilled WIP. |
 
 ## Anti-Patterns
 
-- **Surfacing a client for one component** when other amounts are also outstanding. Always consolidate first.
-- **Ranking by amount owed** instead of court date urgency. A $3,000 shortfall with a hearing in 2 weeks outranks a $10,000 balance with no upcoming dates.
-- **Sending reminders during clearing.** If payment-in-flight is recorded, suppress that client entirely.
-- **Advising on exceptions to policy.** Say "Policy requires cease work" not "You should stop working on this file."
-- **Treating absence as zero.** No matter record = retainer status unknown, not depleted. No time entries = WIP unknown, not zero. Flag unknowns explicitly.
-- **Querying upstream CSVs directly.** All data comes through the practice database. Never parse accounting CSVs.
+- **Surfacing a client for one component** when other amounts are outstanding. Always consolidate first.
+- **Ranking by amount owed** instead of court date urgency.
+- **Sending reminders during clearing.** Suppress clients with active payment-in-flight.
+- **Advising on exceptions to policy.** Say `"Policy requires cease work"`, not `"You should stop working on this file."`
+- **Treating absence as zero.** No matter record = retainer status unknown; no time entries = WIP unknown. Flag unknowns explicitly.
+- **Querying upstream CSVs directly.** All data comes through ``practice-data``. Never parse accounting CSVs.

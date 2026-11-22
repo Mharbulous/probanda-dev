@@ -50,7 +50,7 @@ Prioritization is driven by court date proximity, not just amount owed. The skil
 
 **3.3 Suppress During Clearing**
 
-When the practitioner records that a client has sent payment, suppress all reminders for that client until either the payment clears (confirmed by retainer-tracking's next import) or the clearing window expires without confirmation. Do not treat the retainer as funded during this period — just stop asking.
+When the practitioner records that a client has sent payment, suppress all reminders for that client until either the payment clears (confirmed by retainer-tracking's next import) or the clearing window elapses before a deposit is confirmed. Do not treat the retainer as funded during this period — just stop asking.
 
 **Violation example:** Continuing to surface "Smith — depleted retainer" after the practitioner noted that Smith sent an e-transfer yesterday.
 

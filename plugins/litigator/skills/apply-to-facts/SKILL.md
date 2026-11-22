@@ -1,11 +1,11 @@
 ---
 name: apply-to-facts
-description: >
-  Apply established law to this matter's own facts and reach a conclusion -- whether the client
-  has a claim, whether a defence or a limitation argument holds, whether the facts on the record
-  satisfy a legal test, what follows for this file. Counterpart to `legal-research`,
-  which owns what the law IS. Where the artifact rather than the conclusion is what's wanted: a
-  date -> the `lawyer:docket-clerk` agent; the application itself -> `draft`.
+description: >-
+  Use when applying verified law to a matter's facts to conclude on a claim, defence,
+  or legal test (not legal-research, lawyer:docket-clerk, or draft).
+metadata:
+  author: Probanda Legal
+  tags: [litigation, legal-analysis, facts, merits]
 ---
 
 <!-- litigator v0.27.6 -->
@@ -24,13 +24,20 @@ description: >
 
 | Section | Read when |
 |---|---|
-| 1. Name the live issue | Before any reasoning, and when no current matter is mounted |
-| 2. Get the test from legal-research — never from yourself | Every legal proposition the conclusion rests on |
-| 3. Dispatch marshal-facts for the facts and the mapping | The verified test is in hand and the facts must be found and applied to it |
-| 4. State the conclusion | The agent's mapping has come back |
+| Purpose | Confirming scope before invoking |
+| Prerequisites | Checking required workspace, skills, and agents |
+| Instructions — 1. Name the live issue | Before any reasoning, and when no current matter is mounted |
+| Instructions — 2. Get the test from legal-research — never from yourself | Every legal proposition the conclusion rests on |
+| Instructions — 3. Dispatch marshal-facts for the facts and the mapping | The verified test is in hand and the facts must be found and applied to it |
+| Instructions — 4. State the conclusion | The agent's mapping has come back |
+| Examples | Formatting the step 3 dispatch criteria and final analysis |
+| Limitations | Checking hard boundaries and non-goals |
+| Troubleshooting | Handling `INCOMPLETE` memos, agent refusals, or missing matter context |
 | Handoffs | The practitioner wants a figure, a date or a draft rather than the conclusion |
 
 # Apply to facts — reason from a verified test to a conclusion
+
+## Purpose
 
 The question you were asked is not what the law is. It is what the law *means for these
 facts* — a mixed question of law and fact. You may reason to that conclusion. You may
@@ -43,7 +50,16 @@ permissible is step 2: the test comes back from `researcher:research-agent`, wit
 any of it is applied. Skip step 2 and every conclusion downstream is an unverified
 statement of law wearing a conclusion's clothes.
 
-## 1. Name the live issue
+## Prerequisites
+
+- A mounted matter workspace (or, in a repo session with no current matter, explicit practitioner authorization under `shared/live-issue-test.md` §5).
+- `legal-research` (`researcher:research-agent`) available to supply every legal test and pinpoint citation.
+- `matter-data` available for the read-only lookup of the proceeding and party ids.
+- The `litigator` plugin's fact-marshalling agent available to query case data and map facts to criteria in step 3.
+
+## Instructions
+
+### 1. Name the live issue
 
 Apply the naming test in `shared/live-issue-test.md` §2 before reasoning: name, in one
 sentence, the live issue in the current matter this work serves. Merits reasoning is legal
@@ -55,7 +71,7 @@ authorization of unbilled firm work. If more than one matter workspace is mounte
 which matter this is for; that protects the per-matter law database from cross-matter
 contamination.
 
-## 2. Get the test from legal-research — never from yourself
+### 2. Get the test from legal-research — never from yourself
 
 Invoke ``legal-research`` for every legal proposition the conclusion rests on: the elements
 of the test, the effect of the statute, what the authorities hold. Do not answer any of it
@@ -85,7 +101,7 @@ returned, whether it is an `element` or a `factor`, its `citation` with pinpoint
 did not cite every criterion, the test is not verified: stop as for an `INCOMPLETE` memo
 above and dispatch nothing.
 
-## 3. Dispatch marshal-facts for the facts and the mapping
+### 3. Dispatch marshal-facts for the facts and the mapping
 
 Invoke ``matter-data`` once, as a read-only lookup of the proceeding and the party ids only, not
 for facts: which proceeding this issue sits in, the client's party id, and the ids of the
@@ -123,7 +139,7 @@ distinct, because collapsing them is how a weak case reads as a strong one:
 If the agent returns `refused_no_test`, the criteria were empty or uncited: go back to
 step 2. If it returns `case_data_unavailable`, relay its error and stop.
 
-## 4. State the conclusion
+### 4. State the conclusion
 
 Reason from the agent's mapping, criterion by criterion. Expose the reasoning — a practitioner
 has to be able to disagree with a step, which they cannot do if only the result is shown.
@@ -148,6 +164,53 @@ Give the conclusion, then what would change it:
 
 Never present a conclusion as advice to a client. It is analysis for the practitioner, who
 decides what becomes advice.
+
+## Examples
+
+### Example 1: Step 3 dispatch payload
+
+```yaml
+matter_root: "<live host path to matter folder>"
+proceeding_id: "<proceeding id from matter-data>"
+live_issue: "Whether the defendant's delay bars the plaintiff's interlocutory application."
+question: "Does the record satisfy the test to dismiss the claim for want of prosecution?"
+for_party: "<client party id>"
+against_parties: ["<opposing party id>"]
+mode: map
+criteria:
+  - ref: "C1"
+    kind: "element"
+    text: "<element text as returned by research-agent>"
+    citation: "<primary authority citation with pinpoint>"
+    source: "<research-agent return or stored criterion id>"
+scope_hints: ["pleadings", "correspondence"]
+```
+
+### Example 2: Conclusion shape
+
+```markdown
+- **Criterion C1 (Satisfied):** Supported by record facts [pinpoints]; note unreviewed facts [ids].
+- **Criterion C2 (Unsupported):** Record gap — no document establishes [missing fact].
+- **Adverse facts:** [Plain statement of opposing or client-adverse facts].
+- **Conclusion:** What follows for this file, with confidence and the single fact or authority that would most change the answer.
+```
+
+## Limitations
+
+- Does not establish or verify law itself; every criterion must come from `legal-research` (`researcher:research-agent`) with pinpoint citations.
+- Does not reason around an `INCOMPLETE` research memo or build conclusions on assumed facts when material `gaps[]` remain open.
+- Does not query case databases directly or substitute earlier document reads for the `litigator:marshal-facts` mapping.
+- Produces internal analysis for the practitioner, never client advice, and does not draft filings, compute deadlines, or calculate interest or costs (see `## Handoffs`).
+
+## Troubleshooting
+
+| Symptom / Error | Cause | Solution |
+| --- | --- | --- |
+| Research memo returns `INCOMPLETE` or omits citations for a criterion | Legal test is not verified | Relay the `Audit:` line and named research, dispatch nothing, and stop. |
+| `marshal-facts` returns `refused_no_test` | `criteria[]` was empty or contained an uncited criterion | Return to step 2 and obtain a cited test from `legal-research` before re-dispatching. |
+| `marshal-facts` returns `case_data_unavailable` | Case data store cannot be read for this matter | Relay the agent's error verbatim and stop; do not substitute earlier document reads. |
+| Criterion returns `Undetermined` with `law_needed[]` | Applying the element requires an unsettled legal point | Carry the uncertainty into the conclusion or run follow-up `legal-research` on the named point. |
+| No current matter or multiple matter workspaces mounted | Missing or ambiguous billing/matter anchor | Confirm the target matter and live issue once (or explicit authorization of unbilled firm work) before starting. |
 
 ## Handoffs
 
