@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<!--
+  This diagram's tag gives the commit it was checked against and when it was last updated.
+  To update it: re-read the sources at the new commit, correct the chart if needed,
+  then change both data- attributes and the visible stamp.
+  BUILT: every Probanda skill as shipped today, sorted by the data pool it writes (or mainly
+  reads, if read-only), plus the stores that actually hold each pool today. Box colours show
+  each skill's plugin today.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Pool Map</title>
+<style>
+/* Single light theme by choice: the diagram's colours carry meaning and stay fixed. */
+:root {
+  color-scheme: light;
+  --ink: #1d2733;
+  --muted: #55616f;
+  --paper: #f8f9fb;
+  --rule: #d5dbe3;
+  --body: "Segoe UI", system-ui, sans-serif;
+  --mono: Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--body); }
+main { max-width: 1960px; margin: 0 auto; padding: 28px 20px 48px; display: grid; gap: 20px; }
+h1 { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 600; text-wrap: balance; }
+h2 { margin: 8px 0 0; font-size: 20px; font-weight: 600; }
+code { font: 500 0.92em var(--mono); }
+figure { margin: 0; display: grid; gap: 12px; }
+figcaption { display: grid; gap: 4px; }
+.stamp { font-size: 14px; color: var(--muted); margin: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 15px; height: 15px; border: 2px solid; border-radius: 3px; display: inline-block; }
+.chart { overflow-x: auto; background: #fff; border: 1px solid var(--rule); border-radius: 6px; padding: 16px; }
+pre.mermaid { margin: 0; font-family: var(--body); }
+pre.mermaid svg { display: block; margin: 0 auto; }
+pre.mermaid foreignObject div { max-width: none !important; white-space: nowrap !important; }
+.sources { font-size: 13px; color: var(--muted); margin: 0; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 14px; background: #fff; min-width: 760px; width: 100%; }
+th, td { border: 1px solid var(--rule); padding: 6px 10px; text-align: left; vertical-align: top; }
+th { background: #eef1f5; font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <figure class="diagram" id="data-pool-map"
+          data-based-on-commit="1ffb977002089119bd7f8426dc82d711e57ba69c"
+          data-updated="2026-11-21T18:20:00-07:00">
+    <figcaption>
+      <h1>Every Probanda skill, by the data pool it writes</h1>
+      <p class="stamp">Built · Based on commit <a href="https://github.com/Mharbulous/probanda-dev/commit/1ffb977002089119bd7f8426dc82d711e57ba69c"><code>1ffb9770</code></a> on main · Last updated 2026-11-21 18:20 -07:00</p>
+    </figcaption>
+    <div class="legend" aria-label="Colour key: each skill's plugin today">
+      <span><i style="background:#fdf0d5;border-color:#b7791f"></i>lawyer</span>
+      <span><i style="background:#ddf3ef;border-color:#1f7a6d"></i>researcher</span>
+      <span><i style="background:#f8e3dc;border-color:#9c3d22"></i>litigator</span>
+      <span><i style="background:#e3eefb;border-color:#2563a8"></i>billing</span>
+      <span><i style="background:#efe8fb;border-color:#6b46b0"></i>file-manager</span>
+      <span><i style="background:#eceef1;border-color:#55616f"></i>developer</span>
+      <span><i style="background:#ffffff;border-color:#8a94a0;border-style:dashed"></i>pool with no dedicated writer skill</span>
+    </div>
+
+    <div class="chart">
+<pre class="mermaid">
+---
+title: "Probanda Marketplace Data Pool Map"
+---
+flowchart TB
+    subgraph SC_MATTER["Matter data · one set per matter, never mixed between matters"]
+        direction TB
+        subgraph PRIV["Privileged communications"]
+            direction TB
+            PRIV_x["written by matter-data,<br/>which is placed under Evidence"]
+        end
+        subgraph CORR["Correspondence with others"]
+            direction TB
+            n_deduping_email["deduping-email"]
+        end
+        subgraph EVID["Evidence"]
+            direction TB
+            n_matter_data["matter-data"]
+            n_ingest["ingest"]
+            n_ingest_orchestrator["ingest-orchestrator"]
+            n_litigation_fact_extractor["litigation-fact-extractor"]
+            n_matter_data ~~~ n_ingest
+            n_ingest ~~~ n_ingest_orchestrator
+            n_ingest_orchestrator ~~~ n_litigation_fact_extractor
+        end
+        subgraph COURT["Court record"]
+            direction TB
+            n_e_file["e-file"]
+        end
+        subgraph WPROD["Work product"]
+            direction TB
+            n_apply_to_facts["apply-to-facts"]
+            n_calculate["calculate"]
+            n_apply_to_facts ~~~ n_calculate
+        end
+        subgraph DRAFTS["Drafts"]
+            direction TB
+            n_drafting_data["drafting-data"]
+            n_draft["draft"]
+            n_work["work"]
+            n_prepare["prepare"]
+            n_job_planning["job-planning"]
+            n_solver["solver"]
+            n_narrator["narrator"]
+            n_bcsc_legal_basis["bcsc-legal-basis"]
+            n_polish_substance["polish-substance"]
+            n_publish["publish"]
+            n_assemble["assemble"]
+            n_drafting_data ~~~ n_draft
+            n_draft ~~~ n_work
+            n_work ~~~ n_prepare
+            n_prepare ~~~ n_job_planning
+            n_job_planning ~~~ n_solver
+            n_solver ~~~ n_narrator
+            n_narrator ~~~ n_bcsc_legal_basis
+            n_bcsc_legal_basis ~~~ n_polish_substance
+            n_polish_substance ~~~ n_publish
+            n_publish ~~~ n_assemble
+        end
+        subgraph EVENTS["Events"]
+            direction TB
+            n_calendar_reminders["calendar-reminders"]
+        end
+    end
+    subgraph SC_PRACTICE["Practice data · across a firm's or a lawyer's matters"]
+        direction TB
+        subgraph PRACT["Practice records"]
+            direction TB
+            n_practice_data["practice-data"]
+            n_probanda_setup["probanda-setup"]
+            n_task_prioritization["task-prioritization"]
+            n_executive_assistant["executive-assistant"]
+            n_matter_status_tracking["matter-status-tracking"]
+            n_practice_data ~~~ n_probanda_setup
+            n_probanda_setup ~~~ n_task_prioritization
+            n_task_prioritization ~~~ n_executive_assistant
+            n_executive_assistant ~~~ n_matter_status_tracking
+        end
+        subgraph BILL["Billing"]
+            direction TB
+            n_bill["bill"]
+            n_issue_invoice["issue-invoice"]
+            n_invoice_reviewing["invoice-reviewing"]
+            n_invoice_tracking["invoice-tracking"]
+            n_wip_tracker["wip-tracker"]
+            n_ar_follow_up["ar-follow-up"]
+            n_vet_billable_time["vet-billable-time"]
+            n_time_entry_drafting["time-entry-drafting"]
+            n_bill ~~~ n_issue_invoice
+            n_issue_invoice ~~~ n_invoice_reviewing
+            n_invoice_reviewing ~~~ n_invoice_tracking
+            n_invoice_tracking ~~~ n_wip_tracker
+            n_wip_tracker ~~~ n_ar_follow_up
+            n_ar_follow_up ~~~ n_vet_billable_time
+            n_vet_billable_time ~~~ n_time_entry_drafting
+        end
+        subgraph TRUST["Trust accounting"]
+            direction TB
+            n_retainer_tracking["retainer-tracking"]
+        end
+        subgraph INST["Institutional knowledge"]
+            direction TB
+            n_precedents["precedents"]
+        end
+    end
+    SC_MATTER ~~~ SC_PRACTICE
+    subgraph SC_OWN["Lawyer's own · not yet sorted to a matter"]
+        direction TB
+        subgraph TIME["Timekeeping records"]
+            direction TB
+            n_timecamping_data["timecamping-data"]
+            n_time_pipeline_data["time-pipeline-data"]
+            n_build_timeline["build-timeline"]
+            n_time_sorting["time-sorting"]
+            n_timecamping["timecamping"]
+            n_triage_billing_dates["triage-billing-dates"]
+            n_timecamping_data ~~~ n_time_pipeline_data
+            n_time_pipeline_data ~~~ n_build_timeline
+            n_build_timeline ~~~ n_time_sorting
+            n_time_sorting ~~~ n_timecamping
+            n_timecamping ~~~ n_triage_billing_dates
+        end
+    end
+    SC_PRACTICE ~~~ SC_OWN
+    subgraph SC_NOCLIENT["No client data · shared across every matter"]
+        direction TB
+        subgraph LAW["The law"]
+            direction TB
+            n_legal_commons["legal-commons"]
+            n_legal_research["legal-research"]
+            n_case_brief["case-brief"]
+            n_verify_law["verify-law"]
+            n_legal_memo_extractor["legal-memo-extractor"]
+            n_legal_citation["legal-citation"]
+            n_review_proposition["review-proposition"]
+            n_rule_update["rule-update"]
+            n_legal_commons ~~~ n_legal_research
+            n_legal_research ~~~ n_case_brief
+            n_case_brief ~~~ n_verify_law
+            n_verify_law ~~~ n_legal_memo_extractor
+            n_legal_memo_extractor ~~~ n_legal_citation
+            n_legal_citation ~~~ n_review_proposition
+            n_review_proposition ~~~ n_rule_update
+        end
+        subgraph KNOW["Know-how"]
+            direction TB
+            n_localize["localize"]
+            n_file_naming["file-naming"]
+            n_localize ~~~ n_file_naming
+        end
+    end
+    SC_OWN ~~~ SC_NOCLIENT
+    subgraph SC_OTHER["Across pools, or no client data pool"]
+        direction TB
+        subgraph FILES["Every pool's folders"]
+            direction TB
+            n_housekeeping["housekeeping"]
+            n_route_accounting["route-accounting"]
+            n_file_apply["file-apply"]
+            n_file_sorting["file-sorting"]
+            n_safe_file_deletion["safe-file-deletion"]
+            n_housekeeping ~~~ n_route_accounting
+            n_route_accounting ~~~ n_file_apply
+            n_file_apply ~~~ n_file_sorting
+            n_file_sorting ~~~ n_safe_file_deletion
+        end
+        subgraph READS["Reads across pools, writes none"]
+            direction TB
+            n_find_document["find-document"]
+            n_file_review_prep["file-review-prep"]
+            n_find_document ~~~ n_file_review_prep
+        end
+        subgraph PROB["Probanda's own records"]
+            direction TB
+            n_suggestion["suggestion"]
+            n_probanda_troubleshooting["probanda-troubleshooting"]
+            n_view_suggestions["view-suggestions"]
+            n_view_key_requests["view-key-requests"]
+            n_suggestion ~~~ n_probanda_troubleshooting
+            n_probanda_troubleshooting ~~~ n_view_suggestions
+            n_view_suggestions ~~~ n_view_key_requests
+        end
+        subgraph NONE["No data pool"]
+            direction TB
+            n_address_book["address-book"]
+            n_call_contact["call-contact"]
+            n_verify_bc_lawyer["verify-bc-lawyer"]
+            n_proof_read["proof-read"]
+            n_compare_documents["compare-documents"]
+            n_dyu["dyu"]
+            n_TLDR["TLDR"]
+            n_reflect["reflect"]
+            n_show_me["show-me"]
+            n_CPR["CPR"]
+            n_fix_this["fix-this"]
+            n_hitl_triage["hitl-triage"]
+            n_streamline_skill["streamline-skill"]
+            n_rule_migrate["rule-migrate"]
+            n_address_book ~~~ n_call_contact
+            n_call_contact ~~~ n_verify_bc_lawyer
+            n_verify_bc_lawyer ~~~ n_proof_read
+            n_proof_read ~~~ n_compare_documents
+            n_compare_documents ~~~ n_dyu
+            n_dyu ~~~ n_TLDR
+            n_TLDR ~~~ n_reflect
+            n_reflect ~~~ n_show_me
+            n_show_me ~~~ n_CPR
+            n_CPR ~~~ n_fix_this
+            n_fix_this ~~~ n_hitl_triage
+            n_hitl_triage ~~~ n_streamline_skill
+            n_streamline_skill ~~~ n_rule_migrate
+        end
+    end
+    SC_NOCLIENT ~~~ SC_OTHER
+    classDef lawyer fill:#fdf0d5,stroke:#b7791f,color:#1d2733
+    classDef researcher fill:#ddf3ef,stroke:#1f7a6d,color:#1d2733
+    classDef litigator fill:#f8e3dc,stroke:#9c3d22,color:#1d2733
+    classDef bil fill:#e3eefb,stroke:#2563a8,color:#1d2733
+    classDef fm fill:#efe8fb,stroke:#6b46b0,color:#1d2733
+    classDef dev fill:#eceef1,stroke:#55616f,color:#1d2733
+    classDef placeholder fill:#ffffff,stroke:#8a94a0,stroke-dasharray:4 3,color:#55616f
+    class PRIV_x placeholder
+    class n_deduping_email,n_matter_data,n_ingest,n_ingest_orchestrator,n_litigation_fact_extractor,n_calendar_reminders,n_practice_data,n_probanda_setup,n_task_prioritization,n_executive_assistant,n_matter_status_tracking,n_retainer_tracking,n_localize,n_precedents,n_rule_update,n_file_naming,n_safe_file_deletion,n_find_document,n_file_review_prep,n_suggestion,n_address_book,n_call_contact,n_verify_bc_lawyer,n_proof_read,n_compare_documents,n_dyu,n_TLDR,n_reflect,n_show_me lawyer
+    class n_e_file,n_apply_to_facts,n_calculate,n_drafting_data,n_draft,n_work,n_prepare,n_job_planning,n_solver,n_narrator,n_bcsc_legal_basis,n_polish_substance,n_publish,n_assemble,n_rule_migrate litigator
+    class n_bill,n_issue_invoice,n_invoice_reviewing,n_invoice_tracking,n_wip_tracker,n_ar_follow_up,n_vet_billable_time,n_time_entry_drafting,n_timecamping_data,n_time_pipeline_data,n_build_timeline,n_time_sorting,n_timecamping,n_triage_billing_dates bil
+    class n_legal_commons,n_legal_research,n_case_brief,n_verify_law,n_legal_memo_extractor,n_legal_citation,n_review_proposition,n_probanda_troubleshooting researcher
+    class n_housekeeping,n_route_accounting,n_file_apply,n_file_sorting fm
+    class n_view_suggestions,n_view_key_requests,n_CPR,n_fix_this,n_hitl_triage,n_streamline_skill dev
+</pre>
+    </div>
+
+    <h2>Where each pool lives today</h2>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Pool</th><th>Store(s) today</th><th>Served by</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Privileged communications</td><td><code>privileged.sqlite</code>; matter folder type 2</td><td>lawyer (<code>data</code>: <code>matter_data__*</code>)</td><td>Write-isolated from <code>main.sqlite</code>, but attached on <code>matter_data__query</code> reads. Written by <code>matter-data</code>.</td></tr>
+        <tr><td>Correspondence with others</td><td>Mailbox over IMAP; matter folder type 3 (originals only)</td><td>lawyer (<code>contacts-calendars-email</code>: <code>mail__*</code>)</td><td><code>deduping-email</code> soft-deletes duplicates to Trash in mail folders via <code>mail__dedupe_apply</code>. No derived correspondence database exists yet.</td></tr>
+        <tr><td>Evidence</td><td><code>main.sqlite</code>; matter folders</td><td>lawyer (<code>data</code>: <code>matter_data__*</code>)</td><td>Shares <code>main.sqlite</code> (legacy typed tables) with Court record, Work product, the cast, <code>matter_metadata</code> and <code>housekeeping_reviews</code>.</td></tr>
+        <tr><td>Court record</td><td><code>main.sqlite</code>; matter folders</td><td>lawyer (<code>data</code>: <code>matter_data__*</code>)</td><td>Shares <code>main.sqlite</code> with Evidence and Work product; <code>e-file</code> files packages through the court portal.</td></tr>
+        <tr><td>Work product</td><td><code>main.sqlite</code></td><td>lawyer (<code>data</code>: <code>matter_data__*</code>)</td><td>Shares <code>main.sqlite</code> with Evidence and Court record; <code>litigator</code> ships no MCP server yet.</td></tr>
+        <tr><td>Drafts</td><td><code>submission.sqlite</code> and <code>loose_threads.db</code>; matter draft folders</td><td>lawyer (<code>data</code>: <code>drafting_data__*</code>, <code>drafting_forms__*</code>, <code>loose_threads__*</code>)</td><td><code>submission.sqlite</code> is legacy (70 typed tables, sync-safety guards live); <code>loose_threads.db</code> is generic key-value. Served by <code>lawyer</code> even though all drafting skills ship in <code>litigator</code>.</td></tr>
+        <tr><td>Events</td><td><code>practice.db</code> (<code>anchor</code>, <code>anchor_source</code>, <code>deadline</code>); <code>ProceduralHistory.md</code> per matter</td><td>lawyer (<code>data</code>: <code>practice_data__*</code>, <code>matter_data__procedural_history_append</code>)</td><td>Deadlines are written by the <code>docket-clerk</code> agent; past events are appended to <code>ProceduralHistory.md</code> by <code>matter-data</code>, <code>draft</code>, <code>work</code> and <code>issue-invoice</code>. <code>calendar-reminders</code> only reads the external calendar.</td></tr>
+        <tr><td>Practice records</td><td><code>practice.db</code> (<code>client</code>, <code>matter</code>, <code>matter_role</code>, <code>contact</code>, <code>affiliation</code>, <code>task</code>, <code>signal</code>)</td><td>lawyer (<code>data</code>: <code>practice_data__*</code>)</td><td>Generic store (converted); single cloud sync stream shared with Billing records, Trust accounting, Events and the rule overlay / court calendar.</td></tr>
+        <tr><td>Billing</td><td><code>practice.db</code> (<code>time_entry</code>, <code>invoice</code>, <code>invoice_line</code>, <code>payment</code>, <code>rate</code>, <code>adjustment</code>); <code>time_pipeline.db</code> (namespaces <code>bill</code>, <code>tedraft</code>)</td><td>lawyer (<code>data</code>: <code>practice_data__*</code>); billing (<code>timekeeping</code>: <code>time_pipeline__*</code>, <code>review_date__*</code>, <code>time_review__*</code>)</td><td>Billing records live in <code>lawyer</code>'s <code>practice.db</code>; billing work in progress (<code>bill</code>, <code>tedraft</code>) lives in <code>billing</code>'s <code>time_pipeline.db</code> (Phase 2 step 1 built).</td></tr>
+        <tr><td>Trust accounting</td><td><code>practice.db</code> (trust balance fields on <code>matter</code>, kind <code>retainer_notice</code>)</td><td>lawyer (<code>data</code>: <code>practice_data__*</code>)</td><td>Current balances imported from trust exports by <code>retainer-tracking</code>; no separate trust ledger in Probanda.</td></tr>
+        <tr><td>Institutional knowledge</td><td>Firm precedents folder; <code>_practice\knowledge\</code> (mixed with Know-how); <code>_practice\quirks\quirks.json</code>; <code>_practice\preferences\&lt;person&gt;.json</code>; <code>time_pipeline.db</code> (<code>tedraft</code> description patterns)</td><td>lawyer (<code>data</code>: <code>knowledge__*</code>, <code>quirks__*</code>, <code>preferences__*</code>); billing (<code>timekeeping</code>)</td><td>Spread across five locations; <code>suggestion</code> writes practitioner rules to <code>preferences</code> and <code>localize</code> writes firm-declared layouts and approved hosts into the knowledge overlay.</td></tr>
+        <tr><td>Timekeeping records</td><td><code>time_pipeline.db</code> (<code>timeline</code>, <code>timesort</code>, <code>evidence</code>, <code>item</code>: <code>review_date</code>, <code>day_evidence</code>, <code>block</code>, <code>capture_reading</code>, <code>candidate_date</code>, <code>candidate_coverage</code>, <code>page_click</code>); <code>timecamping.db</code></td><td>billing (<code>timekeeping</code>: <code>time_pipeline__*</code>, <code>review_date__*</code>, <code>time_review__*</code>); lawyer (<code>data</code>: <code>timecamping_data__*</code>)</td><td><code>time_pipeline.db</code> moved to <code>billing</code>'s <code>timekeeping</code> server; <code>timecamping.db</code> (12 legacy typed tables) is still served by <code>lawyer</code>'s <code>data</code> server. The <code>day-reviewer</code> agent stages blocks alongside <code>timecamping</code>.</td></tr>
+        <tr><td>The law</td><td><code>legal-commons</code> (Supabase cloud); <code>law.sqlite</code> per matter; <code>practice.db</code> (<code>rule_overlay</code>, <code>calendar_day</code>, <code>calendar_year</code>); <code>6. LAW</code> matter folder</td><td>researcher (<code>commons</code>: <code>legal_commons__*</code>); lawyer (<code>data</code>: <code>matter_data__*</code>, <code>practice_data__*</code>)</td><td>Shared cloud commons is read-only for practitioners; per-matter authorities live in <code>law.sqlite</code>; rule overlay and court calendar stay in <code>practice.db</code>.</td></tr>
+        <tr><td>Know-how</td><td>Shipped skill <code>references/</code>; <code>_practice\knowledge\</code> (mixed with Institutional knowledge)</td><td>lawyer (<code>data</code>: <code>knowledge__*</code>, <code>skill_source__*</code>)</td><td><code>localize</code> writes both venue know-how and firm-declared layouts; <code>file-naming</code> is read-only over shipped conventions.</td></tr>
+        <tr><td>Probanda's own records</td><td><code>suggestions\suggestions.json</code> beside <code>probanda.json</code>; cloud troubleshooting and suggestion stores</td><td>lawyer (<code>data</code>: <code>suggestion_*</code>); researcher (<code>commons</code>: <code>troubleshoot__*</code>)</td><td>Account Information outside <code>0. CASE DATA</code>. Maintainer skills <code>view-suggestions</code> and <code>view-key-requests</code> ship in <code>developer</code>.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p class="sources">All 76 skills in <code>source/assignment.json</code> (29 <code>lawyer</code>, 8 <code>researcher</code>, 15 <code>litigator</code>, 4 <code>file-manager</code>, 14 <code>billing</code>, 6 <code>developer</code>; <code>solicitor</code> and <code>tokeneconomizer</code> ship no skills). Each skill sits under the pool it writes, or the pool it mainly reads when read-only: <code>executive-assistant</code>, <code>wip-tracker</code>, <code>ar-follow-up</code>, <code>invoice-reviewing</code>, <code>litigation-fact-extractor</code>, <code>calendar-reminders</code>, <code>file-naming</code> and read-only researcher skills are placed this way. Skills that read several pools and write none (<code>find-document</code>, <code>file-review-prep</code>) sit in their own box. Skills that work only on documents handed to them (<code>proof-read</code>, <code>compare-documents</code>), session helpers (<code>dyu</code>, <code>TLDR</code>, <code>reflect</code>, <code>show-me</code>), maintainer dev tools (<code>CPR</code>, <code>fix-this</code>, <code>hitl-triage</code>, <code>streamline-skill</code>, <code>rule-migrate</code>), or external sources that are not Probanda data pools (<code>address-book</code> and <code>call-contact</code> over CardDAV contacts, <code>verify-bc-lawyer</code> over the Law Society of BC directory) sit under "No data pool" (<code>call-contact</code> also reads and proposes <code>tools</code> entries in practice quirks). <code>deduping-email</code> sits under Correspondence with others because <code>mail__dedupe_apply</code> moves duplicate messages to Trash in the mailbox (originals across correspondence and other mail folders). <code>suggestion</code> also writes practitioner rules to <code>preferences</code> (Institutional knowledge) via <code>preferences__write</code>. <code>safe-file-deletion</code> ships in <code>lawyer</code> with the delete-guard hook and routes deletions to <code>file-manager</code>'s <code>file_ops__trash</code> (and <code>trash-rewrite</code> hook). The planned version is in <a href="../Destinations/Data-Pool-Map.html">Destinations/Data-Pool-Map.html</a>. Sources: <code>source/assignment.json</code>, <code>plugins/*/.mcp.json</code>, <code>source/lawyer/mcp/src/schema-gen.ts</code>, <code>source/researcher/commons-mcp/src/schema-gen.ts</code> and each skill's <code>SKILL.md</code>. The placement of read-only skills is a judgment, not a check.</p>
+  </figure>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: "neutral",
+    flowchart: { nodeSpacing: 18, rankSpacing: 30, useMaxWidth: false, htmlLabels: true }, themeVariables: { fontFamily: "Segoe UI, system-ui, sans-serif", fontSize: "16px" } });
+  mermaid.run({ querySelector: "pre.mermaid" });
+</script>
+</body>
+</html>
