@@ -9,9 +9,9 @@ has three Google identities, and only one carries the practice:
 
 | Calendar | Contents |
 |---|---|
-| `brahm@logicalaw.ca` | **The work calendar.** Client meetings, matter deadlines, Zoom bookings. Shown in the Google Calendar sidebar as **"Brahm Dorst"** — the label does not match the address. |
-| `brahm@dorst.ca` | Near-empty. A test row and two deadline markers. |
-| `brahmwhatisfair@gmail.com` | Personal, plus a holidays calendar. |
+| `practitioner@firm.example.com` | **The work calendar.** Client meetings, matter deadlines, Zoom bookings. Shown in the Google Calendar sidebar under the practitioner's display name (e.g., **Pat Example**) — the label does not match the address. |
+| `practitioner@alt.example.com` | Near-empty. A test row and two deadline markers. |
+| `practitioner@personal.example.com` | Personal, plus a holidays calendar. |
 
 Reading the wrong one returns a successful, empty-looking result and no error,
 which is how a walkthrough once concluded the calendar held four events a year

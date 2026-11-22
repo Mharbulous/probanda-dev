@@ -109,7 +109,7 @@ Row schema:
 
 Blocks are time-ordered and non-overlapping within one fetch, and — because of the one-call-per-local-day rule above — across fetches too, so `startUtc` alone is unique. `processName` is deliberately **not** part of the id: a process can recur in a later block after an intervening gap or matter change (e.g. Word → Chrome → Word), so it does not uniquely identify a block the way a start instant does.
 
-The embedded `:` characters in the timestamp need no hashing: row ids are split on the first `:` only, exactly as the existing `telus:c2026-04-15T14:30+16045551234` example already relies on. SKILL.md's hash-the-composite rule (for freeform text that's long or contains `:`) targets unbounded freeform text, not a fixed-width structured timestamp — hashing this value would add nothing.
+The embedded `:` characters in the timestamp need no hashing: row ids are split on the first `:` only, exactly as the existing `telus:c2026-04-15T14:30+{phone}` example already relies on. SKILL.md's hash-the-composite rule (for freeform text that's long or contains `:`) targets unbounded freeform text, not a fixed-width structured timestamp — hashing this value would add nothing.
 
 ## Confidentiality
 

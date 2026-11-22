@@ -28,7 +28,7 @@ dependencies:
 | Data model | Building row ids, keys, indexes or row schemas |
 | Workflow | Every build, refresh or re-import run |
 | Queries | Mapping a practitioner request to the action that answers it |
-| Display rules | The practitioner asks to see the raw timeline |
+| Timeline display | The practitioner asks to see the raw timeline |
 | Integration with other skills | Working out how downstream skills use these rows |
 | Critical constraints | Always |
 
@@ -100,7 +100,7 @@ the source's native record identifier:
 - **Format:** `{source}:{native_id}`
 - **Examples:**
   - `timecamp:a48291` — TimeCamp activity with internal id 48291
-  - `telus:c2026-04-15T14:30+16045551234` — Telus call record (composite key
+  - `telus:c2026-04-15T14:30+{phone}` — Telus call record (composite key
     from normalized timestamp + E.164 phone number; the real export has no
     call-id column — see `reference/TelusConnect.md`)
   - `gcal:{ical-uid}` — Google Calendar event by its iCal UID
@@ -221,7 +221,7 @@ and never resolved, matched, or acted on.
   "raw_type": "file_download",
   "raw_payload": {
     "filename": "Settlement-Memo.docx",
-    "path": "C:/Users/Brahm/Downloads/Settlement-Memo.docx",
+    "path": "/path/to/Downloads/Settlement-Memo.docx",
     "size_bytes": 48213
   },
   "fetched_at": "2026-04-16T02:30:00Z"
@@ -380,12 +380,12 @@ Queries below.
 | Build the timeline for 2026-04-15 | Full workflow with target=2026-04-15. |
 | Re-import the call archive for {date} | Run Telus source only, target={date}. Replaces only Telus rows in that range. |
 | Fetch only {sources} for {date} | Run Step 2 for the named registry entries only, target={date}. Each must still be `enabled: true` and qualified per its own reference. Replace-by-source (Step 4) and the metadata update (Step 5) touch only those sources. The report lists only them, and names every other registry source as not fetched this run, not as skipped. The call archive re-import row above is this row with Telus. |
-| Import Chrometa historical logs | Run the Chrometa import per `reference/Chrometa.md` against `C:\Users\Brahm\Sync\ADMIN\TIME TRACKING\Chrometa Time Records\Consolidated Time Summaries.xlsx`, scoped to the full 2019-01–2020-03 range. |
+| Import Chrometa historical logs | Run the Chrometa import per `reference/Chrometa.md` against `%USERPROFILE%\Sync\ADMIN\TIME TRACKING\Chrometa Time Records\Consolidated Time Summaries.xlsx`, scoped to the full 2019-01–2020-03 range. |
 | What sources are fetched for {date}? | Read `source:{source}:ranges` for each registry entry, plus Chrometa; report which cover {date}. |
 | Show me the raw timeline for {window} | Require a window ≤ 60 minutes. Load `index:activity:by-date:{date}` and `index:event:by-date:{date}`, filter to the window, sort by start_ts/ts, present as a table with columns: Time, Duration (activities only), Source, Raw Type, Key Fields. |
 | When was {source} last fetched? | ``time-pipeline-data`` `get` — `namespace: "timeline"`, `key: "source:{source}:fetched_at"` |
 
-## Display rules
+## Timeline display
 
 The practitioner can ask to inspect the raw timeline, but:
 

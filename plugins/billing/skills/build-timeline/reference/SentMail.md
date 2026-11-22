@@ -6,7 +6,7 @@ Configuration and data details for the practitioner's sent mail. Load this file 
 
 **The source is the iCloud copy of the Microsoft 365 Sent Items**, not Microsoft 365 itself (decided on #1261; the copy is #1262). The outlook-dorst-copier (#1271), used since 2026-09-30, puts the copy in `Sent Messages`, the iCloud account's own sent folder (#942). An earlier copy method put messages in `Sent Items`, which held 1,799 messages on 2026-09-30 and none on 2026-10-01. It stays in scope in case mail lands there again. The copier copies each newly sent email from the Exchange default Sent folder only, so mail filed straight into Exchange's `Outbound LEAP Matter Based Emails` subfolder is not copied forward.
 
-**Personal mail is stored.** `Sent Messages` is also the iCloud account's own sent folder, so it can hold personal mail sent from brahm@dorst.ca (1 of 1,073 messages since 2026-03-01). Those messages are stored like any other, with no filter on the sender (practitioner, 2026-10-01, #942: "Keep all"). The Microsoft Graph route in `Engineering/1. Design/2026-08-27_outlook-source-design.md` §1 is not used.
+**Personal mail is stored.** `Sent Messages` is also the iCloud account's own sent folder, so it can hold personal mail sent from the practitioner's iCloud address (1 of 1,073 messages since 2026-03-01). Those messages are stored like any other, with no filter on the sender (practitioner, 2026-10-01, #942: "Keep all"). The Microsoft Graph route in `Engineering/1. Design/2026-08-27_outlook-source-design.md` §1 is not used.
 
 **Check which folders you are reading before you read them.** Four folders are in scope, listed in precedence order:
 

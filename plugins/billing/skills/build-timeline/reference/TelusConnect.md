@@ -54,7 +54,7 @@ A failed file does not stop the others. Report every `files_failed` entry even w
 
 ## The row contract
 
-`native_id` is `c{date}T{time}{phone}` from the local date, the 24-hour local time and the normalized number: `c2026-08-27T13:39+18006636102`. Same-minute calls take `#2`, `#3`. The id is deterministic, so downstream annotations survive a re-import.
+`native_id` is `c{date}T{time}{phone}` from the local date, the 24-hour local time and the normalized E.164 number (e.g. `c2026-08-27T13:39+{phone}`). Same-minute calls take `#2`, `#3`. The id is deterministic, so downstream annotations survive a re-import.
 
 `raw_type` is `voicemail` when the outcome is `Voicemail`, otherwise `phone_call`.
 
