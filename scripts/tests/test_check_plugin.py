@@ -223,7 +223,11 @@ class Fixture:
         for rel in check_plugin_tree.skill_source_expected(skills, sorted(self.roster), assets):
             data = read(skills, rel)
             if rel.split("/")[0] in self.roster and rel.endswith("/SKILL.md") and rel.count("/") == 1:
-                data = check_plugin_skill_md.stamp_skill_md(data.decode("utf-8"), "litigator", VERSION).encode("utf-8")
+                skill_dir = os.path.join(skills, rel.split("/")[0])
+                data = check_plugin_skill_md.stamp_skill_md(
+                    data.decode("utf-8"), "litigator", VERSION,
+                    include_html_pages=check_plugin_skill_md.skill_uses_html_pages(skill_dir),
+                ).encode("utf-8")
             self.write("plugins/litigator/skills/" + rel, data)
         self.write("plugins/litigator/VISION.md", read(self.root, "source/litigator/VISION.md"))
 
@@ -339,6 +343,23 @@ class TestPlantedViolations(FixtureTest):
         ok, detail = self.fixture.results()["description-length"]
         self.assertTrue(ok)
         self.assertIn("NEAR LIMIT", detail)
+
+    def test_plugin_description_budget_passes_with_advisory(self):
+        with mock.patch.object(check_plugin_skill_md, "PLUGIN_DESCRIPTION_BUDGET_CHARS", 20), \
+             mock.patch.object(check_plugin_skill_md, "PLUGIN_DESCRIPTION_WARN_CHARS", 15):
+            ok, detail = self.fixture.results()["description-length"]
+        self.assertTrue(ok)
+        self.assertIn("PLUGIN LIST BUDGET:", detail)
+
+    def test_html_pages_preamble_is_conditional(self):
+        self.fixture.write("source/skills/alpha/SKILL.md", SOURCE_SKILL_MD)
+        self.fixture.build()
+        non_html = read(self.fixture.root, "plugins/litigator/skills/alpha/SKILL.md").decode("utf-8")
+        self.assertNotIn("> **HTML pages.**", non_html)
+        self.fixture.write("source/skills/alpha/references/board.md", "Renders `Work Board.html`.\n")
+        self.fixture.build()
+        with_html = read(self.fixture.root, "plugins/litigator/skills/alpha/SKILL.md").decode("utf-8")
+        self.assertIn("> **HTML pages.**", with_html)
 
     def test_no_absolute_repo_paths(self):
         # Under tests/, which never ships, so the host-path ratchet is not involved.

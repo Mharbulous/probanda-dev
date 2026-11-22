@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from check_plugin_sources import (  # noqa: E402
     BASELINES, EXTRA_TREES, HOST_PATH, skills_root, source_path, server_path, roster, packaged_assets,
     extra_trees, public_skill_dirs, public_skills)
-from check_plugin_skill_md import stamp_skill_md  # noqa: E402
+from check_plugin_skill_md import skill_uses_html_pages, stamp_skill_md  # noqa: E402
 
 # shipped-tree-purity re-derives the build's selection independently -- its own
 # copies of the exclusions and the text-extension allowlist -- so a selection bug on
@@ -182,7 +182,12 @@ def shipped_tree_purity(repo, plugin, manifest, roster_names, assets, baseline, 
             with open(source, encoding="utf-8", newline="") as f:
                 text = f.read()
             try:
-                want = hashlib.sha256(stamp_skill_md(text, plugin["name"], version).encode("utf-8")).hexdigest()
+                want = hashlib.sha256(
+                    stamp_skill_md(
+                        text, plugin["name"], version,
+                        include_html_pages=skill_uses_html_pages(os.path.dirname(source)),
+                    ).encode("utf-8")
+                ).hexdigest()
             except ValueError:
                 want = None
             if want != sha:

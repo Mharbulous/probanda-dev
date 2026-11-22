@@ -40,7 +40,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import plugin_layout  # noqa: E402
 from cowork_rules import DESCRIPTION_MAX_CHARS, RESERVED, XML_TAG, field, scalar_value  # noqa: E402
-from check_plugin_skill_md import stamp_skill_md  # noqa: E402  the one source of the SKILL.md preamble
+from check_plugin_skill_md import skill_uses_html_pages, stamp_skill_md  # noqa: E402  the one source of the SKILL.md preamble
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -150,7 +150,9 @@ def collect_tree(skills_root, top, declared_dirs, stamp):
         data = path.read_bytes()
         if stamp and arc == f"{top}/SKILL.md":
             try:
-                data = stamp_skill_md(data.decode("utf-8"), *stamp).encode("utf-8")
+                data = stamp_skill_md(
+                    data.decode("utf-8"), *stamp, include_html_pages=skill_uses_html_pages(top_dir)
+                ).encode("utf-8")
             except ValueError:
                 stop(f"{path}: no frontmatter fence to stamp after")
         files[f"skills/{arc}"] = data
