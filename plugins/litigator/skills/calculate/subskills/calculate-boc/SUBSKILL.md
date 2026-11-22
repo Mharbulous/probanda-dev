@@ -3,8 +3,8 @@ name: calculate-boc
 description: >
   Total a BC Supreme Court Form 62 bill of costs: tariff fees at the chosen
   scale, GST and PST on those fees, disbursements as claimed, and the grand
-  total, then put the summary to the practitioner for approval and write the
-  fill context. Form 62 only — a Form 63 default judgment bill is totalled by
+  total, then put the summary to the practitioner for approval and write
+  boc-context.json for /publish. Form 62 only — a Form 63 default judgment bill is totalled by
   its own engine under /publish.
 ---
 
@@ -28,7 +28,7 @@ This member needs a state file that already carries the header, `tariffScale`,
 `unitValue`, `tariffItems[]` and `disbursements[]`. If any of those is missing, say
 which member fills it and stop.
 
-Practitioner input renders per `source/skills/shared/elicitation-widget.md` —
+Practitioner input renders per `shared/elicitation-widget.md` —
 plain chat text only as that file's fallback rung, never as the primary ask.
 
 ## 1. The summary

@@ -1,9 +1,11 @@
 ---
 name: calculate
 description: >
-  Figures for a BC matter: court order interest (pre- and post-judgment), interest under a
-  contract's own rate, and a bill of costs' disbursements, tariff items, scale A/B/C units
-  and totals. Never a deadline or limitation date (the docket-clerk agent).
+  Use when calculating BC court order or contract interest, or bill of costs
+  (disbursements, tariff units, totals). Never deadlines (docket-clerk).
+metadata:
+  author: Probanda Legal
+  tags: [litigation, bc-courts, interest, bill-of-costs]
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
@@ -22,7 +24,9 @@ instead of `SKILL.md` so recursive skill loaders do not expose them as global to
 Asset paths (scripts, references) inside a subskill's `SUBSKILL.md` are written relative to
 this front door's own folder, not to the subskill's folder.
 
-## Routing
+## Instructions
+
+### Routing
 
 0. A deadline, limitation date or hearing date is never a figure here. Spawn
    `lawyer:docket-clerk` for it (`shared/deadline-isolation.md`, "Calling docket-clerk"), and
@@ -60,3 +64,22 @@ A bill-of-costs request that names no member starts at `gather-disbursements`.
 The three bill-of-costs members share one working folder and one state file, described in
 `references/bill-of-costs-workspace.md`. None of them hands off automatically: each ends by
 offering the next member, and the practitioner chooses.
+
+## Examples
+
+```text
+/calculate pre-judgment interest on CAD 50,000 from 2024-03-15 to today
+-> subskills/court-interest-calculator/SUBSKILL.md
+
+/calculate contract interest at prime plus 2% on a CAD 120,000 promissory note
+-> subskills/contract-interest-rates/SUBSKILL.md
+
+/calculate bill of costs for Smith v. Jones
+-> subskills/gather-disbursements/SUBSKILL.md
+
+/calculate calculate-boc
+-> subskills/calculate-boc/SUBSKILL.md
+
+/calculate when is the limitation deadline to file the NOCC?
+-> Not a figure here; spawn lawyer:docket-clerk
+```

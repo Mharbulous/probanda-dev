@@ -1,4 +1,4 @@
-"""Compute a Form 62 bill of costs' totals and write the fill context.
+"""Compute a Form 62 bill of costs' totals and write boc-context.json.
 
 Usage:
     python boc_context.py --state "<working folder>/bill-of-costs.json"
