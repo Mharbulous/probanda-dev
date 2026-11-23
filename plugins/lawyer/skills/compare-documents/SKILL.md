@@ -3,7 +3,7 @@ name: compare-documents
 description: "Compare two PDF copies of one document and say what changed: a court e-filing system's flattened copy against the original ('verify flattened documents'), a converted or re-saved PDF against its source, or a returned signed copy against the version sent. Use for 'did anything change', 'compare these two PDFs', 'check this copy against the original'. Redlining two drafts of a Word document -> not this skill."
 ---
 
-<!-- lawyer v0.31.10 -->
+<!-- lawyer v0.31.11 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

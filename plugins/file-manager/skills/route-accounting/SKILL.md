@@ -4,7 +4,7 @@ disable-model-invocation: true
 description: In the firm's accounting root, review loose bookkeeping files and route each one to its destination folder, after the user approves a routing plan. Use for 'route-accounting', or to sort/file loose accounting documents. Covers .pdf/.docx/.doc/.eml/.msg/.xls.
 ---
 
-<!-- file-manager v0.19.3 -->
+<!-- file-manager v0.19.4 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

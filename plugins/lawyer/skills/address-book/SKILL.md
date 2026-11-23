@@ -6,7 +6,7 @@ description: >-
   or firm records.
 ---
 
-<!-- lawyer v0.31.10 -->
+<!-- lawyer v0.31.11 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

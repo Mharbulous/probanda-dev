@@ -4,7 +4,7 @@ disable-model-invocation: true
 description: "Use when the practitioner says a draft invoice from /bill is signed and types /issue-invoice: records the signed invoice as issued, locks its lines and time entries, writes the frozen copy of what supports each line, and saves a draft email to accounting about trust. Also records when the invoice went out. Sends nothing and moves no trust money."
 ---
 
-<!-- billing v0.7.3 -->
+<!-- billing v0.7.4 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.
