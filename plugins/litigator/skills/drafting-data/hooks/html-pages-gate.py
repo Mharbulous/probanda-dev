@@ -77,7 +77,8 @@ VIEW_NAMES = ("procedural history", "material facts", "legal research", "argumen
 # is not matched inside a longer word.
 VIEW_NAME = r"(?:" + "|".join(re.escape(name) for name in VIEW_NAMES) + r")"
 VIEW = r"(?<![\w-])" + VIEW_NAME + r"(?: - (?:(?:work board|milestone|job board)(?: - proceeding)?|filing) \d+)?(?: preview \d+)?\.html"
-PAGE_ANYWHERE = re.compile(STEM + r"[^\\/\n\"'`]*\.html|" + VIEW + r"|workboard-status\.js", re.I)
+# The gap after the stem never crosses another file's end (".md "), so one match cannot join two paths.
+PAGE_ANYWHERE = re.compile(STEM + r"(?:(?!\.\w+\s)[^\\/\n\"'`])*\.html|" + VIEW + r"|workboard-status\.js", re.I)
 PAGE_NAME = re.compile(STEM + r"[^\\/]*\.html|" + VIEW + r"|workboard-status\.js", re.I)
 # Canonical names a Grep glob is tried against.
 SAMPLE_PAGES = ("Work Board.html", "Work Board 1.html", "Work Board - filing 1.html", "Work Board - proceeding 3.html", "Litigation Strategy.html", "To Do List.html",

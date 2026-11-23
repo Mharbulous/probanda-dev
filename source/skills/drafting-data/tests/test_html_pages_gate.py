@@ -180,6 +180,9 @@ class GateTest(unittest.TestCase):
     def test_shell_tools_allow_other_html(self):
         self.assertAllowed(call("Bash", {"command": f'cat "{DRAFT}\\notes.html"'}))
         self.assertAllowed(call("mcp__remote-devices__device_bash", {"command": "ls"}))
+        # A stem inside one path never joins the ".html" of the next path.
+        self.assertAllowed(call("Bash", {"command": "git commit -- docs/0217-milestone-31-plan.md index.html"}))
+        self.assertDenied(call("Bash", {"command": "git commit -- docs/0217-plan.md Work Board 1.html"}))
 
     def test_device_tools_refuse_any_string_naming_a_page(self):
         self.assertDenied(call("mcp__device_read_file", {"request": {"path": DRAFT + r"\Litigation Strategy.html"}}))
