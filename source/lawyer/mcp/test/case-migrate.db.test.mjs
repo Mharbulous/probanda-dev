@@ -86,6 +86,10 @@ for i, m in enumerate(marks):
             # CREATEs genuinely fire instead of short-circuiting on IF NOT EXISTS.
             con.execute('DROP TABLE IF EXISTS participant_aliases')
             con.execute('DROP TABLE IF EXISTS tribunal_members')
+        if version < 91:
+            # Pre-v9.1 fixtures hold an issue's proceeding in issues.proceeding_id.
+            con.execute('DROP TABLE IF EXISTS issue_proceedings')
+            con.execute('ALTER TABLE issues ADD COLUMN proceeding_id INTEGER REFERENCES proceedings(proceeding_id)')
     if m.group(1) == 'law' and version < 85:
         # Pre-v8.5 fixtures lack the capture columns, so the 84 -> 85 rebuild
         # genuinely adds them. The three CHECK widenings in the same hop need
@@ -163,7 +167,7 @@ test("dispatch rejects an unknown mode before spawning anything", async () => {
   );
 });
 
-test("plan then apply reaches v9.0 through the full adapter stack", async () => {
+test("plan then apply reaches v9.1 through the full adapter stack", async () => {
   const f = fixture(76);
   const { env, cleanup } = isolatedEnv();
   try {
@@ -173,7 +177,7 @@ test("plan then apply reaches v9.0 through the full adapter stack", async () => 
     assert.equal(plan.from_version, "7.6");
     assert.equal(plan.already_current, false);
     assert.match(plan.plan_token, /^cdm1\.[0-9a-f]{32}$/);
-    assert.equal(plan.user_confirmation_required, "MIGRATE matter v7.6 -> v9.0");
+    assert.equal(plan.user_confirmation_required, "MIGRATE matter v7.6 -> v9.1");
     // A plan is a dry run: the natives must still be at 7.6.
     assert.deepEqual(userVersions(f.caseDataDir), [76, 76, 76]);
 
@@ -182,7 +186,7 @@ test("plan then apply reaches v9.0 through the full adapter stack", async () => 
       userConfirmation: plan.user_confirmation_required,
     }, env);
     assert.equal(applied.applied, true);
-    assert.deepEqual(userVersions(f.caseDataDir), [90, 90, 90]);
+    assert.deepEqual(userVersions(f.caseDataDir), [91, 91, 91]);
     assert.equal(applied.evidence_sql_written, true);
 
     // The lock released, so a follow-up call succeeds rather than timing out.
@@ -213,17 +217,17 @@ test("migration plan uses R2 live derivation and heals a stale breadcrumb", asyn
 });
 
 test("a refusal round-trips as a DataServerError carrying the engine's code", async () => {
-  const f = fixture(90);
+  const f = fixture(91);
   const { env, cleanup } = isolatedEnv();
   try {
     await assert.rejects(
       () => caseDataMigrate(f.matterRoot, "apply", {
         planToken: "cdm1.0000000000000000000000000000000",
-        userConfirmation: "MIGRATE matter v9.0 -> v9.0",
+        userConfirmation: "MIGRATE matter v9.1 -> v9.1",
       }, env),
       (err) => {
         assert.equal(err.code, "migrate_refused");
-        assert.match(err.message, /already at v9\.0/);
+        assert.match(err.message, /already at v9\.1/);
         return true;
       },
     );

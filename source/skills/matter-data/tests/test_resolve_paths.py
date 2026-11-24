@@ -25,7 +25,7 @@ class ResolvePathsTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def write_db(self, directory, value="live", version=90, metadata=None):
+    def write_db(self, directory, value="live", version=91, metadata=None):
         directory = Path(directory)
         directory.mkdir(parents=True, exist_ok=True)
         con = sqlite3.connect(directory / "main.sqlite")
@@ -213,7 +213,7 @@ class StagingTagTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             db = Path(temp) / "main.sqlite"
             con = sqlite3.connect(db)
-            con.execute("PRAGMA user_version = 90")
+            con.execute("PRAGMA user_version = 91")
             con.close()
             prefixes = []
             real = tempfile.mkdtemp

@@ -62,7 +62,7 @@ optional; the surfaces are listed in dependency order, not importance order.
   time, each hop served by a `MIGRATE` marker or a `rebuild.py` carve-out; a hop
   served by neither is a hard fail, so the chain fails closed on a gap rather
   than skipping a generation.
-- **`rebuild.py`** — `stamped_version = 76 if args.migrate else 90`. The **`else`
+- **`rebuild.py`** — `stamped_version = 76 if args.migrate else 91`. The **`else`
   branch moves with every bump**, and so do the `accepted` tuple and the two
   version strings in `require_source_version`; the `76` does not (below).
 
@@ -136,8 +136,8 @@ bundle is tracked and shipped, so an un-rebuilt bundle ships the old guard.
 
 > **The two dump-header literals are not byte-identical and must not be
 > copy-pasted between files.** `dump.py`'s `HEADER` uses an em dash
-> (`-- Case Data evidence dump — schema v9.0`); `backend.ts`'s `DUMP_HEADER`
-> uses a double hyphen (`-- Case Data evidence dump -- schema v9.0`). Both
+> (`-- Case Data evidence dump — schema v9.1`); `backend.ts`'s `DUMP_HEADER`
+> uses a double hyphen (`-- Case Data evidence dump -- schema v9.1`). Both
 > readers parse the version out by regex rather than comparing the whole
 > string, so they coexist — but `case-tools.db.test.mjs` asserts the double-hyphen
 > form exactly, and pasting the Python literal into TypeScript fails that test.

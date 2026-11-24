@@ -86,6 +86,82 @@
         "content_sha256": "2c10e1159637d61cc3169aabc7ff197543c3271c513b2bf1c59d046310658637"
       }
     ]
+  },
+  {
+    "store": "matter-data",
+    "hop": "90 -> 91",
+    "date": "2026-11-24",
+    "ruling": "Brahm, 2026-11-24: \"Yes, I so rule\", giving this ruling as drafted: \"I rule that the matter-data hop 90 -> 91 may stand. It replaces the issues.proceeding_id column with the issue_proceedings table, so one issue can link to several proceedings. The store encodes one issue-to-proceeding link before and after, so it relies on the Exception no more than it already did. Record the 17 problems that check_publishable.py --propose-ruling lists for this hop.\"",
+    "problems": [
+      {
+        "message": "forbidden file type",
+        "content_sha256": "a93c8c0ae43b9a18b47c3a8d33e1881bd6a490fad7be21fff7ac5c7c8fe2c6af"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "663e76e3a8240d5db0cee81015e8eefbff4ee6598eb184160642c5f19d9a1c96"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "c26d1d5fbcf3dbb6f5815d69e8e9065e592bd614be999f3aa14c0643d51678ae"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "2cd4a30517d5c77b677f0d3db55cd24b45d99fb55aa5296a8d3815d188d0ecca"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "49d430e73416874309678f5f732715fc03588ee7061ad1153f96bf68a193e8aa"
+      },
+      {
+        "message": "forbidden file type",
+        "content_sha256": "f4701df5a012afb7cdd405a85d5d9eea4c433ecdd57347bd55bf4eb04280361d"
+      },
+      {
+        "message": "forbidden file type",
+        "content_sha256": "53f50310998cf63203881268736706cf096ae1e8c38128734a79f19e6d0149f6"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "786fecae3246c7bfc9d4e69908a6b701a91d3aae5f8944f8950811e495e4acff"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "02dbac780f5466fe3503d6caa464662261fbcfe715342a34c833bd175b033f30"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "27ad5d28aef6265eae784c8a3b28aafd923fdc2a008e228c823952c970ef84d3"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "ccfb1e47ea8e6c9d90618d29096243ca08b74b2e091c425b50e42d408728dec8"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "217ebcbb6e65471eca52e88bb7b17278aad3ba7120982839a27071b8f10ea0f3"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "506accd5bf5cee677f202121e1b31e3688d56d852970ec73cfb8bbe782eb98c0"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "3f1795ab061445c0e1d1a448ab298f9f5d23decb980bb0f98bb9eda698dad61f"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "6530f4a4b8d6d8106f03fd892ebd8781aba3c1fe92f5a1e1b3c957707d26adee"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "8444fb1730f3021e97764a9e751ca29e7b93af9b9b37b9b5360b6b6a25fef8f2"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "4e50ef6500645cdd577c7682cfe76a4a4e4b3b14c72409f63642c1834f657078"
+      }
+    ]
   }
   
 ]

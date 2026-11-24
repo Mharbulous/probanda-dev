@@ -235,9 +235,9 @@ doesn't exist yet, ask the practitioner to create it, then request access.
 One `matter_data__execute` call, `matter_root` from the pointer just written (Step 1)
 (§2.3). `sql_script` is the concatenation,
 in this order: `sections['main']`, then `law_qualified`, then `privileged_qualified`,
-then the `matter_metadata` seed `INSERT`, then the three `PRAGMA user_version = 90`
-statements (`PRAGMA user_version = 90;` for main, `PRAGMA law.user_version = 90;` and
-`PRAGMA privileged.user_version = 90;` for the attached databases — schema-qualified
+then the `matter_metadata` seed `INSERT`, then the three `PRAGMA user_version = 91`
+statements (`PRAGMA user_version = 91;` for main, `PRAGMA law.user_version = 91;` and
+`PRAGMA privileged.user_version = 91;` for the attached databases — schema-qualified
 PRAGMA syntax works the same way as the schema-qualified `PRAGMA table_info` pattern in
 §3). The whole script runs in the one transaction `matter_data__execute` already wraps
 every call in — no separate `BEGIN`/`COMMIT` needed here. All three databases are
@@ -269,9 +269,9 @@ sql_script = "\n".join([
     law_qualified,
     privileged_qualified,
     seed_sql,
-    "PRAGMA user_version = 90;",
-    "PRAGMA law.user_version = 90;",
-    "PRAGMA privileged.user_version = 90;",
+    "PRAGMA user_version = 91;",
+    "PRAGMA law.user_version = 91;",
+    "PRAGMA privileged.user_version = 91;",
 ])
 ```
 

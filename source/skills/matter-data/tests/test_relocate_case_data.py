@@ -49,7 +49,7 @@ class RelocateTests(unittest.TestCase):
         for db in ("main", "law", "privileged"):
             con = sqlite3.connect(self.old / f"{db}.sqlite")
             con.executescript(sections[db])
-            con.execute("PRAGMA user_version = 90")
+            con.execute("PRAGMA user_version = 91")
             con.commit()
             con.close()
         con = sqlite3.connect(self.old / "main.sqlite")
@@ -63,7 +63,7 @@ class RelocateTests(unittest.TestCase):
         con.execute("PRAGMA user_version = 7")
         con.commit()
         con.close()
-        (self.old / "evidence.sql").write_text("-- Case Data evidence dump -- schema v9.0\n", encoding="utf-8")
+        (self.old / "evidence.sql").write_text("-- Case Data evidence dump -- schema v9.1\n", encoding="utf-8")
         (self.old / "housekeeping").mkdir()
         (self.old / "housekeeping" / "run.md").write_text("# Run\n", encoding="utf-8")
         (self.old / "form-sessions").mkdir()

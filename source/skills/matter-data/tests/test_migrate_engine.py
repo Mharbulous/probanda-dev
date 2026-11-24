@@ -1,12 +1,12 @@
 """Tests for the host-side migrate engine behind `matter_data__migrate`.
 
 The end-to-end fixtures are deliberately SYNTHETIC HYBRIDS: a set of databases
-built from the canonical v9.0 schema, selectively un-upgraded, then stamped at
+built from the canonical v9.1 schema, selectively un-upgraded, then stamped at
 an older user_version. That is not a historically faithful v7.4 database, and it
 does not need to be — the engine walks the chain by version stamp and every hop
 is shape-idempotent by construction. What these tests exercise is the engine
 (chain building, the token, staging, backup, all-or-nothing replacement,
-restore), not the schema deltas, which test_schema_v89.py already owns.
+restore), not the schema deltas, which test_schema_v91.py already owns.
 """
 
 import json
@@ -167,6 +167,13 @@ def build_matter(tmp, user_version, deprecated_role=False, drop_housekeeping=Fal
                 # them already there.
                 con.execute("DROP TABLE participant_aliases")
                 con.execute("DROP TABLE tribunal_members")
+            if user_version < 91 and db == "main":
+                # Pre-v9.1 fixtures hold an issue's proceeding in
+                # issues.proceeding_id, so the 90 -> 91 hop genuinely moves
+                # it into issue_proceedings.
+                con.execute("DROP TABLE issue_proceedings")
+                con.execute("ALTER TABLE issues ADD COLUMN proceeding_id "
+                            "INTEGER REFERENCES proceedings(proceeding_id)")
             con.execute(f"PRAGMA user_version = {user_version}")
             con.commit()
         finally:
@@ -206,7 +213,8 @@ class ChainTests(unittest.TestCase):
              (81, 82, "marker"), (82, 83, "marker"),
              (83, 84, "marker"), (84, 85, "marker"), (85, 86, "marker"),
              (86, 87, "marker"), (87, 88, "marker"),
-             (88, 89, "marker"), (89, 90, "marker")],
+             (88, 89, "marker"), (89, 90, "marker"),
+             (90, 91, "marker")],
         )
         self.assertEqual([s["name"] for s in chain if s["kind"] == "carveout"],
                          ["upgrade_74_to_75", "upgrade_75_to_76"])
@@ -231,7 +239,7 @@ class ChainTests(unittest.TestCase):
         self.assertEqual((chain[0]["from"], chain[0]["to"], chain[0]["kind"],
                           chain[0]["name"]), (69, 70, "carveout", "upgrade_69_to_70"))
         self.assertEqual([(s["from"], s["to"]) for s in chain],
-                         [(v, v + 1) for v in range(69, 90)])
+                         [(v, v + 1) for v in range(69, 91)])
 
     def test_public_steps_carry_no_sql_bodies(self):
         for step in engine.public_steps(engine.build_chain(73, self.hops)):
@@ -311,7 +319,7 @@ class PlanApplyTests(EngineFixtureTest):
         self.assertTrue(plan["ok"])
         self.assertFalse(plan["already_current"])
         self.assertEqual(plan["from_version"], "7.6")
-        self.assertEqual(plan["target_version"], "9.0")
+        self.assertEqual(plan["target_version"], "9.1")
         self.assertTrue(plan["plan_token"].startswith("cdm1."))
         self.assertEqual(plan["dry_run"]["dump_header"], engine.DUMP_HEADER)
         self.assertGreater(plan["dry_run"]["triggers_loaded"], 0)
@@ -328,9 +336,9 @@ class PlanApplyTests(EngineFixtureTest):
         result = engine.apply(str(self.matter_root), plan["plan_token"],
                               plan["user_confirmation_required"])
         self.assertTrue(result["applied"])
-        self.assertEqual(versions(self.case_data_dir), {db: 90 for db in DBS})
+        self.assertEqual(versions(self.case_data_dir), {db: 91 for db in DBS})
         self.assertTrue(result["evidence_sql_written"])
-        self.assertIn("schema v9.0",
+        self.assertIn("schema v9.1",
                       self.evidence_path.read_text(encoding="utf-8").splitlines()[0])
 
         # The 76 -> 77 marker's table is really there.
@@ -386,7 +394,7 @@ class PlanApplyTests(EngineFixtureTest):
     def test_apply_refuses_a_wrong_confirmation(self):
         plan = engine.plan(str(self.matter_root))
         before = hashes(self.case_data_dir)
-        for bad in ("", "yes", "MIGRATE wrong v7.6 -> v9.0"):
+        for bad in ("", "yes", "MIGRATE wrong v7.6 -> v9.1"):
             with self.assertRaises(engine.MigrateError) as ctx:
                 engine.apply(str(self.matter_root), plan["plan_token"], bad)
             self.assertIn(ctx.exception.code,
@@ -432,7 +440,7 @@ class CarveoutFiringTests(EngineFixtureTest):
 
         engine.apply(str(self.matter_root), plan["plan_token"],
                      plan["user_confirmation_required"])
-        self.assertEqual(versions(self.case_data_dir), {db: 90 for db in DBS})
+        self.assertEqual(versions(self.case_data_dir), {db: 91 for db in DBS})
 
         con = sqlite3.connect(self.case_data_dir / "main.sqlite")
         try:
@@ -468,7 +476,7 @@ def table_shape(con):
 
 class FromV62Tests(EngineFixtureTest):
     """A faithful v6.2 database (historic schema.sql, no un-upgrading) walks the
-    whole chain, including the 69 -> 70 carve-out, and lands on the v9.0 shape."""
+    whole chain, including the 69 -> 70 carve-out, and lands on the v9.1 shape."""
 
     user_version = 62
 
@@ -496,7 +504,7 @@ class FromV62Tests(EngineFixtureTest):
 
         engine.apply(str(self.matter_root), plan["plan_token"],
                      plan["user_confirmation_required"])
-        self.assertEqual(versions(self.case_data_dir), {db: 90 for db in DBS})
+        self.assertEqual(versions(self.case_data_dir), {db: 91 for db in DBS})
 
         expected = fresh_v89_shape(self.tmp)
         for db in DBS:
@@ -569,19 +577,79 @@ class From85Tests(EngineFixtureTest):
         plan = engine.plan(str(self.matter_root))
         self.assertEqual([(s["from"], s["to"], s["kind"]) for s in plan["steps"]],
                          [(85, 86, "marker"), (86, 87, "marker"), (87, 88, "marker"),
-                          (88, 89, "marker"), (89, 90, "marker")])
+                          (88, 89, "marker"), (89, 90, "marker"),
+                          (90, 91, "marker")])
         self.assertEqual(plan["dry_run"]["foreign_key_violations"],
                          {db: 0 for db in DBS})
 
         engine.apply(str(self.matter_root), plan["plan_token"],
                      plan["user_confirmation_required"])
-        self.assertEqual(versions(self.case_data_dir), {db: 90 for db in DBS})
+        self.assertEqual(versions(self.case_data_dir), {db: 91 for db in DBS})
 
         rows_after, notnull_after, violations = self.instructions()
         self.assertEqual(rows_after, rows_before)
         self.assertEqual((notnull_after["proceeding_id"], notnull_after["party_id"]),
                          (0, 1))
         self.assertEqual(violations, [])
+
+
+class From90Tests(EngineFixtureTest):
+    """A v9.0 matter whose issue holds its proceeding in issues.proceeding_id
+    takes the 90 -> 91 hop: the link moves into issue_proceedings, the column
+    goes, and the issue can then be linked to a second proceeding."""
+
+    user_version = 90
+    drop_housekeeping = False
+
+    def setUp(self):
+        super().setUp()
+        con = sqlite3.connect(self.case_data_dir / "main.sqlite")
+        try:
+            con.executescript(
+                """
+                INSERT INTO proceedings (proceeding_id, court, file_number, status)
+                VALUES (1, 'BCSC', 'S-1', 'active'), (2, 'VIAC', 'A-2', 'active');
+                INSERT INTO facts (fact_id, description) VALUES (7, 'A fact.');
+                INSERT INTO issues (issue_id, proceeding_id, title)
+                VALUES (1, 1, 'Was the contract repudiated?');
+                INSERT INTO issues (issue_id, title) VALUES (2, 'Unlinked issue');
+                INSERT INTO issue_facts (issue_id, fact_id, relevance)
+                VALUES (1, 7, 'supports');
+                """
+            )
+            con.commit()
+        finally:
+            con.close()
+
+    def test_apply_moves_the_link_and_allows_a_second_proceeding(self):
+        plan = engine.plan(str(self.matter_root))
+        self.assertEqual([(s["from"], s["to"]) for s in plan["steps"]], [(90, 91)])
+        self.assertEqual(plan["dry_run"]["row_counts_after"]["main"]["issue_proceedings"], 1)
+        engine.apply(str(self.matter_root), plan["plan_token"],
+                     plan["user_confirmation_required"])
+        self.assertEqual(versions(self.case_data_dir), {db: 91 for db in DBS})
+
+        con = sqlite3.connect(self.case_data_dir / "main.sqlite")
+        try:
+            con.execute("PRAGMA foreign_keys = ON")
+            self.assertEqual(
+                con.execute("SELECT issue_id, proceeding_id FROM issue_proceedings").fetchall(),
+                [(1, 1)])
+            self.assertNotIn("proceeding_id",
+                             {r[1] for r in con.execute("PRAGMA table_info(issues)")})
+            self.assertEqual(con.execute("SELECT count(*) FROM issues").fetchone()[0], 2)
+            self.assertEqual(con.execute("SELECT * FROM issue_facts").fetchall(),
+                             [(1, 7, 'supports')])
+            self.assertEqual(con.execute("PRAGMA foreign_key_check").fetchall(), [])
+
+            con.execute("INSERT INTO issue_proceedings VALUES (1, 2)")
+            queries = rebuild.read_ref("queries.sql")
+            sql = queries.split("@query_31_issues_in_several_proceedings", 1)[1]
+            sql = sql.split("\nSELECT", 1)[1].split(";", 1)[0]
+            rows = con.execute("SELECT" + sql).fetchall()
+        finally:
+            con.close()
+        self.assertEqual([(r[0], r[3], r[7]) for r in rows], [(1, 1, 1), (1, 2, 1)])
 
 
 class StagingTagTests(EngineFixtureTest):
@@ -623,7 +691,7 @@ class StagingTagTests(EngineFixtureTest):
 
 
 class AlreadyCurrentTests(EngineFixtureTest):
-    user_version = 90
+    user_version = 91
     drop_housekeeping = False
 
     def test_plan_reports_already_current_and_issues_no_token(self):

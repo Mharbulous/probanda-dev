@@ -12,11 +12,11 @@ The gate exists so that re-presenting a file that was already ingested routes to
 
 Prove the current matter folder's host path and use it as `matter_root` (§2.2). Read `probanda.json` only to confirm initialization. The Step 3 `matter_data__query` call is what actually exercises pointer/schema-version resolution — the backend runs it host-side on every call.
 
-If a call in Step 3 fails with the **schema-version guard** message (the database is below v9.0), do not proceed:
+If a call in Step 3 fails with the **schema-version guard** message (the database is below v9.1), do not proceed:
 
 1. Report the exact guard message to the user and offer to run `../operations/migrate.md`.
 2. If the user agrees, hand off to `migrate`. When migrate reports success, **retry the Step 3 call once**.
-3. If the guard fires again after a successful migrate, or the user declines, halt and report. Do not attempt to ingest against a pre-v9.0 database.
+3. If the guard fires again after a successful migrate, or the user declines, halt and report. Do not attempt to ingest against a pre-v9.1 database.
 
 If a call instead fails with "stale pointer — re-run initialize" (schema_version isn't 5), halt and direct the user to `../operations/initialize.md` — do not attempt migrate for this error, it is unrelated to the user_version guard.
 

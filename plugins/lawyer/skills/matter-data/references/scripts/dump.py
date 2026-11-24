@@ -2,7 +2,7 @@
 """dump.py — write evidence.sql, the durable plain-text SQL dump.
 
 Stages temp copies of the three binaries, asserts DELETE journal mode, and
-writes evidence.sql with a header line carrying `schema v9.0`, then each
+writes evidence.sql with a header line carrying `schema v9.1`, then each
 database's rows fenced by its section marker pair, content produced by the
 connection's iterdump(). This is the durable text boundary that survives
 cloud-sync corruption and is the rebuild/migration source. Run after every
@@ -23,7 +23,7 @@ import sys
 import fuse_safe_io
 import resolve_paths
 
-HEADER = "-- Case Data evidence dump — schema v9.0"
+HEADER = "-- Case Data evidence dump — schema v9.1"
 
 
 def dump_db(path):
@@ -58,7 +58,7 @@ def write_atomic(path, text):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Write evidence.sql (schema v9.0 dump).")
+    ap = argparse.ArgumentParser(description="Write evidence.sql (schema v9.1 dump).")
     ap.add_argument('matter_root', help="Path to the matter root folder.")
     args = ap.parse_args(argv)
 

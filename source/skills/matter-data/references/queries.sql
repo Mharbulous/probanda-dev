@@ -1,5 +1,5 @@
 -- =========================================================================
--- Case Data — Queries v9.0.
+-- Case Data — Queries v9.1.
 -- Views and canonical queries for the main/law/privileged architecture.
 --
 -- Views are CREATE VIEW statements (created in main.sqlite after ATTACH).
@@ -19,6 +19,7 @@
 --   28:    v8.7 sources pending privilege review (operations/resolve-privilege.md)
 --   29:    v8.9 exhibits of a document (which affidavit exhibits it)
 --   30:    v8.9 held copy of an instrument's full text (/legal-research fallback)
+--   31:    v9.1 issues linked to more than one proceeding
 --
 -- Pending privilege review (v8.7, design-decisions #49): the drafting and
 -- evidence reads (v_fact_status, v_current_positions, 01, 02, 04, 20, 25)
@@ -1224,3 +1225,26 @@ SELECT authority_id, title, citation, authority_type, jurisdiction, file_path, f
 FROM held
 WHERE citation_match OR (?2 <> '' AND title LIKE '%' || ?2 || '%')
 ORDER BY citation_match DESC, rest IS NOT NULL, authority_id;
+
+-- -----------------------------------------------------------------
+-- @query_31_issues_in_several_proceedings
+-- v9.1: each issue linked to two or more proceedings, one row per link, so
+-- the same issue decided in different proceedings can be seen together. An
+-- issue is live in a proceeding when the issue is open and the proceeding
+-- is active.
+-- -----------------------------------------------------------------
+SELECT
+    i.issue_id,
+    i.title,
+    i.status AS issue_status,
+    p.proceeding_id,
+    p.court,
+    p.file_number,
+    p.status AS proceeding_status,
+    (i.status = 'open' AND p.status = 'active') AS live
+FROM issues i
+JOIN issue_proceedings ip ON ip.issue_id = i.issue_id
+JOIN proceedings p ON p.proceeding_id = ip.proceeding_id
+WHERE i.verified >= 0
+  AND (SELECT COUNT(*) FROM issue_proceedings x WHERE x.issue_id = i.issue_id) > 1
+ORDER BY i.issue_id, p.proceeding_id;

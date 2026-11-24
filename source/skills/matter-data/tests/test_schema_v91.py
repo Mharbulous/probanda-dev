@@ -68,7 +68,7 @@ def named_query(marker):
     return text[select : text.index(";", select) + 1]
 
 
-class SchemaV90Tests(unittest.TestCase):
+class SchemaV91Tests(unittest.TestCase):
     def test_reverification_columns_default_and_enforce_cross_column_state(self):
         sections = rebuild.parse_sections(SCHEMA_PATH.read_text(encoding="utf-8"))
         connection = sqlite3.connect(":memory:")
@@ -828,17 +828,17 @@ class SchemaV90Tests(unittest.TestCase):
         )
         self.assertEqual(
             rebuild.require_source_version(
-                "-- Case Data evidence dump — schema v9.0\n", migrate=False
+                "-- Case Data evidence dump — schema v9.1\n", migrate=False
             ),
-            90,
+            91,
         )
         with self.assertRaisesRegex(SystemExit, "requires v7.4 or v7.5"):
             rebuild.require_source_version(
                 "-- Case Data evidence dump — schema v7.3\n", migrate=True
             )
-        with self.assertRaisesRegex(SystemExit, "requires v9.0"):
+        with self.assertRaisesRegex(SystemExit, "requires v9.1"):
             rebuild.require_source_version(
-                "-- Case Data evidence dump — schema v8.9\n", migrate=False
+                "-- Case Data evidence dump — schema v9.0\n", migrate=False
             )
 
     def test_canonical_schema_accepts_only_current_counterclaim_role(self):
@@ -1487,14 +1487,14 @@ class SchemaV90Tests(unittest.TestCase):
                     con.close()
 
             # A 76 database is not activatable: the version guard refuses it, so
-            # it cannot be dumped under a v9.0 header while still at 76.
+            # it cannot be dumped under a v9.1 header while still at 76.
             with self.assertRaises(SystemExit):
                 dump.main([str(matter_root)])
 
             # Apply the post-rebuild 76 -> 77, 77 -> 78, 78 -> 79, 79 -> 80,
             # 80 -> 81, 81 -> 82, 82 -> 83, 83 -> 84, 85 -> 86, 86 -> 87,
-            # 87 -> 88, 88 -> 89 and 89 -> 90 segments before stamping every
-            # database at 90 (the 84 -> 85 hop
+            # 87 -> 88, 88 -> 89, 89 -> 90 and 90 -> 91 segments before stamping every
+            # database at 91 (the 84 -> 85 hop
             # is on `law` and rebuilds three tables the synthetic dump already
             # carries in their v8.5 shape, so it is stamped, not replayed). The
             # synthetic v7.4 dump started
@@ -1537,26 +1537,29 @@ class SchemaV90Tests(unittest.TestCase):
                 con.executescript(migration_snippet(87, 88, "main"))
                 con.executescript(migration_snippet(88, 89, "main"))
                 con.executescript(migration_snippet(89, 90, "main"))
-                con.execute("PRAGMA user_version = 90")
+                con.execute("DROP TABLE issue_proceedings")
+                con.execute("ALTER TABLE issues ADD COLUMN proceeding_id INTEGER")
+                con.executescript(migration_snippet(90, 91, "main"))
+                con.execute("PRAGMA user_version = 91")
             finally:
                 con.close()
             con = sqlite3.connect(case_data_dir / "privileged.sqlite")
             try:
                 con.executescript(migration_snippet(77, 78, "privileged"))
                 con.executescript(migration_snippet(85, 86, "privileged"))
-                con.execute("PRAGMA user_version = 90")
+                con.execute("PRAGMA user_version = 91")
             finally:
                 con.close()
             for database in ("law",):
                 con = sqlite3.connect(case_data_dir / f"{database}.sqlite")
                 try:
-                    con.execute("PRAGMA user_version = 90")
+                    con.execute("PRAGMA user_version = 91")
                 finally:
                     con.close()
 
             self.assertEqual(dump.main([str(matter_root)]), 0)
             self.assertIn(
-                "schema v9.0",
+                "schema v9.1",
                 evidence_path.read_text(encoding="utf-8").splitlines()[0],
             )
 
@@ -2321,6 +2324,48 @@ class SchemaV90Tests(unittest.TestCase):
                 self.assertEqual(columns(migrated, table), columns(canonical, table), table)
             self.assertEqual(migrated.execute("SELECT * FROM parties").fetchall(),
                              parties_before)
+            self.assertEqual(migrated.execute("PRAGMA integrity_check").fetchone()[0], "ok")
+        finally:
+            canonical.close()
+            migrated.close()
+
+    # ------------------------------------------------------------------
+    # v9.0 -> v9.1 (main): issues.proceeding_id becomes issue_proceedings
+    # (decision #81)
+    # ------------------------------------------------------------------
+    def test_migration_90_to_91_moves_issue_links_and_matches_canonical(self):
+        sections = rebuild.parse_sections(SCHEMA_PATH.read_text(encoding="utf-8"))
+        canonical = sqlite3.connect(":memory:")
+        migrated = sqlite3.connect(":memory:")
+        try:
+            canonical.executescript(sections["main"])
+            migrated.executescript(sections["main"])
+            migrated.execute("DROP TABLE issue_proceedings")
+            migrated.execute("ALTER TABLE issues ADD COLUMN proceeding_id "
+                             "INTEGER REFERENCES proceedings(proceeding_id)")
+            migrated.executescript(
+                """
+                INSERT INTO proceedings (proceeding_id, court, file_number)
+                VALUES (1, 'BCSC', 'S-1');
+                INSERT INTO issues (issue_id, proceeding_id, title) VALUES (1, 1, 'Linked');
+                INSERT INTO issues (issue_id, title) VALUES (2, 'Unlinked');
+                """
+            )
+            migrated.executescript(migration_snippet(90, 91, "main"))
+
+            def columns(con, table):
+                return [(r[1], r[2], r[3], r[4], r[5]) for r in
+                        con.execute(f"PRAGMA table_info({table})")]
+
+            for table in ("issues", "issue_proceedings"):
+                self.assertEqual(columns(migrated, table), columns(canonical, table), table)
+            self.assertEqual(
+                migrated.execute("SELECT issue_id, proceeding_id FROM issue_proceedings").fetchall(),
+                [(1, 1)])
+            self.assertEqual(
+                migrated.execute("SELECT issue_id, title FROM issues ORDER BY issue_id").fetchall(),
+                [(1, "Linked"), (2, "Unlinked")])
+            self.assertEqual(migrated.execute("PRAGMA foreign_key_check").fetchall(), [])
             self.assertEqual(migrated.execute("PRAGMA integrity_check").fetchone()[0], "ok")
         finally:
             canonical.close()

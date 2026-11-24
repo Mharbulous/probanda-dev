@@ -26,10 +26,10 @@ class CheckPointersTests(unittest.TestCase):
         self.case_data.mkdir(parents=True)
         for name in ("main.sqlite", "law.sqlite", "privileged.sqlite"):
             con = sqlite3.connect(self.case_data / name)
-            con.execute("PRAGMA user_version = 90")
+            con.execute("PRAGMA user_version = 91")
             con.close()
         evidence = self.case_data / "evidence.sql"
-        evidence.write_text("-- Case Data evidence dump -- schema v9.0\n", encoding="utf-8")
+        evidence.write_text("-- Case Data evidence dump -- schema v9.1\n", encoding="utf-8")
         self.pointer = self.matter / "coclerk.json"
 
     def tearDown(self):
@@ -56,7 +56,7 @@ class CheckPointersTests(unittest.TestCase):
         result = self.run_check()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("HEALTHY", result.stdout)
-        self.assertIn("user_version=90", result.stdout)
+        self.assertIn("user_version=91", result.stdout)
         self.assertIn("stored=selected", result.stdout)
 
     def test_stale_pointer_is_unhealthy_and_the_check_is_read_only(self):

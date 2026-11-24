@@ -21,7 +21,7 @@ from resolve_paths import (
 
 
 SQLITE_HEADER = b"SQLite format 3\x00"
-EVIDENCE_HEADER = "-- Case Data evidence dump -- schema v9.0"
+EVIDENCE_HEADER = "-- Case Data evidence dump -- schema v9.1"
 DATABASES = ("main.sqlite", "law.sqlite", "privileged.sqlite")
 
 

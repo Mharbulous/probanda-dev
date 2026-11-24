@@ -42,7 +42,7 @@ recovery lever). Call `matter_data__execute` with `matter_root` and a no-op
 touches no data satisfies the "successful call" requirement that triggers the dump
 side effect). The response's `evidence_sql` field is the written path.
 
-The dump content itself — the `schema v9.0` header, the three section-marker-fenced
+The dump content itself — the `schema v9.1` header, the three section-marker-fenced
 `iterdump()` bodies, `journal_mode = DELETE` asserted before dumping — is produced
 inside the backend (`source/lawyer/mcp/src/case/backend.ts`, `write_dump`);
 this operation file no longer implements it. Report the `evidence_sql` path returned.
@@ -101,9 +101,9 @@ Steps:
 5. **Validate minimum table counts BEFORE touching native files:** main ≥ 21,
    law ≥ 5, privileged ≥ 3. **Rebuild MUST fail before touching native files if the
    triggers are missing** (the cross-database FK layer must load).
-6. **Stamp `PRAGMA user_version = 90` on all three temp binaries.** `iterdump()`
+6. **Stamp `PRAGMA user_version = 91` on all three temp binaries.** `iterdump()`
    does not capture `PRAGMA user_version`, so a freshly rebuilt database starts
-   at `0` even though its schema is genuinely v9.0 — every operation's version
+   at `0` even though its schema is genuinely v9.1 — every operation's version
    guard would otherwise misread it as legacy v6.2 and refuse to run.
 7. Only after validation and the version stamp, move the three closed temp
    binaries into native storage atomically.
@@ -163,12 +163,12 @@ for db, path in paths.items():
 
 # Stamp the version on all three: iterdump() does not capture PRAGMA
 # user_version, so a freshly rebuilt database defaults to 0 (read as legacy
-# v6.2 by the guard) even though the schema is genuinely v9.0 -- every
+# v6.2 by the guard) even though the schema is genuinely v9.1 -- every
 # subsequent operation would incorrectly refuse to run until "migrate", which
 # would then fail because the columns it tries to ADD already exist.
 for db, path in paths.items():
     c = sqlite3.connect(path)
-    c.execute("PRAGMA user_version = 90")
+    c.execute("PRAGMA user_version = 91")
     c.close()
 
 # All checks passed -> move the closed temp binaries into native storage atomically.

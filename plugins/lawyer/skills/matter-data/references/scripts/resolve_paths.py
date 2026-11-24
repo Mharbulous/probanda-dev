@@ -41,7 +41,7 @@ from case_data_resolver import (  # noqa: E402,F401  (re-exported for the CLIs)
 # Location: docs/ADRs/0013-per-matter-case-data-inside-the-matter-folder.md.
 # ---------------------------------------------------------------------------
 LEGACY_ARTIFACTS_DIR = '9. AI'                          # legacy pointer/binary location
-EXPECTED_USER_VERSION = 90                              # v9.0
+EXPECTED_USER_VERSION = 91                              # v9.1
 EXPECTED_SCHEMA_VERSION = 5                             # pointer (probanda.json) form
 POINTER_NAMES = ('probanda.json', 'coclerk.json')       # current name first; the legacy name is kept updated
 LEGACY_USER_VERSION = 62                                # PRAGMA 0 is treated as this
@@ -198,7 +198,7 @@ def resolve_pointer(matter_root, running_in_sandbox=False, migrate_only=False,
             major, minor = version // 10, version % 10
             raise SystemExit(
                 f"Database schema is at v{major}.{minor} but this skill "
-                f"requires v9.0. Run matter_data__migrate in plan mode.")
+                f"requires v9.1. Run matter_data__migrate in plan mode.")
 
     # --- Step 7: stale-dump warning (non-fatal) ----------------------------
     evidence_sql = norm_join(matter_root, normalized['evidence_sql_path'])
@@ -214,8 +214,8 @@ def resolve_pointer(matter_root, running_in_sandbox=False, migrate_only=False,
             m = re.search(r'schema v(\d+)\.(\d+)', first)
             if not m or (int(m.group(1)) * 10 + int(m.group(2))) < EXPECTED_USER_VERSION:
                 warnings.append(
-                    "evidence.sql is missing a v9.0 schema header or predates "
-                    "v9.0. Regenerate it via maintain; the rebuild-only "
+                    "evidence.sql is missing a v9.1 schema header or predates "
+                    "v9.1. Regenerate it via maintain; the rebuild-only "
                     "transition through v7.6 is the sole exception.")
         except Exception:
             pass

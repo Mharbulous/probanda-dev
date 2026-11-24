@@ -106,4 +106,4 @@ These memos are problem+insight capital, not specs. When a trigger fires, read t
 
 ## Retired schema names — never create or reference
 
-`core`, `ev`, `documents`, `evidence_items`, `legal_authorities`, `authority_propositions`, `position_kind`. These belong to retired schema generations. The current schema is v9.0: **main = 25 tables, law = 5 tables, privileged = 3 tables** (see `references/schema.sql`).
+`core`, `ev`, `documents`, `evidence_items`, `legal_authorities`, `authority_propositions`, `position_kind`. These belong to retired schema generations. The current schema is v9.1: **main = 26 tables, law = 5 tables, privileged = 3 tables** (see `references/schema.sql`).

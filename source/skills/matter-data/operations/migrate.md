@@ -1,4 +1,4 @@
-# migrate — upgrade the databases to schema v9.0
+# migrate — upgrade the databases to schema v9.1
 
 Runs through the `matter_data__migrate` tool, host-side, from **any** environment
 — a local CLI session and a Cowork session use the identical path. The tool
@@ -47,7 +47,7 @@ is touched:
    needs no expiry: after a successful apply the database hashes have changed,
    so a token cannot verify twice.
 2. The exact **`user_confirmation`** string the plan returned as
-   `user_confirmation_required` (`MIGRATE <matter> v<from> -> v9.0`), echoed
+   `user_confirmation_required` (`MIGRATE <matter> v<from> -> v9.1`), echoed
    back verbatim from the plan result. This is a freshness echo tied to the
    plan, not an approval step: apply on a clean dry-run needs no practitioner
    sign-off. What gates apply is the caller's review of the dry-run evidence
@@ -93,7 +93,7 @@ because a scratch copy with the same stored identity shares the backup folder)
 back up → recompute the token from scratch and compare → check the confirmation
 → stage from the **backup copies** (so the working set provably equals what a
 restore would return) → drop all views → run each hop, stamping all three
-databases after each → stamp 90 → attach, load `triggers.sql`, assert the
+databases after each → stamp 91 → attach, load `triggers.sql`, assert the
 trigger count is non-zero, rebuild the views from `queries.sql` → check the
 table-count floor and `PRAGMA integrity_check` (hard) and `foreign_key_check`
 (reported, never blocking — pre-existing violations must not block a schema
@@ -216,9 +216,18 @@ existing row is read or rewritten, row counts are unchanged, and **the
 table-count assertion moves from 23 to 25 on `main`.** See
 `../references/design-decisions.md` #65.
 
+The v9.0 → v9.1 hop is on `main`. It replaces `issues.proceeding_id` with the
+`issue_proceedings` junction, so one issue links to any number of proceedings.
+It copies each existing link into the junction, then rebuilds `issues` without
+the column inside a `PRAGMA foreign_keys = OFF; … ON;` bracket, because
+`issues` is a parent table. This is the one hop where a table gains rows:
+`issue_proceedings` gets one row for each issue that had a proceeding. Every
+other row count is unchanged, and **the table-count assertion moves from 25 to
+26 on `main`.** See `../references/design-decisions.md` #81.
+
 `apply` returns the same plus `backup_id`, `backup_dir`, `post_user_version`,
 `post_sha256` and `evidence_sql_written`. **Success may be reported only after
-the dump header reads `schema v9.0`** — check `evidence_sql_written`, and
+the dump header reads `schema v9.1`** — check `evidence_sql_written`, and
 confirm the ordinary surface works by running one `matter_data__query` afterwards.
 
 Refusal codes: `no_migration_path` (gapped chain), `version_stamps_disagree`

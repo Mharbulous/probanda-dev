@@ -109,7 +109,7 @@ reasons stated at their own entry below):
 | `get_matter_profile.py` | Print `matter_metadata` completeness (present/missing keys) + per-proceeding parties summary. | `python3 get_matter_profile.py "C:\...\Example Matter"` |
 | `get_facts_for_drafting.py` | Read-only: facts with derived posture, current positions, and current evidence links — each with a computed citation. | `python3 get_facts_for_drafting.py "C:\...\Example Matter" --posture disputed` |
 | `get_legal_authorities_for_drafting.py` | Read-only: concepts, their elements/factors, and shaping authorities from `law.sqlite`. | `python3 get_legal_authorities_for_drafting.py "C:\...\Example Matter" --concept-type cause_of_action` |
-| `dump.py` | Write `evidence.sql` (header `schema v9.0`, three section marker pairs, per-DB `iterdump`). | `python3 dump.py "C:\...\Example Matter"` |
+| `dump.py` | Write `evidence.sql` (header `schema v9.1`, three section marker pairs, per-DB `iterdump`). | `python3 dump.py "C:\...\Example Matter"` |
 | `rebuild.py` | Atomic rebuild of the three binaries from `evidence.sql` (native files untouched on failure; validates table counts main≥21 / law≥5 / privileged≥3 — `MIN_TABLES` — and triggers present before move-in). Also the home of the `upgrade_*` in-temp transforms `migrate_engine` imports. | `python3 rebuild.py "C:\...\Example Matter"` |
 | `migrate_engine.py` | **Module, not a CLI.** The engine behind `matter_data__migrate` — chain building, plan token, backup/restore, all-or-nothing native replacement. Imported by the MCP server over `PYTHONPATH`; see `../operations/migrate.md`. | *(not run directly)* |
 | `relocate_case_data.py` | **Module, not a CLI.** The engine behind `matter_data__relocate` (ADR 0013): copies a matter's case data from the firm-level `0. CASE DATA` into the matter's own, verifies every copy, then re-points the pointer; deletes nothing. Imported by the MCP server over `PYTHONPATH`; see `../operations/relocate.md`. | *(not run directly)* |
@@ -143,7 +143,7 @@ reasons stated at their own entry below):
   which is what keeps the bypass off the read path — never "simplify" that
   backend into importing this module.
 - After a bare `rebuild.py`, run `dump.py` so
-  `evidence.sql` carries the fresh `schema v9.0` header. `matter_data__migrate`
+  `evidence.sql` carries the fresh `schema v9.1` header. `matter_data__migrate`
   writes the dump itself and needs no follow-up.
 - `dump.py` and `rebuild.py` are the only tools here that
   write native binaries. The three `get_*` tools and `resolve_pointer.py`,

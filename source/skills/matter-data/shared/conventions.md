@@ -198,7 +198,7 @@ Adoption guidance for building out a matter's data — not a hard gate:
 
 - **Phase 1 (minimum viable):** proceedings, parties, sources, facts, positions, evidence_links.
 - **Phase 2:** the law tables plus causes_of_action, coa_criteria, criteria_facts.
-- **Phase 3:** issues plus their junction tables (issue_facts, issue_criteria).
+- **Phase 3:** issues plus their junction tables (issue_proceedings, issue_facts, issue_criteria). An issue links through `issue_proceedings` to every proceeding it is live in, one row per proceeding.
 
 ---
 

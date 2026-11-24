@@ -1,6 +1,6 @@
 """Decision #67: a Fact known only from a privileged source is a bare row.
 
-Builds a real v9.0 matter from schema.sql and runs the SQL blocks lifted from the
+Builds a real v9.1 matter from schema.sql and runs the SQL blocks lifted from the
 operation files, so the documents and the behaviour are tested together.
 """
 import importlib.util

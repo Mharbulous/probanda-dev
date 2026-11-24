@@ -34,7 +34,7 @@ function isPythonTimeout(err) {
   return true;
 }
 
-// A case matter at v9.0 whose write lock lives in scratch, never in %LOCALAPPDATA%.
+// A case matter at v9.1 whose write lock lives in scratch, never in %LOCALAPPDATA%.
 function caseFixture(t) {
   const matterRoot = mkdtempSync(join(tmpdir(), "coclerk-case-timeout-"));
   t.after(() => rmSync(matterRoot, { recursive: true, force: true }));
@@ -43,7 +43,7 @@ function caseFixture(t) {
   const python = process.env.COCLERK_PYTHON || "python";
   const result = spawnSync(
     python,
-    ["-c", "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('PRAGMA user_version = 90'); c.close()", join(caseDataDir, "main.sqlite")],
+    ["-c", "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('PRAGMA user_version = 91'); c.close()", join(caseDataDir, "main.sqlite")],
     { encoding: "utf-8" },
   );
   if (result.status !== 0) throw new Error(`fixture Python failed: ${result.stderr}`);

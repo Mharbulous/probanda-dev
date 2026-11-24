@@ -2,7 +2,7 @@
 
 Backs the `matter_data__migrate` MCP tool. Four modes:
 
-  plan    — dry-run the whole chain to v9.0 on temp copies; return a plan_token
+  plan    — dry-run the whole chain to v9.1 on temp copies; return a plan_token
   apply   — re-verify the token, back up, re-run the chain, replace the natives
   restore — put a backup set back
   backups — list the backup sets for a matter
@@ -51,10 +51,10 @@ import rebuild
 import resolve_paths
 
 MIGRATE_ENGINE_VERSION = "1"
-TARGET = 90                                     # v9.0
+TARGET = 91                                     # v9.1
 LEGACY_USER_VERSION = 62                        # PRAGMA 0 is treated as this
 DBS = ('main', 'law', 'privileged')
-DUMP_HEADER = "-- Case Data evidence dump -- schema v9.0"
+DUMP_HEADER = "-- Case Data evidence dump -- schema v9.1"
 REF_FILES = ('migrations.sql', 'triggers.sql', 'queries.sql')
 BACKUP_FORMAT = 1
 ENV_BACKUP_ROOT = 'COCLERK_CASE_BACKUP_ROOT'    # test/override hook

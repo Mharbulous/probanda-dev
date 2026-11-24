@@ -2,7 +2,7 @@
 
 The `verified` enum's authoritative definition lives in `shared/conventions.md` — the values are restated here for context, but treat `shared/conventions.md` as canonical for it and for the other cross-cutting semantics (notes-prefix convention, citation format, bitemporal pattern, connection pattern, clock source for dates). Do not restate them divergently anywhere else.
 
-Table counts, stated consistently everywhere in this skill: **main = 23 tables, law = 5 tables, privileged = 3 tables.**
+Table counts, stated consistently everywhere in this skill: **main = 26 tables, law = 5 tables, privileged = 3 tables.**
 
 ---
 
@@ -1366,3 +1366,11 @@ A housekeeping ingest kept documents' extractor output and hand-written SQL out 
 **The call stays the practitioner's (#2).** An email whose From, To and Cc are only firm roster addresses and this matter's client contacts, naming at least one of each, is privileged with no question only while the practitioner holds a Rule (a preference, `../../shared/paralegal-posture.md` §9) saying so in their own words. `email_participants.py` decides the participants by address, with no reading of content and no Bcc. Retiring the Rule brings back Path B's question. A practice quirk cannot hold this Rule: the quirk validator refuses text that loosens a privilege safeguard.
 
 **A split email is one top-level row per store, sharing the file's hash.** The facts of each quoted or forwarded message with an outside participant go to main as ordinary facts, attributed in their notes, under a `correspondence` row with the email's hash. The covering message stays in the privileged row. A second row in either store would break the per-hash identity, and a second file would give one document two hashes. This is #3's two-row lineage, written at once. The gate reads the pair as one privileged-store match, never as corruption. The privileged converter's main-store guard lets the pair's own main row pass, so a repeat writes nothing twice.
+
+## 81. An issue links to its proceedings through a junction (v9.1, 2026-11-24)
+
+One issue can be live in several proceedings of a matter at once, such as an arbitration, two actions and an appeal. Findings on it in each can conflict, so the practitioner needs to see them together. `issues.proceeding_id` held one proceeding, so v9.1 replaces it with `issue_proceedings(issue_id, proceeding_id)`, and `@query_31` lists the issues linked to more than one. The migration copies each existing link into the junction.
+
+**Rejected:** keeping `proceeding_id` as a lead proceeding beside the junction leaves two places to read and write one fact. One `issues` row per proceeding with a shared group id lets copies of one issue disagree about their title, status or positions.
+
+The store encodes one issue-to-proceeding link before and after, as a column and then as a table.

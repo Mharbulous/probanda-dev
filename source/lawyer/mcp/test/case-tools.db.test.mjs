@@ -71,7 +71,7 @@ function liveDerivedFixture({
     const python = process.env.COCLERK_PYTHON || "python";
     const result = spawnSync(
       python,
-      ["-c", "import json,sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('PRAGMA user_version = 90'); c.execute('CREATE TABLE marker(value TEXT)'); c.execute(\"INSERT INTO marker VALUES ('live')\"); m=json.loads(sys.argv[2]); c.execute('CREATE TABLE matter_metadata(key TEXT PRIMARY KEY, value TEXT)') if m else None; c.executemany('INSERT INTO matter_metadata VALUES (?, ?)', m.items()) if m else None; c.commit(); c.close()", main, JSON.stringify(metadata ?? {})],
+      ["-c", "import json,sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('PRAGMA user_version = 91'); c.execute('CREATE TABLE marker(value TEXT)'); c.execute(\"INSERT INTO marker VALUES ('live')\"); m=json.loads(sys.argv[2]); c.execute('CREATE TABLE matter_metadata(key TEXT PRIMARY KEY, value TEXT)') if m else None; c.executemany('INSERT INTO matter_metadata VALUES (?, ?)', m.items()) if m else None; c.commit(); c.close()", main, JSON.stringify(metadata ?? {})],
       { encoding: "utf-8" },
     );
     if (result.status !== 0) throw new Error(`fixture Python failed: ${result.stderr}`);
@@ -179,7 +179,7 @@ test("query preserves a valid relative non-standard nominee", () => {
   const python = process.env.COCLERK_PYTHON || "python";
   const created = spawnSync(
     python,
-    ["-c", "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('PRAGMA user_version = 90'); c.execute('CREATE TABLE marker(value TEXT)'); c.execute(\"INSERT INTO marker VALUES ('custom')\"); c.commit(); c.close()", join(custom, "main.sqlite")],
+    ["-c", "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('PRAGMA user_version = 91'); c.execute('CREATE TABLE marker(value TEXT)'); c.execute(\"INSERT INTO marker VALUES ('custom')\"); c.commit(); c.close()", join(custom, "main.sqlite")],
     { encoding: "utf-8" },
   );
   if (created.status !== 0) throw new Error(`fixture Python failed: ${created.stderr}`);
@@ -200,7 +200,7 @@ test("execute bootstraps the matter's own 0. CASE DATA folder and rewrites matte
   try {
     const result = await caseDataExecute(
       f.matterRoot,
-      "CREATE TABLE marker(value TEXT); INSERT INTO marker VALUES ('bootstrapped'); PRAGMA user_version = 90;",
+      "CREATE TABLE marker(value TEXT); INSERT INTO marker VALUES ('bootstrapped'); PRAGMA user_version = 91;",
       triggersEnv("SELECT 1;", env),
     );
     assert.equal(result.ok, true);
@@ -219,25 +219,25 @@ test("execute bootstraps the matter's own 0. CASE DATA folder and rewrites matte
 // The guard names migrate, not rebuild: rebuild replays an already-current dump
 // and its require_source_version rejects an out-of-date one, so the old
 // "run the rebuild operation" text sent every agent down a dead end.
-test("matter-data runtime rejects v8.9 and directs migrate to v9.0", () => {
-  const f = fixture(89);
+test("matter-data runtime rejects v9.0 and directs migrate to v9.1", () => {
+  const f = fixture(90);
   try {
     assert.throws(
       () => caseDataQuery(f.matterRoot, "SELECT 1 AS ok"),
-      /schema is at v8\.9.*requires v9\.0.*matter_data__migrate.*plan/s,
+      /schema is at v9\.0.*requires v9\.1.*matter_data__migrate.*plan/s,
     );
   } finally {
     f.cleanup();
   }
 });
 
-test("matter-data runtime accepts v9.0 and writes a v9.0 dump header", async () => {
-  const f = fixture(90);
+test("matter-data runtime accepts v9.1 and writes a v9.1 dump header", async () => {
+  const f = fixture(91);
   try {
     const result = caseDataQuery(f.matterRoot, "SELECT 1 AS ok");
     assert.deepEqual(result.rows, [{ ok: 1 }]);
     const write = await caseDataExecute(f.matterRoot, "SELECT 1;", triggersEnv("SELECT 1;"));
-    assert.equal(readFileSync(write.evidence_sql, "utf-8").split(/\r?\n/, 1)[0], "-- Case Data evidence dump -- schema v9.0");
+    assert.equal(readFileSync(write.evidence_sql, "utf-8").split(/\r?\n/, 1)[0], "-- Case Data evidence dump -- schema v9.1");
   } finally {
     f.cleanup();
   }
@@ -264,7 +264,7 @@ test("a pointer without evidence_sql_path gets its dump in the matter-data folde
 // so it no longer collides with the appended COMMIT ("near COMMIT: syntax
 // error").
 test("execute tolerates a final statement missing its trailing semicolon", async () => {
-  const f = fixture(90);
+  const f = fixture(91);
   try {
     const result = await caseDataExecute(
       f.matterRoot,
@@ -285,7 +285,7 @@ test("execute tolerates a final statement missing its trailing semicolon", async
 // loading triggers.sql first could never succeed on a brand-new matter
 // ("no such table: criteria_facts") -- the schema could not be built at all.
 test("execute builds a brand-new matter whose triggers reference its own new tables", async () => {
-  const f = fixture(90);
+  const f = fixture(91);
   const triggers = "CREATE TEMP TRIGGER trg_t BEFORE INSERT ON t BEGIN SELECT 1; END;";
   try {
     const result = await caseDataExecute(f.matterRoot, "CREATE TABLE t(x);", triggersEnv(triggers));
@@ -302,7 +302,7 @@ test("execute builds a brand-new matter whose triggers reference its own new tab
 // Deferred, never skipped: on the bootstrap path the triggers still run, so a
 // schema missing a table the FK layer guards fails before any copy-back.
 test("execute fails a bootstrap whose script omits a table the triggers guard", async () => {
-  const f = fixture(90);
+  const f = fixture(91);
   const triggers = "CREATE TEMP TRIGGER trg_missing BEFORE INSERT ON absent BEGIN SELECT 1; END;";
   try {
     await assert.rejects(
@@ -321,7 +321,7 @@ test("execute fails a bootstrap whose script omits a table the triggers guard", 
 // #1254: the caller no longer sends the trigger layer, so the backend must find it itself and
 // must refuse to write without it (#12) -- before anything is staged or committed.
 test("execute refuses to write when the skills tree has no triggers.sql, and commits nothing", async () => {
-  const f = fixture(90);
+  const f = fixture(91);
   try {
     await assert.rejects(
       () => caseDataExecute(f.matterRoot, "CREATE TABLE t(x);", triggersEnv(null)),
@@ -340,7 +340,7 @@ test("execute refuses to write when the skills tree has no triggers.sql, and com
 });
 
 test("execute refuses to write when triggers.sql is empty, and commits nothing", async () => {
-  const f = fixture(90);
+  const f = fixture(91);
   try {
     await assert.rejects(
       () => caseDataExecute(f.matterRoot, "CREATE TABLE t(x);", triggersEnv(" \n")),
@@ -373,7 +373,7 @@ test("query and execute reject a caller-supplied triggers_sql", async () => {
 
 // On an ordinary (non-bootstrap) write the layer the backend read is loaded before the script runs.
 test("execute loads the skills tree's triggers.sql before an ordinary write", async () => {
-  const f = fixture(90);
+  const f = fixture(91);
   try {
     await caseDataExecute(f.matterRoot, "CREATE TABLE t(x);", triggersEnv("SELECT 1;"));
     const guard = "CREATE TEMP TRIGGER trg_guard BEFORE INSERT ON main.t BEGIN SELECT RAISE(ABORT, 'guarded by triggers.sql'); END;";
@@ -392,7 +392,7 @@ test("execute loads the skills tree's triggers.sql before an ordinary write", as
 // from the same starting binaries both "succeed" and the second copy-back
 // silently discards the first's writes.
 test("a second execute is refused while another session holds the case lock", async () => {
-  const f = fixture(90);
+  const f = fixture(91);
   const { env, cleanup } = isolatedEnv();
   try {
     await caseDataExecute(f.matterRoot, "CREATE TABLE marker(x);", triggersEnv("SELECT 1;", env));
@@ -433,7 +433,7 @@ function twoNativeFixture() {
   const python = process.env.COCLERK_PYTHON || "python";
   const seeded = spawnSync(
     python,
-    ["-c", "import sqlite3,sys\nfor p in sys.argv[1:]:\n    c = sqlite3.connect(p)\n    c.execute('PRAGMA user_version = 90')\n    c.execute('CREATE TABLE marker(value TEXT)')\n    c.execute(\"INSERT INTO marker VALUES ('before')\")\n    c.commit()\n    c.close()", join(caseDataDir, "main.sqlite"), join(caseDataDir, "law.sqlite")],
+    ["-c", "import sqlite3,sys\nfor p in sys.argv[1:]:\n    c = sqlite3.connect(p)\n    c.execute('PRAGMA user_version = 91')\n    c.execute('CREATE TABLE marker(value TEXT)')\n    c.execute(\"INSERT INTO marker VALUES ('before')\")\n    c.commit()\n    c.close()", join(caseDataDir, "main.sqlite"), join(caseDataDir, "law.sqlite")],
     { encoding: "utf-8" },
   );
   if (seeded.status !== 0) throw new Error(`fixture Python failed: ${seeded.stderr}`);
@@ -517,7 +517,7 @@ test("a failed copy-back on the second database rolls the first one back", async
 
 // Reads are the hot path and copy nothing back, so they must not be gated.
 test("query is not blocked by a held case lock", async () => {
-  const f = fixture(90);
+  const f = fixture(91);
   const { env, cleanup } = isolatedEnv();
   try {
     const held = await acquireCaseLock(f.matterRoot, env);
@@ -583,7 +583,7 @@ test("an aged case lock is taken over and reported as broken stale", async () =>
 // write_dump's os.replace fail on demand. Guidance: /matter-data
 // shared/conventions.md section 2.3.
 test("execute reports failure but keeps the committed write when the evidence.sql dump fails", async () => {
-  const f = fixture(90);
+  const f = fixture(91);
   try {
     await caseDataExecute(f.matterRoot, "CREATE TABLE t(x);", triggersEnv("SELECT 1;"));
 

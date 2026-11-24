@@ -27,7 +27,7 @@ function fixture(t) {
   const old = join(library, "0. CASE DATA", "T9999 Scratch Matter");
   mkdirSync(matterRoot, { recursive: true });
   mkdirSync(old, { recursive: true });
-  const made = spawnSync(PYTHON, ["-c", "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('PRAGMA user_version = 90'); c.close()", join(old, "main.sqlite")], { encoding: "utf-8" });
+  const made = spawnSync(PYTHON, ["-c", "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('PRAGMA user_version = 91'); c.close()", join(old, "main.sqlite")], { encoding: "utf-8" });
   if (made.status !== 0) throw new Error(`fixture Python failed: ${made.stderr}`);
   writeFileSync(join(matterRoot, "probanda.json"), JSON.stringify({ schema_version: 5, matter_root: matterRoot, case_data_dir: old }));
   const env = {

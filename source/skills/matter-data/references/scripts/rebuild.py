@@ -18,8 +18,8 @@ Usage:
     python3 rebuild.py <matter_root>
 
 The --migrate path accepts a v7.4 or v7.5 dump and applies the rebuild-only
-upgrades through v7.6 (migrate.md then carries 76 -> 90 incrementally).
-A normal rebuild requires a v9.0 dump. Any other dump
+upgrades through v7.6 (migrate.md then carries 76 -> 91 incrementally).
+A normal rebuild requires a v9.1 dump. Any other dump
 generation fails closed
 before temp databases are created.
 """
@@ -64,10 +64,10 @@ def require_source_version(evidence_text, migrate):
             "Rebuild aborted: evidence.sql has no schema version header; "
             "native files untouched.")
     actual = int(match.group(1)) * 10 + int(match.group(2))
-    accepted = (74, 75) if migrate else (90,)
+    accepted = (74, 75) if migrate else (91,)
     if actual not in accepted:
-        expected = "v7.4 or v7.5" if migrate else "v9.0"
-        mode = "migration rebuild through v7.6" if migrate else "normal v9.0 rebuild"
+        expected = "v7.4 or v7.5" if migrate else "v9.1"
+        mode = "migration rebuild through v7.6" if migrate else "normal v9.1 rebuild"
         raise SystemExit(
             f"Rebuild aborted: {mode} requires {expected} "
             f"dump, but evidence.sql is v{actual // 10}.{actual % 10}; "
@@ -555,9 +555,9 @@ def main(argv=None):
         #
         # --migrate stamps 76, NOT the current version: this path owns only the
         # rebuild-only carve-out (74/75 -> 76). migrate.md then applies the
-        # post-rebuild incremental segment (76 -> 90) and stamps 90. A normal
-        # rebuild replays an already-current dump, so it stamps 90 directly.
-        stamped_version = 76 if args.migrate else 90
+        # post-rebuild incremental segment (76 -> 91) and stamps 91. A normal
+        # rebuild replays an already-current dump, so it stamps 91 directly.
+        stamped_version = 76 if args.migrate else 91
         for db, path in paths.items():
             c = sqlite3.connect(path)
             c.execute(f"PRAGMA user_version = {stamped_version}")

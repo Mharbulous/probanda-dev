@@ -626,3 +626,48 @@ CREATE INDEX IF NOT EXISTS idx_tribunal_members_proceeding ON tribunal_members(p
 CREATE UNIQUE INDEX IF NOT EXISTS idx_participant_aliases_unique ON participant_aliases(
     COALESCE(party_id, 0), of_counsel, COALESCE(witness_id, 0),
     COALESCE(tribunal_member_id, 0), alias_text COLLATE NOCASE);
+
+-- MIGRATE 90 -> 91 -- DB: main
+-- main: issues.proceeding_id becomes the issue_proceedings junction, so one
+--      issue links to any number of proceedings (decision #81). Each existing
+--      link is copied across first, then issues is rebuilt without the column:
+--      SQLite cannot drop a column that carries a foreign key. issues is the
+--      parent of issue_facts, issue_criteria and issue_concepts, so the hop
+--      runs inside a PRAGMA foreign_keys = OFF/ON bracket, as the 84 -> 85
+--      hop does. Every issues row is copied unchanged.
+PRAGMA foreign_keys = OFF;
+
+CREATE TABLE IF NOT EXISTS issue_proceedings (
+    issue_id       INTEGER NOT NULL REFERENCES issues(issue_id),
+    proceeding_id  INTEGER NOT NULL REFERENCES proceedings(proceeding_id),
+    PRIMARY KEY (issue_id, proceeding_id)
+);
+INSERT OR IGNORE INTO issue_proceedings (issue_id, proceeding_id)
+SELECT issue_id, proceeding_id FROM issues WHERE proceeding_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_issue_proceedings_proceeding
+    ON issue_proceedings(proceeding_id);
+
+CREATE TABLE issues_new (
+    issue_id            INTEGER PRIMARY KEY,
+    title               TEXT NOT NULL,
+    description         TEXT,
+    issue_type          TEXT CHECK(issue_type IN ('factual','legal','mixed')),
+    status              TEXT CHECK(status IN (
+                            'open','resolved','abandoned')) DEFAULT 'open',
+    our_position        TEXT,
+    opposing_position   TEXT,
+    priority            INTEGER,
+    verified            INTEGER DEFAULT 0 CHECK(verified IN (-1,0,1,2)),
+    notes               TEXT
+);
+INSERT INTO issues_new (
+    issue_id, title, description, issue_type, status, our_position,
+    opposing_position, priority, verified, notes)
+SELECT
+    issue_id, title, description, issue_type, status, our_position,
+    opposing_position, priority, verified, notes
+FROM issues;
+DROP TABLE issues;
+ALTER TABLE issues_new RENAME TO issues;
+
+PRAGMA foreign_keys = ON;

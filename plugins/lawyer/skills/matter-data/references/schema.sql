@@ -1,5 +1,5 @@
 -- =========================================================================
--- Case Data — schema v9.0 — three-database architecture (main / law / privileged)
+-- Case Data — schema v9.1 — three-database architecture (main / law / privileged)
 -- v5 → v6 changes:
 --   Placement: three databases restructured (core/internal/ev → main/law/privileged)
 --   Shape: documents→sources, evidence_items eliminated, positions simplified
@@ -207,9 +207,13 @@
 --        file-name codes for a party, a party's counsel, a witness or a
 --        tribunal member. approved_on records the practitioner's approval
 --        turn. Purely additive: main moves from 23 to 25 tables.
+-- v9.0 → v9.1 changes (an issue in several proceedings; decision #81):
+--   main: new issue_proceedings junction replaces issues.proceeding_id, so one
+--        issue links to any number of proceedings. Each existing link moves
+--        across. main moves from 25 to 26 tables.
 -- Sections below MUST be delimited by the v6 BEGIN/END markers.
 -- The init/rebuild scripts parse this file by marker.
--- PRAGMA user_version encoding: v9.0 = 90 (major * 10 + minor).
+-- PRAGMA user_version encoding: v9.1 = 91 (major * 10 + minor).
 -- Set by initialize.md on creation; maintained by migrate.md/rebuild.py.
 -- =========================================================================
 
@@ -595,7 +599,6 @@ CREATE TABLE criteria_facts (
 -- -----------------------------------------------------------------
 CREATE TABLE issues (
     issue_id            INTEGER PRIMARY KEY,
-    proceeding_id       INTEGER REFERENCES proceedings(proceeding_id),
     title               TEXT NOT NULL,
     description         TEXT,
     issue_type          TEXT CHECK(issue_type IN ('factual','legal','mixed')),
@@ -606,6 +609,13 @@ CREATE TABLE issues (
     priority            INTEGER,
     verified            INTEGER DEFAULT 0 CHECK(verified IN (-1,0,1,2)),
     notes               TEXT
+);
+
+-- v9.1: the proceedings an issue is live in, any number of them.
+CREATE TABLE issue_proceedings (
+    issue_id       INTEGER NOT NULL REFERENCES issues(issue_id),
+    proceeding_id  INTEGER NOT NULL REFERENCES proceedings(proceeding_id),
+    PRIMARY KEY (issue_id, proceeding_id)
 );
 
 CREATE TABLE issue_facts (
@@ -697,7 +707,7 @@ CREATE INDEX idx_coa_claiming_party          ON causes_of_action(claiming_party_
 CREATE INDEX idx_coa_concept                 ON causes_of_action(concept_id);
 CREATE INDEX idx_coa_criteria_criterion        ON coa_criteria(criterion_id);
 CREATE INDEX idx_criteria_facts_fact          ON criteria_facts(fact_id);
-CREATE INDEX idx_issues_proceeding           ON issues(proceeding_id);
+CREATE INDEX idx_issue_proceedings_proceeding ON issue_proceedings(proceeding_id);
 CREATE INDEX idx_issue_facts_fact            ON issue_facts(fact_id);
 CREATE INDEX idx_issue_criteria_criterion      ON issue_criteria(criterion_id);
 CREATE INDEX idx_issue_concepts_concept        ON issue_concepts(concept_id);

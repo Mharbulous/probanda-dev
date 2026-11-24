@@ -14,7 +14,7 @@ Do not split the VIEWS section into individual statements before sending it: spl
 
 ## 2. Run the query
 
-The named queries live in [`../references/queries.sql`](../references/queries.sql), each marked with a stable `@query_NN_name` comment. IDs run 01–30 (plus `05a`/`05b`/`05c`) with intentional historical gaps at 07 and 11 (removed queries; the gaps are kept so IDs stay stable across schema versions — do not renumber). Parameterized queries:
+The named queries live in [`../references/queries.sql`](../references/queries.sql), each marked with a stable `@query_NN_name` comment. IDs run 01–31 (plus `05a`/`05b`/`05c`) with intentional historical gaps at 07 and 11 (removed queries; the gaps are kept so IDs stay stable across schema versions — do not renumber). Parameterized queries:
 
 | IDs | Parameter |
 |---|---|
