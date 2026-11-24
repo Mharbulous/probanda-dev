@@ -7,7 +7,7 @@ with a report: the payload's keys, whether transcript_path is present and readab
 this hook runs. Every other call passes untouched. It writes nothing and reports no argument,
 no environment value and no transcript content. Fails open: a crash lets the call through, and
 the server then answers not_found.
-Question: docs/Specs/2026-10-28_tokeneconomizer-cowork-adaptation-spec.md, B3, asked of PreToolUse.
+Question: docs/Specs/2026-11-06_practice-quirks-entries-spec.md, whether transcript_path is absent or empty.
 """
 import json
 import os

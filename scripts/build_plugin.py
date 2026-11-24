@@ -9,8 +9,7 @@ Usage:
 Every plugin in source/assignment.json is built (see plugin_layout.py). Plugin P
 is built from source/P/ (plugin.json and roster.json, and .mcp.json, README.md,
 VISION.md, agents/ and hooks/ where they exist), the skills the assignment gives
-P, the whole shared/ tree (unless the assignment's "shared" is false), the bundles of the servers the assignment gives P, and
-the payload the assignment names (files and folders of source/P/, copied whole).
+P, the whole shared/ tree and the bundles of the servers the assignment gives P.
 --out <dir> holds one folder per plugin, <dir>/P/. A folder under plugins/ that
 no plugin builds is reported stale by --check and removed by a build.
 
@@ -18,8 +17,7 @@ A skill is found at source/skills/<name>/ or at public/plugins/*/skills/<name>/,
 never both. The skill selection and the SKILL.md stamp are ported from CoClerk's
 plugin-packager build_plugin.py (native-tree path).
 
-A built file is mode 755 when it ends in .py or the assignment lists it under
-"executables", and 644 otherwise. --check also compares each built file's mode
+A built file is mode 755 when it ends in .py, and 644 otherwise. --check also compares each built file's mode
 with the one git records for it, because a Windows checkout cannot hold the
 executable bit on disk: there `git update-index --chmod=+x <file>` sets it.
 
@@ -183,7 +181,7 @@ def collect(repo, spec):
     # plugin's source says which folders of a private skill are assets and
     # holds the agent files, so the two must agree.
     public = {t: public[t] for t in sorted(spec["skills"]) if t in public}
-    extra = [t for t in EXTRA_TREES if (t == SHARED_TREE and spec["shared"]) or t in spec["skills"]]
+    extra = [t for t in EXTRA_TREES if t == SHARED_TREE or t in spec["skills"]]
     private = {t for t in spec["skills"] if t not in public and t not in EXTRA_TREES}
     if private != set(roster):
         stop(f"{src / 'roster.json'} and source/assignment.json disagree on the private skills of '{name}': "
@@ -214,18 +212,7 @@ def collect(repo, spec):
         for path in sorted(folder.rglob("*")):
             if path.is_file():
                 files[f"skills/{top}/{path.relative_to(folder).as_posix()}"] = path.read_bytes()
-    for entry in spec["payload"]:
-        root = src / entry
-        if not root.exists():
-            stop(f"no payload {root} to ship")
-        for path in [root] if root.is_file() else sorted(root.rglob("*")):
-            rel = path.relative_to(src)
-            if path.is_file() and path.suffix != ".pyc" and not any(p in TREE_EXCLUDE_DIRS for p in rel.parts[:-1]):
-                files[rel.as_posix()] = path.read_bytes()
-    missing = [p for p in spec["executables"] if p not in files]
-    if missing:
-        stop(f"executables of '{name}' name no payload file: " + ", ".join(missing))
-    for text_path in [p for p in files if Path(p).suffix.lower() in TEXT_SUFFIXES or p in spec["executables"]]:
+    for text_path in [p for p in files if Path(p).suffix.lower() in TEXT_SUFFIXES]:
         files[text_path] = files[text_path].replace(b"\r\n", b"\n")
     # The bundles are built elsewhere and ship byte-for-byte.
     for server in spec["servers"]:
@@ -270,7 +257,7 @@ def rename(src, dst):
             time.sleep(0.5)
 
 
-def write(files, out, executables=()):
+def write(files, out):
     """Build beside `out`, then swap the finished folder into place, so a reader
     never sees a half-written `out`. Windows cannot rename a folder over an
     existing one, so the swap is two renames and `out` is absent between them.
@@ -288,7 +275,7 @@ def write(files, out, executables=()):
             path = building / rel
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(data)
-            path.chmod(built_mode(rel, executables))
+            path.chmod(built_mode(rel))
         if replaced.exists():
             shutil.rmtree(replaced)
         if out.exists():
@@ -306,9 +293,9 @@ def write(files, out, executables=()):
         shutil.rmtree(replaced)
 
 
-def built_mode(rel, executables):
-    """The mode the build gives a file: 755 for a .py file or a listed executable, else 644."""
-    return EXECUTABLE if Path(rel).suffix == ".py" or rel in executables else NOT_EXECUTABLE
+def built_mode(rel):
+    """The mode the build gives a file: 755 for a .py file, else 644."""
+    return EXECUTABLE if Path(rel).suffix == ".py" else NOT_EXECUTABLE
 
 
 def git_modes(repo):
@@ -337,14 +324,14 @@ def recorded_mode(path, rel, modes):
     return EXECUTABLE if path.stat().st_mode & 0o111 else NOT_EXECUTABLE
 
 
-def check(files, target, repo, modes, executables=()):
+def check(files, target, repo, modes):
     try:
         on_disk = {p.relative_to(target).as_posix(): p for p in target.rglob("*") if p.is_file()} \
             if target.is_dir() else {}
         changed = sorted(p for p in set(files) & set(on_disk) if on_disk[p].read_bytes() != files[p])
         mode_changed = []
         for p in sorted(set(files) & set(on_disk)):
-            want = built_mode(p, executables)
+            want = built_mode(p)
             rel = on_disk[p].relative_to(repo).as_posix() if on_disk[p].is_relative_to(repo) else None
             have = recorded_mode(on_disk[p], rel, modes)
             if have is not None and have != want:
@@ -380,14 +367,14 @@ def main():
                    and not p.name.startswith(".")) if plugins_dir.is_dir() else []
     if args.check:
         modes = git_modes(repo)
-        code = max([check(files, plugins_dir / name, repo, modes, specs[name]["executables"])
+        code = max([check(files, plugins_dir / name, repo, modes)
                     for name, files in built.items()], default=0)
         for folder in stale:
             print(f"{folder} is stale: no plugin in source/assignment.json builds it")
         return 1 if stale else code
     for name, files in built.items():
         out = (args.out.resolve() if args.out else plugins_dir) / name
-        write(files, out, specs[name]["executables"])
+        write(files, out)
         print(f"{out}: {len(files)} files")
     if not args.out:
         for folder in stale:

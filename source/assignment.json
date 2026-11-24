@@ -240,24 +240,6 @@
         "payload-probe": "source/developer/hooks/payload-probe.py"
       },
       "servers": []
-    },
-    "tokeneconomizer": {
-      "requires": [],
-      "skills": [],
-      "agents": [],
-      "hooks": {},
-      "servers": [],
-      "shared": false,
-      "payload": [
-        "LICENSE",
-        "lib",
-        "scripts",
-        "slash-commands"
-      ],
-      "executables": [
-        "scripts/te",
-        "scripts/te-hook"
-      ]
     }
   }
 }

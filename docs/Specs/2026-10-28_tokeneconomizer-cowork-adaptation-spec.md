@@ -241,3 +241,7 @@ The `te-p1` command hook wrote no report in either session, and its cause is unk
 The container's environment names `GH_TOKEN` and `GITHUB_TOKEN`. A GitHub store would mean a plugin using a credential it wasn't given for that purpose, so it isn't tested or adopted.
 
 P1 verdict: no route passes. Option A is final. The test came out of the plugin in 0.4.0, and the server key `state` is retired.
+
+## Verdict (2026-11-24)
+
+Adaptation abandoned 2026-11-24 (Brahm's ruling). The plugin was removed from probanda-dev. Claude Code keeps the original from the fork.

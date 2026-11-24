@@ -1,6 +1,5 @@
 """Tests for scripts/build_plugin.py. Every build goes to a temp folder."""
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -15,8 +14,7 @@ import fake_repo
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "scripts" / "build_plugin.py"
 SOURCE = REPO / "source"
-PLUGINS = ("lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing", "developer",
-           "tokeneconomizer")
+PLUGINS = ("lawyer", "researcher", "litigator", "solicitor", "file-manager", "billing", "developer")
 BUNDLES = {"lawyer": ("contacts-calendars-email-mcp/dist/contacts-calendars-email-mcp.js", "mcp/dist/litigation-mcp.js"),
            "researcher": ("canlii-mcp/dist/canlii-mcp.js", "commons-mcp/dist/legal-commons-mcp.js"),
            "file-manager": ("files-mcp/dist/file-manager-mcp.js", "files-mcp/dist/trash-cli.js"),
@@ -80,7 +78,7 @@ class BuildPluginTest(unittest.TestCase):
     def test_each_bundle_ships_in_one_plugin_and_every_plugin_has_a_manifest(self):
         for plugin in PLUGINS:
             self.assertTrue((self.out / plugin / ".claude-plugin" / "plugin.json").is_file(), plugin)
-            self.assertEqual((self.out / plugin / "skills" / "shared").is_dir(), plugin != "tokeneconomizer", plugin)
+            self.assertTrue((self.out / plugin / "skills" / "shared").is_dir(), plugin)
             bundles = sorted(p.relative_to(self.out / plugin).as_posix() for p in (self.out / plugin).glob("*/dist/*.js"))
             self.assertEqual(bundles, sorted(BUNDLES.get(plugin, ())), plugin)
 
@@ -279,55 +277,28 @@ class CutoverBuildTest(unittest.TestCase):
         self.put("source/practice/.mcp.json", "{}")
         self.assert_stops("declares the servers [], but 'practice' ships ['data']")
 
-    def with_payload(self, executables):
-        assignment = json.loads(json.dumps(ASSIGNMENT))
-        assignment["plugins"]["research"].update(payload=["LICENSE", "lib", "scripts"], executables=executables)
-        fake_repo.write_assignment(self.repo, assignment["plugins"])
-        self.put("source/research/LICENSE", "Apache\r\n")
-        self.put("source/research/lib/pkg/mod.py", "x = 1\r\n")
-        self.put("source/research/lib/pkg/__pycache__/mod.cpython-312.pyc", "bytecode")
-        self.put("source/research/scripts/run", "#!/bin/sh\r\necho hi\r\n")
-
-    def test_payload_ships_whole_with_its_executables_as_lf(self):
-        self.with_payload(["scripts/run"])
-        result = self.build()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        research = self.repo / "plugins" / "research"
-        self.assertEqual((research / "LICENSE").read_bytes(), b"Apache\r\n")
-        self.assertEqual((research / "lib" / "pkg" / "mod.py").read_bytes(), b"x = 1\n")
-        self.assertFalse((research / "lib" / "pkg" / "__pycache__").exists())
-        self.assertEqual((research / "scripts" / "run").read_bytes(), b"#!/bin/sh\necho hi\n")
-        if os.name == "posix":
-            self.assertTrue(os.stat(research / "scripts" / "run").st_mode & 0o111)
-        self.assertEqual(self.build("--check").returncode, 0)
-
     def git(self, *args):
         subprocess.run(["git", "-C", str(self.repo), *args], check=True, capture_output=True)
 
     def test_check_fails_when_git_records_the_wrong_mode_of_a_built_file(self):
-        self.with_payload(["scripts/run"])
         self.assertEqual(self.build().returncode, 0)
         # As on Windows: git records each file's mode, whatever the disk holds.
         self.git("init", "-q")
         self.git("add", "-A")
         guard = "plugins/practice/skills/shared/hooks/guard.py"  # a .py file: the build gives 755
-        run = "plugins/research/scripts/run"  # a listed executable: 755
-        plain = "plugins/research/lib/pkg/mod.py"  # also .py
-        self.git("update-index", "--chmod=+x", guard, run, plain,
-                 "plugins/research/skills/shared/hooks/guard.py")
+        self.git("update-index", "--chmod=+x", guard, "plugins/research/skills/shared/hooks/guard.py")
         result = self.build("--check")
         self.assertEqual(result.returncode, 0, result.stdout)
-        for wrong in (guard, run):
-            with self.subTest(wrong=wrong):
-                self.git("update-index", "--chmod=-x", wrong)
-                result = self.build("--check")
-                self.assertEqual(result.returncode, 1)
-                self.assertIn(f"{wrong} is 644, the build gives 755", result.stdout)
-                self.git("update-index", "--chmod=+x", wrong)
-        self.git("update-index", "--chmod=+x", "plugins/research/LICENSE")
+        self.git("update-index", "--chmod=-x", guard)
         result = self.build("--check")
         self.assertEqual(result.returncode, 1)
-        self.assertIn("plugins/research/LICENSE is 755, the build gives 644", result.stdout)
+        self.assertIn(f"{guard} is 644, the build gives 755", result.stdout)
+        self.git("update-index", "--chmod=+x", guard)
+        plain = "plugins/practice/skills/shared/x.md"
+        self.git("update-index", "--chmod=+x", plain)
+        result = self.build("--check")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(f"{plain} is 755, the build gives 644", result.stdout)
 
     def test_windows_disk_mode_is_never_read(self):
         sys.path.insert(0, str(REPO / "scripts"))
@@ -337,19 +308,6 @@ class CutoverBuildTest(unittest.TestCase):
             self.assertIsNone(build_plugin.recorded_mode(path, "source/practice/README.md", {}))
             self.assertEqual(build_plugin.recorded_mode(path, "source/practice/README.md",
                                                         {"source/practice/README.md": 0o644}), 0o644)
-
-    def test_a_plugin_can_leave_out_the_shared_tree(self):
-        assignment = json.loads(json.dumps(ASSIGNMENT))
-        assignment["plugins"]["research"]["shared"] = False
-        fake_repo.write_assignment(self.repo, assignment["plugins"])
-        result = self.build()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertFalse((self.repo / "plugins" / "research" / "skills" / "shared").exists())
-        self.assertTrue((self.repo / "plugins" / "practice" / "skills" / "shared").is_dir())
-
-    def test_executable_outside_the_payload_stops_the_build(self):
-        self.with_payload(["scripts/missing"])
-        self.assert_stops("executables of 'research' name no payload file: scripts/missing")
 
 
 class LockedFolderTest(unittest.TestCase):

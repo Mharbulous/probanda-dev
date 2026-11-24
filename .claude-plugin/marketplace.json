@@ -48,12 +48,6 @@
       "source": "./plugins/developer",
       "author": {"name": "Probanda Legal (experimental)", "url": "https://github.com/Probanda-app"},
       "description": "Maintainer-only, never public. Tools for developing Probanda: viewing and triaging the Suggestion Box, run from the probanda-dev checkout. Requires lawyer. Install lawyer first, then developer."
-    },
-    {
-      "name": "tokeneconomizer",
-      "source": "./plugins/tokeneconomizer",
-      "author": {"name": "TokenEconomizer authors"},
-      "description": "Token Economizer, by Microsoft (https://github.com/microsoft/TokenEconomizer). Third-party, not part of Probanda. The original Microsoft TokenEconomizer was optimized for Claude Code. This version is adapted for Claude Cowork. Micro-skills learned per repository and a failure-loop guard. Tool pruning is off in this version. Requires Python 3.10 or newer. Requires no other plugin."
     }
   ]
 }
