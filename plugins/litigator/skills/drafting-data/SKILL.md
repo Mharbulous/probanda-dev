@@ -4,7 +4,7 @@ user-invocable: false
 description: Sole gatekeeper for the per-matter drafting database — Writings and their proceedings, the shared substance they are built from (parties, facts, documents, witnesses, authorities, relief, submissions, opposing points, gaps), job process state, counsel's review records, and the mockups rendered from them. Not the authority on what the law is (legal-research) or deadlines (docket-clerk); it stores and serves the underlying data they consult. Distinct from /matter-data — the drafting database is separate, not an extension of matter-data's main/law/privileged split.
 ---
 
-<!-- litigator v0.27.7 -->
+<!-- litigator v0.28.0 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

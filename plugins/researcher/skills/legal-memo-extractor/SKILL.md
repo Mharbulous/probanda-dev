@@ -4,7 +4,7 @@ disable-model-invocation: true
 description: Use when extracting or indexing research questions from AI legal research memos — Westlaw AI-Assisted Research memos (.docx), Alexi Instant/Pro Memos (.docx/.pdf), or a mixed folder of both. Trigger on requests to extract questions, create a question index, or catalog/organize multiple legal research memo files.
 ---
 
-<!-- researcher v0.21.3 -->
+<!-- researcher v0.22.0 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

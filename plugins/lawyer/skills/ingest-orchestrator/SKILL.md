@@ -3,7 +3,7 @@ name: ingest-orchestrator
 description: Ingest several litigation documents into a matter's case data in one run, or any affidavit, with the extraction done by background extractors and the writes done by tools, so no extracted text and no SQL pass through this session. /ingest hands it every request covering two or more documents and any affidavit, and /matter-data's unattended ingest runs its loop. Use for "ingest these files", "ingest this affidavit", or when /ingest hands a run over.
 ---
 
-<!-- lawyer v0.31.11 -->
+<!-- lawyer v0.32.0 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

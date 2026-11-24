@@ -1,4 +1,4 @@
-// build-stamp: 150c1a6ef375
+// build-stamp: 050c025a3be1
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75267,7 +75267,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "150c1a6ef375";
+var BUILD_STAMP = false ? null : "050c025a3be1";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -107398,9 +107398,9 @@ function advanceRevision(matterRoot, env = process.env) {
 var PY_HELPER4 = case_data_resolver_py_default + LOCATE_PY + String.raw`
 import json, os, re, shutil, sqlite3, sys, tempfile
 
-EXPECTED_USER_VERSION = 90
+EXPECTED_USER_VERSION = 91
 DBS = ('main', 'law', 'privileged')
-DUMP_HEADER = "-- Case Data evidence dump -- schema v9.0"
+DUMP_HEADER = "-- Case Data evidence dump -- schema v9.1"
 
 
 def pointer_case_data_dir(matter_root, case_data_dir):
@@ -107496,7 +107496,7 @@ def resolve_pointer(matter_root):
             major, minor = version // 10, version % 10
             raise SystemExit(
                 f"Database schema is at v{major}.{minor} but this skill "
-                "requires v9.0. Run the migrate operation: call "
+                "requires v9.1. Run the migrate operation: call "
                 "matter_data__migrate with mode 'plan' first, then 'apply' with "
                 "the plan_token it returns. (Not rebuild -- rebuild replays a "
                 "current dump and rejects an out-of-date one.)")
@@ -107514,8 +107514,8 @@ def resolve_pointer(matter_root):
             m = re.search(r'schema v(\d+)\.(\d+)', first)
             if not m or (int(m.group(1)) * 10 + int(m.group(2))) < EXPECTED_USER_VERSION:
                 warnings.append(
-                    "evidence.sql is missing a v9.0 schema header or predates "
-                    "v9.0. Regenerate it via maintain; the rebuild-only "
+                    "evidence.sql is missing a v9.1 schema header or predates "
+                    "v9.1. Regenerate it via maintain; the rebuild-only "
                     "transition through v7.6 is the sole exception.")
         except Exception:
             pass

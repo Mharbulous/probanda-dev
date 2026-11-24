@@ -9,7 +9,7 @@ dependencies:
   - time-sorting             # first-run handoff; reuses its TimeCamp task-tree sync rather than refetching
 ---
 
-<!-- billing v0.7.4 -->
+<!-- billing v0.8.0 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.
