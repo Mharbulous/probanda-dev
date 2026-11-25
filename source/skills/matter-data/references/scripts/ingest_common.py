@@ -18,7 +18,7 @@ A converter returns
 
 A statement is {"sql", "refuse"?, "count"?, "value_as"?, "ask"?, "report"?}:
 `count` names the output count its rowcount adds to (facts, positions, relief,
-links, exhibits), `value_as` the result key that takes its first value, `ask`
+links, exhibits, issues), `value_as` the result key that takes its first value, `ask`
 makes each row it returns an ask item, and `report` makes each row's first
 value a report line. A group is
 {"ref", "params"?, "statements"}. Standard library only.
@@ -212,6 +212,17 @@ WHERE NOT EXISTS (SELECT 1 FROM main.evidence_links x
                   WHERE x.source_id = {source} AND x.fact_id = n.fact_id AND x.valid_to IS NULL)
 ORDER BY n.seq
 """, 'count': 'links'}
+
+
+# Design decision #82: an issue is live in the proceeding of each source its notes say raised it.
+# Run again once a source gains its proceeding (proceedings-profile.md section 7 holds the same text).
+LINK_ISSUES = """
+INSERT OR IGNORE INTO main.issue_proceedings (issue_id, proceeding_id)
+SELECT i.issue_id, s.proceeding_id
+FROM main.issues i
+JOIN main.sources s ON instr(i.notes, '[RAISED-IN:#' || s.source_id || '|') > 0
+WHERE s.proceeding_id IS NOT NULL
+"""
 
 
 def append_marker(marker, source=SOURCE):

@@ -5,8 +5,9 @@ Behind `matter_data__ingest_result` contract `facts` (ingest orchestrator spec
 operations/ingest-extract.md's Universal rules and Path A step 4 in one
 transaction: register (or reuse) the top-level source as `partial`, then facts,
 evidence links, factual positions, relief items and positions, source
-references and, for a witness statement or expert report, the witness rows;
-then flip to `complete`. `pleading_positions.py` validates the arrays first.
+references, the issues a court document raises (design decision #82) and, for a
+witness statement or expert report, the witness rows; then flip to `complete`.
+`pleading_positions.py` validates the arrays first.
 
     request  {"file_path", "file_hash", "results": [{"result_id", "path"}],
               "participants": {name: party_id | [party_id, ...]}, "answers": {...}, "route": {...},
@@ -38,6 +39,7 @@ because a privileged row cannot be a child: it takes Path B's Unclear branch,
 """
 
 import json
+import re
 
 import ingest_common as c
 from pleading_positions import ExtractionError, validate_extraction
@@ -156,7 +158,45 @@ WHERE NOT EXISTS (SELECT 1 FROM main.source_references x WHERE x.source_id = {c.
 ORDER BY r.key
 """
 
-# Witness statements and expert reports (ingest-extract.md lines 229-236): upsert by identity and type;
+# Issues (design decision #82). An issue is matched by the id its key carries, else by its title
+# without regard to case or surrounding space, matter-wide; a matched issue keeps every column.
+_ISSUE_OF = """coalesce(
+        (SELECT x.issue_id FROM main.issues x WHERE x.issue_id = json_extract(i.value, '$.issue_id')),
+        (SELECT min(x.issue_id) FROM main.issues x
+         WHERE lower(trim(x.title)) = lower(trim(json_extract(i.value, '$.title')))))"""
+
+INSERT_ISSUES = f"""
+INSERT INTO main.issues (title, description, issue_type, verified)
+SELECT json_extract(i.value, '$.title'), json_extract(i.value, '$.description'),
+       json_extract(i.value, '$.issue_type'), 0
+FROM json_each(:doc, '$.issues') i
+WHERE {_ISSUE_OF} IS NULL
+  AND i.key = (SELECT min(j.key) FROM json_each(:doc, '$.issues') j
+               WHERE lower(trim(json_extract(j.value, '$.title'))) = lower(trim(json_extract(i.value, '$.title'))))
+ORDER BY i.key
+"""
+
+# One `[RAISED-IN:#<source_id>|<locator>]` marker per issue and document, appended (conventions.md 5).
+_RAISED_IN = f"""(SELECT '[RAISED-IN:#' || {c.SOURCE} || '|' || coalesce(json_extract(i.value, '$.locator'), '') || ']'
+        FROM json_each(:doc, '$.issues') i WHERE {_ISSUE_OF} = main.issues.issue_id ORDER BY i.key LIMIT 1)"""
+
+MARK_ISSUES = f"""
+UPDATE main.issues
+SET notes = CASE WHEN notes IS NULL OR notes = '' THEN {_RAISED_IN} ELSE notes || char(10) || {_RAISED_IN} END
+WHERE {_RAISED_IN} IS NOT NULL AND (notes IS NULL OR instr(notes, {_RAISED_IN}) = 0)
+"""
+
+# Never to a bare row (#67), and `relevance` stays NULL: ingest does not know the firm's side.
+INSERT_ISSUE_FACTS = f"""
+INSERT OR IGNORE INTO main.issue_facts (issue_id, fact_id)
+SELECT n.issue_id, n.fact_id
+FROM (SELECT {_ISSUE_OF} AS issue_id, {c.fact_of('f')} AS fact_id
+      FROM json_each(:doc, '$.issues') i, json_each(i.value, '$.facts') f) n
+WHERE n.issue_id IS NOT NULL
+  AND EXISTS (SELECT 1 FROM main.facts x WHERE x.fact_id = n.fact_id AND x.description <> '')
+"""
+
+# Witness statements and expert reports (ingest-extract.md, under that heading): upsert by identity and type;
 # a repeat fills only NULL attributes and never adds a second witness.
 INSERT_WITNESS = f"""
 INSERT INTO main.witnesses (name, witness_type, report_source_id)
@@ -458,6 +498,24 @@ def plan(request):
                                              'paragraph_reference', 'procedural', 'other'):
             read.problems.append(f'{where}.reference_type is not one of the six')
 
+    # Only a court document raises issues, and never an attachment (#82).
+    issues = []
+    for i, row in enumerate((doc.get('issues') or []) if category == 'court' and not attachment else []):
+        where = f'issues[{i}]'
+        targets = [(key, by_key.get(key)) for key in row.get('fact_keys') or []]
+        issues.append({
+            'issue_id': _key(row.get('issue_key'), 'issue'),
+            'title': read.text(row, 'title', where, required=True),
+            'description': read.text(row, 'description', where),
+            'issue_type': row.get('issue_type'),
+            # The marker's own separators never come from the result.
+            'locator': re.sub(r'[|\]]', ' ', read.text(row, 'source_locator', where) or ''),
+            'facts': [{'fact_id': _key(key, 'fact'),
+                       'fact_locator': target['locator'] if target else None,
+                       'fact_description': target['description'] if target else None}
+                      for key, target in targets],
+        })
+
     if read.problems:
         return {'problems': read.problems}
     if asks:
@@ -473,7 +531,7 @@ def plan(request):
     other_title = (flags['other_copy'][0].get('detail') or '').strip() if flags['other_copy'] else None
 
     payload = {'source': source, 'facts': facts, 'positions': positions, 'relief': relief,
-               'relief_positions': relief_positions, 'references': references, 'witness': witness,
+               'relief_positions': relief_positions, 'references': references, 'issues': issues, 'witness': witness,
                'answered_source_id': route.get('answers_source_id'), 'other_copy_title': other_title}
     passes, markers, report = c.post_passes(request, category, request['file_path'], source['title'],
                                             source['description'], flags)
@@ -485,6 +543,8 @@ def plan(request):
         {'sql': INSERT_RELIEF, 'count': 'relief'},
         {'sql': CLOSE_RELIEF_POSITIONS}, {'sql': INSERT_RELIEF_POSITIONS},
         {'sql': INSERT_REFERENCES},
+        {'sql': INSERT_ISSUES, 'count': 'issues'}, {'sql': MARK_ISSUES}, {'sql': INSERT_ISSUE_FACTS},
+        {'sql': c.LINK_ISSUES},
     ]
     if route.get('transcript'):
         statements += [{'sql': NOTE_CONTRADICTIONS}, REPORT_CONTRADICTIONS]

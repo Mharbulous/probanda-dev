@@ -16,6 +16,7 @@ CASE_DATA_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = CASE_DATA_ROOT / "references" / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
+import dispatch_context  # noqa: E402
 import ingest_affidavit  # noqa: E402
 import ingest_authority  # noqa: E402
 import ingest_common  # noqa: E402
@@ -357,6 +358,92 @@ class Converters(unittest.TestCase):
         req = self.request("facts", [self.facts()], route={"ref": "f1", "kind": "facts", "version_newcomers": ["x' OR '1"]})
         with self.assertRaises(ValueError):
             ingest_facts.plan(req)
+
+    # ---------------------------------------------------------------- issues (#82)
+
+    ISSUE_ROWS = "SELECT title, description, issue_type, status, verified, our_position, opposing_position, notes FROM issues ORDER BY issue_id"
+
+    def factum(self, issues=None, **document):
+        doc = self.facts(
+            facts=[{"fact_key": f"new:{n}", "source_locator": f"para. {n}", "description": text, "category": "contract",
+                    "date_of_fact": None, "evidence": None}
+                   for n, text in ((1, "A loan was made."), (2, "The loan was not repaid."))],
+            fact_positions=[], relief_items=[], relief_positions=[],
+            issues=issues or [
+                {"issue_key": "new-issue:1", "title": "Was there a loan?", "description": "Ada Quill says there was.",
+                 "issue_type": "factual", "source_locator": "Part 2, para. 1", "fact_keys": ["new:1"]},
+                {"issue_key": "new-issue:2", "title": "Is the debt statute-barred?", "description": None,
+                 "issue_type": "legal", "source_locator": "Part 2, para. 2", "fact_keys": []},
+                {"issue_key": "new-issue:3", "title": "Did the judge err in finding repayment?", "description": None,
+                 "issue_type": "mixed", "source_locator": "Part 2, para. 3", "fact_keys": ["new:1", "new:2"]}])
+        doc["document"].update(title="Appellant's Factum", **document)
+        return doc
+
+    def issue_tables(self):
+        return [self.q(self.ISSUE_ROWS), self.q("SELECT * FROM issue_proceedings ORDER BY 1, 2"),
+                self.q("SELECT * FROM issue_facts ORDER BY 1, 2")]
+
+    def test_a_court_documents_issues_are_written_unverified_with_their_facts_and_proceeding(self):
+        _, out = self.write(ingest_facts, self.request("facts", [self.factum()]))
+        self.assertEqual(out["counts"]["issues"], 3)
+        self.assertEqual(self.q(self.ISSUE_ROWS), [
+            ("Was there a loan?", "Ada Quill says there was.", "factual", "open", 0, None, None, "[RAISED-IN:#1|Part 2, para. 1]"),
+            ("Is the debt statute-barred?", None, "legal", "open", 0, None, None, "[RAISED-IN:#1|Part 2, para. 2]"),
+            ("Did the judge err in finding repayment?", None, "mixed", "open", 0, None, None, "[RAISED-IN:#1|Part 2, para. 3]")])
+        self.assertEqual(self.q("SELECT * FROM issue_proceedings ORDER BY 1, 2"), [(1, 1), (2, 1), (3, 1)])
+        self.assertEqual(self.q("SELECT * FROM issue_facts ORDER BY 1, 2"), [(1, 1, None), (3, 1, None), (3, 2, None)])
+        before = self.issue_tables()
+        _, again = self.write(ingest_facts, self.request("facts", [self.factum()]))
+        self.assertEqual(again["counts"]["issues"], 0)
+        self.assertEqual(self.issue_tables(), before, "a repeat adds no row and no marker")
+
+    def test_a_second_document_matches_an_issue_by_key_or_title_and_never_rewrites_it(self):
+        self.write(ingest_facts, self.request("facts", [self.factum()]))
+        self.con.execute("UPDATE issues SET status = 'resolved', verified = 1, description = 'Kept' WHERE issue_id = 1")
+        self.con.commit()
+        second = self.factum(issues=[
+            {"issue_key": "issue:1", "title": "Whether money was lent", "description": "Reworded",
+             "issue_type": "legal", "source_locator": "para. 9", "fact_keys": ["new:2"]},
+            {"issue_key": "new-issue:1", "title": "  IS THE DEBT STATUTE-BARRED? ", "description": "Reworded",
+             "issue_type": "mixed", "source_locator": "para. 12", "fact_keys": []}])
+        _, out = self.write(ingest_facts, self.request("facts", [second], file_hash="b" * 64,
+                                                       file_path="5. COURT FILE\\2026-02-01 RESPONDENT FACTUM.pdf"))
+        self.assertEqual(out["counts"]["issues"], 0)
+        self.assertEqual(self.q(self.ISSUE_ROWS), [
+            ("Was there a loan?", "Kept", "factual", "resolved", 1, None, None,
+             "[RAISED-IN:#1|Part 2, para. 1]\n[RAISED-IN:#2|para. 9]"),
+            ("Is the debt statute-barred?", None, "legal", "open", 0, None, None,
+             "[RAISED-IN:#1|Part 2, para. 2]\n[RAISED-IN:#2|para. 12]"),
+            ("Did the judge err in finding repayment?", None, "mixed", "open", 0, None, None, "[RAISED-IN:#1|Part 2, para. 3]")])
+        self.assertEqual(self.q("SELECT fact_id FROM issue_facts WHERE issue_id = 1 ORDER BY 1"), [(1,), (4,)])
+
+    def test_an_issue_links_to_its_proceeding_once_the_source_has_one(self):
+        self.write(ingest_facts, self.request("facts", [self.factum(proceeding_file_number="S-999999")]))
+        self.assertEqual(self.q("SELECT proceeding_id FROM sources"), [(None,)])
+        self.assertEqual(self.q("SELECT count(*) FROM issues"), [(3,)])
+        self.assertEqual(self.q("SELECT count(*) FROM issue_proceedings"), [(0,)])
+        self.con.execute("UPDATE sources SET proceeding_id = 1")
+        for _ in range(2):
+            self.con.execute(ingest_common.LINK_ISSUES)
+            self.assertEqual(self.q("SELECT * FROM issue_proceedings ORDER BY 1, 2"), [(1, 1), (2, 1), (3, 1)])
+
+    def test_a_document_that_is_not_a_court_document_and_an_attachment_write_no_issue(self):
+        self.write(ingest_facts, self.request("facts", [self.factum(category="correspondence")],
+                                              file_path="3. CORRESPONDENCE\\mail.eml"))
+        self.write(ingest_facts, self.attachment(self.factum()))
+        self.assertEqual(self.q("SELECT count(*) FROM facts"), [(4,)])
+        self.assertEqual(self.q("SELECT count(*) FROM issues"), [(0,)])
+
+    def test_the_extractor_is_served_every_issue_and_no_position(self):
+        self.con.execute("INSERT INTO issues (title, description, status, our_position) VALUES "
+                         "('Was there a loan?', 'x', 'resolved', 'Secret')")
+        self.con.commit()
+        self.con.execute(f"PRAGMA user_version = {resolve_paths.EXPECTED_USER_VERSION}")
+        self.con.close()
+        out = dispatch_context.run({"case_data_dir": str(self.dir)})
+        self.con = sqlite3.connect(self.dir / "main.sqlite")
+        self.assertEqual(out["matter_context"]["issues"],
+                         [{"issue_key": "issue:1", "title": "Was there a loan?", "description": "x"}])
 
     # ---------------------------------------------------------------- an email's attachments (#51, #53, #54)
 

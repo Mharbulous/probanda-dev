@@ -1374,3 +1374,21 @@ One issue can be live in several proceedings of a matter at once, such as an arb
 **Rejected:** keeping `proceeding_id` as a lead proceeding beside the junction leaves two places to read and write one fact. One `issues` row per proceeding with a shared group id lets copies of one issue disagree about their title, status or positions.
 
 The store encodes one issue-to-proceeding link before and after, as a column and then as a table.
+
+## 82. Ingest records the issues a pleading or argument document raises (2026-11-24)
+
+A factum was ingested with facts, positions and relief and no issue, because nothing wrote `issues`. `extract-facts` now returns an `issues` array, and both write routes record it: `ingest_facts.py` for the orchestrator, `operations/ingest-extract.md` Path A step 4 for a single attended document.
+
+**One contract, one dispatch.** No second agent and no practitioner question. `issues` is optional to the validator, so a result staged by an older agent still writes and the contract version does not move.
+
+**Which documents.** Only a `court` document whose own title or caption shows it is a notice of civil claim, response to civil claim, notice of application, application response, notice of appeal or factum, never its file name. The extractor applies that test, the only place it is stated. The converter also drops `issues` for any other category and for an email's attachment.
+
+**Identity is the normalised title, matter-wide.** #81 makes one row serve every proceeding, so a per-proceeding key would make the copies #81 rejected. The extractor is served every issue on file as `issue:<id>`, never `our_position` or `opposing_position`, and returns that key when the document raises the same question in other words. Otherwise `lower(trim(title))` decides, and only then is a row inserted.
+
+**A matched issue is never rewritten.** Its title, description, status and `verified` stand. It gains only a marker, fact links and a proceeding link. A new issue is `verified = 0`.
+
+**No side is inferred.** The firm's client is recorded in practice data, not here, so `our_position`, `opposing_position` and `issue_facts.relevance` stay NULL. The positions a document states go in `description`, each attributed by exact party name. No `issue_facts` row points at a bare row (#67).
+
+**Provenance is a marker, not a column.** `[RAISED-IN:#<source_id>|<locator>]` is appended to `issues.notes`, one per issue and document, on #42's and #64's footing: never a prefix, never touching `verified`. A source column would be a migration and a one-way door (Commandment 8) for what a note holds.
+
+**The proceeding link follows the marker.** A source's proceeding is often set after its write, by `operations/proceedings-profile.md` §7. One idempotent statement (`ingest_common.LINK_ISSUES`, the same text in §7) links every issue to the proceeding of each source its markers name. It runs in the document's transaction and again after §7's back-fill. This adds `issue_proceedings` inserts to that operation's writes, beside #42's bounded write on `main.sources`.

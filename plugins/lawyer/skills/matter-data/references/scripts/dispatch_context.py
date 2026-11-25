@@ -5,7 +5,8 @@ spec 6.1), which stores these values with each dispatch so that
 `matter_data__dispatch_inputs` serves them to the extractor and none passes
 through the main session:
 
-  matter_context   the matter's proceedings and parties, with each party's roles
+  matter_context   the matter's proceedings and parties, with each party's roles,
+                   and its issues, keyed `issue:<issue_id>`
   answered_facts   for a response, every non-bare fact of the pleading it answers,
                    keyed `fact:<fact_id>` (ingest-extract.md Path A step 1)
   answered_relief  that pleading's relief items, keyed `relief:<relief_id>`
@@ -39,7 +40,12 @@ def _read(answers_source_id):
                 "SELECT party_id, role FROM proceeding_parties ORDER BY party_id, proceeding_id"):
             if party_id in parties and role not in parties[party_id]['roles']:
                 parties[party_id]['roles'].append(role)
-        out = {'status': 'ok', 'matter_context': {'proceedings': proceedings, 'parties': list(parties.values())},
+        # Every issue on file, whatever its status, and never either side's position (#82).
+        issues = [{'issue_key': f'issue:{issue_id}', 'title': title, 'description': description}
+                  for issue_id, title, description in con.execute(
+                      "SELECT issue_id, title, description FROM issues ORDER BY issue_id")]
+        out = {'status': 'ok', 'matter_context': {'proceedings': proceedings, 'parties': list(parties.values()),
+                                                  'issues': issues},
                'answered_facts': [], 'answered_relief': []}
         if answers_source_id is not None:
             title = (con.execute("SELECT title FROM sources WHERE source_id = ?", (answers_source_id,))

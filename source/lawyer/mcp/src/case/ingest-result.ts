@@ -48,7 +48,7 @@ const LATER = ["efiling_statement", "register_only"];
 const CLOSABLE = ["facts", "attachment", "affidavit_body", "affidavit_exhibits", "sought_orders", "caselaw", "provision"];
 /** The contracts written only for a file routed in this run. */
 const ROUTED_ONLY = ["attachment", "caselaw", "provision", "affidavit_body", "affidavit_exhibits"];
-const COUNTS = ["facts", "positions", "relief", "links", "exhibits"] as const;
+const COUNTS = ["facts", "positions", "relief", "links", "exhibits", "issues"] as const;
 /** The output cap (est., spec §1.5, §2.1). */
 export const RESULT_CAP = 600;
 
@@ -622,7 +622,7 @@ async function write(
   }
   if (plan.summary) report.unshift(plan.summary);
   else if (plan.title && !plan.failed) {
-    report.unshift(`${plan.title.slice(0, 60)}: ${counts.facts} facts, ${counts.positions} positions, ${counts.relief} relief items, ${counts.links} evidence links${counts.exhibits ? `, ${counts.exhibits} exhibits` : ""}.`);
+    report.unshift(`${plan.title.slice(0, 60)}: ${counts.facts} facts, ${counts.positions} positions, ${counts.relief} relief items, ${counts.links} evidence links${counts.exhibits ? `, ${counts.exhibits} exhibits` : ""}${counts.issues ? `, ${counts.issues} issues` : ""}.`);
   }
   if (plan.failed && !plan.summary) report.unshift(`${(plan.title ?? "This document").slice(0, 60)} could not be read and is recorded as not read.`);
   // An exhibit rolled back is read again, so its question waits for that reading.

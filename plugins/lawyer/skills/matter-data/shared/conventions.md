@@ -154,7 +154,7 @@ Machine-detectable annotations on the `notes` column of facts, positions, and so
 
 **Binding rule:** any row written with a prefixed note MUST get `verified = 2` at insert — straight to the human queue, bypassing the AI verifier. Never write `verified = 0` alongside a prefixed note. **Ingestion never sets `human_reviewed = 1`** — only the review operation sets that flag.
 
-A bracket marker appended to a `sources` or `facts` note, such as `[SUPERSEDED-BY:#…]`, `[NOT-VERSION-OF:#…]` or `[FOLDED-INTO:#…]` ([`../operations/supersede-draft.md`](../operations/supersede-draft.md)), is not a prefix: it never sets `verified` by itself and never routes a row to the queue.
+A bracket marker appended to a `sources` or `facts` note, such as `[SUPERSEDED-BY:#…]`, `[NOT-VERSION-OF:#…]` or `[FOLDED-INTO:#…]` ([`../operations/supersede-draft.md`](../operations/supersede-draft.md)), is not a prefix: it never sets `verified` by itself and never routes a row to the queue. The same holds for `[RAISED-IN:#<source_id>|<locator>]` on `issues.notes`, which ingest appends, one line per document that raises the issue. It is never cleared, and it is how an issue reaches its proceeding once that source has one ([`../operations/proceedings-profile.md`](../operations/proceedings-profile.md) §7, `../references/design-decisions.md` #82).
 
 ---
 

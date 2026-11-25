@@ -131,4 +131,15 @@ WHERE proceeding_id IS NULL
 
 `:court_folder_prefix` is the group's own folder (the first path segment of the `file_path` that triggered the check). This also links any exhibit rows under the same body — they share the body's `file_path` and its `category` ([`../references/design-decisions.md`](../references/design-decisions.md) #17) — no separate handling needed.
 
+Then, in the same call, link each issue to the proceeding of every source whose ingest recorded it as raising that issue ([`../references/design-decisions.md`](../references/design-decisions.md) #82). The statement is idempotent:
+
+```sql
+-- issue link
+INSERT OR IGNORE INTO main.issue_proceedings (issue_id, proceeding_id)
+SELECT i.issue_id, s.proceeding_id
+FROM main.issues i
+JOIN main.sources s ON instr(i.notes, '[RAISED-IN:#' || s.source_id || '|') > 0
+WHERE s.proceeding_id IS NOT NULL;
+```
+
 Run this in the same `matter_data__execute` call as the proceedings write that produced `:confirmed_proceeding_id`, where practical, and report every source updated. This step runs even for §6's exact-match path, where it is the entire write — see [`../references/design-decisions.md`](../references/design-decisions.md) #42 for why that back-fill needs no separate confirmation.

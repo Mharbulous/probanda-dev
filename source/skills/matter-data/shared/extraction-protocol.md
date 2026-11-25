@@ -172,7 +172,7 @@ After every extraction run, report:
 - inserted and updated counts, broken down **by entity type** (sources, facts,
   factual positions, relief items, relief positions, source references,
   evidence links, sought orders (when a Notice of Application was detected),
-  and any provenance);
+  issues, and any provenance);
 - skipped duplicate locators;
 - the size of the verification backlog produced (rows left for the verifier or the human queue);
 - the final `ingestion_status` of each source touched;

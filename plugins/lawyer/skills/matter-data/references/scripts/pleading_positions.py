@@ -14,6 +14,9 @@ POSITION_BASES = {
     "other",
 }
 RELIEF_VALUES = {"seek", "consent", "oppose", "no_position"}
+ISSUE_TYPES = {"factual", "legal", "mixed"}
+# An issue already on file carries its id (`issue:12`); a new one is the extraction's own.
+ISSUE_KEY = re.compile(r"^(?:issue:\d+|new-issue:\d+)$")
 # A stance on a pleading is recognised by its shape, not by a word. "consent"
 # counts only as the verb "consent(s) to", so "Consent Order" and "the consent
 # of" never match.
@@ -242,4 +245,22 @@ def validate_extraction(payload, answered_fact_keys=(), answered_relief_keys=())
             raise ExtractionError(
                 f"unknown target relief: {position['target_relief_key']}"
             )
+
+    # Optional, so a result staged before issues joined the contract still writes.
+    issues = payload.get("issues", [])
+    if not isinstance(issues, list):
+        raise ExtractionError("issues must be an array")
+    issue_keys = set()
+    for issue in issues:
+        key = issue.get("issue_key")
+        if not isinstance(key, str) or not ISSUE_KEY.match(key) or key in issue_keys:
+            raise ExtractionError(f"invalid or repeated issue key: {key}")
+        issue_keys.add(key)
+        if not isinstance(issue.get("title"), str) or not issue["title"].strip():
+            raise ExtractionError(f"issue without a title: {key}")
+        if issue.get("issue_type") not in ISSUE_TYPES:
+            raise ExtractionError(f"invalid issue type: {issue.get('issue_type')}")
+        for fact_key in issue.get("fact_keys") or []:
+            if fact_key not in fact_targets:
+                raise ExtractionError(f"unknown issue fact: {fact_key}")
     return payload

@@ -185,6 +185,36 @@ class PleadingPositionTests(unittest.TestCase):
         ):
             validate_extraction(payload, answered_fact_keys={"f3"})
 
+    def issue_payload(self, **change):
+        payload = empty_payload()
+        payload["facts"] = [{"fact_key": "new:1", "source_locator": "para. 5", "description": "A notice was delivered."}]
+        issue = {"issue_key": "new-issue:1", "title": "Was the notice delivered in time?", "description": None,
+                 "issue_type": "mixed", "source_locator": "Part 2, para. 1", "fact_keys": ["new:1", "f3"]}
+        issue.update(change)
+        payload["issues"] = [issue, {**issue, "issue_key": "issue:12", "fact_keys": []}]
+        return payload
+
+    def test_issues_validate_and_a_payload_without_them_still_passes(self):
+        payload = self.issue_payload()
+        self.assertIs(validate_extraction(payload, answered_fact_keys={"f3"}), payload)
+        bare = empty_payload()
+        self.assertIs(validate_extraction(bare), bare)
+
+    def test_each_malformed_issue_is_refused(self):
+        for change, message in (
+            ({"title": " "}, "issue without a title"),
+            ({"issue_type": "lawyer"}, "invalid issue type: lawyer"),
+            ({"fact_keys": ["new:9"]}, "unknown issue fact: new:9"),
+            ({"issue_key": "issue:12"}, "invalid or repeated issue key: issue:12"),
+            ({"issue_key": "fact:3"}, "invalid or repeated issue key: fact:3"),
+        ):
+            with self.assertRaisesRegex(ExtractionError, message):
+                validate_extraction(self.issue_payload(**change), answered_fact_keys={"f3"})
+        payload = empty_payload()
+        payload["issues"] = None
+        with self.assertRaisesRegex(ExtractionError, "issues must be an array"):
+            validate_extraction(payload)
+
 
 # Suggestion 83893d42-82db-4d8d-a079-5081bd737271, item 3 (red test written by triage).
 class PartQualifiedLocators(unittest.TestCase):

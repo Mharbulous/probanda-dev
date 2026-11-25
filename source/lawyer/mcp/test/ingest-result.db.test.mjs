@@ -128,10 +128,12 @@ test("a routed pleading is dispatched by id, its inputs served, and its staged r
   assert.deepEqual(again.dispatch, [], "a running extractor is not dispatched twice");
   assert.equal(again.running, 1);
 
-  const { result_id } = await stage(FACTS("f1"));
+  const { result_id } = await stage(FACTS("f1", { issues: [{ issue_key: "new-issue:1", title: "Was the loan repaid?", description: null, issue_type: "factual", source_locator: "Part 3 para. 1", fact_keys: ["new:2"] }] }));
   const out = await write(matterRoot, run_id, { ref: "f1" }, "facts", [result_id]);
   assert.equal(out.outcome, "written", JSON.stringify(out));
-  assert.deepEqual(out.counts, { facts: 2, positions: 2, relief: 1, links: 0, exhibits: 0 });
+  assert.deepEqual(out.counts, { facts: 2, positions: 2, relief: 1, links: 0, exhibits: 0, issues: 1 });
+  assert.match(out.report[0], /, 1 issues\.$/);
+  assert.deepEqual(sql(caseDataDir, "SELECT issue_id, proceeding_id FROM issue_proceedings"), [{ issue_id: 1, proceeding_id: 1 }]);
   assert.ok(Buffer.byteLength(JSON.stringify(out)) <= 600, "the reply keeps its cap");
   for (const line of [...out.report, ...out.ask.map((a) => a.say)]) assert.doesNotMatch(line, DENY);
   assert.deepEqual(out.post.map((p) => p.pass), ["linkage", "name_check"]);
@@ -270,7 +272,7 @@ test("an affidavit: Pass 1 writes the body partial, its exhibits are dispatched,
   });
   const a = await exhibit("A");
   const partial = await write(matterRoot, run_id, { ref: "f1:A" }, "affidavit_exhibits", [a.result_id]);
-  assert.deepEqual(partial.counts, { facts: 1, positions: 0, relief: 0, links: 1, exhibits: 1 });
+  assert.deepEqual(partial.counts, { facts: 1, positions: 0, relief: 0, links: 1, exhibits: 1, issues: 0 });
   assert.equal(sql(caseDataDir, "SELECT ingestion_status FROM sources WHERE parent_source_id IS NULL")[0].ingestion_status, "partial");
 
   const b = await exhibit("B", { needs_human: true });

@@ -44,8 +44,10 @@ relief, and non-factual source references.
 
 ## Inputs
 
-- `{{MATTER_CONTEXT}}`: style of cause, court, file number, parties, and dispute
-  summary. Party IDs may appear for recognition; never echo them.
+- `{{MATTER_CONTEXT}}`: style of cause, court, file number, parties, dispute
+  summary, and `issues`, the matter's issues on file, each
+  `{issue_key, title, description}`. Party IDs may appear for recognition; never
+  echo them.
 - `{{DOCUMENT}}`: path, kind, date, and author/filing party. Resolve any `"auto"`
   value from the document and echo the resolved value.
 - `{{ANSWERED_FACTS}}`: for a response document, the complete set of atomic facts
@@ -88,9 +90,16 @@ Classify every extracted statement before placing it in an output collection.
 5. **Source reference/procedural metadata**: incorporation, adoption, response
    relationship, paragraph reference, pleading-history, or other non-factual
    metadata. It belongs only in `source_references`.
-
-Legal conclusions and argument are not facts. Do not force them into another
-collection unless they are source-reference/procedural metadata or relief.
+6. **Issue**: a question the document asks the court to decide, taken from its
+   stated issues or grounds, its "errors in judgment" Part and its argument
+   headings. It belongs only in `issues`. Emit issues only when the document's
+   own title or caption on page 1 (page 2 when page 1 is a backing sheet), never
+   its file name, shows it is a notice of civil claim, response to civil claim,
+   notice of application, application response, notice of appeal or factum.
+   Every other document returns `"issues": []`. An issue that is the same
+   question as one in MATTER_CONTEXT `issues`, however worded, takes that
+   `issue_key`. State a party's position on an issue only as the document
+   states it, never from who filed the document.
 
 ## Factual extraction
 
@@ -241,11 +250,21 @@ collection unless they are source-reference/procedural metadata or relief.
       "target_locator": "smallest unresolved locator",
       "reason": "not present in ANSWERED_FACTS or ANSWERED_RELIEF"
     }
+  ],
+  "issues": [
+    {
+      "issue_key": "opaque MATTER_CONTEXT issue_key or new-issue:<n>",
+      "title": "short neutral question",
+      "description": "the issue as framed, and each party's stated position by exact MATTER_CONTEXT party name",
+      "issue_type": "factual | legal | mixed",
+      "source_locator": "locator",
+      "fact_keys": ["fact_key of each fact the issue turns on"]
+    }
   ]
 }
 ```
 
-All six arrays are required, even when empty. `evidence` is either the shown
+Every array is required, even when empty. `evidence` is either the shown
 object or `null`. Output the JSON object only.
 
 ## Dispatch by id

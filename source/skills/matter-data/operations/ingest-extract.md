@@ -143,13 +143,14 @@ A false positive here is harmless: `agents/extract-sought-orders.md` is the fina
    with `model: "opus"` and `effort: "high"` on the Agent call
    (`../references/design-decisions.md` #70). Supply `MATTER_CONTEXT`, `DOCUMENT`,
    `ANSWERED_FACTS` and `ANSWERED_RELIEF`, and for a PDF its `PAGE_MANIFEST`
-   (Universal rules). The returned object has separate
-   `facts`, `fact_positions`, `relief_items`, `relief_positions`,
-   `source_references`, and `unresolved_references` arrays.
+   (Universal rules). `MATTER_CONTEXT` carries every `main.issues` row as
+   `{issue_key: "issue:<issue_id>", title, description}`, never `our_position`
+   or `opposing_position`. The returned object follows that agent's output
+   contract.
    **If the Notice of Application gate above fired**, additionally dispatch the
    read-only `lawyer:extract-sought-orders` agent, whose body mirrors
    [`../agents/extract-sought-orders.md`](../agents/extract-sought-orders.md) (a second,
-   separate dispatch — not a seventh array on this contract), with `model: "opus"` and
+   separate dispatch — not another array on this contract), with `model: "opus"` and
    `effort: "high"` on the Agent call, supplying
    `MATTER_CONTEXT`, `DOCUMENT` and, for a PDF, its `PAGE_MANIFEST`. Its returned `sought_orders` array is
    captured alongside, never merged into `relief_items` (dual capture is
@@ -159,7 +160,7 @@ A false positive here is harmless: `agents/extract-sought-orders.md` is the fina
    `../references/scripts/pleading_positions.py`; model judgment classifies the
    source text, while this helper enforces keys, enums, range expansion,
    duplicate identities, and fail-closed unresolved locators.
-   - All six arrays must exist and every enum/party/key must be valid.
+   - Every array of the contract must exist and every enum/party/key must be valid.
    - If `unresolved_references` is non-empty, sort by the target's numeric
      paragraph/subparagraph order, report the smallest unresolved locator and
      abort. No source or child row is written. Then offer to read that
@@ -191,7 +192,7 @@ A false positive here is harmless: `agents/extract-sought-orders.md` is the fina
      be present (possibly empty); every `order_number` and `order_text` must be
      non-empty; `order_number` values must be unique within the array.
      Violation aborts the whole document transaction and is reported, same as
-     the six-array checks above. A `not_a_notice_of_application: true` result
+     the array checks above. A `not_a_notice_of_application: true` result
      is not a violation — it means the gate's two signals fired on a document
      the subagent's own closer read then ruled out; write zero `sought_orders`
      rows for it and proceed with the rest of the transaction normally.
@@ -215,6 +216,17 @@ A false positive here is harmless: `agents/extract-sought-orders.md` is the fina
      the Universal rules' tiled retry gets a
      `notes` value starting `OCR:` and `verified = 2` — the existing §5
      notes-prefix convention, no new marker family;
+   - for a `court` document that is not an email's attachment, write each
+     returned issue (`../references/design-decisions.md` #82). Match it to a
+     `main.issues` row by the `issue_id` in its `issue_key`, else by
+     `lower(trim(title))`, matter-wide. Insert only an unmatched issue:
+     `title`, `description`, `issue_type` and `verified = 0`, with
+     `our_position` and `opposing_position` NULL. A matched row keeps every
+     column. For either, append `[RAISED-IN:#<source_id>|<locator>]` to its
+     `notes` unless already there (`../shared/conventions.md` §5), and
+     `INSERT OR IGNORE` one `issue_facts` row per fact key, `relevance` NULL.
+     Then run the issue link statement of
+     [`proceedings-profile.md`](proceedings-profile.md) §7;
    - set the source `ingestion_status = 'complete'`.
 5. **Version positions only on their full response identity.** If the same fact,
    party, responding source, and response locator already has a current factual
@@ -228,7 +240,7 @@ A false positive here is harmless: `agents/extract-sought-orders.md` is the fina
    pleading positions for the same fact and party. Record a contradiction in
    notes; do not auto-resolve it.
 8. Commit, let `matter_data__execute` regenerate the dump, and report counts for
-   all six collections plus skipped exact duplicates, plus `sought_orders`
+   every collection, issues included, plus skipped exact duplicates, plus `sought_orders`
    rows written (and any `UNCONFIRMED:`/`OCR:` escalations) when the Notice of
    Application gate fired.
 
