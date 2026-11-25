@@ -32,4 +32,4 @@ An upgrade needs no adoption and no pasting (`shared/paralegal-posture.md` secti
 
 The upgrade skips a job whose steps are fixed or kept as written: a fixed-text job (the list `work/references/job-session.md`'s pickup review skips), an intake note-up or grouped intake job, and a job whose steps were split along its item's own numbered or lettered parts (`draft/references/job-session.md`, `draft.note-up`).
 
-**Unattended.** An unattended run never pauses and never upgrades. Where it meets a plan that falls short, it writes nothing, reports which of sections 1 and 2 the plan lacks, and stops, as the restating check does.
+**Unattended.** An unattended run upgrades a plan that falls short, a plan marker included, without pausing, once it holds the job, and then works it. It never stamps the plan's approval, so the Work Board shows the plan as written without the practitioner until a session announces it.
