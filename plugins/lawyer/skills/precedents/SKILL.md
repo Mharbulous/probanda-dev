@@ -3,7 +3,7 @@ name: precedents
 description: "Use when the practitioner says 'make this a precedent', 'update the precedent', 'organize my precedents', or expects a standard form that may not exist ('my standard retainer', 'the form we use'). Creates a reusable Word precedent from their own saved document, saves an edited copy as a new version, and tidies the precedents folder. A precedent is a Word file whose variable fields are in square brackets and highlighted yellow. Not for filling a precedent in for a client, and not for court forms."
 ---
 
-<!-- lawyer v0.32.2 -->
+<!-- lawyer v0.32.3 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

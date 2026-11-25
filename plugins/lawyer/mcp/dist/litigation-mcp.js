@@ -1,4 +1,4 @@
-// build-stamp: 0debc1920a4e
+// build-stamp: 19aa09e7b5e5
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -63,9 +63,9 @@ var require_code = __commonJS({
     };
     exports.Name = Name2;
     var _Code = class extends _CodeOrName {
-      constructor(code) {
+      constructor(code2) {
         super();
-        this._items = typeof code === "string" ? [code] : code;
+        this._items = typeof code2 === "string" ? [code2] : code2;
       }
       toString() {
         return this.str;
@@ -92,13 +92,13 @@ var require_code = __commonJS({
     exports._Code = _Code;
     exports.nil = new _Code("");
     function _3(strs, ...args) {
-      const code = [strs[0]];
+      const code2 = [strs[0]];
       let i3 = 0;
       while (i3 < args.length) {
-        addCodeArg(code, args[i3]);
-        code.push(strs[++i3]);
+        addCodeArg(code2, args[i3]);
+        code2.push(strs[++i3]);
       }
-      return new _Code(code);
+      return new _Code(code2);
     }
     exports._ = _3;
     var plus = new _Code("+");
@@ -114,13 +114,13 @@ var require_code = __commonJS({
       return new _Code(expr);
     }
     exports.str = str2;
-    function addCodeArg(code, arg) {
+    function addCodeArg(code2, arg) {
       if (arg instanceof _Code)
-        code.push(...arg._items);
+        code2.push(...arg._items);
       else if (arg instanceof Name2)
-        code.push(arg);
+        code2.push(arg);
       else
-        code.push(interpolate(arg));
+        code2.push(interpolate(arg));
     }
     exports.addCodeArg = addCodeArg;
     function optimize(expr) {
@@ -155,8 +155,8 @@ var require_code = __commonJS({
         return `"${a3}${b3.slice(1)}`;
       return;
     }
-    function strConcat(c1, c22) {
-      return c22.emptyStr() ? c1 : c1.emptyStr() ? c22 : str2`${c1}${c22}`;
+    function strConcat(c12, c22) {
+      return c22.emptyStr() ? c12 : c12.emptyStr() ? c22 : str2`${c12}${c22}`;
     }
     exports.strConcat = strConcat;
     function interpolate(x3) {
@@ -304,7 +304,7 @@ var require_scope = __commonJS({
         }, usedValues, getCode);
       }
       _reduceValues(values, valueCode, usedValues = {}, getCode) {
-        let code = code_1.nil;
+        let code2 = code_1.nil;
         for (const prefix in values) {
           const vs2 = values[prefix];
           if (!vs2)
@@ -317,16 +317,16 @@ var require_scope = __commonJS({
             let c3 = valueCode(name);
             if (c3) {
               const def = this.opts.es5 ? exports.varKinds.var : exports.varKinds.const;
-              code = (0, code_1._)`${code}${def} ${name} = ${c3};${this.opts._n}`;
+              code2 = (0, code_1._)`${code2}${def} ${name} = ${c3};${this.opts._n}`;
             } else if (c3 = getCode === null || getCode === void 0 ? void 0 : getCode(name)) {
-              code = (0, code_1._)`${code}${c3}${this.opts._n}`;
+              code2 = (0, code_1._)`${code2}${c3}${this.opts._n}`;
             } else {
               throw new ValueError(name);
             }
             nameSet.set(name, UsedValueState.Completed);
           });
         }
-        return code;
+        return code2;
       }
     };
     exports.ValueScope = ValueScope;
@@ -486,9 +486,9 @@ var require_codegen = __commonJS({
       }
     };
     var AnyCode = class extends Node2 {
-      constructor(code) {
+      constructor(code2) {
         super();
-        this.code = code;
+        this.code = code2;
       }
       render({ _n: _n2 }) {
         return `${this.code};` + _n2;
@@ -510,7 +510,7 @@ var require_codegen = __commonJS({
         this.nodes = nodes;
       }
       render(opts) {
-        return this.nodes.reduce((code, n3) => code + n3.render(opts), "");
+        return this.nodes.reduce((code2, n3) => code2 + n3.render(opts), "");
       }
       optimizeNodes() {
         const { nodes } = this;
@@ -558,10 +558,10 @@ var require_codegen = __commonJS({
         this.condition = condition;
       }
       render(opts) {
-        let code = `if(${this.condition})` + super.render(opts);
+        let code2 = `if(${this.condition})` + super.render(opts);
         if (this.else)
-          code += "else " + this.else.render(opts);
-        return code;
+          code2 += "else " + this.else.render(opts);
+        return code2;
       }
       optimizeNodes() {
         super.optimizeNodes();
@@ -682,12 +682,12 @@ var require_codegen = __commonJS({
     Return.kind = "return";
     var Try = class extends BlockNode {
       render(opts) {
-        let code = "try" + super.render(opts);
+        let code2 = "try" + super.render(opts);
         if (this.catch)
-          code += this.catch.render(opts);
+          code2 += this.catch.render(opts);
         if (this.finally)
-          code += this.finally.render(opts);
-        return code;
+          code2 += this.finally.render(opts);
+        return code2;
       }
       optimizeNodes() {
         var _a4, _b;
@@ -804,18 +804,18 @@ var require_codegen = __commonJS({
       }
       // returns code for object literal for the passed argument list of key-value pairs
       object(...keyValues) {
-        const code = ["{"];
+        const code2 = ["{"];
         for (const [key, value2] of keyValues) {
-          if (code.length > 1)
-            code.push(",");
-          code.push(key);
+          if (code2.length > 1)
+            code2.push(",");
+          code2.push(key);
           if (key !== value2 || this.opts.es5) {
-            code.push(":");
-            (0, code_1.addCodeArg)(code, value2);
+            code2.push(":");
+            (0, code_1.addCodeArg)(code2, value2);
           }
         }
-        code.push("}");
-        return new code_1._Code(code);
+        code2.push("}");
+        return new code_1._Code(code2);
       }
       // `if` clause (or statement if `thenBody` and, optionally, `elseBody` are passed)
       if(condition, thenBody, elseBody) {
@@ -1202,8 +1202,8 @@ var require_util = __commonJS({
     })(Type2 || (exports.Type = Type2 = {}));
     function getErrorPath(dataProp, dataPropType, jsPropertySyntax) {
       if (dataProp instanceof codegen_1.Name) {
-        const isNumber = dataPropType === Type2.Num;
-        return jsPropertySyntax ? isNumber ? (0, codegen_1._)`"[" + ${dataProp} + "]"` : (0, codegen_1._)`"['" + ${dataProp} + "']"` : isNumber ? (0, codegen_1._)`"/" + ${dataProp}` : (0, codegen_1._)`"/" + ${dataProp}.replace(/~/g, "~0").replace(/\\//g, "~1")`;
+        const isNumber2 = dataPropType === Type2.Num;
+        return jsPropertySyntax ? isNumber2 ? (0, codegen_1._)`"[" + ${dataProp} + "]"` : (0, codegen_1._)`"['" + ${dataProp} + "']"` : isNumber2 ? (0, codegen_1._)`"/" + ${dataProp}` : (0, codegen_1._)`"/" + ${dataProp}.replace(/~/g, "~0").replace(/\\//g, "~1")`;
       }
       return jsPropertySyntax ? (0, codegen_1.getProperty)(dataProp).toString() : "/" + escapeJsonPointer(dataProp);
     }
@@ -2236,8 +2236,8 @@ var require_resolve = __commonJS({
       }
       return count2;
     }
-    function getFullPath(resolver, id = "", normalize2) {
-      if (normalize2 !== false)
+    function getFullPath(resolver, id = "", normalize3) {
+      if (normalize3 !== false)
         id = normalizeId(id);
       const p3 = resolver.parse(id);
       return _getFullPath(resolver, p3);
@@ -3115,22 +3115,22 @@ var require_utils = __commonJS({
     var isPathCharacter = RegExp.prototype.test.bind(/^[\da-z\-._~!$&'()*+,;=:@/]$/iu);
     function stringArrayToHexStripped(input) {
       let acc = "";
-      let code = 0;
+      let code2 = 0;
       let i3 = 0;
       for (i3 = 0; i3 < input.length; i3++) {
-        code = input[i3].charCodeAt(0);
-        if (code === 48) {
+        code2 = input[i3].charCodeAt(0);
+        if (code2 === 48) {
           continue;
         }
-        if (!(code >= 48 && code <= 57 || code >= 65 && code <= 70 || code >= 97 && code <= 102)) {
+        if (!(code2 >= 48 && code2 <= 57 || code2 >= 65 && code2 <= 70 || code2 >= 97 && code2 <= 102)) {
           return "";
         }
         acc += input[i3];
         break;
       }
       for (i3 += 1; i3 < input.length; i3++) {
-        code = input[i3].charCodeAt(0);
-        if (!(code >= 48 && code <= 57 || code >= 65 && code <= 70 || code >= 97 && code <= 102)) {
+        code2 = input[i3].charCodeAt(0);
+        if (!(code2 >= 48 && code2 <= 57 || code2 >= 65 && code2 <= 70 || code2 >= 97 && code2 <= 102)) {
           return "";
         }
         acc += input[i3];
@@ -3633,7 +3633,7 @@ var require_fast_uri = __commonJS({
     "use strict";
     var { normalizeIPv6, removeDotSegments, recomposeAuthority, normalizePercentEncoding, normalizePathEncoding, escapePreservingEscapes, reescapeHostDelimiters, isIPv4, nonSimpleDomain } = require_utils();
     var { SCHEMES, getSchemeHandler } = require_schemes();
-    function normalize2(uri, options) {
+    function normalize3(uri, options) {
       if (typeof uri === "string") {
         uri = /** @type {T} */
         normalizeString(uri, options);
@@ -3900,7 +3900,7 @@ var require_fast_uri = __commonJS({
     }
     var fastUri = {
       SCHEMES,
-      normalize: normalize2,
+      normalize: normalize3,
       resolve: resolve12,
       resolveComponent,
       equal,
@@ -4307,16 +4307,16 @@ var require_core = __commonJS({
         return this;
       }
       // Add format
-      addFormat(name, format) {
-        if (typeof format == "string")
-          format = new RegExp(format);
-        this.formats[name] = format;
+      addFormat(name, format2) {
+        if (typeof format2 == "string")
+          format2 = new RegExp(format2);
+        this.formats[name] = format2;
         return this;
       }
       errorsText(errors = this.errors, { separator = ", ", dataVar = "data" } = {}) {
         if (!errors || errors.length === 0)
           return "No errors";
-        return errors.map((e3) => `${dataVar}${e3.instancePath} ${e3.message}`).reduce((text11, msg) => text11 + separator + msg);
+        return errors.map((e3) => `${dataVar}${e3.instancePath} ${e3.message}`).reduce((text12, msg) => text12 + separator + msg);
       }
       $dataMetaSchema(metaSchema, keywordsJsonPointers) {
         const rules = this.RULES.all;
@@ -4428,9 +4428,9 @@ var require_core = __commonJS({
     }
     function addInitialFormats() {
       for (const name in this.opts.formats) {
-        const format = this.opts.formats[name];
-        if (format)
-          this.addFormat(name, format);
+        const format2 = this.opts.formats[name];
+        if (format2)
+          this.addFormat(name, format2);
       }
     }
     function addInitialKeywords(defs) {
@@ -5409,7 +5409,7 @@ var require_contains = __commonJS({
           const count2 = gen.let("count", 0);
           validateItems(schValid, () => gen.if(schValid, () => checkLimits(count2)));
         }
-        function validateItems(_valid, block2) {
+        function validateItems(_valid, block3) {
           gen.forRange("i", 0, len, (i3) => {
             cxt.subschema({
               keyword: "contains",
@@ -5417,7 +5417,7 @@ var require_contains = __commonJS({
               dataPropType: util_1.Type.Num,
               compositeRule: true
             }, _valid);
-            block2();
+            block3();
           });
         }
         function checkLimits(count2) {
@@ -6113,18 +6113,18 @@ var require_format = __commonJS({
           });
           const fDef = gen.const("fDef", (0, codegen_1._)`${fmts}[${schemaCode}]`);
           const fType = gen.let("fType");
-          const format = gen.let("format");
-          gen.if((0, codegen_1._)`typeof ${fDef} == "object" && !(${fDef} instanceof RegExp)`, () => gen.assign(fType, (0, codegen_1._)`${fDef}.type || "string"`).assign(format, (0, codegen_1._)`${fDef}.validate`), () => gen.assign(fType, (0, codegen_1._)`"string"`).assign(format, fDef));
+          const format2 = gen.let("format");
+          gen.if((0, codegen_1._)`typeof ${fDef} == "object" && !(${fDef} instanceof RegExp)`, () => gen.assign(fType, (0, codegen_1._)`${fDef}.type || "string"`).assign(format2, (0, codegen_1._)`${fDef}.validate`), () => gen.assign(fType, (0, codegen_1._)`"string"`).assign(format2, fDef));
           cxt.fail$data((0, codegen_1.or)(unknownFmt(), invalidFmt()));
           function unknownFmt() {
             if (opts.strictSchema === false)
               return codegen_1.nil;
-            return (0, codegen_1._)`${schemaCode} && !${format}`;
+            return (0, codegen_1._)`${schemaCode} && !${format2}`;
           }
           function invalidFmt() {
-            const callFormat = schemaEnv.$async ? (0, codegen_1._)`(${fDef}.async ? await ${format}(${data}) : ${format}(${data}))` : (0, codegen_1._)`${format}(${data})`;
-            const validData = (0, codegen_1._)`(typeof ${format} == "function" ? ${callFormat} : ${format}.test(${data}))`;
-            return (0, codegen_1._)`${format} && ${format} !== true && ${fType} === ${ruleType} && !${validData}`;
+            const callFormat = schemaEnv.$async ? (0, codegen_1._)`(${fDef}.async ? await ${format2}(${data}) : ${format2}(${data}))` : (0, codegen_1._)`${format2}(${data})`;
+            const validData = (0, codegen_1._)`(typeof ${format2} == "function" ? ${callFormat} : ${format2}.test(${data}))`;
+            return (0, codegen_1._)`${format2} && ${format2} !== true && ${fType} === ${ruleType} && !${validData}`;
           }
         }
         function validateFormat() {
@@ -6135,7 +6135,7 @@ var require_format = __commonJS({
           }
           if (formatDef === true)
             return;
-          const [fmtType, format, fmtRef] = getFormat(formatDef);
+          const [fmtType, format2, fmtRef] = getFormat(formatDef);
           if (fmtType === ruleType)
             cxt.pass(validCondition());
           function unknownFormat() {
@@ -6149,8 +6149,8 @@ var require_format = __commonJS({
             }
           }
           function getFormat(fmtDef) {
-            const code = fmtDef instanceof RegExp ? (0, codegen_1.regexpCode)(fmtDef) : opts.code.formats ? (0, codegen_1._)`${opts.code.formats}${(0, codegen_1.getProperty)(schema)}` : void 0;
-            const fmt = gen.scopeValue("formats", { key: schema, ref: fmtDef, code });
+            const code2 = fmtDef instanceof RegExp ? (0, codegen_1.regexpCode)(fmtDef) : opts.code.formats ? (0, codegen_1._)`${opts.code.formats}${(0, codegen_1.getProperty)(schema)}` : void 0;
+            const fmt = gen.scopeValue("formats", { key: schema, ref: fmtDef, code: code2 });
             if (typeof fmtDef == "object" && !(fmtDef instanceof RegExp)) {
               return [fmtDef.type || "string", fmtDef.validate, (0, codegen_1._)`${fmt}.validate`];
             }
@@ -6162,7 +6162,7 @@ var require_format = __commonJS({
                 throw new Error("async format in sync schema");
               return (0, codegen_1._)`await ${fmtRef}(${data})`;
             }
-            return typeof format == "function" ? (0, codegen_1._)`${fmtRef}(${data})` : (0, codegen_1._)`${fmtRef}.test(${data})`;
+            return typeof format2 == "function" ? (0, codegen_1._)`${fmtRef}(${data})` : (0, codegen_1._)`${fmtRef}.test(${data})`;
           }
         }
       }
@@ -6177,8 +6177,8 @@ var require_format2 = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var format_1 = require_format();
-    var format = [format_1.default];
-    exports.default = format;
+    var format2 = [format_1.default];
+    exports.default = format2;
   }
 });
 
@@ -6674,7 +6674,7 @@ var require_formats = __commonJS({
         const matches = TIME2.exec(str2);
         if (!matches)
           return false;
-        const hr2 = +matches[1];
+        const hr3 = +matches[1];
         const min = +matches[2];
         const sec = +matches[3];
         const tz = matches[4];
@@ -6683,10 +6683,10 @@ var require_formats = __commonJS({
         const tzM = +(matches[7] || 0);
         if (tzH > 23 || tzM > 59 || strictTimeZone && !tz)
           return false;
-        if (hr2 <= 23 && min <= 59 && sec < 60)
+        if (hr3 <= 23 && min <= 59 && sec < 60)
           return true;
         const utcMin = min - tzM * tzSign;
-        const utcHr = hr2 - tzH * tzSign - (utcMin < 0 ? 1 : 0);
+        const utcHr = hr3 - tzH * tzSign - (utcMin < 0 ? 1 : 0);
         return (utcHr === 23 || utcHr === -1) && (utcMin === 59 || utcMin === -1) && sec < 61;
       };
     }
@@ -6820,17 +6820,17 @@ var require_limit = __commonJS({
           cxt.fail$data((0, codegen_1.or)((0, codegen_1._)`typeof ${fmt} != "object"`, (0, codegen_1._)`${fmt} instanceof RegExp`, (0, codegen_1._)`typeof ${fmt}.compare != "function"`, compareCode(fmt)));
         }
         function validateFormat() {
-          const format = fCxt.schema;
-          const fmtDef = self2.formats[format];
+          const format2 = fCxt.schema;
+          const fmtDef = self2.formats[format2];
           if (!fmtDef || fmtDef === true)
             return;
           if (typeof fmtDef != "object" || fmtDef instanceof RegExp || typeof fmtDef.compare != "function") {
-            throw new Error(`"${keyword}": format "${format}" does not define "compare" function`);
+            throw new Error(`"${keyword}": format "${format2}" does not define "compare" function`);
           }
           const fmt = gen.scopeValue("formats", {
-            key: format,
+            key: format2,
             ref: fmtDef,
-            code: opts.code.formats ? (0, codegen_1._)`${opts.code.formats}${(0, codegen_1.getProperty)(format)}` : void 0
+            code: opts.code.formats ? (0, codegen_1._)`${opts.code.formats}${(0, codegen_1.getProperty)(format2)}` : void 0
           });
           cxt.fail$data(compareCode(fmt));
         }
@@ -6864,8 +6864,8 @@ var require_dist = __commonJS({
         return ajv;
       }
       const [formats, exportName] = opts.mode === "fast" ? [formats_1.fastFormats, fastName] : [formats_1.fullFormats, fullName];
-      const list3 = opts.formats || formats_1.formatNames;
-      addFormats(ajv, list3, formats, exportName);
+      const list4 = opts.formats || formats_1.formatNames;
+      addFormats(ajv, list4, formats, exportName);
       if (opts.keywords)
         (0, limit_1.default)(ajv);
       return ajv;
@@ -6877,11 +6877,11 @@ var require_dist = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f3;
     };
-    function addFormats(ajv, list3, fs2, exportName) {
+    function addFormats(ajv, list4, fs2, exportName) {
       var _a4;
       var _b;
       (_a4 = (_b = ajv.opts.code).formats) !== null && _a4 !== void 0 ? _a4 : _b.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
-      for (const f3 of list3)
+      for (const f3 of list4)
         ajv.addFormat(f3, fs2[f3]);
     }
     module.exports = exports = formatsPlugin;
@@ -7531,7 +7531,7 @@ function decodeScan(e3, t3, r3, a3, n3, i3, s3, o3, c3, l3 = false) {
     t4(e4, getBlockBufferOffset(e4, y3, a4));
   }
   const w3 = a3.length;
-  let x3, S3, k3, C3, v4, O3;
+  let x3, S4, k3, C3, v4, O3;
   O3 = u3 ? 0 === i3 ? 0 === o3 ? function decodeDCFirst(e4, t4) {
     const r4 = decodeHuffman(e4.huffmanTableDC), a4 = 0 === r4 ? 0 : receiveAndExtend(r4) << c3;
     e4.blockData[t4] = e4.pred += a4;
@@ -7630,7 +7630,7 @@ function decodeScan(e3, t3, r3, a3, n3, i3, s3, o3, c3, l3 = false) {
   for (; D3 <= M3; ) {
     const r4 = n3 ? Math.min(M3 - D3, n3) : M3;
     if (r4 > 0) {
-      for (S3 = 0; S3 < w3; S3++) a3[S3].pred = 0;
+      for (S4 = 0; S4 < w3; S4++) a3[S4].pred = 0;
       p3 = 0;
       if (1 === w3) {
         x3 = a3[0];
@@ -7639,8 +7639,8 @@ function decodeScan(e3, t3, r3, a3, n3, i3, s3, o3, c3, l3 = false) {
           D3++;
         }
       } else for (v4 = 0; v4 < r4; v4++) {
-        for (S3 = 0; S3 < w3; S3++) {
-          x3 = a3[S3];
+        for (S4 = 0; S4 < w3; S4++) {
+          x3 = a3[S4];
           R3 = x3.h;
           E3 = x3.v;
           for (k3 = 0; k3 < E3; k3++) for (C3 = 0; C3 < R3; C3++) decodeMcu(x3, O3, D3, k3, C3);
@@ -7662,7 +7662,7 @@ function decodeScan(e3, t3, r3, a3, n3, i3, s3, o3, c3, l3 = false) {
 }
 function quantizeAndInverse(e3, t3, r3) {
   const a3 = e3.quantizationTable, n3 = e3.blockData;
-  let i3, s3, o3, c3, l3, h3, u3, d3, f3, g3, p3, m3, b3, y3, w3, x3, S3;
+  let i3, s3, o3, c3, l3, h3, u3, d3, f3, g3, p3, m3, b3, y3, w3, x3, S4;
   if (!a3) throw new JpegError("missing required Quantization Table.");
   for (let e4 = 0; e4 < 64; e4 += 8) {
     f3 = n3[t3 + e4];
@@ -7692,9 +7692,9 @@ function quantizeAndInverse(e3, t3, r3) {
       u3 = y3 << 4;
       i3 = i3 + s3 + 1 >> 1;
       s3 = i3 - s3;
-      S3 = o3 * $r + c3 * zr + 128 >> 8;
+      S4 = o3 * $r + c3 * zr + 128 >> 8;
       o3 = o3 * zr - c3 * $r + 128 >> 8;
-      c3 = S3;
+      c3 = S4;
       l3 = l3 + u3 + 1 >> 1;
       u3 = l3 - u3;
       d3 = d3 + h3 + 1 >> 1;
@@ -7703,12 +7703,12 @@ function quantizeAndInverse(e3, t3, r3) {
       c3 = i3 - c3;
       s3 = s3 + o3 + 1 >> 1;
       o3 = s3 - o3;
-      S3 = l3 * Wr + d3 * Hr + 2048 >> 12;
+      S4 = l3 * Wr + d3 * Hr + 2048 >> 12;
       l3 = l3 * Hr - d3 * Wr + 2048 >> 12;
-      d3 = S3;
-      S3 = h3 * Xr + u3 * qr + 2048 >> 12;
+      d3 = S4;
+      S4 = h3 * Xr + u3 * qr + 2048 >> 12;
       h3 = h3 * qr - u3 * Xr + 2048 >> 12;
-      u3 = S3;
+      u3 = S4;
       r3[e4] = i3 + d3;
       r3[e4 + 7] = i3 - d3;
       r3[e4 + 1] = s3 + u3;
@@ -7718,15 +7718,15 @@ function quantizeAndInverse(e3, t3, r3) {
       r3[e4 + 3] = c3 + l3;
       r3[e4 + 4] = c3 - l3;
     } else {
-      S3 = Gr * f3 + 512 >> 10;
-      r3[e4] = S3;
-      r3[e4 + 1] = S3;
-      r3[e4 + 2] = S3;
-      r3[e4 + 3] = S3;
-      r3[e4 + 4] = S3;
-      r3[e4 + 5] = S3;
-      r3[e4 + 6] = S3;
-      r3[e4 + 7] = S3;
+      S4 = Gr * f3 + 512 >> 10;
+      r3[e4] = S4;
+      r3[e4 + 1] = S4;
+      r3[e4 + 2] = S4;
+      r3[e4 + 3] = S4;
+      r3[e4 + 4] = S4;
+      r3[e4 + 5] = S4;
+      r3[e4 + 6] = S4;
+      r3[e4 + 7] = S4;
     }
   }
   for (let e4 = 0; e4 < 8; ++e4) {
@@ -7749,9 +7749,9 @@ function quantizeAndInverse(e3, t3, r3) {
       u3 = y3;
       i3 = 4112 + (i3 + s3 + 1 >> 1);
       s3 = i3 - s3;
-      S3 = o3 * $r + c3 * zr + 2048 >> 12;
+      S4 = o3 * $r + c3 * zr + 2048 >> 12;
       o3 = o3 * zr - c3 * $r + 2048 >> 12;
-      c3 = S3;
+      c3 = S4;
       l3 = l3 + u3 + 1 >> 1;
       u3 = l3 - u3;
       d3 = d3 + h3 + 1 >> 1;
@@ -7760,12 +7760,12 @@ function quantizeAndInverse(e3, t3, r3) {
       c3 = i3 - c3;
       s3 = s3 + o3 + 1 >> 1;
       o3 = s3 - o3;
-      S3 = l3 * Wr + d3 * Hr + 2048 >> 12;
+      S4 = l3 * Wr + d3 * Hr + 2048 >> 12;
       l3 = l3 * Hr - d3 * Wr + 2048 >> 12;
-      d3 = S3;
-      S3 = h3 * Xr + u3 * qr + 2048 >> 12;
+      d3 = S4;
+      S4 = h3 * Xr + u3 * qr + 2048 >> 12;
       h3 = h3 * qr - u3 * Xr + 2048 >> 12;
-      u3 = S3;
+      u3 = S4;
       f3 = i3 + d3;
       x3 = i3 - d3;
       g3 = s3 + u3;
@@ -7791,16 +7791,16 @@ function quantizeAndInverse(e3, t3, r3) {
       n3[t3 + e4 + 48] = w3;
       n3[t3 + e4 + 56] = x3;
     } else {
-      S3 = Gr * f3 + 8192 >> 14;
-      S3 = S3 < -2040 ? 0 : S3 >= 2024 ? 255 : S3 + 2056 >> 4;
-      n3[t3 + e4] = S3;
-      n3[t3 + e4 + 8] = S3;
-      n3[t3 + e4 + 16] = S3;
-      n3[t3 + e4 + 24] = S3;
-      n3[t3 + e4 + 32] = S3;
-      n3[t3 + e4 + 40] = S3;
-      n3[t3 + e4 + 48] = S3;
-      n3[t3 + e4 + 56] = S3;
+      S4 = Gr * f3 + 8192 >> 14;
+      S4 = S4 < -2040 ? 0 : S4 >= 2024 ? 255 : S4 + 2056 >> 4;
+      n3[t3 + e4] = S4;
+      n3[t3 + e4 + 8] = S4;
+      n3[t3 + e4 + 16] = S4;
+      n3[t3 + e4 + 24] = S4;
+      n3[t3 + e4 + 32] = S4;
+      n3[t3 + e4 + 40] = S4;
+      n3[t3 + e4 + 48] = S4;
+      n3[t3 + e4 + 56] = S4;
     }
   }
 }
@@ -7930,10 +7930,10 @@ function decodeBitmap(e3, t3, r3, a3, n3, i3, s3, o3) {
     w3 = Math.min(w3, l3[p3].y);
     p3 < h3 - 1 && l3[p3].y === l3[p3 + 1].y && l3[p3].x === l3[p3 + 1].x - 1 ? m3 |= 1 << h3 - 1 - p3 : f3.push(p3);
   }
-  const x3 = f3.length, S3 = new Int8Array(x3), k3 = new Int8Array(x3), C3 = new Uint16Array(x3);
+  const x3 = f3.length, S4 = new Int8Array(x3), k3 = new Int8Array(x3), C3 = new Uint16Array(x3);
   for (g3 = 0; g3 < x3; g3++) {
     p3 = f3[g3];
-    S3[g3] = l3[p3].x;
+    S4[g3] = l3[p3].x;
     k3[g3] = l3[p3].y;
     C3[g3] = 1 << h3 - 1 - p3;
   }
@@ -7960,7 +7960,7 @@ function decodeBitmap(e3, t3, r3, a3, n3, i3, s3, o3) {
         H3 = H3 << 1 & m3;
         for (p3 = 0; p3 < x3; p3++) {
           L3 = e4 + k3[p3];
-          j3 = _3 + S3[p3];
+          j3 = _3 + S4[p3];
           U3 = R3[L3][j3];
           if (U3) {
             U3 = C3[p3];
@@ -8003,7 +8003,7 @@ function decodeRefinement(e3, t3, r3, a3, n3, i3, s3, o3, c3) {
     m3[f3] = g3[f3].x;
     b3[f3] = g3[f3].y;
   }
-  const y3 = a3[0].length, w3 = a3.length, x3 = ma[r3], S3 = [], k3 = c3.decoder, C3 = c3.contextCache.getContexts("GR");
+  const y3 = a3[0].length, w3 = a3.length, x3 = ma[r3], S4 = [], k3 = c3.decoder, C3 = c3.contextCache.getContexts("GR");
   let v4 = 0;
   for (let r4 = 0; r4 < t3; r4++) {
     if (s3) {
@@ -8011,13 +8011,13 @@ function decodeRefinement(e3, t3, r3, a3, n3, i3, s3, o3, c3) {
       if (v4) throw new Jbig2Error("prediction is not supported");
     }
     const t4 = new Uint8Array(e3);
-    S3.push(t4);
+    S4.push(t4);
     for (let s4 = 0; s4 < e3; s4++) {
       let o4, c4, l4 = 0;
       for (f3 = 0; f3 < h3; f3++) {
         o4 = r4 + d3[f3];
         c4 = s4 + u3[f3];
-        o4 < 0 || c4 < 0 || c4 >= e3 ? l4 <<= 1 : l4 = l4 << 1 | S3[o4][c4];
+        o4 < 0 || c4 < 0 || c4 >= e3 ? l4 <<= 1 : l4 = l4 << 1 | S4[o4][c4];
       }
       for (f3 = 0; f3 < p3; f3++) {
         o4 = r4 + b3[f3] - i3;
@@ -8028,16 +8028,16 @@ function decodeRefinement(e3, t3, r3, a3, n3, i3, s3, o3, c3) {
       t4[s4] = g4;
     }
   }
-  return S3;
+  return S4;
 }
 function decodeTextRegion(e3, t3, r3, a3, n3, i3, s3, o3, c3, l3, h3, u3, d3, f3, g3, p3, m3, b3, y3) {
   if (e3 && t3) throw new Jbig2Error("refinement with Huffman is not supported");
   const w3 = [];
-  let x3, S3;
+  let x3, S4;
   for (x3 = 0; x3 < a3; x3++) {
-    S3 = new Uint8Array(r3);
-    n3 && S3.fill(n3);
-    w3.push(S3);
+    S4 = new Uint8Array(r3);
+    n3 && S4.fill(n3);
+    w3.push(S4);
   }
   const k3 = m3.decoder, C3 = m3.contextCache;
   let v4 = e3 ? -f3.tableDeltaT.decode(y3) : -decodeInteger(C3, "IADT", k3), O3 = 0;
@@ -8062,31 +8062,31 @@ function decodeTextRegion(e3, t3, r3, a3, n3, i3, s3, o3, c3, l3, h3, u3, d3, f3
       const N3 = i4 - (1 & u3 ? 0 : R3 - 1), _3 = a4 - (2 & u3 ? M3 - 1 : 0);
       let L3, j3, U3;
       if (l3) for (L3 = 0; L3 < R3; L3++) {
-        S3 = w3[_3 + L3];
-        if (!S3) continue;
+        S4 = w3[_3 + L3];
+        if (!S4) continue;
         U3 = D3[L3];
         const e4 = Math.min(r3 - N3, M3);
         switch (d3) {
           case 0:
-            for (j3 = 0; j3 < e4; j3++) S3[N3 + j3] |= U3[j3];
+            for (j3 = 0; j3 < e4; j3++) S4[N3 + j3] |= U3[j3];
             break;
           case 2:
-            for (j3 = 0; j3 < e4; j3++) S3[N3 + j3] ^= U3[j3];
+            for (j3 = 0; j3 < e4; j3++) S4[N3 + j3] ^= U3[j3];
             break;
           default:
             throw new Jbig2Error(`operator ${d3} is not supported`);
         }
       }
       else for (j3 = 0; j3 < R3; j3++) {
-        S3 = w3[N3 + j3];
-        if (S3) {
+        S4 = w3[N3 + j3];
+        if (S4) {
           U3 = D3[j3];
           switch (d3) {
             case 0:
-              for (L3 = 0; L3 < M3; L3++) S3[_3 + L3] |= U3[L3];
+              for (L3 = 0; L3 < M3; L3++) S4[_3 + L3] |= U3[L3];
               break;
             case 2:
-              for (L3 = 0; L3 < M3; L3++) S3[_3 + L3] ^= U3[L3];
+              for (L3 = 0; L3 < M3; L3++) S4[_3 + L3] ^= U3[L3];
               break;
             default:
               throw new Jbig2Error(`operator ${d3} is not supported`);
@@ -9435,7 +9435,7 @@ function createCmapTable(e3, t3, r3) {
   const h3 = i3 + 1;
   a3[i3][0] < 65535 && 65535 === a3[i3][1] && (a3[i3][1] = 65534);
   const u3 = a3[i3][1] < 65535 ? 1 : 0, d3 = h3 + u3, f3 = OpenTypeFileBuilder.getSearchParams(d3, 2);
-  let g3, p3, m3, b3, y3 = "", w3 = "", x3 = "", S3 = "", k3 = "", C3 = 0;
+  let g3, p3, m3, b3, y3 = "", w3 = "", x3 = "", S4 = "", k3 = "", C3 = 0;
   for (i3 = 0, s3 = h3; i3 < s3; i3++) {
     g3 = a3[i3];
     p3 = g3[0];
@@ -9450,12 +9450,12 @@ function createCmapTable(e3, t3, r3) {
     }
     if (e4) {
       x3 += string16(b3[0] - p3 & 65535);
-      S3 += string16(0);
+      S4 += string16(0);
     } else {
       const e5 = 2 * (d3 - i3) + 2 * C3;
       C3 += m3 - p3 + 1;
       x3 += string16(0);
-      S3 += string16(e5);
+      S4 += string16(e5);
       for (o3 = 0, c3 = b3.length; o3 < c3; ++o3) k3 += string16(b3[o3]);
     }
   }
@@ -9463,9 +9463,9 @@ function createCmapTable(e3, t3, r3) {
     w3 += "\xFF\xFF";
     y3 += "\xFF\xFF";
     x3 += "\0";
-    S3 += "\0\0";
+    S4 += "\0\0";
   }
-  const v4 = "\0\0" + string16(2 * d3) + string16(f3.range) + string16(f3.entry) + string16(f3.rangeShift) + w3 + "\0\0" + y3 + x3 + S3 + k3;
+  const v4 = "\0\0" + string16(2 * d3) + string16(f3.range) + string16(f3.entry) + string16(f3.rangeShift) + w3 + "\0\0" + y3 + x3 + S4 + k3;
   let O3 = "", T3 = "";
   if (n3 > 1) {
     l3 += "\0\0\n" + string32(4 + 8 * n3 + 4 + v4.length);
@@ -10901,7 +10901,7 @@ function calculateSHA512(e3, t3, r3, a3 = false) {
   const b3 = new Array(80);
   for (g3 = 0; g3 < 80; g3++) b3[g3] = new Word64(0, 0);
   const { k: y3 } = bc;
-  let w3 = new Word64(0, 0), x3 = new Word64(0, 0), S3 = new Word64(0, 0), k3 = new Word64(0, 0), C3 = new Word64(0, 0), v4 = new Word64(0, 0), O3 = new Word64(0, 0), T3 = new Word64(0, 0);
+  let w3 = new Word64(0, 0), x3 = new Word64(0, 0), S4 = new Word64(0, 0), k3 = new Word64(0, 0), C3 = new Word64(0, 0), v4 = new Word64(0, 0), O3 = new Word64(0, 0), T3 = new Word64(0, 0);
   const D3 = new Word64(0, 0), M3 = new Word64(0, 0), R3 = new Word64(0, 0), E3 = new Word64(0, 0);
   let N3, _3;
   for (g3 = 0; g3 < d3; ) {
@@ -10920,7 +10920,7 @@ function calculateSHA512(e3, t3, r3, a3 = false) {
     }
     w3.assign(n3);
     x3.assign(i3);
-    S3.assign(s3);
+    S4.assign(s3);
     k3.assign(o3);
     C3.assign(c3);
     v4.assign(l3);
@@ -10935,7 +10935,7 @@ function calculateSHA512(e3, t3, r3, a3 = false) {
       D3.add(y3[p3]);
       D3.add(b3[p3]);
       sigma(M3, w3, E3);
-      maj(R3, w3, x3, S3, E3);
+      maj(R3, w3, x3, S4, E3);
       M3.add(R3);
       N3 = T3;
       T3 = O3;
@@ -10943,8 +10943,8 @@ function calculateSHA512(e3, t3, r3, a3 = false) {
       v4 = C3;
       k3.add(D3);
       C3 = k3;
-      k3 = S3;
-      S3 = x3;
+      k3 = S4;
+      S4 = x3;
       x3 = w3;
       N3.assign(D3);
       N3.add(M3);
@@ -10952,7 +10952,7 @@ function calculateSHA512(e3, t3, r3, a3 = false) {
     }
     n3.add(w3);
     i3.add(x3);
-    s3.add(S3);
+    s3.add(S4);
     o3.add(k3);
     c3.add(C3);
     l3.add(v4);
@@ -11019,13 +11019,13 @@ function calculateSHA256(e3, t3, r3) {
       f3 += 4;
     }
     for (g3 = 16; g3 < 64; ++g3) m3[g3] = (rotr(y3 = m3[g3 - 2], 17) ^ rotr(y3, 19) ^ y3 >>> 10) + m3[g3 - 7] + calculate_sha256_littleSigma(m3[g3 - 15]) + m3[g3 - 16] | 0;
-    let e4, t4, r4 = a3, u4 = n3, p4 = i3, w3 = s3, x3 = o3, S3 = c3, k3 = l3, C3 = h3;
+    let e4, t4, r4 = a3, u4 = n3, p4 = i3, w3 = s3, x3 = o3, S4 = c3, k3 = l3, C3 = h3;
     for (g3 = 0; g3 < 64; ++g3) {
-      e4 = C3 + calculate_sha256_sigmaPrime(x3) + calculate_sha256_ch(x3, S3, k3) + b3[g3] + m3[g3];
+      e4 = C3 + calculate_sha256_sigmaPrime(x3) + calculate_sha256_ch(x3, S4, k3) + b3[g3] + m3[g3];
       t4 = calculate_sha256_sigma(r4) + calculate_sha256_maj(r4, u4, p4);
       C3 = k3;
-      k3 = S3;
-      S3 = x3;
+      k3 = S4;
+      S4 = x3;
       x3 = w3 + e4 | 0;
       w3 = p4;
       p4 = u4;
@@ -11037,7 +11037,7 @@ function calculateSHA256(e3, t3, r3) {
     i3 = i3 + p4 | 0;
     s3 = s3 + w3 | 0;
     o3 = o3 + x3 | 0;
-    c3 = c3 + S3 | 0;
+    c3 = c3 + S4 | 0;
     l3 = l3 + k3 | 0;
     h3 = h3 + C3 | 0;
   }
@@ -11691,7 +11691,7 @@ var init_pdf_worker_min = __esm({
         this.result = t4;
       }, g3 = Result.prototype;
       e3.exports = function(e4, t4, r4) {
-        var p3, m3, b3, y3, w3, x3, S3, k3 = r4 && r4.that, C3 = !(!r4 || !r4.AS_ENTRIES), v4 = !(!r4 || !r4.IS_RECORD), O3 = !(!r4 || !r4.IS_ITERATOR), T3 = !(!r4 || !r4.INTERRUPTED), D3 = a3(t4, k3), stop = function(e5) {
+        var p3, m3, b3, y3, w3, x3, S4, k3 = r4 && r4.that, C3 = !(!r4 || !r4.AS_ENTRIES), v4 = !(!r4 || !r4.IS_RECORD), O3 = !(!r4 || !r4.IS_ITERATOR), T3 = !(!r4 || !r4.INTERRUPTED), D3 = a3(t4, k3), stop = function(e5) {
           p3 && d3(p3, "normal", e5);
           return new Result(true, e5);
         }, callFn = function(e5) {
@@ -11712,9 +11712,9 @@ var init_pdf_worker_min = __esm({
           p3 = h3(e4, m3);
         }
         x3 = v4 ? e4.next : p3.next;
-        for (; !(S3 = n3(x3, p3)).done; ) {
+        for (; !(S4 = n3(x3, p3)).done; ) {
           try {
-            w3 = callFn(S3.value);
+            w3 = callFn(S4.value);
           } catch (e5) {
             d3(p3, "throw", e5);
           }
@@ -12082,7 +12082,7 @@ var init_pdf_worker_min = __esm({
         return { promise: e4.promise, resolve: e4.resolve, reject: e4.reject };
       } });
     }, 4644: (e3, t3, r3) => {
-      var a3, n3, i3, s3 = r3(7811), o3 = r3(3724), c3 = r3(4576), l3 = r3(4901), h3 = r3(34), u3 = r3(9297), d3 = r3(6955), f3 = r3(6823), g3 = r3(6699), p3 = r3(6840), m3 = r3(2106), b3 = r3(1625), y3 = r3(2787), w3 = r3(2967), x3 = r3(8227), S3 = r3(3392), k3 = r3(1181), C3 = k3.enforce, v4 = k3.get, O3 = c3.Int8Array, T3 = O3 && O3.prototype, D3 = c3.Uint8ClampedArray, M3 = D3 && D3.prototype, R3 = O3 && y3(O3), E3 = T3 && y3(T3), N3 = Object.prototype, _3 = c3.TypeError, L3 = x3("toStringTag"), j3 = S3("TYPED_ARRAY_TAG"), U3 = "TypedArrayConstructor", q3 = s3 && !!w3 && "Opera" !== d3(c3.opera), X3 = false, H3 = { Int8Array: 1, Uint8Array: 1, Uint8ClampedArray: 1, Int16Array: 2, Uint16Array: 2, Int32Array: 4, Uint32Array: 4, Float32Array: 4, Float64Array: 8 }, W4 = { BigInt64Array: 8, BigUint64Array: 8 }, getTypedArrayConstructor = function(e4) {
+      var a3, n3, i3, s3 = r3(7811), o3 = r3(3724), c3 = r3(4576), l3 = r3(4901), h3 = r3(34), u3 = r3(9297), d3 = r3(6955), f3 = r3(6823), g3 = r3(6699), p3 = r3(6840), m3 = r3(2106), b3 = r3(1625), y3 = r3(2787), w3 = r3(2967), x3 = r3(8227), S4 = r3(3392), k3 = r3(1181), C3 = k3.enforce, v4 = k3.get, O3 = c3.Int8Array, T3 = O3 && O3.prototype, D3 = c3.Uint8ClampedArray, M3 = D3 && D3.prototype, R3 = O3 && y3(O3), E3 = T3 && y3(T3), N3 = Object.prototype, _3 = c3.TypeError, L3 = x3("toStringTag"), j3 = S4("TYPED_ARRAY_TAG"), U3 = "TypedArrayConstructor", q3 = s3 && !!w3 && "Opera" !== d3(c3.opera), X3 = false, H3 = { Int8Array: 1, Uint8Array: 1, Uint8ClampedArray: 1, Int16Array: 2, Uint16Array: 2, Int32Array: 4, Uint32Array: 4, Float32Array: 4, Float64Array: 8 }, W4 = { BigInt64Array: 8, BigUint64Array: 8 }, getTypedArrayConstructor = function(e4) {
         var t4 = y3(e4);
         if (h3(t4)) {
           var r4 = v4(t4);
@@ -12249,7 +12249,7 @@ var init_pdf_worker_min = __esm({
         o3(a4, "stack", s3(1, f3(n4.stack, 1)));
         h3(a4, this, w3);
         return a4;
-      }, x3 = w3.prototype = y3.prototype, S3 = "stack" in new b3(m3), k3 = "stack" in new y3(1, 2), C3 = y3 && g3 && Object.getOwnPropertyDescriptor(n3, m3), v4 = !(!C3 || C3.writable && C3.configurable), O3 = S3 && !v4 && !k3;
+      }, x3 = w3.prototype = y3.prototype, S4 = "stack" in new b3(m3), k3 = "stack" in new y3(1, 2), C3 = y3 && g3 && Object.getOwnPropertyDescriptor(n3, m3), v4 = !(!C3 || C3.writable && C3.configurable), O3 = S4 && !v4 && !k3;
       a3({ global: true, constructor: true, forced: p3 || O3 }, { DOMException: O3 ? w3 : y3 });
       var T3 = i3(m3), D3 = T3.prototype;
       if (D3.constructor !== T3) {
@@ -12310,7 +12310,7 @@ var init_pdf_worker_min = __esm({
         return e4;
       } });
     }, 5636: (e3, t3, r3) => {
-      var a3 = r3(4576), n3 = r3(9504), i3 = r3(6706), s3 = r3(7696), o3 = r3(5169), c3 = r3(7394), l3 = r3(4483), h3 = r3(1548), u3 = a3.structuredClone, d3 = a3.ArrayBuffer, f3 = a3.DataView, g3 = Math.min, p3 = d3.prototype, m3 = f3.prototype, b3 = n3(p3.slice), y3 = i3(p3, "resizable", "get"), w3 = i3(p3, "maxByteLength", "get"), x3 = n3(m3.getInt8), S3 = n3(m3.setInt8);
+      var a3 = r3(4576), n3 = r3(9504), i3 = r3(6706), s3 = r3(7696), o3 = r3(5169), c3 = r3(7394), l3 = r3(4483), h3 = r3(1548), u3 = a3.structuredClone, d3 = a3.ArrayBuffer, f3 = a3.DataView, g3 = Math.min, p3 = d3.prototype, m3 = f3.prototype, b3 = n3(p3.slice), y3 = i3(p3, "resizable", "get"), w3 = i3(p3, "maxByteLength", "get"), x3 = n3(m3.getInt8), S4 = n3(m3.setInt8);
       e3.exports = (h3 || l3) && function(e4, t4, r4) {
         var a4, n4 = c3(e4), i4 = void 0 === t4 ? n4 : s3(t4), p4 = !y3 || !y3(e4);
         o3(e4);
@@ -12322,7 +12322,7 @@ var init_pdf_worker_min = __esm({
         else {
           var m4 = r4 && !p4 && w3 ? { maxByteLength: w3(e4) } : void 0;
           a4 = new d3(i4, m4);
-          for (var k3 = new f3(e4), C3 = new f3(a4), v4 = g3(i4, n4), O3 = 0; O3 < v4; O3++) S3(C3, O3, x3(k3, O3));
+          for (var k3 = new f3(e4), C3 = new f3(a4), v4 = g3(i4, n4), O3 = 0; O3 < v4; O3++) S4(C3, O3, x3(k3, O3));
         }
         h3 || l3(e4);
         return a4;
@@ -12690,8 +12690,8 @@ var init_pdf_worker_min = __esm({
         return n3(this, arguments.length ? arguments[0] : void 0, true);
       } });
     }, 8111: (e3, t3, r3) => {
-      var a3 = r3(6518), n3 = r3(4576), i3 = r3(679), s3 = r3(8551), o3 = r3(4901), c3 = r3(2787), l3 = r3(2106), h3 = r3(4659), u3 = r3(9039), d3 = r3(9297), f3 = r3(8227), g3 = r3(7657).IteratorPrototype, p3 = r3(3724), m3 = r3(6395), b3 = "constructor", y3 = "Iterator", w3 = f3("toStringTag"), x3 = TypeError, S3 = n3[y3], k3 = m3 || !o3(S3) || S3.prototype !== g3 || !u3((function() {
-        S3({});
+      var a3 = r3(6518), n3 = r3(4576), i3 = r3(679), s3 = r3(8551), o3 = r3(4901), c3 = r3(2787), l3 = r3(2106), h3 = r3(4659), u3 = r3(9039), d3 = r3(9297), f3 = r3(8227), g3 = r3(7657).IteratorPrototype, p3 = r3(3724), m3 = r3(6395), b3 = "constructor", y3 = "Iterator", w3 = f3("toStringTag"), x3 = TypeError, S4 = n3[y3], k3 = m3 || !o3(S4) || S4.prototype !== g3 || !u3((function() {
+        S4({});
       })), C3 = function Iterator() {
         i3(this, g3);
         if (c3(this) === g3) throw new x3("Abstract class Iterator not directly constructable");
@@ -12867,9 +12867,9 @@ var init_pdf_worker_min = __esm({
             y3 = e4.length;
             break;
           }
-          var S3 = p3(e4, x3);
+          var S4 = p3(e4, x3);
           ++x3;
-          if ("=" === S3) {
+          if ("=" === S4) {
             if (w3.length < 2) throw new f3("Padding is too early");
             x3 = skipAsciiWhitespace(e4, x3);
             if (2 === w3.length) {
@@ -12887,10 +12887,10 @@ var init_pdf_worker_min = __esm({
             y3 = e4.length;
             break;
           }
-          if (!o3(n4, S3)) throw new f3("Unexpected character");
+          if (!o3(n4, S4)) throw new f3("Unexpected character");
           var k3 = a4 - b3;
           if (1 === k3 && 2 === w3.length || 2 === k3 && 3 === w3.length) break;
-          if (4 === (w3 += S3).length) {
+          if (4 === (w3 += S4).length) {
             b3 = writeBytes(m3, decodeBase64Chunk(w3, n4, false), b3);
             w3 = "";
             y3 = x3;
@@ -15234,8 +15234,8 @@ var init_pdf_worker_min = __esm({
               s3 = r3.fetchIfRef(e3[1]);
               l3 = s3.getArray("WhitePoint");
               h3 = s3.getArray("BlackPoint");
-              const S3 = s3.getArray("Range");
-              return new LabCS(l3, h3, S3);
+              const S4 = s3.getArray("Range");
+              return new LabCS(l3, h3, S4);
             default:
               warn(`Unimplemented ColorSpace object: ${a4}`);
               return this.gray;
@@ -15394,9 +15394,9 @@ var init_pdf_worker_min = __esm({
               n3 += 2;
               r3.components = [];
               r3.componentIds = {};
-              const S3 = e3[n3++];
+              const S4 = e3[n3++];
               let k3 = 0, C3 = 0;
-              for (d3 = 0; d3 < S3; d3++) {
+              for (d3 = 0; d3 < S4; d3++) {
                 const t4 = e3[n3], a4 = e3[n3 + 1] >> 4, i4 = 15 & e3[n3 + 1];
                 k3 < a4 && (k3 = a4);
                 C3 < i4 && (C3 = i4);
@@ -15492,7 +15492,7 @@ var init_pdf_worker_min = __esm({
       _getLinearizedBlockData(e3, t3, r3 = false) {
         const a3 = this.width / e3, n3 = this.height / t3;
         let i3, s3, o3, c3, l3, h3, u3, d3, f3, g3, p3, m3 = 0;
-        const b3 = this.components.length, y3 = e3 * t3 * b3, w3 = new Uint8ClampedArray(y3), x3 = new Uint32Array(e3), S3 = 4294967288;
+        const b3 = this.components.length, y3 = e3 * t3 * b3, w3 = new Uint8ClampedArray(y3), x3 = new Uint32Array(e3), S4 = 4294967288;
         let k3;
         for (u3 = 0; u3 < b3; u3++) {
           i3 = this.components[u3];
@@ -15504,13 +15504,13 @@ var init_pdf_worker_min = __esm({
           if (s3 !== k3) {
             for (l3 = 0; l3 < e3; l3++) {
               d3 = 0 | l3 * s3;
-              x3[l3] = (d3 & S3) << 3 | 7 & d3;
+              x3[l3] = (d3 & S4) << 3 | 7 & d3;
             }
             k3 = s3;
           }
           for (h3 = 0; h3 < t3; h3++) {
             d3 = 0 | h3 * o3;
-            g3 = c3 * (d3 & S3) | (7 & d3) << 3;
+            g3 = c3 * (d3 & S4) | (7 & d3) << 3;
             for (l3 = 0; l3 < e3; l3++) {
               w3[m3] = p3[g3 + x3[l3]];
               m3 += b3;
@@ -15732,7 +15732,7 @@ var init_pdf_worker_min = __esm({
         n3.HEAP64 = new BigInt64Array(e4);
         n3.HEAPU64 = new BigUint64Array(e4);
       }
-      var w3, x3 = 0, S3 = null;
+      var w3, x3 = 0, S4 = null;
       function abort(e4) {
         n3.onAbort?.(e4);
         h3(e4 = "Aborted(" + e4 + ")");
@@ -15975,9 +15975,9 @@ var init_pdf_worker_min = __esm({
           !(function removeRunDependency(e6) {
             x3--;
             n3.monitorRunDependencies?.(x3);
-            if (0 == x3 && S3) {
-              var t6 = S3;
-              S3 = null;
+            if (0 == x3 && S4) {
+              var t6 = S4;
+              S4 = null;
               t6();
             }
           })();
@@ -16012,7 +16012,7 @@ var init_pdf_worker_min = __esm({
         for (; n3.preInit.length > 0; ) n3.preInit.pop()();
       }
       !(function run2() {
-        if (x3 > 0) S3 = run2;
+        if (x3 > 0) S4 = run2;
         else {
           !(function preRun() {
             if (n3.preRun) {
@@ -16021,7 +16021,7 @@ var init_pdf_worker_min = __esm({
             }
             callRuntimeCallbacks(C3);
           })();
-          if (x3 > 0) S3 = run2;
+          if (x3 > 0) S4 = run2;
           else if (n3.setStatus) {
             n3.setStatus("Running...");
             setTimeout((() => {
@@ -17313,15 +17313,15 @@ var init_pdf_worker_min = __esm({
             }
           }
           const w3 = [], x3 = [];
-          let S3, k3, C3 = false;
+          let S4, k3, C3 = false;
           const v4 = r4.length + a4;
           for (; x3.length < v4; ) {
             let t5 = e4 ? b3.decode(u3) : decodeInteger(m3, "IAEX", p3);
             for (; t5--; ) x3.push(C3);
             C3 = !C3;
           }
-          for (S3 = 0, k3 = r4.length; S3 < k3; S3++) x3[S3] && w3.push(r4[S3]);
-          for (let e5 = 0; e5 < a4; S3++, e5++) x3[S3] && w3.push(d3[e5]);
+          for (S4 = 0, k3 = r4.length; S4 < k3; S4++) x3[S4] && w3.push(r4[S4]);
+          for (let e5 = 0; e5 < a4; S4++, e5++) x3[S4] && w3.push(d3[e5]);
           return w3;
         })(e3.huffman, e3.refinement, l3, e3.numberOfNewSymbols, e3.numberOfExportedSymbols, s3, e3.template, e3.at, e3.refinementTemplate, e3.refinementAt, h3, o3);
       }
@@ -17455,7 +17455,7 @@ var init_pdf_worker_min = __esm({
             i4 && y3.fill(i4);
             p3.push(y3);
           }
-          const w3 = t4.length, x3 = t4[0], S3 = x3[0].length, k3 = x3.length, C3 = log2(w3), v4 = [];
+          const w3 = t4.length, x3 = t4[0], S4 = x3[0].length, k3 = x3.length, C3 = log2(w3), v4 = [];
           if (!e4) {
             v4.push({ x: r4 <= 1 ? 3 : 2, y: -1 });
             0 === r4 && v4.push({ x: -3, y: -1 }, { x: 2, y: -2 }, { x: -2, y: -2 });
@@ -17477,10 +17477,10 @@ var init_pdf_worker_min = __esm({
             _3 = t4[N3];
             L3 = h3 + M3 * f3 + R3 * d3 >> 8;
             j3 = u3 + M3 * d3 - R3 * f3 >> 8;
-            if (L3 >= 0 && L3 + S3 <= a4 && j3 >= 0 && j3 + k3 <= n4) for (m3 = 0; m3 < k3; m3++) {
+            if (L3 >= 0 && L3 + S4 <= a4 && j3 >= 0 && j3 + k3 <= n4) for (m3 = 0; m3 < k3; m3++) {
               q3 = p3[j3 + m3];
               U3 = _3[m3];
-              for (b3 = 0; b3 < S3; b3++) q3[L3 + b3] |= U3[b3];
+              for (b3 = 0; b3 < S4; b3++) q3[L3 + b3] |= U3[b3];
             }
             else {
               let e5, t5;
@@ -17489,7 +17489,7 @@ var init_pdf_worker_min = __esm({
                 if (!(t5 < 0 || t5 >= n4)) {
                   q3 = p3[t5];
                   U3 = _3[m3];
-                  for (b3 = 0; b3 < S3; b3++) {
+                  for (b3 = 0; b3 < S4; b3++) {
                     e5 = L3 + b3;
                     e5 >= 0 && e5 < a4 && (q3[e5] |= U3[b3]);
                   }
@@ -30294,29 +30294,29 @@ var init_pdf_worker_min = __esm({
             const w4 = y4.at(-2);
             0 !== w4.offset && 0 === w4.endOffset && (w4.endOffset = g4);
             const x4 = /* @__PURE__ */ Object.create(null);
-            let S4 = 0;
-            l4(d4, 0, S4);
+            let S5 = 0;
+            l4(d4, 0, S5);
             for (m4 = 0, b4 = o4; m4 < r4; m4++, b4 += o4) {
-              const e6 = sanitizeGlyph(f4, y4[m4].offset, y4[m4].endOffset, p4, S4, n4), t6 = e6.length;
+              const e6 = sanitizeGlyph(f4, y4[m4].offset, y4[m4].endOffset, p4, S5, n4), t6 = e6.length;
               0 === t6 && (x4[m4] = true);
               e6.sizeOfInstructions > s4 && (s4 = e6.sizeOfInstructions);
-              S4 += t6;
-              l4(d4, b4, S4);
+              S5 += t6;
+              l4(d4, b4, S5);
             }
-            if (0 === S4) {
+            if (0 === S5) {
               const e6 = new Uint8Array([0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 49, 0]);
               for (m4 = 0, b4 = o4; m4 < h4; m4++, b4 += o4) l4(d4, b4, e6.length);
               t5.data = e6;
             } else if (i4) {
               const r5 = c4(d4, o4);
-              if (p4.length > r5 + S4) t5.data = p4.subarray(0, r5 + S4);
+              if (p4.length > r5 + S5) t5.data = p4.subarray(0, r5 + S5);
               else {
-                t5.data = new Uint8Array(r5 + S4);
-                t5.data.set(p4.subarray(0, S4));
+                t5.data = new Uint8Array(r5 + S5);
+                t5.data.set(p4.subarray(0, S5));
               }
-              t5.data.set(p4.subarray(0, r5), S4);
-              l4(e5.data, d4.length - o4, S4 + r5);
-            } else t5.data = p4.subarray(0, S4);
+              t5.data.set(p4.subarray(0, r5), S5);
+              l4(e5.data, d4.length - o4, S5 + r5);
+            } else t5.data = p4.subarray(0, S5);
             return { missingGlyphs: x4, maxSizeOfInstructions: s4 };
           })(s3.loca, s3.glyf, u3, e4, m3, f3, p3);
           b3 = t4.missingGlyphs;
@@ -30636,9 +30636,9 @@ var init_pdf_worker_min = __esm({
             n4.length > 0 && e4.toUnicode.amend(n4);
           })(r3, this.isSymbolicFont, a4);
         } else s3.name = { tag: "name", data: createNameTable(this.name) };
-        const S3 = new OpenTypeFileBuilder(i3.version);
-        for (const e4 in s3) S3.addTable(e4, s3[e4].data);
-        return S3.toArray();
+        const S4 = new OpenTypeFileBuilder(i3.version);
+        for (const e4 in s3) S4.addTable(e4, s3[e4].data);
+        return S4.toArray();
       }
       convert(e3, t3, r3) {
         r3.fixedPitch = false;
@@ -30928,7 +30928,7 @@ var init_pdf_worker_min = __esm({
           return;
         }
         const y3 = new Float32Array(o3.numComps), w3 = new Float32Array(1);
-        let x3, S3 = 0;
+        let x3, S4 = 0;
         w3[0] = c3;
         p3(w3, 0, y3, 0);
         let k3 = o3.getRgb(y3, 0);
@@ -30942,7 +30942,7 @@ var init_pdf_worker_min = __esm({
           w3[0] = c3 + e4 * m3;
           p3(w3, 0, y3, 0);
           x3 = o3.getRgb(y3, 0);
-          const t4 = e4 - S3;
+          const t4 = e4 - S4;
           T3 = Math.min(T3, (x3[0] - k3[0] + 1) / t4);
           D3 = Math.min(D3, (x3[1] - k3[1] + 1) / t4);
           M3 = Math.min(M3, (x3[2] - k3[2] + 1) / t4);
@@ -30958,7 +30958,7 @@ var init_pdf_worker_min = __esm({
             R3 = x3[0] - O3[0] - 1;
             E3 = x3[1] - O3[1] - 1;
             N3 = x3[2] - O3[2] - 1;
-            S3 = v4;
+            S4 = v4;
             k3 = O3;
           }
           v4 = e4;
@@ -31371,14 +31371,14 @@ var init_pdf_worker_min = __esm({
         u3 = MathClamp(u3, _MeshShading.MIN_SPLIT_PATCH_CHUNKS_AMOUNT, _MeshShading.MAX_SPLIT_PATCH_CHUNKS_AMOUNT);
         const d3 = h3 + 1, f3 = new Int32Array((u3 + 1) * d3), g3 = new Int32Array((u3 + 1) * d3);
         let p3 = 0;
-        const m3 = new Uint8Array(3), b3 = new Uint8Array(3), y3 = a3[i3[0]], w3 = a3[i3[1]], x3 = a3[i3[2]], S3 = a3[i3[3]], k3 = getB(u3), C3 = getB(h3);
+        const m3 = new Uint8Array(3), b3 = new Uint8Array(3), y3 = a3[i3[0]], w3 = a3[i3[1]], x3 = a3[i3[2]], S4 = a3[i3[3]], k3 = getB(u3), C3 = getB(h3);
         for (let e4 = 0; e4 <= u3; e4++) {
           m3[0] = (y3[0] * (u3 - e4) + x3[0] * e4) / u3 | 0;
           m3[1] = (y3[1] * (u3 - e4) + x3[1] * e4) / u3 | 0;
           m3[2] = (y3[2] * (u3 - e4) + x3[2] * e4) / u3 | 0;
-          b3[0] = (w3[0] * (u3 - e4) + S3[0] * e4) / u3 | 0;
-          b3[1] = (w3[1] * (u3 - e4) + S3[1] * e4) / u3 | 0;
-          b3[2] = (w3[2] * (u3 - e4) + S3[2] * e4) / u3 | 0;
+          b3[0] = (w3[0] * (u3 - e4) + S4[0] * e4) / u3 | 0;
+          b3[1] = (w3[1] * (u3 - e4) + S4[1] * e4) / u3 | 0;
+          b3[2] = (w3[2] * (u3 - e4) + S4[2] * e4) / u3 | 0;
           for (let t4 = 0; t4 <= h3; t4++, p3++) {
             if (!(0 !== e4 && e4 !== u3 || 0 !== t4 && t4 !== h3)) continue;
             let i4 = 0, s4 = 0, o4 = 0;
@@ -34004,7 +34004,7 @@ var init_pdf_worker_min = __esm({
           t3.ensureNotTerminated();
           b3.reset();
           const y3 = {};
-          let w3, x3, S3, k3, C3, v4;
+          let w3, x3, S4, k3, C3, v4;
           for (; !(w3 = b3.check()); ) {
             y3.args = null;
             if (!m3.read(y3)) break;
@@ -34328,8 +34328,8 @@ var init_pdf_worker_min = __esm({
                 break;
               default:
                 if (null !== e5) {
-                  for (x3 = 0, S3 = e5.length; x3 < S3 && !(e5[x3] instanceof Dict); x3++) ;
-                  if (x3 < S3) {
+                  for (x3 = 0, S4 = e5.length; x3 < S4 && !(e5[x3] instanceof Dict); x3++) ;
+                  if (x3 < S4) {
                     warn("getOperatorList - ignoring operator: " + n5);
                     continue;
                   }
@@ -34370,7 +34370,7 @@ var init_pdf_worker_min = __esm({
           b3 = 0;
         }
         const y3 = this, w3 = this.xref, x3 = [];
-        let S3 = null;
+        let S4 = null;
         const k3 = new LocalImageCache(), C3 = new LocalGStateCache(), v4 = new EvaluatorPreprocessor(e3, w3, i3);
         let O3;
         function pushWhitespace({ width: e4 = 0, height: t4 = 0, transform: r4 = p3.prevTransform, fontName: a3 = p3.fontName }) {
@@ -34746,13 +34746,13 @@ var init_pdf_worker_min = __esm({
                 break;
               case jt:
                 flushTextContentItem();
-                S3 ??= r3.get("XObject") || Dict.empty;
+                S4 ??= r3.get("XObject") || Dict.empty;
                 D3 = M3[0] instanceof Name;
                 b4 = M3[0].name;
                 if (D3 && k3.getByName(b4)) break;
                 next2(new Promise((function(e6, a3) {
                   if (!D3) throw new FormatError("XObject must be referred to by name.");
-                  let n6 = S3.getRaw(b4);
+                  let n6 = S4.getRaw(b4);
                   if (n6 instanceof Ref) {
                     if (k3.getByRef(n6)) {
                       e6();
@@ -35293,7 +35293,7 @@ var init_pdf_worker_min = __esm({
           warn(`translateFont - fetching "${u3.name}" font file: "${e4}".`);
           p3 = null;
         }
-        let x3 = false, S3 = null, k3 = null;
+        let x3 = false, S4 = null, k3 = null;
         if (p3) {
           if (p3.dict) {
             const e4 = p3.dict.get("Subtype");
@@ -35307,7 +35307,7 @@ var init_pdf_worker_min = __esm({
           if (e4) {
             l3.fontFamily = `${l3.fontFamily}-PdfJS-XFA`;
             l3.metrics = e4.metrics || null;
-            S3 = e4.factors || null;
+            S4 = e4.factors || null;
             p3 = await this.fetchStandardFontData(e4.name);
             x3 = !!p3;
             r3 = t3 = getXfaFontDict(u3.name);
@@ -35334,7 +35334,7 @@ var init_pdf_worker_min = __esm({
         Number.isInteger(R3) || (R3 = 0);
         let E3 = e3.get("ItalicAngle");
         "number" != typeof E3 && (E3 = 0);
-        const N3 = { type: i3, name: u3.name, subtype: m3, file: p3, length1: b3, length2: y3, length3: w3, isInternalFont: x3, loadedName: r3.loadedName, composite: a3, fixedPitch: false, fontMatrix: C3, firstChar: s3, lastChar: o3, toUnicode: c3, bbox: v4, ascent: O3, descent: T3, xHeight: D3, capHeight: M3, flags: R3, italicAngle: E3, isType3Font: h3, cssFontInfo: l3, scaleFactors: S3, systemFontInfo: k3 };
+        const N3 = { type: i3, name: u3.name, subtype: m3, file: p3, length1: b3, length2: y3, length3: w3, isInternalFont: x3, loadedName: r3.loadedName, composite: a3, fixedPitch: false, fontMatrix: C3, firstChar: s3, lastChar: o3, toUnicode: c3, bbox: v4, ascent: O3, descent: T3, xHeight: D3, capHeight: M3, flags: R3, italicAngle: E3, isType3Font: h3, cssFontInfo: l3, scaleFactors: S4, systemFontInfo: k3 };
         if (a3) {
           const e4 = r3.get("Encoding");
           e4 instanceof Name && (N3.cidEncoding = e4.name);
@@ -35911,8 +35911,8 @@ var init_pdf_worker_min = __esm({
         let b3 = 1;
         h3 > p3 && (b3 = p3 / h3);
         let y3 = 1;
-        const w3 = i * a3, x3 = s * a3, S3 = w3 * l3.length;
-        S3 > m3 && (y3 = m3 / S3);
+        const w3 = i * a3, x3 = s * a3, S4 = w3 * l3.length;
+        S4 > m3 && (y3 = m3 / S4);
         const k3 = a3 * Math.min(b3, y3), C3 = ["q", `0 0 ${numberToString(p3)} ${numberToString(m3)} re W n`, "BT", `1 0 0 1 0 ${numberToString(m3 + x3)} Tm 0 Tc ${getPdfColor(n3, true)}`, `/${this.fontName.name} ${numberToString(k3)} Tf`], { resources: v4 } = this;
         if (1 !== (o3 = "number" == typeof o3 && o3 >= 0 && o3 <= 1 ? o3 : 1)) {
           C3.push("/R0 gs");
@@ -36620,11 +36620,11 @@ var init_pdf_worker_min = __esm({
             const w3 = i3.getNewTemporaryRef(), x3 = new Dict(i3);
             _StructTreeRoot.#Q(x3, s4);
             await this.#ee({ structTreeParent: y3, tagDict: x3, newTagRef: w3, structTreeRootRef: t3, fallbackKids: a3, xref: i3, cache: c3 });
-            const S3 = new Dict(i3);
-            x3.set("K", S3);
-            S3.set("Type", l3);
-            p3 && S3.set("Pg", g3);
-            S3.set("Obj", m3);
+            const S4 = new Dict(i3);
+            x3.set("K", S4);
+            S4.set("Type", l3);
+            p3 && S4.set("Pg", g3);
+            S4.set("Obj", m3);
             c3.put(w3, x3);
             n3.push(b3, w3);
           }
@@ -37767,10 +37767,10 @@ var init_pdf_worker_min = __esm({
               const w3 = s3.get("JS");
               let x3;
               w3 instanceof BaseStream ? x3 = w3.getString() : "string" == typeof w3 && (x3 = w3);
-              const S3 = x3 && recoverJsURL(stringToPDFString(x3));
-              if (S3) {
-                n3 = S3.url;
-                t3.newWindow = S3.newWindow;
+              const S4 = x3 && recoverJsURL(stringToPDFString(x3));
+              if (S4) {
+                n3 = S4.url;
+                t3.newWindow = S4.newWindow;
                 break;
               }
             default:
@@ -45874,10 +45874,10 @@ var init_pdf_worker_min = __esm({
         }
         let x3 = b3.descent;
         x3 = isNaN(x3) ? o * m3 : Math.max(o * m3, Math.abs(x3) * p3);
-        const S3 = Math.min(Math.floor((f3 - p3) / 2), 1), k3 = this.data.textAlignment;
-        if (this.data.multiLine) return this._getMultilineAppearance(g3, y3, b3, p3, d3, f3, k3, 2, S3, x3, m3, a3);
-        if (this.data.comb) return this._getCombAppearance(g3, b3, y3[0], p3, d3, f3, 2, S3, x3, m3, a3);
-        const C3 = S3 + x3;
+        const S4 = Math.min(Math.floor((f3 - p3) / 2), 1), k3 = this.data.textAlignment;
+        if (this.data.multiLine) return this._getMultilineAppearance(g3, y3, b3, p3, d3, f3, k3, 2, S4, x3, m3, a3);
+        if (this.data.comb) return this._getCombAppearance(g3, b3, y3[0], p3, d3, f3, 2, S4, x3, m3, a3);
+        const C3 = S4 + x3;
         if (0 === k3 || k3 > 2) return `/Tx BMC q ${c3}BT ` + g3 + ` 1 0 0 1 ${numberToString(2)} ${numberToString(C3)} Tm (${escapeString(y3[0])}) Tj ET Q EMC`;
         return `/Tx BMC q ${c3}BT ` + g3 + ` 1 0 0 1 0 0 Tm ${this._renderText(y3[0], b3, p3, d3, k3, { shift: 0 }, 2, C3)} ET Q EMC`;
       }
@@ -46330,10 +46330,10 @@ var init_pdf_worker_min = __esm({
           for (const e4 of u3) y3 <= e4 && e4 < w3 && x3.push(`1 ${l3 - (e4 - y3 + 1) * p3} ${c3} ${p3} re f`);
         }
         x3.push("BT", f3, `1 0 0 1 0 ${l3} Tm`);
-        const S3 = { shift: 0 };
+        const S4 = { shift: 0 };
         for (let e4 = y3; e4 < w3; e4++) {
           const { displayValue: t4 } = this.data.options[e4], r4 = e4 === y3 ? m3 : 0;
-          x3.push(this._renderText(t4, d3, g3, c3, 0, S3, 2, -p3 + r4));
+          x3.push(this._renderText(t4, d3, g3, c3, 0, S4, 2, -p3 + r4));
         }
         x3.push("ET Q EMC");
         return x3.join("\n");
@@ -46491,10 +46491,10 @@ var init_pdf_worker_min = __esm({
         const g3 = await WidgetAnnotation._getFontData(n3, s3, { fontName: "Helv", fontSize: c3 }, d3), [p3, m3, b3, y3] = l3;
         let w3 = b3 - p3, x3 = y3 - m3;
         h3 % 180 != 0 && ([w3, x3] = [x3, w3]);
-        const S3 = u3.split("\n"), k3 = c3 / 1e3;
+        const S4 = u3.split("\n"), k3 = c3 / 1e3;
         let C3 = -1 / 0;
         const v4 = [];
-        for (let e4 of S3) {
+        for (let e4 of S4) {
           const t4 = g3.encodeString(e4);
           if (t4.length > 1) return null;
           e4 = t4.join("");
@@ -46507,7 +46507,7 @@ var init_pdf_worker_min = __esm({
         let O3 = 1;
         C3 > w3 && (O3 = w3 / C3);
         let T3 = 1;
-        const D3 = i * c3, M3 = 1 * c3, R3 = D3 * S3.length;
+        const D3 = i * c3, M3 = 1 * c3, R3 = D3 * S4.length;
         R3 > x3 && (T3 = x3 / R3);
         const E3 = c3 * Math.min(O3, T3);
         let N3, _3, L3;
@@ -48400,13 +48400,13 @@ var init_pdf_worker_min = __esm({
           x3 = new RefSet();
           w3 = Promise.all([e4, this.#fe(y3, x3, null)]).then((([e5]) => e5 ? AnnotationFactory.printNewAnnotations(e5, p3, r3, y3, t4) : null));
         }
-        const S3 = Promise.all([o3, u3]).then((async ([i4]) => {
+        const S4 = Promise.all([o3, u3]).then((async ([i4]) => {
           const s4 = new OperatorList(a3, t3);
           e3.send("StartRenderPage", { transparency: p3.hasBlendModes(this.resources, this.nonBlendModesSet), pageIndex: this.pageIndex, cacheKey: n3 });
           await p3.getOperatorList({ stream: i4, task: r3, resources: this.resources, operatorList: s4 });
           return s4;
         }));
-        let [k3, C3, v4] = await Promise.all([S3, this._parsedAnnotations, w3]);
+        let [k3, C3, v4] = await Promise.all([S4, this._parsedAnnotations, w3]);
         if (v4) {
           C3 = C3.filter(((e4) => !(e4.ref && x3.has(e4.ref))));
           for (let e4 = 0, t4 = v4.length; e4 < t4; e4++) {
@@ -49661,7 +49661,7 @@ var init_pdf_worker_min = __esm({
             x3 = w3[0];
             if (!x3) return l4.bytes;
           } else if (0 === s4.size) return l4.bytes;
-          const S3 = u4 && h4 instanceof Dict && s4.values().some(((e5) => e5.needAppearances)), k3 = h4 instanceof Dict && h4.get("XFA") || null;
+          const S4 = u4 && h4 instanceof Dict && s4.values().some(((e5) => e5.needAppearances)), k3 = h4 instanceof Dict && h4.get("XFA") || null;
           let C3 = null, v4 = false;
           if (Array.isArray(k3)) {
             for (let e5 = 0, t5 = k3.length; e5 < t5; e5 += 2) if ("datasets" === k3[e5]) {
@@ -49676,7 +49676,7 @@ var init_pdf_worker_min = __esm({
             if (t5 instanceof Dict) for (const [r4, a5] of t5) "string" == typeof a5 && (e5[r4] = stringToPDFString(a5));
             O3 = { rootRef: b3, encryptRef: g3.trailer.getRaw("Encrypt") || null, newRef: g3.getNewTemporaryRef(), infoRef: g3.trailer.getRaw("Info") || null, info: e5, fileIds: g3.trailer.get("ID") || null, startXRef: p3 ? f3 : g3.lastXRefStreamPos ?? f3, filename: n4 };
           }
-          return incrementalUpdate({ originalData: l4.bytes, xrefInfo: O3, changes: s4, xref: g3, hasXfa: !!k3, xfaDatasetsRef: C3, hasXfaDatasetsEntry: v4, needAppearances: S3, acroFormRef: u4, acroForm: h4, xfaData: x3, useXrefStream: isDict(g3.topDict, "XRef") }).finally((() => {
+          return incrementalUpdate({ originalData: l4.bytes, xrefInfo: O3, changes: s4, xref: g3, hasXfa: !!k3, xfaDatasetsRef: C3, hasXfaDatasetsEntry: v4, needAppearances: S4, acroFormRef: u4, acroForm: h4, xfaData: x3, useXrefStream: isDict(g3.topDict, "XRef") }).finally((() => {
             g3.resetNewTemporaryRef();
           }));
         }));
@@ -50079,33 +50079,33 @@ function drawTriangle(t3, e3, i3, s3, n3, r3, a3, o3) {
   }
   const p3 = (l3[i3] + e3.offsetX) * e3.scaleX, g3 = (l3[i3 + 1] + e3.offsetY) * e3.scaleY, f3 = (l3[s3] + e3.offsetX) * e3.scaleX, m3 = (l3[s3 + 1] + e3.offsetY) * e3.scaleY, b3 = (l3[n3] + e3.offsetX) * e3.scaleX, v4 = (l3[n3 + 1] + e3.offsetY) * e3.scaleY;
   if (g3 >= v4) return;
-  const w3 = h3[r3], y3 = h3[r3 + 1], A3 = h3[r3 + 2], _3 = h3[a3], x3 = h3[a3 + 1], E3 = h3[a3 + 2], S3 = h3[o3], C3 = h3[o3 + 1], T3 = h3[o3 + 2], M3 = Math.round(g3), D3 = Math.round(v4);
-  let P3, k3, I3, R3, L3, O3, N3, B3;
+  const w3 = h3[r3], y3 = h3[r3 + 1], A3 = h3[r3 + 2], _3 = h3[a3], x3 = h3[a3 + 1], E3 = h3[a3 + 2], S4 = h3[o3], C3 = h3[o3 + 1], T3 = h3[o3 + 2], M3 = Math.round(g3), D3 = Math.round(v4);
+  let P4, k3, I3, R3, L3, O3, N3, B3;
   for (let t4 = M3; t4 <= D3; t4++) {
     if (t4 < m3) {
       const e5 = t4 < g3 ? 0 : (g3 - t4) / (g3 - m3);
-      P3 = p3 - (p3 - f3) * e5;
+      P4 = p3 - (p3 - f3) * e5;
       k3 = w3 - (w3 - _3) * e5;
       I3 = y3 - (y3 - x3) * e5;
       R3 = A3 - (A3 - E3) * e5;
     } else {
       let e5;
       e5 = t4 > v4 ? 1 : m3 === v4 ? 0 : (m3 - t4) / (m3 - v4);
-      P3 = f3 - (f3 - b3) * e5;
-      k3 = _3 - (_3 - S3) * e5;
+      P4 = f3 - (f3 - b3) * e5;
+      k3 = _3 - (_3 - S4) * e5;
       I3 = x3 - (x3 - C3) * e5;
       R3 = E3 - (E3 - T3) * e5;
     }
     let e4;
     e4 = t4 < g3 ? 0 : t4 > v4 ? 1 : (g3 - t4) / (g3 - v4);
     L3 = p3 - (p3 - b3) * e4;
-    O3 = w3 - (w3 - S3) * e4;
+    O3 = w3 - (w3 - S4) * e4;
     N3 = y3 - (y3 - C3) * e4;
     B3 = A3 - (A3 - T3) * e4;
-    const i4 = Math.round(Math.min(P3, L3)), s4 = Math.round(Math.max(P3, L3));
+    const i4 = Math.round(Math.min(P4, L3)), s4 = Math.round(Math.max(P4, L3));
     let n4 = d3 * t4 + 4 * i4;
     for (let t5 = i4; t5 <= s4; t5++) {
-      e4 = (P3 - t5) / (P3 - L3);
+      e4 = (P4 - t5) / (P4 - L3);
       e4 < 0 ? e4 = 0 : e4 > 1 && (e4 = 1);
       c3[n4++] = k3 - (k3 - O3) * e4 | 0;
       c3[n4++] = I3 - (I3 - N3) * e4 | 0;
@@ -50464,7 +50464,7 @@ function getDocument(t3 = {}) {
     throw new Error("Invalid PDF binary data: either TypedArray, string, or array-like object is expected in the data property.");
   })(t3.data) : null, a3 = t3.httpHeaders || null, o3 = true === t3.withCredentials, l3 = t3.password ?? null, h3 = t3.range instanceof PDFDataRangeTransport ? t3.range : null, c3 = Number.isInteger(t3.rangeChunkSize) && t3.rangeChunkSize > 0 ? t3.rangeChunkSize : At2;
   let d3 = t3.worker instanceof PDFWorker ? t3.worker : null;
-  const u3 = t3.verbosity, p3 = "string" != typeof t3.docBaseUrl || isDataScheme(t3.docBaseUrl) ? null : t3.docBaseUrl, g3 = getFactoryUrlProp(t3.cMapUrl), f3 = false !== t3.cMapPacked, m3 = t3.CMapReaderFactory || (i2 ? NodeCMapReaderFactory : DOMCMapReaderFactory), b3 = getFactoryUrlProp(t3.iccUrl), v4 = getFactoryUrlProp(t3.standardFontDataUrl), w3 = t3.StandardFontDataFactory || (i2 ? NodeStandardFontDataFactory : DOMStandardFontDataFactory), y3 = getFactoryUrlProp(t3.wasmUrl), A3 = t3.WasmFactory || (i2 ? NodeWasmFactory : DOMWasmFactory), _3 = true !== t3.stopAtErrors, x3 = Number.isInteger(t3.maxImageSize) && t3.maxImageSize > -1 ? t3.maxImageSize : -1, E3 = false !== t3.isEvalSupported, S3 = "boolean" == typeof t3.isOffscreenCanvasSupported ? t3.isOffscreenCanvasSupported : !i2, C3 = "boolean" == typeof t3.isImageDecoderSupported ? t3.isImageDecoderSupported : !i2 && (util_FeatureTest.platform.isFirefox || !globalThis.chrome), T3 = Number.isInteger(t3.canvasMaxAreaInBytes) ? t3.canvasMaxAreaInBytes : -1, M3 = "boolean" == typeof t3.disableFontFace ? t3.disableFontFace : i2, D3 = true === t3.fontExtraProperties, P3 = true === t3.enableXfa, k3 = t3.ownerDocument || globalThis.document, I3 = true === t3.disableRange, R3 = true === t3.disableStream, L3 = true === t3.disableAutoFetch, O3 = true === t3.pdfBug, N3 = t3.CanvasFactory || (i2 ? NodeCanvasFactory : DOMCanvasFactory), B3 = t3.FilterFactory || (i2 ? NodeFilterFactory : DOMFilterFactory), U3 = true === t3.enableHWA, H3 = false !== t3.useWasm, z3 = h3 ? h3.length : t3.length ?? NaN, j3 = "boolean" == typeof t3.useSystemFonts ? t3.useSystemFonts : !i2 && !M3, G3 = "boolean" == typeof t3.useWorkerFetch ? t3.useWorkerFetch : !!(m3 === DOMCMapReaderFactory && w3 === DOMStandardFontDataFactory && A3 === DOMWasmFactory && g3 && v4 && y3 && isValidFetchUrl(g3, document.baseURI) && isValidFetchUrl(v4, document.baseURI) && isValidFetchUrl(y3, document.baseURI));
+  const u3 = t3.verbosity, p3 = "string" != typeof t3.docBaseUrl || isDataScheme(t3.docBaseUrl) ? null : t3.docBaseUrl, g3 = getFactoryUrlProp(t3.cMapUrl), f3 = false !== t3.cMapPacked, m3 = t3.CMapReaderFactory || (i2 ? NodeCMapReaderFactory : DOMCMapReaderFactory), b3 = getFactoryUrlProp(t3.iccUrl), v4 = getFactoryUrlProp(t3.standardFontDataUrl), w3 = t3.StandardFontDataFactory || (i2 ? NodeStandardFontDataFactory : DOMStandardFontDataFactory), y3 = getFactoryUrlProp(t3.wasmUrl), A3 = t3.WasmFactory || (i2 ? NodeWasmFactory : DOMWasmFactory), _3 = true !== t3.stopAtErrors, x3 = Number.isInteger(t3.maxImageSize) && t3.maxImageSize > -1 ? t3.maxImageSize : -1, E3 = false !== t3.isEvalSupported, S4 = "boolean" == typeof t3.isOffscreenCanvasSupported ? t3.isOffscreenCanvasSupported : !i2, C3 = "boolean" == typeof t3.isImageDecoderSupported ? t3.isImageDecoderSupported : !i2 && (util_FeatureTest.platform.isFirefox || !globalThis.chrome), T3 = Number.isInteger(t3.canvasMaxAreaInBytes) ? t3.canvasMaxAreaInBytes : -1, M3 = "boolean" == typeof t3.disableFontFace ? t3.disableFontFace : i2, D3 = true === t3.fontExtraProperties, P4 = true === t3.enableXfa, k3 = t3.ownerDocument || globalThis.document, I3 = true === t3.disableRange, R3 = true === t3.disableStream, L3 = true === t3.disableAutoFetch, O3 = true === t3.pdfBug, N3 = t3.CanvasFactory || (i2 ? NodeCanvasFactory : DOMCanvasFactory), B3 = t3.FilterFactory || (i2 ? NodeFilterFactory : DOMFilterFactory), U3 = true === t3.enableHWA, H3 = false !== t3.useWasm, z3 = h3 ? h3.length : t3.length ?? NaN, j3 = "boolean" == typeof t3.useSystemFonts ? t3.useSystemFonts : !i2 && !M3, G3 = "boolean" == typeof t3.useWorkerFetch ? t3.useWorkerFetch : !!(m3 === DOMCMapReaderFactory && w3 === DOMStandardFontDataFactory && A3 === DOMWasmFactory && g3 && v4 && y3 && isValidFetchUrl(g3, document.baseURI) && isValidFetchUrl(v4, document.baseURI) && isValidFetchUrl(y3, document.baseURI));
   setVerbosityLevel(u3);
   const V3 = { canvasFactory: new N3({ ownerDocument: k3, enableHWA: U3 }), filterFactory: new B3({ docId: s3, ownerDocument: k3 }), cMapReaderFactory: G3 ? null : new m3({ baseUrl: g3, isCompressed: f3 }), standardFontDataFactory: G3 ? null : new w3({ baseUrl: v4 }), wasmFactory: G3 ? null : new A3({ baseUrl: y3 }) };
   if (!d3) {
@@ -50472,7 +50472,7 @@ function getDocument(t3 = {}) {
     d3 = t4.port ? PDFWorker.fromPort(t4) : new PDFWorker(t4);
     e3._worker = d3;
   }
-  const W4 = { docId: s3, apiVersion: "5.1.91", data: r3, password: l3, disableAutoFetch: L3, rangeChunkSize: c3, length: z3, docBaseUrl: p3, enableXfa: P3, evaluatorOptions: { maxImageSize: x3, disableFontFace: M3, ignoreErrors: _3, isEvalSupported: E3, isOffscreenCanvasSupported: S3, isImageDecoderSupported: C3, canvasMaxAreaInBytes: T3, fontExtraProperties: D3, useSystemFonts: j3, useWasm: H3, useWorkerFetch: G3, cMapUrl: g3, iccUrl: b3, standardFontDataUrl: v4, wasmUrl: y3 } }, $3 = { ownerDocument: k3, pdfBug: O3, styleElement: null, loadingParams: { disableAutoFetch: L3, enableXfa: P3 } };
+  const W4 = { docId: s3, apiVersion: "5.1.91", data: r3, password: l3, disableAutoFetch: L3, rangeChunkSize: c3, length: z3, docBaseUrl: p3, enableXfa: P4, evaluatorOptions: { maxImageSize: x3, disableFontFace: M3, ignoreErrors: _3, isEvalSupported: E3, isOffscreenCanvasSupported: S4, isImageDecoderSupported: C3, canvasMaxAreaInBytes: T3, fontExtraProperties: D3, useSystemFonts: j3, useWasm: H3, useWorkerFetch: G3, cMapUrl: g3, iccUrl: b3, standardFontDataUrl: v4, wasmUrl: y3 } }, $3 = { ownerDocument: k3, pdfBug: O3, styleElement: null, loadingParams: { disableAutoFetch: L3, enableXfa: P4 } };
   d3.promise.then((function() {
     if (e3.destroyed) throw new Error("Loading aborted");
     if (d3.destroyed) throw new Error("Worker was destroyed");
@@ -50875,7 +50875,7 @@ var init_pdf_min = __esm({
         this.result = e4;
       }, g3 = Result.prototype;
       t3.exports = function(t4, e4, i4) {
-        var f3, m3, b3, v4, w3, y3, A3, _3 = i4 && i4.that, x3 = !(!i4 || !i4.AS_ENTRIES), E3 = !(!i4 || !i4.IS_RECORD), S3 = !(!i4 || !i4.IS_ITERATOR), C3 = !(!i4 || !i4.INTERRUPTED), T3 = s3(e4, _3), stop = function(t5) {
+        var f3, m3, b3, v4, w3, y3, A3, _3 = i4 && i4.that, x3 = !(!i4 || !i4.AS_ENTRIES), E3 = !(!i4 || !i4.IS_RECORD), S4 = !(!i4 || !i4.IS_ITERATOR), C3 = !(!i4 || !i4.INTERRUPTED), T3 = s3(e4, _3), stop = function(t5) {
           f3 && u3(f3, "normal", t5);
           return new Result(true, t5);
         }, callFn = function(t5) {
@@ -50886,7 +50886,7 @@ var init_pdf_min = __esm({
           return C3 ? T3(t5, stop) : T3(t5);
         };
         if (E3) f3 = t4.iterator;
-        else if (S3) f3 = t4;
+        else if (S4) f3 = t4;
         else {
           if (!(m3 = d3(t4))) throw new p3(a3(t4) + " is not iterable");
           if (o3(m3)) {
@@ -51258,7 +51258,7 @@ var init_pdf_min = __esm({
         return { promise: t4.promise, resolve: t4.resolve, reject: t4.reject };
       } });
     }, 4644: (t3, e3, i3) => {
-      var s3, n3, r3, a3 = i3(7811), o3 = i3(3724), l3 = i3(4576), h3 = i3(4901), c3 = i3(34), d3 = i3(9297), u3 = i3(6955), p3 = i3(6823), g3 = i3(6699), f3 = i3(6840), m3 = i3(2106), b3 = i3(1625), v4 = i3(2787), w3 = i3(2967), y3 = i3(8227), A3 = i3(3392), _3 = i3(1181), x3 = _3.enforce, E3 = _3.get, S3 = l3.Int8Array, C3 = S3 && S3.prototype, T3 = l3.Uint8ClampedArray, M3 = T3 && T3.prototype, D3 = S3 && v4(S3), P3 = C3 && v4(C3), k3 = Object.prototype, I3 = l3.TypeError, R3 = y3("toStringTag"), L3 = A3("TYPED_ARRAY_TAG"), O3 = "TypedArrayConstructor", N3 = a3 && !!w3 && "Opera" !== u3(l3.opera), B3 = false, U3 = { Int8Array: 1, Uint8Array: 1, Uint8ClampedArray: 1, Int16Array: 2, Uint16Array: 2, Int32Array: 4, Uint32Array: 4, Float32Array: 4, Float64Array: 8 }, H3 = { BigInt64Array: 8, BigUint64Array: 8 }, getTypedArrayConstructor = function(t4) {
+      var s3, n3, r3, a3 = i3(7811), o3 = i3(3724), l3 = i3(4576), h3 = i3(4901), c3 = i3(34), d3 = i3(9297), u3 = i3(6955), p3 = i3(6823), g3 = i3(6699), f3 = i3(6840), m3 = i3(2106), b3 = i3(1625), v4 = i3(2787), w3 = i3(2967), y3 = i3(8227), A3 = i3(3392), _3 = i3(1181), x3 = _3.enforce, E3 = _3.get, S4 = l3.Int8Array, C3 = S4 && S4.prototype, T3 = l3.Uint8ClampedArray, M3 = T3 && T3.prototype, D3 = S4 && v4(S4), P4 = C3 && v4(C3), k3 = Object.prototype, I3 = l3.TypeError, R3 = y3("toStringTag"), L3 = A3("TYPED_ARRAY_TAG"), O3 = "TypedArrayConstructor", N3 = a3 && !!w3 && "Opera" !== u3(l3.opera), B3 = false, U3 = { Int8Array: 1, Uint8Array: 1, Uint8ClampedArray: 1, Int16Array: 2, Uint16Array: 2, Int32Array: 4, Uint32Array: 4, Float32Array: 4, Float64Array: 8 }, H3 = { BigInt64Array: 8, BigUint64Array: 8 }, getTypedArrayConstructor = function(t4) {
         var e4 = v4(t4);
         if (c3(e4)) {
           var i4 = E3(e4);
@@ -51277,14 +51277,14 @@ var init_pdf_min = __esm({
         };
         if (N3) for (s3 in U3) l3[s3] && w3(l3[s3], D3);
       }
-      if (!N3 || !P3 || P3 === k3) {
-        P3 = D3.prototype;
-        if (N3) for (s3 in U3) l3[s3] && w3(l3[s3].prototype, P3);
+      if (!N3 || !P4 || P4 === k3) {
+        P4 = D3.prototype;
+        if (N3) for (s3 in U3) l3[s3] && w3(l3[s3].prototype, P4);
       }
-      N3 && v4(M3) !== P3 && w3(M3, P3);
-      if (o3 && !d3(P3, R3)) {
+      N3 && v4(M3) !== P4 && w3(M3, P4);
+      if (o3 && !d3(P4, R3)) {
         B3 = true;
-        m3(P3, R3, { configurable: true, get: function() {
+        m3(P4, R3, { configurable: true, get: function() {
           return c3(this) ? this[L3] : void 0;
         } });
         for (s3 in U3) l3[s3] && g3(l3[s3], L3, s3);
@@ -51308,7 +51308,7 @@ var init_pdf_min = __esm({
               }
             }
           }
-          P3[t4] && !i4 || f3(P3, t4, i4 ? e4 : N3 && C3[t4] || e4, s4);
+          P4[t4] && !i4 || f3(P4, t4, i4 ? e4 : N3 && C3[t4] || e4, s4);
         }
       }, exportTypedArrayStaticMethod: function(t4, e4, i4) {
         var s4, n4;
@@ -51332,7 +51332,7 @@ var init_pdf_min = __esm({
         if (!c3(t4)) return false;
         var e4 = u3(t4);
         return "DataView" === e4 || d3(U3, e4) || d3(H3, e4);
-      }, isTypedArray, TypedArray: D3, TypedArrayPrototype: P3 };
+      }, isTypedArray, TypedArray: D3, TypedArrayPrototype: P4 };
     }, 4659: (t3, e3, i3) => {
       var s3 = i3(3724), n3 = i3(4913), r3 = i3(6980);
       t3.exports = function(t4, e4, i4) {
@@ -51425,14 +51425,14 @@ var init_pdf_min = __esm({
         o3(s4, "stack", a3(1, p3(n4.stack, 1)));
         c3(s4, this, w3);
         return s4;
-      }, y3 = w3.prototype = v4.prototype, A3 = "stack" in new b3(m3), _3 = "stack" in new v4(1, 2), x3 = v4 && g3 && Object.getOwnPropertyDescriptor(n3, m3), E3 = !(!x3 || x3.writable && x3.configurable), S3 = A3 && !E3 && !_3;
-      s3({ global: true, constructor: true, forced: f3 || S3 }, { DOMException: S3 ? w3 : v4 });
+      }, y3 = w3.prototype = v4.prototype, A3 = "stack" in new b3(m3), _3 = "stack" in new v4(1, 2), x3 = v4 && g3 && Object.getOwnPropertyDescriptor(n3, m3), E3 = !(!x3 || x3.writable && x3.configurable), S4 = A3 && !E3 && !_3;
+      s3({ global: true, constructor: true, forced: f3 || S4 }, { DOMException: S4 ? w3 : v4 });
       var C3 = r3(m3), T3 = C3.prototype;
       if (T3.constructor !== C3) {
         f3 || o3(T3, "constructor", a3(1, C3));
         for (var M3 in u3) if (l3(u3, M3)) {
-          var D3 = u3[M3], P3 = D3.s;
-          l3(C3, P3) || o3(C3, P3, a3(6, D3.c));
+          var D3 = u3[M3], P4 = D3.s;
+          l3(C3, P4) || o3(C3, P4, a3(6, D3.c));
         }
       }
     }, 5002: (t3) => {
@@ -51498,7 +51498,7 @@ var init_pdf_min = __esm({
         else {
           var m4 = i4 && !f4 && w3 ? { maxByteLength: w3(t4) } : void 0;
           s4 = new u3(r4, m4);
-          for (var _3 = new p3(t4), x3 = new p3(s4), E3 = g3(r4, n4), S3 = 0; S3 < E3; S3++) A3(x3, S3, y3(_3, S3));
+          for (var _3 = new p3(t4), x3 = new p3(s4), E3 = g3(r4, n4), S4 = 0; S4 < E3; S4++) A3(x3, S4, y3(_3, S4));
         }
         c3 || h3(t4);
         return s4;
@@ -51914,7 +51914,7 @@ var init_pdf_min = __esm({
         return s4;
       } });
     }, 8335: (t3, e3, i3) => {
-      var s3 = i3(6518), n3 = i3(3724), r3 = i3(4576), a3 = i3(7751), o3 = i3(9504), l3 = i3(9565), h3 = i3(4901), c3 = i3(34), d3 = i3(4376), u3 = i3(9297), p3 = i3(655), g3 = i3(6198), f3 = i3(4659), m3 = i3(9039), b3 = i3(8235), v4 = i3(4495), w3 = r3.JSON, y3 = r3.Number, A3 = r3.SyntaxError, _3 = w3 && w3.parse, x3 = a3("Object", "keys"), E3 = Object.getOwnPropertyDescriptor, S3 = o3("".charAt), C3 = o3("".slice), T3 = o3(/./.exec), M3 = o3([].push), D3 = /^\d$/, P3 = /^[1-9]$/, k3 = /^[\d-]$/, I3 = /^[\t\n\r ]$/, internalize = function(t4, e4, i4, s4) {
+      var s3 = i3(6518), n3 = i3(3724), r3 = i3(4576), a3 = i3(7751), o3 = i3(9504), l3 = i3(9565), h3 = i3(4901), c3 = i3(34), d3 = i3(4376), u3 = i3(9297), p3 = i3(655), g3 = i3(6198), f3 = i3(4659), m3 = i3(9039), b3 = i3(8235), v4 = i3(4495), w3 = r3.JSON, y3 = r3.Number, A3 = r3.SyntaxError, _3 = w3 && w3.parse, x3 = a3("Object", "keys"), E3 = Object.getOwnPropertyDescriptor, S4 = o3("".charAt), C3 = o3("".slice), T3 = o3(/./.exec), M3 = o3([].push), D3 = /^\d$/, P4 = /^[1-9]$/, k3 = /^[\d-]$/, I3 = /^[\t\n\r ]$/, internalize = function(t4, e4, i4, s4) {
         var n4, r4, a4, o4, h4, p4 = t4[e4], f4 = s4 && p4 === s4.value, m4 = f4 && "string" == typeof s4.source ? { source: s4.source } : {};
         if (c3(p4)) {
           var b4 = d3(p4), v5 = f4 ? s4.nodes : b4 ? [] : {};
@@ -51950,7 +51950,7 @@ var init_pdf_min = __esm({
       Context.prototype = { fork: function(t4) {
         return new Context(this.source, t4);
       }, parse: function() {
-        var t4 = this.source, e4 = this.skip(I3, this.index), i4 = this.fork(e4), s4 = S3(t4, e4);
+        var t4 = this.source, e4 = this.skip(I3, this.index), i4 = this.fork(e4), s4 = S4(t4, e4);
         if (T3(k3, s4)) return i4.number();
         switch (s4) {
           case "{":
@@ -51972,7 +51972,7 @@ var init_pdf_min = __esm({
       }, object: function() {
         for (var t4 = this.source, e4 = this.index + 1, i4 = false, s4 = {}, n4 = {}; e4 < t4.length; ) {
           e4 = this.until(['"', "}"], e4);
-          if ("}" === S3(t4, e4) && !i4) {
+          if ("}" === S4(t4, e4) && !i4) {
             e4++;
             break;
           }
@@ -51984,7 +51984,7 @@ var init_pdf_min = __esm({
           f3(n4, a4, r4);
           f3(s4, a4, r4.value);
           e4 = this.until([",", "}"], r4.end);
-          var o4 = S3(t4, e4);
+          var o4 = S4(t4, e4);
           if ("," === o4) {
             i4 = true;
             e4++;
@@ -51997,7 +51997,7 @@ var init_pdf_min = __esm({
       }, array: function() {
         for (var t4 = this.source, e4 = this.index + 1, i4 = false, s4 = [], n4 = []; e4 < t4.length; ) {
           e4 = this.skip(I3, e4);
-          if ("]" === S3(t4, e4) && !i4) {
+          if ("]" === S4(t4, e4) && !i4) {
             e4++;
             break;
           }
@@ -52005,10 +52005,10 @@ var init_pdf_min = __esm({
           M3(n4, r4);
           M3(s4, r4.value);
           e4 = this.until([",", "]"], r4.end);
-          if ("," === S3(t4, e4)) {
+          if ("," === S4(t4, e4)) {
             i4 = true;
             e4++;
-          } else if ("]" === S3(t4, e4)) {
+          } else if ("]" === S4(t4, e4)) {
             e4++;
             break;
           }
@@ -52019,16 +52019,16 @@ var init_pdf_min = __esm({
         return this.node(0, e4.value, t4, e4.end);
       }, number: function() {
         var t4 = this.source, e4 = this.index, i4 = e4;
-        "-" === S3(t4, i4) && i4++;
-        if ("0" === S3(t4, i4)) i4++;
+        "-" === S4(t4, i4) && i4++;
+        if ("0" === S4(t4, i4)) i4++;
         else {
-          if (!T3(P3, S3(t4, i4))) throw new A3("Failed to parse number at: " + i4);
+          if (!T3(P4, S4(t4, i4))) throw new A3("Failed to parse number at: " + i4);
           i4 = this.skip(D3, i4 + 1);
         }
-        "." === S3(t4, i4) && (i4 = this.skip(D3, i4 + 1));
-        if ("e" === S3(t4, i4) || "E" === S3(t4, i4)) {
+        "." === S4(t4, i4) && (i4 = this.skip(D3, i4 + 1));
+        if ("e" === S4(t4, i4) || "E" === S4(t4, i4)) {
           i4++;
-          "+" !== S3(t4, i4) && "-" !== S3(t4, i4) || i4++;
+          "+" !== S4(t4, i4) && "-" !== S4(t4, i4) || i4++;
           if (i4 === (i4 = this.skip(D3, i4))) throw new A3("Failed to parse number's exponent value at: " + i4);
         }
         return this.node(0, y3(C3(t4, e4, i4)), e4, i4);
@@ -52037,11 +52037,11 @@ var init_pdf_min = __esm({
         if (C3(this.source, i4, s4) !== e4) throw new A3("Failed to parse value at: " + i4);
         return this.node(0, t4, i4, s4);
       }, skip: function(t4, e4) {
-        for (var i4 = this.source; e4 < i4.length && T3(t4, S3(i4, e4)); e4++) ;
+        for (var i4 = this.source; e4 < i4.length && T3(t4, S4(i4, e4)); e4++) ;
         return e4;
       }, until: function(t4, e4) {
         e4 = this.skip(I3, e4);
-        for (var i4 = S3(this.source, e4), s4 = 0; s4 < t4.length; s4++) if (t4[s4] === i4) return e4;
+        for (var i4 = S4(this.source, e4), s4 = 0; s4 < t4.length; s4++) if (t4[s4] === i4) return e4;
         throw new A3('Unexpected character: "' + i4 + '" at: ' + e4);
       } };
       var R3 = m3((function() {
@@ -52057,7 +52057,7 @@ var init_pdf_min = __esm({
         return L3 && !h3(e4) ? _3(t4) : (function(t5, e5) {
           t5 = p3(t5);
           var i4 = new Context(t5, 0, ""), s4 = i4.parse(), n4 = s4.value, r4 = i4.skip(I3, s4.end);
-          if (r4 < t5.length) throw new A3('Unexpected extra character: "' + S3(t5, r4) + '" after the parsed data at: ' + r4);
+          if (r4 < t5.length) throw new A3('Unexpected extra character: "' + S4(t5, r4) + '" after the parsed data at: ' + r4);
           return h3(e5) ? internalize({ "": n4 }, "", e5, s4) : n4;
         })(t4, e4);
       } });
@@ -54908,20 +54908,20 @@ var init_pdf_min = __esm({
           this.#ye[0] = t4;
           this.#ye[1] = i4;
         }
-        [A3, _3] = (S3 = A3 / i3, C3 = _3 / s3, [d3[0] * S3 + d3[2] * C3, d3[1] * S3 + d3[3] * C3]);
-        var S3, C3;
+        [A3, _3] = (S4 = A3 / i3, C3 = _3 / s3, [d3[0] * S4 + d3[2] * C3, d3[1] * S4 + d3[3] * C3]);
+        var S4, C3;
         if (g3) {
           const t4 = Math.hypot(a3, o3);
           x3 = E3 = Math.max(Math.min(Math.hypot(b3[0] - m3[0] - A3, b3[1] - m3[1] - _3) / t4, 1 / a3, 1 / o3), l3 / a3, h3 / o3);
         } else f3 ? x3 = MathClamp2(Math.abs(b3[0] - m3[0] - A3), l3, 1) / a3 : E3 = MathClamp2(Math.abs(b3[1] - m3[1] - _3), h3, 1) / o3;
         const T3 = _AnnotationEditor._round(a3 * x3), M3 = _AnnotationEditor._round(o3 * E3);
         v4 = transf(...p3(T3, M3));
-        const D3 = w3 - v4[0], P3 = y3 - v4[1];
+        const D3 = w3 - v4[0], P4 = y3 - v4[1];
         this.#Se ||= [this.x, this.y, this.width, this.height];
         this.width = T3;
         this.height = M3;
         this.x = D3;
-        this.y = P3;
+        this.y = P4;
         this.setDims(i3 * T3, s3 * M3);
         this.fixAndSetPosition();
         this._onResizing();
@@ -56547,11 +56547,11 @@ var init_pdf_min = __esm({
         const x3 = Math.ceil(o3 * b3), E3 = Math.ceil(l3 * v4);
         x3 >= Math.ceil(p3 * b3) ? w3 = o3 : A3 = true;
         E3 >= Math.ceil(g3 * v4) ? y3 = l3 : _3 = true;
-        const S3 = this.getSizeAndScale(w3, this.ctx.canvas.width, b3), C3 = this.getSizeAndScale(y3, this.ctx.canvas.height, v4), T3 = t3.cachedCanvases.getCanvas("pattern", S3.size, C3.size), M3 = T3.context, D3 = a3.createCanvasGraphics(M3);
+        const S4 = this.getSizeAndScale(w3, this.ctx.canvas.width, b3), C3 = this.getSizeAndScale(y3, this.ctx.canvas.height, v4), T3 = t3.cachedCanvases.getCanvas("pattern", S4.size, C3.size), M3 = T3.context, D3 = a3.createCanvasGraphics(M3);
         D3.groupLevel = t3.groupLevel;
         this.setFillAndStrokeStyleToContext(D3, s3, r3);
-        M3.translate(-S3.scale * h3, -C3.scale * c3);
-        D3.transform(S3.scale, 0, 0, C3.scale, 0, 0);
+        M3.translate(-S4.scale * h3, -C3.scale * c3);
+        D3.transform(S4.scale, 0, 0, C3.scale, 0, 0);
         M3.save();
         this.clipBbox(D3, h3, c3, d3, u3);
         D3.baseTransform = getCurrentTransform(D3.ctx);
@@ -56566,7 +56566,7 @@ var init_pdf_min = __esm({
           for (let t4 = 0; t4 <= u4; t4++) for (let i5 = 0; i5 <= f4; i5++) d4.drawImage(e4, n4 * t4, r4 * i5, n4, r4, 0, 0, n4, r4);
           return { canvas: a4.canvas, scaleX: i4.scale, scaleY: s4.scale, offsetX: h3, offsetY: c3 };
         }
-        return { canvas: T3.canvas, scaleX: S3.scale, scaleY: C3.scale, offsetX: h3, offsetY: c3 };
+        return { canvas: T3.canvas, scaleX: S4.scale, scaleY: C3.scale, offsetX: h3, offsetY: c3 };
       }
       getSizeAndScale(t3, e3, i3) {
         const s3 = Math.max(_TilingPattern.MAX_PATTERN_SIZE, e3);
@@ -57476,11 +57476,11 @@ var init_pdf_min = __esm({
           this.compose();
           return;
         }
-        let E3, S3 = 0;
+        let E3, S4 = 0;
         for (E3 = 0; E3 < c3; ++E3) {
           const e4 = t3[E3];
           if ("number" == typeof e4) {
-            S3 += u3 * e4 * s3 / 1e3;
+            S4 += u3 * e4 * s3 / 1e3;
             continue;
           }
           let h4 = false;
@@ -57490,9 +57490,9 @@ var init_pdf_min = __esm({
             const t4 = e4.vmetric || p3, i4 = -(e4.vmetric ? t4[1] : 0.5 * _3) * g3, s4 = t4[2] * g3;
             _3 = t4 ? -t4[0] : _3;
             y3 = i4 / r3;
-            A4 = (S3 + s4) / r3;
+            A4 = (S4 + s4) / r3;
           } else {
-            y3 = S3 / r3;
+            y3 = S4 / r3;
             A4 = 0;
           }
           if (i3.remeasure && _3 > 0) {
@@ -57513,10 +57513,10 @@ var init_pdf_min = __esm({
               this.paintChar(w3.fontChar, t4, e5, m3, b3);
             }
           }
-          S3 += d3 ? _3 * g3 - c4 * l3 : _3 * g3 + c4 * l3;
+          S4 += d3 ? _3 * g3 - c4 * l3 : _3 * g3 + c4 * l3;
           h4 && n3.restore();
         }
-        d3 ? e3.y -= S3 : e3.x += S3 * h3;
+        d3 ? e3.y -= S4 : e3.x += S4 * h3;
         n3.restore();
         this.compose();
       }
@@ -66353,6 +66353,245 @@ var init_pdf_min = __esm({
   }
 });
 
+// node_modules/punycode.js/punycode.js
+var require_punycode = __commonJS({
+  "node_modules/punycode.js/punycode.js"(exports, module) {
+    "use strict";
+    var maxInt = 2147483647;
+    var base = 36;
+    var tMin = 1;
+    var tMax = 26;
+    var skew = 38;
+    var damp = 700;
+    var initialBias = 72;
+    var initialN = 128;
+    var delimiter = "-";
+    var regexPunycode = /^xn--/;
+    var regexNonASCII = /[^\0-\x7F]/;
+    var regexSeparators = /[\x2E\u3002\uFF0E\uFF61]/g;
+    var errors = {
+      "overflow": "Overflow: input needs wider integers to process",
+      "not-basic": "Illegal input >= 0x80 (not a basic code point)",
+      "invalid-input": "Invalid input"
+    };
+    var baseMinusTMin = base - tMin;
+    var floor = Math.floor;
+    var stringFromCharCode = String.fromCharCode;
+    function error2(type) {
+      throw new RangeError(errors[type]);
+    }
+    function map(array2, callback) {
+      const result = [];
+      let length = array2.length;
+      while (length--) {
+        result[length] = callback(array2[length]);
+      }
+      return result;
+    }
+    function mapDomain(domain, callback) {
+      const parts = domain.split("@");
+      let result = "";
+      if (parts.length > 1) {
+        result = parts[0] + "@";
+        domain = parts[1];
+      }
+      domain = domain.replace(regexSeparators, ".");
+      const labels = domain.split(".");
+      const encoded = map(labels, callback).join(".");
+      return result + encoded;
+    }
+    function ucs2decode(string3) {
+      const output = [];
+      let counter = 0;
+      const length = string3.length;
+      while (counter < length) {
+        const value2 = string3.charCodeAt(counter++);
+        if (value2 >= 55296 && value2 <= 56319 && counter < length) {
+          const extra = string3.charCodeAt(counter++);
+          if ((extra & 64512) == 56320) {
+            output.push(((value2 & 1023) << 10) + (extra & 1023) + 65536);
+          } else {
+            output.push(value2);
+            counter--;
+          }
+        } else {
+          output.push(value2);
+        }
+      }
+      return output;
+    }
+    var ucs2encode = (codePoints) => String.fromCodePoint(...codePoints);
+    var basicToDigit = function(codePoint) {
+      if (codePoint >= 48 && codePoint < 58) {
+        return 26 + (codePoint - 48);
+      }
+      if (codePoint >= 65 && codePoint < 91) {
+        return codePoint - 65;
+      }
+      if (codePoint >= 97 && codePoint < 123) {
+        return codePoint - 97;
+      }
+      return base;
+    };
+    var digitToBasic = function(digit, flag2) {
+      return digit + 22 + 75 * (digit < 26) - ((flag2 != 0) << 5);
+    };
+    var adapt = function(delta, numPoints, firstTime) {
+      let k3 = 0;
+      delta = firstTime ? floor(delta / damp) : delta >> 1;
+      delta += floor(delta / numPoints);
+      for (; delta > baseMinusTMin * tMax >> 1; k3 += base) {
+        delta = floor(delta / baseMinusTMin);
+      }
+      return floor(k3 + (baseMinusTMin + 1) * delta / (delta + skew));
+    };
+    var decode5 = function(input) {
+      const output = [];
+      const inputLength = input.length;
+      let i3 = 0;
+      let n3 = initialN;
+      let bias = initialBias;
+      let basic = input.lastIndexOf(delimiter);
+      if (basic < 0) {
+        basic = 0;
+      }
+      for (let j3 = 0; j3 < basic; ++j3) {
+        if (input.charCodeAt(j3) >= 128) {
+          error2("not-basic");
+        }
+        output.push(input.charCodeAt(j3));
+      }
+      for (let index = basic > 0 ? basic + 1 : 0; index < inputLength; ) {
+        const oldi = i3;
+        for (let w3 = 1, k3 = base; ; k3 += base) {
+          if (index >= inputLength) {
+            error2("invalid-input");
+          }
+          const digit = basicToDigit(input.charCodeAt(index++));
+          if (digit >= base) {
+            error2("invalid-input");
+          }
+          if (digit > floor((maxInt - i3) / w3)) {
+            error2("overflow");
+          }
+          i3 += digit * w3;
+          const t3 = k3 <= bias ? tMin : k3 >= bias + tMax ? tMax : k3 - bias;
+          if (digit < t3) {
+            break;
+          }
+          const baseMinusT = base - t3;
+          if (w3 > floor(maxInt / baseMinusT)) {
+            error2("overflow");
+          }
+          w3 *= baseMinusT;
+        }
+        const out = output.length + 1;
+        bias = adapt(i3 - oldi, out, oldi == 0);
+        if (floor(i3 / out) > maxInt - n3) {
+          error2("overflow");
+        }
+        n3 += floor(i3 / out);
+        i3 %= out;
+        output.splice(i3++, 0, n3);
+      }
+      return String.fromCodePoint(...output);
+    };
+    var encode4 = function(input) {
+      const output = [];
+      input = ucs2decode(input);
+      const inputLength = input.length;
+      let n3 = initialN;
+      let delta = 0;
+      let bias = initialBias;
+      for (const currentValue of input) {
+        if (currentValue < 128) {
+          output.push(stringFromCharCode(currentValue));
+        }
+      }
+      const basicLength = output.length;
+      let handledCPCount = basicLength;
+      if (basicLength) {
+        output.push(delimiter);
+      }
+      while (handledCPCount < inputLength) {
+        let m3 = maxInt;
+        for (const currentValue of input) {
+          if (currentValue >= n3 && currentValue < m3) {
+            m3 = currentValue;
+          }
+        }
+        const handledCPCountPlusOne = handledCPCount + 1;
+        if (m3 - n3 > floor((maxInt - delta) / handledCPCountPlusOne)) {
+          error2("overflow");
+        }
+        delta += (m3 - n3) * handledCPCountPlusOne;
+        n3 = m3;
+        for (const currentValue of input) {
+          if (currentValue < n3 && ++delta > maxInt) {
+            error2("overflow");
+          }
+          if (currentValue === n3) {
+            let q3 = delta;
+            for (let k3 = base; ; k3 += base) {
+              const t3 = k3 <= bias ? tMin : k3 >= bias + tMax ? tMax : k3 - bias;
+              if (q3 < t3) {
+                break;
+              }
+              const qMinusT = q3 - t3;
+              const baseMinusT = base - t3;
+              output.push(
+                stringFromCharCode(digitToBasic(t3 + qMinusT % baseMinusT, 0))
+              );
+              q3 = floor(qMinusT / baseMinusT);
+            }
+            output.push(stringFromCharCode(digitToBasic(q3, 0)));
+            bias = adapt(delta, handledCPCountPlusOne, handledCPCount === basicLength);
+            delta = 0;
+            ++handledCPCount;
+          }
+        }
+        ++delta;
+        ++n3;
+      }
+      return output.join("");
+    };
+    var toUnicode = function(input) {
+      return mapDomain(input, function(string3) {
+        return regexPunycode.test(string3) ? decode5(string3.slice(4).toLowerCase()) : string3;
+      });
+    };
+    var toASCII = function(input) {
+      return mapDomain(input, function(string3) {
+        return regexNonASCII.test(string3) ? "xn--" + encode4(string3) : string3;
+      });
+    };
+    var punycode2 = {
+      /**
+       * A string representing the current Punycode.js version number.
+       * @memberOf punycode
+       * @type String
+       */
+      "version": "2.3.1",
+      /**
+       * An object of methods to convert from JavaScript's internal character
+       * representation (UCS-2) to Unicode code points, and back.
+       * @see <https://mathiasbynens.be/notes/javascript-encoding>
+       * @memberOf punycode
+       * @type Object
+       */
+      "ucs2": {
+        "decode": ucs2decode,
+        "encode": ucs2encode
+      },
+      "decode": decode5,
+      "encode": encode4,
+      "toASCII": toASCII,
+      "toUnicode": toUnicode
+    };
+    module.exports = punycode2;
+  }
+});
+
 // node_modules/zod/v4/core/core.js
 var _a;
 // @__NO_SIDE_EFFECTS__
@@ -67016,8 +67255,8 @@ function prefixIssues(path, issues) {
 function unwrapMessage(message) {
   return typeof message === "string" ? message : message?.message;
 }
-function finalizeIssue(iss, ctx, config2) {
-  const message = iss.message ? iss.message : unwrapMessage(iss.inst?._zod.def?.error?.(iss)) ?? unwrapMessage(ctx?.error?.(iss)) ?? unwrapMessage(config2.customError?.(iss)) ?? unwrapMessage(config2.localeError?.(iss)) ?? "Invalid input";
+function finalizeIssue(iss, ctx, config3) {
+  const message = iss.message ? iss.message : unwrapMessage(iss.inst?._zod.def?.error?.(iss)) ?? unwrapMessage(ctx?.error?.(iss)) ?? unwrapMessage(config3.customError?.(iss)) ?? unwrapMessage(config3.localeError?.(iss)) ?? "Invalid input";
   const { inst: _inst, continue: _continue, input: _input, ...rest } = iss;
   rest.path ?? (rest.path = []);
   rest.message = message;
@@ -70300,16 +70539,16 @@ var formatMap = {
 var stringProcessor = (schema, ctx, _json, _params) => {
   const json4 = _json;
   json4.type = "string";
-  const { minimum, maximum, format, patterns, contentEncoding } = schema._zod.bag;
+  const { minimum, maximum, format: format2, patterns, contentEncoding } = schema._zod.bag;
   if (typeof minimum === "number")
     json4.minLength = minimum;
   if (typeof maximum === "number")
     json4.maxLength = maximum;
-  if (format) {
-    json4.format = formatMap[format] ?? format;
+  if (format2) {
+    json4.format = formatMap[format2] ?? format2;
     if (json4.format === "")
       delete json4.format;
-    if (format === "time") {
+    if (format2 === "time") {
       delete json4.format;
     }
   }
@@ -70331,8 +70570,8 @@ var stringProcessor = (schema, ctx, _json, _params) => {
 };
 var numberProcessor = (schema, ctx, _json, _params) => {
   const json4 = _json;
-  const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
-  if (typeof format === "string" && format.includes("int"))
+  const { minimum, maximum, format: format2, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
+  if (typeof format2 === "string" && format2.includes("int"))
     json4.type = "integer";
   else
     json4.type = "number";
@@ -73112,23 +73351,23 @@ var ServerResultSchema = union([
   CreateTaskResultSchema
 ]);
 var McpError = class _McpError extends Error {
-  constructor(code, message, data) {
-    super(`MCP error ${code}: ${message}`);
-    this.code = code;
+  constructor(code2, message, data) {
+    super(`MCP error ${code2}: ${message}`);
+    this.code = code2;
     this.data = data;
     this.name = "McpError";
   }
   /**
    * Factory method to create the appropriate error type based on the error code and data
    */
-  static fromError(code, message, data) {
-    if (code === ErrorCode.UrlElicitationRequired && data) {
+  static fromError(code2, message, data) {
+    if (code2 === ErrorCode.UrlElicitationRequired && data) {
       const errorData = data;
       if (errorData.elicitations) {
         return new UrlElicitationRequiredError(errorData.elicitations, message);
       }
     }
-    return new _McpError(code, message, data);
+    return new _McpError(code2, message, data);
   }
 };
 var UrlElicitationRequiredError = class extends McpError {
@@ -74939,10 +75178,10 @@ import { join } from "node:path";
 
 // ../../mcp-shared/errors.js
 var DataServerError = class extends Error {
-  constructor(message, code = "data_error", details) {
+  constructor(message, code2 = "data_error", details) {
     super(message);
     this.name = new.target.name;
-    this.code = code;
+    this.code = code2;
     this.details = details;
   }
 };
@@ -75192,15 +75431,15 @@ function resolveShippedRoot(relPath, env = process.env, request2 = {}) {
       }
     }
   }
-  const code = request2.code ?? "skills_root_missing";
+  const code2 = request2.code ?? "skills_root_missing";
   try {
-    const repoRoot = resolveRepoRoot(env, { code, subject: request2.subject ?? "the skills tree" });
+    const repoRoot = resolveRepoRoot(env, { code: code2, subject: request2.subject ?? "the skills tree" });
     return { root: checkoutSkillsRoot(repoRoot), shipped_from: "checkout", plugin: null, plugin_version: null };
   } catch (err) {
-    if (!(err instanceof DataServerError) || err.code !== code) throw err;
+    if (!(err instanceof DataServerError) || err.code !== code2) throw err;
     throw new DataServerError(`${err.message}
 
-${rosterLine(installRoot, segment, request2.plugin)}`, code);
+${rosterLine(installRoot, segment, request2.plugin)}`, code2);
   }
 }
 function isDirectory(dir) {
@@ -75267,7 +75506,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "0debc1920a4e";
+var BUILD_STAMP = false ? null : "19aa09e7b5e5";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -75403,10 +75642,10 @@ function defineTool(name, handler, flags) {
   return { name, handler: (args, context) => handler(args, context), flags };
 }
 function dispatchFrom(buildDefinitions, tools, replyText2 = jsonText) {
-  let table2;
+  let table3;
   const call = async (context, name, rawArgs) => {
-    table2 ??= pairTools(buildDefinitions(), tools);
-    const entry4 = table2.get(name);
+    table3 ??= pairTools(buildDefinitions(), tools);
+    const entry4 = table3.get(name);
     if (!entry4) throw new ValidationError(`Unknown tool "${name}"`);
     return entry4.handler(validateToolInput(entry4.definition, rawArgs), context);
   };
@@ -75419,17 +75658,17 @@ function pairTools(definitions, tools) {
     if (entries.has(tool.name)) problems.push(`${tool.name} is listed twice`);
     entries.set(tool.name, tool);
   }
-  const table2 = /* @__PURE__ */ new Map();
+  const table3 = /* @__PURE__ */ new Map();
   for (const definition of definitions) {
     const tool = entries.get(definition.name);
-    if (tool) table2.set(definition.name, { definition, handler: tool.handler, flags: tool.flags });
+    if (tool) table3.set(definition.name, { definition, handler: tool.handler, flags: tool.flags });
     else problems.push(`no handler for ${definition.name}`);
   }
   for (const name of entries.keys()) {
-    if (!table2.has(name)) problems.push(`no definition for ${name}`);
+    if (!table3.has(name)) problems.push(`no definition for ${name}`);
   }
   if (problems.length) throw new DataServerError(`The tool list and its definitions differ: ${problems.join("; ")}`, "internal_error");
-  return table2;
+  return table3;
 }
 var FAULT = /* @__PURE__ */ Symbol("fault");
 async function toolReply(name, run2, replyText2 = jsonText) {
@@ -75537,30 +75776,30 @@ function withCallLog(dispatch, toolNames, env = process.env) {
   };
 }
 function callRecord(tool, started, ms2, reply, session) {
-  const text11 = reply?.content.map((c3) => c3.type === "text" ? c3.text : "").join("") ?? "";
-  const record2 = { t: started.toISOString(), tool, ms: ms2, outcome: "ok", bytes: Buffer.byteLength(text11, "utf-8"), build: BUILD_STAMP, session };
+  const text12 = reply?.content.map((c3) => c3.type === "text" ? c3.text : "").join("") ?? "";
+  const record2 = { t: started.toISOString(), tool, ms: ms2, outcome: "ok", bytes: Buffer.byteLength(text12, "utf-8"), build: BUILD_STAMP, session };
   if (reply === void 0 || reply.isError) {
     record2.outcome = reply === void 0 || FAULT in reply ? "error" : "refused";
-    const code = errorCode(text11);
-    if (code !== void 0) record2.code = code;
-  } else if (text11.includes('"timings"')) {
-    const phases = phaseTimings(text11);
+    const code2 = errorCode(text12);
+    if (code2 !== void 0) record2.code = code2;
+  } else if (text12.includes('"timings"')) {
+    const phases = phaseTimings(text12);
     if (phases) record2.phases = phases;
   }
   return record2;
 }
-function errorCode(text11) {
+function errorCode(text12) {
   try {
-    const code = JSON.parse(text11).error?.code;
-    return typeof code === "string" && ERROR_CODE.test(code) ? code : void 0;
+    const code2 = JSON.parse(text12).error?.code;
+    return typeof code2 === "string" && ERROR_CODE.test(code2) ? code2 : void 0;
   } catch {
     return void 0;
   }
 }
-function phaseTimings(text11) {
+function phaseTimings(text12) {
   let timings;
   try {
-    timings = JSON.parse(text11).timings;
+    timings = JSON.parse(text12).timings;
   } catch {
     return void 0;
   }
@@ -75721,8 +75960,8 @@ async function runPowerShell(label2, script2, stdin = "") {
   child.stderr.on("data", (chunk2) => stderr.push(chunk2));
   const done = new Promise((resolve12, reject) => {
     child.on("error", reject);
-    child.on("exit", (code) => {
-      if (code === 0) resolve12();
+    child.on("exit", (code2) => {
+      if (code2 === 0) resolve12();
       else reject(new Error(`${label2} failed: ${Buffer.concat(stderr).toString("utf8").trim()}`));
     });
   });
@@ -75992,20 +76231,20 @@ async function callItems(env, fn2, body2) {
       init: { method: "POST", headers: { "Content-Type": "application/json", apikey: staticKey }, body: JSON.stringify(body2) }
     });
   } catch (err) {
-    const { detail: detail2, code } = failure(err);
-    const reset = RESET_CODES.has(code ?? "") || err.name === "TimeoutError";
+    const { detail: detail2, code: code2 } = failure(err);
+    const reset = RESET_CODES.has(code2 ?? "") || err.name === "TimeoutError";
     throw reset ? new CloudResetError(detail2) : new CloudUnreachableError(detail2);
   }
   if (!res.ok) throw new CloudUnreachableError(`HTTP ${res.status}`);
-  let text11;
+  let text12;
   try {
-    text11 = await res.text();
+    text12 = await res.text();
   } catch (err) {
     throw new CloudResetError(failure(err).detail);
   }
   let json4;
   try {
-    json4 = JSON.parse(text11);
+    json4 = JSON.parse(text12);
   } catch {
     throw new CloudUnreachableError("a reply that is not JSON");
   }
@@ -76096,9 +76335,9 @@ function runPythonDriver(opts) {
     });
     if (res.error) {
       lastErr = res.error.message;
-      const code = res.error.code;
-      if (code === "ENOENT") continue;
-      if (code === "ETIMEDOUT") {
+      const code2 = res.error.code;
+      if (code2 === "ENOENT") continue;
+      if (code2 === "ETIMEDOUT") {
         throw new PythonTimeoutError(
           `${label2} (${py}) did not finish within ${timeoutMs}ms and was killed.` + (timeoutAdvice2 ? ` ${timeoutAdvice2}` : "") + removeKilledStaging(tag, stagingDescription)
         );
@@ -76924,7 +77163,7 @@ function practicePrefixed(name) {
   return `practice_data__${name}`;
 }
 function ruleOverlayRecordSchema() {
-  const text11 = { type: "string" };
+  const text12 = { type: "string" };
   const isoDate = { type: "string", description: "ISO date, YYYY-MM-DD" };
   const orNull = (schema) => ({ anyOf: [schema, { type: "null" }] });
   const object3 = (properties2) => ({
@@ -76936,12 +77175,12 @@ function ruleOverlayRecordSchema() {
   const properties = {
     record_id: { type: "string", description: "UUID; omit on a first write" },
     jurisdiction: { type: "string", enum: ["CA-BC"] },
-    enactment: object3({ name: text11, citation: text11, civix_id: text11 }),
-    amending_instrument: object3({ reg: text11, oic: orNull(text11), commencement: isoDate }),
+    enactment: object3({ name: text12, citation: text12, civix_id: text12 }),
+    amending_instrument: object3({ reg: text12, oic: orNull(text12), commencement: isoDate }),
     deadline_type: { type: "string", description: "snake_case" },
     anchor_type: { type: "string", description: "snake_case" },
     base: orNull({ type: "string", description: "snake_case anchor or deadline type counted from; null in a repeal record" }),
-    rule_ref: text11,
+    rule_ref: text12,
     offset: orNull({
       ...object3({
         value: { type: "integer", minimum: 0 },
@@ -76953,9 +77192,9 @@ function ruleOverlayRecordSchema() {
     }),
     counting: orNull({ type: "string", enum: COUNTING_METHODS }),
     semantics: orNull({ type: "string", enum: SEMANTICS }),
-    description: text11,
+    description: text12,
     verbatim: { type: "string", description: "the enacting text, also for a repeal record" },
-    source: object3({ url: text11, fetched_at: isoDate, kind: { type: "string", enum: SOURCE_KINDS } }),
+    source: object3({ url: text12, fetched_at: isoDate, kind: { type: "string", enum: SOURCE_KINDS } }),
     effective_from: isoDate,
     effective_to: orNull(isoDate),
     supersedes: { type: "array", items: { type: "string" }, description: "shipped:<deadline_type> or another record's record_id" },
@@ -78168,16 +78407,16 @@ function mergeVenues(shipped, local) {
       const row2 = objectAt(raw, shipped.file, where);
       onlyKeys(row2, VENUE_ROW_KEYS, shipped.file, where);
       checkStamp(row2, shipped.file, where);
-      const code = stringAt(row2, "code", shipped.file, where, true);
-      if (byCode.has(code)) invalid(shipped.file, where, `code "${code}" appears twice`);
+      const code2 = stringAt(row2, "code", shipped.file, where, true);
+      if (byCode.has(code2)) invalid(shipped.file, where, `code "${code2}" appears twice`);
       const venue = {
-        code,
+        code: code2,
         name: stringAt(row2, "name", shipped.file, where, true),
         aliases: aliasesOf(row2, shipped.file, where, "shipped", true),
         ...provenance(row2, shipped.file, where),
         layer: "shipped"
       };
-      byCode.set(code, venue);
+      byCode.set(code2, venue);
       view.venues.push(venue);
     });
     arrayAt(doc, "not_venues", shipped.file, "the index", false).forEach((raw, i3) => {
@@ -78200,24 +78439,24 @@ function mergeVenues(shipped, local) {
       const row2 = objectAt(raw, local.file, where);
       onlyKeys(row2, VENUE_ROW_KEYS, local.file, where);
       checkStamp(row2, local.file, where);
-      const code = stringAt(row2, "code", local.file, where, true);
+      const code2 = stringAt(row2, "code", local.file, where, true);
       const aliases = aliasesOf(row2, local.file, where, "local", false);
-      const existing = byCode.get(code);
+      const existing = byCode.get(code2);
       if (existing) {
-        if (existing.layer === "local") invalid(local.file, where, `code "${code}" appears twice`);
-        compare2(conflicts, code, "name", existing.name, stringAt(row2, "name", local.file, where, false));
+        if (existing.layer === "local") invalid(local.file, where, `code "${code2}" appears twice`);
+        compare2(conflicts, code2, "name", existing.name, stringAt(row2, "name", local.file, where, false));
         unionAliases(existing.aliases, aliases);
         return;
       }
       const venue = {
-        code,
+        code: code2,
         name: stringAt(row2, "name", local.file, where, true),
         aliases,
         ...provenance(row2, local.file, where),
         layer: "local"
       };
       if (row2.aliases === void 0) invalid(local.file, `${where}.aliases`, "is required on a venue learned only in the overlay");
-      byCode.set(code, venue);
+      byCode.set(code2, venue);
       view.venues.push(venue);
     });
     arrayAt(doc, "not_venues", local.file, "the index", false).forEach((raw, i3) => {
@@ -78316,13 +78555,13 @@ function normalizeName(name) {
   if (words2.length > 1 && words2[0] === "the") words2.shift();
   return words2.join("");
 }
-function wordsOf(text11) {
-  return text11.normalize("NFKC").toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+function wordsOf(text12) {
+  return text12.normalize("NFKC").toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
 }
 var VENUE_STOPWORDS = [["court"], ["tribunal"], ["of"], ["the"], ["british", "columbia"]];
 var KIND_STOPWORDS = [["of"], ["the"], ["form"]];
-function tokensOf(text11, stopwords) {
-  const words2 = wordsOf(text11);
+function tokensOf(text12, stopwords) {
+  const words2 = wordsOf(text12);
   const out = [];
   for (let i3 = 0; i3 < words2.length; ) {
     const stop = stopwords.find((phrase) => phrase.every((word, k3) => words2[i3 + k3] === word));
@@ -78339,59 +78578,59 @@ function initialsOf(name) {
   const words2 = name.normalize("NFKC").match(/[\p{L}\p{N}]+/gu) ?? [];
   return words2.filter((word) => new RegExp("^\\p{Lu}", "u").test(word)).map((word) => word[0]).join("").toLowerCase();
 }
-function withoutAffix(code, affix) {
-  if (affix === "" || code === affix) return [];
+function withoutAffix(code2, affix) {
+  if (affix === "" || code2 === affix) return [];
   const out = [];
-  if (code.startsWith(affix)) out.push(code.slice(affix.length));
-  if (code.endsWith(affix)) out.push(code.slice(0, code.length - affix.length));
+  if (code2.startsWith(affix)) out.push(code2.slice(affix.length));
+  if (code2.endsWith(affix)) out.push(code2.slice(0, code2.length - affix.length));
   return out;
 }
 function resolveAmong(given, entities, jurisdiction, stopwords) {
   const n3 = normalizeName(given);
   if (n3 === "") throw new ValidationError(`resolve: ${JSON.stringify(given)} holds no letters or digits`);
   const equal = [];
-  for (const entity of entities) {
-    const hit = entity.names.find((candidate) => normalizeName(candidate.text) === n3);
-    if (hit) equal.push({ entity, via: hit.via });
+  for (const entity2 of entities) {
+    const hit = entity2.names.find((candidate) => normalizeName(candidate.text) === n3);
+    if (hit) equal.push({ entity: entity2, via: hit.via });
   }
   if (equal.length === 1) {
-    const { entity, via } = equal[0];
+    const { entity: entity2, via } = equal[0];
     return {
       result: "resolved",
-      code: entity.code,
-      name: entity.name,
+      code: entity2.code,
+      name: entity2.name,
       via,
-      row: entity.row,
-      ...entity.not_venue ? { not_venue: entity.not_venue } : {}
+      row: entity2.row,
+      ...entity2.not_venue ? { not_venue: entity2.not_venue } : {}
     };
   }
   if (equal.length > 1) {
-    return { result: "ambiguous", alias_split: equal.map(({ entity, via }) => ({ code: entity.code, name: entity.name, via })) };
+    return { result: "ambiguous", alias_split: equal.map(({ entity: entity2, via }) => ({ code: entity2.code, name: entity2.name, via })) };
   }
   const j3 = normalizeName(jurisdiction);
   const givenTokens = tokensOf(given, stopwords);
   const ours2 = new Set(givenTokens);
   const candidates = [];
-  const add = (entity, rule) => {
-    if (!candidates.some((c3) => c3.code === entity.code && c3.name === entity.name && c3.rule === rule)) {
-      candidates.push({ code: entity.code, name: entity.name, rule });
+  const add = (entity2, rule) => {
+    if (!candidates.some((c3) => c3.code === entity2.code && c3.name === entity2.name && c3.rule === rule)) {
+      candidates.push({ code: entity2.code, name: entity2.name, rule });
     }
   };
-  for (const entity of entities) {
-    if (entity.affix) {
-      const code = normalizeName(entity.code);
-      if (withoutAffix(code, j3).includes(n3) || j3 + n3 === code) add(entity, "jurisdiction_affix");
+  for (const entity2 of entities) {
+    if (entity2.affix) {
+      const code2 = normalizeName(entity2.code);
+      if (withoutAffix(code2, j3).includes(n3) || j3 + n3 === code2) add(entity2, "jurisdiction_affix");
     }
-    const initials = initialsOf(entity.name);
-    if (initials !== "" && [initials, j3 + initials, initials + j3, ...withoutAffix(initials, j3)].includes(n3)) add(entity, "acronym");
+    const initials = initialsOf(entity2.name);
+    if (initials !== "" && [initials, j3 + initials, initials + j3, ...withoutAffix(initials, j3)].includes(n3)) add(entity2, "acronym");
     if (givenTokens.length > 0) {
-      for (const { text: text11, via } of entity.names) {
+      for (const { text: text12, via } of entity2.names) {
         if (via === "code") continue;
-        const other = tokensOf(text11, stopwords);
+        const other = tokensOf(text12, stopwords);
         if (other.length === 0) continue;
         const theirs = new Set(other);
         if (givenTokens.every((t3) => theirs.has(t3)) || other.every((t3) => ours2.has(t3))) {
-          add(entity, "token_containment");
+          add(entity2, "token_containment");
           break;
         }
       }
@@ -78419,7 +78658,7 @@ function resolveVenue(view, given, jurisdiction) {
     entities.push({
       code: NO_VENUE,
       name: nv.name,
-      names: [nv.name, ...nv.aliases.map((alias) => alias.name)].map((text11) => ({ text: text11, via: "not_venue" })),
+      names: [nv.name, ...nv.aliases.map((alias) => alias.name)].map((text12) => ({ text: text12, via: "not_venue" })),
       row: NO_VENUE_ROW,
       not_venue: nv,
       affix: false
@@ -78943,7 +79182,7 @@ function fileToolDefinitions() {
     },
     {
       name: "research_filing__save_answer",
-      description: "Save `text` as a new `.md` file in a matter `6. LAW` folder, ending in a generated `## Legend` of the work markers it prints, which replaces any `## Legend` at its end; never overwrites. `filename` is a bare `.md` name with none of the characters Windows forbids in a file name (`< > : \" | ? *`, otherwise `invalid_filename`); if it is taken, the file becomes `<stem> vN.md`, N one above the highest version present. `destination_dir` is an absolute host path inside a `6. LAW` tree; if missing, it is created when its parent is already in that tree (the final folder only). Returns {path, filename, bytes, created_dir, sha256}, `sha256` being the hex digest of the bytes written. Pass `from_scratch` instead of `text` to copy a file `research_filing__write_scratch` wrote: the absolute path it returned. Its bytes are saved as `text` is and the scratch file is kept. It must sit directly in the research-agent scratchpad of the matter whose `6. LAW` tree holds `destination_dir`; anywhere else is refused `not_scratch`, nothing written. Pass `from_render` instead to file a research memo's or case brief's Writing: the absolute path of the `.md` mockup `drafting_forms__render` returned, inside the 0. DRAFT folder of the same matter; it is saved without the mockup's own header (its first `---` block, which names the matter) and the title line after it, and anywhere else is refused `not_render`. A memo's copy also leaves out the mockup's mockup-only lines, and the result returns them as `mockup_only_lines` when there are any. A case brief's mockup is also saved without its work markers, trace comments and `## Legend`, and one still holding a gap line (a slot not written, an item its Writing does not cite, or a Holding, Ratio or Obiter item but a `None.` without its closing `statement_of_law_id` comment, its passage or its pinpoint) is refused `brief_incomplete`, nothing written. Exactly one of `text`, `from_scratch` and `from_render`; more or none is refused `invalid_argument`. When the answer serves a job this session holds, also pass `db_path`, `ticket_id` and `session_token` (all three or none), with the `claim_no` this session's `drafting_data__assign_job` returned: the save is then recorded against the job, so its card lists the answer and its idle clock restarts, and the result carries `job: {ticket_id, recorded, note}`. Refused before anything is written: `invalid_job`, `invalid_ticket_id`, `invalid_session_token`, `invalid_claim_no`, `stale_claim` (work begun under another claim of the job), `not_found` (no such job), `schema_below_v52`, `not_research_job` (the job's title lacks `Legal research: ` and it is no case brief, note-up, other fixed-text job or job holding a Proposal's key) and `not_held` (the job is not this session's under that claim: taken over, released, shelved or completed; report it and stop, saving nothing for it). `recorded: false` means a take-over landed during the save: the file is saved, so report it and stop. `record_failed` means the file was saved but the record was not: never save it again.",
+      description: "Save `text` as a `.md` file in a matter `6. LAW` folder, ending in a generated `## Legend` of the work markers it prints, which replaces any `## Legend` at its end, and a hidden save marker. `filename` is a bare `.md` name with none of the characters Windows forbids in a file name (`< > : \" | ? *`, otherwise `invalid_filename`); a file already there is replaced when this tool saved it and it is unedited since, else refused `foreign_file`, nothing written. `destination_dir` is an absolute host path inside a `6. LAW` tree; if missing, it is created when its parent is already in that tree (the final folder only). Returns {path, filename, bytes, created_dir, sha256}, `sha256` being the hex digest of the bytes written. Pass `from_scratch` instead of `text` to copy a file `research_filing__write_scratch` wrote: the absolute path it returned. Its bytes are saved as `text` is and the scratch file is kept. It must sit directly in the research-agent scratchpad of the matter whose `6. LAW` tree holds `destination_dir`; anywhere else is refused `not_scratch`, nothing written. Pass `from_render` instead to file a research memo's or case brief's Writing: the absolute path of the `.md` mockup `drafting_forms__render` returned, inside the 0. DRAFT folder of the same matter; it is saved without the mockup's own header (its first `---` block, which names the matter) and the title line after it, and anywhere else is refused `not_render`. A memo's copy also leaves out the mockup's mockup-only lines, and the result returns them as `mockup_only_lines` when there are any. A case brief's mockup is also saved without its work markers, trace comments and `## Legend`, and one still holding a gap line (a slot not written, an item its Writing does not cite, or a Holding, Ratio or Obiter item but a `None.` without its closing `statement_of_law_id` comment, its passage or its pinpoint) is refused `brief_incomplete`, nothing written. Exactly one of `text`, `from_scratch` and `from_render`; more or none is refused `invalid_argument`. When the answer serves a job this session holds, also pass `db_path`, `ticket_id` and `session_token` (all three or none), with the `claim_no` this session's `drafting_data__assign_job` returned: the save is then recorded against the job, so its card lists the answer and its idle clock restarts, and the result carries `job: {ticket_id, recorded, note}`. Refused before anything is written: `invalid_job`, `invalid_ticket_id`, `invalid_session_token`, `invalid_claim_no`, `stale_claim` (work begun under another claim of the job), `not_found` (no such job), `schema_below_v52`, `not_research_job` (the job's title lacks `Legal research: ` and it is no case brief, note-up, other fixed-text job or job holding a Proposal's key) and `not_held` (the job is not this session's under that claim: taken over, released, shelved or completed; report it and stop, saving nothing for it). `recorded: false` means a take-over landed during the save: the file is saved, so report it and stop. `record_failed` means the file was saved but the record was not: never save it again.",
       inputSchema: {
         type: "object",
         properties: {
@@ -81182,9 +81421,9 @@ import { createServer, get } from "node:http";
 import { existsSync as existsSync6, readFileSync as readFileSync5 } from "node:fs";
 var DEFAULT_PAGE_PORTS = { lawyer: 47615, "file-manager": 47616, timekeeping: 47617 };
 var PagePortError = class extends Error {
-  constructor(message, code) {
+  constructor(message, code2) {
     super(message);
-    this.code = code;
+    this.code = code2;
   }
   code;
 };
@@ -81192,8 +81431,8 @@ var isPort = (value2) => typeof value2 === "number" && Number.isInteger(value2) 
 function pagePort(bundle, env) {
   const path = configPath(env);
   if (!existsSync6(path)) return DEFAULT_PAGE_PORTS[bundle];
-  const config2 = JSON.parse(readFileSync5(path, "utf-8"));
-  const ports = config2?.page_ports;
+  const config3 = JSON.parse(readFileSync5(path, "utf-8"));
+  const ports = config3?.page_ports;
   if (ports !== void 0 && ports !== null) {
     if (typeof ports !== "object" || Array.isArray(ports)) {
       throw new PagePortError(`${path}: page_ports must be an object mapping a plugin to its port, got ${JSON.stringify(ports)}`, "invalid_page_ports");
@@ -81205,7 +81444,7 @@ function pagePort(bundle, env) {
     }
   }
   if (bundle === "lawyer") {
-    const value2 = config2?.page_api_port;
+    const value2 = config3?.page_api_port;
     if (value2 !== void 0 && value2 !== null) {
       if (!isPort(value2)) throw new PagePortError(`${path}: page_api_port must be a whole number from 1 to 65535, got ${JSON.stringify(value2)}`, "invalid_page_api_port");
       return value2;
@@ -81390,13 +81629,13 @@ function credentialListener(options) {
 var pending;
 var port = credentialListener({ bundle: "lawyer", prefix: "cloud-key", handle });
 async function serveKeyPage(save3) {
-  const link2 = randomBytes3(24).toString("hex");
-  pending = { link: link2, save: save3 };
-  return `http://127.0.0.1:${await port()}/cloud-key/${link2}`;
+  const link3 = randomBytes3(24).toString("hex");
+  pending = { link: link3, save: save3 };
+  return `http://127.0.0.1:${await port()}/cloud-key/${link3}`;
 }
-async function handle(req, res, link2) {
+async function handle(req, res, link3) {
   const current = pending;
-  if (!current || link2 !== current.link) {
+  if (!current || link3 !== current.link) {
     return sendPage(res, 404, "This link has expired", "<p>Return to Claude and ask for a new link.</p>");
   }
   if (req.method === "GET") return sendPage(res, 200, TITLE, FORM);
@@ -81426,8 +81665,8 @@ function sendPage(res, status3, title2, body2, style = STYLE) {
   );
 }
 var STYLE = "body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#fafafa;color:#222}main{max-width:32rem;margin:2rem auto}input{display:block;width:100%;box-sizing:border-box;margin:.5rem 0 1rem;padding:.5rem;font-size:1rem}button{padding:.5rem 1rem;font-size:1rem}.error{color:#a00}.note{color:#555;font-size:.9rem}@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note{color:#aaa}}";
-function escape2(text11) {
-  return text11.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
+function escape2(text12) {
+  return text12.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
 }
 
 // src/local-page/token.ts
@@ -81538,13 +81777,13 @@ ${canonicalJson2(rest)}`;
   };
 }
 async function servePage(name, args, key) {
-  const link2 = randomBytes5(24).toString("hex");
-  pending2 = { link: link2, nonce: randomBytes5(24).toString("hex"), key, name, args };
-  return `http://127.0.0.1:${await port2()}/approve/${link2}`;
+  const link3 = randomBytes5(24).toString("hex");
+  pending2 = { link: link3, nonce: randomBytes5(24).toString("hex"), key, name, args };
+  return `http://127.0.0.1:${await port2()}/approve/${link3}`;
 }
-async function handle2(req, res, link2) {
+async function handle2(req, res, link3) {
   const current = pending2;
-  if (!current || link2 !== current.link) {
+  if (!current || link3 !== current.link) {
     return page(res, 404, "This link has expired", "<p>Return to Claude and ask for the step again.</p>");
   }
   if (req.method === "GET") return page(res, 200, "Approve this step", body(current));
@@ -81566,8 +81805,8 @@ async function handle2(req, res, link2) {
   json(res, 200, { approved: true });
 }
 function body(current) {
-  const text11 = pageText(current.name, current.args);
-  return `<p class="warning">${escape2(text11.warning)}</p><p>${escape2(text11.step)}</p><p class="note">Approve only a step you asked Probanda to take.</p><button id="approve" type="button">Approve</button><p id="result" role="status"></p><script>const nonce=${JSON.stringify(current.nonce)};document.getElementById('approve').addEventListener('click',async(e)=>{e.target.disabled=true;const out=document.getElementById('result');try{const r=await fetch(location.pathname,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nonce})});out.textContent=r.ok?'Approved. You can close this tab and tell Claude it is approved.':'Not approved: this link has expired. Return to Claude and ask for the step again.';}catch{out.textContent='Not approved: Probanda did not answer. Return to Claude and ask for the step again.';}});</script>`;
+  const text12 = pageText(current.name, current.args);
+  return `<p class="warning">${escape2(text12.warning)}</p><p>${escape2(text12.step)}</p><p class="note">Approve only a step you asked Probanda to take.</p><button id="approve" type="button">Approve</button><p id="result" role="status"></p><script>const nonce=${JSON.stringify(current.nonce)};document.getElementById('approve').addEventListener('click',async(e)=>{e.target.disabled=true;const out=document.getElementById('result');try{const r=await fetch(location.pathname,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nonce})});out.textContent=r.ok?'Approved. You can close this tab and tell Claude it is approved.':'Not approved: this link has expired. Return to Claude and ask for the step again.';}catch{out.textContent='Not approved: Probanda did not answer. Return to Claude and ask for the step again.';}});</script>`;
 }
 function page(res, status3, title2, content) {
   html(
@@ -81663,9 +81902,9 @@ function groupBy(rows5, field) {
   const groups = /* @__PURE__ */ new Map();
   for (const row2 of rows5) {
     const key = String(row2[field]);
-    const list3 = groups.get(key) ?? [];
-    list3.push(row2);
-    groups.set(key, list3);
+    const list4 = groups.get(key) ?? [];
+    list4.push(row2);
+    groups.set(key, list4);
   }
   return groups;
 }
@@ -81839,7 +82078,7 @@ async function ar_data(store) {
   const items2 = store.items();
   const clients = loadClientsById(items2);
   const cutoffByMatter = /* @__PURE__ */ new Map();
-  for (const [id, list3] of groupBy(rowsOf(items2, "invoice"), "matter_id")) cutoffByMatter.set(id, effectiveCutoff(list3));
+  for (const [id, list4] of groupBy(rowsOf(items2, "invoice"), "matter_id")) cutoffByMatter.set(id, effectiveCutoff(list4));
   const wipByMatter = /* @__PURE__ */ new Map();
   for (const entry4 of rowsOf(items2, "time_entry")) {
     if (entry4.billable !== true) continue;
@@ -82299,11 +82538,11 @@ function assertRelativeSyntax(relative6, label2) {
     throw new PathOutOfScopeError(`${label2} must not contain a '..' segment: ${relative6}`);
   }
 }
-function canonicalRoot(root, missingMessage2, code = "skills_root_missing") {
+function canonicalRoot(root, missingMessage2, code2 = "skills_root_missing") {
   try {
     return realpathSync.native(root);
   } catch {
-    throw new DataServerError(missingMessage2, code);
+    throw new DataServerError(missingMessage2, code2);
   }
 }
 function resolveWithin(canonRoot, relative6, label2, mustExist = true) {
@@ -82661,11 +82900,11 @@ function readLayerBytes(abs, label2) {
   try {
     return readFileSync8(abs);
   } catch (err) {
-    const code = err.code;
-    if (code === "ENOENT") throw new DataServerError(`${label2} not found: ${abs}`, "not_found");
-    if (code === "UNKNOWN" || code === "EIO") {
+    const code2 = err.code;
+    if (code2 === "ENOENT") throw new DataServerError(`${label2} not found: ${abs}`, "not_found");
+    if (code2 === "UNKNOWN" || code2 === "EIO") {
       throw new DataServerError(
-        `${label2} exists but could not be read (${code}): ${abs}. It is most likely a OneDrive online-only file that is not downloaded. Open its folder in File Explorer, choose "Always keep on this device", and retry.`,
+        `${label2} exists but could not be read (${code2}): ${abs}. It is most likely a OneDrive online-only file that is not downloaded. Open its folder in File Explorer, choose "Always keep on this device", and retry.`,
         "not_downloaded"
       );
     }
@@ -82679,13 +82918,13 @@ function readLayerFiles(loc, label2) {
     if (type === null) return null;
     if (type === "dir") throw new DataServerError(`${label2} is a folder, not a file: ${loc.kp.path} (use knowledge__list)`, "not_a_file");
     const bytes = readLayerBytes(root.abs, label2);
-    const text11 = bytes.toString("utf-8");
-    return { layer, abs: root.abs, bytes, text: text11.startsWith("\uFEFF") ? text11.slice(1) : text11 };
+    const text12 = bytes.toString("utf-8");
+    return { layer, abs: root.abs, bytes, text: text12.startsWith("\uFEFF") ? text12.slice(1) : text12 };
   };
   return { shipped: read3("shipped", loc.shipped), local: read3("local", loc.local) };
 }
 function identicalText(a3, b3) {
-  const lf = (text11) => text11.replace(/\r\n?/g, "\n");
+  const lf = (text12) => text12.replace(/\r\n?/g, "\n");
   return lf(a3) === lf(b3);
 }
 function assertTreeFile(kp, label2) {
@@ -82773,7 +83012,7 @@ function addressList(value2, label2) {
   return value2;
 }
 function contactOp(fields2, id, creating, label2) {
-  const list3 = (value2) => value2 ?? (creating ? [] : void 0);
+  const list4 = (value2) => value2 ?? (creating ? [] : void 0);
   return {
     op: creating ? "create" : "update",
     id,
@@ -82781,10 +83020,10 @@ function contactOp(fields2, id, creating, label2) {
     tags: { entity: fields2.entity },
     data: {
       name: fields2.name,
-      emails: list3(stringList(fields2.emails, `${label2}.emails`)),
-      phones: list3(stringList(fields2.phones, `${label2}.phones`)),
-      addresses: list3(addressList(fields2.addresses, `${label2}.addresses`)),
-      other_names: list3(stringList(fields2.other_names, `${label2}.other_names`)),
+      emails: list4(stringList(fields2.emails, `${label2}.emails`)),
+      phones: list4(stringList(fields2.phones, `${label2}.phones`)),
+      addresses: list4(addressList(fields2.addresses, `${label2}.addresses`)),
+      other_names: list4(stringList(fields2.other_names, `${label2}.other_names`)),
       carddav_url: fields2.carddav_url,
       note: fields2.note
     }
@@ -82961,8 +83200,8 @@ function same(a3, b3) {
 }
 function union2(...lists) {
   const seen = /* @__PURE__ */ new Map();
-  for (const list3 of lists) {
-    for (const entry4 of Array.isArray(list3) ? list3 : []) seen.set(canonicalJson(entry4), seen.get(canonicalJson(entry4)) ?? entry4);
+  for (const list4 of lists) {
+    for (const entry4 of Array.isArray(list4) ? list4 : []) seen.set(canonicalJson(entry4), seen.get(canonicalJson(entry4)) ?? entry4);
   }
   return [...seen.values()];
 }
@@ -83514,9 +83753,9 @@ async function import_invoices(store, args) {
       result.skipped_no_matter += 1;
       continue;
     }
-    const list3 = byMatter.get(matter.id) ?? [];
-    list3.push({ row: row2, matter });
-    byMatter.set(matter.id, list3);
+    const list4 = byMatter.get(matter.id) ?? [];
+    list4.push({ row: row2, matter });
+    byMatter.set(matter.id, list4);
   }
   if (!confirmRegression) {
     const regressions = [];
@@ -83852,14 +84091,14 @@ import { closeSync, openSync, readdirSync as readdirSync8, readFileSync as readF
 import { win32 as pathWin324 } from "node:path";
 var UUID2 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function readLockKey(lock, field) {
-  let text11;
+  let text12;
   try {
-    text11 = readFileSync10(lock, "utf-8");
+    text12 = readFileSync10(lock, "utf-8");
   } catch {
     return null;
   }
   try {
-    const key = JSON.parse(text11)[field];
+    const key = JSON.parse(text12)[field];
     return typeof key === "string" && UUID2.test(key) ? key : "none";
   } catch {
     return "none";
@@ -83893,18 +84132,18 @@ function removeLockIfKey(lock, field, key, stillStale = () => true, waitMs = 0) 
   }
 }
 function unlinkClaim(claim) {
-  let code = "UNKNOWN";
+  let code2 = "UNKNOWN";
   for (let attempt = 0; attempt < 10; attempt++) {
     try {
       unlinkSync4(claim);
       return;
     } catch (err) {
-      code = err.code ?? "UNKNOWN";
-      if (code === "ENOENT") return;
+      code2 = err.code ?? "UNKNOWN";
+      if (code2 === "ENOENT") return;
       sleepSync(50);
     }
   }
-  console.error(`[lock] could not remove the removal claim ${claim}: ${code}`);
+  console.error(`[lock] could not remove the removal claim ${claim}: ${code2}`);
 }
 function orphanClaims(lock) {
   const dir = pathWin324.dirname(lock);
@@ -83922,24 +84161,25 @@ function sleepSync(ms2) {
 
 // src/status-file.ts
 import { renameSync, unlinkSync as unlinkSync5, writeFileSync as writeFileSync3 } from "node:fs";
+import { threadId } from "node:worker_threads";
 function sleepSync2(ms2) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms2);
 }
-function writeStatusFile(target2, text11, { attempts = 10, delayMs = 50 } = {}) {
-  const temp = `${target2}.${process.pid}.tmp`;
+function writeStatusFile(target2, text12, { attempts = 10, delayMs = 50 } = {}) {
+  const temp = `${target2}.${process.pid}.${threadId}.tmp`;
   try {
-    writeFileSync3(temp, text11, "utf-8");
+    writeFileSync3(temp, text12, "utf-8");
   } catch (err) {
     return err.code ?? "UNKNOWN";
   }
-  let code = "UNKNOWN";
+  let code2 = "UNKNOWN";
   for (let attempt = 0; attempt < attempts; attempt++) {
     try {
       renameSync(temp, target2);
       return null;
     } catch (err) {
-      code = err.code ?? "UNKNOWN";
-      if (!["EPERM", "EBUSY", "EACCES"].includes(code)) break;
+      code2 = err.code ?? "UNKNOWN";
+      if (!["EPERM", "EBUSY", "EACCES"].includes(code2)) break;
       if (attempt < attempts - 1) sleepSync2(delayMs);
     }
   }
@@ -83947,7 +84187,7 @@ function writeStatusFile(target2, text11, { attempts = 10, delayMs = 50 } = {}) 
     unlinkSync5(temp);
   } catch {
   }
-  return code;
+  return code2;
 }
 
 // src/file-lock.ts
@@ -83995,9 +84235,9 @@ async function withFileLock(target2, fn2) {
     }
   }
 }
-function writeTextAtomic(target2, text11) {
-  const code = writeStatusFile(target2, text11);
-  if (code) throw new DataServerError(`could not write ${target2}: ${code}`, "write_failed");
+function writeTextAtomic(target2, text12) {
+  const code2 = writeStatusFile(target2, text12);
+  if (code2) throw new DataServerError(`could not write ${target2}: ${code2}`, "write_failed");
 }
 function writeBytesAtomic(target2, bytes) {
   writeTextAtomic(target2, bytes);
@@ -84037,9 +84277,9 @@ function valueLooksSecret(raw) {
   if (value2.length < 6) return false;
   return /\d/.test(value2) || /[a-z]/.test(value2) && /[A-Z]/.test(value2) || /[!@#$%^&*]/.test(value2);
 }
-function holdsCredential(text11) {
-  for (const match of text11.matchAll(CREDENTIAL_LABEL)) if (valueLooksSecret(match[1])) return true;
-  return CREDENTIAL_SHAPES.some((shape) => shape.test(text11));
+function holdsCredential(text12) {
+  for (const match of text12.matchAll(CREDENTIAL_LABEL)) if (valueLooksSecret(match[1])) return true;
+  return CREDENTIAL_SHAPES.some((shape) => shape.test(text12));
 }
 function text2(raw, name, max) {
   if (typeof raw !== "string" || raw.trim() === "") throw new ValidationError(`${name} must be a non-empty string`);
@@ -84326,20 +84566,20 @@ function readFirmProfile(env = process.env, fallback) {
     );
   }
   const roster = rosterOf(firm, paths.firm);
-  const config2 = configPath(env);
-  const machine = existsSync11(config2) ? readJson(config2) : void 0;
+  const config3 = configPath(env);
+  const machine = existsSync11(config3) ? readJson(config3) : void 0;
   const raw = machine?.person;
   const person2 = raw === void 0 || raw === null || raw === "" ? null : raw;
   const quirks = machine?.practice_quirks;
   if (quirks !== void 0 && quirks !== null && typeof quirks !== "string") {
-    throw new ValidationError(`practice_quirks in ${config2} must be a string`);
+    throw new ValidationError(`practice_quirks in ${config3} must be a string`);
   }
   if (person2 !== null && typeof person2 !== "string") {
-    throw new ValidationError(`person in ${config2} must be a string`);
+    throw new ValidationError(`person in ${config3} must be a string`);
   }
   if (person2 !== null && !roster.some((entry4) => entry4.key === person2)) {
     throw new ValidationError(
-      `person "${person2}" in ${config2} is not a key in the firm roster (${paths.firm}). Add a roster_entry with that key, or set person to an existing key, with practice_data__upsert_firm_profile.`
+      `person "${person2}" in ${config3} is not a key in the firm roster (${paths.firm}). Add a roster_entry with that key, or set person to an existing key, with practice_data__upsert_firm_profile.`
     );
   }
   return {
@@ -84404,15 +84644,15 @@ function readZipParts(zip, source, wanted2) {
   return parts;
 }
 var PART_TEXT = /<w:p(?:\s[^>]*?)?(\/?)>|<\/w:p>|<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/g;
-function occurrences(text11, token) {
-  return text11.split(token).length - 1;
+function occurrences(text12, token) {
+  return text12.split(token).length - 1;
 }
 function splitTokens(xml) {
   const split = /* @__PURE__ */ new Set();
   const paragraphs = [];
-  for (const [tag, selfClosing, text11] of xml.matchAll(PART_TEXT)) {
-    if (text11 !== void 0) {
-      paragraphs.at(-1)?.push(text11);
+  for (const [tag, selfClosing, text12] of xml.matchAll(PART_TEXT)) {
+    if (text12 !== void 0) {
+      paragraphs.at(-1)?.push(text12);
     } else if (tag === "</w:p>") {
       const texts = paragraphs.pop() ?? [];
       for (const token of TOKENS) {
@@ -84490,8 +84730,8 @@ async function upsert_firm_profile(args, env = process.env) {
       result.changed.push(field);
     }
   }
-  const config2 = args.person !== void 0 || args.signature !== void 0 || args.practice_quirks !== void 0 ? readConfig(env) : void 0;
-  if (config2 && args.person !== void 0) {
+  const config3 = args.person !== void 0 || args.signature !== void 0 || args.practice_quirks !== void 0 ? readConfig(env) : void 0;
+  if (config3 && args.person !== void 0) {
     const person3 = asString(args.person, "person");
     const rosterSource = firm ?? current;
     if (rosterSource?.roster === void 0) {
@@ -84500,16 +84740,16 @@ async function upsert_firm_profile(args, env = process.env) {
     if (!rosterOf(rosterSource, paths.firm).some((entry4) => entry4.key === person3)) {
       throw new ValidationError(`person "${person3}" is not a key in the firm roster (${paths.firm})`);
     }
-    config2.person = person3;
+    config3.person = person3;
     result.changed.push("person");
   }
-  if (config2 && args.signature !== void 0) {
+  if (config3 && args.signature !== void 0) {
     const signature = asString(args.signature, "signature");
     if (!existsSync11(signature)) throw new NotFoundError(`signature file not found: ${signature}`);
-    config2.signature = signature;
+    config3.signature = signature;
     result.changed.push("signature");
   }
-  if (config2 && args.practice_quirks !== void 0) {
+  if (config3 && args.practice_quirks !== void 0) {
     const quirks = args.practice_quirks;
     if (typeof quirks !== "string") throw new ValidationError("practice_quirks must be a string");
     if (quirks.length > PRACTICE_QUIRKS_MAX) {
@@ -84523,8 +84763,8 @@ async function upsert_firm_profile(args, env = process.env) {
         "use_quirks"
       );
     }
-    if (quirks === "") delete config2.practice_quirks;
-    else config2.practice_quirks = quirks;
+    if (quirks === "") delete config3.practice_quirks;
+    else config3.practice_quirks = quirks;
     result.changed.push("practice_quirks");
   }
   let letterhead;
@@ -84553,7 +84793,7 @@ async function upsert_firm_profile(args, env = process.env) {
     return entry4.role === "lawyer" && entry4.active !== false && fields2.length > 0 ? [{ key: entry4.key, fields: fields2 }] : [];
   });
   if (signers.length > 0) result.signer_fields_missing = signers;
-  const person2 = (config2 ?? readConfig(env)).person;
+  const person2 = (config3 ?? readConfig(env)).person;
   const preparer = roster.find((entry4) => typeof person2 === "string" && entry4.key === person2);
   if (preparer && !preparer.initials) result.preparer_initials_missing = person2;
   if (firm || letterhead || invoiceTemplate) mkdirSync5(dirname7(paths.firm), { recursive: true });
@@ -84569,10 +84809,10 @@ async function upsert_firm_profile(args, env = process.env) {
     writeFileSync4(paths.invoiceTemplate, invoiceTemplate);
     result.written.push(paths.invoiceTemplate);
   }
-  if (config2) {
+  if (config3) {
     for (const target2 of configWritePaths(env)) {
       mkdirSync5(dirname7(target2), { recursive: true });
-      writeJson(target2, config2);
+      writeJson(target2, config3);
       result.written.push(target2);
     }
   }
@@ -84608,16 +84848,16 @@ function folderMapPath(env, key) {
   return join16(folderMapsDir(env), `${key}.json`);
 }
 function machinePerson(env) {
-  const config2 = configPath(env);
-  if (!existsSync12(config2)) return null;
+  const config3 = configPath(env);
+  if (!existsSync12(config3)) return null;
   let person2;
   try {
-    person2 = JSON.parse(readFileSync13(config2, "utf-8"))?.person;
+    person2 = JSON.parse(readFileSync13(config3, "utf-8"))?.person;
   } catch (err) {
-    throw new ValidationError(`${config2} is not valid JSON: ${err.message}`);
+    throw new ValidationError(`${config3} is not valid JSON: ${err.message}`);
   }
   if (person2 === void 0 || person2 === null || person2 === "") return null;
-  if (typeof person2 !== "string") throw new ValidationError(`person in ${config2} must be a string`);
+  if (typeof person2 !== "string") throw new ValidationError(`person in ${config3} must be a string`);
   return person2;
 }
 function splitGlob(glob) {
@@ -84807,8 +85047,8 @@ function practiceDb(root) {
 function rootWorks(root) {
   return typeof root === "string" && root !== "" && isDir(root) && isFile(practiceDb(root));
 }
-function keysMissing(config2) {
-  return DOCUMENTED_KEYS.filter((key) => config2[key] === void 0 || config2[key] === null || config2[key] === "");
+function keysMissing(config3) {
+  return DOCUMENTED_KEYS.filter((key) => config3[key] === void 0 || config3[key] === null || config3[key] === "");
 }
 function redirectedCopies(env) {
   const packages = join17(env.LOCALAPPDATA || join17(homedir6(), "AppData", "Local"), "Packages");
@@ -84880,17 +85120,17 @@ async function config_status(args, env = process.env) {
   }
   if (status3.exists && status3.path) {
     try {
-      const config2 = JSON.parse(readFileSync14(status3.path, "utf-8"));
-      status3.keys_present = Object.keys(config2);
-      status3.keys_missing = keysMissing(config2);
-      if (typeof config2.practice_quirks === "string" && config2.practice_quirks !== "") {
-        status3.practice_quirks = config2.practice_quirks;
+      const config3 = JSON.parse(readFileSync14(status3.path, "utf-8"));
+      status3.keys_present = Object.keys(config3);
+      status3.keys_missing = keysMissing(config3);
+      if (typeof config3.practice_quirks === "string" && config3.practice_quirks !== "") {
+        status3.practice_quirks = config3.practice_quirks;
       }
       status3.practice_quirks = renderQuirksNote(env) ?? status3.practice_quirks;
-      if (typeof config2.case_data_root === "string" && config2.case_data_root !== "") {
-        status3.case_data_root = config2.case_data_root;
-        status3.root_exists = isDir(config2.case_data_root);
-        status3.practice_db_exists = rootWorks(config2.case_data_root);
+      if (typeof config3.case_data_root === "string" && config3.case_data_root !== "") {
+        status3.case_data_root = config3.case_data_root;
+        status3.root_exists = isDir(config3.case_data_root);
+        status3.practice_db_exists = rootWorks(config3.case_data_root);
       }
     } catch (err) {
       status3.parse_error = err.message;
@@ -84927,34 +85167,34 @@ async function config_set_root(args, env = process.env) {
     );
   }
   const created = !existsSync13(path);
-  let config2 = { version: 1 };
+  let config3 = { version: 1 };
   if (!created) {
     try {
-      config2 = JSON.parse(readFileSync14(path, "utf-8"));
+      config3 = JSON.parse(readFileSync14(path, "utf-8"));
     } catch (err) {
       throw new ValidationError(`${path} is not valid JSON (${err.message}); repair it by hand. Nothing was written.`);
     }
-    if (config2 === null || typeof config2 !== "object" || Array.isArray(config2)) {
+    if (config3 === null || typeof config3 !== "object" || Array.isArray(config3)) {
       throw new ValidationError(`${path} does not hold a JSON object; repair it by hand. Nothing was written.`);
     }
-    if (rootWorks(config2.case_data_root)) {
+    if (rootWorks(config3.case_data_root)) {
       throw new DataServerError(
-        `Refused: ${path} already sets case_data_root to ${config2.case_data_root}, which holds _practice\\practice.db. A working root is never repointed, because every running session reads it. Nothing was written.`,
+        `Refused: ${path} already sets case_data_root to ${config3.case_data_root}, which holds _practice\\practice.db. A working root is never repointed, because every running session reads it. Nothing was written.`,
         "root_already_working"
       );
     }
   }
-  const previous = typeof config2.case_data_root === "string" ? config2.case_data_root : null;
-  config2.case_data_root = root;
+  const previous = typeof config3.case_data_root === "string" ? config3.case_data_root : null;
+  config3.case_data_root = root;
   if (initialize) mkdirSync7(join17(root, "_practice"), { recursive: true });
   const written = configWritePaths(env);
   for (const target2 of written) {
     mkdirSync7(dirname9(target2), { recursive: true });
     const temp = `${target2}.${process.pid}.tmp`;
-    writeFileSync6(temp, JSON.stringify(config2, null, 2) + "\n", "utf-8");
+    writeFileSync6(temp, JSON.stringify(config3, null, 2) + "\n", "utf-8");
     renameSync2(temp, target2);
   }
-  const result = { path: written[0], created, previous_case_data_root: previous, case_data_root: root, keys_missing: keysMissing(config2) };
+  const result = { path: written[0], created, previous_case_data_root: previous, case_data_root: root, keys_missing: keysMissing(config3) };
   if (initialize) {
     new PracticeStore(env).pendingCount();
     result.initialized = true;
@@ -84971,11 +85211,11 @@ var INCLUDE = /@@include\(([^)]*)\)@@/g;
 var DATA = "@@data@@";
 function expand(name, files, chain) {
   if (chain.includes(name)) throw new Error(`template include cycle: ${[...chain, name].join(" -> ")}`);
-  const text11 = files[name];
-  if (text11 === void 0) {
+  const text12 = files[name];
+  if (text12 === void 0) {
     throw new Error(`template "${name}" is missing${chain.length ? ` (included by "${chain.at(-1)}")` : ""}`);
   }
-  return text11.replace(INCLUDE, (_3, inner) => expand(inner, files, [...chain, name]));
+  return text12.replace(INCLUDE, (_3, inner) => expand(inner, files, [...chain, name]));
 }
 function composeTemplate(entry4, files) {
   const page2 = expand(entry4, files, []);
@@ -85439,8 +85679,8 @@ async function render_practice_board(store) {
   if (existsSync14(file) && !readFileSync15(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
     throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the Practice Board's marker, so this renderer did not write it`);
   }
-  const code = writeStatusFile(file, renderPracticeBoardHtml(data));
-  if (code !== null) throw new DataServerError(`could not write ${file}: ${code}`);
+  const code2 = writeStatusFile(file, renderPracticeBoardHtml(data));
+  if (code2 !== null) throw new DataServerError(`could not write ${file}: ${code2}`);
   return {
     practice_board_path: file,
     counts: {
@@ -85898,15 +86138,15 @@ function confineRunDir(matter, runId) {
   return real;
 }
 function readProposal(runDir, runId, root) {
-  let text11;
+  let text12;
   try {
-    text11 = readFileSync16(pathWin329.join(runDir, PROPOSAL), "utf-8");
+    text12 = readFileSync16(pathWin329.join(runDir, PROPOSAL), "utf-8");
   } catch {
     return { proposal: null, problem: "no proposal.json" };
   }
   let parsed;
   try {
-    parsed = JSON.parse(text11);
+    parsed = JSON.parse(text12);
   } catch (err) {
     return { proposal: null, problem: `proposal.json does not parse: ${err.message}` };
   }
@@ -85920,16 +86160,16 @@ function requireProposal(runDir, runId, root) {
   return proposal;
 }
 function readApproval(runDir, runId) {
-  let text11;
+  let text12;
   try {
-    text11 = readFileSync16(pathWin329.join(runDir, APPROVAL), "utf-8");
+    text12 = readFileSync16(pathWin329.join(runDir, APPROVAL), "utf-8");
   } catch (err) {
-    const code = err.code;
-    return code === "ENOENT" ? { approval: null } : { approval: null, problem: `approval.json cannot be read (${code})` };
+    const code2 = err.code;
+    return code2 === "ENOENT" ? { approval: null } : { approval: null, problem: `approval.json cannot be read (${code2})` };
   }
   let parsed;
   try {
-    parsed = JSON.parse(text11);
+    parsed = JSON.parse(text12);
   } catch (err) {
     return { approval: null, problem: `approval.json does not parse: ${err.message}` };
   }
@@ -86090,7 +86330,7 @@ import { readFileSync as readFileSync20 } from "node:fs";
 function fail(file, field, rule) {
   throw new DataServerError(`${file}: ${field}: ${rule}`, "invalid_layout");
 }
-function extractJsonBlock(content, file, exactlyOne, code = "invalid_layout") {
+function extractJsonBlock(content, file, exactlyOne, code2 = "invalid_layout") {
   const lines2 = content.split(/\r?\n/);
   let start2 = 0;
   if (lines2[0]?.trimEnd() === "---") {
@@ -86098,26 +86338,26 @@ function extractJsonBlock(content, file, exactlyOne, code = "invalid_layout") {
     start2 = end === -1 ? lines2.length : end + 1;
   }
   const opens = [];
-  let fence = null;
+  let fence2 = null;
   for (let i3 = start2; i3 < lines2.length; i3++) {
     const line = lines2[i3];
-    if (fence === null) {
+    if (fence2 === null) {
       const open = /^(`{3,}|~{3,})/.exec(line);
       if (!open) continue;
-      fence = open[1];
+      fence2 = open[1];
       if (/^```json\s*$/.test(line)) opens.push(i3);
-    } else if (line.trimEnd().length >= fence.length && line.trimEnd() === fence[0].repeat(line.trimEnd().length)) {
-      fence = null;
+    } else if (line.trimEnd().length >= fence2.length && line.trimEnd() === fence2[0].repeat(line.trimEnd().length)) {
+      fence2 = null;
     }
   }
-  if (opens.length === 0) throw new DataServerError(`${file}: has no fenced json block after its front matter`, code);
-  if (exactlyOne && opens.length > 1) throw new DataServerError(`${file}: carries ${opens.length} fenced json blocks; exactly one is allowed`, code);
+  if (opens.length === 0) throw new DataServerError(`${file}: has no fenced json block after its front matter`, code2);
+  if (exactlyOne && opens.length > 1) throw new DataServerError(`${file}: carries ${opens.length} fenced json blocks; exactly one is allowed`, code2);
   const close = lines2.findIndex((line, i3) => i3 > opens[0] && /^```\s*$/.test(line));
-  if (close === -1) throw new DataServerError(`${file}: its fenced json block is never closed`, code);
+  if (close === -1) throw new DataServerError(`${file}: its fenced json block is never closed`, code2);
   try {
     return JSON.parse(lines2.slice(opens[0] + 1, close).join("\n"));
   } catch (err) {
-    throw new DataServerError(`${file}: its fenced json block is not valid JSON: ${err.message}`, code);
+    throw new DataServerError(`${file}: its fenced json block is not valid JSON: ${err.message}`, code2);
   }
 }
 var PROJECTIONS = [
@@ -86180,8 +86420,8 @@ function isCited(value2) {
 function checkRuleRef(ref, file, field) {
   if (typeof ref !== "string" || ref.trim() === "") fail(file, `${field}.rule_ref`, "must be a non-empty string");
 }
-function scalar(block2, key, file, citable) {
-  const raw = block2[key];
+function scalar(block3, key, file, citable) {
+  const raw = block3[key];
   if (!isObject3(raw)) return raw;
   if (!citable) fail(file, key, "never carries a rule_ref; it cannot be cited, confirmed or corrected");
   if (!isCited(raw) || Object.keys(raw).length !== 2) fail(file, key, "a cited scalar is exactly { value, rule_ref }");
@@ -86225,92 +86465,92 @@ function validatePart(part, file, field) {
 }
 function validateTypeBlock(raw, file, context) {
   if (!isObject3(raw)) fail(file, "the layout block", "must be a JSON object");
-  const block2 = raw;
-  for (const key of Object.keys(block2)) {
+  const block3 = raw;
+  for (const key of Object.keys(block3)) {
     if (TYPOGRAPHY.includes(key)) fail(file, key, "typography is not in the layout contract; it belongs to /publish's physical-format file");
     if (!TYPE_FIELDS.includes(key)) fail(file, key, `is not a layout field (allowed: ${TYPE_FIELDS.join(", ")})`);
   }
   for (const key of ["renderer", "needs_forum_parts", "title", "exhibit_numbering"]) {
-    if (!Object.hasOwn(block2, key)) fail(file, key, "is required; a missing required field has no default");
+    if (!Object.hasOwn(block3, key)) fail(file, key, "is required; a missing required field has no default");
   }
-  const renderer = scalar(block2, "renderer", file, false);
+  const renderer = scalar(block3, "renderer", file, false);
   requireEnum(renderer, ["bespoke", "general"], file, "renderer");
-  const needsForum = scalar(block2, "needs_forum_parts", file, false);
+  const needsForum = scalar(block3, "needs_forum_parts", file, false);
   if (typeof needsForum !== "boolean") fail(file, "needs_forum_parts", "must be true or false");
   if (needsForum && context.noVenue) fail(file, "needs_forum_parts", "a type declaring true cannot resolve under _NoVenue");
-  if (Object.hasOwn(block2, "folder_code")) requireString(scalar(block2, "folder_code", file, false), file, "folder_code");
-  requireString(scalar(block2, "title", file, true), file, "title");
-  requireEnum(scalar(block2, "exhibit_numbering", file, true), ["proceeding", "writing"], file, "exhibit_numbering");
+  if (Object.hasOwn(block3, "folder_code")) requireString(scalar(block3, "folder_code", file, false), file, "folder_code");
+  requireString(scalar(block3, "title", file, true), file, "title");
+  requireEnum(scalar(block3, "exhibit_numbering", file, true), ["proceeding", "writing"], file, "exhibit_numbering");
   const general = renderer === "general";
   if (general) {
-    if (!Object.hasOwn(block2, "parts")) fail(file, "parts", "is required on a general type");
-    if (!Array.isArray(block2.parts)) fail(file, "parts", "must be an ordered array");
-    block2.parts.forEach((part, i3) => validatePart(part, file, `parts[${i3}]`));
-  } else if (Object.hasOwn(block2, "parts")) {
+    if (!Object.hasOwn(block3, "parts")) fail(file, "parts", "is required on a general type");
+    if (!Array.isArray(block3.parts)) fail(file, "parts", "must be an ordered array");
+    block3.parts.forEach((part, i3) => validatePart(part, file, `parts[${i3}]`));
+  } else if (Object.hasOwn(block3, "parts")) {
     fail(file, "parts", "a bespoke type declares no parts");
   }
-  if (Object.hasOwn(block2, "goal_criteria")) requireNameList(block2.goal_criteria, GOAL_CRITERIA, file, "goal_criteria");
-  if (Object.hasOwn(block2, "companions")) requireNameList(block2.companions, COMPANIONS, file, "companions");
-  if (Object.hasOwn(block2, "ingest_inputs")) {
+  if (Object.hasOwn(block3, "goal_criteria")) requireNameList(block3.goal_criteria, GOAL_CRITERIA, file, "goal_criteria");
+  if (Object.hasOwn(block3, "companions")) requireNameList(block3.companions, COMPANIONS, file, "companions");
+  if (Object.hasOwn(block3, "ingest_inputs")) {
     const ingestable = documentTypes().filter((t3) => !t3.flags.includes("never_ingest")).map((t3) => t3.id);
-    requireNameList(block2.ingest_inputs, ingestable, file, "ingest_inputs");
-    if (block2.ingest_inputs.length === 0) fail(file, "ingest_inputs", "must name at least one document type; a type that reads no matter folder omits the key");
+    requireNameList(block3.ingest_inputs, ingestable, file, "ingest_inputs");
+    if (block3.ingest_inputs.length === 0) fail(file, "ingest_inputs", "must name at least one document type; a type that reads no matter folder omits the key");
   }
-  if (Object.hasOwn(block2, "page_limit")) {
-    const limit = scalar(block2, "page_limit", file, true);
+  if (Object.hasOwn(block3, "page_limit")) {
+    const limit = scalar(block3, "page_limit", file, true);
     if (!Number.isInteger(limit) || limit < 1) fail(file, "page_limit", "must be a positive integer of pages");
   }
-  if (Object.hasOwn(block2, "letterhead")) {
-    const letterhead = scalar(block2, "letterhead", file, false);
+  if (Object.hasOwn(block3, "letterhead")) {
+    const letterhead = scalar(block3, "letterhead", file, false);
     if (typeof letterhead !== "boolean") fail(file, "letterhead", "must be true or false");
     if (letterhead && !general) fail(file, "letterhead", "is allowed on general types only");
   }
-  if (Object.hasOwn(block2, "marker")) {
-    requireString(scalar(block2, "marker", file, false), file, "marker");
-    if (scalar(block2, "letterhead", file, false) !== true) fail(file, "marker", "is allowed only where letterhead is true");
+  if (Object.hasOwn(block3, "marker")) {
+    requireString(scalar(block3, "marker", file, false), file, "marker");
+    if (scalar(block3, "letterhead", file, false) !== true) fail(file, "marker", "is allowed only where letterhead is true");
   }
-  if (Object.hasOwn(block2, "signer")) {
-    const signer = scalar(block2, "signer", file, false);
+  if (Object.hasOwn(block3, "signer")) {
+    const signer = scalar(block3, "signer", file, false);
     requireEnum(signer, ["lawyer", "party"], file, "signer");
-    if (signer === "party" && scalar(block2, "letterhead", file, false) === true) {
+    if (signer === "party" && scalar(block3, "letterhead", file, false) === true) {
       fail(file, "signer", "party is allowed only where letterhead is not true; a letterhead render requires a roster lawyer as signer");
     }
   }
-  citedItems(block2, "type", file);
+  citedItems(block3, "type", file);
 }
 function validateVenueBlock(raw, file) {
   if (!isObject3(raw)) fail(file, "the venue block", "must be a JSON object");
-  const block2 = raw;
-  for (const key of Object.keys(block2)) {
+  const block3 = raw;
+  for (const key of Object.keys(block3)) {
     if (!VENUE_FIELDS.includes(key)) fail(file, key, `is not a venue.md field (allowed: ${VENUE_FIELDS.join(", ")})`);
   }
   for (const key of VENUE_FIELDS) {
-    if (!Object.hasOwn(block2, key)) fail(file, key, "is required; a missing required field has no default");
+    if (!Object.hasOwn(block3, key)) fail(file, key, "is required; a missing required field has no default");
   }
-  const caption2 = scalar(block2, "caption_lines", file, true);
+  const caption2 = scalar(block3, "caption_lines", file, true);
   if (Array.isArray(caption2)) {
     if (caption2.length === 0) fail(file, "caption_lines", "must name at least one line");
     caption2.forEach((line, i3) => requireString(line, file, `caption_lines[${i3}]`));
   } else {
     requireString(caption2, file, "caption_lines");
   }
-  requireString(scalar(block2, "file_number_label", file, true), file, "file_number_label");
-  const registry2 = scalar(block2, "registry_label", file, true);
+  requireString(scalar(block3, "file_number_label", file, true), file, "file_number_label");
+  const registry2 = scalar(block3, "registry_label", file, true);
   if (registry2 !== null) requireString(registry2, file, "registry_label");
-  let roles = block2.party_roles;
+  let roles = block3.party_roles;
   if (cited(roles)) {
     checkRuleRef(roles.rule_ref, file, "party_roles");
     roles = roles.value;
   }
   if (!isObject3(roles) || Object.keys(roles).length === 0) fail(file, "party_roles", "must map each role key to its printed label");
   for (const [role2, label2] of Object.entries(roles)) requireString(label2, file, `party_roles.${role2}`);
-  requireString(scalar(block2, "display_label", file, true), file, "display_label");
-  citedItems(block2, "venue", file);
+  requireString(scalar(block3, "display_label", file, true), file, "display_label");
+  citedItems(block3, "venue", file);
 }
 function cited(value2) {
   return isCited(value2) && Object.keys(value2).length === 2;
 }
-function citedItems(block2, kind, file) {
+function citedItems(block3, kind, file) {
   const out = [];
   const add = (rule_ref, field, part) => {
     const ref = rule_ref;
@@ -86320,18 +86560,18 @@ function citedItems(block2, kind, file) {
   };
   const fields2 = kind === "type" ? CITABLE_TYPE_FIELDS : VENUE_FIELDS;
   for (const field of fields2) {
-    if (cited(block2[field])) add(block2[field].rule_ref, field);
+    if (cited(block3[field])) add(block3[field].rule_ref, field);
   }
-  if (kind === "type" && Array.isArray(block2.parts)) {
-    block2.parts.forEach((part, i3) => {
+  if (kind === "type" && Array.isArray(block3.parts)) {
+    block3.parts.forEach((part, i3) => {
       if (isObject3(part) && Object.hasOwn(part, "rule_ref")) add(part.rule_ref, `parts[${i3}]`, i3);
     });
   }
   return out;
 }
 function substituteLayout(raw, kind, corrections, file, context) {
-  const block2 = structuredClone(raw);
-  const items2 = citedItems(block2, kind, file);
+  const block3 = structuredClone(raw);
+  const items2 = citedItems(block3, kind, file);
   const substituted = [];
   for (const correction of corrections) {
     const item = items2.find((candidate) => candidate.rule_ref === correction.rule_ref);
@@ -86343,20 +86583,20 @@ function substituteLayout(raw, kind, corrections, file, context) {
     if (item.part !== void 0) {
       if (!isObject3(correction.value)) fail(file, where, "a parts[] entry takes the whole part object");
       if (Object.hasOwn(correction.value, "rule_ref")) fail(file, where, "a corrected part carries no rule_ref of its own");
-      block2.parts[item.part] = { ...correction.value, rule_ref: correction.rule_ref };
+      block3.parts[item.part] = { ...correction.value, rule_ref: correction.rule_ref };
     } else {
       const bare2 = correction.value;
       const isRoles = item.field === "party_roles";
       const isCaption = item.field === "caption_lines";
       if (isObject3(bare2) && !isRoles) fail(file, where, `${item.field} takes a scalar`);
       if (Array.isArray(bare2) && !isCaption) fail(file, where, `${item.field} takes a scalar`);
-      block2[item.field] = { value: bare2, rule_ref: correction.rule_ref };
+      block3[item.field] = { value: bare2, rule_ref: correction.rule_ref };
     }
     substituted.push(correction.rule_ref);
   }
-  if (kind === "type") validateTypeBlock(block2, file, context);
-  else validateVenueBlock(block2, file);
-  return { block: block2, substituted };
+  if (kind === "type") validateTypeBlock(block3, file, context);
+  else validateVenueBlock(block3, file);
+  return { block: block3, substituted };
 }
 
 // src/submission/backend.ts
@@ -86427,10 +86667,10 @@ var SINGLE_LETTER = /(?:^|[\s(.])[a-z]$/i;
 function isResearchTitle(title2) {
   return title2.startsWith(RESEARCH_JOB_PREFIX);
 }
-function sentenceCount(text11) {
+function sentenceCount(text12) {
   let count2 = 0;
-  for (const end of text11.matchAll(/[.?!]["'”’)\]]*(?=\s|$)/g)) {
-    const before = text11.slice(0, end.index);
+  for (const end of text12.matchAll(/[.?!]["'”’)\]]*(?=\s|$)/g)) {
+    const before = text12.slice(0, end.index);
     if (end[0][0] === "." && (ABBREVIATION.test(before) || SINGLE_LETTER.test(before))) continue;
     count2 += 1;
   }
@@ -87344,11 +87584,11 @@ function holds(dbPath, key) {
   if (snapshots.get(dbPath)?.has(key)) return true;
   return readSnapshot(dbPath).has(key);
 }
-function hasTable(dbPath, table2) {
-  return holds(dbPath, table2);
+function hasTable(dbPath, table3) {
+  return holds(dbPath, table3);
 }
-function hasColumn(dbPath, table2, column) {
-  return holds(dbPath, `${table2}.${column}`);
+function hasColumn(dbPath, table3, column) {
+  return holds(dbPath, `${table3}.${column}`);
 }
 
 // src/submission/forms/query.ts
@@ -87419,10 +87659,10 @@ function shippedVenueBlock(filing, forum) {
   return extractJsonBlock(content, path, true);
 }
 function venueHeadingFor(filing, proceeding2) {
-  const block2 = filing.layout_snapshot !== null ? storedLayout(filing).venue : proceeding2.forum === null ? null : shippedVenueBlock(filing, proceeding2.forum);
-  if (block2 === null) return null;
-  validateVenueBlock(block2, `"${filing.title}"'s court or tribunal part`);
-  const fields2 = block2;
+  const block3 = filing.layout_snapshot !== null ? storedLayout(filing).venue : proceeding2.forum === null ? null : shippedVenueBlock(filing, proceeding2.forum);
+  if (block3 === null) return null;
+  validateVenueBlock(block3, `"${filing.title}"'s court or tribunal part`);
+  const fields2 = block3;
   return {
     caption_lines: scalarValue(fields2.caption_lines),
     file_number_label: scalarValue(fields2.file_number_label),
@@ -87431,12 +87671,12 @@ function venueHeadingFor(filing, proceeding2) {
   };
 }
 function captionHeadingFor(filing, proceeding2) {
-  const heading = venueHeadingFor(filing, proceeding2);
-  if (heading === null) {
+  const heading2 = venueHeadingFor(filing, proceeding2);
+  if (heading2 === null) {
     const why = filing.layout_snapshot === null ? "its proceeding has no court or tribunal recorded" : "its stored layout has no court or tribunal part";
     throw new DataServerError(`"${filing.title}" prints a style of cause, but ${why}`, "venue_missing");
   }
-  return heading;
+  return heading2;
 }
 function fetchParties(dbPath, proceedingId) {
   return rows(
@@ -88902,8 +89142,8 @@ function gapMarker(wrapper) {
   }
 }
 var MOCKUP_ONLY_TAG = "<!-- mockup-only -->";
-function mockupMessage(glyph2, text11) {
-  return `${glyph2} ${text11} ${MOCKUP_ONLY_TAG}`;
+function mockupMessage(glyph2, text12) {
+  return `${glyph2} ${text12} ${MOCKUP_ONLY_TAG}`;
 }
 function jurisdictionSlotMarker(state) {
   if (state === "needed") return "\u{1F3DB}\uFE0F";
@@ -88990,8 +89230,8 @@ function testimonyPinpointMarker(instrument, pinpoint, execution) {
 }
 function exhibitLetterIndex(letter) {
   if (!/^[A-Z]{1,2}$/.test(letter)) return -1;
-  const code = (i3) => letter.charCodeAt(i3) - 65;
-  return letter.length === 1 ? code(0) : 26 + code(0) * 26 + code(1);
+  const code2 = (i3) => letter.charCodeAt(i3) - 65;
+  return letter.length === 1 ? code2(0) : 26 + code2(0) * 26 + code2(1);
 }
 function exhibitLetterItem(item) {
   const [from, to2 = from, ...rest] = item.split("-");
@@ -89004,9 +89244,9 @@ function exhibitLetterItem(item) {
   }
   return letters;
 }
-function exhibitLetterList(list3) {
+function exhibitLetterList(list4) {
   const letters = [];
-  for (const item of list3.split(",")) {
+  for (const item of list4.split(",")) {
     const named2 = exhibitLetterItem(item.trim());
     if (named2 === null) return null;
     letters.push(...named2);
@@ -89114,12 +89354,12 @@ var PRE_V51_SNAPSHOT_KEYS = {
   treatment: "(SELECT a.treatment FROM authorities a WHERE a.id = statements_of_law.authority_id)",
   basis_statements: "(SELECT group_concat(concat(r.excerpt_id, ':', a.treatment) ORDER BY r.id) FROM order_sought_requires r JOIN statements_of_law s ON s.id = r.excerpt_id JOIN authorities a ON a.id = s.authority_id WHERE r.order_sought_id = order_sought.id AND r.basis_state = 'filled')"
 };
-function reviewSnapshotSql(table2, treatmentNoteHeld2 = true) {
+function reviewSnapshotSql(table3, treatmentNoteHeld2 = true) {
   const derived = treatmentNoteHeld2 ? DERIVED_SNAPSHOT_KEYS : PRE_V51_SNAPSHOT_KEYS;
-  return `json_object(${REVIEW_SNAPSHOT_FIELDS[table2].map((c3) => `'${c3}', ${derived[c3] ?? c3}`).join(", ")})`;
+  return `json_object(${REVIEW_SNAPSHOT_FIELDS[table3].map((c3) => `'${c3}', ${derived[c3] ?? c3}`).join(", ")})`;
 }
-function reviewKey(table2, id) {
-  return `${table2}:${id}`;
+function reviewKey(table3, id) {
+  return `${table3}:${id}`;
 }
 function treatmentMarker(treatment) {
   switch (treatment) {
@@ -89234,8 +89474,8 @@ function ordinaryCostsOrder(wording) {
   return words2.includes("costs") && words2.every((w3) => ORDINARY_COSTS_WORDS.has(w3));
 }
 function ordinaryCostsSubmission(contention, servedOrderWordings) {
-  const text11 = contention.toLowerCase();
-  return servedOrderWordings.length > 0 && servedOrderWordings.every(ordinaryCostsOrder) && text11.includes("cost") && !UNUSUAL_COSTS_MODIFIERS.some((m3) => text11.includes(m3));
+  const text12 = contention.toLowerCase();
+  return servedOrderWordings.length > 0 && servedOrderWordings.every(ordinaryCostsOrder) && text12.includes("cost") && !UNUSUAL_COSTS_MODIFIERS.some((m3) => text12.includes(m3));
 }
 function doubtMarker(doubt) {
   return doubt ? "\u{1F443}" : "";
@@ -89618,9 +89858,9 @@ var RECORD_NOUNS = {
   admissions: "admission",
   clauses: "clause"
 };
-function itemLabel(table2, id, qualifier, item) {
+function itemLabel(table3, id, qualifier, item) {
   if (item.length <= 80 && !/[\r\n]/.test(item)) return item;
-  const noun = Object.hasOwn(RECORD_NOUNS, table2) ? RECORD_NOUNS[table2] : table2.replaceAll("_", " ");
+  const noun = Object.hasOwn(RECORD_NOUNS, table3) ? RECORD_NOUNS[table3] : table3.replaceAll("_", " ");
   const words2 = item.trim().split(/\s+/).slice(0, 8).join(" ");
   return `${noun} ${id}${qualifier === void 0 ? "" : `, ${qualifier}`}, "${words2}\u2026"`;
 }
@@ -89653,11 +89893,11 @@ function deriveProposals(inventory, holders, rejections) {
   const generating = inventory.filter((e3) => e3.generating !== false);
   const groups = /* @__PURE__ */ new Map();
   for (const e3 of generating) {
-    const list3 = groups.get(proposalKey(e3));
-    if (list3 === void 0) groups.set(proposalKey(e3), [e3]);
-    else list3.push(e3);
+    const list4 = groups.get(proposalKey(e3));
+    if (list4 === void 0) groups.set(proposalKey(e3), [e3]);
+    else list4.push(e3);
   }
-  const has = (slug, table2, id) => id !== void 0 && groups.has(`${slug}:${table2}:${id}`);
+  const has = (slug, table3, id) => id !== void 0 && groups.has(`${slug}:${table3}:${id}`);
   const proposals = [];
   const lapsed_keys = [];
   for (const [key, entries] of groups) {
@@ -89699,8 +89939,8 @@ function noteUpDue(proposals) {
   return proposals.filter((p3) => p3.slug === "note-up" && p3.lane === "proposed").map((p3) => p3.key);
 }
 var PROVISION = /(?<![\w'’])((?:sub)?(?:rule|section)s?\s+|(?:rr?|ss?)(?:\.\s*|\s+))(\d+(?:[-.]\d+)*(?:\([0-9a-z.]+\))*)/gi;
-function provisionsIn(text11) {
-  return [...text11.matchAll(PROVISION)].map((m3) => {
+function provisionsIn(text12) {
+  return [...text12.matchAll(PROVISION)].map((m3) => {
     const word = /^(?:sub)?r/i.test(m3[1]) ? "r" : "s";
     return { text: m3[0], identity: `${word}:${m3[2].toLowerCase()}`, signature: `${word}:${m3[2].replace(/\(.*$/, "").replace(/\d+/g, "N")}` };
   });
@@ -89777,8 +90017,8 @@ var UNATTENDED_ELIGIBLE = /* @__PURE__ */ new Map([
   ["\u{1F9D0}", []]
 ]);
 function eligibleKey(key) {
-  const [slug, table2] = key.split(":");
-  return [...GLYPH_SLUGS].some(([glyph2, s3]) => s3 === slug && (UNATTENDED_ELIGIBLE.get(glyph2) ?? []).includes(table2));
+  const [slug, table3] = key.split(":");
+  return [...GLYPH_SLUGS].some(([glyph2, s3]) => s3 === slug && (UNATTENDED_ELIGIBLE.get(glyph2) ?? []).includes(table3));
 }
 var livePartner = (p3) => p3.status === null || (p3.status === "queued" || p3.status === "wip") && !p3.rejected;
 function ineligibleReasons(ticket, filed, printed, titles, inProgress2) {
@@ -89791,7 +90031,7 @@ function ineligibleReasons(ticket, filed, printed, titles, inProgress2) {
     not_one_step: ticket.steps.length !== 1,
     no_proposal_keys: ticket.proposal_keys.length === 0 && !planMarker,
     dead_key: printed !== null && ticket.proposal_keys.some((key) => !printed.has(key)),
-    reworded: printed !== null && ticket.proposal_keys.some((key) => printed.has(key) && texts.some((text11) => text11 !== titles.get(key))),
+    reworded: printed !== null && ticket.proposal_keys.some((key) => printed.has(key) && texts.some((text12) => text12 !== titles.get(key))),
     marker_not_eligible: ticket.proposal_keys.some((key) => !eligibleKey(key)),
     live_partner: ticket.conflicts.some(livePartner),
     shared_material: inProgress2.some((held2) => held2.id !== ticket.id && held2.scope.some((h3) => ticket.scope.some((s3) => scopesShare(h3, s3))))
@@ -89803,9 +90043,9 @@ function ineligibleReasons(ticket, filed, printed, titles, inProgress2) {
 function groupBy2(items2, key) {
   const map = /* @__PURE__ */ new Map();
   for (const item of items2) {
-    const list3 = map.get(key(item)) ?? [];
-    list3.push(item);
-    map.set(key(item), list3);
+    const list4 = map.get(key(item)) ?? [];
+    list4.push(item);
+    map.set(key(item), list4);
   }
   return map;
 }
@@ -90048,8 +90288,8 @@ function skillSourceRead(relative6, env, from, match, installRoot) {
     );
   }
   const blocks3 = splitBlocks(whole);
-  const hits = blocks3.filter((block2) => {
-    const lowered = block2.toLowerCase();
+  const hits = blocks3.filter((block3) => {
+    const lowered = block3.toLowerCase();
     return terms2.some((term) => lowered.includes(term));
   });
   if (hits.length === 0) {
@@ -90058,10 +90298,10 @@ function skillSourceRead(relative6, env, from, match, installRoot) {
       "no_match"
     );
   }
-  const newline = whole.includes("\r\n") ? "\r\n" : "\n";
+  const newline2 = whole.includes("\r\n") ? "\r\n" : "\n";
   return {
     ...base,
-    content: hits.join(newline + newline),
+    content: hits.join(newline2 + newline2),
     blocks_matched: hits.length,
     blocks_total: blocks3.length
   };
@@ -90158,16 +90398,16 @@ function admittedHost(entry4) {
   return host.toLowerCase();
 }
 function readHostEntries(path) {
-  let text11;
+  let text12;
   try {
-    text11 = readFileSync22(path, "utf-8");
+    text12 = readFileSync22(path, "utf-8");
   } catch (err) {
     if (err.code === "ENOENT") return [];
     throw err;
   }
   let entries;
   try {
-    entries = JSON.parse(text11.startsWith("\uFEFF") ? text11.slice(1) : text11);
+    entries = JSON.parse(text12.startsWith("\uFEFF") ? text12.slice(1) : text12);
   } catch (err) {
     throw new DataServerError(`${path} is not valid JSON: ${err.message}`, "invalid_hosts_file");
   }
@@ -90255,8 +90495,8 @@ function firstHeader(value2) {
   return Array.isArray(value2) ? value2[0] ?? null : value2;
 }
 function errorClass(err) {
-  const code = err?.code;
-  if (typeof code === "string" && code !== "") return code;
+  const code2 = err?.code;
+  if (typeof code2 === "string" && code2 !== "") return code2;
   return err instanceof Error ? err.name : "Error";
 }
 function parseUrl(url) {
@@ -90373,21 +90613,21 @@ var NAMED_ENTITIES = {
   sect: "\xA7",
   para: "\xB6"
 };
-function decodeEntities(text11) {
-  return text11.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z][a-z0-9]*);/gi, (whole, body2) => {
+function decodeEntities(text12) {
+  return text12.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z][a-z0-9]*);/gi, (whole, body2) => {
     if (body2[0] === "#") {
-      const code = body2[1] === "x" || body2[1] === "X" ? parseInt(body2.slice(2), 16) : parseInt(body2.slice(1), 10);
-      return code > 0 && code <= 1114111 ? String.fromCodePoint(code) : whole;
+      const code2 = body2[1] === "x" || body2[1] === "X" ? parseInt(body2.slice(2), 16) : parseInt(body2.slice(1), 10);
+      return code2 > 0 && code2 <= 1114111 ? String.fromCodePoint(code2) : whole;
     }
     return NAMED_ENTITIES[body2.toLowerCase()] ?? whole;
   });
 }
 function htmlBlocks(html2) {
-  const text11 = html2.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "").replace(BLOCK_TAG, "\0").replace(/<[^>]*>/g, "");
-  return text11.split("\0").map((block2) => decodeEntities(block2).replace(/\s+/g, " ").trim()).filter((block2) => block2 !== "");
+  const text12 = html2.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "").replace(BLOCK_TAG, "\0").replace(/<[^>]*>/g, "");
+  return text12.split("\0").map((block3) => decodeEntities(block3).replace(/\s+/g, " ").trim()).filter((block3) => block3 !== "");
 }
-function foldApostrophe(text11) {
-  return text11.replace(/\u2019/g, "'");
+function foldApostrophe(text12) {
+  return text12.replace(/\u2019/g, "'");
 }
 function passagePresent(joinedBlocks, passage) {
   const needle = foldApostrophe(passage.replace(/\s+/g, " ").trim());
@@ -90440,11 +90680,11 @@ async function sourcesFetch(args, seams = {}) {
     throw new DataServerError(`${outcome.final_url} did not return a PDF; only a PDF is saved (nothing else is written to disk)`, "not_pdf");
   }
   const blocks3 = htmlBlocks(outcome.bytes.toString("utf-8"));
-  const kept = terms2 ? blocks3.filter((block2) => terms2.some((term) => block2.toLowerCase().includes(term))) : blocks3;
+  const kept = terms2 ? blocks3.filter((block3) => terms2.some((term) => block3.toLowerCase().includes(term))) : blocks3;
   if (terms2 && kept.length === 0) {
     throw new DataServerError(`no block of ${outcome.final_url} contains any of ${JSON.stringify(args.match)}`, "no_match");
   }
-  const text11 = kept.join("\n");
+  const text12 = kept.join("\n");
   return {
     kind: "html",
     url: outcome.url,
@@ -90454,7 +90694,7 @@ async function sourcesFetch(args, seams = {}) {
     sha256: outcome.sha256,
     blocks_total: blocks3.length,
     ...terms2 ? { blocks_matched: kept.length } : {},
-    ...Buffer.byteLength(text11, "utf-8") > FETCH_TEXT_LIMIT_BYTES ? { truncated: true } : { text: text11 }
+    ...Buffer.byteLength(text12, "utf-8") > FETCH_TEXT_LIMIT_BYTES ? { truncated: true } : { text: text12 }
   };
 }
 
@@ -90475,8 +90715,8 @@ function readFrontMatter(content, where) {
   const fail3 = (index, why) => {
     throw new DataServerError(`${where}, front matter line ${index + 2}: ${why}`, "invalid_front_matter");
   };
-  const scalar2 = (text11, index) => {
-    const value3 = text11.trim();
+  const scalar2 = (text12, index) => {
+    const value3 = text12.trim();
     if (value3 === "" || value3 === "null" || value3 === "~") return null;
     if (value3.startsWith('"')) {
       if (!value3.endsWith('"') || value3.length < 2) fail3(index, "unterminated double-quoted value");
@@ -90504,23 +90744,23 @@ function readFrontMatter(content, where) {
     if (raw.length === 0) return ["", i4];
     const depth = Math.min(...raw.filter((line) => line.trim() !== "").map(indentOf));
     const content2 = raw.map((line) => line.slice(Math.min(depth, indentOf(line))));
-    let text11;
+    let text12;
     if (header[0] === "|") {
-      text11 = content2.join("\n");
+      text12 = content2.join("\n");
     } else {
-      text11 = content2.reduce((acc, line) => {
+      text12 = content2.reduce((acc, line) => {
         if (line === "") return `${acc}
 `;
         return acc === "" || acc.endsWith("\n") ? acc + line : `${acc} ${line}`;
       }, "");
     }
-    return [header.endsWith("-") ? text11 : `${text11}
+    return [header.endsWith("-") ? text12 : `${text12}
 `, i4];
   };
   const value2 = (rest, index, parent) => {
-    const text11 = (rest ?? "").trim();
-    if (text11.startsWith("|") || text11.startsWith(">")) return blockScalar(text11, index + 1, parent);
-    return [scalar2(text11, index), index + 1];
+    const text12 = (rest ?? "").trim();
+    if (text12.startsWith("|") || text12.startsWith(">")) return blockScalar(text12, index + 1, parent);
+    return [scalar2(text12, index), index + 1];
   };
   const out = {};
   let i3 = 0;
@@ -90548,7 +90788,7 @@ function readFrontMatter(content, where) {
     }
     const dash = indentOf(body2[next2]);
     if (!/^-(?:[ \t]|$)/.test(body2[next2].trimStart())) fail3(next2, "nested maps are not supported; only a block list may sit under a key");
-    const list3 = [];
+    const list4 = [];
     i3 = next2;
     while (i3 < body2.length) {
       if (isBlank(body2[i3])) {
@@ -90563,7 +90803,7 @@ function readFrontMatter(content, where) {
       const itemCol = dash + 1 + (afterDash.length - item.length);
       const km = KEY_LINE.exec(item);
       if (!km) {
-        list3.push(scalar2(item, i3));
+        list4.push(scalar2(item, i3));
         i3++;
         continue;
       }
@@ -90580,9 +90820,9 @@ function readFrontMatter(content, where) {
         k3 = KEY_LINE.exec(body2[i3].slice(itemCol));
         if (!k3) fail3(i3, "expected `key: value` in a list item");
       }
-      list3.push(map);
+      list4.push(map);
     }
-    out[key] = list3;
+    out[key] = list4;
   }
   return out;
 }
@@ -90683,9 +90923,9 @@ function gapOf(outcome) {
   const { ok: _ok, hosts: _hosts, ...gap2 } = outcome;
   return gap2;
 }
-function markersFound(text11, pattern) {
+function markersFound(text12, pattern) {
   const found2 = /* @__PURE__ */ new Set();
-  for (const match of text11.matchAll(new RegExp(pattern.source, pattern.flags))) {
+  for (const match of text12.matchAll(new RegExp(pattern.source, pattern.flags))) {
     found2.add(match.length > 1 ? match[1] ?? "" : match[0]);
   }
   return [...found2].sort();
@@ -90776,9 +91016,9 @@ async function checkAll(records, fetcher) {
   for (const record2 of records) sources.push(await checkRecord(record2, fetcher));
   return sources;
 }
-function knowledgeTreeFile(path, text11) {
+function knowledgeTreeFile(path, text12) {
   const slash = path.lastIndexOf("/");
-  return { path, dir: slash === -1 ? "" : path.slice(0, slash), content: text11 };
+  return { path, dir: slash === -1 ? "" : path.slice(0, slash), content: text12 };
 }
 async function checkKnowledgeFile(path, label2, seams, fetcher) {
   const kp = parseKnowledgePath(path, label2);
@@ -90820,10 +91060,10 @@ function passageHash(passage) {
 function invalid2(file, where, rule) {
   throw new DataServerError(`${file}: ${where}: ${rule}`, "invalid_sidecar");
 }
-function parseSidecar(text11, file, knowledgePath) {
+function parseSidecar(text12, file, knowledgePath) {
   let doc;
   try {
-    doc = JSON.parse(text11);
+    doc = JSON.parse(text12);
   } catch (err) {
     return invalid2(file, "the sidecar", `is not valid JSON: ${err.message}`);
   }
@@ -90935,8 +91175,8 @@ function effectiveStatus(input) {
 }
 function readRows(sidecarAbs, knowledgePath) {
   if (!existsSync23(sidecarAbs)) return [];
-  const text11 = readLayerBytes(sidecarAbs, "the confirmation sidecar").toString("utf-8");
-  return parseSidecar(text11.startsWith("\uFEFF") ? text11.slice(1) : text11, sidecarAbs, knowledgePath);
+  const text12 = readLayerBytes(sidecarAbs, "the confirmation sidecar").toString("utf-8");
+  return parseSidecar(text12.startsWith("\uFEFF") ? text12.slice(1) : text12, sidecarAbs, knowledgePath);
 }
 async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check3) {
   return withFileLock(sidecarAbs, () => {
@@ -91051,23 +91291,23 @@ function validateFormatBlock(raw, file) {
   }
   return { defaulted: FORMAT_PROPERTIES.filter((property) => !Object.hasOwn(raw.format, property)) };
 }
-function formatRefs(block2) {
+function formatRefs(block3) {
   const refs = /* @__PURE__ */ new Map();
-  for (const [property, entry4] of Object.entries(block2.format)) refs.set(entry4.rule_ref, property);
+  for (const [property, entry4] of Object.entries(block3.format)) refs.set(entry4.rule_ref, property);
   return refs;
 }
 function substituteFormat(raw, corrections, file) {
-  const block2 = structuredClone(raw);
-  const refs = formatRefs(block2);
+  const block3 = structuredClone(raw);
+  const refs = formatRefs(block3);
   const substituted = [];
   for (const correction of corrections) {
     const property = refs.get(correction.rule_ref);
     if (!property) fail2(file, `corrected value for rule_ref "${correction.rule_ref}"`, "names no property of this file");
-    block2.format[property] = { value: correction.value, rule_ref: correction.rule_ref };
+    block3.format[property] = { value: correction.value, rule_ref: correction.rule_ref };
     substituted.push(correction.rule_ref);
   }
-  const { defaulted } = validateFormatBlock(block2, file);
-  return { block: block2, defaulted, substituted };
+  const { defaulted } = validateFormatBlock(block3, file);
+  return { block: block3, defaulted, substituted };
 }
 
 // src/knowledge/items.ts
@@ -91126,16 +91366,16 @@ function blockOf(kp, content, status3, items2) {
     const raw2 = extractJsonBlock(content, kp.path, false, "invalid_format");
     validateFormatBlock(raw2, kp.path);
     uncited([...formatRefs(raw2).keys()]);
-    const { block: block3, defaulted, substituted: substituted2 } = substituteFormat(raw2, corrections, kp.path);
-    return { format: block3.format, defaulted, corrections_substituted: substituted2 };
+    const { block: block4, defaulted, substituted: substituted2 } = substituteFormat(raw2, corrections, kp.path);
+    return { format: block4.format, defaulted, corrections_substituted: substituted2 };
   }
   const raw = extractJsonBlock(content, kp.path, true);
   const context = { noVenue: kindOf.noVenue };
   if (kindOf.kind === "type") validateTypeBlock(raw, kp.path, context);
   else validateVenueBlock(raw, kp.path);
   uncited(citedItems(raw, kindOf.kind, kp.path).map((item) => item.rule_ref));
-  const { block: block2, substituted } = substituteLayout(raw, kindOf.kind, corrections, kp.path, context);
-  return { layout: block2, corrections_substituted: substituted };
+  const { block: block3, substituted } = substituteLayout(raw, kindOf.kind, corrections, kp.path, context);
+  return { layout: block3, corrections_substituted: substituted };
 }
 
 // src/knowledge/read.ts
@@ -91152,8 +91392,8 @@ function sidecarRows(kp, seams, label2) {
   const type = entryType(loc.local, label2, sidecarKp.path);
   if (type === null) return [];
   if (type === "dir") throw new DataServerError(`${label2}: ${sidecarKp.path} is a folder, not a sidecar`, "invalid_sidecar");
-  const text11 = readLayerBytes(loc.local.abs, label2).toString("utf-8");
-  const rows5 = parseSidecar(text11.startsWith("\uFEFF") ? text11.slice(1) : text11, loc.local.abs, kp.path);
+  const text12 = readLayerBytes(loc.local.abs, label2).toString("utf-8");
+  const rows5 = parseSidecar(text12.startsWith("\uFEFF") ? text12.slice(1) : text12, loc.local.abs, kp.path);
   if (kp.rest.length === 5 && kp.rest[3] === "Sources") {
     const i3 = rows5.findIndex((row2) => row2.status === "corrected");
     if (i3 !== -1) {
@@ -91270,8 +91510,8 @@ function walk2(kp, recursive, seams, entries, breaks, top) {
   const local = readLayerDir(loc.local, label2, kp.path);
   if (top && shipped === null && local === null) throw new DataServerError(`${label2} not found in either layer: ${kp.path}`, "not_found");
   const merged = /* @__PURE__ */ new Map();
-  const add = (layer, list3) => {
-    for (const entry4 of list3 ?? []) {
+  const add = (layer, list4) => {
+    for (const entry4 of list4 ?? []) {
       if (layer === "shipped" && !inTree([...kp.rest, entry4.name])) continue;
       const key = entry4.name.toLowerCase();
       const known = merged.get(key) ?? { name: entry4.name, types: {} };
@@ -91468,15 +91708,15 @@ function copySavedCopy(saved, seams, label2) {
   try {
     copyFileSync2(saved.abs, writableOverlayPath(saved.pdf.to, seams, label2).abs);
   } catch (err) {
-    const code = err.code;
-    if (typeof code !== "string") throw err;
-    return { path: saved.path, copied: false, error: code };
+    const code2 = err.code;
+    if (typeof code2 !== "string") throw err;
+    return { path: saved.path, copied: false, error: code2 };
   }
   return { path: saved.path, copied: true, to: saved.pdf.to.path, sha256: saved.pdf.sha256 };
 }
 var PDF_SHA_LINE = /^\s*pdf_sha256:\s*["']?([0-9a-fA-F]{64})["']?\s*$/gm;
-function pdfHashesIn(text11) {
-  return [...new Set([...text11.matchAll(PDF_SHA_LINE)].map((m3) => m3[1].toLowerCase()))];
+function pdfHashesIn(text12) {
+  return [...new Set([...text12.matchAll(PDF_SHA_LINE)].map((m3) => m3[1].toLowerCase()))];
 }
 function liveKnowledgeTexts(canon, seams) {
   const texts = [];
@@ -91506,7 +91746,7 @@ function deleteUnreferencedPdfs(hashes, seams, label2) {
   const live = liveKnowledgeTexts(canon, seams);
   const deleted = [];
   for (const hash of hashes) {
-    if (live.some((text11) => text11.includes(hash))) continue;
+    if (live.some((text12) => text12.includes(hash))) continue;
     for (const host of readdirSync15(fetched, { withFileTypes: true })) {
       if (!host.isDirectory()) continue;
       const name = `${hash.slice(0, 12)}.pdf`;
@@ -91640,7 +91880,7 @@ async function writeDocument(kp, args, matter, seams, label2) {
   checkClientGuidance(kp, front, seams, label2);
   const saved = args.saved_copy === void 0 ? null : savedCopyOf(args.saved_copy, kp.path, front, seams);
   const stamp3 = { learned_by: "agent", matter: mattNum, plugin_version: pluginVersion(seams.installRoot), shipped_from: loc.shipped_from };
-  const text11 = stampHeader(content, saved?.pdf ? { ...stamp3, pdf_sha256: saved.pdf.sha256 } : stamp3);
+  const text12 = stampHeader(content, saved?.pdf ? { ...stamp3, pdf_sha256: saved.pdf.sha256 } : stamp3);
   const target2 = writableOverlayPath(kp, seams, label2);
   const previous = await withFileLock(target2.abs, () => {
     const existing = entryType(target2, label2, kp.path);
@@ -91653,14 +91893,14 @@ async function writeDocument(kp, args, matter, seams, label2) {
     }
     const old = existing === "file" ? readFileSync24(target2.abs, "utf-8") : null;
     const stale_check = old === null ? null : checkStaleBody(kp.path, target2.abs, old, front, fetcher);
-    writeTextAtomic(target2.abs, text11);
+    writeTextAtomic(target2.abs, text12);
     return { old, stale_check };
   });
   return {
     path: kp.path,
     layer: "local",
     status: previous.old === null ? "created" : "overwritten",
-    size: Buffer.byteLength(text11, "utf-8"),
+    size: Buffer.byteLength(text12, "utf-8"),
     header: stamp3,
     ...previous.stale_check ? { stale_check: previous.stale_check } : {},
     ...saved ? { saved_copy: copySavedCopy(saved, seams, label2) } : {},
@@ -91801,11 +92041,11 @@ function listAndKey(index, row2) {
   if (row2.resolves_to !== void 0) return { list: "not_venues", key: normalizeName(rowString(row2, "name")) };
   return { list: "venues", key: rowString(row2, "code") };
 }
-function keyIn(list3, row2) {
+function keyIn(list4, row2) {
   if (typeof row2 !== "object" || row2 === null) return null;
-  const value2 = row2[list3 === "venues" ? "code" : list3 === "kinds" ? "file" : "name"];
+  const value2 = row2[list4 === "venues" ? "code" : list4 === "kinds" ? "file" : "name"];
   if (typeof value2 !== "string") return null;
-  return list3 === "not_venues" ? normalizeName(value2) : value2;
+  return list4 === "not_venues" ? normalizeName(value2) : value2;
 }
 function checkAliases(row2, official, taken, file) {
   const officialSet = new Set(official.map(normalizeName));
@@ -91827,8 +92067,8 @@ function checkAliases(row2, official, taken, file) {
     seen.add(n3);
   }
 }
-function checkIndexRow(kp, view, list3, key, row2, noVenue, file) {
-  if (list3 === "kinds") {
+function checkIndexRow(kp, view, list4, key, row2, noVenue, file) {
+  if (list4 === "kinds") {
     const kinds = view.kinds;
     if (key.endsWith(".md")) {
       throw new DataServerError(`${file}: kinds row file "${key}" must be the type file's name without ".md" ("${key.slice(0, -3)}")`, "grammar_violation");
@@ -91846,7 +92086,7 @@ function checkIndexRow(kp, view, list3, key, row2, noVenue, file) {
     return;
   }
   const venues = view;
-  if (list3 === "venues") {
+  if (list4 === "venues") {
     if (key === NO_VENUE) throw new DataServerError(`${file}: the ${NO_VENUE} row is never stored; the runtime adds it`, "invalid_index");
     const problem = grammarProblem(kp.head, [kp.rest[0], kp.rest[1], key], "dir", "local");
     if (problem) throw new DataServerError(`${file}: venue code "${key}" is its folder name, and ${problem}`, "grammar_violation");
@@ -91874,7 +92114,7 @@ async function writeIndexRow(kp, index, args, seams, label2) {
       `knowledge__write.row: ${callerStamp.join(", ")} ${callerStamp.length === 1 ? "is not a caller field" : "are not caller fields"} of an index row; the runtime stamps plugin_version and shipped_from`
     );
   }
-  const { list: list3, key } = listAndKey(index, given);
+  const { list: list4, key } = listAndKey(index, given);
   const folder = folderOf(kp, label2);
   const noVenue = index === "kinds" && kp.rest[2] === NO_VENUE;
   const shippedKp = parseKnowledgePath(`${folder.path}/${INDEX_NAMES[index][0]}`, label2);
@@ -91888,24 +92128,24 @@ async function writeIndexRow(kp, index, args, seams, label2) {
     const existing = entryType(target2, label2, kp.path);
     let doc = {};
     if (existing === "file") {
-      const text11 = readFileSync25(target2.abs, "utf-8");
+      const text12 = readFileSync25(target2.abs, "utf-8");
       try {
-        doc = JSON.parse(text11.startsWith("\uFEFF") ? text11.slice(1) : text11);
+        doc = JSON.parse(text12.startsWith("\uFEFF") ? text12.slice(1) : text12);
       } catch (err) {
         throw new DataServerError(`${label2}: ${target2.abs} is not valid JSON: ${err.message}`, "invalid_index");
       }
       merge2(doc, target2.abs);
     }
-    const rows5 = Array.isArray(doc[list3]) ? [...doc[list3]] : [];
-    const at = rows5.findIndex((known) => keyIn(list3, known) === key);
+    const rows5 = Array.isArray(doc[list4]) ? [...doc[list4]] : [];
+    const at = rows5.findIndex((known) => keyIn(list4, known) === key);
     const without = rows5.filter((_3, i3) => i3 !== at);
-    checkIndexRow(kp, merge2({ ...doc, [list3]: without }, target2.abs), list3, key, row2, noVenue, target2.abs);
+    checkIndexRow(kp, merge2({ ...doc, [list4]: without }, target2.abs), list4, key, row2, noVenue, target2.abs);
     if (at === -1) rows5.push(row2);
     else rows5[at] = row2;
-    const next2 = { ...doc, [list3]: rows5 };
+    const next2 = { ...doc, [list4]: rows5 };
     const view = merge2(next2, target2.abs);
     writeTextAtomic(target2.abs, JSON.stringify(next2, null, 2) + "\n");
-    return { path: kp.path, index, list: list3, key, status: at === -1 ? "created" : "updated", view, ...provenance2(loc.shipped_from, seams) };
+    return { path: kp.path, index, list: list4, key, status: at === -1 ? "created" : "updated", view, ...provenance2(loc.shipped_from, seams) };
   });
 }
 
@@ -91962,14 +92202,14 @@ async function retireOne(kp, seams, label2) {
         }
       }
       const target2 = writableOverlayPath(dest, seams, label2);
-      const text11 = readFileSync26(source.abs, "utf-8");
+      const text12 = readFileSync26(source.abs, "utf-8");
       renameSync4(source.abs, target2.abs);
       if (hasSidecar) renameSync4(sidecar2, `${target2.abs}${SIDECAR_SUFFIX}`);
       return {
         path: kp.path,
         to: dest.path,
         ...hasSidecar ? { sidecar_to: `${dest.path}${SIDECAR_SUFFIX}` } : {},
-        pdf_hashes: pdfHashesIn(text11)
+        pdf_hashes: pdfHashesIn(text12)
       };
     })
   );
@@ -92065,8 +92305,8 @@ function factStatementMarkers(s3, courtRecordLinked, admitted, copyMarker) {
 function statementBlock(excerpt, citationLine, markers, tag, id, indent2) {
   const out = [];
   if (excerpt) {
-    const fence = "`".repeat(Math.max(3, ...[...excerpt.matchAll(/`+/g)].map((m3) => m3[0].length + 1)));
-    out.push(`${indent2}${fence}`, ...excerpt.split("\n").map((l3) => l3 ? `${indent2}${l3}` : ""), `${indent2}${fence}`, "");
+    const fence2 = "`".repeat(Math.max(3, ...[...excerpt.matchAll(/`+/g)].map((m3) => m3[0].length + 1)));
+    out.push(`${indent2}${fence2}`, ...excerpt.split("\n").map((l3) => l3 ? `${indent2}${l3}` : ""), `${indent2}${fence2}`, "");
   }
   out.push(`${indent2}${[citationLine, markers, `<!-- ${tag} ${id} -->`].filter(Boolean).join(" ")}`);
   return out;
@@ -92224,9 +92464,9 @@ function fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today3) {
       set.add(r3.partyId);
       byFact.set(r3.factId, set);
     } else if (role2 === "spent") {
-      const list3 = spentByFact.get(r3.factId) ?? [];
-      list3.push(admissionRungMarker(state));
-      spentByFact.set(r3.factId, list3);
+      const list4 = spentByFact.get(r3.factId) ?? [];
+      list4.push(admissionRungMarker(state));
+      spentByFact.set(r3.factId, list4);
     }
   }
   for (const [factId, glyphs] of spentByFact) spentGlyphByFact.set(factId, dedupeLineMarkers(glyphs));
@@ -92412,9 +92652,9 @@ function fetchJurisdictionEdges(dbPath, orderIds) {
     orderIds
   );
   for (const e3 of edges) {
-    const list3 = edgesByOrder.get(e3.order_sought_id) ?? [];
-    list3.push(e3);
-    edgesByOrder.set(e3.order_sought_id, list3);
+    const list4 = edgesByOrder.get(e3.order_sought_id) ?? [];
+    list4.push(e3);
+    edgesByOrder.set(e3.order_sought_id, list4);
   }
   return edgesByOrder;
 }
@@ -92423,14 +92663,14 @@ function fetchJurisdictionEdges(dbPath, orderIds) {
 function groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGlyphs, suppressedFactIds = /* @__PURE__ */ new Set()) {
   const statementsByFact = /* @__PURE__ */ new Map();
   for (const s3 of statementRows) {
-    const list3 = statementsByFact.get(s3.fact_id) ?? [];
-    list3.push(s3);
-    statementsByFact.set(s3.fact_id, list3);
+    const list4 = statementsByFact.get(s3.fact_id) ?? [];
+    list4.push(s3);
+    statementsByFact.set(s3.fact_id, list4);
   }
   const result = /* @__PURE__ */ new Map();
   for (const f3 of factRows) {
-    const list3 = result.get(f3.submission_id) ?? [];
-    list3.push({
+    const list4 = result.get(f3.submission_id) ?? [];
+    list4.push({
       factId: f3.fact_id,
       postulate: f3.postulate,
       courtRecord: f3.court_record,
@@ -92442,7 +92682,7 @@ function groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGly
       witnessSuppressed: suppressedFactIds.has(f3.fact_id),
       statements: statementsByFact.get(f3.fact_id) ?? []
     });
-    result.set(f3.submission_id, list3);
+    result.set(f3.submission_id, list4);
   }
   return result;
 }
@@ -92487,14 +92727,14 @@ function fetchReviewState(dbPath, proceedingId) {
     approved: new Map(approved.map((r3) => [reviewKey(r3.entity, r3.entity_id), r3.snapshot]))
   };
 }
-function reviewMarkerFor(review, inv, lineGlyphs, table2, id, item) {
+function reviewMarkerFor(review, inv, lineGlyphs, table3, id, item) {
   if (review === void 0) return "";
-  const key = reviewKey(table2, id);
+  const key = reviewKey(table3, id);
   const current = review.current.get(key);
   if (current === void 0) return "";
   const approved = review.approved.get(key) ?? null;
   const glyph2 = counselReviewMarker(lineGlyphs, current, approved);
-  if (glyph2 && inv) recordCriterionGlyphs(inv, glyph2, ["\u{1F9D0}"], { table: table2, id, item, ...approved === null ? {} : { changed: true } });
+  if (glyph2 && inv) recordCriterionGlyphs(inv, glyph2, ["\u{1F9D0}"], { table: table3, id, item, ...approved === null ? {} : { changed: true } });
   return glyph2;
 }
 function orderReviewMarkerFor(review, inv, lineGlyphs, order) {
@@ -92651,9 +92891,9 @@ function fetchRhetoric(dbPath, filingId, document2, part) {
   );
   const recordsByParagraph = /* @__PURE__ */ new Map();
   for (const { rhetorical_paragraph_id, ...rec } of recordRows) {
-    const list3 = recordsByParagraph.get(rhetorical_paragraph_id) ?? [];
-    list3.push(rec);
-    recordsByParagraph.set(rhetorical_paragraph_id, list3);
+    const list4 = recordsByParagraph.get(rhetorical_paragraph_id) ?? [];
+    list4.push(rec);
+    recordsByParagraph.set(rhetorical_paragraph_id, list4);
   }
   return found2.map((r3) => ({
     id: r3.id,
@@ -92752,10 +92992,10 @@ function styleOfProceedingCaption(parties2, opts) {
   const lines2 = [];
   lines2.push("| | | |");
   lines2.push("| :--- | :---: | ---: |");
-  const { heading } = opts;
-  if (heading.registry_label !== null) lines2.push(`| | | ${opts.registry ?? ""} ${heading.registry_label} |`);
-  if (heading.registry_label !== null || opts.fileNumber) lines2.push(`| | | ${heading.file_number_label} ${opts.fileNumber ?? ""} |`);
-  for (const line of [heading.caption_lines].flat()) lines2.push(`| | **${line}** | |`);
+  const { heading: heading2 } = opts;
+  if (heading2.registry_label !== null) lines2.push(`| | | ${opts.registry ?? ""} ${heading2.registry_label} |`);
+  if (heading2.registry_label !== null || opts.fileNumber) lines2.push(`| | | ${heading2.file_number_label} ${opts.fileNumber ?? ""} |`);
+  for (const line of [heading2.caption_lines].flat()) lines2.push(`| | **${line}** | |`);
   const groups = groupPartiesByRole(parties2);
   groups.forEach((group, i3) => {
     lines2.push(`| ${i3 === 0 ? "BETWEEN:" : "AND:"} | | |`);
@@ -92806,9 +93046,9 @@ function checkboxOrderBlock(rows5) {
 function buildLowerCourtRoleByRole(parties2) {
   const valuesByRole = /* @__PURE__ */ new Map();
   for (const p3 of parties2) {
-    const list3 = valuesByRole.get(p3.role) ?? [];
-    list3.push(p3.lower_court_role);
-    valuesByRole.set(p3.role, list3);
+    const list4 = valuesByRole.get(p3.role) ?? [];
+    list4.push(p3.lower_court_role);
+    valuesByRole.set(p3.role, list4);
   }
   const result = {};
   for (const [role2, values] of valuesByRole) {
@@ -92887,17 +93127,17 @@ var EXHIBIT_REF_RE = /((?:the[ \t]+)?(?:claimant|respondent|applicant|petitioner
 function sortFindings(findings) {
   return findings.sort((a3, b3) => a3.document.localeCompare(b3.document) || a3.page - b3.page || a3.quote.localeCompare(b3.quote));
 }
-function lineAround(text11, offset) {
-  const start2 = text11.lastIndexOf("\n", offset - 1) + 1;
-  const endIdx = text11.indexOf("\n", offset);
-  const end = endIdx === -1 ? text11.length : endIdx;
-  return text11.slice(start2, end).replace(/\s+/g, " ").trim();
+function lineAround(text12, offset) {
+  const start2 = text12.lastIndexOf("\n", offset - 1) + 1;
+  const endIdx = text12.indexOf("\n", offset);
+  const end = endIdx === -1 ? text12.length : endIdx;
+  return text12.slice(start2, end).replace(/\s+/g, " ").trim();
 }
 function extractExhibitReferences(doc) {
   const refs = [];
-  (doc.text_by_page ?? []).forEach((text11, i3) => {
-    for (const m3 of text11.matchAll(EXHIBIT_REF_RE)) {
-      const quote = lineAround(text11, m3.index ?? 0);
+  (doc.text_by_page ?? []).forEach((text12, i3) => {
+    for (const m3 of text12.matchAll(EXHIBIT_REF_RE)) {
+      const quote = lineAround(text12, m3.index ?? 0);
       const qualified = Boolean(m3[1]);
       const first = Number(m3[2]);
       const numbers = [first];
@@ -93030,8 +93270,8 @@ function isPlaceholder(bracket, preceded) {
 var BRACKET_RE = /\[[^\[\]]{0,200}\]/g;
 function looksSigned(doc) {
   if (/\bsigned\b/i.test(doc.file_name)) return true;
-  const text11 = (doc.text_by_page ?? []).join("\n");
-  return /Final Audit Report|Status:[ \t]*Signed|Document e-signed by|Agreement completed|Signature Certificate|DocuSign/i.test(text11);
+  const text12 = (doc.text_by_page ?? []).join("\n");
+  return /Final Audit Report|Status:[ \t]*Signed|Document e-signed by|Agreement completed|Signature Certificate|DocuSign/i.test(text12);
 }
 function checkPlaceholders(docs) {
   const findings = [];
@@ -93040,13 +93280,13 @@ function checkPlaceholders(docs) {
     if (!doc.text_by_page || EXHIBIT_FILE_RE.test(doc.file_name)) continue;
     scanned++;
     const signed = looksSigned(doc);
-    doc.text_by_page.forEach((text11, i3) => {
+    doc.text_by_page.forEach((text12, i3) => {
       const seen = /* @__PURE__ */ new Set();
-      for (const m3 of text11.matchAll(BRACKET_RE)) {
-        const preceded = text11.slice(Math.max(0, (m3.index ?? 0) - 1), m3.index ?? 0);
+      for (const m3 of text12.matchAll(BRACKET_RE)) {
+        const preceded = text12.slice(Math.max(0, (m3.index ?? 0) - 1), m3.index ?? 0);
         const bracket = m3[0].replace(/\s+/g, " ");
         if (!isPlaceholder(bracket, preceded)) continue;
-        const quote = lineAround(text11, m3.index ?? 0);
+        const quote = lineAround(text12, m3.index ?? 0);
         const key = `${quote}|${bracket}`;
         if (seen.has(key)) continue;
         seen.add(key);
@@ -93170,9 +93410,9 @@ function itemLines(ctx, state, id, law) {
   const excerpt = (row2.excerpt ?? "").trim() === "" ? null : row2.excerpt;
   return statementBlock(excerpt, lawStatementCitationLine(row2) ?? `> ${CITATION_MISSING}`, lawStatementMarkers(row2), "statement_of_law_id", id, "").join("\n");
 }
-function memoHeader(text11) {
-  const value2 = (key) => new RegExp(`^${key}:[ \\t]*(.*?)[ \\t]*$`, "m").exec(text11)?.[1];
-  const job = /^(?:Document:.*?MEMORANDUM OF LAW (?:for Job #)?|Job:[ \t]*#?|To:[ \t]*Job #?)(\d+)[ \t]*$/m.exec(text11)?.[1];
+function memoHeader(text12) {
+  const value2 = (key) => new RegExp(`^${key}:[ \\t]*(.*?)[ \\t]*$`, "m").exec(text12)?.[1];
+  const job = /^(?:Document:.*?MEMORANDUM OF LAW (?:for Job #)?|Job:[ \t]*#?|To:[ \t]*Job #?)(\d+)[ \t]*$/m.exec(text12)?.[1];
   const confidence = value2("Confidence");
   return [
     "---",
@@ -93188,15 +93428,15 @@ function slot(ctx, name, part, state) {
   const paragraphs = (name === "memo-header" ? memoHeader(row2.text) : row2.text).trim().split(/\r?\n[ \t]*\r?\n/).map((p3) => p3.trim()).filter((p3) => p3 !== "").map((p3, i3) => {
     const ref = STATEMENT_REF.exec(p3);
     const own = ref ? p3.slice(0, ref.index) : p3;
-    const text11 = checkFormat(ctx, name, row2.id, own.split(/\r?\n/), state).join("\n");
+    const text12 = checkFormat(ctx, name, row2.id, own.split(/\r?\n/), state).join("\n");
     if (ctx.filing.kind === "case_brief" && BRIEF_LAW_SLOTS.has(name) && p3 !== "None." && (!ref || own.includes("<!--"))) {
-      return `${text11}
+      return `${text12}
 
 ${gap(ctx, state, `${name} paragraph ${i3 + 1} does not end with its one statement_of_law_id comment`)}`;
     }
-    if (!ref) return text11;
+    if (!ref) return text12;
     law ??= new Map(fetchFilingLaw(ctx.dbPath, ctx.filing.id).map((r3) => [r3.statement_id, r3]));
-    return `${text11}
+    return `${text12}
 
 ${itemLines(ctx, state, Number(ref[1]), law)}`;
   });
@@ -93318,10 +93558,10 @@ function fetchClauses(dbPath, filingId) {
   ).rows;
 }
 var ENACTMENT_KINDS = /* @__PURE__ */ new Set(["statute", "regulation", "rule"]);
-var normalized = (text11) => text11.toLowerCase().replace(/\s+/g, " ").trim();
+var normalized = (text12) => text12.toLowerCase().replace(/\s+/g, " ").trim();
 function namesEnactment(printed, c3) {
-  const text11 = normalized(printed);
-  return [c3.authority_citation, c3.authority_title].some((name) => name !== null && normalized(name) !== "" && text11.includes(normalized(name)));
+  const text12 = normalized(printed);
+  return [c3.authority_citation, c3.authority_title].some((name) => name !== null && normalized(name) !== "" && text12.includes(normalized(name)));
 }
 function currencyWithheld(c3, printed) {
   if (c3.basis !== "implied" || c3.authority_kind === null || !ENACTMENT_KINDS.has(c3.authority_kind) || !namesEnactment(printed, c3)) return null;
@@ -93450,8 +93690,8 @@ function composeLayoutSnapshot(key, seams = {}) {
   const passage_hashes = {};
   const blockOf3 = (path, kind) => {
     const read4 = knowledgeRead(path, seams);
-    const block2 = read4.layout;
-    for (const { rule_ref } of citedItems(block2, kind, path)) {
+    const block3 = read4.layout;
+    for (const { rule_ref } of citedItems(block3, kind, path)) {
       const hash = read4.items.find((item) => item.rule_ref === rule_ref).passage_hash;
       if (passage_hashes[rule_ref] !== void 0 && passage_hashes[rule_ref] !== hash) {
         throw new DataServerError(`${path}: rule_ref "${rule_ref}" is also cited by the other block with a different passage`, "invalid_layout");
@@ -93576,8 +93816,8 @@ import { existsSync as existsSync27, mkdirSync as mkdirSync14, readFileSync as r
 import { basename as basename4, dirname as dirname13, isAbsolute as isAbsolute5, join as join23, resolve as resolve3 } from "node:path";
 var RECORDS_FOLDER = "Drafting records";
 var LEGACY_MANIFEST_FILE = "render-manifest.json";
-function sha256(text11) {
-  return createHash9("sha256").update(text11, "utf-8").digest("hex");
+function sha256(text12) {
+  return createHash9("sha256").update(text12, "utf-8").digest("hex");
 }
 function manifestPath(dbPath, filingId) {
   return join23(recordsDir(dbPath), `render-manifest-${filingId}.json`);
@@ -93639,14 +93879,14 @@ function freshManifest(dbPath, filingId, stamp3, partiesDrift) {
   for (const f3 of manifest.files) {
     const file = join23(dir, f3.file_name);
     if (!existsSync27(file)) return null;
-    let text11;
+    let text12;
     try {
-      text11 = readFileSync27(file, "utf-8");
+      text12 = readFileSync27(file, "utf-8");
     } catch {
       return null;
     }
-    if (sha256(text11) !== f3.sha256) return null;
-    contents.set(f3.file_name, text11);
+    if (sha256(text12) !== f3.sha256) return null;
+    contents.set(f3.file_name, text12);
   }
   return { manifest, dir, contents };
 }
@@ -93827,9 +94067,9 @@ function filingFrontmatter(proceeding2, ctx, documentType) {
 function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, inventory, review) {
   const statementsByFact = /* @__PURE__ */ new Map();
   for (const stmt of fetchStatementsOfFact(dbPath, facts.map((f3) => f3.id))) {
-    const list3 = statementsByFact.get(stmt.fact_id) ?? [];
-    list3.push(stmt);
-    statementsByFact.set(stmt.fact_id, list3);
+    const list4 = statementsByFact.get(stmt.fact_id) ?? [];
+    list4.push(stmt);
+    statementsByFact.set(stmt.fact_id, list4);
   }
   const lines2 = [];
   let para2 = startPara;
@@ -93945,9 +94185,9 @@ function fetchAttachedExhibits(dbPath, affidavitDocumentId) {
 function buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, onMissing) {
   const out = [];
   const parts = [];
-  const newPart = (text11, indent2) => {
-    out.push({ text: text11, indent: indent2, part: parts.length });
-    parts.push({ bookmark: text11 });
+  const newPart = (text12, indent2) => {
+    out.push({ text: text12, indent: indent2, part: parts.length });
+    parts.push({ bookmark: text12 });
   };
   out.push({ text: "Cover Page", indent: 0, part: "cover" });
   out.push({ text: "Table of Contents", indent: 0, part: "toc" });
@@ -94459,7 +94699,7 @@ function renderBccaFactum(ctx) {
   lines2.push("");
   lines2.push("<!-- Word builds this from the headings; page numbers fill when the assembled document's fields update. -->");
   lines2.push("");
-  for (const heading of [
+  for (const heading2 of [
     "CHRONOLOGY",
     "OPENING STATEMENT",
     "PART 1 - STATEMENT OF FACTS",
@@ -94469,7 +94709,7 @@ function renderBccaFactum(ctx) {
     "APPENDICES: LIST OF AUTHORITIES",
     "APPENDICES: ENACTMENTS"
   ]) {
-    lines2.push(`- ${heading}`);
+    lines2.push(`- ${heading2}`);
   }
   lines2.push("");
   lines2.push("## CHRONOLOGY");
@@ -94761,9 +95001,9 @@ function renderApplicationResponse(ctx) {
   const witnessBacked = witnessBackedFlags(ctx.dbPath, facts.map((f3) => f3.id));
   const statementsByFact = /* @__PURE__ */ new Map();
   for (const stmt of statementsOfFact) {
-    const list3 = statementsByFact.get(stmt.fact_id) ?? [];
-    list3.push(stmt);
-    statementsByFact.set(stmt.fact_id, list3);
+    const list4 = statementsByFact.get(stmt.fact_id) ?? [];
+    list4.push(stmt);
+    statementsByFact.set(stmt.fact_id, list4);
   }
   const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
   const submissionIds = submissions.map((s3) => s3.id);
@@ -94970,7 +95210,7 @@ function renderApplicationResponse(ctx) {
       `${i3 + 1}. ${d3.label}${materialDateSuffix(d3.label, d3.document_date)}${provenancePart}${copy ? ` ${copy}` : ""} <!-- document ${i3 + 1} -->`
     );
   });
-  STANDARD_MATERIAL_LINES.forEach((text11, i3) => lines2.push(`${docs.length + i3 + 1}. ${text11}`));
+  STANDARD_MATERIAL_LINES.forEach((text12, i3) => lines2.push(`${docs.length + i3 + 1}. ${text12}`));
   lines2.push("");
   lines2.push("**Address for service filed:**");
   const afs = afsCheckbox(client);
@@ -94985,8 +95225,8 @@ function renderApplicationResponse(ctx) {
 
 // src/submission/forms/render-bcsc-affidavit.ts
 var EXHIBIT_TOKEN = /\{exhibit:(\d+)\}/g;
-function placedDocumentIds(text11) {
-  return [...text11.matchAll(EXHIBIT_TOKEN)].map((m3) => Number(m3[1]));
+function placedDocumentIds(text12) {
+  return [...text12.matchAll(EXHIBIT_TOKEN)].map((m3) => Number(m3[1]));
 }
 function letterFor(index) {
   let out = "";
@@ -94995,13 +95235,13 @@ function letterFor(index) {
 }
 function exhibitLetters(paragraphTexts) {
   const letters = /* @__PURE__ */ new Map();
-  for (const text11 of paragraphTexts) {
-    for (const id of placedDocumentIds(text11)) if (!letters.has(id)) letters.set(id, letterFor(letters.size));
+  for (const text12 of paragraphTexts) {
+    for (const id of placedDocumentIds(text12)) if (!letters.has(id)) letters.set(id, letterFor(letters.size));
   }
   return letters;
 }
-function withExhibitLetters(text11, letters) {
-  return text11.replace(EXHIBIT_TOKEN, (_3, id) => `**Exhibit "${letters.get(Number(id))}"**`);
+function withExhibitLetters(text12, letters) {
+  return text12.replace(EXHIBIT_TOKEN, (_3, id) => `**Exhibit "${letters.get(Number(id))}"**`);
 }
 function fetchAffidavits(dbPath, filingId) {
   return rows(
@@ -95443,9 +95683,9 @@ function renderWrittenArguments(ctx, documentKey) {
   );
   const servedBySubmission = /* @__PURE__ */ new Map();
   for (const r3 of servedRows) {
-    const list3 = servedBySubmission.get(r3.submission_id) ?? [];
-    list3.push(r3);
-    servedBySubmission.set(r3.submission_id, list3);
+    const list4 = servedBySubmission.get(r3.submission_id) ?? [];
+    list4.push(r3);
+    servedBySubmission.set(r3.submission_id, list4);
   }
   function struckSubmission(submissionId) {
     const served = servedBySubmission.get(submissionId) ?? [];
@@ -95763,9 +96003,9 @@ function fetchDocumentTenderStatus(dbPath, documentIds, today3, inventory) {
   const tenders = fetchExhibitTenders(dbPath, documentIds);
   const tendersByDoc = /* @__PURE__ */ new Map();
   for (const t3 of tenders) {
-    const list3 = tendersByDoc.get(t3.exhibit_id) ?? [];
-    list3.push(t3);
-    tendersByDoc.set(t3.exhibit_id, list3);
+    const list4 = tendersByDoc.get(t3.exhibit_id) ?? [];
+    list4.push(t3);
+    tendersByDoc.set(t3.exhibit_id, list4);
   }
   const admissionIds = [...new Set(tenders.filter((t3) => t3.admission_id !== null).map((t3) => t3.admission_id))];
   const states = /* @__PURE__ */ new Map();
@@ -95852,9 +96092,9 @@ function renderNoticeOfApplication(ctx) {
   );
   const statementsByFact = /* @__PURE__ */ new Map();
   for (const stmt of statementsOfFact) {
-    const list3 = statementsByFact.get(stmt.fact_id) ?? [];
-    list3.push(stmt);
-    statementsByFact.set(stmt.fact_id, list3);
+    const list4 = statementsByFact.get(stmt.fact_id) ?? [];
+    list4.push(stmt);
+    statementsByFact.set(stmt.fact_id, list4);
   }
   const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
   const submissionIds = submissions.map((s3) => s3.id);
@@ -96077,7 +96317,7 @@ function renderNoticeOfApplication(ctx) {
     const printed = printMarkerSets([affidavitMarker(a3)]);
     lines2.push(`${n3}. ${label2}${materialDateSuffix(label2, a3?.execution ?? null)}${printed ? ` ${printed}` : ""} <!-- document ${n3} -->`);
   });
-  STANDARD_MATERIAL_LINES.forEach((text11, i3) => lines2.push(`${docs.length + unattached.length + i3 + 1}. ${text11}`));
+  STANDARD_MATERIAL_LINES.forEach((text12, i3) => lines2.push(`${docs.length + unattached.length + i3 + 1}. ${text12}`));
   lines2.push("");
   lines2.push(checkboxOrderBlock([]));
   lines2.push("");
@@ -96174,14 +96414,14 @@ function withSubject(label2, title2) {
 }
 function affidavitLabel(a3) {
   const n3 = a3.affidavit_number === null ? null : a3.affidavit_number.trim().replace(/^#/, "");
-  const code = n3 === null ? "AFF" : `AFF#${n3}`;
-  if (a3.deponent_name === null) return { short: code, long: a3.label };
+  const code2 = n3 === null ? "AFF" : `AFF#${n3}`;
+  if (a3.deponent_name === null) return { short: code2, long: a3.label };
   const deponent = a3.deponent_name;
   let long;
   if (n3 === null) long = `Affidavit of ${deponent}`;
   else if (/^\d+$/.test(n3) && Number(n3) >= 1 && Number(n3) <= 10) long = `${ORDINALS[Number(n3) - 1]} affidavit of ${deponent}`;
   else long = `Affidavit #${n3} of ${deponent}`;
-  return { short: `${code} ${deponent}`, long };
+  return { short: `${code2} ${deponent}`, long };
 }
 function witnessStatementLabel(witnessName) {
   return { short: `WSS ${witnessName}`, long: `Witness statement of ${witnessName}` };
@@ -96291,9 +96531,9 @@ function resolveTypeFile(venue, kind, seams = {}) {
     );
   }
   const file = `${documents}/${rows5[0].file}.md`;
-  const block2 = extractJsonBlock(readShipped(file, seams), file, true);
-  validateTypeBlock(block2, file, { noVenue });
-  return { file, block: block2 };
+  const block3 = extractJsonBlock(readShipped(file, seams), file, true);
+  validateTypeBlock(block3, file, { noVenue });
+  return { file, block: block3 };
 }
 function composeFiller(venue, kind, seams = {}) {
   const type = resolveTypeFile(venue, kind, seams);
@@ -96383,8 +96623,8 @@ function buildSnapshot(args, seams = {}) {
 }
 function citedStates(stored, filing, seams = {}) {
   const out = [];
-  const read3 = (block2, raw, file) => {
-    const cited2 = citedItems(raw, block2, file ?? `"${filing.title}"'s stored layout`);
+  const read3 = (block3, raw, file) => {
+    const cited2 = citedItems(raw, block3, file ?? `"${filing.title}"'s stored layout`);
     if (cited2.length === 0) return;
     if (file === null) {
       throw new DataServerError(`"${filing.title}": its layout cites ${cited2.map((c3) => c3.rule_ref).join(", ")} but records no source to read them from`, "invalid_layout_snapshot");
@@ -96394,7 +96634,7 @@ function citedStates(stored, filing, seams = {}) {
       out.push({
         rule_ref,
         field,
-        block: block2,
+        block: block3,
         file,
         header: result.header,
         snapshot_hash: stored.passage_hashes[rule_ref],
@@ -96594,8 +96834,8 @@ function renderGeneral(ctx, stored, cited2) {
   const title2 = String(scalarValue(layout.title));
   const venueLabel = stored.venue === null ? "" : String(scalarValue(stored.venue.display_label));
   const placed = /* @__PURE__ */ new Set();
-  const tagAt = (block2, field) => {
-    const state2 = cited2.find((s3) => s3.block === block2 && s3.field === field);
+  const tagAt = (block3, field) => {
+    const state2 = cited2.find((s3) => s3.block === block3 && s3.field === field);
     if (state2 === void 0) return "";
     placed.add(state2);
     return tagOf(state2);
@@ -96819,8 +97059,8 @@ function openJobs(tickets, afterGate) {
   );
 }
 var WAIVER = " \u2014 WAIVED: ";
-function recordedRevision(text11) {
-  const m3 = text11.split(WAIVER)[0].match(/\[rev (\d+)\]$/);
+function recordedRevision(text12) {
+  const m3 = text12.split(WAIVER)[0].match(/\[rev (\d+)\]$/);
   return m3 ? Number(m3[1]) : null;
 }
 var PRE_FILING = {
@@ -97211,8 +97451,8 @@ function goalFor(ctx, tickets, shelved, current, deadlines, afterGate) {
   const hearing = storedLayout(ctx.filing).layout.goal_criteria.includes("hearing-date") ? hearingDateCriterion(ctx.dbPath, ctx.filing) : null;
   const criteria = [...drafting, ...gate === null ? [] : [gate.criterion], ...hearing === null ? [] : [hearing], ...deadlines];
   const state = forum === null ? "pending" : criteria.every((c3) => c3.state === "met") ? "met" : "unmet";
-  const text11 = gate === null ? internalCardText(drafting, jobs2.length) : cardText(drafting, gate, hearing, deadlines, send3, serve3);
-  return { goal: { sentence, state, text: filed ?? text11 }, criteria };
+  const text12 = gate === null ? internalCardText(drafting, jobs2.length) : cardText(drafting, gate, hearing, deadlines, send3, serve3);
+  return { goal: { sentence, state, text: filed ?? text12 }, criteria };
 }
 
 // src/submission/forms/build-work-board.ts
@@ -97291,8 +97531,8 @@ function sanitizeForPath(name) {
 }
 function readExistingRevision(filePath) {
   if (!existsSync28(filePath)) return void 0;
-  const text11 = readFileSync29(filePath, "utf-8");
-  const match = text11.match(/^Revision:[ \t]*(\d+)/m) ?? text11.match(/^window\.WORKBOARD = \{"meta":\{"revision":(\d+)/m) ?? text11.match(/data-k="Rev">(\d+)</);
+  const text12 = readFileSync29(filePath, "utf-8");
+  const match = text12.match(/^Revision:[ \t]*(\d+)/m) ?? text12.match(/^window\.WORKBOARD = \{"meta":\{"revision":(\d+)/m) ?? text12.match(/data-k="Rev">(\d+)</);
   return match ? Number(match[1]) : void 0;
 }
 function folderRows(dbPath) {
@@ -97322,8 +97562,8 @@ function matchOf(name, row2) {
   const rest = name.replace(DATE_PREFIX, "").toLowerCase();
   const titles = [row2.title, ...row2.style_of_cause ? [`${row2.title} - ${row2.style_of_cause}`] : []].map((t3) => sanitizeForPath(t3).toLowerCase());
   if (titles.includes(rest)) return "own";
-  const code = storedLayoutField(row2, "folder_code");
-  return code !== null && titles.some((t3) => rest === `${code.toLowerCase()} ${t3}`) ? "legacy" : null;
+  const code2 = storedLayoutField(row2, "folder_code");
+  return code2 !== null && titles.some((t3) => rest === `${code2.toLowerCase()} ${t3}`) ? "legacy" : null;
 }
 function isDir2(path) {
   try {
@@ -97661,9 +97901,9 @@ function draftingParties(caseDataDir, proceeding2, parties2, env = process.env) 
   const read3 = new Map((record2?.parties ?? []).map((c3) => [c3.case_party_id, c3]));
   const rows5 = [];
   const resolved = parties2.map((p3) => {
-    const link2 = linkOf(p3);
-    const caseParty = link2 === null ? void 0 : read3.get(link2);
-    if (link2 === null) rows5.push({ ...base(p3), kind: "unlinked" });
+    const link3 = linkOf(p3);
+    const caseParty = link3 === null ? void 0 : read3.get(link3);
+    if (link3 === null) rows5.push({ ...base(p3), kind: "unlinked" });
     else if (caseParty === void 0) rows5.push({ ...base(p3), kind: "not_of_record" });
     return withCaseData(p3, caseParty);
   });
@@ -97728,14 +97968,14 @@ function partiesDriftLines(rows5) {
     return mockupMessage(gapMarker("not_recorded"), `${r3.name} (${r3.role}): ${what}`);
   });
 }
-function withLeadLines(markdown, lines2) {
-  if (lines2.length === 0) return markdown;
-  const block2 = lines2.join("\n\n") + "\n\n";
-  const frontmatter = /^---\n[\s\S]*?\n---\n/.exec(markdown);
-  return frontmatter ? frontmatter[0] + block2 + markdown.slice(frontmatter[0].length) : block2 + markdown;
+function withLeadLines(markdown2, lines2) {
+  if (lines2.length === 0) return markdown2;
+  const block3 = lines2.join("\n\n") + "\n\n";
+  const frontmatter = /^---\n[\s\S]*?\n---\n/.exec(markdown2);
+  return frontmatter ? frontmatter[0] + block3 + markdown2.slice(frontmatter[0].length) : block3 + markdown2;
 }
-function withPartiesDriftLines(markdown, rows5) {
-  return withLeadLines(markdown, partiesDriftLines(rows5));
+function withPartiesDriftLines(markdown2, rows5) {
+  return withLeadLines(markdown2, partiesDriftLines(rows5));
 }
 
 // src/submission/schema-ceiling.ts
@@ -98149,8 +98389,8 @@ var ITEM_STATUS = {
   declined: "Declined",
   implemented: "Implemented"
 };
-function escapeHtml(text11) {
-  return text11.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
+function escapeHtml(text12) {
+  return text12.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
 }
 function text6(value2) {
   return escapeHtml(value2).replace(BRACKET, '<span class="bracket">[$1]</span>');
@@ -98158,8 +98398,8 @@ function text6(value2) {
 function para(value2) {
   return typeof value2 === "string" ? `<p class="text">${text6(value2)}</p>` : "";
 }
-function section(heading, body2) {
-  return body2 ? `<h3>${heading}</h3>${body2}` : "";
+function section(heading2, body2) {
+  return body2 ? `<h3>${heading2}</h3>${body2}` : "";
 }
 function parsePayload(record2) {
   if (record2.payload === null) return null;
@@ -98178,15 +98418,15 @@ function itemStatusLine(record2, n3) {
   return `<p class="item-status"><span class="label">${escapeHtml(label2)}</span>${reason2}</p>`;
 }
 function structuredItem(item) {
-  const list3 = (values, key) => Array.isArray(values) && values.length ? `<ul>${values.map((v4) => `<li>${text6(String(key && v4 && typeof v4 === "object" ? v4[key] : v4))}</li>`).join("")}</ul>` : "";
-  return section("The pain", para(item.pain)) + section("Where", para(item.where)) + section("What would show it is solved", para(item.done_test)) + section("What must stay true", list3(item.constraints)) + section("Changes", list3(item.changes, "change"));
+  const list4 = (values, key) => Array.isArray(values) && values.length ? `<ul>${values.map((v4) => `<li>${text6(String(key && v4 && typeof v4 === "object" ? v4[key] : v4))}</li>`).join("")}</ul>` : "";
+  return section("The pain", para(item.pain)) + section("Where", para(item.where)) + section("What would show it is solved", para(item.done_test)) + section("What must stay true", list4(item.constraints)) + section("Changes", list4(item.changes, "change"));
 }
 function items(record2, payload) {
-  const list3 = Array.isArray(payload.items) ? payload.items : [];
-  if (list3.length && list3.every((i3) => typeof i3 === "string")) {
-    return `<ol class="items">${list3.map((t3, i3) => `<li>${para(t3)}${itemStatusLine(record2, i3 + 1)}</li>`).join("")}</ol>`;
+  const list4 = Array.isArray(payload.items) ? payload.items : [];
+  if (list4.length && list4.every((i3) => typeof i3 === "string")) {
+    return `<ol class="items">${list4.map((t3, i3) => `<li>${para(t3)}${itemStatusLine(record2, i3 + 1)}</li>`).join("")}</ol>`;
   }
-  const detail2 = list3.filter((i3) => typeof i3 === "object" && i3 !== null).map((i3) => `<div class="detail">${structuredItem(i3)}</div>`).join("");
+  const detail2 = list4.filter((i3) => typeof i3 === "object" && i3 !== null).map((i3) => `<div class="detail">${structuredItem(i3)}</div>`).join("");
   return `<ol class="items"><li>${para(payload.pain_point ?? payload.body)}${itemStatusLine(record2, 1)}${detail2}</li></ol>`;
 }
 function contextLines(payload) {
@@ -98398,8 +98638,8 @@ var ROLE_LABELS = {
 var str = (value2) => typeof value2 === "string" && value2.trim() !== "" ? value2.trim() : null;
 var list = (value2) => Array.isArray(value2) ? value2.filter((v4) => typeof v4 === "string" && v4.trim() !== "") : [];
 var num = (value2) => typeof value2 === "number" ? value2 : null;
-function fold(text11) {
-  return text11.normalize("NFKD").replace(new RegExp("\\p{M}", "gu"), "").toLowerCase().replace(/['’-]/g, "").replace(/[^\p{L}\p{N}@.]+/gu, " ").trim();
+function fold(text12) {
+  return text12.normalize("NFKD").replace(new RegExp("\\p{M}", "gu"), "").toLowerCase().replace(/['’-]/g, "").replace(/[^\p{L}\p{N}@.]+/gu, " ").trim();
 }
 function title(role2) {
   const words2 = role2.replace(/_/g, " ");
@@ -98668,7 +98908,7 @@ function buildCastModel(input) {
       name: party.name,
       code: codeOf(party.aliases),
       badges: partyBadges(party),
-      pills: titles.map((text11) => ({ text: text11 })),
+      pills: titles.map((text12) => ({ text: text12 })),
       flags: [...tieState(tie).flags, ...flags],
       proposed: tieState(tie).proposed,
       reach: counselOf.has(party.party_id) ? "none" : "both",
@@ -98718,7 +98958,7 @@ function buildCastModel(input) {
       ...state,
       reach: "none",
       badges: m3.proceeding_id === null ? [] : [procBadge(m3.proceeding_id)],
-      pills: [m3.tribunal_body, m3.capacity].filter((t3) => Boolean(t3)).map((text11) => ({ text: text11 })),
+      pills: [m3.tribunal_body, m3.capacity].filter((t3) => Boolean(t3)).map((text12) => ({ text: text12 })),
       aliases: m3.aliases.filter((a3) => a3.kind === "spelling").map((a3) => a3.text),
       contact: ensure(contactDetails(tie, []), "Address for service"),
       appearances: m3.notes ? [{ label: "Notes", value: m3.notes }] : [],
@@ -98818,14 +99058,14 @@ var CAST_PAGE = templated({
     "cast-of-characters.js": cast_of_characters_js_default
   }
 });
-var copyButton = (label2, text11, cls = "") => `<button type="button"${cls ? ` class="${cls}"` : ""} data-copy="${escapeHtml(text11)}" title="${escapeHtml(text11)}">${escapeHtml(label2)}</button>`;
+var copyButton = (label2, text12, cls = "") => `<button type="button"${cls ? ` class="${cls}"` : ""} data-copy="${escapeHtml(text12)}" title="${escapeHtml(text12)}">${escapeHtml(label2)}</button>`;
 function detail(d3) {
   if (d3.value === null) return `<span class="k">${escapeHtml(d3.label)}</span><span class="v missing">Missing</span>`;
   const source = d3.source ? `<span class="src">${d3.sourcePath ? `<a href="${escapeHtml(pathToFileURL(d3.sourcePath).href)}">${escapeHtml(d3.source)}</a>` : escapeHtml(d3.source)}</span>` : "";
   const priv = d3.privileged ? `<span class="pill priv inl">${FLAG_LABELS.priv}</span>` : "";
   return `<span class="k">${escapeHtml(d3.label)}</span><span class="v">${escapeHtml(d3.value)}${d3.copy ? copyButton("copy", d3.value, "copy") : ""}${source}${priv}</span>`;
 }
-var rows2 = (heading, details) => details.length ? `<h3>${escapeHtml(heading)}</h3><div class="rows">${details.map(detail).join("")}</div>` : "";
+var rows2 = (heading2, details) => details.length ? `<h3>${escapeHtml(heading2)}</h3><div class="rows">${details.map(detail).join("")}</div>` : "";
 function summary(e3) {
   const part = (value2, missing) => value2 ? escapeHtml(value2) : `<span class="gap">${missing}</span>`;
   const bits = [part(e3.email, "no email"), part(e3.phone, "no phone"), ...e3.address ? [escapeHtml(e3.address)] : []];
@@ -100261,16 +100501,16 @@ var TEXT_COLUMN = {
   statements_of_fact: "excerpt",
   statements_of_law: "excerpt"
 };
-function sha256Text(text11) {
-  return createHash10("sha256").update(text11, "utf-8").digest("hex");
+function sha256Text(text12) {
+  return createHash10("sha256").update(text12, "utf-8").digest("hex");
 }
 function normalizePart(label2) {
   const m3 = /^\s*(?:part\s+)?(\d+)\s*$/i.exec(label2);
   return m3 ? `Part ${m3[1]}` : label2.trim().toLowerCase();
 }
-function partLabel(heading) {
-  const m3 = /^PART\s+(\d+)/i.exec(heading);
-  return m3 ? `Part ${m3[1]}` : heading.replace(/[*_`]/g, "").trim();
+function partLabel(heading2) {
+  const m3 = /^PART\s+(\d+)/i.exec(heading2);
+  return m3 ? `Part ${m3[1]}` : heading2.replace(/[*_`]/g, "").trim();
 }
 function factPart(kind) {
   return kind === "notice_of_application" ? "part2" : "part4";
@@ -100293,9 +100533,9 @@ function blocksOf(source) {
   let part = "";
   let current = null;
   for (const line of source.markdown.split(/\r?\n/)) {
-    const heading = HEADING.exec(line);
-    if (heading) {
-      part = partLabel(heading[1]);
+    const heading2 = HEADING.exec(line);
+    if (heading2) {
+      part = partLabel(heading2[1]);
       current = null;
       continue;
     }
@@ -100323,22 +100563,22 @@ function blocksOf(source) {
 function rows3(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
-function readTexts(dbPath, entity, ids) {
+function readTexts(dbPath, entity2, ids) {
   const out = /* @__PURE__ */ new Map();
   const unique = [...new Set(ids)];
   if (unique.length === 0) return out;
   const marks = unique.map(() => "?").join(", ");
-  const column = entity === "statements_of_fact" ? "CASE WHEN exhibit_id IS NOT NULL THEN exhibit_excerpt ELSE excerpt END" : TEXT_COLUMN[entity];
-  for (const r3 of rows3(dbPath, `SELECT id, ${column} AS text FROM ${entity} WHERE id IN (${marks})`, unique)) {
+  const column = entity2 === "statements_of_fact" ? "CASE WHEN exhibit_id IS NOT NULL THEN exhibit_excerpt ELSE excerpt END" : TEXT_COLUMN[entity2];
+  for (const r3 of rows3(dbPath, `SELECT id, ${column} AS text FROM ${entity2} WHERE id IN (${marks})`, unique)) {
     out.set(Number(r3.id), String(r3.text ?? ""));
   }
   return out;
 }
 function readDeployments(dbPath, filingId) {
-  const read3 = (table2, fk, part, override2) => rows3(
+  const read3 = (table3, fk, part, override2) => rows3(
     dbPath,
     `SELECT id, ${fk} AS fk, document, ${part ? "part" : "NULL"} AS part, ordinal, ${override2 ? "wording_override" : "NULL"} AS override
-         FROM ${table2} WHERE filing_id = ? ORDER BY ordinal, id`,
+         FROM ${table3} WHERE filing_id = ? ORDER BY ordinal, id`,
     [filingId]
   ).map((r3) => ({
     id: Number(r3.id),
@@ -100361,8 +100601,8 @@ var DEPLOYMENT_OF = {
   order_sought: "filing_orders",
   rhetorical_paragraphs: "filing_rhetoric"
 };
-function toDeployment(table2, row2) {
-  return { table: table2, id: row2.id, ordinal: row2.ordinal, part: row2.part };
+function toDeployment(table3, row2) {
+  return { table: table3, id: row2.id, ordinal: row2.ordinal, part: row2.part };
 }
 function buildParagraphMap(dbPath, filing, sources) {
   const blocks3 = sources.flatMap(blocksOf);
@@ -100379,36 +100619,36 @@ function buildParagraphMap(dbPath, filing, sources) {
   const seenPositional = /* @__PURE__ */ new Map();
   const resolved = blocks3.flatMap((b3) => {
     if (b3.label === null || b3.traceId === null) return [];
-    const entity = PARAGRAPH_TRACES[b3.label];
+    const entity2 = PARAGRAPH_TRACES[b3.label];
     if (POSITIONAL.has(b3.label)) {
       const key = `${b3.source.document}|${b3.label}`;
       const k3 = seenPositional.get(key) ?? 0;
       seenPositional.set(key, k3 + 1);
       const row2 = positional(b3.label, b3.source.document)[k3];
-      return row2 === void 0 ? [] : [{ block: b3, entity, rowId: row2.fk, positional: true }];
+      return row2 === void 0 ? [] : [{ block: b3, entity: entity2, rowId: row2.fk, positional: true }];
     }
-    return [{ block: b3, entity, rowId: b3.traceId, positional: false }];
+    return [{ block: b3, entity: entity2, rowId: b3.traceId, positional: false }];
   });
-  const ids = (entity) => [
-    ...resolved.filter((r3) => r3.entity === entity).map((r3) => r3.rowId),
-    ...blocks3.flatMap((b3) => b3.statements.filter((s3) => s3.entity === entity).map((s3) => s3.id))
+  const ids = (entity2) => [
+    ...resolved.filter((r3) => r3.entity === entity2).map((r3) => r3.rowId),
+    ...blocks3.flatMap((b3) => b3.statements.filter((s3) => s3.entity === entity2).map((s3) => s3.id))
   ];
   const texts = /* @__PURE__ */ new Map();
-  for (const entity of Object.keys(TEXT_COLUMN)) texts.set(entity, readTexts(dbPath, entity, ids(entity)));
+  for (const entity2 of Object.keys(TEXT_COLUMN)) texts.set(entity2, readTexts(dbPath, entity2, ids(entity2)));
   const out = [];
   let lastSubmission = null;
   for (const r3 of resolved) {
     const b3 = r3.block;
     const document2 = b3.source.document;
     if (r3.entity === "submissions") lastSubmission = { document: document2, part: b3.part, id: r3.rowId };
-    const table2 = DEPLOYMENT_OF[r3.entity];
-    const candidates = table2 === void 0 ? [] : deployments[table2].filter((d3) => d3.fk === r3.rowId && d3.document === document2);
-    const placement = candidates.find((d3) => table2 !== "filing_facts" || d3.part === factPart(filing.kind)) ?? candidates[0];
-    const override2 = table2 === "filing_orders" && placement?.override != null ? placement.override : null;
+    const table3 = DEPLOYMENT_OF[r3.entity];
+    const candidates = table3 === void 0 ? [] : deployments[table3].filter((d3) => d3.fk === r3.rowId && d3.document === document2);
+    const placement = candidates.find((d3) => table3 !== "filing_facts" || d3.part === factPart(filing.kind)) ?? candidates[0];
+    const override2 = table3 === "filing_orders" && placement?.override != null ? placement.override : null;
     const base = texts.get(r3.entity)?.get(r3.rowId);
     if (base === void 0) continue;
-    const text11 = override2 ?? base;
-    if (r3.positional && !b3.line.includes(text11)) continue;
+    const text12 = override2 ?? base;
+    if (r3.positional && !b3.line.includes(text12)) continue;
     const parent = r3.entity === "law_assertions" && lastSubmission !== null && lastSubmission.document === document2 && lastSubmission.part === b3.part ? lastSubmission.id : null;
     const common = { document: document2, part: b3.part, number: b3.number, title: b3.source.title };
     out.push({
@@ -100416,9 +100656,9 @@ function buildParagraphMap(dbPath, filing, sources) {
       sub: 0,
       entity: r3.entity,
       row_id: r3.rowId,
-      text: text11,
-      text_hash: sha256Text(text11),
-      deployment: table2 === void 0 || placement === void 0 ? null : toDeployment(table2, placement),
+      text: text12,
+      text_hash: sha256Text(text12),
+      deployment: table3 === void 0 || placement === void 0 ? null : toDeployment(table3, placement),
       parent,
       override_id: override2 === null || placement === void 0 ? null : placement.id
     });
@@ -100633,8 +100873,8 @@ function buildLegalMemosData(dbPath, jobs2, matterDir) {
 
 // src/submission/forms/brief-job.ts
 var BRIEF_JOB_PREFIX = "Brief the case: ";
-function squashed(text11) {
-  return text11.replace(/[\s.]+/g, "").toLowerCase();
+function squashed(text12) {
+  return text12.replace(/[\s.]+/g, "").toLowerCase();
 }
 function citationParts(citation) {
   return (citation ?? "").split(/,(?![^()]*\))/).map((piece) => squashed(piece.replace(/\s+at\s.*$/i, "").replace(/\s*\([^()]*\)\s*$/, ""))).filter((part) => /\d/.test(part) && /[a-z]/.test(part));
@@ -100705,8 +100945,8 @@ function foldKey(citation, authorityId, name) {
   return citationKey(citation) ?? (authorityId !== null ? `id:${authorityId}` : `name:${name.toLowerCase()}`);
 }
 var CITATION_PIECE = /^(?:[[(]\d{4}[\])]\s+\d*|\d+)\s*[A-Za-z].*?\s\d+(?:\s*\([^()]*\))*(?:\s+at\s.*)?$/;
-function isCitation(text11) {
-  return text11.split(/,\s+/).every((piece) => CITATION_PIECE.test(piece) && !/\sv\.?\s/i.test(piece));
+function isCitation(text12) {
+  return text12.split(/,\s+/).every((piece) => CITATION_PIECE.test(piece) && !/\sv\.?\s/i.test(piece));
 }
 function briefCase(file) {
   const whole = titleOf2(file).replace(/^case brief\s+/i, "");
@@ -100721,8 +100961,8 @@ function briefCase(file) {
 }
 var CITATION_LIKE = /\b\d+\s*[A-Za-z.]+\s*\d+\b/;
 function holdsCitation(name, part) {
-  const text11 = part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(?<!\\d)${text11}(?!\\d)`).test(squashed(name));
+  const text12 = part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?<!\\d)${text12}(?!\\d)`).test(squashed(name));
 }
 function caseOfFile(file, known) {
   const { whole, style, citation } = briefCase(file);
@@ -100945,7 +101185,7 @@ function propositionsFor(dbPath, proceedingId, ids, merged) {
     (s3) => s3.law_assertion_id !== null || !researchCited.has(s3.statement_id) || otherCited.has(s3.statement_id) || orderCited.has(s3.statement_id) || citedHere.has(s3.statement_id)
   );
   const onFilingIds = new Set(onFiling.map((s3) => s3.id));
-  const present3 = (list3) => list3.filter((id) => id !== null);
+  const present3 = (list4) => list4.filter((id) => id !== null);
   const deployed = /* @__PURE__ */ new Set([
     ...links.filter((l3) => onFilingIds.has(l3.submission_id)).map((l3) => l3.law_assertion_id),
     ...present3(required2.filter((r3) => r3.on_filing === 1).map((r3) => r3.law_assertion_id))
@@ -101011,8 +101251,8 @@ function propositionsFor(dbPath, proceedingId, ids, merged) {
   }
   const linkedTo = (submissionId) => links.filter((l3) => l3.submission_id === submissionId).map((l3) => l3.law_assertion_id);
   const groups = [];
-  const push = (heading, note, list3) => {
-    if (list3.length > 0) groups.push({ heading, note, propositions: list3 });
+  const push = (heading2, note, list4) => {
+    if (list4.length > 0) groups.push({ heading: heading2, note, propositions: list4 });
   };
   const propositionOf = new Map(statements.map((s3) => [s3.statement_id, s3.law_assertion_id]));
   const orderGroup = (edges) => [
@@ -101121,8 +101361,8 @@ function viewPageFile(page2, board, folder) {
   if (folder !== void 0) return join34(folder, `${page2.name}.html`);
   return board.filing_id === null ? `${page2.name} - Work Board - proceeding ${board.proceeding_id}.html` : `${page2.name} - Work Board ${board.filing_id}.html`;
 }
-function escapeRegExp(text11) {
-  return text11.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function escapeRegExp(text12) {
+  return text12.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 function isViewPageFile(fileName) {
   return VIEW_PAGES.some((page2) => new RegExp(`^${escapeRegExp(page2.name)}(?: - (?:Work Board|Milestone|Job Board) (?:- proceeding )?\\d+)?\\.html$`, "i").test(fileName));
@@ -101278,7 +101518,7 @@ function pageItems(held2, combined2) {
     keep.push(...own);
   }
   if (keep.every(Boolean)) return combined2;
-  const pick2 = (list3) => list3.filter((_3, i3) => keep[i3]);
+  const pick2 = (list4) => list4.filter((_3, i3) => keep[i3]);
   return {
     ...combined2,
     items: pick2(combined2.items),
@@ -101289,7 +101529,7 @@ function pageItems(held2, combined2) {
 }
 function combinedCriteria(goaled, deadlineIds, page2) {
   const several = goaled.length > 1 && !page2;
-  const tag = (s3, text11) => several ? `${writingOf(s3)}: ${text11}` : text11;
+  const tag = (s3, text12) => several ? `${writingOf(s3)}: ${text12}` : text12;
   const order = [];
   const byId2 = /* @__PURE__ */ new Map();
   goaled.forEach((s3, i3) => {
@@ -101472,8 +101712,8 @@ function courtFileAffidavits(dbPath, filingId, matterRoot) {
     if (!("path" in folder) || number3 === void 0) {
       return { ...base, court_file: null, court_file_made_on: null, note: "path" in folder ? "drafting data records no affidavit number" : folder.note, mismatch: null };
     }
-    const code = r3.deponent ? deponentCode(r3.deponent).toUpperCase() : null;
-    const matches = names.filter((n3) => String(Number(n3.number)) === String(Number(number3)) && (code === null || n3.deponent_code.toUpperCase() === code));
+    const code2 = r3.deponent ? deponentCode(r3.deponent).toUpperCase() : null;
+    const matches = names.filter((n3) => String(Number(n3.number)) === String(Number(number3)) && (code2 === null || n3.deponent_code.toUpperCase() === code2));
     const latest = newest(matches);
     const made = newest(matches.filter((n3) => n3.status !== null && MADE.has(n3.status)));
     const madeOn = made?.date ?? null;
@@ -101934,8 +102174,8 @@ var LETTER_KIND = /(?:^|[^a-z])letter(?:[^a-z]|$)/i;
 function awaitingResponse(filing) {
   return filing.filed_on !== null && !filing.retired_on && LETTER_KIND.test(filing.kind);
 }
-function firstLine2(text11) {
-  return text11?.split(/\r?\n/).map((line) => line.trim()).find((line) => line !== "") ?? null;
+function firstLine2(text12) {
+  return text12?.split(/\r?\n/).map((line) => line.trim()).find((line) => line !== "") ?? null;
 }
 function sentLetterLine(dbPath, filing) {
   const prose = fetchProse(dbPath, filing.id);
@@ -103623,8 +103863,8 @@ function recordPagesState(dbPath, todos, section3, sessionToken) {
     ...state.sessions ? { sessions: state.sessions } : {}
   };
   mkdirSync18(recordsDir(dbPath), { recursive: true });
-  const code = writeStatusFile(statePath(dbPath), JSON.stringify(next2, null, 2) + "\n");
-  if (code !== null) throw new DataServerError(`could not write ${statePath(dbPath)}: ${code}`);
+  const code2 = writeStatusFile(statePath(dbPath), JSON.stringify(next2, null, 2) + "\n");
+  if (code2 !== null) throw new DataServerError(`could not write ${statePath(dbPath)}: ${code2}`);
   return change;
 }
 
@@ -103816,10 +104056,10 @@ function renderBoardSummary(section3, client, todos) {
 function renderLiveLanes(section3) {
   const m3 = section3.meta;
   const lines2 = [];
-  for (const [category, heading] of LANES) {
+  for (const [category, heading2] of LANES) {
     if (category === "superseded") lines2.push(`## Completed (${jobsIn(section3, "completed").length})`, shelvedHeading(section3));
     const jobs2 = jobsIn(section3, category);
-    lines2.push(`## ${heading} (${jobs2.length})`);
+    lines2.push(`## ${heading2} (${jobs2.length})`);
     for (const t3 of jobs2) lines2.push(collapsedText(t3) + tagTail(t3, m3.rendered) + generalTail(t3));
     if (category === "ready") {
       const choice = jobs2.find((t3) => t3.dispatch_skips.length === 0);
@@ -104051,9 +104291,9 @@ function fenceStep(open, line) {
 var LEGEND_HEADING = "## Legend";
 var GLYPH_ALTERNATIVES = SYMBOLS.map((s3) => s3.glyph).sort((a3, b3) => b3.length - a3.length).map((g3) => g3.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
 var RUN_RE = new RegExp(`(?:${GLYPH_ALTERNATIVES.join("|")})+`, "g");
-function scannedText(markdown) {
+function scannedText(markdown2) {
   let open = "";
-  const kept = markdown.split("\n").filter((line) => {
+  const kept = markdown2.split("\n").filter((line) => {
     const inFence = open !== "";
     const step2 = fenceStep(open, line);
     open = step2.open;
@@ -104064,8 +104304,8 @@ function scannedText(markdown) {
 function row(cells) {
   return `|${cells.map((cell) => cell ? ` ${cell} ` : " ").join("|")}|`;
 }
-function buildLegend(markdown, documentType) {
-  const sets = [...scannedText(markdown).matchAll(RUN_RE)].map((m3) => splitGlyphs(m3[0]));
+function buildLegend(markdown2, documentType) {
+  const sets = [...scannedText(markdown2).matchAll(RUN_RE)].map((m3) => splitGlyphs(m3[0]));
   const present3 = new Set(sets.flat());
   const rows5 = [];
   const notes = [];
@@ -104089,14 +104329,14 @@ function buildLegend(markdown, documentType) {
   if (rows5.length === 0) return { text: "", notes: [] };
   return { text: [LEGEND_HEADING, "", row(["Symbol", "Name", "Meaning", "Work"]), "|---|---|---|---|", ...rows5].join("\n") + "\n", notes };
 }
-function withoutLegend(markdown) {
-  const at = markdown.lastIndexOf(`
+function withoutLegend(markdown2) {
+  const at = markdown2.lastIndexOf(`
 ${LEGEND_HEADING}
 `);
-  return at === -1 ? markdown : markdown.slice(0, at);
+  return at === -1 ? markdown2 : markdown2.slice(0, at);
 }
-function withLegend(markdown, documentType) {
-  const body2 = withoutLegend(markdown);
+function withLegend(markdown2, documentType) {
+  const body2 = withoutLegend(markdown2);
   const legend = buildLegend(body2, documentType);
   return { markdown: legend.text ? `${body2.trimEnd()}
 
@@ -104138,7 +104378,7 @@ function formCurrency(formKey, today3, seams = {}) {
   let formNumber;
   if (front === null) formNumber = /^form-(\d+(?:\.\d+)?)$/.exec(formKey)?.[1] ?? null;
   else formNumber = typeof front.form_number === "string" ? front.form_number : null;
-  const conformedTo = lists[0].filter((reg) => lists.every((list3) => list3.includes(reg)));
+  const conformedTo = lists[0].filter((reg) => lists.every((list4) => list4.includes(reg)));
   const unconformed = [];
   for (const enactment of record2.enactments) {
     for (const change of enactment.pending_changes ?? []) {
@@ -104225,10 +104465,10 @@ var MESSAGE_LINE_RES = [
   /^🧩 no facts attributed to this witness$/m
 ];
 var STRUCK_LINE_RE = /^[ \t]*~~.*~~[ \t]*\n?/gm;
-function stripSections(markdown) {
-  let out = markdown;
-  for (const heading of MOCKUP_ONLY_HEADINGS) {
-    const startRe = new RegExp(`\\n(#{2,6}) ${heading}\\n`);
+function stripSections(markdown2) {
+  let out = markdown2;
+  for (const heading2 of MOCKUP_ONLY_HEADINGS) {
+    const startRe = new RegExp(`\\n(#{2,6}) ${heading2}\\n`);
     for (; ; ) {
       const start2 = out.match(startRe);
       if (!start2 || start2.index === void 0) break;
@@ -104243,16 +104483,16 @@ function stripSections(markdown) {
   }
   return out;
 }
-function stripGlyphs(markdown) {
-  let out = markdown;
+function stripGlyphs(markdown2) {
+  let out = markdown2;
   for (const glyph2 of ALL_MARKER_GLYPHS) {
     out = out.split(glyph2).join("");
   }
   return out;
 }
-function tidy(markdown) {
+function tidy(markdown2) {
   let open = "";
-  const lines2 = markdown.split("\n").map((line) => {
+  const lines2 = markdown2.split("\n").map((line) => {
     const step2 = fenceStep(open, line);
     const inFence = open !== "";
     open = step2.open;
@@ -104265,8 +104505,8 @@ function tidy(markdown) {
   });
   return lines2.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
 }
-function toFiledFace(markdown) {
-  let out = markdown.replace(FRONTMATTER_RE, "");
+function toFiledFace(markdown2) {
+  let out = markdown2.replace(FRONTMATTER_RE, "");
   out = out.replace(MOCKUP_ONLY_LINE_RE, "");
   out = out.replace(GAP_LINE_RE, "");
   out = out.replace(HTML_COMMENT_RE, "");
@@ -104416,20 +104656,20 @@ var BCCA_HEARING = /^(THIS IS A RESPONSE TO the stay application .*, returnable 
 function withholdHearing(doc) {
   if (doc.markdown === void 0) return doc;
   const unlessBlank = (value2, blank) => value2 === blank ? value2 : HEARING_WITHHELD;
-  const markdown = doc.markdown.replace(NOA_HEARING, (_m, head, proposed, tail) => `${head}${unlessBlank(proposed, "________________")}${tail}`).replace(
+  const markdown2 = doc.markdown.replace(NOA_HEARING, (_m, head, proposed, tail) => `${head}${unlessBlank(proposed, "________________")}${tail}`).replace(
     BCCA_HEARING,
     (_m, head, date3, time3) => `${head}${unlessBlank(date3, gapMarker("gap"))}${time3 === void 0 ? "" : ` at ${HEARING_WITHHELD}`}.`
   );
-  return { ...doc, markdown };
+  return { ...doc, markdown: markdown2 };
 }
 
 // src/submission/forms/filed-gates.ts
-function findMissingLawCitations(markdown) {
-  return markdown.split("\n").filter((line) => line.includes(CITATION_MISSING)).flatMap((line) => line.match(/<!-- statement_of_law_id (\d+) -->/)?.[1] ?? []).map(Number);
+function findMissingLawCitations(markdown2) {
+  return markdown2.split("\n").filter((line) => line.includes(CITATION_MISSING)).flatMap((line) => line.match(/<!-- statement_of_law_id (\d+) -->/)?.[1] ?? []).map(Number);
 }
-function findUnrenderableOrders(markdown) {
+function findUnrenderableOrders(markdown2) {
   const ids = [];
-  for (const line of markdown.split("\n")) {
+  for (const line of markdown2.split("\n")) {
     if (!line.includes(TEMPLATE_NOT_CHOSEN) && !line.includes(UNRECOGNIZED_TEMPLATE_KEY)) continue;
     const m3 = line.match(/<!-- order_sought_id (\d+) -->/);
     if (m3) ids.push(Number(m3[1]));
@@ -104607,8 +104847,8 @@ function writeDocument2(baseDir, output, revision) {
   mkdirSync19(baseDir, { recursive: true });
   const filePath = join41(baseDir, output.fileName);
   archiveIfStale(filePath, fileStem(output.fileName), revision);
-  const code = writeStatusFile(filePath, output.markdown);
-  if (code) throw new DataServerError(`could not write ${filePath}: ${code}`);
+  const code2 = writeStatusFile(filePath, output.markdown);
+  if (code2) throw new DataServerError(`could not write ${filePath}: ${code2}`);
   return filePath;
 }
 var RETIRED_BOARD_FILES = ["workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
@@ -104765,10 +105005,10 @@ function renderWitnessStatements(ctx) {
       paragraphs.map((p3) => p3.id)
     );
     const factsByParagraph = /* @__PURE__ */ new Map();
-    for (const link2 of links) {
-      const list3 = factsByParagraph.get(link2.statement_paragraph_id) ?? [];
-      list3.push(link2.fact_id);
-      factsByParagraph.set(link2.statement_paragraph_id, list3);
+    for (const link3 of links) {
+      const list4 = factsByParagraph.get(link3.statement_paragraph_id) ?? [];
+      list4.push(link3.fact_id);
+      factsByParagraph.set(link3.statement_paragraph_id, list4);
     }
     const witnessFacts = fetchIncludedStatementsOfFactForWitness(ctx.dbPath, s3.witness_id);
     const linkedSofIds = new Set(links.map((l3) => l3.statement_of_fact_id));
@@ -104851,9 +105091,9 @@ function renderWitnessStatements(ctx) {
 // src/submission/forms/render-documents.ts
 function renderDocument(ctx, timings, documentType, fileName, render, label2 = typeLabel(documentType, fileName)) {
   const from = ctx.inventory.length;
-  const markdown = timed(timings, `render ${fileName}`, render);
+  const markdown2 = timed(timings, `render ${fileName}`, render);
   stampDoc(ctx.inventory, from, documentType);
-  return { documentType, fileName, markdown, label: label2 };
+  return { documentType, fileName, markdown: markdown2, label: label2 };
 }
 function venueDocumentsForFiling(ctx, timings, general, cited2) {
   if (general !== null) {
@@ -105084,20 +105324,20 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
       const board = boardDocument(section4, written, documentTypes2?.includes("Work_board") ?? false);
       return { filing_id: filingId, revision, documents: [...projected, board].map(withholdHearing), ...pagesReport(written), ...tail, timings: withTotal(timings, started) };
     }
-    const inline = [...documents2, boardDocument(section4, void 0, documentTypes2?.includes("Work_board") ?? false)];
-    return { filing_id: filingId, revision, documents: selectDocuments(inline, documentTypes2).map(withholdHearing), ...tail, timings: withTotal(timings, started) };
+    const inline2 = [...documents2, boardDocument(section4, void 0, documentTypes2?.includes("Work_board") ?? false)];
+    return { filing_id: filingId, revision, documents: selectDocuments(inline2, documentTypes2).map(withholdHearing), ...tail, timings: withTotal(timings, started) };
   };
   if (hit) {
     timed(timings, "remove retired board files", () => removeOldBoardFiles(baseDir));
     const section4 = timed(timings, "board_section", () => buildWorkBoardData({ ...ctx, inventory: hit.manifest.inventory }, deadlines));
     const documents2 = hit.manifest.files.map((f3) => {
-      const markdown = hit.contents.get(f3.file_name);
+      const markdown2 = hit.contents.get(f3.file_name);
       return {
         document_type: f3.document_type,
         path: join42(hit.dir, f3.file_name),
         file_name: f3.file_name,
-        markdown,
-        ...symbolNotes(legendNotes(markdown, f3.document_type))
+        markdown: markdown2,
+        ...symbolNotes(legendNotes(markdown2, f3.document_type))
       };
     });
     recordParagraphMap(hit.manifest.files.map((f3) => ({ documentType: f3.document_type, fileName: f3.file_name, markdown: hit.contents.get(f3.file_name) })));
@@ -105403,8 +105643,8 @@ function renderForm32FiledFace(ctx, warnings) {
           message: `Fact ${f3.id} (Part 2, paragraph ${n3}): no court record is linked, so no evidence reference names the document it comes from.`
         });
       } else {
-        const reference = evidenceReference(labelMap.get(f3.court_record), f3.court_record_pinpoint);
-        if (reference !== null) lines2.push(`>> ${reference}`);
+        const reference2 = evidenceReference(labelMap.get(f3.court_record), f3.court_record_pinpoint);
+        if (reference2 !== null) lines2.push(`>> ${reference2}`);
       }
       for (const stmt of part2Statements) {
         if (stmt.fact_id !== f3.id || stmt.purpose === "impeachment") continue;
@@ -105494,9 +105734,9 @@ function struckSubmissionIds(dbPath, submissionIds) {
   );
   const crossedFlagsBySubmission = /* @__PURE__ */ new Map();
   for (const r3 of served) {
-    const list3 = crossedFlagsBySubmission.get(r3.submission_id) ?? [];
-    list3.push(r3.crossed_out_on !== null);
-    crossedFlagsBySubmission.set(r3.submission_id, list3);
+    const list4 = crossedFlagsBySubmission.get(r3.submission_id) ?? [];
+    list4.push(r3.crossed_out_on !== null);
+    crossedFlagsBySubmission.set(r3.submission_id, list4);
   }
   const struck = /* @__PURE__ */ new Set();
   for (const [submissionId, flags] of crossedFlagsBySubmission) {
@@ -105710,7 +105950,7 @@ function renderForm33FiledFace(ctx, warnings) {
   for (const d3 of docs) {
     body2.push(`- ${d3.label}${materialDateSuffix(d3.label, d3.document_date)}`);
   }
-  for (const text11 of STANDARD_MATERIAL_LINES) body2.push(`- ${text11}`);
+  for (const text12 of STANDARD_MATERIAL_LINES) body2.push(`- ${text12}`);
   return front.join("\n") + "\n" + body2.join("\n").trimEnd() + "\n";
 }
 
@@ -105786,7 +106026,7 @@ function confineCaseDataFolder(dbPath, caseDataFolder2) {
   }
   return folder;
 }
-function writeSubstanceFile(caseData, fileName, markdown, folders2 = [BCSC_SUBSTANCE_FOLDER]) {
+function writeSubstanceFile(caseData, fileName, markdown2, folders2 = [BCSC_SUBSTANCE_FOLDER]) {
   const dirs = folders2.map((_3, i3) => pathWin3217.join(caseData, ...folders2.slice(0, i3 + 1)));
   const path = pathWin3217.join(dirs[dirs.length - 1], fileName);
   for (const p3 of [...dirs, path]) {
@@ -105795,7 +106035,7 @@ function writeSubstanceFile(caseData, fileName, markdown, folders2 = [BCSC_SUBST
     }
   }
   for (const dir of dirs) if (!existsSync40(dir)) mkdirSync20(dir);
-  writeFileSync10(path, markdown, "utf-8");
+  writeFileSync10(path, markdown2, "utf-8");
   return path;
 }
 
@@ -105830,15 +106070,15 @@ function submissionFormsEmitForm32(dbPath, filingId, caseDataFolder2, seams = {}
   const lenient = publish3.lenient === true ? unplacedFactWarnings(dbPath, filing) : void 0;
   if (lenient === void 0) refuseUnplacedFacts(dbPath, filing, "drafting_forms__emit_form32");
   const ctx = buildContext(dbPath, proceeding2, filing, parties2, revision, {});
-  const markdown = renderForm32FiledFace(ctx, lenient);
+  const markdown2 = renderForm32FiledFace(ctx, lenient);
   const sidecar2 = publishSidecar(ctx, lenient ?? [], publish3.cover_notes ?? []);
   const publishName = publishFileName("form-32.md");
   return {
     filing_id: filingId,
     revision,
     file_name: "form-32.md",
-    markdown,
-    ...caseData === void 0 ? {} : { written_path: writeSubstanceFile(caseData, "form-32.md", markdown) },
+    markdown: markdown2,
+    ...caseData === void 0 ? {} : { written_path: writeSubstanceFile(caseData, "form-32.md", markdown2) },
     publish_file_name: publishName,
     publish_json: sidecar2.json,
     ...caseData === void 0 ? {} : { publish_path: writeSubstanceFile(caseData, publishName, sidecar2.json) },
@@ -105869,15 +106109,15 @@ function submissionFormsEmitForm33(dbPath, filingId, caseDataFolder2, seams = {}
   const lenient = publish3.lenient === true ? unplacedFactWarnings(dbPath, filing) : void 0;
   if (lenient === void 0) refuseUnplacedFacts(dbPath, filing, "drafting_forms__emit_form33");
   const ctx = buildContext(dbPath, proceeding2, filing, parties2, revision, {});
-  const markdown = renderForm33FiledFace(ctx, lenient);
+  const markdown2 = renderForm33FiledFace(ctx, lenient);
   const sidecar2 = publishSidecar(ctx, lenient ?? [], publish3.cover_notes ?? []);
   const publishName = publishFileName("form-33.md");
   return {
     filing_id: filingId,
     revision,
     file_name: "form-33.md",
-    markdown,
-    ...caseData === void 0 ? {} : { written_path: writeSubstanceFile(caseData, "form-33.md", markdown) },
+    markdown: markdown2,
+    ...caseData === void 0 ? {} : { written_path: writeSubstanceFile(caseData, "form-33.md", markdown2) },
     publish_file_name: publishName,
     publish_json: sidecar2.json,
     ...caseData === void 0 ? {} : { publish_path: writeSubstanceFile(caseData, publishName, sidecar2.json) },
@@ -105955,15 +106195,15 @@ function submissionFormsEmitAffidavit(dbPath, filingId, documentId, caseDataFold
     throw new ValidationError(`That document is not an affidavit listed as supporting "${filing.title}".`);
   }
   const ctx = buildContext(dbPath, proceeding2, filing, parties2, revision, {});
-  const markdown = renderAffidavitFiledFace(ctx, affidavit);
+  const markdown2 = renderAffidavitFiledFace(ctx, affidavit);
   const fileName = `affidavit-${documentId}.md`;
   return {
     filing_id: filingId,
     document_id: documentId,
     revision,
     file_name: fileName,
-    markdown,
-    ...caseData === void 0 ? {} : { written_path: writeSubstanceFile(caseData, fileName, markdown) }
+    markdown: markdown2,
+    ...caseData === void 0 ? {} : { written_path: writeSubstanceFile(caseData, fileName, markdown2) }
   };
 }
 
@@ -106095,8 +106335,8 @@ function renderBccaBookFiledFace(ctx) {
 
 // src/submission/forms/emit-bcca-factum.ts
 var ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-function oneLine2(text11) {
-  return text11.replace(/\s*\n\s*/g, " ").trim();
+function oneLine2(text12) {
+  return text12.replace(/\s*\n\s*/g, " ").trim();
 }
 function pushExcerpt(lines2, excerpt, cite) {
   if (excerpt) {
@@ -106334,8 +106574,8 @@ import { basename as basename12, dirname as dirname30, isAbsolute as isAbsolute8
 function authored(docs) {
   return docs.filter((d3) => d3.text_by_page && !EXHIBIT_FILE_RE.test(d3.file_name));
 }
-function lines(text11) {
-  return text11.split(/\r?\n/).map((l3) => l3.replace(/\s+/g, " ").trim()).filter(Boolean);
+function lines(text12) {
+  return text12.split(/\r?\n/).map((l3) => l3.replace(/\s+/g, " ").trim()).filter(Boolean);
 }
 var norm = (s3) => s3.replace(/\s+/g, " ").trim().toLowerCase();
 var esc2 = (s3) => s3.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -106374,8 +106614,8 @@ function checkFigureConsistency(docs, dates, amounts) {
   const scanned = authored(docs);
   for (const doc of scanned) {
     const severity = looksSigned(doc) ? "high" : "normal";
-    doc.text_by_page.forEach((text11, i3) => {
-      for (const line of new Set(lines(text11))) {
+    doc.text_by_page.forEach((text12, i3) => {
+      for (const line of new Set(lines(text12))) {
         for (const m3 of line.matchAll(MONEY_RE)) {
           const c3 = cents(m3[1], m3[2]);
           if (amountCents.some((a3) => a3.cents === c3)) continue;
@@ -106442,8 +106682,8 @@ function checkPartyNames(docs, anchors) {
   const fileRe = anchors.file_number ? fileNumberSearch(anchors.file_number) : null;
   for (const doc of scanned) {
     const severity = looksSigned(doc) ? "high" : "normal";
-    doc.text_by_page.forEach((text11, i3) => {
-      for (const line of new Set(lines(text11))) {
+    doc.text_by_page.forEach((text12, i3) => {
+      for (const line of new Set(lines(text12))) {
         for (const { name, re: re3 } of names) {
           for (const m3 of line.matchAll(re3)) {
             if (nameKey(m3[0]) === nameKey(name)) continue;
@@ -106497,7 +106737,7 @@ function checkExecution(docs, instruments) {
       push(1, doc.file_name, `could not be read: ${doc.error ?? "not a PDF or DOCX"}`);
       continue;
     }
-    const pages = doc.text_by_page.map((text11, i3) => ({ text: text11, page: i3 + 1 }));
+    const pages = doc.text_by_page.map((text12, i3) => ({ text: text12, page: i3 + 1 }));
     const audit = pages.filter((x3) => AUDIT_PAGE_RE.test(x3.text));
     const statuses = audit.flatMap((p3) => [...p3.text.matchAll(AUDIT_STATUS_RE)].map((m3) => ({ page: p3.page, quote: m3[0].replace(/\s+/g, " "), value: m3[1] })));
     for (const s3 of statuses.filter((x3) => !/^(completed|signed)$/i.test(x3.value))) {
@@ -107011,11 +107251,11 @@ function publish(job) {
   if (job.pageFile) {
     const page2 = `window.WORKBOARD_STATUS = ${JSON.stringify(job.status).replace(/</g, "\\u003c")};
 `;
-    const code2 = writeStatusFile(job.pageFile, page2);
-    if (code2 !== null) job.status.write_error = { target: job.pageFile, code: code2, at: nowIso2() };
+    const code3 = writeStatusFile(job.pageFile, page2);
+    if (code3 !== null) job.status.write_error = { target: job.pageFile, code: code3, at: nowIso2() };
   }
-  const code = writeStatusFile(job.mirrorFile, JSON.stringify(job.status));
-  if (code !== null) job.status.write_error = { target: job.mirrorFile, code, at: nowIso2() };
+  const code2 = writeStatusFile(job.mirrorFile, JSON.stringify(job.status));
+  if (code2 !== null) job.status.write_error = { target: job.mirrorFile, code: code2, at: nowIso2() };
   return true;
 }
 function releaseLock(job) {
@@ -107244,15 +107484,15 @@ function refuseForeignPages(draftDir, targets) {
 }
 function writePage(file, html2) {
   mkdirSync21(dirname32(file), { recursive: true });
-  const code = writeStatusFile(file, html2);
-  if (code !== null) throw new DataServerError(`could not write ${file}: ${code}`);
+  const code2 = writeStatusFile(file, html2);
+  if (code2 !== null) throw new DataServerError(`could not write ${file}: ${code2}`);
 }
 var OLD_PAGE = /^(?:Milestone.*|job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments) - filing \d+|loose threads(?: - (?:filing|Milestone|job board)(?: - proceeding)? \d+)?|provable facts - Milestone(?: - proceeding)? \d+|provable facts - job board(?: - proceeding)? \d+|(?:raw research|legal memos)(?: - (?:Milestone|job board)(?: - proceeding)? \d+)?)\.html$/i;
 var PREVIEW_FILE = / preview \d+\.html$/i;
 var RETIRED_PREVIEW = /^(?:raw research|legal memos)(?: - (?:Milestone|job board)(?: - proceeding)? \d+)? preview \d+\.html$/i;
 function generatorWrote(file) {
-  const text11 = readFileSync35(file, "utf-8");
-  return text11.includes(MILESTONE_MARKER) || text11.includes(MATTER_BOARD_MARKER) || text11.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
+  const text12 = readFileSync35(file, "utf-8");
+  return text12.includes(MILESTONE_MARKER) || text12.includes(MATTER_BOARD_MARKER) || text12.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
 }
 var RECORDS_ENTRY = /^(?:matter-pages-state\.json|render-manifest-\d+\.json|quick-edits-\d+\.jsonl|paragraph-maps|previews)$/i;
 function draftingWorkFiles(draftDir) {
@@ -108141,9 +108381,9 @@ function stageResult(result, env = process.env) {
     if (name.endsWith(".json") && now - statSync17(file).mtimeMs > KEEP_MS) unlinkSync12(file);
   }
   const resultId = randomUUID11();
-  const text11 = JSON.stringify(result);
-  writeFileSync12(join49(dir, `${resultId}.json`), text11, "utf-8");
-  return { result_id: resultId, bytes: Buffer.byteLength(text11, "utf-8") };
+  const text12 = JSON.stringify(result);
+  writeFileSync12(join49(dir, `${resultId}.json`), text12, "utf-8");
+  return { result_id: resultId, bytes: Buffer.byteLength(text12, "utf-8") };
 }
 
 // src/case/ingest-authority.ts
@@ -108383,9 +108623,9 @@ var createPdfium = (() => {
     }
     var wasmMemory;
     var ABORT = false;
-    function assert4(condition, text11) {
+    function assert4(condition, text12) {
       if (!condition) {
-        abort("Assertion failed" + (text11 ? ": " + text11 : ""));
+        abort("Assertion failed" + (text12 ? ": " + text12 : ""));
       }
     }
     var HEAP8, HEAPU8, HEAP16, HEAPU16, HEAP32, HEAPU32, HEAPF32, HEAPF64;
@@ -108807,12 +109047,12 @@ var createPdfium = (() => {
     }
     var stackRestore = (val) => __emscripten_stack_restore(val);
     var stackSave = () => _emscripten_stack_get_current();
-    var warnOnce = (text11) => {
+    var warnOnce = (text12) => {
       warnOnce.shown ||= {};
-      if (!warnOnce.shown[text11]) {
-        warnOnce.shown[text11] = 1;
-        if (ENVIRONMENT_IS_NODE) text11 = "warning: " + text11;
-        err(text11);
+      if (!warnOnce.shown[text12]) {
+        warnOnce.shown[text12] = 1;
+        if (ENVIRONMENT_IS_NODE) text12 = "warning: " + text12;
+        err(text12);
       }
     };
     var UTF8Decoder = typeof TextDecoder != "undefined" ? new TextDecoder() : void 0;
@@ -109894,8 +110134,8 @@ var createPdfium = (() => {
           if (!islast || opts.follow) {
             var count2 = 0;
             while (FS.isLink(current.mode)) {
-              var link2 = FS.readlink(current_path);
-              current_path = PATH_FS.resolve(PATH.dirname(current_path), link2);
+              var link3 = FS.readlink(current_path);
+              current_path = PATH_FS.resolve(PATH.dirname(current_path), link3);
               var lookup = FS.lookupPath(current_path, { recurse_count: opts.recurse_count + 1 });
               current = lookup.node;
               if (count2++ > 40) {
@@ -110410,14 +110650,14 @@ var createPdfium = (() => {
       },
       readlink(path) {
         var lookup = FS.lookupPath(path);
-        var link2 = lookup.node;
-        if (!link2) {
+        var link3 = lookup.node;
+        if (!link3) {
           throw new FS.ErrnoError(44);
         }
-        if (!link2.node_ops.readlink) {
+        if (!link3.node_ops.readlink) {
           throw new FS.ErrnoError(28);
         }
-        return PATH_FS.resolve(FS.getPath(link2.parent), link2.node_ops.readlink(link2));
+        return PATH_FS.resolve(FS.getPath(link3.parent), link3.node_ops.readlink(link3));
       },
       stat(path, dontFollow) {
         var lookup = FS.lookupPath(path, { follow: !dontFollow });
@@ -110859,9 +111099,9 @@ var createPdfium = (() => {
         assert4(stderr.fd === 2, `invalid handle for stderr (${stderr.fd})`);
       },
       staticInit() {
-        [44].forEach((code) => {
-          FS.genericErrors[code] = new FS.ErrnoError(code);
-          FS.genericErrors[code].stack = "<generic error, no stack>";
+        [44].forEach((code2) => {
+          FS.genericErrors[code2] = new FS.ErrnoError(code2);
+          FS.genericErrors[code2].stack = "<generic error, no stack>";
         });
         FS.nameTable = new Array(4096);
         FS.mount(MEMFS, {}, "/");
@@ -113878,24 +114118,24 @@ var BITMAP_BGR = 2;
 var DEFAULT_WASM = new URL("./pdfium.wasm", import.meta.url);
 var loaded = /* @__PURE__ */ new Map();
 function loadPdfium(wasm) {
-  let lib = loaded.get(wasm.href);
-  if (!lib) {
-    lib = (async () => {
+  let lib2 = loaded.get(wasm.href);
+  if (!lib2) {
+    lib2 = (async () => {
       const module = await init({ wasmBinary: readFileSync38(wasm), print: console.error, printErr: console.error });
       module.PDFiumExt_Init();
       return module;
     })();
-    loaded.set(wasm.href, lib);
-    lib.catch(() => loaded.delete(wasm.href));
+    loaded.set(wasm.href, lib2);
+    lib2.catch(() => loaded.delete(wasm.href));
   }
-  return lib;
+  return lib2;
 }
-function heapU8(lib) {
-  return lib.pdfium.HEAPU8;
+function heapU8(lib2) {
+  return lib2.pdfium.HEAPU8;
 }
-function malloc(lib, bytes, code = "renderer_unavailable") {
-  const ptr = lib.pdfium.wasmExports.malloc(Math.max(bytes, 1));
-  if (!ptr) throw new DataServerError(`the PDF renderer could not allocate ${bytes} bytes`, code);
+function malloc(lib2, bytes, code2 = "renderer_unavailable") {
+  const ptr = lib2.pdfium.wasmExports.malloc(Math.max(bytes, 1));
+  if (!ptr) throw new DataServerError(`the PDF renderer could not allocate ${bytes} bytes`, code2);
   return ptr;
 }
 async function withPdf(path, wasm, work) {
@@ -113904,50 +114144,50 @@ async function withPdf(path, wasm, work) {
   if (extname4(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
   const data = readFileSync38(path);
   const pending5 = loadPdfium(wasm);
-  let lib;
+  let lib2;
   try {
-    lib = await pending5;
+    lib2 = await pending5;
   } catch (err) {
     throw new DataServerError(`the PDF renderer did not load: ${err.message}`, "renderer_unavailable");
   }
   try {
-    const dataPtr = malloc(lib, data.length, "file_too_large");
-    heapU8(lib).set(data, dataPtr);
-    const doc = lib.FPDF_LoadMemDocument(dataPtr, data.length, "");
+    const dataPtr = malloc(lib2, data.length, "file_too_large");
+    heapU8(lib2).set(data, dataPtr);
+    const doc = lib2.FPDF_LoadMemDocument(dataPtr, data.length, "");
     if (!doc) {
-      const code = lib.FPDF_GetLastError();
-      lib.pdfium.wasmExports.free(dataPtr);
-      if (code === ERR_PASSWORD) throw new DataServerError(`the PDF is password-protected: ${path}`, "password_protected");
-      throw new DataServerError(`PDFium cannot open ${path} as a PDF (error ${code})`, "not_pdf");
+      const code2 = lib2.FPDF_GetLastError();
+      lib2.pdfium.wasmExports.free(dataPtr);
+      if (code2 === ERR_PASSWORD) throw new DataServerError(`the PDF is password-protected: ${path}`, "password_protected");
+      throw new DataServerError(`PDFium cannot open ${path} as a PDF (error ${code2})`, "not_pdf");
     }
     try {
-      return await work(lib, doc, data);
+      return await work(lib2, doc, data);
     } finally {
-      lib.FPDF_CloseDocument(doc);
-      lib.pdfium.wasmExports.free(dataPtr);
+      lib2.FPDF_CloseDocument(doc);
+      lib2.pdfium.wasmExports.free(dataPtr);
     }
   } catch (err) {
     if (err instanceof WebAssembly.RuntimeError && loaded.get(wasm.href) === pending5) loaded.delete(wasm.href);
     throw err;
   }
 }
-function withPage(lib, doc, n3, use) {
-  const page2 = lib.FPDF_LoadPage(doc, n3 - 1);
+function withPage(lib2, doc, n3, use) {
+  const page2 = lib2.FPDF_LoadPage(doc, n3 - 1);
   if (!page2) throw new DataServerError(`PDFium cannot load page ${n3} of this PDF`, "bad_pages");
   try {
     return use(page2);
   } finally {
-    lib.FPDF_ClosePage(page2);
+    lib2.FPDF_ClosePage(page2);
   }
 }
 var nextTurn = () => new Promise((resolve12) => setImmediate(resolve12));
 async function classifyPdfPages(path, wasm = DEFAULT_WASM) {
-  return withPdf(path, wasm, async (lib, doc) => {
+  return withPdf(path, wasm, async (lib2, doc) => {
     const kinds = [];
-    const pageCount = lib.FPDF_GetPageCount(doc);
+    const pageCount = lib2.FPDF_GetPageCount(doc);
     for (let n3 = 1; n3 <= pageCount; n3++) {
       if (n3 > 1) await nextTurn();
-      kinds.push(withPage(lib, doc, n3, (page2) => classify2(lib, page2, n3)));
+      kinds.push(withPage(lib2, doc, n3, (page2) => classify2(lib2, page2, n3)));
     }
     return kinds;
   });
@@ -113967,9 +114207,9 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
     }
     const file = join50(renderDir, `${name}.png`);
     writeFileSync13(file, png);
-    const image = { path: file, sha256: createHash11("sha256").update(png).digest("hex"), width, height };
-    if (tile !== void 0) image.tile = tile;
-    return image;
+    const image2 = { path: file, sha256: createHash11("sha256").update(png).digest("hex"), width, height };
+    if (tile !== void 0) image2.tile = tile;
+    return image2;
   });
   return { source_sha256, page_count, render_dir: renderDir, pages };
 }
@@ -113977,16 +114217,16 @@ function pdfPagePngs(path, pages, wasm = DEFAULT_WASM) {
   return renderScannedPages({ path, pages }, wasm, (png) => png);
 }
 async function renderScannedPages(args, wasm, keep) {
-  return withPdf(args.path, wasm, async (lib, doc, data) => {
+  return withPdf(args.path, wasm, async (lib2, doc, data) => {
     const sourceSha256 = createHash11("sha256").update(data).digest("hex");
-    const pageCount = lib.FPDF_GetPageCount(doc);
+    const pageCount = lib2.FPDF_GetPageCount(doc);
     const [first, last] = pageRange(args.pages, pageCount);
     const pages = [];
     for (let n3 = first; n3 <= last; n3++) {
       if (n3 > first) await nextTurn();
-      const plan2 = withPage(lib, doc, n3, (page2) => {
-        if (classify2(lib, page2, n3) === "born_digital") return null;
-        const { width: width2, height: height2 } = pageSize(lib, page2, n3, args.tiles ? TILE_DPI : DPI);
+      const plan2 = withPage(lib2, doc, n3, (page2) => {
+        if (classify2(lib2, page2, n3) === "born_digital") return null;
+        const { width: width2, height: height2 } = pageSize(lib2, page2, n3, args.tiles ? TILE_DPI : DPI);
         return { width: width2, height: height2, tiles: args.tiles ? overlappingHalves(width2, height2) : tileRows(width2, 0, height2) };
       });
       if (!plan2) {
@@ -113997,7 +114237,7 @@ async function renderScannedPages(args, wasm, keep) {
       const images = [];
       for (const [i3, [top, rows5]] of tiles.entries()) {
         await nextTurn();
-        const png = withPage(lib, doc, n3, (page2) => renderPng(lib, page2, n3, width, height, top, rows5));
+        const png = withPage(lib2, doc, n3, (page2) => renderPng(lib2, page2, n3, width, height, top, rows5));
         const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
         images.push(keep({ png, name, width, height: rows5, ...tiles.length > 1 ? { tile: i3 + 1 } : {} }, sourceSha256));
       }
@@ -114020,9 +114260,9 @@ function pageRange(pages, pageCount) {
   }
   return [first, last];
 }
-function pageSize(lib, page2, n3, dpi) {
-  const wPt = lib.FPDF_GetPageWidthF(page2);
-  const hPt = lib.FPDF_GetPageHeightF(page2);
+function pageSize(lib2, page2, n3, dpi) {
+  const wPt = lib2.FPDF_GetPageWidthF(page2);
+  const hPt = lib2.FPDF_GetPageHeightF(page2);
   if (!(wPt <= MAX_PAGE_POINTS && hPt <= MAX_PAGE_POINTS)) {
     throw new DataServerError(`page ${n3} is ${wPt} x ${hPt} pt, over the PDF limit of ${MAX_PAGE_POINTS} pt a side`, "page_too_large");
   }
@@ -114053,26 +114293,26 @@ function transform2([a3, b3, c3, d3, e3, f3], [l3, bo2, r3, t3]) {
   const ys2 = [l3, r3].flatMap((x3) => [bo2, t3].map((y3) => b3 * x3 + d3 * y3 + f3));
   return [Math.min(...xs2), Math.min(...ys2), Math.max(...xs2), Math.max(...ys2)];
 }
-function classify2(lib, page2, n3) {
-  const m3 = lib.pdfium;
-  const floats = malloc(lib, 24);
+function classify2(lib2, page2, n3) {
+  const m3 = lib2.pdfium;
+  const floats = malloc(lib2, 24);
   const read3 = (count2) => Array.from({ length: count2 }, (_3, i3) => m3.getValue(floats + 4 * i3, "float"));
   const images = [];
   const texts = [];
   let invisibleText = false;
   let box;
   try {
-    if (!lib.FPDF_GetPageBoundingBox(page2, floats)) {
+    if (!lib2.FPDF_GetPageBoundingBox(page2, floats)) {
       throw new DataServerError(`PDFium cannot read the page box of page ${n3} of this PDF`, "bad_pages");
     }
     box = read3(4);
-    const bounds = (obj, matrix) => lib.FPDFPageObj_GetBounds(obj, floats, floats + 4, floats + 8, floats + 12) ? transform2(matrix, read3(4)) : null;
+    const bounds = (obj, matrix) => lib2.FPDFPageObj_GetBounds(obj, floats, floats + 4, floats + 8, floats + 12) ? transform2(matrix, read3(4)) : null;
     const walk4 = (count2, objectAt2, matrix) => {
       for (let i3 = 0; i3 < count2; i3++) {
         const obj = objectAt2(i3);
-        const type = lib.FPDFPageObj_GetType(obj);
+        const type = lib2.FPDFPageObj_GetType(obj);
         if (type === OBJ_TEXT) {
-          if (INVISIBLE_TEXT_MODES.has(lib.FPDFTextObj_GetTextRenderMode(obj))) invisibleText = true;
+          if (INVISIBLE_TEXT_MODES.has(lib2.FPDFTextObj_GetTextRenderMode(obj))) invisibleText = true;
           else {
             const rect = bounds(obj, matrix);
             if (rect) texts.push(rect);
@@ -114081,13 +114321,13 @@ function classify2(lib, page2, n3) {
           const rect = bounds(obj, matrix);
           if (rect) images.push(rect);
         } else if (type === OBJ_FORM) {
-          lib.FPDFPageObj_GetMatrix(obj, floats);
+          lib2.FPDFPageObj_GetMatrix(obj, floats);
           const inner = compose(read3(6), matrix);
-          walk4(lib.FPDFFormObj_CountObjects(obj), (j3) => lib.FPDFFormObj_GetObject(obj, j3), inner);
+          walk4(lib2.FPDFFormObj_CountObjects(obj), (j3) => lib2.FPDFFormObj_GetObject(obj, j3), inner);
         }
       }
     };
-    walk4(lib.FPDFPage_CountObjects(page2), (i3) => lib.FPDFPage_GetObject(page2, i3), [1, 0, 0, 1, 0, 0]);
+    walk4(lib2.FPDFPage_CountObjects(page2), (i3) => lib2.FPDFPage_GetObject(page2, i3), [1, 0, 0, 1, 0, 0]);
   } finally {
     m3.wasmExports.free(floats);
   }
@@ -114111,19 +114351,19 @@ function coverage(rects, [left, bottom, right, top]) {
   }
   return grid.reduce((sum, v4) => sum + v4, 0) / (N3 * N3);
 }
-function renderPng(lib, page2, n3, width, height, top, rows5) {
-  return encodePng(renderRgb(lib, page2, n3, width, height, top, rows5), width, rows5);
+function renderPng(lib2, page2, n3, width, height, top, rows5) {
+  return encodePng(renderRgb(lib2, page2, n3, width, height, top, rows5), width, rows5);
 }
-function renderRgb(lib, page2, n3, width, height, top, rows5, flags = 0, form = 0) {
-  const bitmap = lib.FPDFBitmap_CreateEx(width, rows5, BITMAP_BGR, 0, 0);
+function renderRgb(lib2, page2, n3, width, height, top, rows5, flags = 0, form = 0) {
+  const bitmap = lib2.FPDFBitmap_CreateEx(width, rows5, BITMAP_BGR, 0, 0);
   if (!bitmap) throw new DataServerError(`PDFium could not allocate a ${width}x${rows5} bitmap for page ${n3}`, "page_too_large");
   try {
-    lib.FPDFBitmap_FillRect(bitmap, 0, 0, width, rows5, 4294967295);
-    lib.FPDF_RenderPageBitmap(bitmap, page2, 0, -top, width, height, 0, flags);
-    if (form) lib.FPDF_FFLDraw(form, bitmap, page2, 0, -top, width, height, 0, flags);
-    const buffer = lib.FPDFBitmap_GetBuffer(bitmap);
-    const stride = lib.FPDFBitmap_GetStride(bitmap);
-    const heap = heapU8(lib);
+    lib2.FPDFBitmap_FillRect(bitmap, 0, 0, width, rows5, 4294967295);
+    lib2.FPDF_RenderPageBitmap(bitmap, page2, 0, -top, width, height, 0, flags);
+    if (form) lib2.FPDF_FFLDraw(form, bitmap, page2, 0, -top, width, height, 0, flags);
+    const buffer = lib2.FPDFBitmap_GetBuffer(bitmap);
+    const stride = lib2.FPDFBitmap_GetStride(bitmap);
+    const heap = heapU8(lib2);
     const rgb = Buffer.alloc(width * 3 * rows5);
     for (let y3 = 0; y3 < rows5; y3++) {
       const src = buffer + y3 * stride;
@@ -114136,7 +114376,7 @@ function renderRgb(lib, page2, n3, width, height, top, rows5, flags = 0, form = 
     }
     return rgb;
   } finally {
-    lib.FPDFBitmap_Destroy(bitmap);
+    lib2.FPDFBitmap_Destroy(bitmap);
   }
 }
 function encodePng(rgb, width, rows5) {
@@ -114217,7 +114457,7 @@ var JUST_HELD = (name) => `${name} has just been added to this matter in another
 var PICKED_UP = (names) => `An earlier ingest of ${names.join(", ")} stopped without finishing. I've taken those files into this run.`;
 var TAKEN = (name) => `${name} was taken into another session's ingest while this one was stopped, so nothing more was recorded for it here.`;
 var SAVING = (name) => `Another session is saving to this matter. ${name} will be saved once it finishes.`;
-var refusal = (code) => ({ ok: false, refused: code, say: SAY[code] });
+var refusal = (code2) => ({ ok: false, refused: code2, say: SAY[code2] });
 var reported = /* @__PURE__ */ new Set();
 function sayOnce(left, line) {
   const keys = left.filter((key) => !reported.has(key));
@@ -114750,14 +114990,14 @@ function takeClaims(matterDir, own, started, files, env) {
   return { granted, leftOut, report };
 }
 function readersOf(dir) {
-  let text11;
+  let text12;
   try {
-    text11 = readFileSync39(journalPath(dir), "utf-8");
+    text12 = readFileSync39(journalPath(dir), "utf-8");
   } catch {
     return 0;
   }
   const events = [];
-  for (const line of text11.split("\n")) {
+  for (const line of text12.split("\n")) {
     try {
       if (line.trim() !== "") events.push(JSON.parse(line));
     } catch {
@@ -115164,13 +115404,13 @@ function dispatchInputs(dispatchId, env = process.env) {
     const path = dispatchPath(dir, dispatchId);
     if (!existsSync47(path)) continue;
     const stored = JSON.parse(readFileSync39(path, "utf-8"));
-    let text11 = JSON.stringify(stored.inputs);
+    let text12 = JSON.stringify(stored.inputs);
     if (stored.session) {
       stored.stage.forEach((host, i3) => {
-        text11 = text11.split(JSON.stringify(host).slice(1, -1)).join(JSON.stringify(stored.session[i3]).slice(1, -1));
+        text12 = text12.split(JSON.stringify(host).slice(1, -1)).join(JSON.stringify(stored.session[i3]).slice(1, -1));
       });
     }
-    return JSON.parse(text11);
+    return JSON.parse(text12);
   }
   throw new DataServerError("no dispatch with that id on this computer", "unknown_dispatch");
 }
@@ -115417,23 +115657,23 @@ function checkIsoDate(value2, field) {
     throw new ValidationError(`matter_data__procedural_history_append.${field} must be a real date, YYYY-MM-DD: ${value2}`, "invalid_date");
   }
 }
-function datesIn(text11) {
+function datesIn(text12) {
   const found2 = [];
   const iso2 = (y3, m3, d3) => `${y3}-${String(m3).padStart(2, "0")}-${String(d3).padStart(2, "0")}`;
   const month = (name) => MONTHS3.findIndex((full) => full.startsWith(name.toLowerCase().replace(/\.$/, ""))) + 1;
-  for (const m3 of text11.matchAll(/\b(\d{4})-(\d{2})-(\d{2})\b/g)) found2.push(iso2(+m3[1], +m3[2], +m3[3]));
-  for (const m3 of text11.matchAll(/\b([A-Za-z]{3,9}\.?)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/g)) {
+  for (const m3 of text12.matchAll(/\b(\d{4})-(\d{2})-(\d{2})\b/g)) found2.push(iso2(+m3[1], +m3[2], +m3[3]));
+  for (const m3 of text12.matchAll(/\b([A-Za-z]{3,9}\.?)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/g)) {
     const mo2 = month(m3[1]);
     if (mo2 > 0) found2.push(iso2(+m3[3], mo2, +m3[2]));
   }
-  for (const m3 of text11.matchAll(/\b(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9}\.?),?\s+(\d{4})\b/g)) {
+  for (const m3 of text12.matchAll(/\b(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9}\.?),?\s+(\d{4})\b/g)) {
     const mo2 = month(m3[2]);
     if (mo2 > 0) found2.push(iso2(+m3[3], mo2, +m3[1]));
   }
   return found2;
 }
-function parse3(text11) {
-  const lines2 = text11.split(/\r?\n/);
+function parse3(text12) {
+  const lines2 = text12.split(/\r?\n/);
   let i3 = 0;
   if (lines2[0] === "---") {
     const end = lines2.indexOf("---", 1);
@@ -115442,9 +115682,9 @@ function parse3(text11) {
   }
   const sections = [];
   for (; i3 < lines2.length; i3++) {
-    const heading = HEADING2.exec(lines2[i3]);
-    if (heading) {
-      sections.push({ date: heading[1], lines: [] });
+    const heading2 = HEADING2.exec(lines2[i3]);
+    if (heading2) {
+      sections.push({ date: heading2[1], lines: [] });
     } else if (sections.length > 0) {
       sections[sections.length - 1].lines.push(lines2[i3]);
     } else if (lines2[i3].trim() !== "" && lines2[i3].trim() !== TITLE2) {
@@ -115573,11 +115813,11 @@ var SAY_REFUSED = {
   attachment_held: "This attachment is already on file, so it was not recorded again.",
   refused: "This document could not be recorded, so nothing from its reading was kept."
 };
-var refused = (code, extra = {}) => ({
+var refused = (code2, extra = {}) => ({
   outcome: "refused",
-  refused: code,
+  refused: code2,
   ask: [],
-  report: SAY_REFUSED[code] ? [SAY_REFUSED[code]] : [],
+  report: SAY_REFUSED[code2] ? [SAY_REFUSED[code2]] : [],
   ...extra
 });
 var LeaseGone = class extends Error {
@@ -115883,10 +116123,10 @@ async function write(args, env, run2, filePath, fileHash, results, dropAlso, loc
   }
   if (!done.ok) {
     const first = String(done.refused[0] ?? "");
-    const code = first.split(":")[0];
-    if (code === "answered") return reread(first);
-    await record2({ result_ids: args.result_ids, outcome: "refused", reason: code });
-    return fit(refused(SAY_REFUSED[code] ? code : "refused", { items: [{ ref: refs[0], outcome: "failed", reason: first.slice(0, 160) }] }));
+    const code2 = first.split(":")[0];
+    if (code2 === "answered") return reread(first);
+    await record2({ result_ids: args.result_ids, outcome: "refused", reason: code2 });
+    return fit(refused(SAY_REFUSED[code2] ? code2 : "refused", { items: [{ ref: refs[0], outcome: "failed", reason: first.slice(0, 160) }] }));
   }
   const counts3 = Object.fromEntries(COUNTS.map((k3) => [k3, 0]));
   const named2 = {};
@@ -116123,10 +116363,10 @@ async function housekeepingLog(request2, env = process.env) {
 import { existsSync as existsSync49, readFileSync as readFileSync42 } from "node:fs";
 import { join as join53 } from "node:path";
 var REFERENCE = "drafting-data/references/document-paths.md";
-function fencedSql(text11, needle) {
-  const block2 = [...text11.matchAll(/```sql\n([\s\S]*?)```/g)].map((m3) => m3[1]).find((body2) => body2.includes(needle));
-  if (block2 === void 0) throw new ValidationError(`${REFERENCE} holds no sql block containing "${needle}"`);
-  return block2;
+function fencedSql(text12, needle) {
+  const block3 = [...text12.matchAll(/```sql\n([\s\S]*?)```/g)].map((m3) => m3[1]).find((body2) => body2.includes(needle));
+  if (block3 === void 0) throw new ValidationError(`${REFERENCE} holds no sql block containing "${needle}"`);
+  return block3;
 }
 function assertStoredForm(field, path) {
   if (path.includes("/") || /^[A-Za-z]:/.test(path) || path.startsWith("\\") || path.startsWith(".\\")) {
@@ -116139,16 +116379,16 @@ async function repointDocuments(request2, env = process.env) {
   const dbPath = resolveDbPath(validateMatterRoot(request2.matter_root));
   if (!existsSync49(dbPath)) return { database: false, repointed: [] };
   const shipped = resolveShippedRoot(REFERENCE, env, { subject: "the drafting-data document-paths reference", plugin: "litigator" });
-  const text11 = readFileSync42(join53(shipped.root, ...REFERENCE.split("/")), "utf-8").replace(/\r\n/g, "\n");
+  const text12 = readFileSync42(join53(shipped.root, ...REFERENCE.split("/")), "utf-8").replace(/\r\n/g, "\n");
   const values = {
     old_path: request2.old_path,
     old_absolute: `${request2.matter_root.replace(/[\\/]+$/, "")}\\${request2.old_path}`,
     new_path: request2.new_path
   };
   const params = values;
-  const rows5 = submissionDataQuery(dbPath, fencedSql(text11, "-- document paths: rows to re-point"), params).rows;
+  const rows5 = submissionDataQuery(dbPath, fencedSql(text12, "-- document paths: rows to re-point"), params).rows;
   if (rows5.length === 0) return { database: true, repointed: [] };
-  const done = await submissionDataWrite(dbPath, fencedSql(text11, "-- document paths: re-point"), params, env);
+  const done = await submissionDataWrite(dbPath, fencedSql(text12, "-- document paths: re-point"), params, env);
   const repointed = rows5.map((row2) => Object.values(row2)[0]);
   return done.warning ? { database: true, repointed, warning: done.warning } : { database: true, repointed };
 }
@@ -116592,7 +116832,7 @@ async function looseThreadsCapture(args, env = process.env) {
     return { id };
   });
 }
-var significant = (text11) => new Set(text11.toLowerCase().match(/[\p{L}\p{N}]{4,}/gu) ?? []);
+var significant = (text12) => new Set(text12.toLowerCase().match(/[\p{L}\p{N}]{4,}/gu) ?? []);
 function restates(thread, words2) {
   const own = significant(`${thread.idea} ${thread.rank_job ?? ""}`);
   return words2.size > 0 && [...words2].filter((w3) => own.has(w3)).length * 2 >= words2.size;
@@ -116884,8 +117124,8 @@ var DELIVER_TITLE = "Deliver";
 var WAIVER2 = " \u2014 WAIVED: ";
 var PRE_SEND_INTENT = "Meet or waive each criterion that holds this Writing back from being recorded as sent.";
 var MISMATCH_CAP = 20;
-function refused2(message, code, details) {
-  return new DataServerError(`${TOOL8}: ${message}`, code, details);
+function refused2(message, code2, details) {
+  return new DataServerError(`${TOOL8}: ${message}`, code2, details);
 }
 function revisionMoved(title2, expected, current) {
   return new DataServerError(
@@ -116984,7 +117224,7 @@ function storedParagraphs(dbPath, filing, stored) {
   return stored.layout.parts.flatMap((part) => {
     const texts = part.source === "terms" ? clauses() : part.source.startsWith("slot:") ? (prose.get(part.source.slice("slot:".length))?.text ?? "").split(/\r?\n\s*\r?\n/) : [];
     const unit = part.source === "terms" ? "clause" : "paragraph";
-    return texts.map((p3) => p3.trim()).filter((p3) => p3 !== "").map((text11, i3) => ({ part: `${part.source}, ${unit} ${i3 + 1}`, text: text11 }));
+    return texts.map((p3) => p3.trim()).filter((p3) => p3 !== "").map((text12, i3) => ({ part: `${part.source}, ${unit} ${i3 + 1}`, text: text12 }));
   });
 }
 function compareSentCopy(paragraphs, args, env) {
@@ -116996,8 +117236,8 @@ function compareSentCopy(paragraphs, args, env) {
     timeoutMs: pythonTimeoutMs2(env, READ_TIMEOUT_MS)
   });
 }
-function isCalendarDate(text11) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text11);
+function isCalendarDate(text12) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text12);
   if (match === null) return false;
   const [year, month, day] = match.slice(1).map(Number);
   const date3 = new Date(Date.UTC(year, month - 1, day));
@@ -117146,8 +117386,8 @@ ${unlisted} more not listed.` : "") + "\nCorrect the stored text to what was sen
 
 // src/submission/forms/filed-write.ts
 var TOOL9 = "drafting_data__record_filed";
-function refused3(message, code) {
-  return new DataServerError(`${TOOL9}: ${message}`, code);
+function refused3(message, code2) {
+  return new DataServerError(`${TOOL9}: ${message}`, code2);
 }
 async function submissionDataRecordFiled(args, env = process.env) {
   if (!isCalendarDate(args.filed_on)) throw new ValidationError(`${TOOL9}.filed_on must be a calendar date, YYYY-MM-DD`, "invalid_filed_on");
@@ -117198,8 +117438,8 @@ async function submissionDataRecordFiled(args, env = process.env) {
 // src/submission/forms/served-write.ts
 import { existsSync as existsSync52 } from "node:fs";
 var TOOL10 = "drafting_data__record_served";
-function refused4(message, code) {
-  return new DataServerError(`${TOOL10}: ${message}`, code);
+function refused4(message, code2) {
+  return new DataServerError(`${TOOL10}: ${message}`, code2);
 }
 async function submissionDataRecordServed(args, env = process.env) {
   if (!isCalendarDate(args.served_on)) throw new ValidationError(`${TOOL10}.served_on must be a calendar date, YYYY-MM-DD`, "invalid_served_on");
@@ -117461,8 +117701,8 @@ async function submissionDataTakeJob(args, env = process.env) {
       lock.release();
     }
   } catch (err) {
-    const code = err.code;
-    history = { added: null, note: code === "duplicate_entry" ? "Today's heading already holds this job's started entry." : `Not written: ${err.message}` };
+    const code2 = err.code;
+    history = { added: null, note: code2 === "duplicate_entry" ? "Today's heading already holds this job's started entry." : `Not written: ${err.message}` };
   }
   return {
     ticket_id: id,
@@ -117623,7 +117863,7 @@ function priorityExpr(args) {
 function children(job, at) {
   const id = { $rowid: at };
   return [
-    ...job.steps.map((text11, i3) => ({ sql: "INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (?, ?, ?)", params: [id, i3 + 1, text11] })),
+    ...job.steps.map((text12, i3) => ({ sql: "INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (?, ?, ?)", params: [id, i3 + 1, text12] })),
     ...(job.scope ?? []).map((r3) => ({ sql: "INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (?, ?, ?)", params: [id, r3.entity, r3.entity_id] }))
   ];
 }
@@ -117759,7 +117999,7 @@ async function submissionDataSetStep(args, env = process.env) {
   if (args.text !== void 0 && (typeof args.text !== "string" || args.text.trim() === "")) {
     throw new ValidationError(`${TOOL14}.text is the step's new words, not blank; nothing was written`, "invalid_text");
   }
-  const text11 = args.text === void 0 ? { sql: "", params: [] } : { sql: "text = ?, ", params: [args.text] };
+  const text12 = args.text === void 0 ? { sql: "", params: [] } : { sql: "text = ?, ", params: [args.text] };
   const id = args.ticket_id;
   const ordinal = args.ordinal;
   const token = args.session_token;
@@ -117776,9 +118016,9 @@ async function submissionDataSetStep(args, env = process.env) {
   const minutes = status3 === "waiting" ? args.wait_minutes ?? DEFAULT_WAIT_MINUTES : null;
   const held2 = heldBy(args.db_path, token, checkClaim(TOOL14, args.db_path, id, token, args.claim_no));
   const guard2 = `WHERE ticket_id = ? AND ordinal = ? AND done_at IS NULL AND EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${held2.sql})`;
-  const write2 = status3 === "done" ? { sql: `UPDATE ticket_steps SET ${text11.sql}done_at = ${nowMinuteSql()}${statusHeld ? ", status = NULL, wait_until = NULL, status_note = NULL" : ""} ${guard2}`, params: [...text11.params, id, ordinal, id, ...held2.params] } : {
-    sql: `UPDATE ticket_steps SET ${text11.sql}status = ?, wait_until = ${minutes === null ? "NULL" : nowMinuteSql(minutes)}, status_note = ? ${guard2}`,
-    params: [...text11.params, status3 === "open" ? null : status3, owesWords ? words2 : null, id, ordinal, id, ...held2.params]
+  const write2 = status3 === "done" ? { sql: `UPDATE ticket_steps SET ${text12.sql}done_at = ${nowMinuteSql()}${statusHeld ? ", status = NULL, wait_until = NULL, status_note = NULL" : ""} ${guard2}`, params: [...text12.params, id, ordinal, id, ...held2.params] } : {
+    sql: `UPDATE ticket_steps SET ${text12.sql}status = ?, wait_until = ${minutes === null ? "NULL" : nowMinuteSql(minutes)}, status_note = ? ${guard2}`,
+    params: [...text12.params, status3 === "open" ? null : status3, owesWords ? words2 : null, id, ordinal, id, ...held2.params]
   };
   const written = await submissionDataWriteAll(args.db_path, [write2, ...touchStatements(args.db_path, id, held2)], env);
   const changes = written.ok ? written.results[0].changes : written.changes;
@@ -117872,10 +118112,10 @@ async function submissionDataRewriteJob(args, env = process.env) {
     if (!(held2 && args.append)) {
       statements.push({ sql: `DELETE FROM ticket_steps WHERE ticket_id = ?${held2 ? " AND done_at IS NULL" : ""} AND ${onJob}`, params: [id, id, ...guardParams] });
     }
-    for (const text11 of args.steps) {
+    for (const text12 of args.steps) {
       statements.push({
         sql: `INSERT INTO ticket_steps (ticket_id, ordinal, text) SELECT id, (SELECT COALESCE(MAX(ordinal), 0) + 1 FROM ticket_steps WHERE ticket_id = ?), ? FROM tickets WHERE id = ? AND ${guard2}`,
-        params: [id, text11, id, ...guardParams],
+        params: [id, text12, id, ...guardParams],
         expect_changes: 1
       });
     }
@@ -118106,7 +118346,7 @@ function boardsOf(dbPath) {
   return boards.filter((b3) => !index.absorbed({ filing_id: b3.filing_id, proceeding_id: b3.proceeding_id }));
 }
 function chooseBoard(args, boards) {
-  const refusal3 = (why, code) => new DataServerError(`${why}: ${boards.map((b3) => `"${b3.name}"`).join(", ")}. Ask the practitioner which, and call again naming it. Nothing was written.`, code, { boards });
+  const refusal3 = (why, code2) => new DataServerError(`${why}: ${boards.map((b3) => `"${b3.name}"`).join(", ")}. Ask the practitioner which, and call again naming it. Nothing was written.`, code2, { boards });
   if (args.filing_id !== void 0 || args.proceeding_id !== void 0) {
     const board = boards.find((b3) => args.filing_id !== void 0 ? b3.filing_id === args.filing_id : b3.filing_id === null && b3.proceeding_id === args.proceeding_id);
     if (board === void 0) throw refusal3("That is not a Work Board this matter can attach to. Its boards are", "not_a_board");
@@ -118437,9 +118677,9 @@ var KIND = {
   statements_of_law: "statement of law"
 };
 var Refusal = class extends Error {
-  constructor(code, message) {
+  constructor(code2, message) {
     super(message);
-    this.code = code;
+    this.code = code2;
   }
   code;
 };
@@ -118517,28 +118757,28 @@ var Plan = class {
     this.log.push(entry4);
   }
   /** One filing's placement list as this script will have left it so far. */
-  list(table2, document2, part) {
-    const key = `${table2}|${document2}|${part ?? ""}`;
-    let list3 = this.sim.get(key);
-    if (list3 === void 0) {
-      const d3 = DEPLOY_BY_TABLE[table2];
-      list3 = rows4(
+  list(table3, document2, part) {
+    const key = `${table3}|${document2}|${part ?? ""}`;
+    let list4 = this.sim.get(key);
+    if (list4 === void 0) {
+      const d3 = DEPLOY_BY_TABLE[table3];
+      list4 = rows4(
         this.db,
-        `SELECT id, ${d3.fk} AS fk, ordinal FROM ${table2} WHERE filing_id = ? AND document = ?${part === null ? "" : " AND part = ?"} ORDER BY ordinal, id`,
+        `SELECT id, ${d3.fk} AS fk, ordinal FROM ${table3} WHERE filing_id = ? AND document = ?${part === null ? "" : " AND part = ?"} ORDER BY ordinal, id`,
         part === null ? [this.filing.id, document2] : [this.filing.id, document2, part]
       ).map((r3) => ({ id: Number(r3.id), key: null, fk: Number(r3.fk), ordinal: Number(r3.ordinal), pending: false }));
-      this.sim.set(key, list3);
+      this.sim.set(key, list4);
     }
-    return list3;
+    return list4;
   }
-  setList(table2, document2, part, list3) {
-    this.sim.set(`${table2}|${document2}|${part ?? ""}`, list3);
-    this.lists.set(`${table2}|${document2}|${part ?? ""}`, { table: table2, document: document2, part });
+  setList(table3, document2, part, list4) {
+    this.sim.set(`${table3}|${document2}|${part ?? ""}`, list4);
+    this.lists.set(`${table3}|${document2}|${part ?? ""}`, { table: table3, document: document2, part });
   }
   /** Gives `order` the list's own ordinals, sorted, so a rhetorical paragraph placed on the same scale keeps
    * its place among the rows; an inserted row adds one past the last, and a tie is pushed one past the
    * slot before it. Writes only the rows whose ordinal changes; a pending row takes its ordinal for its INSERT. */
-  reorder(table2, order, what) {
+  reorder(table3, order, what) {
     const slots = order.filter((r3) => !r3.pending).map((r3) => r3.ordinal).sort((a3, b3) => a3 - b3);
     while (slots.length < order.length) slots.push((slots[slots.length - 1] ?? 0) + 1);
     for (let i3 = 1; i3 < slots.length; i3 += 1) if (slots[i3] <= slots[i3 - 1]) slots[i3] = slots[i3 - 1] + 1;
@@ -118550,8 +118790,8 @@ var Plan = class {
       }
       if (row2.ordinal === want) return;
       const ref = this.rowRef(row2);
-      this.push(`${what}: renumber ${table2} ${rowName(row2)} from ${row2.ordinal} to ${want}`, `UPDATE ${table2} SET ordinal = ? WHERE id = ${ref.sql} AND ordinal = ?`, [want, ...ref.params, row2.ordinal], 1);
-      if (row2.id !== null) this.written.add(`${table2}:${row2.id}`);
+      this.push(`${what}: renumber ${table3} ${rowName(row2)} from ${row2.ordinal} to ${want}`, `UPDATE ${table3} SET ordinal = ? WHERE id = ${ref.sql} AND ordinal = ?`, [want, ...ref.params, row2.ordinal], 1);
+      if (row2.id !== null) this.written.add(`${table3}:${row2.id}`);
       row2.ordinal = want;
     });
   }
@@ -118605,9 +118845,9 @@ function pinCheck(db, entries) {
     if (seen.has(id)) continue;
     seen.add(id);
     const base = { paragraph: describe3(e3), entity: e3.entity, row_id: e3.row_id };
-    const text11 = currentText(db, e3);
-    if (text11 === void 0) out.push({ ...base, what: "text", seen: "printed", now: "the row is gone" });
-    else if (sha256Text(text11) !== e3.text_hash) out.push({ ...base, what: "text", seen: "the text you saw", now: text11 });
+    const text12 = currentText(db, e3);
+    if (text12 === void 0) out.push({ ...base, what: "text", seen: "printed", now: "the row is gone" });
+    else if (sha256Text(text12) !== e3.text_hash) out.push({ ...base, what: "text", seen: "the text you saw", now: text12 });
     if (e3.deployment !== null) {
       const found2 = rows4(db, `SELECT ordinal FROM ${e3.deployment.table} WHERE id = ?`, [e3.deployment.id]);
       if (found2.length === 0) out.push({ ...base, what: "placement", seen: `on the ${docLabel(e3.document)}`, now: `no longer on the ${docLabel(e3.document)}` });
@@ -118637,14 +118877,14 @@ function takeOff(plan2, e3, docs, what) {
   let taken = 0;
   for (const doc of docs) {
     const part = d3.part ? factPart(plan2.filing.kind) : null;
-    const list3 = plan2.list(d3.table, doc, part);
-    const row2 = list3.find((r3) => r3.fk === e3.row_id);
+    const list4 = plan2.list(d3.table, doc, part);
+    const row2 = list4.find((r3) => r3.fk === e3.row_id);
     if (row2 === void 0) continue;
     const ref = plan2.rowRef(row2);
     plan2.push(`${what}: take ${KIND[e3.entity]} ${e3.row_id} off the ${docLabel(doc)}`, `DELETE FROM ${d3.table} WHERE id = ${ref.sql} AND ${d3.fk} = ? AND ordinal = ?`, [...ref.params, e3.row_id, row2.ordinal], 1);
     if (row2.id !== null) plan2.written.add(`${d3.table}:${row2.id}`);
     plan2.audit({ op: "remove", document: doc, entity: e3.entity, entity_id: e3.row_id, deployment_id: plan2.rowId(row2), from: row2.ordinal, to: null, old_hash: null, new_hash: null });
-    plan2.setList(d3.table, doc, part, list3.filter((r3) => r3 !== row2));
+    plan2.setList(d3.table, doc, part, list4.filter((r3) => r3 !== row2));
     taken += 1;
   }
   if (taken === 0) throw new Refusal("not_placed", `${describe3(e3)} is not on the ${docs.map(docLabel).join(" or ")}, so there is nothing to take off.`);
@@ -118658,7 +118898,7 @@ function planReword(plan2, op, t3, rewords) {
     throw new Refusal("exhibit_excerpt", "This statement prints its exhibit's excerpt, which an on-the-fly revision does not edit.");
   }
   const override2 = t3.override_id !== null;
-  const entity = override2 ? "filing_orders" : t3.entity;
+  const entity2 = override2 ? "filing_orders" : t3.entity;
   const rowId = override2 ? t3.override_id : t3.row_id;
   const field = override2 ? "wording_override" : TEXT_COLUMN[t3.entity];
   const current = currentText(plan2.db, t3);
@@ -118675,9 +118915,9 @@ function planReword(plan2, op, t3, rewords) {
       values.push(op.states_fact ? 1 : 0);
     }
   }
-  plan2.push(`reword ${entity} ${rowId}`, `UPDATE ${entity} SET ${sets.join(", ")} WHERE id = ? AND ${field} = ?`, [...values, rowId, current], 1);
-  plan2.written.add(`${entity}:${rowId}`);
-  plan2.audit({ op: "reword", document: t3.document, entity, entity_id: rowId, deployment_id: null, from: null, to: null, old_hash: sha256Text(current), new_hash: sha256Text(op.new_text) });
+  plan2.push(`reword ${entity2} ${rowId}`, `UPDATE ${entity2} SET ${sets.join(", ")} WHERE id = ? AND ${field} = ?`, [...values, rowId, current], 1);
+  plan2.written.add(`${entity2}:${rowId}`);
+  plan2.audit({ op: "reword", document: t3.document, entity: entity2, entity_id: rowId, deployment_id: null, from: null, to: null, old_hash: sha256Text(current), new_hash: sha256Text(op.new_text) });
   rewords.push({ new_text: op.new_text, choice: op.choice });
 }
 function anchorFk(t3, a3, what) {
@@ -118699,14 +118939,14 @@ function planMove(plan2, op, t3, a3, i3) {
   const part = d3.part ? t3.deployment?.part ?? factPart(plan2.filing.kind) : null;
   let moved = 0;
   for (const doc of docs) {
-    const list3 = plan2.list(d3.table, doc, part);
-    const tr2 = list3.find((r3) => r3.fk === t3.row_id);
-    const ar2 = list3.find((r3) => r3.fk === fk);
+    const list4 = plan2.list(d3.table, doc, part);
+    const tr2 = list4.find((r3) => r3.fk === t3.row_id);
+    const ar2 = list4.find((r3) => r3.fk === fk);
     if (tr2 === void 0 || ar2 === void 0) throw new Refusal("not_placed", `${tr2 === void 0 ? describe3(t3) : describe3(a3)} is not on the ${docLabel(doc)}.`);
     if (tr2 === ar2) throw new Refusal("same_paragraph", `${describe3(t3)} cannot move relative to itself.`);
-    const order = list3.filter((r3) => r3 !== tr2);
+    const order = list4.filter((r3) => r3 !== tr2);
     order.splice(order.indexOf(ar2) + (op.anchor.position === "after" ? 1 : 0), 0, tr2);
-    const from = list3.indexOf(tr2) + 1;
+    const from = list4.indexOf(tr2) + 1;
     const to2 = order.indexOf(tr2) + 1;
     if (from === to2) continue;
     plan2.reorder(d3.table, order, `op ${i3 + 1} move`);
@@ -118717,14 +118957,14 @@ function planMove(plan2, op, t3, a3, i3) {
   }
   if (moved === 0) throw new Refusal("no_change", `${describe3(t3)} is already ${op.anchor.position} ${describe3(a3)}.`);
 }
-function insertAt(plan2, table2, document2, part, anchor, where, key, what) {
-  const list3 = plan2.list(table2, document2, part);
+function insertAt(plan2, table3, document2, part, anchor, where, key, what) {
+  const list4 = plan2.list(table3, document2, part);
   const row2 = { id: null, key, fk: null, ordinal: 0, pending: true };
-  const order = [...list3];
+  const order = [...list4];
   const index = anchor === null ? order.length : order.indexOf(anchor) + (where === "after" ? 1 : 0);
   order.splice(index, 0, row2);
-  plan2.reorder(table2, order, what);
-  plan2.setList(table2, document2, part, order);
+  plan2.reorder(table3, order, what);
+  plan2.setList(table3, document2, part, order);
   return row2;
 }
 function planRecast(plan2, op, t3, a3, i3, menu) {
@@ -118737,7 +118977,7 @@ function planRecast(plan2, op, t3, a3, i3, menu) {
     throw new Refusal("recast_type", `The Part holding ${describe3(a3)} takes ${offered.length > 0 ? `only: ${offered.join(", ")}` : "nothing this route makes"}, so ${describe3(t3)} cannot become a ${op.new_type} there.`);
   }
   if (t3.entity === "facts" === (op.new_type === "fact")) throw new Refusal("recast_same_type", `${describe3(t3)} is already a ${op.new_type}; placing it elsewhere among its kind is a move.`);
-  const text11 = currentText(plan2.db, t3);
+  const text12 = currentText(plan2.db, t3);
   const label2 = `op ${i3 + 1} recast`;
   const newKey = `op${i3 + 1}.new`;
   if (op.new_type === "submission") {
@@ -118758,7 +118998,7 @@ function planRecast(plan2, op, t3, a3, i3, menu) {
     plan2.push(
       `${label2}: create the submission`,
       "INSERT INTO submissions (proceeding_id, contention, ordinal) SELECT ?, ?, COALESCE(MAX(ordinal), 0) + 1 FROM submissions WHERE proceeding_id = ?",
-      [plan2.filing.proceeding_id, text11, plan2.filing.proceeding_id],
+      [plan2.filing.proceeding_id, text12, plan2.filing.proceeding_id],
       1
     );
     plan2.remember(newKey);
@@ -118777,13 +119017,13 @@ function planRecast(plan2, op, t3, a3, i3, menu) {
       placed2.pending = false;
     }
     takeOff(plan2, t3, docs, label2);
-    plan2.audit({ op: "recast", document: a3.document, entity: "submissions", entity_id: plan2.idOf(newKey), deployment_id: null, from: null, to: null, old_hash: sha256Text(text11), new_hash: sha256Text(text11) });
+    plan2.audit({ op: "recast", document: a3.document, entity: "submissions", entity_id: plan2.idOf(newKey), deployment_id: null, from: null, to: null, old_hash: sha256Text(text12), new_hash: sha256Text(text12) });
     return;
   }
   if (a3.document !== "form" || a3.deployment === null || a3.deployment.table !== "filing_facts") {
     throw new Refusal("recast_place", `A new fact is placed in the form's facts Part; ${describe3(a3)} is not there.`);
   }
-  plan2.push(`${label2}: create the fact`, "INSERT INTO facts (proceeding_id, postulate) VALUES (?, ?)", [plan2.filing.proceeding_id, text11], 1);
+  plan2.push(`${label2}: create the fact`, "INSERT INTO facts (proceeding_id, postulate) VALUES (?, ?)", [plan2.filing.proceeding_id, text12], 1);
   plan2.remember(newKey);
   const part = a3.deployment.part;
   const anchorRow = plan2.list("filing_facts", "form", part).find((r3) => r3.fk === a3.row_id);
@@ -118798,25 +119038,25 @@ function planRecast(plan2, op, t3, a3, i3, menu) {
   plan2.remember(placed.key);
   placed.pending = false;
   takeOff(plan2, t3, docsFor(op.document, t3.document), label2);
-  plan2.audit({ op: "recast", document: "form", entity: "facts", entity_id: plan2.idOf(newKey), deployment_id: null, from: null, to: null, old_hash: sha256Text(text11), new_hash: sha256Text(text11) });
+  plan2.audit({ op: "recast", document: "form", entity: "facts", entity_id: plan2.idOf(newKey), deployment_id: null, from: null, to: null, old_hash: sha256Text(text12), new_hash: sha256Text(text12) });
 }
 function planRestore(plan2, op, i3) {
   if (!Number.isInteger(op.remove_line) || op.remove_line <= 0) throw new ValidationError(`${PREVIEW}: restore needs remove_line, the remove's line in the Writing's quick-edits log`, "invalid_remove_line");
   const file = logFile(plan2.db, plan2.filing.id);
-  const text11 = existsSync54(file) ? readFileSync44(file, "utf-8").split("\n")[op.remove_line - 1] : void 0;
-  const removed = text11 ? JSON.parse(text11) : void 0;
-  const entity = String(removed?.entity);
-  const d3 = removed?.op === "remove" && Object.hasOwn(DEPLOY, entity) ? DEPLOY[entity] : void 0;
+  const text12 = existsSync54(file) ? readFileSync44(file, "utf-8").split("\n")[op.remove_line - 1] : void 0;
+  const removed = text12 ? JSON.parse(text12) : void 0;
+  const entity2 = String(removed?.entity);
+  const d3 = removed?.op === "remove" && Object.hasOwn(DEPLOY, entity2) ? DEPLOY[entity2] : void 0;
   if (removed === void 0 || d3 === void 0) {
     throw new Refusal("not_a_remove", `Line ${op.remove_line} of Writing ${plan2.filing.id}'s quick-edits log is not a remove, so there is nothing to restore.`);
   }
   const fk = Number(removed.entity_id);
   const document2 = String(removed.document);
   const part = d3.part ? factPart(plan2.filing.kind) : null;
-  const list3 = plan2.list(d3.table, document2, part);
-  if (list3.some((r3) => r3.fk === fk)) throw new Refusal("already_placed", `${d3.kind} ${fk} is already on the ${docLabel(document2)}.`);
+  const list4 = plan2.list(d3.table, document2, part);
+  if (list4.some((r3) => r3.fk === fk)) throw new Refusal("already_placed", `${d3.kind} ${fk} is already on the ${docLabel(document2)}.`);
   const oldOrdinal = Number(removed.from);
-  const next2 = list3.find((r3) => r3.ordinal >= oldOrdinal) ?? null;
+  const next2 = list4.find((r3) => r3.ordinal >= oldOrdinal) ?? null;
   const key = `op${i3 + 1}.restored`;
   const placed = insertAt(plan2, d3.table, document2, part, next2, "before", key, `op ${i3 + 1} restore`);
   const columns = d3.part ? `filing_id, ${d3.fk}, document, part, ordinal` : `filing_id, ${d3.fk}, document, ordinal`;
@@ -118825,7 +119065,7 @@ function planRestore(plan2, op, i3) {
   plan2.remember(key);
   placed.pending = false;
   placed.fk = fk;
-  plan2.audit({ op: "restore", document: document2, entity, entity_id: fk, deployment_id: plan2.idOf(key), from: null, to: placed.ordinal, old_hash: null, new_hash: null });
+  plan2.audit({ op: "restore", document: document2, entity: entity2, entity_id: fk, deployment_id: plan2.idOf(key), from: null, to: placed.ordinal, old_hash: null, new_hash: null });
 }
 function planKill(plan2, t3) {
   if (t3.sub !== 0 || t3.entity !== "submissions" && t3.entity !== "law_assertions") {
@@ -118846,10 +119086,10 @@ function planKill(plan2, t3) {
     let here = 0;
     if (drafting) {
       for (const doc of DOCUMENTS) {
-        const list3 = plan2.list("filing_submissions", doc, null);
-        const kept = list3.filter((r3) => r3.fk !== t3.row_id);
-        here += list3.length - kept.length;
-        if (kept.length !== list3.length) plan2.setList("filing_submissions", doc, null, kept);
+        const list4 = plan2.list("filing_submissions", doc, null);
+        const kept = list4.filter((r3) => r3.fk !== t3.row_id);
+        here += list4.length - kept.length;
+        if (kept.length !== list4.length) plan2.setList("filing_submissions", doc, null, kept);
       }
     }
     plan2.push(
@@ -118864,10 +119104,10 @@ function planKill(plan2, t3) {
 function foreignJobs(db, session, pairs) {
   const clauses = [];
   const params = [session];
-  for (const [table2, ids] of pairs) {
-    const list3 = [...ids].filter((id) => id > 0);
-    clauses.push(`(s.entity = ? AND (s.entity_id IS NULL${list3.length > 0 ? ` OR s.entity_id IN (${list3.map(() => "?").join(", ")})` : ""}))`);
-    params.push(table2, ...list3);
+  for (const [table3, ids] of pairs) {
+    const list4 = [...ids].filter((id) => id > 0);
+    clauses.push(`(s.entity = ? AND (s.entity_id IS NULL${list4.length > 0 ? ` OR s.entity_id IN (${list4.map(() => "?").join(", ")})` : ""}))`);
+    params.push(table3, ...list4);
   }
   if (clauses.length === 0) return [];
   return rows4(
@@ -118878,10 +119118,10 @@ function foreignJobs(db, session, pairs) {
     params
   ).map((r3) => ({ id: Number(r3.id), title: String(r3.title) }));
 }
-function addPair(pairs, table2, id) {
-  const set = pairs.get(table2) ?? /* @__PURE__ */ new Set();
+function addPair(pairs, table3, id) {
+  const set = pairs.get(table3) ?? /* @__PURE__ */ new Set();
   set.add(id);
-  pairs.set(table2, set);
+  pairs.set(table3, set);
 }
 function entryPairs(pairs, e3) {
   addPair(pairs, e3.entity, e3.row_id);
@@ -118892,8 +119132,8 @@ function entryPairs(pairs, e3) {
 function textKey(e3) {
   return `${e3.entity}:${e3.row_id}:${e3.parent ?? ""}`;
 }
-function indent(text11) {
-  return text11.replace(/\n/g, "\n    ");
+function indent(text12) {
+  return text12.replace(/\n/g, "\n    ");
 }
 function diffBlocks(before, after) {
   const out = [];
@@ -118926,10 +119166,10 @@ function diffBlocks(before, after) {
 }
 function consequencesOf(db, filingId, before, after, beforeMap, afterMap, touched, detached) {
   const docOf = new Map(mapSources(after.documents).map((s3) => [s3.documentType, s3.document]));
-  const label2 = (entries, doc, table2, id) => {
+  const label2 = (entries, doc, table3, id) => {
     const document2 = docOf.get(doc);
-    const e3 = entries.find((x3) => x3.document === document2 && x3.entity === table2 && x3.row_id === id && x3.sub === 0) ?? entries.find((x3) => x3.document === document2 && x3.entity === table2 && x3.row_id === id);
-    return e3 ? `${e3.title} ${position(e3)}` : `${table2} ${id} (${doc})`;
+    const e3 = entries.find((x3) => x3.document === document2 && x3.entity === table3 && x3.row_id === id && x3.sub === 0) ?? entries.find((x3) => x3.document === document2 && x3.entity === table3 && x3.row_id === id);
+    return e3 ? `${e3.title} ${position(e3)}` : `${table3} ${id} (${doc})`;
   };
   const keyOf2 = (x3) => `${x3.doc}${x3.table}${x3.id}${x3.marker}`;
   const mapped = (x3) => docOf.has(x3.doc);
@@ -118970,8 +119210,8 @@ function consequencesOf(db, filingId, before, after, beforeMap, afterMap, touche
     order_sought: { from: "filing_orders x", fk: "x.order_sought_id" },
     law_assertions: { from: "submission_law sl JOIN filing_submissions x ON x.submission_id = sl.submission_id", fk: "sl.law_assertion_id" }
   };
-  for (const [entity, ids] of byEntity) {
-    const v4 = via[entity];
+  for (const [entity2, ids] of byEntity) {
+    const v4 = via[entity2];
     if (v4 === void 0) continue;
     const unique = [...new Set(ids)];
     for (const r3 of rows4(
@@ -118980,7 +119220,7 @@ function consequencesOf(db, filingId, before, after, beforeMap, afterMap, touche
         WHERE ${v4.fk} IN (${unique.map(() => "?").join(", ")}) AND x.filing_id <> ? ORDER BY x.filing_id`,
       [...unique, filingId]
     )) {
-      other.push(`${KIND[entity]} ${r3.row_id} also prints on Writing ${r3.filing_id} (${r3.title}), ${docLabel(String(r3.document))}.`);
+      other.push(`${KIND[entity2]} ${r3.row_id} also prints on Writing ${r3.filing_id} (${r3.title}), ${docLabel(String(r3.document))}.`);
     }
   }
   return {
@@ -119014,7 +119254,7 @@ function pruneTokens(db) {
     if (statSync20(file).mtimeMs < cutoff) unlinkSync15(file);
   }
 }
-function refusedPreview(base, code, note, extra = {}) {
+function refusedPreview(base, code2, note, extra = {}) {
   return {
     preview_token: null,
     ...base,
@@ -119026,7 +119266,7 @@ function refusedPreview(base, code, note, extra = {}) {
     preview_paths: [],
     rewords: [],
     appliable: false,
-    refused: code,
+    refused: code2,
     note,
     ...extra
   };
@@ -119122,22 +119362,22 @@ async function submissionFormsPreviewEdit(args) {
     const pairs = /* @__PURE__ */ new Map();
     for (const r3 of resolved) for (const e3 of [r3.target, r3.anchor]) if (e3) entryPairs(pairs, e3);
     for (const w3 of plan2.written) {
-      const [table2, id] = w3.split(":");
-      addPair(pairs, table2, Number(id));
+      const [table3, id] = w3.split(":");
+      addPair(pairs, table3, Number(id));
     }
-    for (const [table2, c3] of Object.entries(trial.changed)) {
-      for (const id of [...c3.inserted, ...c3.updated, ...c3.deleted]) addPair(pairs, table2, c3.inserted.includes(id) ? -1 : id);
+    for (const [table3, c3] of Object.entries(trial.changed)) {
+      for (const id of [...c3.inserted, ...c3.updated, ...c3.deleted]) addPair(pairs, table3, c3.inserted.includes(id) ? -1 : id);
     }
     addPair(pairs, "filings", filing.id);
     const jobs2 = foreignJobs(db, args.session_token, pairs);
     const preconditions = [];
     const rowsSeen = /* @__PURE__ */ new Set();
-    const rowPrecondition = (table2, id) => {
-      const k3 = `${table2}:${id}`;
+    const rowPrecondition = (table3, id) => {
+      const k3 = `${table3}:${id}`;
       if (rowsSeen.has(k3) || id <= 0) return;
       rowsSeen.add(k3);
-      const sql = `SELECT * FROM "${table2}" WHERE rowid = ?`;
-      preconditions.push({ label: `${table2} row ${id}`, sql, params: [id], hash: hashRows(db, sql, [id]) });
+      const sql = `SELECT * FROM "${table3}" WHERE rowid = ?`;
+      preconditions.push({ label: `${table3} row ${id}`, sql, params: [id], hash: hashRows(db, sql, [id]) });
     };
     for (const r3 of resolved) {
       for (const e3 of [r3.target, r3.anchor]) {
@@ -119152,10 +119392,10 @@ async function submissionFormsPreviewEdit(args) {
       }
     }
     for (const w3 of plan2.written) {
-      const [table2, id] = w3.split(":");
-      rowPrecondition(table2, Number(id));
+      const [table3, id] = w3.split(":");
+      rowPrecondition(table3, Number(id));
     }
-    for (const [table2, c3] of Object.entries(trial.changed)) for (const id of [...c3.updated, ...c3.deleted]) rowPrecondition(table2, id);
+    for (const [table3, c3] of Object.entries(trial.changed)) for (const id of [...c3.updated, ...c3.deleted]) rowPrecondition(table3, id);
     for (const l3 of plan2.lists.values()) {
       const sql = `SELECT id FROM ${l3.table} WHERE filing_id = ? AND document = ?${l3.part === null ? "" : " AND part = ?"} ORDER BY id`;
       const params = l3.part === null ? [filing.id, l3.document] : [filing.id, l3.document, l3.part];
@@ -119208,7 +119448,7 @@ async function submissionFormsPreviewEdit(args) {
       labels: plan2.labels,
       log: plan2.log,
       preconditions,
-      scope: [...pairs].map(([table2, ids]) => [table2, [...ids]]),
+      scope: [...pairs].map(([table3, ids]) => [table3, [...ids]]),
       expires_at: expires,
       used_at: null
     });
@@ -119238,7 +119478,7 @@ async function submissionFormsApplyEdit(args) {
   if (stale.length > 0) {
     return { applied: false, filing_id: stored.filing_id, refused: "stale_preview", stale_rows: stale, note: `Refused: ${stale.join("; ")} changed since the preview. Nothing was written. Render, present and preview again.` };
   }
-  const jobs2 = foreignJobs(db, args.session_token, new Map(stored.scope.map(([table2, ids]) => [table2, new Set(ids)])));
+  const jobs2 = foreignJobs(db, args.session_token, new Map(stored.scope.map(([table3, ids]) => [table3, new Set(ids)])));
   if (jobs2.length > 0) {
     return { applied: false, filing_id: stored.filing_id, refused: "foreign_job", foreign_jobs: jobs2, note: `Refused: ${jobs2.map((j3) => `Job #${j3.id}: ${j3.title}`).join("; ")} is in progress in another session over a row this edit touches. Nothing was written.` };
   }
@@ -119265,7 +119505,7 @@ function appendLog(db, stored, results, revision) {
   const before = existsSync54(file) ? readFileSync44(file, "utf-8").split("\n").length - 1 : 0;
   const id = (ref) => ref === null || typeof ref === "number" ? ref : results[ref.$rowid].rowid;
   const appliedAt = (/* @__PURE__ */ new Date()).toISOString();
-  const text11 = stored.log.map((e3) => {
+  const text12 = stored.log.map((e3) => {
     const entityId = id(e3.entity_id);
     const to2 = e3.op === "kill" ? String(rows4(db, `SELECT killed_on FROM "${e3.entity}" WHERE id = ?`, [entityId])[0].killed_on) : e3.to;
     return JSON.stringify({
@@ -119285,7 +119525,7 @@ function appendLog(db, stored, results, revision) {
       new_hash: e3.new_hash
     });
   }).join("\n");
-  appendFileSync4(file, `${text11}
+  appendFileSync4(file, `${text12}
 `, "utf-8");
   return { file, lines: stored.log.map((_3, i3) => before + i3 + 1) };
 }
@@ -119466,12 +119706,12 @@ async function lookUpMatter(root, practiceDb2, client) {
     return { lookup: { matt_num: token, found: false, note: `Matter lookup for ${token} ${why}; client identity not filled in.` }, client };
   }
   const row2 = rows5[0];
-  const text11 = (v4) => v4 === null || v4 === void 0 || v4 === "" ? void 0 : String(v4);
+  const text12 = (v4) => v4 === null || v4 === void 0 || v4 === "" ? void 0 : String(v4);
   const resolved = {
-    clientName: client.clientName ?? text11(row2.client_name),
-    clientNo: client.clientNo ?? text11(row2.client_num),
-    matterNo: client.matterNo ?? text11(row2.matt_num),
-    matterDescription: client.matterDescription ?? text11(row2.description)
+    clientName: client.clientName ?? text12(row2.client_name),
+    clientNo: client.clientNo ?? text12(row2.client_num),
+    matterNo: client.matterNo ?? text12(row2.matt_num),
+    matterDescription: client.matterDescription ?? text12(row2.description)
   };
   return {
     lookup: {
@@ -119683,8 +119923,8 @@ function bcscFormHarness(args, env = process.env, installRoot) {
     if (args.command === "abandon") confineSessionDir(sessions, sessionId);
     else ctx = checkSession(root, caseData, sessions, sessionId);
     argv.push("--", sessionId);
-    const text11 = TEXT_ARG[args.command];
-    if (text11) argv.push(requireArg(args, text11));
+    const text12 = TEXT_ARG[args.command];
+    if (text12) argv.push(requireArg(args, text12));
     if (args.command === "step" && LOCATE_STEPS.has(ctx?.current_step)) confineLocatePaths(caseData, argv[argv.length - 1]);
   }
   const action = runPythonDriver({
@@ -119852,8 +120092,8 @@ function bindDraftTarget(matterRoot, env) {
   const root = validateMatterRoot(matterRoot);
   return { root, caseData: existingCaseDataFolder(root, env), draft: draftFolder(root) };
 }
-function writeWorkingFile(target2, folders2, fileName, text11) {
-  return writeSubstanceFile(target2.caseData, fileName, text11, folders2);
+function writeWorkingFile(target2, folders2, fileName, text12) {
+  return writeSubstanceFile(target2.caseData, fileName, text12, folders2);
 }
 function writingSubfolder(target2, name) {
   return resolveWithin(target2.writing, name, `${name} folder`, false);
@@ -119923,9 +120163,9 @@ function publishGeneral(args, env = process.env, installRoot) {
       detail: "This document is filled by its own form step, never by the general one. Use the step that fills this kind of document."
     };
   }
-  const format = knowledgeRead(args.format_path, { env, installRoot });
+  const format2 = knowledgeRead(args.format_path, { env, installRoot });
   const write2 = (name, value2) => writeWorkingFile(target2, ["publish-general"], name, json2(value2));
-  const argv = ["--filed", write2("filed.json", filed), "--format", write2("format.json", format), "--out-dir", target2.draft, "--out-name", args.output_name];
+  const argv = ["--filed", write2("filed.json", filed), "--format", write2("format.json", format2), "--out-dir", target2.draft, "--out-name", args.output_name];
   if (args.letter !== void 0) argv.push("--letter", write2("letter.json", withMarker(args.letter, layout)));
   if (layout?.letterhead === true) argv.push("--profile", write2("profile.json", readFirmProfile(env)));
   if (args.tokens !== void 0) argv.push("--tokens", write2("tokens.json", args.tokens));
@@ -120032,11 +120272,11 @@ var Lists = class {
   cc = [];
   not_addressed = [];
   seen = /* @__PURE__ */ new Set();
-  add(list3, name, address2) {
+  add(list4, name, address2) {
     const key = address2.toLowerCase();
     if (this.seen.has(key)) return;
     this.seen.add(key);
-    this[list3].push(named(name, address2));
+    this[list4].push(named(name, address2));
   }
   recipient(r3, why) {
     const addresses = addressesOf(r3.email);
@@ -120312,8 +120552,8 @@ function paragraphOf(pinpoint) {
 }
 function findingParas(finding, pinpoint) {
   const found2 = /* @__PURE__ */ new Set();
-  for (const list3 of (finding ?? "").matchAll(FINDING_PARAS)) {
-    for (const [, from, to2] of list3[1].matchAll(/(\d+)(?:\s*[-–]\s*(\d+))?/g)) {
+  for (const list4 of (finding ?? "").matchAll(FINDING_PARAS)) {
+    for (const [, from, to2] of list4[1].matchAll(/(\d+)(?:\s*[-–]\s*(\d+))?/g)) {
       const a3 = Number(from);
       const b3 = to2 === void 0 ? a3 : Number(to2);
       for (let n3 = Math.min(a3, b3); n3 <= Math.max(a3, b3); n3++) found2.add(n3);
@@ -120889,10 +121129,10 @@ function dirEntry(raw) {
 import { createHash as createHash14 } from "node:crypto";
 var sha2563 = (bytes) => createHash14("sha256").update(bytes).digest("hex");
 function splitHead(raw) {
-  const text11 = raw.toString("latin1");
-  const m3 = /\r?\n\r?\n/.exec(text11);
-  if (!m3) return { head: text11, body: Buffer.alloc(0) };
-  return { head: text11.slice(0, m3.index), body: raw.subarray(m3.index + m3[0].length) };
+  const text12 = raw.toString("latin1");
+  const m3 = /\r?\n\r?\n/.exec(text12);
+  if (!m3) return { head: text12, body: Buffer.alloc(0) };
+  return { head: text12.slice(0, m3.index), body: raw.subarray(m3.index + m3[0].length) };
 }
 function parseHeaders(head) {
   const headers2 = /* @__PURE__ */ new Map();
@@ -120912,8 +121152,8 @@ function decodeCharset(bytes, charset) {
     return new TextDecoder("windows-1252").decode(bytes);
   }
 }
-function quotedPrintable(text11) {
-  const soft = text11.replace(/=\r?\n/g, "");
+function quotedPrintable(text12) {
+  const soft = text12.replace(/=\r?\n/g, "");
   const out = [];
   for (let i3 = 0; i3 < soft.length; i3 += 1) {
     if (soft[i3] === "=" && /^[0-9A-Fa-f]{2}$/.test(soft.slice(i3 + 1, i3 + 3))) {
@@ -120965,8 +121205,8 @@ function walk3(raw, out, depth) {
     const delimiter = `--${boundary}`;
     const whole = body2.toString("latin1");
     const close = whole.indexOf(`${delimiter}--`);
-    const text11 = close >= 0 ? whole.slice(0, close) : whole;
-    const pieces = text11.split(new RegExp(`\\r?\\n?${escapeRegex2(delimiter)}[ \\t]*\\r?\\n`));
+    const text12 = close >= 0 ? whole.slice(0, close) : whole;
+    const pieces = text12.split(new RegExp(`\\r?\\n?${escapeRegex2(delimiter)}[ \\t]*\\r?\\n`));
     for (const piece of pieces.slice(1)) {
       if (piece.trim() === "") continue;
       walk3(Buffer.from(piece, "latin1"), out, depth + 1);
@@ -120984,8 +121224,8 @@ function walk3(raw, out, depth) {
   else if ((mediaType === "text/rtf" || mediaType === "application/rtf") && out.rtf === void 0) out.rtf = decoded;
   else out.others.push({ type: mediaType, size: decoded.length, sha256: sha2563(decoded) });
 }
-function escapeRegex2(text11) {
-  return text11.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function escapeRegex2(text12) {
+  return text12.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 // src/correspondence/highlight.ts
@@ -121080,11 +121320,11 @@ var ENTITIES = {
   agrave: "\xE0",
   ccedil: "\xE7"
 };
-function decodeEntities2(text11) {
-  return text11.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, body2) => {
+function decodeEntities2(text12) {
+  return text12.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, body2) => {
     if (body2[0] === "#") {
-      const code = body2[1] === "x" || body2[1] === "X" ? parseInt(body2.slice(2), 16) : parseInt(body2.slice(1), 10);
-      return Number.isFinite(code) ? String.fromCodePoint(code) : whole;
+      const code2 = body2[1] === "x" || body2[1] === "X" ? parseInt(body2.slice(2), 16) : parseInt(body2.slice(1), 10);
+      return Number.isFinite(code2) ? String.fromCodePoint(code2) : whole;
     }
     return ENTITIES[body2.toLowerCase()] ?? whole;
   });
@@ -121110,8 +121350,8 @@ function readHtml(html2) {
     }
     return "";
   };
-  const push = (text12) => {
-    if (hidden === 0 && text12) runs.push({ text: text12, colour: current() });
+  const push = (text13) => {
+    if (hidden === 0 && text13) runs.push({ text: text13, colour: current() });
   };
   const token = /<!--[\s\S]*?-->|<!\[[\s\S]*?\]>|<!(?:[^>]*)>|<\/?([a-zA-Z][\w:-]*)([^>]*)>|([^<]+)|</g;
   let m3;
@@ -121141,8 +121381,8 @@ function readHtml(html2) {
     }
     stack.push({ name, colour: INLINE.has(name) ? highlightOf(name, m3[2]) : void 0 });
   }
-  const text11 = runs.map((r3) => r3.text).join("").replace(/\u00a0/g, " ").replace(/[ \t]*\n[ \t]*/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
-  return { text: text11, highlights: mergeRuns(runs) };
+  const text12 = runs.map((r3) => r3.text).join("").replace(/\u00a0/g, " ").replace(/[ \t]*\n[ \t]*/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  return { text: text12, highlights: mergeRuns(runs) };
 }
 
 // src/correspondence/lzfu.ts
@@ -121239,20 +121479,20 @@ function readRtf(rtf) {
     const rgb = colours[idx];
     return rgb ? colourName(rgb) : null;
   };
-  const emitText = (text12) => {
-    if (!text12 || st3.skip) return;
+  const emitText = (text13) => {
+    if (!text13 || st3.skip) return;
     if (fromHtml) {
       if (st3.htmlRtf && !st3.htmlTag) return;
-      html2 += st3.htmlTag ? text12 : escapeHtml2(text12);
+      html2 += st3.htmlTag ? text13 : escapeHtml2(text13);
       return;
     }
-    runs.push({ text: text12, colour: colourOf() ?? "" });
+    runs.push({ text: text13, colour: colourOf() ?? "" });
   };
   const flushBytes = () => {
     if (pendingBytes.length === 0) return;
-    const text12 = decoder.decode(Buffer.from(pendingBytes));
+    const text13 = decoder.decode(Buffer.from(pendingBytes));
     pendingBytes = [];
-    emitText(text12);
+    emitText(text13);
   };
   let i3 = 0;
   while (i3 < src.length) {
@@ -121360,8 +121600,8 @@ function readRtf(rtf) {
           st3.uc = param2 ?? 1;
           break;
         case "u": {
-          const code = param2 === void 0 ? 0 : param2 < 0 ? param2 + 65536 : param2;
-          emitLiteral(String.fromCharCode(code));
+          const code2 = param2 === void 0 ? 0 : param2 < 0 ? param2 + 65536 : param2;
+          emitLiteral(String.fromCharCode(code2));
           skipChars = st3.uc;
           break;
         }
@@ -121421,23 +121661,23 @@ function readRtf(rtf) {
     for (const c3 of chunk2) pendingBytes.push(c3.charCodeAt(0));
   }
   flushBytes();
-  function emitLiteral(text12) {
+  function emitLiteral(text13) {
     flushBytes();
     if (skipChars > 0) {
       skipChars -= 1;
       return;
     }
-    emitText(text12);
+    emitText(text13);
   }
   if (fromHtml) return { html: html2, text: "", highlights: [] };
-  const text11 = runs.map((r3) => r3.text).join("");
-  return { text: text11, highlights: mergeRuns(runs) };
+  const text12 = runs.map((r3) => r3.text).join("");
+  return { text: text12, highlights: mergeRuns(runs) };
 }
 function hex(n3) {
   return Math.max(0, Math.min(255, n3)).toString(16).padStart(2, "0");
 }
-function escapeHtml2(text11) {
-  return text11.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function escapeHtml2(text12) {
+  return text12.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 function textDecoder(codepage) {
   const label2 = codepage === 65001 ? "utf-8" : codepage === 1200 ? "utf-16le" : `windows-${codepage}`;
@@ -121491,8 +121731,8 @@ var MsgNode = class {
     return this.cfb.read(`${this.prefix}/__substg1.0_${tag}0102`);
   }
 };
-function collapse(text11) {
-  return (text11 ?? "").replace(/\s+/g, " ").trim();
+function collapse(text12) {
+  return (text12 ?? "").replace(/\s+/g, " ").trim();
 }
 function address(node, nameProp, smtpProp, addrProp) {
   const name = collapse(node.text(nameProp));
@@ -121523,12 +121763,12 @@ function msgHeaders(cfb, msg) {
     sent: isoOrNull(dateHeader) ?? msg.time(57) ?? msg.time(3590)
   };
 }
-function splitList(text11) {
-  return (text11 ?? "").split(";").map(collapse).filter(Boolean);
+function splitList(text12) {
+  return (text12 ?? "").split(";").map(collapse).filter(Boolean);
 }
-function isoOrNull(text11) {
-  if (!text11) return null;
-  const t3 = Date.parse(text11);
+function isoOrNull(text12) {
+  if (!text12) return null;
+  const t3 = Date.parse(text12);
   return Number.isNaN(t3) ? null : new Date(t3).toISOString();
 }
 function openMsg(bytes) {
@@ -121572,21 +121812,21 @@ function parseMsg(bytes, bodyLimit) {
   return finish2(headers2, body2, htmlReading ? htmlReading.highlights : rtfRuns, htmlReading ? "html" : rtfText !== void 0 ? "rtf" : "none", attachments, bodyLimit);
 }
 function emlHeaders(headers2) {
-  const list3 = (v4) => v4 ? splitAddresses(decodeWords(v4)) : [];
+  const list4 = (v4) => v4 ? splitAddresses(decodeWords(v4)) : [];
   return {
     from: collapse(decodeWords(headers2.get("from") ?? "")),
-    to: list3(headers2.get("to")),
-    cc: list3(headers2.get("cc")),
+    to: list4(headers2.get("to")),
+    cc: list4(headers2.get("cc")),
     subject: collapse(decodeWords(headers2.get("subject") ?? "")),
     sent: isoOrNull(headers2.get("date"))
   };
 }
-function splitAddresses(text11) {
+function splitAddresses(text12) {
   const out = [];
   let depth = 0;
   let quoted = false;
   let current = "";
-  for (const c3 of text11) {
+  for (const c3 of text12) {
     if (c3 === '"') quoted = !quoted;
     else if (c3 === "<" && !quoted) depth += 1;
     else if (c3 === ">" && !quoted) depth = Math.max(0, depth - 1);
@@ -121738,13 +121978,13 @@ import { basename as basename17, extname as extname7, win32 as pathWin3227 } fro
 // src/correspondence/zip.ts
 import { deflateRawSync } from "node:zlib";
 var CRC_TABLE2 = (() => {
-  const table2 = new Uint32Array(256);
+  const table3 = new Uint32Array(256);
   for (let n3 = 0; n3 < 256; n3 += 1) {
     let c3 = n3;
     for (let k3 = 0; k3 < 8; k3 += 1) c3 = c3 & 1 ? 3988292384 ^ c3 >>> 1 : c3 >>> 1;
-    table2[n3] = c3 >>> 0;
+    table3[n3] = c3 >>> 0;
   }
-  return table2;
+  return table3;
 })();
 function crc322(data) {
   let c3 = 4294967295;
@@ -121801,11 +122041,11 @@ function zipParts(parts) {
 var W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 var QUOTE_INDENT = 720;
 var LIST_INDENT = 360;
-function escapeXml(text11) {
-  return text11.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+function escapeXml(text12) {
+  return text12.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 var WORD = /[\p{L}\p{N}]/u;
-function inlineRuns(text11) {
+function inlineRuns(text12) {
   const runs = [];
   let bold = false;
   let italic = false;
@@ -121814,22 +122054,22 @@ function inlineRuns(text11) {
     if (buf) runs.push({ text: buf, bold, italic });
     buf = "";
   };
-  for (let i3 = 0; i3 < text11.length; i3 += 1) {
-    const c3 = text11[i3];
-    if (c3 === "\\" && i3 + 1 < text11.length && "\\*_`#>-".includes(text11[i3 + 1])) {
-      buf += text11[i3 + 1];
+  for (let i3 = 0; i3 < text12.length; i3 += 1) {
+    const c3 = text12[i3];
+    if (c3 === "\\" && i3 + 1 < text12.length && "\\*_`#>-".includes(text12[i3 + 1])) {
+      buf += text12[i3 + 1];
       i3 += 1;
       continue;
     }
-    if (c3 === "*" && text11[i3 + 1] === "*") {
+    if (c3 === "*" && text12[i3 + 1] === "*") {
       flush();
       bold = !bold;
       i3 += 1;
       continue;
     }
     if (c3 === "*" || c3 === "_") {
-      const prev = text11[i3 - 1] ?? " ";
-      const next2 = text11[i3 + 1] ?? " ";
+      const prev = text12[i3 - 1] ?? " ";
+      const next2 = text12[i3 + 1] ?? " ";
       const opens = !italic && !/\s/.test(next2) && (c3 === "*" || !WORD.test(prev));
       const closes = italic && !/\s/.test(prev) && (c3 === "*" || !WORD.test(next2));
       if (opens || closes) {
@@ -121843,7 +122083,7 @@ function inlineRuns(text11) {
   flush();
   return runs;
 }
-function blocks2(markdown) {
+function blocks2(markdown2) {
   const out = [];
   let para2 = [];
   let quote = [];
@@ -121855,7 +122095,7 @@ function blocks2(markdown) {
     if (quote.length) out.push({ kind: "quote", lines: quote });
     quote = [];
   };
-  for (const raw of markdown.replace(/\r\n?/g, "\n").split("\n")) {
+  for (const raw of markdown2.replace(/\r\n?/g, "\n").split("\n")) {
     const line = raw.replace(/\s+$/, "");
     const q3 = /^\s{0,3}>\s?(.*)$/.exec(line);
     if (q3) {
@@ -121875,8 +122115,8 @@ function blocks2(markdown) {
       out.push({ kind: "item", marker: /\d/.test(item[1]) ? item[1] : "\u2022", text: item[2] });
       continue;
     }
-    const heading = /^#{1,6}\s+(.*)$/.exec(line);
-    para2.push(heading ? `**${heading[1]}**` : line);
+    const heading2 = /^#{1,6}\s+(.*)$/.exec(line);
+    para2.push(heading2 ? `**${heading2[1]}**` : line);
   }
   endPara();
   endQuote();
@@ -121889,30 +122129,30 @@ function runXml(run2) {
 function linesXml(lines2) {
   return lines2.map((line) => inlineRuns(line).map(runXml).join("")).join("<w:r><w:br/></w:r>");
 }
-function blockXml(block2, next2) {
-  if (block2.kind === "quote") {
-    return `<w:p><w:pPr><w:ind w:left="${QUOTE_INDENT}" w:right="${QUOTE_INDENT}"/></w:pPr>${linesXml(block2.lines)}</w:p>`;
+function blockXml(block3, next2) {
+  if (block3.kind === "quote") {
+    return `<w:p><w:pPr><w:ind w:left="${QUOTE_INDENT}" w:right="${QUOTE_INDENT}"/></w:pPr>${linesXml(block3.lines)}</w:p>`;
   }
-  if (block2.kind === "item") {
+  if (block3.kind === "item") {
     const tight = next2?.kind === "item" ? `<w:spacing w:after="0"/>` : "";
-    return `<w:p><w:pPr><w:tabs><w:tab w:val="left" w:pos="${LIST_INDENT * 2}"/></w:tabs>${tight}<w:ind w:left="${LIST_INDENT * 2}" w:hanging="${LIST_INDENT}"/></w:pPr>${runXml({ text: block2.marker, bold: false, italic: false })}<w:r><w:tab/></w:r>${linesXml([block2.text])}</w:p>`;
+    return `<w:p><w:pPr><w:tabs><w:tab w:val="left" w:pos="${LIST_INDENT * 2}"/></w:tabs>${tight}<w:ind w:left="${LIST_INDENT * 2}" w:hanging="${LIST_INDENT}"/></w:pPr>${runXml({ text: block3.marker, bold: false, italic: false })}<w:r><w:tab/></w:r>${linesXml([block3.text])}</w:p>`;
   }
-  return `<w:p>${linesXml(block2.lines)}</w:p>`;
+  return `<w:p>${linesXml(block3.lines)}</w:p>`;
 }
-function documentXml(markdown) {
-  const all = blocks2(markdown);
-  const body2 = all.map((block2, i3) => blockXml(block2, all[i3 + 1])).join("");
+function documentXml(markdown2) {
+  const all = blocks2(markdown2);
+  const body2 = all.map((block3, i3) => blockXml(block3, all[i3 + 1])).join("");
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="${W}"><w:body>${body2}<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>`;
 }
 var STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="${W}"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Calibri" w:cs="Calibri"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:lang w:val="en-CA"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="160" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>`;
 var CONTENT_TYPES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`;
 var ROOT_RELS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
 var DOCUMENT_RELS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
-function markdownToDocx(markdown) {
+function markdownToDocx(markdown2) {
   return zipParts({
     "[Content_Types].xml": CONTENT_TYPES,
     "_rels/.rels": ROOT_RELS,
-    "word/document.xml": documentXml(markdown),
+    "word/document.xml": documentXml(markdown2),
     "word/_rels/document.xml.rels": DOCUMENT_RELS,
     "word/styles.xml": STYLES
   });
@@ -121965,9 +122205,9 @@ function realpathOrMissing(path) {
 }
 function save2(args, root) {
   const name = args.name;
-  const text11 = args.text;
+  const text12 = args.text;
   if (typeof name !== "string" || name === "") throw new ValidationError("drafting_forms__reply_draft.name is required for step save");
-  if (typeof text11 !== "string" || text11.trim() === "") throw new ValidationError("drafting_forms__reply_draft.text is required for step save");
+  if (typeof text12 !== "string" || text12.trim() === "") throw new ValidationError("drafting_forms__reply_draft.text is required for step save");
   assertSegment(name, "name");
   if (/\.[a-z0-9]{1,5}$/i.test(name)) throw new ValidationError(`name is a bare file name stem, without an extension: ${name}`);
   if (VERSION_SUFFIX.test(name)) throw new ValidationError(`name is the stem without " vN"; the server picks the version: ${name}`);
@@ -121975,7 +122215,7 @@ function save2(args, root) {
     throw new ValidationError(`name must follow the firm's grammar, "YYYY-MM-DD CODE Recipient re Subject" (e.g. an ET or LET code): ${name}`);
   }
   const dir = draftFolder2(root);
-  const written = writeNextFree(dir, name, ".md", text11);
+  const written = writeNextFree(dir, name, ".md", text12);
   return { success: true, path: written.path, version: written.version };
 }
 function exportDocx(args, root) {
@@ -123171,15 +123411,15 @@ var CASE_DATA_ROOT = /0\. CASE DATA[\\/]+/gi;
 var DOCUMENTS_ROOT = /Litigation - Documents[\\/]+/gi;
 var SEGMENT_END = /^(?:$|[\\/\s"'`.,;:)\]}>])/;
 var MAX_STRING_LENGTH = 2e3;
-function namesPerson(text11) {
-  for (const match of text11.matchAll(EMAIL)) {
+function namesPerson(text12) {
+  for (const match of text12.matchAll(EMAIL)) {
     if (!SERVICE_LOCAL_PARTS.has(match[1].toLowerCase())) return true;
   }
   return false;
 }
-function namesSegment(text11, root, allowed) {
-  for (const match of text11.matchAll(root)) {
-    const rest = text11.slice(match.index + match[0].length);
+function namesSegment(text12, root, allowed) {
+  for (const match of text12.matchAll(root)) {
+    const rest = text12.slice(match.index + match[0].length);
     if (SEGMENT_END.test(rest)) continue;
     const lower = rest.toLowerCase();
     const isAllowed = allowed.some(
@@ -123191,15 +123431,15 @@ function namesSegment(text11, root, allowed) {
 }
 var REDACTION_RULES = [
   ["email", namesPerson],
-  ["user_path", (text11) => USER_ROOTS.some((root) => namesSegment(text11, root, USER_SEGMENTS))],
+  ["user_path", (text12) => USER_ROOTS.some((root) => namesSegment(text12, root, USER_SEGMENTS))],
   [
     "matter_folder",
-    (text11) => namesSegment(text11, CASE_DATA_ROOT, PLACEHOLDERS) || namesSegment(text11, DOCUMENTS_ROOT, DOCUMENTS_SEGMENTS)
+    (text12) => namesSegment(text12, CASE_DATA_ROOT, PLACEHOLDERS) || namesSegment(text12, DOCUMENTS_ROOT, DOCUMENTS_SEGMENTS)
   ],
-  ["too_long", (text11) => text11.length > MAX_STRING_LENGTH]
+  ["too_long", (text12) => text12.length > MAX_STRING_LENGTH]
 ];
-function findRedactionHits(text11) {
-  return REDACTION_RULES.filter(([, hits]) => hits(text11)).map(([kind]) => kind);
+function findRedactionHits(text12) {
+  return REDACTION_RULES.filter(([, hits]) => hits(text12)).map(([kind]) => kind);
 }
 var MAX_ITEMS_JSON_LENGTH = 5e4;
 var MAX_PREVIEW_HTML_LENGTH = 2e5;
@@ -123217,7 +123457,7 @@ function findSuggestionHits(fields2) {
     ([kind, hit]) => strings.some(hit) || kind !== "too_long" && html2.some(hit)
   ).map(([kind]) => kind);
   if (fields2.items && JSON.stringify(fields2.items).length > MAX_ITEMS_JSON_LENGTH) hits.push("items_too_long");
-  if ((fields2.previews ?? []).some((text11) => text11.length > MAX_PREVIEW_HTML_LENGTH)) hits.push("preview_too_long");
+  if ((fields2.previews ?? []).some((text12) => text12.length > MAX_PREVIEW_HTML_LENGTH)) hits.push("preview_too_long");
   if (fields2.mockup !== void 0 && Buffer.byteLength(fields2.mockup, "utf-8") > MAX_MOCKUP_HTML_BYTES) hits.push("mockup_too_long");
   return hits;
 }
@@ -123242,8 +123482,8 @@ function readJson3(file) {
   }
 }
 function person(env) {
-  const config2 = configPath(env);
-  const raw = existsSync62(config2) ? readJson3(config2).person : void 0;
+  const config3 = configPath(env);
+  const raw = existsSync62(config3) ? readJson3(config3).person : void 0;
   if (raw === void 0 || raw === null || raw === "") {
     throw new DataServerError(
       `person is not set: this machine's probanda.json names no firm roster key ("person"), so a preference has no owner. Set it with practice_data__upsert_firm_profile, then retry.`,
@@ -123251,7 +123491,7 @@ function person(env) {
     );
   }
   if (typeof raw !== "string" || !/^[A-Za-z0-9_-]+$/.test(raw)) {
-    throw new ValidationError(`person in ${config2} must be a roster key of letters, digits, "_" and "-"`);
+    throw new ValidationError(`person in ${config3} must be a roster key of letters, digits, "_" and "-"`);
   }
   return raw;
 }
@@ -123344,21 +123584,21 @@ async function post(supabaseUrl, staticKey, path, body2) {
     const cause = err.cause;
     return { ok: false, status: null, cause: [err.message, cause?.code ?? cause?.message].filter(Boolean).join(": ") };
   }
-  let text11 = "";
+  let text12 = "";
   try {
-    text11 = await res.text();
+    text12 = await res.text();
   } catch (err) {
     return { ok: false, status: res.status, cause: `HTTP ${res.status}, reply cut off: ${err.message}` };
   }
   let json4;
   try {
-    json4 = text11 ? JSON.parse(text11) : {};
+    json4 = text12 ? JSON.parse(text12) : {};
   } catch {
     json4 = null;
   }
   const obj = json4 !== null && typeof json4 === "object" && !Array.isArray(json4) ? json4 : null;
   if (!res.ok) {
-    const error2 = typeof obj?.error === "string" ? obj.error : text11.slice(0, 500);
+    const error2 = typeof obj?.error === "string" ? obj.error : text12.slice(0, 500);
     return { ok: false, status: res.status, cause: `HTTP ${res.status}: ${error2}` };
   }
   if (!obj) return { ok: false, status: res.status, cause: `HTTP ${res.status}: a reply that is not a JSON object` };
@@ -123502,13 +123742,13 @@ async function retryWriteUps(env, seams) {
 var NOT_CONFIGURED = "this computer has no Probanda key, so no status can be read: call cloud_key__configure_credential once and have the practitioner paste the key on the page it serves, or, if they have none, call key_request__submit";
 function cloudItems(value2) {
   if (!Array.isArray(value2)) return null;
-  const text11 = (v4) => typeof v4 === "string" ? v4 : null;
+  const text12 = (v4) => typeof v4 === "string" ? v4 : null;
   return value2.filter(isObject7).map((row2) => ({
     item: typeof row2.item === "number" ? row2.item : 0,
-    status: text11(row2.status),
-    reason: text11(row2.reason),
-    category: text11(row2.category),
-    implemented_in: text11(row2.implemented_in)
+    status: text12(row2.status),
+    reason: text12(row2.reason),
+    category: text12(row2.category),
+    implemented_in: text12(row2.implemented_in)
   }));
 }
 async function readStatuses(ids, env = process.env, seams = {}) {
@@ -123646,8 +123886,8 @@ function listCaseRecordNames(caseDataDirs, env = process.env) {
       const r3 = raw;
       if (r3?.status === "not_applicable") return { status: "not_applicable" };
       if (r3?.status !== "ok") return { status: "unavailable" };
-      const list3 = (value2) => Array.isArray(value2) ? value2.filter((v4) => typeof v4 === "string") : [];
-      return { status: "ok", titles: list3(r3.titles), file_names: list3(r3.file_names), matter: list3(r3.matter), parties: list3(r3.parties) };
+      const list4 = (value2) => Array.isArray(value2) ? value2.filter((v4) => typeof v4 === "string") : [];
+      return { status: "ok", titles: list4(r3.titles), file_names: list4(r3.file_names), matter: list4(r3.matter), parties: list4(r3.parties) };
     });
   } catch {
     return unavailable;
@@ -123741,9 +123981,9 @@ var TOKEN = new RegExp("(\\p{L}+(?:['\\u2019]\\p{L}+)*)|(\\p{Nd}+)", "gu");
 function keyOf(word) {
   return word.replace(/\u2019/g, "'").toLowerCase();
 }
-function tokens(text11) {
+function tokens(text12) {
   const out = [];
-  for (const m3 of text11.matchAll(TOKEN)) {
+  for (const m3 of text12.matchAll(TOKEN)) {
     const start2 = m3.index ?? 0;
     if (m3[1] !== void 0) {
       if (m3[1].replace(/['\u2019]/g, "").length >= 3) out.push({ key: keyOf(m3[1]), start: start2, end: start2 + m3[1].length });
@@ -123753,8 +123993,8 @@ function tokens(text11) {
   }
   return out;
 }
-function parseStopWords(text11) {
-  return text11.split(/\r?\n/).map((line) => line.trim()).filter((line) => line !== "" && !line.startsWith("#")).map(keyOf);
+function parseStopWords(text12) {
+  return text12.split(/\r?\n/).map((line) => line.trim()).filter((line) => line !== "" && !line.startsWith("#")).map(keyOf);
 }
 function loadStopWords(env = process.env, installRoot) {
   const root = resolveShippedRoot(STOP_WORDS_DIR, env, { subject: "the suggestion word lists", plugin: "lawyer", installRoot }).root;
@@ -123771,8 +124011,8 @@ function buildTokenIndex(records, stopWords) {
   if (records.firmName) for (const t3 of tokens(records.firmName)) stop.add(t3.key);
   const index = /* @__PURE__ */ new Map();
   for (const source of RECORD_SOURCES) {
-    for (const text11 of records.texts[source]) {
-      for (const t3 of tokens(text11)) {
+    for (const text12 of records.texts[source]) {
+      for (const t3 of tokens(text12)) {
         if (stop.has(t3.key)) continue;
         const held2 = index.get(t3.key) ?? /* @__PURE__ */ new Set();
         held2.add(source);
@@ -123821,10 +124061,10 @@ var AMOUNTS = [
   // A number with thousands separators: 12,500 or 12,500.00.
   /(?<![\d.,])\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?(?![\d,])/g
 ];
-function matchAll(text11, patterns, kind, keep = () => true) {
+function matchAll(text12, patterns, kind, keep = () => true) {
   const hits = [];
   for (const pattern of patterns) {
-    for (const m3 of text11.matchAll(pattern)) {
+    for (const m3 of text12.matchAll(pattern)) {
       let value2 = m3[0];
       if (kind === "path") value2 = value2.replace(/[.,;:)\]]+$/, "");
       if (value2 === "" || !keep(value2)) continue;
@@ -123834,12 +124074,12 @@ function matchAll(text11, patterns, kind, keep = () => true) {
   }
   return hits;
 }
-function findPatterns(text11) {
-  const emails = matchAll(text11, [EMAIL2], "email", (value2) => !SERVICE_LOCAL_PARTS2.has(value2.split("@")[0].toLowerCase()));
+function findPatterns(text12) {
+  const emails = matchAll(text12, [EMAIL2], "email", (value2) => !SERVICE_LOCAL_PARTS2.has(value2.split("@")[0].toLowerCase()));
   const within = (hit, others) => others.some((o3) => o3 !== hit && o3.start <= hit.start && hit.end <= o3.end && o3.end - o3.start > hit.end - hit.start);
-  const paths = matchAll(text11, PATHS3, "path", (value2) => new RegExp("\\p{L}", "u").test(value2)).filter((hit) => !emails.some((e3) => e3.start <= hit.start && hit.end <= e3.end));
-  const dates = matchAll(text11, DATES, "date");
-  const amounts = matchAll(text11, AMOUNTS, "amount");
+  const paths = matchAll(text12, PATHS3, "path", (value2) => new RegExp("\\p{L}", "u").test(value2)).filter((hit) => !emails.some((e3) => e3.start <= hit.start && hit.end <= e3.end));
+  const dates = matchAll(text12, DATES, "date");
+  const amounts = matchAll(text12, AMOUNTS, "amount");
   const all = [...emails, ...paths, ...dates, ...amounts];
   const seen = /* @__PURE__ */ new Set();
   return all.filter((hit) => !within(hit, all.filter((o3) => o3.kind === hit.kind))).filter((hit) => {
@@ -123861,15 +124101,15 @@ function factLeaves(value2, path, into) {
 }
 function locate2(card2) {
   const out = [];
-  const one = (part, text11) => {
-    if (text11 === void 0 || text11 === null) return;
-    if (typeof text11 !== "string") throw new ValidationError(`${part} must be a string`);
-    out.push({ part, text: text11 });
+  const one = (part, text12) => {
+    if (text12 === void 0 || text12 === null) return;
+    if (typeof text12 !== "string") throw new ValidationError(`${part} must be a string`);
+    out.push({ part, text: text12 });
   };
-  const many = (part, list3) => {
-    if (list3 === void 0 || list3 === null) return;
-    if (!Array.isArray(list3) || !list3.every((entry4) => typeof entry4 === "string")) throw new ValidationError(`${part} must be a list of strings`);
-    list3.forEach((text11, index) => out.push({ part, index, text: text11 }));
+  const many = (part, list4) => {
+    if (list4 === void 0 || list4 === null) return;
+    if (!Array.isArray(list4) || !list4.every((entry4) => typeof entry4 === "string")) throw new ValidationError(`${part} must be a list of strings`);
+    list4.forEach((text12, index) => out.push({ part, index, text: text12 }));
   };
   one("pain_point", card2.pain_point);
   many("items", card2.items);
@@ -123939,17 +124179,17 @@ var OPEN_HERE = "Open on this computer";
 var OFFLINE_AFTER = ".";
 var NOT_CHECKED = "Not sent: Probanda could not check this against your records. Try again in a moment.";
 var BRACKET2 = /\[(client|matter|person|document|file|date|amount)\]/g;
-function escapeHtml3(text11) {
-  return text11.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
+function escapeHtml3(text12) {
+  return text12.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
 }
-function marked(text11) {
-  return escapeHtml3(text11).replace(BRACKET2, '<span class="bracket">[$1]</span>');
+function marked(text12) {
+  return escapeHtml3(text12).replace(BRACKET2, '<span class="bracket">[$1]</span>');
 }
 function guess(on2) {
   return on2 ? `<p class="guess">${GUESS_LABEL}</p>` : "";
 }
-function editable(text11) {
-  return `<div class="text" contenteditable="true" spellcheck="true">${marked(text11)}</div>`;
+function editable(text12) {
+  return `<div class="text" contenteditable="true" spellcheck="true">${marked(text12)}</div>`;
 }
 var KIND_LABEL = { constraint: "Constraint", evidence: "Evidence" };
 function contextLine(line) {
@@ -124259,9 +124499,9 @@ import { join as join63 } from "node:path";
 var PLACEHOLDERS_DIR = "suggestion/references/mockup";
 var PLACEHOLDERS_FILE = "placeholders.txt";
 var MAX_MOCKUP_BYTES = 1e6;
-var normal = (text11) => text11.replace(/\s+/g, " ").trim();
-function parsePlaceholders(text11) {
-  return text11.split(/\r?\n/).map(normal).filter((line) => line !== "" && !line.startsWith("#"));
+var normal = (text12) => text12.replace(/\s+/g, " ").trim();
+function parsePlaceholders(text12) {
+  return text12.split(/\r?\n/).map(normal).filter((line) => line !== "" && !line.startsWith("#"));
 }
 function loadPlaceholders(env = process.env, installRoot) {
   const root = resolveShippedRoot(PLACEHOLDERS_DIR, env, { subject: "the suggestion mockup placeholders", plugin: "lawyer", installRoot }).root;
@@ -124346,11 +124586,11 @@ var ALLOWED_ATTRIBUTES = {
   lang: /^[a-z]{2}(?:-[a-z]{2})?$/i
 };
 var ENTITIES2 = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", ndash: "\u2013", mdash: "\u2014", bull: "\u2022" };
-function decode3(text11) {
-  return text11.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, name) => {
+function decode3(text12) {
+  return text12.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, name) => {
     if (name[0] === "#") {
-      const code = name[1] === "x" || name[1] === "X" ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10);
-      return Number.isFinite(code) ? String.fromCodePoint(code) : whole;
+      const code2 = name[1] === "x" || name[1] === "X" ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10);
+      return Number.isFinite(code2) ? String.fromCodePoint(code2) : whole;
     }
     return ENTITIES2[name.toLowerCase()] ?? whole;
   });
@@ -124384,8 +124624,8 @@ function checkMockup(html2, placeholders) {
   if (patterns.length) return { problem: `the mockup holds what reads as ${patterns[0].kind === "amount" ? "an amount" : `a ${patterns[0].kind}`}` };
   return null;
 }
-function escapeHtml4(text11) {
-  return text11.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
+function escapeHtml4(text12) {
+  return text12.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
 }
 var STYLE5 = ":root{--bg:#fafafa;--fg:#222;--muted:#555;--line:#ccc;--accent:#2f5f8a;--warn:#a00}@media (prefers-color-scheme: dark){:root{--bg:#1e1e1e;--fg:#eee;--muted:#aaa;--line:#555;--accent:#8fb8e0;--warn:#f88}}body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:var(--bg);color:var(--fg)}main{max-width:60rem;margin:0 auto}h1{font-size:1.3rem}.note{color:var(--muted);font-size:.9rem}.frame{width:100%;height:36rem;border:1px solid var(--line);background:#fff}textarea{width:100%;min-height:4rem;font:inherit;box-sizing:border-box}button{padding:.4rem 1rem;font-size:1rem;margin-top:.5rem}.feedback{min-height:1.2em;font-size:.9rem}.feedback.error{color:var(--warn)}.done{opacity:.55}";
 var SCRIPT3 = `
@@ -124443,9 +124683,9 @@ import { basename as basename18 } from "node:path";
 var TITLE3 = "Probanda TimeCamp connector";
 var pending3;
 var port3 = credentialListener({ bundle: "timecamp", prefix: "timecamp", handle: handle3 });
-async function handle3(req, res, link2) {
+async function handle3(req, res, link3) {
   const current = pending3;
-  if (!current || link2 !== current.link) {
+  if (!current || link3 !== current.link) {
     return sendPage(res, 404, "This link has expired", "<p>Return to Claude and ask for a new link.</p>");
   }
   if (req.method === "GET") return sendPage(res, 200, TITLE3, FORM2);
@@ -124733,9 +124973,9 @@ function pluginsOf(seams) {
 function currentVersion(plugins, plugin) {
   return plugins.find((p3) => p3.plugin === plugin)?.version ?? null;
 }
-function parseObservationTexts(text11) {
+function parseObservationTexts(text12) {
   const out = /* @__PURE__ */ new Map();
-  for (const raw of text11.split(/\r?\n/)) {
+  for (const raw of text12.split(/\r?\n/)) {
     const line = raw.trim();
     if (!line || line.startsWith("#")) continue;
     const at = line.indexOf("=");
@@ -125127,8 +125367,8 @@ function cardText2(card2) {
 function blockOf2(card2, part, index) {
   if (part === "pain_point") return { id: null, text: card2.pain_point.text };
   if (part === "comment") return { id: null, text: card2.comment };
-  const block2 = (part === "items" ? card2.items : card2.context_lines)[index ?? -1];
-  return { id: block2.id, text: block2.text };
+  const block3 = (part === "items" ? card2.items : card2.context_lines)[index ?? -1];
+  return { id: block3.id, text: block3.text };
 }
 function isReadable(part) {
   return READABLE.includes(part);
@@ -125137,11 +125377,11 @@ function promptsOf(card2, hits) {
   const prompts = [];
   for (const hit of hits) {
     if (!isReadable(hit.part) || hit.offer === null) continue;
-    const block2 = blockOf2(card2, hit.part, hit.index);
-    const span = block2.text.slice(hit.start, hit.end);
-    const exempt = (hit.kind === "date" || hit.kind === "amount") && card2.send_anyway.some((s3) => s3.part === hit.part && s3.id === block2.id && s3.kind === hit.kind && s3.text === span);
+    const block3 = blockOf2(card2, hit.part, hit.index);
+    const span = block3.text.slice(hit.start, hit.end);
+    const exempt = (hit.kind === "date" || hit.kind === "amount") && card2.send_anyway.some((s3) => s3.part === hit.part && s3.id === block3.id && s3.kind === hit.kind && s3.text === span);
     if (exempt) continue;
-    prompts.push({ part: hit.part, id: block2.id, start: hit.start, end: hit.end, kind: hit.kind, offer: hit.offer, text: span });
+    prompts.push({ part: hit.part, id: block3.id, start: hit.start, end: hit.end, kind: hit.kind, offer: hit.offer, text: span });
   }
   return prompts;
 }
@@ -125325,8 +125565,8 @@ function cardEdits(value2) {
     ...value2.comment === void 0 ? {} : { comment: text9("comment", value2.comment, { empty: true, max: MAX_EDIT }) }
   };
 }
-function edited(block2, value2) {
-  return value2 === block2.text ? block2 : { ...block2, text: value2, guess: false };
+function edited(block3, value2) {
+  return value2 === block3.text ? block3 : { ...block3, text: value2, guess: false };
 }
 function applyEdits(card2, edits) {
   if (edits.pain_point !== void 0 && edits.pain_point !== "") card2.pain_point = edited(card2.pain_point, edits.pain_point);
@@ -125459,18 +125699,18 @@ async function resolvePrompt(cardId, answer, deps) {
     if (!hit || answer.action === "send_anyway" && hit.kind !== "date" && hit.kind !== "amount") {
       return { done: { outcome: "stale", prompts: promptsOf(card2, check3.hits), blocks: blocksOf2(card2) } };
     }
-    const block2 = blockOf2(card2, part, hit.index);
-    const span = block2.text.slice(hit.start, hit.end);
+    const block3 = blockOf2(card2, part, hit.index);
+    const span = block3.text.slice(hit.start, hit.end);
     if (answer.action === "send_anyway") {
-      card2.send_anyway.push({ part, id: block2.id, kind: hit.kind, text: span });
+      card2.send_anyway.push({ part, id: block3.id, kind: hit.kind, text: span });
     } else {
-      const replaced = `${block2.text.slice(0, hit.start)}[${bracketFor(hit.kind, hit.sources)}]${block2.text.slice(hit.end)}`;
+      const replaced = `${block3.text.slice(0, hit.start)}[${bracketFor(hit.kind, hit.sources)}]${block3.text.slice(hit.end)}`;
       if (part === "pain_point") card2.pain_point = { ...card2.pain_point, text: replaced };
       else if (part === "comment") card2.comment = replaced;
       else {
-        const list3 = part === "items" ? card2.items : card2.context_lines;
-        const at = list3.findIndex((b3) => b3.id === block2.id);
-        list3[at] = { ...list3[at], text: replaced };
+        const list4 = part === "items" ? card2.items : card2.context_lines;
+        const at = list4.findIndex((b3) => b3.id === block3.id);
+        list4[at] = { ...list4[at], text: replaced };
       }
     }
     return claimed(card2, checkAndClaim(card2, records, stopWords, now.toISOString()));
@@ -125523,8 +125763,8 @@ async function requestMockup(cardId, edits, deps) {
     const card2 = findCard(store, cardId);
     if (effectiveState(card2, now) !== "open") return { outcome: "closed" };
     applyEdits(card2, edits);
-    const link2 = mockupLink(card2, now);
-    if (link2 !== "available") return { outcome: link2 };
+    const link3 = mockupLink(card2, now);
+    if (link3 !== "available") return { outcome: link3 };
     card2.mockup_request = { at: now.toISOString(), taken_at: null };
     return { outcome: "requested" };
   });
@@ -125693,9 +125933,9 @@ function parseSpecification(raw) {
     }
   }
   if (!isObject10(value2) || !Array.isArray(value2.sentences)) bad();
-  const list3 = value2.sentences;
-  if (list3.length < 1 || list3.length > MAX_SENTENCES2) bad();
-  const sentences = list3.map((entry4, i3) => {
+  const list4 = value2.sentences;
+  if (list4.length < 1 || list4.length > MAX_SENTENCES2) bad();
+  const sentences = list4.map((entry4, i3) => {
     if (!isObject10(entry4) || typeof entry4.text !== "string" || !entry4.text.trim() || entry4.text.length > MAX_SENTENCE) bad();
     if (entry4.item !== void 0 && !(Number.isInteger(entry4.item) && entry4.item >= 1)) bad();
     const cites = entry4.cites ?? [];
@@ -125714,7 +125954,7 @@ function parseSpecification(raw) {
   });
   return { format: SPEC_FORMAT, sentences };
 }
-var norm3 = (text11) => text11.replace(/\s+/g, " ").trim();
+var norm3 = (text12) => text12.replace(/\s+/g, " ").trim();
 function shippedReader(env, installRoot) {
   return (path) => {
     try {
@@ -127812,12 +128052,12 @@ function composeWithOverrides(set, overrides = {}) {
 }
 function writePreview(dir, base, html2, fixture) {
   mkdirSync31(dir, { recursive: true });
-  const text11 = fixture ? `${html2}${html2.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
+  const text12 = fixture ? `${html2}${html2.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
 ` : html2;
   for (let n3 = 1; ; n3++) {
     const path = join66(dir, `${base} preview ${n3}.html`);
     try {
-      writeFileSync19(path, text11, { flag: "wx" });
+      writeFileSync19(path, text12, { flag: "wx" });
       return path;
     } catch (err) {
       if (err.code !== "EEXIST") throw err;
@@ -127985,8 +128225,8 @@ var TIERS = [
 var PREFIX2 = "**Coverage:**";
 var SHAPE = TIERS.map((t3) => `${t3.label}: ${t3.expected}`).join(" | ");
 var FIX = `Expected one line: ${SHAPE}. Any tier may instead read NOT AUDITED or NOT AUDITED: <reason>. Nothing in parentheses after a segment and nothing after the Legislation segment; detail goes in the notes below the line.`;
-function checkCoverageLine(text11) {
-  const line = text11.split(/\r?\n/).map((l3) => l3.trim()).find((l3) => l3.startsWith(PREFIX2) || l3.startsWith("case data:"));
+function checkCoverageLine(text12) {
+  const line = text12.split(/\r?\n/).map((l3) => l3.trim()).find((l3) => l3.startsWith(PREFIX2) || l3.startsWith("case data:"));
   if (line === void 0) {
     throw new DataServerError(`no coverage line: no line starts "${PREFIX2}" or "case data:". ${FIX}`, "coverage_line_malformed");
   }
@@ -128065,10 +128305,10 @@ function cfbStreams(file) {
     const s3 = sector(n3);
     for (let i3 = 0; i3 < sectorSize / 4; i3++) fat.push(s3.readUInt32LE(4 * i3));
   }
-  const chain = (start2, table2) => {
+  const chain = (start2, table3) => {
     const out = [];
-    for (let n3 = start2; n3 !== END_OF_CHAIN2; n3 = table2[n3]) {
-      if (n3 === void 0 || n3 >= table2.length || out.length > table2.length) throw new Error("compound file chain is broken");
+    for (let n3 = start2; n3 !== END_OF_CHAIN2; n3 = table3[n3]) {
+      if (n3 === void 0 || n3 >= table3.length || out.length > table3.length) throw new Error("compound file chain is broken");
       out.push(n3);
     }
     return out;
@@ -128179,8 +128419,8 @@ function docText(path) {
   if (nFib < NFIB_WORD97) throw new DocUnsupported(`.doc (Word 6/95 format, nFib ${nFib})`);
   const flags = wd.readUInt16LE(10);
   if (flags & 256) throw new Error("password-protected");
-  const table2 = streams.get(flags & 512 ? "1Table" : "0Table");
-  if (!table2) throw new Error("the document's table stream is missing");
+  const table3 = streams.get(flags & 512 ? "1Table" : "0Table");
+  if (!table3) throw new Error("the document's table stream is missing");
   const csw = wd.readUInt16LE(32);
   const rgLw = 34 + 2 * csw + 2;
   const cslw = wd.readUInt16LE(rgLw - 2);
@@ -128189,8 +128429,8 @@ function docText(path) {
   const rgFcLcb = rgLw + 4 * cslw + 2;
   const fcClx = wd.readUInt32LE(rgFcLcb + 33 * 8);
   const lcbClx = wd.readUInt32LE(rgFcLcb + 33 * 8 + 4);
-  if (fcClx + lcbClx > table2.length || lcbClx === 0) throw new Error("the document's piece table is out of range");
-  const clx = table2.subarray(fcClx, fcClx + lcbClx);
+  if (fcClx + lcbClx > table3.length || lcbClx === 0) throw new Error("the document's piece table is out of range");
+  const clx = table3.subarray(fcClx, fcClx + lcbClx);
   let at = 0;
   while (at < clx.length && clx[at] === 1) at += 3 + clx.readInt16LE(at + 1);
   if (clx[at] !== 2) throw new Error("the document's piece table is malformed");
@@ -128199,20 +128439,20 @@ function docText(path) {
   const n3 = (lcb - 4) / 12;
   if (!Number.isInteger(n3) || n3 < 1) throw new Error("the document's piece table is malformed");
   const total = ccpText + ccpFtn + ccpHdd + ccpAtn + ccpEdn;
-  let text11 = "";
-  for (let i3 = 0; i3 < n3 && text11.length < total; i3++) {
+  let text12 = "";
+  for (let i3 = 0; i3 < n3 && text12.length < total; i3++) {
     const cpStart = plc.readUInt32LE(4 * i3);
     const chars = plc.readUInt32LE(4 * (i3 + 1)) - cpStart;
     const fc2 = plc.readUInt32LE(4 * (n3 + 1) + 8 * i3 + 2);
     if (fc2 & 1073741824) {
       const off = (fc2 & 1073741823) / 2;
-      text11 += cp1252(wd.subarray(off, off + chars));
+      text12 += cp1252(wd.subarray(off, off + chars));
     } else {
-      text11 += wd.toString("utf16le", fc2, fc2 + 2 * chars);
+      text12 += wd.toString("utf16le", fc2, fc2 + 2 * chars);
     }
   }
-  const main = plain(text11.slice(0, ccpText));
-  const notes = [text11.slice(ccpText, ccpText + ccpFtn), text11.slice(total - ccpEdn, total)].map((story) => plain(story).trim()).filter((story) => story !== "");
+  const main = plain(text12.slice(0, ccpText));
+  const notes = [text12.slice(ccpText, ccpText + ccpFtn), text12.slice(total - ccpEdn, total)].map((story) => plain(story).trim()).filter((story) => story !== "");
   return notes.length ? `${main}
 ${notes.join("\n\n")}
 ` : main;
@@ -128255,17 +128495,17 @@ async function pdfPages(path) {
   const data = new Uint8Array(readFileSync56(path));
   if (data.length === 0) throw new Error("file is empty (0 bytes)");
   return quietStdout(async () => {
-    let lib;
+    let lib2;
     try {
-      lib = await loadPdfJs();
+      lib2 = await loadPdfJs();
     } catch (err) {
       throw new PdfExtractorUnavailable(`pdf.js did not load: ${err.message}`);
     }
     let doc;
     try {
-      doc = await lib.getDocument({
+      doc = await lib2.getDocument({
         data,
-        verbosity: lib.VerbosityLevel.ERRORS,
+        verbosity: lib2.VerbosityLevel.ERRORS,
         isEvalSupported: false,
         disableFontFace: true,
         useSystemFonts: false,
@@ -128280,13 +128520,13 @@ async function pdfPages(path) {
       for (let n3 = 1; n3 <= doc.numPages; n3++) {
         const page2 = await doc.getPage(n3);
         const content = await page2.getTextContent();
-        let text11 = "";
+        let text12 = "";
         for (const item of content.items) {
           if (!("str" in item)) continue;
-          text11 += item.str;
-          if (item.hasEOL) text11 += "\n";
+          text12 += item.str;
+          if (item.hasEOL) text12 += "\n";
         }
-        pages.push(text11);
+        pages.push(text12);
         page2.cleanup();
       }
       return pages;
@@ -128313,14 +128553,14 @@ async function extractText(path) {
         return unread(`ocr_unavailable: page ${scanned + 1} is a scanned or OCR'd page, whose text layer is never read`);
       }
       const pages = await pdfPages(path);
-      const text11 = pages.join("\n\f\n");
-      const bytes = Buffer.byteLength(text11.trim(), "utf-8");
+      const text12 = pages.join("\n\f\n");
+      const bytes = Buffer.byteLength(text12.trim(), "utf-8");
       if (bytes < SCANNED_BYTES_PER_PAGE * Math.max(pages.length, 1)) {
         return unread(
           `ocr_unavailable: ${bytes} bytes of text over ${pages.length} page(s), under ${SCANNED_BYTES_PER_PAGE} per page, so likely scanned`
         );
       }
-      result = { status: "ok", kind: "pdf", method: "text", text: text11, pages: kinds.length };
+      result = { status: "ok", kind: "pdf", method: "text", text: text12, pages: kinds.length };
     } else if (ext === ".docx") {
       result = { status: "ok", kind: "docx", method: "text", text: docxText(path), pages: null };
     } else if (ext === ".doc") {
@@ -128341,8 +128581,8 @@ async function extractText(path) {
 // src/files/version-name.ts
 import { readdirSync as readdirSync36 } from "node:fs";
 function nextVersionName(dir, stem3, ext) {
-  const escape3 = (text11) => text11.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const version2 = new RegExp(`^${escape3(stem3)}(?: v(\\d+))?${escape3(ext)}$`, "i");
+  const escape4 = (text12) => text12.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const version2 = new RegExp(`^${escape4(stem3)}(?: v(\\d+))?${escape4(ext)}$`, "i");
   let highest = 0;
   for (const name of readdirSync36(dir)) {
     const match = version2.exec(name);
@@ -128414,13 +128654,13 @@ function appendManifest(destinationDir, record2) {
   const records = readFileSync58(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
   return { path, records };
 }
-function saveAnswer(destinationDir, filename, text11, fromScratch, fromRender) {
+function saveAnswer(destinationDir, filename, text12, fromScratch, fromRender) {
   assertBareFilename(filename, "filename");
   const ext = pathWin3231.extname(filename);
   if (ext.toLowerCase() !== ".md") {
     throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
   }
-  if ([text11, fromScratch, fromRender].filter((v4) => v4 !== void 0).length !== 1) {
+  if ([text12, fromScratch, fromRender].filter((v4) => v4 !== void 0).length !== 1) {
     throw new DataServerError("pass exactly one of text, from_scratch and from_render", "invalid_argument");
   }
   let body2;
@@ -128432,17 +128672,41 @@ function saveAnswer(destinationDir, filename, text11, fromScratch, fromRender) {
     if (fromScratch !== void 0) {
       source = scratchBytes(destinationDir, fromScratch);
     } else {
-      if (typeof text11 !== "string" || text11.length === 0) {
+      if (typeof text12 !== "string" || text12.length === 0) {
         throw new DataServerError("text must be a non-empty string", "invalid_argument");
       }
-      source = Buffer.from(text11, "utf-8");
+      source = Buffer.from(text12, "utf-8");
     }
-    body2 = Buffer.from(withLegend(source.toString("utf-8"), "").markdown, "utf-8");
+    body2 = Buffer.from(withLegend(source.toString("utf-8").replace(SAVE_MARKER, ""), "").markdown, "utf-8");
   }
   const { dir, created } = resolveOrCreateLawDir(destinationDir);
-  const saved = writeNewVersion(dir, filename, body2);
-  const sha2565 = createHash15("sha256").update(body2).digest("hex");
-  return { path: saved.path, filename: saved.filename, bytes: body2.length, created_dir: created, sha256: sha2565, ...mockupOnly.length > 0 ? { mockup_only_lines: mockupOnly } : {} };
+  const saved = writeOwnFile(dir, filename, body2.toString("utf-8"));
+  const sha2565 = createHash15("sha256").update(saved.bytes).digest("hex");
+  return { path: saved.path, filename, bytes: saved.bytes.length, created_dir: created, sha256: sha2565, ...mockupOnly.length > 0 ? { mockup_only_lines: mockupOnly } : {} };
+}
+var SAVE_MARKER = /\n\n<!-- probanda-save sha256:([0-9a-f]{64}) -->\n$/;
+var sha256Of = (text12) => createHash15("sha256").update(text12, "utf-8").digest("hex");
+function writeOwnFile(dir, filename, text12) {
+  const content = `${text12}
+
+<!-- probanda-save sha256:${sha256Of(text12)} -->
+`;
+  const bytes = Buffer.from(content, "utf-8");
+  const path = pathWin3231.join(dir, filename);
+  try {
+    writeFileSync20(path, bytes, { flag: "wx" });
+    return { path, bytes };
+  } catch (err) {
+    if (err.code !== "EEXIST") throw err;
+  }
+  const existing = readFileSync58(path, "utf-8");
+  const marker = SAVE_MARKER.exec(existing);
+  if (marker === null || sha256Of(existing.slice(0, marker.index)) !== marker[1]) {
+    throw new DataServerError(`${path} was not saved by Probanda, or was edited after its save, so it is not overwritten; nothing was saved`, "foreign_file");
+  }
+  const code2 = writeStatusFile(path, content);
+  if (code2) throw new DataServerError(`could not replace ${path}: ${code2}`);
+  return { path, bytes };
 }
 function scratchBytes(destinationDir, fromScratch) {
   if (typeof fromScratch !== "string" || !pathWin3231.isAbsolute(fromScratch)) {
@@ -128513,20 +128777,20 @@ function renderBytes(destinationDir, fromRender) {
   if (copy.trim() === "") throw new DataServerError(`from_render is empty: ${source}`, "invalid_argument");
   return { body: Buffer.from(copy, "utf-8"), mockupOnly };
 }
-function writeScratch(matterRoot, filename, text11, kind) {
+function writeScratch(matterRoot, filename, text12, kind) {
   assertBareFilename(filename, "filename");
   if (pathWin3231.extname(filename).toLowerCase() !== ".md") {
     throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
   }
-  if (typeof text11 !== "string" || text11.length === 0) {
+  if (typeof text12 !== "string" || text12.length === 0) {
     throw new DataServerError("text must be a non-empty string", "invalid_argument");
   }
   if (kind !== void 0 && kind !== "research-notes") {
     throw new DataServerError(`kind must be "research-notes" when given: ${kind}`, "invalid_argument");
   }
-  if (kind === "research-notes") checkCoverageLine(text11);
+  if (kind === "research-notes") checkCoverageLine(text12);
   const { dir, created } = researchScratchDir(validateMatterRoot(matterRoot));
-  const body2 = Buffer.from(text11, "utf-8");
+  const body2 = Buffer.from(text12, "utf-8");
   const saved = writeNewVersion(dir, filename, body2);
   return { path: saved.path, filename: saved.filename, bytes: body2.length, created_dir: created };
 }
@@ -128642,8 +128906,8 @@ function manifestMarker(law, file) {
   }
   return marker;
 }
-function matchBlocks(file, text11, regex, context, budget) {
-  const lines2 = text11.split(/\r?\n/);
+function matchBlocks(file, text12, regex, context, budget) {
+  const lines2 = text12.split(/\r?\n/);
   const hits = [];
   const isPdf2 = pathWin3231.extname(file).toLowerCase() === ".pdf";
   const pageOfLine = [];
@@ -129084,12 +129348,12 @@ function resolveMatterFile(matterRoot, path) {
 }
 function checkTerms(terms2) {
   if (terms2 === void 0) return [];
-  const list3 = typeof terms2 === "string" ? [terms2] : terms2;
-  if (!Array.isArray(list3) || list3.some((t3) => typeof t3 !== "string" || t3.trim() === "")) {
+  const list4 = typeof terms2 === "string" ? [terms2] : terms2;
+  if (!Array.isArray(list4) || list4.some((t3) => typeof t3 !== "string" || t3.trim() === "")) {
     throw new DataServerError("terms must be a non-empty string or an array of them", "invalid_argument");
   }
-  if (list3.length > MAX_TERMS) throw new DataServerError(`at most ${MAX_TERMS} terms`, "invalid_argument");
-  return list3;
+  if (list4.length > MAX_TERMS) throw new DataServerError(`at most ${MAX_TERMS} terms`, "invalid_argument");
+  return list4;
 }
 function checkRegex(regex) {
   if (regex === void 0) return null;
@@ -129123,11 +129387,11 @@ function checkPages(pages, ext) {
   if (first < 1 || last < first) throw new DataServerError(`pages is not a range: ${pages}`, "invalid_argument");
   return { first, last };
 }
-function plainText(text11) {
-  return text11.replace(/^#{1,6}\s+/, "").replace(/\*\*|__/g, "").trim();
+function plainText(text12) {
+  return text12.replace(/^#{1,6}\s+/, "").replace(/\*\*|__/g, "").trim();
 }
 function textLines(file, ext, bytes, range, seams) {
-  const split = (text11, page2, base) => text11.split(/\r?\n|\f/).map((t3, i3) => ({ text: t3.trim(), plain: plainText(t3), page: page2, line: base + i3 + 1 })).filter((l3) => l3.text !== "");
+  const split = (text12, page2, base) => text12.split(/\r?\n|\f/).map((t3, i3) => ({ text: t3.trim(), plain: plainText(t3), page: page2, line: base + i3 + 1 })).filter((l3) => l3.text !== "");
   let lines2;
   let marker = null;
   let source;
@@ -129142,9 +129406,9 @@ function textLines(file, ext, bytes, range, seams) {
   } else if (EXTRACTED_EXTENSIONS.has(ext)) {
     source = ext === ".pdf" ? "pdf" : "docx";
     let base = 0;
-    let pageTexts = (seams.extractPages ?? noPageExtractor)(file).map((text11, i3) => {
-      const page2 = { text: text11, page: i3 + 1, base };
-      base += text11.split(/\r?\n|\f/).length;
+    let pageTexts = (seams.extractPages ?? noPageExtractor)(file).map((text12, i3) => {
+      const page2 = { text: text12, page: i3 + 1, base };
+      base += text12.split(/\r?\n|\f/).length;
       return page2;
     });
     if (range !== null) {
@@ -129167,9 +129431,9 @@ function textLines(file, ext, bytes, range, seams) {
   if (lines2.length === 0) throw new DataServerError("the file holds no text", "no_text");
   return { lines: lines2, source, marker };
 }
-function frontMatter(text11) {
-  const m3 = /^---\r?\n[\s\S]*?\r?\n---\r?\n/.exec(text11);
-  if (m3 === null) return { body: text11, lines: 0, marker: null };
+function frontMatter(text12) {
+  const m3 = /^---\r?\n[\s\S]*?\r?\n---\r?\n/.exec(text12);
+  if (m3 === null) return { body: text12, lines: 0, marker: null };
   const raw = /^currency_marker:[ \t]*(.*?)\s*$/m.exec(m3[0])?.[1] ?? "";
   let marker = raw === "" || raw === "null" ? null : raw;
   if (marker !== null && marker.startsWith('"')) {
@@ -129178,7 +129442,7 @@ function frontMatter(text11) {
     } catch {
     }
   }
-  return { body: text11.slice(m3[0].length), lines: m3[0].split("\n").length - 1, marker };
+  return { body: text12.slice(m3[0].length), lines: m3[0].split("\n").length - 1, marker };
 }
 function sectionKey(num2) {
   return num2.split(/[-.]/).map(Number);
@@ -129190,8 +129454,8 @@ function compareKeys(a3, b3) {
   }
   return 0;
 }
-function isHeading(text11) {
-  return text11.length <= MAX_HEADING_CHARS && !/[.;:,\]]$/.test(text11) && !SECTION_LINE.test(text11) && !/^[([]/.test(text11);
+function isHeading(text12) {
+  return text12.length <= MAX_HEADING_CHARS && !/[.;:,\]]$/.test(text12) && !SECTION_LINE.test(text12) && !/^[([]/.test(text12);
 }
 function ruleHeading(line) {
   return isHeading(line.plain) ? RULE_HEADING.exec(line.plain)?.[1] ?? null : null;
@@ -129202,21 +129466,21 @@ function isPartHeading(line) {
 function sectionChunks(lines2) {
   const rules = lines2.some((l3) => ruleHeading(l3) !== null);
   const chunks = [];
-  let block2 = 1;
+  let block3 = 1;
   let last = null;
   let part = null;
   let division = null;
-  let current = { block: block2, section: null, heading: null, path: [], lines: [] };
+  let current = { block: block3, section: null, heading: null, path: [], lines: [] };
   const open = (section3, line, isRule) => {
-    let heading = isRule ? line.plain : null;
+    let heading2 = isRule ? line.plain : null;
     const prev = current.lines[current.lines.length - 1];
     if (!isRule && prev !== void 0 && isHeading(prev.plain) && !isPartHeading(prev) && (current.section !== null || current.lines.length > 1)) {
-      heading = prev.plain;
+      heading2 = prev.plain;
       current.lines.pop();
     }
     if (current.lines.length > 0) chunks.push(current);
     const path = [part, division].filter((p3) => p3 !== null);
-    current = { block: block2, section: section3, heading, path, lines: [line] };
+    current = { block: block3, section: section3, heading: heading2, path, lines: [line] };
   };
   for (const line of lines2) {
     if (isPartHeading(line)) {
@@ -129227,7 +129491,7 @@ function sectionChunks(lines2) {
         division = line.plain;
       }
       if (current.lines.length > 0) chunks.push(current);
-      current = { block: block2, section: null, heading: null, path: [], lines: [line] };
+      current = { block: block3, section: null, heading: null, path: [], lines: [line] };
       continue;
     }
     const rule = ruleHeading(line);
@@ -129243,7 +129507,7 @@ function sectionChunks(lines2) {
       last = key;
       open(num2, line, rule !== null);
     } else if (restart && compareKeys(key, last) < 0) {
-      block2 += 1;
+      block3 += 1;
       last = key;
       open(num2, line, rule !== null);
     } else {
@@ -129411,9 +129675,9 @@ function findByName(root, start2, name, within) {
   walk4(start2);
   return { path: pathWin3233.relative(root, start2) || ".", name, matches, match_count: matches.length, truncated, skipped };
 }
-function textWindow(text11, offset) {
+function textWindow(text12, offset) {
   const end = offset + TEXT_LIMIT;
-  return { text: text11.slice(offset, end), total_chars: text11.length, next_offset: end < text11.length ? end : null };
+  return { text: text12.slice(offset, end), total_chars: text12.length, next_offset: end < text12.length ? end : null };
 }
 async function readPdf(path, full, pages) {
   const kinds = await classifyPdfPages(full);
@@ -129423,8 +129687,8 @@ async function readPdf(path, full, pages) {
     try {
       layers = await pdfPages(full);
     } catch (err) {
-      const code = err instanceof PdfExtractorUnavailable ? "extractor_unavailable" : "unreadable";
-      throw new DataServerError(`${code}: ${err.message}`, code);
+      const code2 = err instanceof PdfExtractorUnavailable ? "extractor_unavailable" : "unreadable";
+      throw new DataServerError(`${code2}: ${err.message}`, code2);
     }
   }
   const shown = [];
@@ -129441,13 +129705,13 @@ async function readPdf(path, full, pages) {
       shown.push({ page: n3, kind: "scanned" });
       continue;
     }
-    const text11 = layers[n3 - 1];
-    if (chars > 0 && chars + text11.length > TEXT_LIMIT) {
+    const text12 = layers[n3 - 1];
+    if (chars > 0 && chars + text12.length > TEXT_LIMIT) {
       next2 = n3;
       break;
     }
-    chars += text11.length;
-    shown.push({ page: n3, kind: "born_digital", text: text11 });
+    chars += text12.length;
+    shown.push({ page: n3, kind: "born_digital", text: text12 });
   }
   const result = { path, type: "pdf", page_count: kinds.length, pages: shown, next_page: next2 };
   if (imagePages === 0) return result;
@@ -129517,18 +129781,18 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
   return withPdf(
     args.a,
     wasm,
-    (lib, docA, dataA) => withPdf(args.b, wasm, async (_3, docB, dataB) => {
-      const formA = openForm(lib, docA);
+    (lib2, docA, dataA) => withPdf(args.b, wasm, async (_3, docB, dataB) => {
+      const formA = openForm(lib2, docA);
       let formB;
       try {
-        formB = openForm(lib, docB);
+        formB = openForm(lib2, docB);
       } catch (err) {
-        closeForm(lib, formA);
+        closeForm(lib2, formA);
         throw err;
       }
       try {
-        const pagesA = lib.FPDF_GetPageCount(docA);
-        const pagesB = lib.FPDF_GetPageCount(docB);
+        const pagesA = lib2.FPDF_GetPageCount(docA);
+        const pagesB = lib2.FPDF_GetPageCount(docB);
         const [first, last] = pageRange(args.pages, Math.max(pagesA, pagesB));
         const clearedPages = [];
         const flagged2 = [];
@@ -129548,9 +129812,9 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
         };
         for (let n3 = first; n3 <= last; n3++) {
           if (n3 > first) await nextTurn();
-          const a3 = n3 <= pagesA ? withPage(lib, docA, n3, (page2) => pageFacts(lib, page2, n3, formA.handle)) : null;
+          const a3 = n3 <= pagesA ? withPage(lib2, docA, n3, (page2) => pageFacts(lib2, page2, n3, formA.handle)) : null;
           if (a3) await nextTurn();
-          const b3 = n3 <= pagesB ? withPage(lib, docB, n3, (page2) => pageFacts(lib, page2, n3, formB.handle)) : null;
+          const b3 = n3 <= pagesB ? withPage(lib2, docB, n3, (page2) => pageFacts(lib2, page2, n3, formB.handle)) : null;
           const entry4 = { page: n3, reasons: differences(a3, b3) };
           if (entry4.reasons.length === 0) {
             clearedPages.push(n3);
@@ -129575,8 +129839,8 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
           work_dir: workDir
         };
       } finally {
-        closeForm(lib, formB);
-        closeForm(lib, formA);
+        closeForm(lib2, formB);
+        closeForm(lib2, formA);
       }
     })
   );
@@ -129618,14 +129882,14 @@ function changedShare(a3, b3) {
   }
   return Math.round(changed / (a3.length / 3) * 1e4) / 1e4;
 }
-function pageFacts(lib, page2, n3, form) {
-  const rotation = lib.FPDFPage_GetRotation(page2) * 90;
-  const [w3, h3] = [lib.FPDF_GetPageWidthF(page2), lib.FPDF_GetPageHeightF(page2)];
+function pageFacts(lib2, page2, n3, form) {
+  const rotation = lib2.FPDFPage_GetRotation(page2) * 90;
+  const [w3, h3] = [lib2.FPDF_GetPageWidthF(page2), lib2.FPDF_GetPageHeightF(page2)];
   const [uw, uh] = rotation % 180 ? [h3, w3] : [w3, h3];
-  const { width, height } = pageSize(lib, page2, n3, DPI);
-  lib.FORM_OnAfterLoadPage(page2, form);
+  const { width, height } = pageSize(lib2, page2, n3, DPI);
+  lib2.FORM_OnAfterLoadPage(page2, form);
   try {
-    const rgb = renderRgb(lib, page2, n3, width, height, 0, height, FPDF_ANNOT, form);
+    const rgb = renderRgb(lib2, page2, n3, width, height, 0, height, FPDF_ANNOT, form);
     return {
       size: `${uw.toFixed(2)}x${uh.toFixed(2)}`,
       rotation,
@@ -129633,68 +129897,68 @@ function pageFacts(lib, page2, n3, form) {
       height,
       rgb,
       render: sha2564(rgb),
-      text: sha2564(pageText2(lib, page2)),
-      images: sha2564(imageHashes(lib, page2).join(","))
+      text: sha2564(pageText2(lib2, page2)),
+      images: sha2564(imageHashes(lib2, page2).join(","))
     };
   } finally {
-    lib.FORM_OnBeforeClosePage(page2, form);
+    lib2.FORM_OnBeforeClosePage(page2, form);
   }
 }
-function pageText2(lib, page2) {
-  const textPage = lib.FPDFText_LoadPage(page2);
+function pageText2(lib2, page2) {
+  const textPage = lib2.FPDFText_LoadPage(page2);
   if (!textPage) return "";
   try {
-    const count2 = lib.FPDFText_CountChars(textPage);
+    const count2 = lib2.FPDFText_CountChars(textPage);
     if (count2 <= 0) return "";
     const bytes = (count2 + 1) * 2;
-    const ptr = lib.pdfium.wasmExports.malloc(bytes);
+    const ptr = lib2.pdfium.wasmExports.malloc(bytes);
     try {
-      const written = lib.FPDFText_GetText(textPage, 0, count2, ptr);
-      const heap = lib.pdfium.HEAPU8;
+      const written = lib2.FPDFText_GetText(textPage, 0, count2, ptr);
+      const heap = lib2.pdfium.HEAPU8;
       return Buffer.from(heap.subarray(ptr, ptr + Math.max(0, written - 1) * 2)).toString("utf16le");
     } finally {
-      lib.pdfium.wasmExports.free(ptr);
+      lib2.pdfium.wasmExports.free(ptr);
     }
   } finally {
-    lib.FPDFText_ClosePage(textPage);
+    lib2.FPDFText_ClosePage(textPage);
   }
 }
-function imageHashes(lib, page2) {
+function imageHashes(lib2, page2) {
   const hashes = [];
   const walk4 = (count2, objectAt2) => {
     for (let i3 = 0; i3 < count2; i3++) {
       const obj = objectAt2(i3);
-      const type = lib.FPDFPageObj_GetType(obj);
+      const type = lib2.FPDFPageObj_GetType(obj);
       if (type === OBJ_IMAGE) {
-        const length = lib.FPDFImageObj_GetImageDataRaw(obj, 0, 0);
-        const ptr = lib.pdfium.wasmExports.malloc(Math.max(length, 1));
+        const length = lib2.FPDFImageObj_GetImageDataRaw(obj, 0, 0);
+        const ptr = lib2.pdfium.wasmExports.malloc(Math.max(length, 1));
         try {
-          lib.FPDFImageObj_GetImageDataRaw(obj, ptr, length);
-          const heap = lib.pdfium.HEAPU8;
+          lib2.FPDFImageObj_GetImageDataRaw(obj, ptr, length);
+          const heap = lib2.pdfium.HEAPU8;
           hashes.push(sha2564(Buffer.from(heap.subarray(ptr, ptr + length))));
         } finally {
-          lib.pdfium.wasmExports.free(ptr);
+          lib2.pdfium.wasmExports.free(ptr);
         }
       } else if (type === OBJ_FORM) {
-        walk4(lib.FPDFFormObj_CountObjects(obj), (j3) => lib.FPDFFormObj_GetObject(obj, j3));
+        walk4(lib2.FPDFFormObj_CountObjects(obj), (j3) => lib2.FPDFFormObj_GetObject(obj, j3));
       }
     }
   };
-  walk4(lib.FPDFPage_CountObjects(page2), (i3) => lib.FPDFPage_GetObject(page2, i3));
+  walk4(lib2.FPDFPage_CountObjects(page2), (i3) => lib2.FPDFPage_GetObject(page2, i3));
   return hashes;
 }
-function openForm(lib, doc) {
-  const info3 = lib.PDFiumExt_OpenFormFillInfo();
-  const handle5 = info3 ? lib.PDFiumExt_InitFormFillEnvironment(doc, info3) : 0;
+function openForm(lib2, doc) {
+  const info3 = lib2.PDFiumExt_OpenFormFillInfo();
+  const handle5 = info3 ? lib2.PDFiumExt_InitFormFillEnvironment(doc, info3) : 0;
   if (!handle5) {
-    if (info3) lib.PDFiumExt_CloseFormFillInfo(info3);
+    if (info3) lib2.PDFiumExt_CloseFormFillInfo(info3);
     throw new DataServerError("the PDF renderer could not draw this PDF's form fields", "renderer_unavailable");
   }
   return { info: info3, handle: handle5 };
 }
-function closeForm(lib, { info: info3, handle: handle5 }) {
-  lib.PDFiumExt_ExitFormFillEnvironment(handle5);
-  lib.PDFiumExt_CloseFormFillInfo(info3);
+function closeForm(lib2, { info: info3, handle: handle5 }) {
+  lib2.PDFiumExt_ExitFormFillEnvironment(handle5);
+  lib2.PDFiumExt_CloseFormFillInfo(info3);
 }
 
 // src/submission/forms/save-job-answer.ts
@@ -129731,11 +129995,14 @@ async function saveAnswerTool(args, env = process.env) {
   }
   const saved = saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch, args.from_render);
   let written;
+  const file = lawRelativePath(saved.path);
   try {
     written = await submissionDataWriteAll(
       dbPath,
       [
-        { sql: `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${nowMinuteSql()} FROM tickets WHERE id = ? AND ${held2.sql}`, params: [lawRelativePath(saved.path), id, ...held2.params] },
+        // A same-day save replaces its file, so the job lists it once, at its latest save.
+        { sql: `DELETE FROM ticket_answers WHERE ticket_id = ? AND file_path = ? AND EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${held2.sql})`, params: [id, file, id, ...held2.params] },
+        { sql: `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${nowMinuteSql()} FROM tickets WHERE id = ? AND ${held2.sql}`, params: [file, id, ...held2.params] },
         ...touchStatements(dbPath, id, held2)
       ],
       env
@@ -129744,7 +130011,7 @@ async function saveAnswerTool(args, env = process.env) {
     throw new DataServerError(`The answer was saved at ${saved.path}, but recording it against job ${id} failed: ${err.message}. Do not save it again.`, "record_failed");
   }
   const warning = written.warning ? { warning: written.warning } : {};
-  if (written.ok && written.results[0].changes === 1) {
+  if (written.ok && written.results[1].changes === 1) {
     return { ...saved, job: { ticket_id: id, recorded: true, note: `Recorded against job ${id}: its card lists the answer.` }, ...warning };
   }
   const [row2] = submissionDataQuery(dbPath, "SELECT locked_by, status, rejected_at FROM tickets WHERE id = ?", [id]).rows;
@@ -129835,11 +130102,11 @@ async function submit(env) {
   if (key.configured) {
     throw new ValidationError("this computer already holds Probanda's key (practice_data__config_status reports cloud_credential: present), so no request is needed");
   }
-  const link2 = randomBytes8(24).toString("hex");
-  pending4 = { link: link2, projectUrl: key.supabaseUrl, env };
+  const link3 = randomBytes8(24).toString("hex");
+  pending4 = { link: link3, projectUrl: key.supabaseUrl, env };
   return {
     status: "awaiting_details",
-    url: `http://127.0.0.1:${await port4()}/key-request/${link2}`,
+    url: `http://127.0.0.1:${await port4()}/key-request/${link3}`,
     next: "Send the practitioner this link and ask them to type their details on that page, never in chat. When they say it is sent, call key_request__status. The link works only on this computer, until a new link is made or the server restarts."
   };
 }
@@ -129883,10 +130150,10 @@ async function post2(projectUrl, path, body2, what) {
     const detail2 = err instanceof Error ? err.message : String(err);
     throw new ValidationError(`Probanda's Cloud did not answer, so it is not known whether it got this request (${detail2})`);
   }
-  const text11 = await res.text();
+  const text12 = await res.text();
   let reply = {};
   try {
-    reply = text11 ? JSON.parse(text11) : {};
+    reply = text12 ? JSON.parse(text12) : {};
   } catch {
   }
   if (!res.ok) {
@@ -129929,9 +130196,9 @@ function requestBody(form, tokenHash, thisYear = (/* @__PURE__ */ new Date()).ge
     token_hash: tokenHash
   };
 }
-async function handle4(req, res, link2) {
+async function handle4(req, res, link3) {
   const current = pending4;
-  if (!current || link2 !== current.link) {
+  if (!current || link3 !== current.link) {
     return sendPage(res, 404, "This link has expired", "<p>Return to Claude and ask for a new link.</p>");
   }
   if (req.method === "GET") return sendPage(res, 200, TITLE4, FORM3);
@@ -130290,7 +130557,5067 @@ function once(fn2) {
 
 // src/page-api/server.ts
 import { existsSync as existsSync69 } from "node:fs";
+import { readFile as readFile3 } from "node:fs/promises";
 import { basename as basename20, isAbsolute as isAbsolute12 } from "node:path";
+
+// node_modules/mdurl/index.mjs
+var mdurl_exports = {};
+__export(mdurl_exports, {
+  decode: () => decode_default,
+  encode: () => encode_default,
+  format: () => format,
+  parse: () => parse_default
+});
+
+// node_modules/mdurl/lib/decode.mjs
+var decodeCache = {};
+function getDecodeCache(exclude) {
+  let cache2 = decodeCache[exclude];
+  if (cache2) {
+    return cache2;
+  }
+  cache2 = decodeCache[exclude] = [];
+  for (let i3 = 0; i3 < 128; i3++) {
+    const ch2 = String.fromCharCode(i3);
+    cache2.push(ch2);
+  }
+  for (let i3 = 0; i3 < exclude.length; i3++) {
+    const ch2 = exclude.charCodeAt(i3);
+    cache2[ch2] = "%" + ("0" + ch2.toString(16).toUpperCase()).slice(-2);
+  }
+  return cache2;
+}
+function decode4(string3, exclude) {
+  if (typeof exclude !== "string") {
+    exclude = decode4.defaultChars;
+  }
+  const cache2 = getDecodeCache(exclude);
+  return string3.replace(/(%[a-f0-9]{2})+/gi, function(seq) {
+    let result = "";
+    for (let i3 = 0, l3 = seq.length; i3 < l3; i3 += 3) {
+      const b1 = parseInt(seq.slice(i3 + 1, i3 + 3), 16);
+      if (b1 < 128) {
+        result += cache2[b1];
+        continue;
+      }
+      if ((b1 & 224) === 192 && i3 + 3 < l3) {
+        const b22 = parseInt(seq.slice(i3 + 4, i3 + 6), 16);
+        if ((b22 & 192) === 128) {
+          const chr = b1 << 6 & 1984 | b22 & 63;
+          if (chr < 128) {
+            result += "\uFFFD\uFFFD";
+          } else {
+            result += String.fromCharCode(chr);
+          }
+          i3 += 3;
+          continue;
+        }
+      }
+      if ((b1 & 240) === 224 && i3 + 6 < l3) {
+        const b22 = parseInt(seq.slice(i3 + 4, i3 + 6), 16);
+        const b3 = parseInt(seq.slice(i3 + 7, i3 + 9), 16);
+        if ((b22 & 192) === 128 && (b3 & 192) === 128) {
+          const chr = b1 << 12 & 61440 | b22 << 6 & 4032 | b3 & 63;
+          if (chr < 2048 || chr >= 55296 && chr <= 57343) {
+            result += "\uFFFD\uFFFD\uFFFD";
+          } else {
+            result += String.fromCharCode(chr);
+          }
+          i3 += 6;
+          continue;
+        }
+      }
+      if ((b1 & 248) === 240 && i3 + 9 < l3) {
+        const b22 = parseInt(seq.slice(i3 + 4, i3 + 6), 16);
+        const b3 = parseInt(seq.slice(i3 + 7, i3 + 9), 16);
+        const b4 = parseInt(seq.slice(i3 + 10, i3 + 12), 16);
+        if ((b22 & 192) === 128 && (b3 & 192) === 128 && (b4 & 192) === 128) {
+          let chr = b1 << 18 & 1835008 | b22 << 12 & 258048 | b3 << 6 & 4032 | b4 & 63;
+          if (chr < 65536 || chr > 1114111) {
+            result += "\uFFFD\uFFFD\uFFFD\uFFFD";
+          } else {
+            chr -= 65536;
+            result += String.fromCharCode(55296 + (chr >> 10), 56320 + (chr & 1023));
+          }
+          i3 += 9;
+          continue;
+        }
+      }
+      result += "\uFFFD";
+    }
+    return result;
+  });
+}
+decode4.defaultChars = ";/?:@&=+$,#";
+decode4.componentChars = "";
+var decode_default = decode4;
+
+// node_modules/mdurl/lib/encode.mjs
+var encodeCache = {};
+function getEncodeCache(exclude) {
+  let cache2 = encodeCache[exclude];
+  if (cache2) {
+    return cache2;
+  }
+  cache2 = encodeCache[exclude] = [];
+  for (let i3 = 0; i3 < 128; i3++) {
+    const ch2 = String.fromCharCode(i3);
+    if (/^[0-9a-z]$/i.test(ch2)) {
+      cache2.push(ch2);
+    } else {
+      cache2.push("%" + ("0" + i3.toString(16).toUpperCase()).slice(-2));
+    }
+  }
+  for (let i3 = 0; i3 < exclude.length; i3++) {
+    cache2[exclude.charCodeAt(i3)] = exclude[i3];
+  }
+  return cache2;
+}
+function encode3(string3, exclude, keepEscaped) {
+  if (typeof exclude !== "string") {
+    keepEscaped = exclude;
+    exclude = encode3.defaultChars;
+  }
+  if (typeof keepEscaped === "undefined") {
+    keepEscaped = true;
+  }
+  const cache2 = getEncodeCache(exclude);
+  let result = "";
+  for (let i3 = 0, l3 = string3.length; i3 < l3; i3++) {
+    const code2 = string3.charCodeAt(i3);
+    if (keepEscaped && code2 === 37 && i3 + 2 < l3) {
+      if (/^[0-9a-f]{2}$/i.test(string3.slice(i3 + 1, i3 + 3))) {
+        result += string3.slice(i3, i3 + 3);
+        i3 += 2;
+        continue;
+      }
+    }
+    if (code2 < 128) {
+      result += cache2[code2];
+      continue;
+    }
+    if (code2 >= 55296 && code2 <= 57343) {
+      if (code2 >= 55296 && code2 <= 56319 && i3 + 1 < l3) {
+        const nextCode = string3.charCodeAt(i3 + 1);
+        if (nextCode >= 56320 && nextCode <= 57343) {
+          result += encodeURIComponent(string3[i3] + string3[i3 + 1]);
+          i3++;
+          continue;
+        }
+      }
+      result += "%EF%BF%BD";
+      continue;
+    }
+    result += encodeURIComponent(string3[i3]);
+  }
+  return result;
+}
+encode3.defaultChars = ";/?:@&=+$,-_.!~*'()#";
+encode3.componentChars = "-_.!~*'()";
+var encode_default = encode3;
+
+// node_modules/mdurl/lib/format.mjs
+function format(url) {
+  let result = "";
+  result += url.protocol || "";
+  result += url.slashes ? "//" : "";
+  result += url.auth ? url.auth + "@" : "";
+  if (url.hostname && url.hostname.indexOf(":") !== -1) {
+    result += "[" + url.hostname + "]";
+  } else {
+    result += url.hostname || "";
+  }
+  result += url.port ? ":" + url.port : "";
+  result += url.pathname || "";
+  result += url.search || "";
+  result += url.hash || "";
+  return result;
+}
+
+// node_modules/mdurl/lib/parse.mjs
+function Url() {
+  this.protocol = null;
+  this.slashes = null;
+  this.auth = null;
+  this.port = null;
+  this.hostname = null;
+  this.hash = null;
+  this.search = null;
+  this.pathname = null;
+}
+var protocolPattern = /^([a-z0-9.+-]+:)/i;
+var portPattern = /:[0-9]*$/;
+var simplePathPattern = /^(\/\/?(?!\/)[^\?\s]*)(\?[^\s]*)?$/;
+var delims = ["<", ">", '"', "`", " ", "\r", "\n", "	"];
+var unwise = ["{", "}", "|", "\\", "^", "`"].concat(delims);
+var autoEscape = ["'"].concat(unwise);
+var nonHostChars = ["%", "/", "?", ";", "#"].concat(autoEscape);
+var hostEndingChars = ["/", "?", "#"];
+var hostnameMaxLen = 255;
+var hostnamePartPattern = /^[+a-z0-9A-Z_-]{0,63}$/;
+var hostnamePartStart = /^([+a-z0-9A-Z_-]{0,63})(.*)$/;
+var hostlessProtocol = {
+  javascript: true,
+  "javascript:": true
+};
+var slashedProtocol = {
+  http: true,
+  https: true,
+  ftp: true,
+  gopher: true,
+  file: true,
+  "http:": true,
+  "https:": true,
+  "ftp:": true,
+  "gopher:": true,
+  "file:": true
+};
+function urlParse(url, slashesDenoteHost) {
+  if (url && url instanceof Url) return url;
+  const u3 = new Url();
+  u3.parse(url, slashesDenoteHost);
+  return u3;
+}
+Url.prototype.parse = function(url, slashesDenoteHost) {
+  let lowerProto, hec, slashes;
+  let rest = url;
+  rest = rest.trim();
+  if (!slashesDenoteHost && url.split("#").length === 1) {
+    const simplePath = simplePathPattern.exec(rest);
+    if (simplePath) {
+      this.pathname = simplePath[1];
+      if (simplePath[2]) {
+        this.search = simplePath[2];
+      }
+      return this;
+    }
+  }
+  let proto = protocolPattern.exec(rest);
+  if (proto) {
+    proto = proto[0];
+    lowerProto = proto.toLowerCase();
+    this.protocol = proto;
+    rest = rest.substr(proto.length);
+  }
+  if (slashesDenoteHost || proto || rest.match(/^\/\/[^@\/]+@[^@\/]+/)) {
+    slashes = rest.substr(0, 2) === "//";
+    if (slashes && !(proto && hostlessProtocol[proto])) {
+      rest = rest.substr(2);
+      this.slashes = true;
+    }
+  }
+  if (!hostlessProtocol[proto] && (slashes || proto && !slashedProtocol[proto])) {
+    let hostEnd = -1;
+    for (let i3 = 0; i3 < hostEndingChars.length; i3++) {
+      hec = rest.indexOf(hostEndingChars[i3]);
+      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd)) {
+        hostEnd = hec;
+      }
+    }
+    let auth, atSign;
+    if (hostEnd === -1) {
+      atSign = rest.lastIndexOf("@");
+    } else {
+      atSign = rest.lastIndexOf("@", hostEnd);
+    }
+    if (atSign !== -1) {
+      auth = rest.slice(0, atSign);
+      rest = rest.slice(atSign + 1);
+      this.auth = auth;
+    }
+    hostEnd = -1;
+    for (let i3 = 0; i3 < nonHostChars.length; i3++) {
+      hec = rest.indexOf(nonHostChars[i3]);
+      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd)) {
+        hostEnd = hec;
+      }
+    }
+    if (hostEnd === -1) {
+      hostEnd = rest.length;
+    }
+    if (rest[hostEnd - 1] === ":") {
+      hostEnd--;
+    }
+    const host = rest.slice(0, hostEnd);
+    rest = rest.slice(hostEnd);
+    this.parseHost(host);
+    this.hostname = this.hostname || "";
+    const ipv6Hostname = this.hostname[0] === "[" && this.hostname[this.hostname.length - 1] === "]";
+    if (!ipv6Hostname) {
+      const hostparts = this.hostname.split(/\./);
+      for (let i3 = 0, l3 = hostparts.length; i3 < l3; i3++) {
+        const part = hostparts[i3];
+        if (!part) {
+          continue;
+        }
+        if (!part.match(hostnamePartPattern)) {
+          let newpart = "";
+          for (let j3 = 0, k3 = part.length; j3 < k3; j3++) {
+            if (part.charCodeAt(j3) > 127) {
+              newpart += "x";
+            } else {
+              newpart += part[j3];
+            }
+          }
+          if (!newpart.match(hostnamePartPattern)) {
+            const validParts = hostparts.slice(0, i3);
+            const notHost = hostparts.slice(i3 + 1);
+            const bit = part.match(hostnamePartStart);
+            if (bit) {
+              validParts.push(bit[1]);
+              notHost.unshift(bit[2]);
+            }
+            if (notHost.length) {
+              rest = notHost.join(".") + rest;
+            }
+            this.hostname = validParts.join(".");
+            break;
+          }
+        }
+      }
+    }
+    if (this.hostname.length > hostnameMaxLen) {
+      this.hostname = "";
+    }
+    if (ipv6Hostname) {
+      this.hostname = this.hostname.substr(1, this.hostname.length - 2);
+    }
+  }
+  const hash = rest.indexOf("#");
+  if (hash !== -1) {
+    this.hash = rest.substr(hash);
+    rest = rest.slice(0, hash);
+  }
+  const qm = rest.indexOf("?");
+  if (qm !== -1) {
+    this.search = rest.substr(qm);
+    rest = rest.slice(0, qm);
+  }
+  if (rest) {
+    this.pathname = rest;
+  }
+  if (slashedProtocol[lowerProto] && this.hostname && !this.pathname) {
+    this.pathname = "";
+  }
+  return this;
+};
+Url.prototype.parseHost = function(host) {
+  let port5 = portPattern.exec(host);
+  if (port5) {
+    port5 = port5[0];
+    if (port5 !== ":") {
+      this.port = port5.substr(1);
+    }
+    host = host.substr(0, host.length - port5.length);
+  }
+  if (host) {
+    this.hostname = host;
+  }
+};
+var parse_default = urlParse;
+
+// node_modules/uc.micro/build/index.mjs
+var build_exports = {};
+__export(build_exports, {
+  Any: () => Any,
+  Cc: () => Cc2,
+  Cf: () => Cf,
+  P: () => P3,
+  S: () => S3,
+  Z: () => Z3
+});
+var Any = /[\0-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/;
+var Cc2 = /[\0-\x1F\x7F-\x9F]/;
+var Cf = /[\xAD\u0600-\u0605\u061C\u06DD\u070F\u0890\u0891\u08E2\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u206F\uFEFF\uFFF9-\uFFFB]|\uD804[\uDCBD\uDCCD]|\uD80D[\uDC30-\uDC3F]|\uD82F[\uDCA0-\uDCA3]|\uD834[\uDD73-\uDD7A]|\uDB40[\uDC01\uDC20-\uDC7F]/;
+var P3 = /[!-#%-\*,-\/:;\?@\[-\]_\{\}\xA1\xA7\xAB\xB6\xB7\xBB\xBF\u037E\u0387\u055A-\u055F\u0589\u058A\u05BE\u05C0\u05C3\u05C6\u05F3\u05F4\u0609\u060A\u060C\u060D\u061B\u061D-\u061F\u066A-\u066D\u06D4\u0700-\u070D\u07F7-\u07F9\u0830-\u083E\u085E\u0964\u0965\u0970\u09FD\u0A76\u0AF0\u0C77\u0C84\u0DF4\u0E4F\u0E5A\u0E5B\u0F04-\u0F12\u0F14\u0F3A-\u0F3D\u0F85\u0FD0-\u0FD4\u0FD9\u0FDA\u104A-\u104F\u10FB\u1360-\u1368\u1400\u166E\u169B\u169C\u16EB-\u16ED\u1735\u1736\u17D4-\u17D6\u17D8-\u17DA\u1800-\u180A\u1944\u1945\u1A1E\u1A1F\u1AA0-\u1AA6\u1AA8-\u1AAD\u1B4E\u1B4F\u1B5A-\u1B60\u1B7D-\u1B7F\u1BFC-\u1BFF\u1C3B-\u1C3F\u1C7E\u1C7F\u1CC0-\u1CC7\u1CD3\u2010-\u2027\u2030-\u2043\u2045-\u2051\u2053-\u205E\u207D\u207E\u208D\u208E\u2308-\u230B\u2329\u232A\u2768-\u2775\u27C5\u27C6\u27E6-\u27EF\u2983-\u2998\u29D8-\u29DB\u29FC\u29FD\u2CF9-\u2CFC\u2CFE\u2CFF\u2D70\u2E00-\u2E2E\u2E30-\u2E4F\u2E52-\u2E5D\u3001-\u3003\u3008-\u3011\u3014-\u301F\u3030\u303D\u30A0\u30FB\uA4FE\uA4FF\uA60D-\uA60F\uA673\uA67E\uA6F2-\uA6F7\uA874-\uA877\uA8CE\uA8CF\uA8F8-\uA8FA\uA8FC\uA92E\uA92F\uA95F\uA9C1-\uA9CD\uA9DE\uA9DF\uAA5C-\uAA5F\uAADE\uAADF\uAAF0\uAAF1\uABEB\uFD3E\uFD3F\uFE10-\uFE19\uFE30-\uFE52\uFE54-\uFE61\uFE63\uFE68\uFE6A\uFE6B\uFF01-\uFF03\uFF05-\uFF0A\uFF0C-\uFF0F\uFF1A\uFF1B\uFF1F\uFF20\uFF3B-\uFF3D\uFF3F\uFF5B\uFF5D\uFF5F-\uFF65]|\uD800[\uDD00-\uDD02\uDF9F\uDFD0]|\uD801\uDD6F|\uD802[\uDC57\uDD1F\uDD3F\uDE50-\uDE58\uDE7F\uDEF0-\uDEF6\uDF39-\uDF3F\uDF99-\uDF9C]|\uD803[\uDD6E\uDEAD\uDED0\uDF55-\uDF59\uDF86-\uDF89]|\uD804[\uDC47-\uDC4D\uDCBB\uDCBC\uDCBE-\uDCC1\uDD40-\uDD43\uDD74\uDD75\uDDC5-\uDDC8\uDDCD\uDDDB\uDDDD-\uDDDF\uDE38-\uDE3D\uDEA9\uDFD4\uDFD5\uDFD7\uDFD8]|\uD805[\uDC4B-\uDC4F\uDC5A\uDC5B\uDC5D\uDCC6\uDDC1-\uDDD7\uDE41-\uDE43\uDE60-\uDE6C\uDEB9\uDF3C-\uDF3E]|\uD806[\uDC3B\uDD44-\uDD46\uDDE2\uDE3F-\uDE46\uDE9A-\uDE9C\uDE9E-\uDEA2\uDF00-\uDF09\uDFE1]|\uD807[\uDC41-\uDC45\uDC70\uDC71\uDEF7\uDEF8\uDF43-\uDF4F\uDFFF]|\uD809[\uDC70-\uDC74]|\uD80B[\uDFF1\uDFF2]|\uD81A[\uDE6E\uDE6F\uDEF5\uDF37-\uDF3B\uDF44]|\uD81B[\uDD6D-\uDD6F\uDE97-\uDE9A\uDFE2]|\uD82F\uDC9F|\uD836[\uDE87-\uDE8B]|\uD839\uDDFF|\uD83A[\uDD5E\uDD5F]/;
+var S3 = /[\$\+<->\^`\|~\xA2-\xA6\xA8\xA9\xAC\xAE-\xB1\xB4\xB8\xD7\xF7\u02C2-\u02C5\u02D2-\u02DF\u02E5-\u02EB\u02ED\u02EF-\u02FF\u0375\u0384\u0385\u03F6\u0482\u058D-\u058F\u0606-\u0608\u060B\u060E\u060F\u06DE\u06E9\u06FD\u06FE\u07F6\u07FE\u07FF\u0888\u09F2\u09F3\u09FA\u09FB\u0AF1\u0B70\u0BF3-\u0BFA\u0C7F\u0D4F\u0D79\u0E3F\u0F01-\u0F03\u0F13\u0F15-\u0F17\u0F1A-\u0F1F\u0F34\u0F36\u0F38\u0FBE-\u0FC5\u0FC7-\u0FCC\u0FCE\u0FCF\u0FD5-\u0FD8\u109E\u109F\u1390-\u1399\u166D\u17DB\u1940\u19DE-\u19FF\u1B61-\u1B6A\u1B74-\u1B7C\u1FBD\u1FBF-\u1FC1\u1FCD-\u1FCF\u1FDD-\u1FDF\u1FED-\u1FEF\u1FFD\u1FFE\u2044\u2052\u207A-\u207C\u208A-\u208C\u20A0-\u20C1\u2100\u2101\u2103-\u2106\u2108\u2109\u2114\u2116-\u2118\u211E-\u2123\u2125\u2127\u2129\u212E\u213A\u213B\u2140-\u2144\u214A-\u214D\u214F\u218A\u218B\u2190-\u2307\u230C-\u2328\u232B-\u2429\u2440-\u244A\u249C-\u24E9\u2500-\u2767\u2794-\u27C4\u27C7-\u27E5\u27F0-\u2982\u2999-\u29D7\u29DC-\u29FB\u29FE-\u2B73\u2B76-\u2BFF\u2CE5-\u2CEA\u2E50\u2E51\u2E80-\u2E99\u2E9B-\u2EF3\u2F00-\u2FD5\u2FF0-\u2FFF\u3004\u3012\u3013\u3020\u3036\u3037\u303E\u303F\u309B\u309C\u3190\u3191\u3196-\u319F\u31C0-\u31E5\u31EF\u3200-\u321E\u322A-\u3247\u3250\u3260-\u327F\u328A-\u32B0\u32C0-\u33FF\u4DC0-\u4DFF\uA490-\uA4C6\uA700-\uA716\uA720\uA721\uA789\uA78A\uA828-\uA82B\uA836-\uA839\uAA77-\uAA79\uAB5B\uAB6A\uAB6B\uFB29\uFBB2-\uFBD2\uFD40-\uFD4F\uFD90\uFD91\uFDC8-\uFDCF\uFDFC-\uFDFF\uFE62\uFE64-\uFE66\uFE69\uFF04\uFF0B\uFF1C-\uFF1E\uFF3E\uFF40\uFF5C\uFF5E\uFFE0-\uFFE6\uFFE8-\uFFEE\uFFFC\uFFFD]|\uD800[\uDD37-\uDD3F\uDD79-\uDD89\uDD8C-\uDD8E\uDD90-\uDD9C\uDDA0\uDDD0-\uDDFC]|\uD802[\uDC77\uDC78\uDEC8]|\uD803[\uDD8E\uDD8F\uDED1-\uDED8]|\uD805\uDF3F|\uD807[\uDFD5-\uDFF1]|\uD81A[\uDF3C-\uDF3F\uDF45]|\uD82F\uDC9C|\uD833[\uDC00-\uDCEF\uDCFA-\uDCFC\uDD00-\uDEB3\uDEBA-\uDED0\uDEE0-\uDEF0\uDF50-\uDFC3]|\uD834[\uDC00-\uDCF5\uDD00-\uDD26\uDD29-\uDD64\uDD6A-\uDD6C\uDD83\uDD84\uDD8C-\uDDA9\uDDAE-\uDDEA\uDE00-\uDE41\uDE45\uDF00-\uDF56]|\uD835[\uDEC1\uDEDB\uDEFB\uDF15\uDF35\uDF4F\uDF6F\uDF89\uDFA9\uDFC3]|\uD836[\uDC00-\uDDFF\uDE37-\uDE3A\uDE6D-\uDE74\uDE76-\uDE83\uDE85\uDE86]|\uD838[\uDD4F\uDEFF]|\uD83B[\uDCAC\uDCB0\uDD2E\uDEF0\uDEF1]|\uD83C[\uDC00-\uDC2B\uDC30-\uDC93\uDCA0-\uDCAE\uDCB1-\uDCBF\uDCC1-\uDCCF\uDCD1-\uDCF5\uDD0D-\uDDAD\uDDE6-\uDE02\uDE10-\uDE3B\uDE40-\uDE48\uDE50\uDE51\uDE60-\uDE65\uDF00-\uDFFF]|\uD83D[\uDC00-\uDED8\uDEDC-\uDEEC\uDEF0-\uDEFC\uDF00-\uDFD9\uDFE0-\uDFEB\uDFF0]|\uD83E[\uDC00-\uDC0B\uDC10-\uDC47\uDC50-\uDC59\uDC60-\uDC87\uDC90-\uDCAD\uDCB0-\uDCBB\uDCC0\uDCC1\uDCD0-\uDCD8\uDD00-\uDE57\uDE60-\uDE6D\uDE70-\uDE7C\uDE80-\uDE8A\uDE8E-\uDEC6\uDEC8\uDECD-\uDEDC\uDEDF-\uDEEA\uDEEF-\uDEF8\uDF00-\uDF92\uDF94-\uDFEF\uDFFA]/;
+var Z3 = /[ \xA0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/;
+
+// node_modules/entities/dist/decode-codepoint.js
+var c1 = [
+  8364,
+  0,
+  8218,
+  402,
+  8222,
+  8230,
+  8224,
+  8225,
+  710,
+  8240,
+  352,
+  8249,
+  338,
+  0,
+  381,
+  0,
+  0,
+  8216,
+  8217,
+  8220,
+  8221,
+  8226,
+  8211,
+  8212,
+  732,
+  8482,
+  353,
+  8250,
+  339,
+  0,
+  382,
+  376
+];
+function isInvalidCodePoint(codePoint) {
+  return codePoint === 0 || codePoint >= 55296 && codePoint <= 57343 || codePoint > 1114111;
+}
+function replaceCodePoint(codePoint) {
+  if (isInvalidCodePoint(codePoint)) {
+    return 65533;
+  }
+  if (codePoint >= 128 && codePoint <= 159) {
+    return c1[codePoint - 128] || codePoint;
+  }
+  return codePoint;
+}
+function codePointToString(codePoint) {
+  return codePoint - 1 >>> 0 < 127 || codePoint - 160 >>> 0 < 55136 ? String.fromCharCode(codePoint) : String.fromCodePoint(replaceCodePoint(codePoint));
+}
+
+// node_modules/entities/dist/internal/decode-shared.js
+var BASE91_INVERSE = /* @__PURE__ */ (() => {
+  const table3 = new Uint8Array(127);
+  let code2 = 0;
+  for (let char = 33; char <= 126; char++) {
+    if (char !== 34 && char !== 36 && char !== 92) {
+      table3[char] = code2++;
+    }
+  }
+  return table3;
+})();
+function decodeTrieDict(input, resultLength, atomCount, dict1AtomCount, ngramCount, dictSize) {
+  const base = 91;
+  const inputLength = input.length;
+  const twoCharBias = dictSize * (base - 1);
+  let pos = 0;
+  const readSlotCode = () => {
+    const c12 = BASE91_INVERSE[input.charCodeAt(pos++)];
+    return c12 < dictSize ? c12 : c12 * base - twoCharBias + BASE91_INVERSE[input.charCodeAt(pos++)];
+  };
+  const dict2AtomCount = atomCount - dict1AtomCount;
+  const slotCount = atomCount + ngramCount;
+  const single = new Int32Array(slotCount);
+  single.fill(-1, dict1AtomCount, dictSize);
+  single.fill(-1, dictSize + dict2AtomCount, slotCount);
+  const start2 = new Int32Array(slotCount);
+  const length = new Int32Array(slotCount);
+  function decodeDelta(count2, off) {
+    let previous = 0;
+    let slot2 = off;
+    const end = off + count2;
+    while (slot2 < end) {
+      const code2 = BASE91_INVERSE[input.charCodeAt(pos++)];
+      if (code2 < 89) {
+        previous += code2;
+        single[slot2++] = previous;
+      } else if (code2 === 89) {
+        let runLength = BASE91_INVERSE[input.charCodeAt(pos++)] + 2;
+        while (runLength--)
+          single[slot2++] = ++previous;
+      } else {
+        const next2 = BASE91_INVERSE[input.charCodeAt(pos++)];
+        previous += 89 + // eslint-disable-next-line unicorn/prefer-minimal-ternary -- branches read a different number of side-effecting input bytes
+        (next2 < 90 ? next2 * base + BASE91_INVERSE[input.charCodeAt(pos++)] : BASE91_INVERSE[input.charCodeAt(pos++)] * 8281 + BASE91_INVERSE[input.charCodeAt(pos++)] * base + BASE91_INVERSE[input.charCodeAt(pos++)]);
+        single[slot2++] = previous;
+      }
+    }
+  }
+  decodeDelta(dict1AtomCount, 0);
+  decodeDelta(dict2AtomCount, dictSize);
+  const references = new Int32Array(ngramCount * 2);
+  let poolSize = 0;
+  let ngramIndex = 0;
+  function readNgramReferences(count2, startSlot) {
+    for (let index = 0; index < count2; index++) {
+      const slot2 = startSlot + index;
+      const a3 = readSlotCode();
+      const b3 = readSlotCode();
+      references[ngramIndex * 2] = a3;
+      references[ngramIndex * 2 + 1] = b3;
+      ngramIndex += 1;
+      start2[slot2] = poolSize;
+      const entryLength = (single[a3] < 0 ? length[a3] : 1) + (single[b3] < 0 ? length[b3] : 1);
+      length[slot2] = entryLength;
+      poolSize += entryLength;
+    }
+  }
+  readNgramReferences(ngramCount - dictSize + dict1AtomCount, dictSize + dict2AtomCount);
+  readNgramReferences(dictSize - dict1AtomCount, dict1AtomCount);
+  const pool = new Uint16Array(poolSize);
+  let write2 = 0;
+  for (let index = 0; index < ngramIndex; index++) {
+    for (let half = 0; half < 2; half++) {
+      const source = references[index * 2 + half];
+      const value2 = single[source];
+      if (value2 < 0) {
+        let read3 = start2[source];
+        const readEnd = read3 + length[source];
+        while (read3 < readEnd)
+          pool[write2++] = pool[read3++];
+      } else {
+        pool[write2++] = value2;
+      }
+    }
+  }
+  const out = new Uint16Array(resultLength);
+  let outIndex = 0;
+  while (pos < inputLength) {
+    let slot2 = BASE91_INVERSE[input.charCodeAt(pos++)];
+    if (slot2 >= dictSize) {
+      slot2 = slot2 * base - twoCharBias + BASE91_INVERSE[input.charCodeAt(pos++)];
+    }
+    const value2 = single[slot2];
+    if (value2 < 0) {
+      let read3 = start2[slot2];
+      const readEnd = read3 + length[slot2];
+      while (read3 < readEnd)
+        out[outIndex++] = pool[read3++];
+    } else {
+      out[outIndex++] = value2;
+    }
+  }
+  return out;
+}
+
+// node_modules/entities/dist/generated/decode-data-html.js
+var htmlDecodeTree = /* @__PURE__ */ decodeTrieDict("!}.&u%}'&}*'~!6*)%&,~!J~!J~%L~y<~!R,~~%Lu~~#GD~~#|)1#%}^%}2%+#.##%##%}&%##%'#%##&%#%#'%#&#%#&#'#%%#&#%##%#)%''%&%#%#'%#%%#%%}%%%#%#&(23#%%#&-%0%('1#(##%#'##+%'*.:1}#%#6-+(%'%%#%%%}#L'2351&('%}&/N'(0(/*-%(%%}#'+&T%7.2}#&%&#%#36/5##%&%%#&#%%#))2%%##%&&'0~!#*+&'%1~!%).'3q?&%'1~!.##%6(~!+%%%(Gw'rT~!E#<nA%#jZ~!H%(~!42##~!*31&~!G%U~#)5~#`3~!J~!Z~%]~%Y~%C~!q~!u~#kz~%#~!6'~!D~!U~!?~#T~!c%~!G#'~%7|~!G~!J~!G&~#pb~(Df}#%}*&}#%##%##%##&#-}&'#'&%#.++}%mI,#,@&(}*%}*'%&##&#%##%}&0}#.},U},%}+%}&%}#%##&}B%(}(%}+%)})%##%#&}&%##%&}<%}>%#%&}*%}(%}9%}/%})%}*%}*%}?&}&%}3%}&*#%})%#%#)}#&#-#+*%E%%'%'#%}#*V##&##I}#&&##%&%#&&Qf%%))w/0+&%#(#.%-''''++++7}>%4'',##1,#%#&%##&#'##&#*#9)%&%}#*}%,#+P(%A&%#'&##wSD',9E00#y#@}(+}&%&>~!#~!X}#*}(&&}(&}(,%}%&#+&}#&}I%#%}%)#(},'%#*}4%%#%}(''}#/##(##),%-##%%)#&}(.}&%#&}%%}*&#%},&&}&%}#%*'#%})%}D&}&%}-&}6&#&}-,%}#%})-(~+`~,=?~I9'9%~!,#%})%})%}@%}?%}(~!?~#<~#pP~#BG~#=1#%K+~#?#~%;)~#A~#mF1~#A'~'X%'~#lR~#N~'N~#r~#m#-~#i'?%#'%~#B%##%,%#~#_%#0%~#]732~,w~2+#:&#%&'0%&>%}#>##F+)#%&&#(+_}4&}-%}(&}@&}O7Fdf0@+/v4}&WU##&/0#&'('B#%}.%}'+#%}#%%&#&%#%##+#&#)#6#'#.},%}c%},%#%##%&#&%#&~#>'*-.%##%##%}#%%}%'~#)D1}#%*&~#_%%'(~#S2%'.}#~#=##*'*-%}&'%'##&&~'E%.#&~#M4}%%##&'%#~#O1##%&#'+~#<B%##%%'%+~#;#@%}#&%#&&%#(~#H1}'%'##&&~#?A}&'~#D#%32}'&&&&~#[}'(#%}'~#;C})&}%%#%~#=&%,3}%'(#%%~#^'#&&)#%'~#Y%-~#d-%'~#^%%&#&&&}#~#b~2t*&'~&(~&@~0%~e~3}%*''0})&}+~!9##-}#%-hD*)1fC#%/&/fB#40~!+#)*4~!+~!K'&:~!/*7~!.#~!H~!L':~%x&~!H#~!*~%1~!I#~!+A~#p'~!F~~#-#~,,(~.Z~!V~%;'B'mq-W~!N~%I%#&&#&}#%},%%}'%}+X#%}#&}(%}'%}<%}#%}%%'}'%}:~![)9@~%>~#UA%-%##&~!C%~!-.9:~!1~!-^2/:a~!y,D*J#-5)/4~%23,~#G~!L1~!0X3`~!2+~!!0-~&E~!W~!o,>Y&]~%cZx_&~#O*9#A#'#+I'%#)~!0B*-5A+-((F&*M#)(-7-5+'-3a5Vi~!Y~!?+[)%3),ERHm~!+:D,VG.+)?fB%%*(%)'(#&80%1'8`K8?`+'Z#&O&'H5#*9)A%%5&3))0%39+.*7#()&&*=4@**L)<'_&*+..;(#*+)./&0#3)%')-8(4ixD(&.}%,('aI:,)%,k2231T)I'#/-W7,/'Q#.'Y24+h')37</31&83##&0#),H(?'&?/1##%#&&#%''-%&&&#(&''&#.-'%#%%(,')*'&#&#'##%(%(#%('#&##%%%%('%#%#%%#%#&%##h>w+v<ayvyvcg.uuhKr}g/v|g>u9i[~>g5uI~=RvdwEg;v/g;uk!!TTSx]@RT!U!#!@VBRUU!'UTe-d0c`e&gSdicedFcrdTaqb.kYcAohdYd@a3e+d}dMdtd.aJ#bqcK`dle/e.e'dwdPdodddjbEb}ogd^ofdpduc6j?l%d{drdqc)d7bacOdQ%T#Y)X.sR[yH>6Vyv3[xwLu>vo'!*.[yBacahoj>6Rew3[xqdZa#!a&#^(X-[yG>6Vyu3[xvg3sEr|g.u/Ri9db0T#^(Xa)!-[y;>6Vylg4wKs{JwNZt3@3r=c4Z([xlg;wKt!cpq's@v7A'*a(a+!-a#[y<3Dt?3Dt'>6Vym3[xmg9rxsNJwLZt4~?r?db1T#`-!(Xa,!0[yS>6Vz%NuQs.g4wKtnJwNZtS@3r>c4Z([y%g;wKtrdga8!a(!#&T*Y-Xa#!a0<or[yc3Dtq>6Vz43[y3JwNZtf@3s!Ju}!%Dti:pm3c_%X#tjB5pkd6q!r]u?voC'*-a.a2!0a&a+[yI3DtI3Ds~3DtH>6Vyw3[xx;:s#~<5pKJwNZtE@3r~d`a)!a2T#a.(!+U.X1[yT3Dt`3Dtv>6Vz&3[y&g9rxwzcxstPu.<rAJwLZtT~?r@dZa%!a.&^*Za(/Reu[ya>6Vz23[y1g3sEr}wkg{NuQRg{ci(U#5@b`~,cg#U(2WnH5wugcRh7dX#T(Y,a'Ta!!a,[yZ<]mj>6Vz,3[y+Pv#5ReZKu+=,%!H}7ABwkaS?Rh:BcW(X#<]mrj:ubv/ARekdg%!(!a.*Ta(Y.X1!#sP>Rl*Dt6[y>>6Vyo3Wf*jOvuumvuRgRJuq*!:9<B@bX~3jVv&v@s@5Re[d/rQt{uAvo&a&a*)a2!,0Wf!3Dt0=Bs'>6Re}3[xy~<5s%JwJZt1~Gs)c;&!#2sJkNuXvzq7rxu,Re8dka4!a8(aEZ+a@Y.X1Xa)[yd=Bs(3DtP>6Vz53[y4cX#X&Re:avRe9~<5s&JwJZtQ~Gs*i^rzvdRg+Jv{%!2sbB@bX}kdga,!Za?&^*T1/!a'Dt+[y6>6Vyf3Wf%g/u;s4hGu6?Rh-JvZ,!c%#&RoX54Rivj7uyvf8RgTKvZB%*!2sGh<vu5Rgq<=C::9bb~#dZ#T&Ta6Y.X*Dt>[y93Wf)coZ(T,6VyifluvRgC@95@B@bX~/hFu34cC#T,k/unq8w8Q5RkUklwQuzunq8w8Q5Rk8d/rJu?v8w9)-&!a0a;a&aIWejg3sEr/h1s<DtDJvyZqY5aws3Jvy!&Wei~Hr1:au5@Bag>23E~5c:Z&bX};kKv?w&unuVu5Rjc;>bs)#~@:Rh.=ay<a]C;b`}Vd6s/t{uAvoaxa()!a,a7%-a#a2Dt,[yF2Wo[>6Vyt3[xuNuPRi&NuPwpi#RoWh?vf8Ri%Jv]!%Ri:KvxD!.'2WeAjZu`q9rxu,Re7woeAg-unLq(qA_/*2Wg_g3u5q^9:4E}/jTrxrzv=Wkkd~0UX#^^Xa-a1a5T&a=U1a'*aEa]!a*aPaA-adok[y54Rn>;:p3~Dp5g9rpsFNvZqjg3uJp4~<5p0Pw;5qlJwNZt*@3p1Pw:5p/Ou!5p2JvG'!6Vye=<qnJvh_[xhg3v,Rh3kOwOw-sDuev/Re^dha[a%!%!a+#Ta7)-5TaCaO!aka!a)sf[yb2>Rl!9ARiq5E}Qg=ucRkBE|oJrJ_@Wk~@Wk{JrJ_@Wk|@WkyJrJ_@Wk}@WkzJvO_[y2g-vMRmiKuYC!)&>Ri;>Ri<@3RkNc](X#@9Rk=g5vuRmhKvDB!+'=]meg3u4Rmgd)#Y'Vz3CARmfd`a+!%T'!+#Ta1Ta6TaM-sTDt9[yA9sYd'%Y#s[[xpj:ueunaXRgEjRq,v-vuqdd2'`#6Rev<32@5>:2<E}5xIo9a*X#Y(;5RePJvD_g>vyRgNj8w)v8<wggs:RgXiZt|vjx,hSq3ah!-(~@:Ro/Ou!5RhWj^v(pyw8unRhUdx-UY#^Ua.a3a70!)%UX1TaDa)'omRiRRhE[y:3Dsz=Br,>6Vyj3[xkg6ruwjcqsrPw;5r*Ku]D'Zt-@3r(~?r.i[vwv]dU1a--U#`a4(g/vsRhPOu!5RhLj:rmu9Wo!~@:wdh@g/vsRiTjXuvvNr}:RhBj^v(pyw8unRn]dz1UYa'a+^Y(!aETZalaRY.Ta?a4[yDJw1!#qLsW>6Vyrfzq-pLflpwRe|Js>%!Dt@3Dt&Jvy_[xs~HrnjMuwpsw'RecKu+D#'!t<~Grl~?rjg5u-x,gwp{ah!-(~@:Rg~Ou!5Rh'jXuvvNr}:Rh#cW#X/c;&!#2sLi[v7u7RgpJv)(!iLrxu,Re6j7v@s@5Se[e7d`aW!Za(a`T.a#!a3!&aDa-!9)Dt_=6s+3[x~~DR|h~DS6avhGun5RkZj3w)v-]mkKunB!&*]kb97R|i<ARk<c:Z(6Vy}Juh'!wziMRoS:F|vkLuauJv5vtvQRh1d='T+Y#VyO~DR|jcF#T'7R|g97R|kJv3'!ay<Rj,Jvh&!:ReXcsa6*a+#a#_aIRf9aLRf?c,Z&Rf5Rf7c.Z&Rf;Rf>cQ#%T'p-Rf8Rf=ct#%'(*!,p,Rf4p+Rf6Rf:Rf<d~'Ua%U*^UYa(!a,-!#a4YaTalaEX0a8a<Weo3Dt/3Dsx=Br93Wen~Dr;~<5p<JwNZt2@3p=Pw:5p;Ou!5r3c7&!#:p>3Ds}KvGB)_6Vyk2sM=<r7x'eovA(!hFu1ARf}cV#X&@r5j6rvwQa^Rf3c=Za'wkghJv__g;unRggA53B9=b^}%j6uduo5Jq;!(hIv%2Re`Ou4ARe_e%a#^^^Xa&!a*a2!&a6YaP!*ad!#a:aE/5Rn?[y@>6Vyp;:pE~DrY~<5pBJwNZt8@3pCh=rt3rWPw:5pAJup_[xoNuPpF9c!#'45pD5ARn)d8#X'X*3@rU72s]h>v<<sSjJpqvewOJq/(!hNw'5ReBk0s2u3w/w'5ReE5@Jq.!a+JQ!&WeU23d(#Y&RjG5]jBk!u7w&u0udARjEe#+^^^Ub#!a2/a`Z(agT1!a-a;|@TaG!aS[yV=Re~fow'RguNuPRe?bz#'>RoUWeL>:Cbb|?JwPZtVg6ruRmzJvD'!6Vz(g/vmRh~Jvy_[y(g9voRgyx*cy(#2>Ri2B9b]~9kIw9u7rluJu3Rg]dI#a%UY'@=p%CAx.gQZ&RhwwygtRm{x5g_Z'+ABqR9Woa=Bp&dV#^*Xa'!&@o{g4v]Rk;Jv{!%Rk[wkkiA5RkiwwfUB=x,fUuqC&*!>RfTg8v0RfV~ARfSd;rJsAuAv9wR'ae+/aO!a@aza/a#[yQ@Wg!2Wemg3sEr0JvB_g>uvReWg2v+Re=KupB_+[y!2AbY~-~Hr2AJwD!(h<~El>h<~El?Kun@+_:9b`}Kg-v/Ri3g;vtwyk_9]k_d=&T#*U.6qh@Ab`|K9:H|CJv[!&3Dtex'fDwC%!Rf[9WlMd[(^X,!a%Z06Vz!@WgBg=v~Rgvg,QRe@awd,#Y+jTv|Q~EfWj]uNr|~FRfXdy#Y&^Ua%!aO.!(a)Ua;=!a@aKap!a-,a!Ta]a[rSa]p?[y82sK=Bq~;:p:~<5p8Pw:5p7d'#Y'Wf(;RnRi[u4w&RgJJvG'!6Vyh=<r#ijuuv/sIKuYD'ZtG@3p9~Gr&d2#`(g<vtRgFj`u5w&rqpxRf2CJuY!+:wfnTOu!5Rg}jNs1ucv&RfwJvA!&3@q|BDcC#T,k/unq8w8Q5RkTklwQuzunq8w8Q5Rk9dga#!a'!a=#a0!:+Tb*b@aO.a4!aba8aFJv^}?!VyR~Dr<g;u%Rn.~<5p[x'e`wNZtR@3p]Pw:5pZhNvjBp.woe_g5u-r4JwF!%DtO3:ooc7&!#:p^3DtpLuGw(!+%)Dtk6Vz#2sd=<r8d'#Y([y#<x3gJt`w@!)%}MRiowzikRij=]ilxAf3,U(#B2Rf#g0v-Rm[ck{`U#]giKv3>)!&6Ri154s,KuGB_%@r68r:dJ|t`#X(9<E|u2@H|rx3gJu?w'!+'1Nu7Reg4=H~+9<wxgY95Rm]xLggZ-`(X}U2:Ri4h<uOawRmsJv__5@bb{jbV~3dka#a'a]!,#a+U=a>b6a3b%!/aKa/)!arwve^VyJ;:pR~DpTg3uJpS~<5pOPw;5qmPw:5pNOu!5pQJvG'!6Vyx=<qoJvA!{~Jup!%@qk7Rn/KvyD!}''[xz;>wkh'?Rh,x8gyt`w5D!&),(SgyccRgztJ@3pPB5p#d'(Y#<]mmifubw&RgoJvE&!82s^JvF&!8Rf,ADb]~;x=h'rNu]vK!,%'*0RnORh)4Rh*AqQg-vaRnNg;wHwkh'ba~4cE#Ta*x3gctyw@'!+%RnFRnD<4Rn@hFvK5RnCxWg[#`&a0Ua()`1Rm75Rg[c]%X#qi8Rg^NvdRj>BwzgZauwji7Rm6A4wgg]d1#&(*,.0a#Rm;Rm<Rm=Rm>Rm?Rm@RmARmBe%#^^^Xaea?aC/b+(,!a+a#!a/!>a&Ta<aKbD!2wphBRnk[yPw}hE|.=Br-3Dtm>6Vy~g6urRf.x,hPrNav!%'RnqRo%Ro#Nu;q[Pw;5r+JwNZtM@3r)d'#Y'Weh;xChL#`&RnmRnoKu}>%(!Rne~Bs-;2wjcussJv+'!aYSO}6@B<5?ba~8LrNvj!.%*ROwungw~ng~:9;Ri^>wtnig;wHRnixDh@|(UZ.x1h@|)!#:2<H|*xHn]#-UX'3Ro)z=iT}6ARns=Bwsn_wpnaRncw]aR(#UXa&Ua*a/=]iPd'#Y&Ro'WnXf{QRm2hNvj]nZd`'T~&1`{|`#9b]{}c:'!#Wl{>@=be}]?cl{{U#:5Abb}Jds#^YaF!a*b4a#a3aPa>&Tb!bH!*a_!Eau?/a&RjY<]gj>6Vz*;:pe~DrZg,QRj1JwNZtX@wihspcJvZ&!VyX9WmOJu|!|N2WmHJvh&!]ht~Bpbcn&T(!#RmQ<s7Nu;padH#X'`+WmJ@>RmKCARhnKup=!)&Wf+:RhqNuPpf9c!#'45pd5AwghpARn(Ls@w!%,)!RmP@Wfe<E|IJva!&WmNg8vsRmLd`*.`#Y'Xa!axRn*]hrA8Rhug5s@rXg8u!RmMd8#X'X*3@rV72smdI*#UY&RmICARho~GsgxVgd)Ta'U-Y&Xa!T#RnEWnA@Wffg1uDRi0hFvK5RnBxGnG&#`%owp)@wsf+bX}Ze-*1!a*^^^Ua|!#a.aq&Ya2!a>.a6!a:aO`aJDtL[y`@Wg#>6Vz12@wzoYRoZNuPRi!NuPRhzg=ucRi,@=b`{Yg=ucRi-ACJvB!&Sh[ebSh]ebi`wUuFRm4Jw2_[y0JvB!.<Ju(!&SoG}6Shd}6<Ju(!&SoH}6She}6Kur@._g5vHRieJvx!{L2G{Kx6gd'T#?Rh82Wi5cZ#X(g1w)Rm5dW-Y(Ta#!a)!#aYa=wnfE=su2>>bU{0j9udv:<svj8uQv-7RgHdE%#^'sq9sp=>Bb_{TJv`!&g/r|snj6v(us5d,#Y(56H}[978H}]Jw5!&g1rushJvB!+j;v{u5?zDhd}6}bj;v{u5?zDhe}6}ce*#`(^^^a[aea!=!a6a*aoXb1a.!aAbL!b>,b'aL!aV@Wf|2Wlg3[y/JwNZt^@3piPw:5pgJunZou3@rsJva&!Vy_g<v~Rm#JvG'!6Vz0=<r{Ju{%!:pj@WfsiXuJu3Rm:JvZ&!WfA~Bph@c4Z&Dtwax5rubx(#:awRk1@d,#Y&RfjRfid1#,Y(@Wfp2Wlrg5s@ryKu[@!,'=]ig9wlk?Rk>g5u-rqJvy'!@9RkQcH(T#=>Ri~@<wkj(Wj(KuZB*!&<7rw@9RkRcH(T#=>Ri}@<wkj)Wj)dg(Ta2Xa9X#`-!a*CARhg@@=I}d9x;c~#X%so=<sj>2@@=aybb}XjWv0Q~EfEj3vLv;<d,#Y(56H}`978H}_dgaPaFa'a/!#a3Y0a_a;a|!1(a7-[yE3[xt;:pJNvZrrg3uJrvJwNZt=@3pIh=rt3rxPw:5pGOu!5rpJvG'!6Vys=<rz@c4Z&Dt(ax5rtJvZ!&~BpH@wsfNg-vaRlNci*U#=<wei<F}a5@Jq.!a*JQ!%@qZ23d(#Y&RjH5]jCk!u7w&u0udARjFd/prq=tyvpaEa(a:.!a1aZ(@@=I}:9wpd%=<sX55w_h}@@=I{t=ay<aU@@=I}T=ay<2@@=I})?C9:9au@9Cb]}DP~=x-fAZ(2Wl1=ay<aU@@=I}>5@d##Y+jTv|vV~EfFj]uNpn~FRfGdgaK!Z2&!a8a-Tb({E!acTbM*!a(DtY[yYd'%Y#sl[y*hHvh>Re5x2c{Z}.j4uCvcawRiMd+#X+_x&d!},<5RkX;2Hzw@x,gavfB-!{CcF&T#Roe;RodwWbBg5urRgaKvHC*_6Vz+<4opieuew&Rmq@d]&Y)X,T#X0Rh}<BqP=4qS9:ReMg/ujReNJw0!/<Jui%!bd{kawwnemRelAxUa?a3#*.&UX(Ya+a/RhvRnQ<o}9Wmtd-#Y&RgSRmw9;Rmxay=Rmyg-vaRmuxEhSrNu,v-voC!%(aR.a(a7+1Ro1>Ro5CE{A9b]{@;5x#eO{:g;urRi+KrNA!%(Ro3>Ro79;Ri_Ku@>{;&!x%gX|{KunA_+g5QRj/g3u5Rj#g>uERj%wio/xRhS&!,!#^1U}wba{8>>@=be}qC@:D5ba{7Ku+A&!}x?ba}t>>@=be}se(aA^^^Uat!b0#{pa+awUazbGa#aLb9bgaWac'a5TbS=Br!d1#`%scp_Jvl!#rT>Re0JvX&!VyN=H{Fcm#U&:pY=ReaJv2&!]h0=]nUJvG'!6Vy|=<r%JrM_=]h2@Wlud'#)U'Wf'b]{i=]h/Jvh!&~BpWg=v]RnMx+ny#'Nu;pVwjnu=]nwxJnx,T#`&Reqwjnt=]nvieu9vrRjLLuYwP(#+!th@wih5pX~Gr'g5v/Rh4KunA'!-CARnP@wwiN:Rm_9x'cvw>!|l=<saKvAA!0&3@q}>w^e1bp#&Re2Re3BDx7gH#T|f5H|eKuZ>!%(:qNAH{]Jv6!+3B2B9=b^{X<5<B92:E{ZLvhwA(a;a%!igQuyRmad+#Y}m@3Rh5d8#X'X*:AqUAHzmaxwbh<aXRnVcF}RT#Nw&cj#U(BWnug/vsRntdka)(a3+.Zb7aYYan1!bVa@Xa}[y^@b[{G=H{+hFu73Rj&Pv#5ReQcK%T#sig1v{Rj'Ku+D#'!t]~Grm~?rkKuMB!01d5#`'Vy.ta3Dtu~Hroc8#'{^45s85AwZbP&!#Rn!wghxWn#KvEA!)&2RlA2RlBx:h|#(T,=]j09Wobz>x]z/@awRoTd+#Y(az]hFhCrm4d,#Y+jTv|Q~EfMj]uNr|~FRfOdCa!Xa9_X#@<plJvf!%b`{(9;Rgwc;.!#2x7cw#T|UDb]|T5Ju={(!=@E{&Jv)&!Ab`{'awJvf!~*>>@=be{#KuY>!+&4Ezyi[ugv&RjIdea+T)#UXa&T-T&a!Rh9auRmW=]kLg5vuRn+g3u4Rn-Ow6ARn,hHus5xNk?#UX(U~)/g8v0RkD~AwkkF?Ri.OuNBwkkA?Ri/d|a2`a*^UYa.!aBTZaTa'Xa;!(!2!-a#b2[yC>6Vyq3[xr2Wi?g1rusVh%s?DtF~<5rbJs;%!DtBfswKtCj[uvuSsEu3RgVx3o:u+wN'*Zt;@3rd~Grh~?rfg8w)Lq)qE&-a%!>bI|`jWv0vV~EfCjTv|vV~Ef@j]uNpn~FRfBcK#T']gWNu7x,k7q4ai(0!hHv8<RhmkMu9vrsBuev/RhlCJvB!,g<v{wchh~@:Rhji[vrv{wchi~@:RhkdS&a5UY#Ta!RgPwwiI5BwciI~@:Rh`x'iJvj'!5]iJPu8Bwch]~@:Rhach)U#h3rp]gLh@t|Ax,hTq3ah!-(~@:Ro0Ou!5RhXj^v(pyw8unRhVd|)`,^UYas!a?/a2Z'a^Ta{Tb7Ta(a#!a,Wf&9sZ3DtAadamov=Bqt3[xig8vsRm~>waiL2b`{QJv*_Ouv2qgj<v]v2BqfdR'X*X#Y-@3qr~Gqv~?p6hHv-]glPup5Lq+q?_%*b_{qF{n9b^{rOu4ARhpKvCD!+&~Bqp:5Dbb}nwoiKl&unuTuBv]v+ueunaXRf0=Jvh!0nKufu8v1w&w7q%w&uHrz:Rgnj5w,uxDJq/(!hNw'5ReCk0s2u3w/w'5ReFd>Za&!*UaA=<wkgsRnSJv^!%Refifw3vyRgOKu_B'!,<]gkiiu:w&Rh<=C@a^<B57@2F{[<B5@aW:=3away9A5aW=<B=C@a^<B57@2F{Ie-#`(^^^bCara.b8aza6!/bZ,!adTbnTbOb+aFaS!aAT9@Wf~2Wli3Dtl2@d,#Y&RfnRfmJwJZtN~GqyJva&!VyMg<v~Rm%iXuJu3Rm9Jv[_=]ih9wlkDRkCd1#`(@Wg>2Wls3cH#T(@<Rj*=>Ri|b~'#23s9h<~El.d'#Y&Dtxi^rzvdRl#d*#U%(o|B2s`hJwSaxRmDKv4B&!1:Rmdd5#`'Vx}to~Hq{x'f1v3(!BA5ba|bJv_&!Wfug1v]ReIdO+U/Y#&G}-8wze=Rh{g1v]ReHg/uQRf/by#)ibQwERl/cH#T(@<Rj+=>Ri{cNu+vlax-!(#a0qa9<Rii2;;bU{H;x<i=&X#Rk`<4wwi=C9H~8xAI(Y#<azRi@45wXI<B9;5bb~7dL(X#Xa(+!aL6Vy{g5QqOau:5au2@ay547EzbxOcU(UX-T#Ta#:Cbb|A?wjh/b_|SOw6ARgtihr}u7Rhy<d1#T)X1@@=I|~=ay<2@@=aybb}Sj3vLv;<d,#Y(56H}A978H}@dGpvs@uAu`vcw9*!aFa+ai%(b!aXa8.a?a[ozWey=sU2@G}Nch&U#Rf_WexKu+D#'!t:~Gr`~?r^j]uNr|~FRg*j^psurwJt|RmcKv)@&!)7Rkv~Br[@wxfO:Rl3co#U'6Rezj_q#vIuavjRltwzeyh@vr5JqD0!>aY?C9:9au@9Cb]}9cl#U*5;5<H||jbuus1ucv&Rfvg1v~d/pppzqFr^a--a~!aMat1(hFv;Wiz@@=Izoj5uuv-7Rix~Cw`fk2WlVcZ#X,k)u3vWs@u2]ktg;wEx'fBq(_2Wg/jTv|vV~EfoJv]!15x'hzqG!(P~EfU~CRl_j6v(us5x4i-#T(2WmZ?C2F|d>Kq<aj1!*jTqIsBv=Wl`~Cw`fi2WlWj`v0u*~>RlR=c>Z,k#u3vWs@u2]kr<c1Z+jTqIsBv=Wla~Cw`fm2WlXdmb3!a{(arZa`bkTa%TbQTa-a9+c'!aM!/[yL=Bqug.w'RifhFvyDRj.g>vgwyk^9]k^Jv3_@WfbAARkhJw2_[x|JvB_wkoIRoKwkoJRoLd'(Y#<]gm=<9<H|yd'%_X#skDtb3awwqkgNulRkgdB#^',9:p'hJwSaxRmEBwVb8@4=H|qLu+w50&!)@3qs~?pU>Awwn;;Rn=c:Z'ARn<=<qwKvC@!/&~BqqJv6!&]eVb^z^xRge'/a%+^`#Sge}6<4Rn3=]n0Pw2>Rn8Jw0!&>Rn:>Rn6cY#a7+!a&=<wkaNw~h3z_c5Z{=wjh#=]nLKv^D!&)Vyz=bW|swYb<WetcG#T(2wxa@qVx@gD#Y&b^|V5JwG&!5bb|pg/w&RgD@x=kHs=uAvn!a%%/'+RmSRh694Ro`g-vaRmRhHv-]mlxCcS#`&ba~.5cD#Ta)P~=d,#Y(56H{>978H{Dd_#{2^Y%_+qbbb{6g3sERhsbU{?dfa.,`a(Xa<!aiX#(55RiG54RiHcI#T'WiU3RiVNvdwtfcRlKNvdd,#Y&RlHRlExQgf.1*^T'X#Sgf}6Wn4=]hfPrk>Rn7Jw0!&>Rn5>Rn9Lunw?&a2!,5<oq@@wqfdRlJj5Q~=d,#Y(~ARfcOuN]fdDKw;ay(}i!547E}j?cI#T(@5bV}iCbV}hdv(^^Tb?a40,b##Tbo!a*bR!a<b|a/!aKai!aU[yK=]o^g:v>ReGJwPZtK<7Rh+h<~El,Pv#5ReR@awwxjCg,ulRjDJv6&!]j!z?aQeeg>w=Sh<eeJw;!&axEzOg,Qosc!#*:wkeJ]eJ>x'h-u(!%Ro.w~h.zPdNZ(X,Ya![x{;9ReY;wkgxRiF:x?ap#Y&RmUg<s2Rkod]+UY0TZ'!a&A9sw<=bczLNvuw{gqzNhJwSaxRmCKuLay!#&s_Rf-55b^{uJvZa!!c%#(55Ri654wmiu5RiuawLu,vp!+}^%b_}Y9;wkgxba}o>A9:=b^}zKuh=a''!3awRk3c*'!#aHRk6c+Z&Rk5Rk4Jv)&!awRjSawd9*`#0?C2@EzMj8u<uJ5RmbjQrquJu3x,k>uq@_+=ayb^|W~ARkEOuN]k@7dhzV^X/X&a-#zRzSb`zXcJzTT#2WkVKvDBzW!%FzY9;5bbzWjQrquJu3Jw3%!b`zU=ayb^zQd:#X(T-a!6Vyywxh}=b]{Jg=u1RiAdGp~qHtzv!w(wA+a+a;<!aJaYai'anasb(=azRmV:Cbb{MLq2vb!%')RjuRjrRjtRjqx3jnqCw3!%')Rk(Rk+Rk&Rk)Lq2vb!%')Rj{RjxRjzRjwLq2vb!%')RjsRjpRjfRjex3jcqCw3!%')Rk'Rk*RjkRjl9<CbbzfOu4ARhxLq2vb!%')RjyRjvRjhRjgx=joq*uKvb!%')+-Rk.Rk%Rj~Rk-Rk#Rj}x=jdq*uKvb!%')+-Rk,Rk!Rj|RjmRjjRjidAq&qKs@uAv8Aa.'*-a@a&0!aM@a5[y73Dsy3Ds|3Dt):wxgI2sHJwJZt.~Gqxwsf0ikrzt}Rl0Jvy_[xj~HqzKv_A|D!&WfP8axRoVcf,U#k(v]v+ueunaXRf1Ju}'!g8u#Ri=jQw!sCunLprq>!,')~<5qeGzq9F{W=c##%s5au:5aU3CBE|;d4#X(D!a&6Vygx(b;#(=]ed?C2F{N<capoq2r[a&!aPa9,'Pw;5s:@@=I|,55w_h|@@=IzcP~=x'fCqB_2Wl2>aU@@=I|1OuNBc1Z+jTqIsBv=Wlc~Cw`fl2WlZ~AcTa%!Z+jTqIsBv=Wlb~Cw`fh2WlYk+uNqJsBv=WlSg,u3dca3#UXaMYa)TaB-=cM|7T#<bI}l5@B932:aV2G{BOuNBJq:|M!5Ezt=<B=C@a^<B57@2F{v>cB{/T#=ay<bI{3Jv6!a.6BKq0ah&+!5E}HP~Ef{978BaU@@=Iza<7d#.Y#978BaU@@=IzH~AJq0!(@@=IzG978BaU@@=IzFe,aU*Y&^^^bvJb,b:bFad!a,c2Ta>aL.bo6!a#CbTa'T#Re{2Wlh2@G{yg6t~Ro_NvdRfticuRQRllJv3&!x&c|zs@Jw3!%RflwpfkRlpKuL;%(!Re<@G|C2GzdhIvuBwgjAg-u0RjAKQB%!(GzZ@G|5NuuRl7d='T+Y#Vy[g<v~Rm!==G|>JvA!)@wma=]m1ifuaw&RmnLs@vT'!|/+[y,g:v>ReTJw1!#qX=x!eC{bLu+wT&)ZtZauq_~Graci&U#F|89:r_Lupvq!.)&2RlG8RfaC=x!eF{_h?rpWlmd&'!#X|&]k::xJey#`'T|+<E|&2@H|%dE#(^,g;u.RiEg6vjRiC9xCkA{O|zY#g=ucRmXKs0@!&*@G|m@awRknJuh!,3d(}gY}eJvj!%Rm):Jw3!%Rm+Rm-Ls0w(&!a(a#@b[|6cZ#X'7RkxWgAOu4ARn'dH'U#Y*Vz-Wm'CARm}d]*#a%^a*T'aK!a<9bV{PC=p*Jw4!&SgxcbB5r]idw(wBRmF7xFkt#&`(Rm/Rm8E|!JuY_9:Rl5=wrgr2:bbxd@xXfB(a*#T+!.X0X1Ta/a'T&RlDRfL>RlyARl9b[z[>RfZ:RlL:RfRwlg/ARl;9;RlxKv,A/!%7s69<74=BA5ba{-8Bde#`a<XaKYa1,a'P~=wxfB2bZ}}?C972@@=I}r8@55B9;5bb}G978B2@@=aybb}3j3vLv;<Jw3&!>Rfk=ayb^}4~Ad1#`*@@=aybb{w2@>==<bbz]dx+UY#^UaF!a9!bB'Ya1.!ajXa#%olRhD[y=3Dt#Ov5BrHKuMB%!(Rf^Wep~HrJwkiQjKr|~FRg)Ku+D#'!t5~GrF~?rDdV)UY,Z/_7RkuG{<~BrBg,rlsO:235B@bX}|d?a1!#`(6Vyn5@d##Y+jTv|vV~EfIj]uNpn~FRfH7Lq2vb1!a9-978BaU@@=Iz9978BbU}#~AJq0!(@@=Iz8978BaU@@=Iz7~AJQ|}!978BbU}!JvkaK!AdUa21-U#`a+(g/vsRn~Ou!5RPj:rmu9WhOjXuvvNr}:RhAj^v(pyw8unRn[kPr}p|u7vwv]RiSBd;pppzq@qHQa?(b.!a.a`@.|xa(hFv;Wiyj5uuv-7Riw~Cw`fg2WlU978BbU|wOuNBJqG!(P~EfD~CRlQcZ#X,k)u3vWs@u2]ksg;wEx'f@q1_2Wg.j]uNpn~FRfqJv]!15x'h{qG!(@@=IzK~CRl^j6v(us5x4i,#T(2WmY?C2F{1>Kq<aj1!*jTqIsBv=Wld~Cw`fj2Wl[j`v0u*~>RlT=c>Z,k#u3vWs@u2]kq<c1Z+jTqIsBv=Wle~Cw`fn2Wl]dn1#c(a(b^a2!b/bAT(bj!aDa7bu,a_a{c0!2T0g:v>ReD2@G{42@G{5~DpM~<5rc=Bx6i>{RT#RnI@zCx]y]z:2Jv[!zr5Awyk]9]k]dD(Y+X#6Vz.g=wKtgwhaCwgmTWj2Lu,w%_+/[y-B;b^xeg3u3Rj-2@bX{*KrJ<!+'@Wg(g?QRlC@Jv`!%b[zIwsfII}8JQ_@w|kW|=Jv(%!AqcOuNBJvEzh!bYzjLs@wP#(0!oy@>RkdJwMZtc3Dtd@BcG#T'9bWxg2@2Fznd*#Y+;2x'c}w<zizixNgwa#Z'U+!/!a'!a+w~g~z6wcn{Rn}wcnzRn|5Rh%=]nJg5vuRmvNvdRlvcprJu}w*az*a#!%.a.'Bot9qT]kj@Wg'ay2Gzv@Jv`!%b[zEwsfHI}1;ck#Ux`<Cbbx_Lu+w!a&0*!wko*wwo,So,}6Juqxf!E}PigQuyRm`d3(`#8>Rn%:A5B;bZ~%KvhCa!a2!x>k7#Uxb@b{#xaRk7Jw0!)>wwhlShl}6>wwhmShm}6CJvB!.x'hhvj{!!5Bwkhhbaz}x'hivjz~!5Bwkhibaz|xEhTrNu,v-vpD!a%&/)a3a.,%Ro2t[CE{)@3re9b]{%wjo09:rgc:Z&Ro6=<riifuaw&RmoKrNA!%(Ro4>Ro89;Ri`dSaL'UYzxZb)7Rka3xRhT&!,!#^1U}vbaz{>>@=be}yC@:D5bazzKu+A&!}{?ba}y>>@=be}wxBh[t`u~vJvr!%a!a()a,a0a4RoC=]o;Ju(!%RoGRhdwjh`=]oAg>w#Ro?g5vuRo=NvdRl|Ku]C.!&;RoEJvB!%RoORoMBx'h[v+_?w~h`}~5?w~hd~!xKh]oiptu-utv.vp!#%&a30a@a'a+(a/aOp(o~p!RoDJu(!%RoHRhewjha=]oBNvdRl}g>w#Ro@g5vuRo>c[#X']o<CauRoRAd-#Y':RkpauRoQKu]C.!&;RoFJvB!%RoNRoPBx'h]v+_?w~ha}t5?w~he}ue!/UbhYacXaW^Tc&a;b:a-c/#b&aja1(!cL+!bKbt!bmcRc9aIc?8[yW3Dtt94Rg`Jv}!&SiRMzBhEebShEMNuPRe>x7gL#TzuwjirRipc<Z&>on;>z=h-MSh.Mwqczx'a7vj&!>Re4@=ResJt__NuPRi*NuPRi)j]uNr|~FRfzKrJ>_+@Wfy@Wf]2WocKrJ<!+'@Wg%g/QRl@@Jv`!&awRl<wsfFIzgLu(w*!.*&ShBMwvhIRhI9;RhNx1hK'!#Sn]Mx1hK~0!#:2<H~7cNu+w7D*'1ZtW>Rn1~?rOc:Z&Rn2=<rQ<7wjh&=BSnLMc]#X(6Vz)w[b=a!U#9wzgMc3#&(RgMRitRis<x,gKt`ax!&+SioM=BSilMc3#&(RgKRinRimKurB,!&SiQMzBhDebShDM6BJQ!(P~Efx978B2@@=I}WLrJw!!,a*&@G}O@9wkibRid@@x'fKwC!&SlDMSfLMjUv~Q~EfKKv3@a+!(hFv-]mpx/hYZ(C5RiWz<o/MwkhY?So/M@x,gbvfB*&!SgEM:SoeeehFu3:Rgbda(,^TZa)X/7Sg[eb:2RgI~BrMC@wgkc:wwkcRerx3h(uUvK!&*,SnOM4Sh*MArRg;wHRh(x=h;rJvPwI!a4',a'0@Wg&=BSh/Mg>w=Rh=g3w*wwgGRgGcW(X#;Sg}M2Gzk@Jv`!&awRl=wsfGIz`dKZ*T'Y-:RhR7RhQg5u-p`j6v(us5d,#Y+~Awkia?RicOuNBwkibba}Ld6p~tyu_vbAa'a+!a/'a3aEa8a!>Sh,ebJv{!&Sh@ebSaReb9;SgwebNuPRi(NvdRl)NuPRi'hHu^<Rm^Jvv_@Wl(g;u1Si/ebKu'B&!*Sh?eb@Wl'z@aPeb95Si.ebcpputyvjB)!,&a+0a%ShAMWeK@G}C@WfJ9;RhMwvhH9w{ia}ix,hJvRA1(!zAn[MRhHx1hJ~*!#hFv(BSn[MBJQ!(@@=I~'978B2@@=I}2db.Ua<'X}+T#a0XaG2G}E;wkg|wuh!Rh!x,hZu,@)!&So0MVy)C5RiXACJvB!&5RiY5RiZg8w)cG}*T#2@bU}=KsA>(!a.3wkhZba~(x,h^u(A!&(SoCMRhb5Bz=h[eb?w~hb~6x,h_u(A!&(SoDMRhc5Bz=h]eb?w~hc~6e)aA1T#T,^^^c-bMb&blcPaP(a/!0!bA=b5c@a(!bfbrc#2afwmhARnjwchORnp2Wlf3DtsNvdRl-2@wpa<]m0bx(#:awRk2@Jw3!%RfhwpfgRlnKQB%!(G{V@G|'NuuRl6d='T+Y#VyUg<v~Rl~==G|<Jv+'!aYShC}6@B<5?ba~8@Jw3'!g2QRljhLrpWlOd+#Y'g.w'rIg>w*wgj@g-u0Rj@Lu+wT&)ZtUauq]~GrGci&U#F|39:rELrNvj!.%*RhCwunfw~nf~:9;Ri]>wtnhg;wHRnhx3hDs@v~!/+'@Wfr@9RkSNu&Rlo=@<5GzoKs0@_+@Wl+@awRkmJuh!-3d(}pY#qWJvj!%Rm(:Jw3!%Rm,Rm*de&!1U-U#`)Re;@G|.@9Ri82@wjfvRlq=@<5GzpLvOvr!).&2RlF8Rf`C=x!eE{.Jw3_g2QRlkhLrpWlPde(!#U{s,UXa*Ta'[y'g:v>ReS;x0PZ&RnlRnn~HrKJw1}f!=x!eB|2w]aP(#Xa&a*Ta.Ua2a7=]iOd'#Y&Ro&WnWg;u.RiDg6vjRiBNvdRlzhNvj]nYJuW_2Wm3x)kFze{9d])!a.!,Y01!#&aC!a3RndC=ox~BrC@2b^{pg,rlse7x'ksuq!%Rm.E{xidw(wBRmGx9o+)X#wwo-So-}69:Rl4@xSf@a#XZ'X)X,Ta(/ARl8b[xc>RfY:RlI:RfQwlg.ARl:9;Rlwdn'#^XafaQa1X1TaHTa)@b[{zcZ#X'7RkwWg@Ou4ARn&x)kG#{,g7u/RkGdH'U#Y*Vz'Wm&CARm|bx#(A]gUbUzJj9Q~=d,#Y(56H}l978H{U7d,0#U*2>ABb_xZ978BbU{e~AJQ{g!978BbU{hxMh?ad{oUYZ.x1h?{l!#:2<H{mx3n[t{vl!,&a%3Ro(z=iS}6ARnr=Bwsn^wvn`Rnbd`*T}B0!#^X'BG{c9b]{a>>@=be}F?JvS!&BG{d7BG}(Bde#`a1X,Ya@!a'P~=wxf@2bZ}I56B2@@=aybb}08@55B9;5bb}<j3vLv;<Jw3&!>Rfg=ayb^}&OuNBKuLA!)a!P~=x#fD{f2@>==<bbzl?C972@@=Ix^d6rSu,v7w*C(0a)a6#B+a%!sQ[y?3Dt%3[xn~<5rLOu!5p@Ku+D#'!t7~GrP~?rNKvlaya7'!h+v-5qMg=t|cd,U#5AAaa5Abb{S@52B5@a[@52B5Gx[iXueu;d<#`a(!/549C;ag>23ExY5@Dah89b^~689Jv)!~2b[~1Lv'w(%*!a#bX|aPrmawRe]keu7uhv-q6rxu,q`xTo]/a5aU!bNaDXbi!b-!ao!b<bwA!#5@B932:aV2G|:d-)Y#hJrL>RhG<7@C5<H|_=Cau:5aj5@B932:bJ|ng>vIbs)#?C2F|9jPv0w.vISh-MKvUaz(.!9ABbb|[5;5<H|Eg>unwfh;9:4E|YjQsBt|vjx'hYq3!(?C2F|J:2<BaY?C2F|GOu!5x,g|p{ah!-(?C2F|c9:4E|OjXuvvNr}:Rh&i[w*t|cd+U#jJvsu)vsSn~Mkfrmu9p}u7vwv]So!McW#Xa!ax5@A5aY:5;5<H|>kJv~vYrquJu3x4ib#T)2@SmZM?C2F|Bj:rmu9@xPhI(a*a#U#`a3-5Abb|L~@:RhK9:4E|0@52B5G|#C::aY?C2F|-:2<BaY?C2F|.5Jvk!a)javYrquJu3x4ia#T)2@SmYM?C2F|HAxPhH(!a#U#`a*-5Abb|4~@:RhJ9:4E|R@52B5G|F:2<BaY?C2F|Sc^#Xa2j=Qq5CJvB!-g<v{z;hhM?C2F|Zi[vrv{z;hiM?C2F|XKsA>!a)-g<v{z;h[eb?C2F|]i[vrv{z;h]eb?C2F|^iZu.vix,hZq3ah!.(?C2F|QOu!5ShXM:2<BaY?C2F|P", 13494, 2713, 49, 25, 61);
+
+// node_modules/entities/dist/internal/bin-trie-flags.js
+var BinTrieFlags;
+(function(BinTrieFlags2) {
+  BinTrieFlags2[BinTrieFlags2["VALUE_LENGTH"] = 49152] = "VALUE_LENGTH";
+  BinTrieFlags2[BinTrieFlags2["FLAG13"] = 8192] = "FLAG13";
+  BinTrieFlags2[BinTrieFlags2["BRANCH_LENGTH"] = 8064] = "BRANCH_LENGTH";
+  BinTrieFlags2[BinTrieFlags2["JUMP_TABLE"] = 127] = "JUMP_TABLE";
+  BinTrieFlags2[BinTrieFlags2["VALUE_MASK"] = 8191] = "VALUE_MASK";
+})(BinTrieFlags || (BinTrieFlags = {}));
+
+// node_modules/entities/dist/decode.js
+var CharCodes;
+(function(CharCodes2) {
+  CharCodes2[CharCodes2["AMP"] = 38] = "AMP";
+  CharCodes2[CharCodes2["NUM"] = 35] = "NUM";
+  CharCodes2[CharCodes2["SEMI"] = 59] = "SEMI";
+  CharCodes2[CharCodes2["EQUALS"] = 61] = "EQUALS";
+  CharCodes2[CharCodes2["ZERO"] = 48] = "ZERO";
+  CharCodes2[CharCodes2["NINE"] = 57] = "NINE";
+  CharCodes2[CharCodes2["LOWER_A"] = 97] = "LOWER_A";
+  CharCodes2[CharCodes2["LOWER_X"] = 120] = "LOWER_X";
+})(CharCodes || (CharCodes = {}));
+var TO_LOWER_BIT = 32;
+var CONSUMED_SHIFT = 21;
+var CODE_POINT_MASK = 2097151;
+var CONSUMED_OVERFLOW = 2047;
+var longNumericConsumed = 0;
+function unpackConsumed(packed) {
+  const consumed = packed >>> CONSUMED_SHIFT;
+  return consumed === CONSUMED_OVERFLOW ? longNumericConsumed : consumed;
+}
+function isNumber(code2) {
+  return code2 - CharCodes.ZERO >>> 0 <= 9;
+}
+function isHexadecimalCharacter(code2) {
+  return (code2 | TO_LOWER_BIT) - CharCodes.LOWER_A >>> 0 <= 5;
+}
+function isAlpha(code2) {
+  return (code2 | TO_LOWER_BIT) - CharCodes.LOWER_A >>> 0 <= 25;
+}
+function isEntityInAttributeInvalidEnd(code2) {
+  return code2 === CharCodes.EQUALS || isAlpha(code2) || isNumber(code2);
+}
+var EntityDecoderState;
+(function(EntityDecoderState2) {
+  EntityDecoderState2[EntityDecoderState2["EntityStart"] = 0] = "EntityStart";
+  EntityDecoderState2[EntityDecoderState2["NumericStart"] = 1] = "NumericStart";
+  EntityDecoderState2[EntityDecoderState2["NumericDecimal"] = 2] = "NumericDecimal";
+  EntityDecoderState2[EntityDecoderState2["NumericHex"] = 3] = "NumericHex";
+  EntityDecoderState2[EntityDecoderState2["NamedEntity"] = 4] = "NamedEntity";
+})(EntityDecoderState || (EntityDecoderState = {}));
+var DecodingMode;
+(function(DecodingMode2) {
+  DecodingMode2[DecodingMode2["Legacy"] = 0] = "Legacy";
+  DecodingMode2[DecodingMode2["Strict"] = 1] = "Strict";
+  DecodingMode2[DecodingMode2["Attribute"] = 2] = "Attribute";
+})(DecodingMode || (DecodingMode = {}));
+function determineBranch(decodeTree, current, nodeIndex, char) {
+  const branchCount = (current & BinTrieFlags.BRANCH_LENGTH) >> 7;
+  const jumpOffset = current & BinTrieFlags.JUMP_TABLE;
+  if (jumpOffset) {
+    if (branchCount === 0) {
+      return char === jumpOffset ? nodeIndex : -1;
+    }
+    const slot2 = char - jumpOffset;
+    if (slot2 >>> 0 >= branchCount)
+      return -1;
+    const stored = decodeTree[nodeIndex + slot2];
+    return stored === 0 ? -1 : nodeIndex + branchCount + stored - 1 & 65535;
+  }
+  if (branchCount === 0)
+    return -1;
+  const packedKeySlots = branchCount + 1 >> 1;
+  const branchEnd = nodeIndex + packedKeySlots + branchCount;
+  for (let index = 0; index < branchCount; index++) {
+    const packed = decodeTree[nodeIndex + (index >> 1)];
+    const key = packed >> ((index & 1) << 3) & 255;
+    if (key === char) {
+      const pointerIndex = nodeIndex + packedKeySlots + index;
+      return branchEnd + decodeTree[pointerIndex] & 65535;
+    }
+    if (key > char)
+      return -1;
+  }
+  return -1;
+}
+function readTrieValue(decodeTree, nodeIndex, valueLength) {
+  if (valueLength === 1) {
+    return String.fromCharCode(decodeTree[nodeIndex] & BinTrieFlags.VALUE_MASK);
+  }
+  if (valueLength === 2) {
+    return String.fromCharCode(decodeTree[nodeIndex + 1]);
+  }
+  return String.fromCharCode(decodeTree[nodeIndex + 1], decodeTree[nodeIndex + 2]);
+}
+function parseNumericEntity(input, numberStart, inputLength) {
+  let offset = numberStart + 1;
+  let cp = 0;
+  let digitStart = offset;
+  if (offset < inputLength && (input.charCodeAt(offset) | TO_LOWER_BIT) === CharCodes.LOWER_X) {
+    offset += 1;
+    digitStart = offset;
+    while (offset < inputLength) {
+      const char = input.charCodeAt(offset);
+      if (isNumber(char)) {
+        cp = cp * 16 + (char - CharCodes.ZERO);
+      } else if (isHexadecimalCharacter(char)) {
+        cp = cp * 16 + ((char | TO_LOWER_BIT) - CharCodes.LOWER_A + 10);
+      } else {
+        break;
+      }
+      offset += 1;
+    }
+  } else {
+    while (offset < inputLength) {
+      const digit = input.charCodeAt(offset) - CharCodes.ZERO;
+      if (digit >>> 0 > 9)
+        break;
+      cp = cp * 10 + digit;
+      offset += 1;
+    }
+  }
+  if (offset === digitStart)
+    return 0;
+  if (offset < inputLength && input.charCodeAt(offset) === CharCodes.SEMI) {
+    offset += 1;
+  }
+  if (cp > 1114111)
+    cp = 1114112;
+  let consumed = offset - numberStart;
+  if (consumed >= CONSUMED_OVERFLOW) {
+    longNumericConsumed = consumed;
+    consumed = CONSUMED_OVERFLOW;
+  }
+  return consumed << CONSUMED_SHIFT | cp;
+}
+function decodeWithTrie(input, isStrict, isAttribute) {
+  const decodeTree = htmlDecodeTree;
+  let offset = input.indexOf("&");
+  if (offset < 0)
+    return input;
+  const inputLength = input.length;
+  let chunkStart = 0;
+  let result = "";
+  const root = decodeTree[0];
+  const rootJumpOffset = root & BinTrieFlags.JUMP_TABLE;
+  const rootBranchCount = (root & BinTrieFlags.BRANCH_LENGTH) >> 7;
+  do {
+    const entityStart = offset + 1;
+    const firstChar = input.charCodeAt(entityStart);
+    let consumed;
+    let value2;
+    if (firstChar === CharCodes.NUM) {
+      const packed = parseNumericEntity(input, entityStart, inputLength);
+      consumed = unpackConsumed(packed);
+      if (isStrict && consumed > 0 && input.charCodeAt(entityStart + consumed - 1) !== CharCodes.SEMI) {
+        consumed = 0;
+      }
+      value2 = consumed === 0 ? "" : codePointToString(packed & CODE_POINT_MASK);
+    } else if (isAlpha(firstChar)) {
+      consumed = 0;
+      value2 = "";
+      const rootSlotIndex = firstChar - rootJumpOffset;
+      let nodeIndex;
+      if (rootSlotIndex >>> 0 < rootBranchCount) {
+        const stored = decodeTree[1 + rootSlotIndex];
+        nodeIndex = stored === 0 ? -1 : rootBranchCount + stored & 65535;
+      } else {
+        nodeIndex = -1;
+      }
+      let bestNodeIndex = 0;
+      let bestValueLength = 0;
+      let current = nodeIndex < 0 ? 0 : decodeTree[nodeIndex];
+      let index = entityStart + 1;
+      trie: while (index < inputLength) {
+        while (
+          // Value-less, non-run node with a nonzero jump offset.
+          (current & (BinTrieFlags.VALUE_LENGTH | BinTrieFlags.FLAG13)) === 0 && (current & BinTrieFlags.JUMP_TABLE) !== 0
+        ) {
+          const jumpOffset = current & BinTrieFlags.JUMP_TABLE;
+          const branchCount = (current & BinTrieFlags.BRANCH_LENGTH) >> 7;
+          if (branchCount === 0) {
+            if (input.charCodeAt(index) !== jumpOffset)
+              break trie;
+            nodeIndex += 1;
+          } else {
+            const slot2 = input.charCodeAt(index) - jumpOffset;
+            if (slot2 >>> 0 >= branchCount)
+              break trie;
+            const stored = decodeTree[nodeIndex + 1 + slot2];
+            if (stored === 0)
+              break trie;
+            nodeIndex = nodeIndex + branchCount + stored & 65535;
+          }
+          current = decodeTree[nodeIndex];
+          index += 1;
+          if (index >= inputLength)
+            break trie;
+        }
+        if ((current & (BinTrieFlags.VALUE_LENGTH | BinTrieFlags.FLAG13)) === BinTrieFlags.FLAG13) {
+          const runLength = (current & BinTrieFlags.BRANCH_LENGTH) >> 7;
+          if (input.charCodeAt(index) !== (current & BinTrieFlags.JUMP_TABLE)) {
+            break;
+          }
+          index += 1;
+          const remaining = runLength - 1;
+          let wordIndex = nodeIndex + 1;
+          let charIndexInPacked = 0;
+          for (; charIndexInPacked + 1 < remaining; charIndexInPacked += 2) {
+            const packed = decodeTree[wordIndex];
+            if (input.charCodeAt(index) !== (packed & 255))
+              break trie;
+            index += 1;
+            if (input.charCodeAt(index) !== (packed >> 8 & 255))
+              break trie;
+            index += 1;
+            wordIndex += 1;
+          }
+          if (charIndexInPacked < remaining) {
+            if (input.charCodeAt(index) !== (decodeTree[wordIndex] & 255))
+              break;
+            index += 1;
+          }
+          nodeIndex += 1 + (runLength >> 1);
+          current = decodeTree[nodeIndex];
+          continue;
+        }
+        const valueLength = current >>> 14;
+        const char = input.charCodeAt(index);
+        if (valueLength !== 0) {
+          if (char === CharCodes.SEMI) {
+            consumed = index - entityStart + 1;
+            value2 = valueLength === 1 ? String.fromCharCode(current & BinTrieFlags.VALUE_MASK) : readTrieValue(decodeTree, nodeIndex, valueLength);
+            break;
+          }
+          if (!isStrict && (current & BinTrieFlags.FLAG13) === 0) {
+            consumed = index - entityStart;
+            bestNodeIndex = nodeIndex;
+            bestValueLength = valueLength;
+          }
+          if (valueLength === 1)
+            break;
+        }
+        const next2 = determineBranch(decodeTree, current, nodeIndex + (valueLength || 1), char);
+        if (next2 < 0)
+          break;
+        nodeIndex = next2;
+        current = decodeTree[nodeIndex];
+        index += 1;
+      }
+      if (value2 === "") {
+        const finalVL = current >>> 14;
+        if (finalVL !== 0 && !isStrict && (current & BinTrieFlags.FLAG13) === 0) {
+          consumed = index - entityStart;
+          bestNodeIndex = nodeIndex;
+          bestValueLength = finalVL;
+        }
+        if (consumed > 0) {
+          value2 = readTrieValue(decodeTree, bestNodeIndex, bestValueLength);
+        }
+      }
+    } else {
+      consumed = 0;
+      value2 = "";
+    }
+    if (consumed === 0 || isAttribute && firstChar !== CharCodes.NUM && input.charCodeAt(entityStart + consumed - 1) !== CharCodes.SEMI && entityStart + consumed < inputLength && isEntityInAttributeInvalidEnd(input.charCodeAt(entityStart + consumed))) {
+      offset = entityStart;
+    } else {
+      if (chunkStart < offset) {
+        result += input.slice(chunkStart, offset);
+      }
+      result += value2;
+      offset = chunkStart = entityStart + consumed;
+    }
+    if (input.charCodeAt(offset) !== CharCodes.AMP) {
+      offset = input.indexOf("&", offset);
+    }
+  } while (offset >= 0);
+  return result + input.slice(chunkStart);
+}
+function decodeHTMLStrict(htmlString) {
+  return decodeWithTrie(htmlString, true, false);
+}
+
+// node_modules/entities/dist/index.js
+var EntityLevel;
+(function(EntityLevel2) {
+  EntityLevel2[EntityLevel2["XML"] = 0] = "XML";
+  EntityLevel2[EntityLevel2["HTML"] = 1] = "HTML";
+})(EntityLevel || (EntityLevel = {}));
+var EncodingMode;
+(function(EncodingMode2) {
+  EncodingMode2[EncodingMode2["UTF8"] = 0] = "UTF8";
+  EncodingMode2[EncodingMode2["ASCII"] = 1] = "ASCII";
+  EncodingMode2[EncodingMode2["Extensive"] = 2] = "Extensive";
+  EncodingMode2[EncodingMode2["Attribute"] = 3] = "Attribute";
+  EncodingMode2[EncodingMode2["Text"] = 4] = "Text";
+})(EncodingMode || (EncodingMode = {}));
+
+// node_modules/linkify-it/build/index.mjs
+var REBuilder = class {
+  src_Any = Any.source;
+  src_Cc = Cc2.source;
+  src_Z = Z3.source;
+  src_P = P3.source;
+  src_ZPCc = [
+    this.src_Z,
+    this.src_P,
+    this.src_Cc
+  ].join("|");
+  src_ZCc = [this.src_Z, this.src_Cc].join("|");
+  cache = {};
+  opts = {
+    maxLength: 1e4,
+    urlAuth: false,
+    schema_names: []
+  };
+  constructor(opts = {}) {
+    this.opts = {
+      ...this.opts,
+      ...opts
+    };
+  }
+  set(opts = {}) {
+    this.opts = {
+      ...this.opts,
+      ...opts
+    };
+    this.cache = {};
+    return this;
+  }
+  escapeRE(str2) {
+    return str2.replace(/[.?*+^$[\]\\(){}|-]/g, "\\$&");
+  }
+  nestedPairRE(open, close, depth = 4) {
+    const openRE = this.escapeRE(open);
+    const closeRE = this.escapeRE(close);
+    const atom = `(?:(?!${this.src_ZCc}|${openRE}|${closeRE}).)`;
+    let pair = `${openRE}${atom}{0,1000}${closeRE}`;
+    for (let level = 2; level <= depth; level++) pair = `${openRE}(?:${atom}|${pair}){0,1000}${closeRE}`;
+    return pair;
+  }
+  get_text_separators() {
+    return this.cache.text_separators ??= /[><\uff5c]/;
+  }
+  get_pseudo_letter() {
+    return this.cache.src_pseudo_letter ??= new RegExp(`(?:(?!${this.get_text_separators().source}|${this.src_ZPCc})${this.src_Any})`);
+  }
+  get_ipv4_addr() {
+    return this.cache.src_ip4 ??= /* @__PURE__ */ new RegExp("(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])[.]){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])");
+  }
+  get_ipv6_addr() {
+    const h16 = "[0-9A-Fa-f]{1,4}";
+    const ls32 = `(?:(?:${h16}:${h16})|${this.get_ipv4_addr().source})`;
+    return this.cache.src_ip6_addr ??= new RegExp(`(?:(?:${h16}:){6}${ls32}|::(?:${h16}:){5}${ls32}|(?:${h16})?::(?:${h16}:){4}${ls32}|(?:(?:${h16}:){0,1}${h16})?::(?:${h16}:){3}${ls32}|(?:(?:${h16}:){0,2}${h16})?::(?:${h16}:){2}${ls32}|(?:(?:${h16}:){0,3}${h16})?::${h16}:${ls32}|(?:(?:${h16}:){0,4}${h16})?::${ls32}|(?:(?:${h16}:){0,5}${h16})?::${h16}|(?:(?:${h16}:){0,6}${h16})?::)`);
+  }
+  get_ipv6_url_host() {
+    return this.cache.src_ip6_host ??= new RegExp(`\\[${this.get_ipv6_addr().source}\\]`);
+  }
+  get_ipv6_mail_host() {
+    return this.cache.src_ipv6_mail_host ??= new RegExp(`\\[IPv6:${this.get_ipv6_addr().source}\\]`);
+  }
+  get_auth() {
+    return this.cache.src_auth ??= new RegExp(`(?:(?:(?!${this.src_ZCc}|[@/\\[\\]()]).){1,50}@)?`);
+  }
+  get_port() {
+    return this.cache.src_port ??= /* @__PURE__ */ new RegExp("(?::(?:6(?:[0-4]\\d{3}|5(?:[0-4]\\d{2}|5(?:[0-2]\\d|3[0-5])))|[1-5]?\\d{1,4}))?");
+  }
+  get_host_terminator() {
+    return this.cache.src_host_terminator ??= new RegExp(`(?=$|${this.get_text_separators().source}|${this.src_ZPCc})(?!${this.opts["---"] ? "-(?!--)|" : "-|"}_|:\\d|\\.-|\\.(?!$|${this.src_ZPCc}))`);
+  }
+  get_path_terminator() {
+    return this.cache.src_path_terminator ??= new RegExp(`${this.src_ZPCc}|${this.get_text_separators().source}`);
+  }
+  get_path() {
+    return this.cache.src_path ??= new RegExp(`(?:[/?#](?:${this.nestedPairRE("[", "]")}|${this.nestedPairRE("(", ")")}|${this.nestedPairRE("{", "}")}|\\"(?:(?!${this.src_ZCc}|["]).){1,100}\\"|\\'(?:(?!${this.src_ZCc}|[']).){1,100}\\'|\\'(?=${this.get_pseudo_letter().source}|[-])|\\.{2,20}[:]?[a-zA-Z0-9%/&]|\\.(?!${this.src_ZCc}|[.]|$)|` + (this.opts["---"] ? "\\-(?!--(?:[^-]|$))(?:-{0,19})|" : "\\-{1,20}|") + `,(?!${this.src_ZCc}|$)|;(?!${this.src_ZCc}|$)|\\!{1,20}(?!${this.src_ZCc}|[!]|$)|\\?(?!${this.src_ZCc}|[?]|$)|` + this.get_path_extra().source + `[\\\\/:%@#&=_~*]|(?!${this.get_path_terminator().source}).){1,${this.opts.maxLength}}|\\/)?`);
+  }
+  get_mail_name() {
+    return this.cache.src_mail_name ??= /* @__PURE__ */ new RegExp("[-!#$%&'*+/=?^_`{|}~a-zA-Z0-9](?:[-!#$%&'*+/=?^_`{|}~a-zA-Z0-9]|[.](?=[-!#$%&'*+/=?^_`{|}~a-zA-Z0-9])){0,63}");
+  }
+  get_xn() {
+    return this.cache.src_xn ??= /* @__PURE__ */ new RegExp("xn--[a-z0-9\\-]{1,59}");
+  }
+  get_tld() {
+    if (this.cache.tld) return this.cache.tld;
+    const tlds_src = [...new Set(this.opts.tlds || [])].sort().reverse().join("|");
+    this.cache.tld = new RegExp(`${tlds_src || "$#none#$"}|${this.get_xn().source}`);
+    return this.cache.tld;
+  }
+  get_domain_root() {
+    return this.cache.src_domain_root ??= new RegExp("(?:" + this.get_xn().source + `|${this.get_pseudo_letter().source}{1,63})`);
+  }
+  get_domain() {
+    return this.cache.src_domain ??= new RegExp("(?:" + this.get_xn().source + `|(?:${this.get_pseudo_letter().source})|(?:${this.get_pseudo_letter().source}(?:-|${this.get_pseudo_letter().source}){0,61}${this.get_pseudo_letter().source}))`);
+  }
+  get_url_host_port() {
+    return this.cache.url_host_port ??= new RegExp("(?:" + this.get_ipv6_url_host().source + `|(?:(?:(?:${this.get_domain().source})\\.){0,10}${this.get_domain().source}))` + this.get_port().source + this.get_host_terminator().source);
+  }
+  get_fuzzy_url_host_port() {
+    return this.cache.fuzzy_url_host_port ??= new RegExp("(?:" + (this.opts.fuzzyIP ? this.get_ipv4_addr().source + "|" : "") + `(?:(?:(?:${this.get_domain().source})\\.){1,10}(?:${this.get_tld().source})))` + this.get_host_terminator().source);
+  }
+  get_mail_host() {
+    return this.cache.src_mail_host ??= new RegExp("(?:" + this.get_ipv6_mail_host().source + `|(?:(?:(?:${this.get_domain().source})\\.){0,4}${this.get_domain().source}))` + this.get_host_terminator().source);
+  }
+  get_fuzzy_mail_host() {
+    return this.cache.src_fuzzy_mail_host ??= new RegExp("(?:" + this.get_ipv6_mail_host().source + `|(?:(?:(?:${this.get_domain().source})[.]){1,4}${this.get_domain_root().source}))` + this.get_host_terminator().source);
+  }
+  get_path_extra() {
+    return this.cache.src_path_extra ??= /* @__PURE__ */ new RegExp("");
+  }
+  get_fuzzy_mail_host_search() {
+    return this.cache.mail_fuzzy_host_search ??= new RegExp(`@${this.get_fuzzy_mail_host().source}`, "ig");
+  }
+  get_fuzzy_link_search() {
+    return this.cache.link_fuzzy_search ??= new RegExp(`(^|(?![.:/\\-_@])(?:[$+<=>^\`|\uFF5C]|${this.src_ZPCc}))(?:(?![$+<=>^\`|\uFF5C])${this.get_fuzzy_url_host_port().source}${this.get_path().source})`, "ig");
+  }
+  get_http_validator() {
+    return this.cache.http_validator ??= new RegExp("\\/\\/" + (this.opts.urlAuth ? this.get_auth().source : "") + this.get_url_host_port().source + this.get_path().source, "iy");
+  }
+  get_relative_proto_validator() {
+    return this.cache.relative_proto_validator ??= new RegExp((this.opts.urlAuth ? this.get_auth().source : "") + `(?:localhost|${this.get_ipv6_url_host().source}|(?:(?:${this.get_domain().source})[.]){1,10}${this.get_domain_root().source})` + this.get_port().source + this.get_host_terminator().source + this.get_path().source, "iy");
+  }
+  get_mail_name_validator() {
+    return this.cache.mail_name_validator ??= new RegExp(`(?:^|${this.get_text_separators().source}|"|\\(|${this.src_ZCc})(${this.get_mail_name().source})$`);
+  }
+  get_mailto_validator() {
+    return this.cache.mailto_validator ??= new RegExp(`${this.get_mail_name().source}@${this.get_mail_host().source}`, "iy");
+  }
+  get_schema_names() {
+    return this.cache.schema_names ??= new RegExp((this.opts.schema_names || []).map((name) => this.escapeRE(name)).join("|"));
+  }
+  get_schema_search() {
+    return this.cache.schema_search ??= new RegExp(`(^|(?!_)(?:[><\uFF5C]|${this.src_ZPCc}))(${this.get_schema_names().source})`, "ig");
+  }
+  get_schema_at_start() {
+    return this.cache.schema_at_start ??= new RegExp(`^${this.get_schema_search().source}`, "i");
+  }
+};
+var web_schema = {
+  validate: (text12, pos, self2) => {
+    const re3 = self2.re.get_http_validator();
+    re3.lastIndex = pos;
+    const m3 = re3.exec(text12);
+    return m3 ? m3[0].length : 0;
+  },
+  normalize: (match, self2) => self2.normalize(match)
+};
+var defaultSchemas = {
+  "http:": web_schema,
+  "https:": web_schema,
+  "ftp:": web_schema,
+  "//": {
+    validate: function(text12, pos, self2) {
+      const re3 = self2.re.get_relative_proto_validator();
+      re3.lastIndex = pos;
+      const m3 = re3.exec(text12);
+      if (m3) {
+        if (pos >= 3 && text12[pos - 3] === ":") return 0;
+        if (pos >= 3 && text12[pos - 3] === "/") return 0;
+        return m3[0].length;
+      }
+      return 0;
+    },
+    normalize: (match, self2) => self2.normalize(match)
+  },
+  "mailto:": {
+    validate: function(text12, pos, self2) {
+      const re3 = self2.re.get_mailto_validator();
+      re3.lastIndex = pos;
+      const m3 = re3.exec(text12);
+      return m3 ? m3[0].length : 0;
+    },
+    normalize: (match, self2) => self2.normalize(match)
+  }
+};
+var tlds_2ch = "a:cdefgilmnoqrstuwxz|b:abdefghijmnorstvwyz|c:acdfghiklmnoruvwxyz|d:ejkmoz|e:cegrstu|f:ijkmor|g:abdefghilmnpqrstuwy|h:kmnrtu|i:delmnoqrst|j:emop|k:eghimnprwyz|l:abcikrstuvy|m:acdeghklmnopqrstuvwxyz|n:acefgilopruz|o:m|p:aefghklmnrstwy|q:a|r:eosuw|s:abcdeghijklmnortuvxyz|t:cdfghjklmnortvwz|u:agksyz|v:aceginu|w:fs|y:et|z:amw";
+var tlds_default = "biz|com|edu|gov|net|org|pro|web|xxx|aero|asia|coop|info|museum|name|shop|\u0440\u0444";
+function unpackTlds() {
+  const result = tlds_default.split("|");
+  tlds_2ch.split("|").forEach((item) => {
+    const sep2 = item.indexOf(":");
+    const prefix = item.slice(0, sep2);
+    for (const suffix of item.slice(sep2 + 1)) result.push(prefix + suffix);
+  });
+  return result;
+}
+var defaultOptions = {
+  fuzzyLink: false,
+  fuzzyEmail: true,
+  fuzzyIP: false,
+  "---": false,
+  tlds: unpackTlds(),
+  urlAuth: false,
+  maxLength: 1e4
+};
+var Match = class {
+  /** Prefix (protocol) for matched string. Empty for fuzzy links. */
+  schema;
+  /** First position of matched string. */
+  index;
+  /** Next position after matched string. */
+  lastIndex;
+  /** Matched string. */
+  raw;
+  /** Normalized text of matched string. */
+  text;
+  /** Normalized URL of matched string. */
+  url;
+  constructor(text12, schema, index, lastIndex) {
+    const raw = text12.slice(index, lastIndex);
+    this.schema = schema.toLowerCase();
+    this.index = index;
+    this.lastIndex = lastIndex;
+    this.raw = raw;
+    this.text = raw;
+    this.url = raw;
+  }
+};
+var LinkifyIt = class {
+  __opts__;
+  __schemas__;
+  re;
+  /**
+  * Creates new linkifier instance.
+  *
+  * By default understands:
+  *
+  * - `http(s)://...` , `ftp://...`, `mailto:...` & `//...` links
+  * - "fuzzy" emails (foo@bar.com).
+  *
+  * See {@link LinkifyConstructorOptions} for available options.
+  *
+  * @param options Recognition options.
+  *
+  * @example
+  * ```javascript
+  * import { LinkifyIt } from 'linkify-it'
+  *
+  * const linkify = new LinkifyIt({ fuzzyLink: true })
+  *
+  * linkify
+  *   .tlds(require('tlds'))       // Reload with full TLD list
+  *   .tlds('onion', true)         // Add unofficial `.onion` domain
+  *   .add('ftp:', null)           // Disable `ftp:` protocol
+  *   .set({ fuzzyIP: true })      // Enable IPs in fuzzy links
+  *
+  * console.log(linkify.test('Site github.com!')) // true
+  * console.log(linkify.match('Site github.com!'))
+  * ```
+  */
+  constructor(options = {}) {
+    const { rebuilder, ...linkifyOptions } = options;
+    this.__opts__ = {
+      ...defaultOptions,
+      ...linkifyOptions
+    };
+    this.__schemas__ = { ...defaultSchemas };
+    this.re = rebuilder || new REBuilder();
+    this.re.set({
+      ...this.__opts__,
+      schema_names: Object.keys(this.__schemas__)
+    });
+  }
+  /**
+  * Add new rule definition.
+  *
+  * `schema` is a link prefix (usually, protocol name with `:` at the end,
+  * `skype:` for example). `linkify-it` makes sure that prefix is not
+  * preceded with alphanumeric char and symbols. Only whitespaces and
+  * punctuation allowed.
+  *
+  * `definition` is a rule to check tail after link prefix. To disable an
+  * existing rule, pass `null`.
+  *
+  * @param schema Rule name (fixed pattern prefix).
+  * @param definition Schema definition, or `null` to disable the rule.
+  *
+  * See [twitter mentions example](https://github.com/markdown-it/linkify-it/blob/master/examples/twitter.mjs).
+  */
+  add(schema, definition = null) {
+    if (!definition) delete this.__schemas__[schema];
+    else {
+      const def = {
+        normalize: (match, self2) => self2.normalize(match),
+        ...definition
+      };
+      this.__schemas__[schema] = def;
+    }
+    this.re.set({
+      ...this.__opts__,
+      schema_names: Object.keys(this.__schemas__)
+    });
+    return this;
+  }
+  /**
+  * Set recognition options for links without schema.
+  *
+  * @param options Recognition options.
+  */
+  set(options = {}) {
+    this.__opts__ = {
+      ...this.__opts__,
+      ...options
+    };
+    this.re.set({
+      ...this.__opts__,
+      schema_names: Object.keys(this.__schemas__)
+    });
+    return this;
+  }
+  /**
+  * Searches linkifiable pattern and returns `true` on success or `false` on fail.
+  *
+  * @param text Text to scan.
+  */
+  test(text12) {
+    if (!text12.length) return false;
+    let m3, re3;
+    re3 = this.re.get_schema_search();
+    re3.lastIndex = 0;
+    while ((m3 = re3.exec(text12)) !== null) if (this.testSchemaAt(text12, m3[2], re3.lastIndex)) return true;
+    if (this.__opts__.fuzzyLink && this.__schemas__["http:"]) {
+      re3 = this.re.get_fuzzy_link_search();
+      re3.lastIndex = 0;
+      if (re3.exec(text12) !== null) return true;
+    }
+    if (this.__opts__.fuzzyEmail && this.__schemas__["mailto:"]) {
+      if (text12.indexOf("@") >= 0) {
+        const mailHostRe = this.re.get_fuzzy_mail_host_search();
+        const mailNameRe = this.re.get_mail_name_validator();
+        mailHostRe.lastIndex = 0;
+        while ((m3 = mailHostRe.exec(text12)) !== null) {
+          const name = text12.slice(Math.max(0, m3.index - 65), m3.index);
+          if (mailNameRe.test(name)) return true;
+        }
+      }
+    }
+    return false;
+  }
+  /**
+  * Similar to {@link LinkifyIt.test} but checks only specific protocol tail exactly
+  * at given position. Returns length of found pattern (0 on fail).
+  *
+  * @param text Text to scan.
+  * @param schema Rule (schema) name.
+  * @param pos Text offset to check from.
+  */
+  testSchemaAt(text12, schema, pos) {
+    if (!this.__schemas__[schema.toLowerCase()]) return 0;
+    return this.__schemas__[schema.toLowerCase()].validate(text12.slice(0, pos + this.__opts__.maxLength), pos, this);
+  }
+  /**
+  * Returns array of found link descriptions or `null` on fail. We strongly
+  * recommend to use {@link LinkifyIt.test} first, for best speed.
+  *
+  * @param text Text to scan.
+  */
+  match(text12) {
+    const result = [];
+    const schemaRe = this.re.get_schema_search();
+    let fuzzyLinkRe;
+    let mailHostRe;
+    let mailNameRe;
+    let fuzzyLinkCandidate;
+    let fuzzyEmailCandidate;
+    let schemaPrefix;
+    let schemaDone = false;
+    let fuzzyLinkDone = false;
+    let fuzzyEmailDone = false;
+    let pos = 0;
+    if (!text12.length) return null;
+    schemaRe.lastIndex = 0;
+    if (this.__opts__.fuzzyLink && this.__schemas__["http:"]) {
+      fuzzyLinkRe = this.re.get_fuzzy_link_search();
+      fuzzyLinkRe.lastIndex = 0;
+    }
+    if (this.__opts__.fuzzyEmail && this.__schemas__["mailto:"]) {
+      mailHostRe = this.re.get_fuzzy_mail_host_search();
+      mailHostRe.lastIndex = 0;
+      mailNameRe = this.re.get_mail_name_validator();
+    }
+    for (; ; ) {
+      const scanFrom = Math.max(pos - 1, 0);
+      if (mailHostRe && mailNameRe && !fuzzyEmailDone && (!fuzzyEmailCandidate || fuzzyEmailCandidate.index < pos)) {
+        if (mailHostRe.lastIndex < scanFrom) mailHostRe.lastIndex = scanFrom;
+        for (; ; ) {
+          const m3 = mailHostRe.exec(text12);
+          if (!m3) {
+            fuzzyEmailDone = true;
+            fuzzyEmailCandidate = void 0;
+            break;
+          }
+          const name = mailNameRe.exec(text12.slice(Math.max(0, m3.index - 65), m3.index));
+          if (!name) continue;
+          fuzzyEmailCandidate = {
+            schema: "mailto:",
+            index: m3.index - name[1].length,
+            lastIndex: m3.index + m3[0].length
+          };
+          if (fuzzyEmailCandidate.index >= pos) break;
+          if (mailHostRe.lastIndex < scanFrom) mailHostRe.lastIndex = scanFrom;
+        }
+      }
+      if (fuzzyLinkRe && !fuzzyLinkDone && (!fuzzyLinkCandidate || fuzzyLinkCandidate.index < pos)) {
+        if (fuzzyLinkRe.lastIndex < scanFrom) fuzzyLinkRe.lastIndex = scanFrom;
+        for (; ; ) {
+          const m3 = fuzzyLinkRe.exec(text12);
+          if (!m3) {
+            fuzzyLinkDone = true;
+            fuzzyLinkCandidate = void 0;
+            break;
+          }
+          fuzzyLinkCandidate = {
+            schema: "",
+            index: m3.index + m3[1].length,
+            lastIndex: m3.index + m3[0].length
+          };
+          if (fuzzyLinkCandidate.index >= pos) break;
+          if (fuzzyLinkRe.lastIndex < scanFrom) fuzzyLinkRe.lastIndex = scanFrom;
+        }
+      }
+      let fuzzyCandidate = fuzzyEmailCandidate;
+      if (!fuzzyCandidate || fuzzyLinkCandidate && (fuzzyLinkCandidate.index < fuzzyCandidate.index || fuzzyLinkCandidate.index === fuzzyCandidate.index && fuzzyLinkCandidate.lastIndex > fuzzyCandidate.lastIndex)) fuzzyCandidate = fuzzyLinkCandidate;
+      let schemaCandidate;
+      if (!schemaDone) for (; ; ) {
+        if (!schemaPrefix) {
+          if (schemaRe.lastIndex < scanFrom) schemaRe.lastIndex = scanFrom;
+          const m3 = schemaRe.exec(text12);
+          if (!m3) {
+            schemaDone = true;
+            break;
+          }
+          schemaPrefix = {
+            schema: m3[2],
+            index: m3.index + m3[1].length,
+            lastIndex: m3.index + m3[0].length
+          };
+        }
+        if (schemaPrefix.index < pos) {
+          schemaPrefix = void 0;
+          continue;
+        }
+        if (fuzzyCandidate && schemaPrefix.index > fuzzyCandidate.index) break;
+        const prefix = schemaPrefix;
+        schemaPrefix = void 0;
+        const len = this.testSchemaAt(text12, prefix.schema, prefix.lastIndex);
+        if (len) {
+          schemaCandidate = {
+            schema: prefix.schema,
+            index: prefix.index,
+            lastIndex: prefix.lastIndex + len
+          };
+          break;
+        }
+      }
+      let candidate = schemaCandidate;
+      if (!candidate || fuzzyEmailCandidate && (fuzzyEmailCandidate.index < candidate.index || fuzzyEmailCandidate.index === candidate.index && fuzzyEmailCandidate.lastIndex > candidate.lastIndex)) candidate = fuzzyEmailCandidate;
+      if (!candidate || fuzzyLinkCandidate && (fuzzyLinkCandidate.index < candidate.index || fuzzyLinkCandidate.index === candidate.index && fuzzyLinkCandidate.lastIndex > candidate.lastIndex)) candidate = fuzzyLinkCandidate;
+      if (!candidate) break;
+      if (candidate === fuzzyEmailCandidate) fuzzyEmailCandidate = void 0;
+      else if (candidate === fuzzyLinkCandidate) fuzzyLinkCandidate = void 0;
+      const match = new Match(text12, candidate.schema, candidate.index, candidate.lastIndex);
+      if (match.schema) this.__schemas__[match.schema].normalize(match, this);
+      else this.normalize(match);
+      result.push(match);
+      pos = candidate.lastIndex;
+    }
+    if (result.length) return result;
+    return null;
+  }
+  /**
+  * Returns fully-formed (not fuzzy) link if it starts at the beginning
+  * of the string, and null otherwise.
+  *
+  * @param text Text to scan.
+  */
+  matchAtStart(text12) {
+    if (!text12.length) return null;
+    const m3 = this.re.get_schema_at_start().exec(text12);
+    if (!m3) return null;
+    const len = this.testSchemaAt(text12, m3[2], m3[0].length);
+    if (!len) return null;
+    const match = new Match(text12, m3[2], m3.index + m3[1].length, m3.index + m3[0].length + len);
+    this.__schemas__[match.schema].normalize(match, this);
+    return match;
+  }
+  /**
+  * Load (or merge) new TLDs list. Those are used for fuzzy links (without
+  * prefix) to avoid false positives. By default this algorithm is used:
+  *
+  * - hostname with any 2-letter root zones are ok.
+  * - biz|com|edu|gov|net|org|pro|web|xxx|aero|asia|coop|info|museum|name|shop|рф
+  *   are ok.
+  * - encoded (`xn--...`) root zones are ok.
+  *
+  * If list is replaced, then exact match for 2-chars root zones will be checked.
+  *
+  * @param list List of TLDs.
+  * @param keepOld Merge with current list if `true` (`false` by default).
+  */
+  tlds(list4, keepOld = false) {
+    list4 = Array.isArray(list4) ? list4 : [list4];
+    if (!keepOld) this.__opts__.tlds = list4;
+    else this.__opts__.tlds = this.__opts__.tlds.concat(list4);
+    this.re.set({
+      ...this.__opts__,
+      schema_names: Object.keys(this.__schemas__)
+    });
+    return this;
+  }
+  /**
+  * Default normalizer (if schema does not define its own).
+  *
+  * @param match Match to normalize.
+  */
+  normalize(match) {
+    if (!match.schema) match.url = `http://${match.url}`;
+    if (match.schema === "mailto:" && !/^mailto:/i.test(match.url)) match.url = `mailto:${match.url}`;
+  }
+};
+
+// node_modules/markdown-it/dist/markdown-it.mjs
+var import_punycode = __toESM(require_punycode(), 1);
+var __defProp2 = Object.defineProperty;
+var __exportAll = (all, no_symbols) => {
+  let target2 = {};
+  for (var name in all) __defProp2(target2, name, {
+    get: all[name],
+    enumerable: true
+  });
+  if (!no_symbols) __defProp2(target2, Symbol.toStringTag, { value: "Module" });
+  return target2;
+};
+var utils_exports = /* @__PURE__ */ __exportAll({
+  arrayReplaceAt: () => arrayReplaceAt,
+  asciiTrim: () => asciiTrim,
+  callable: () => callable,
+  escapeHtml: () => escapeHtml5,
+  escapeRE: () => escapeRE,
+  fromCodePoint: () => fromCodePoint,
+  isMdAsciiPunct: () => isMdAsciiPunct,
+  isPunctChar: () => isPunctChar,
+  isPunctCharCode: () => isPunctCharCode,
+  isSpace: () => isSpace,
+  isValidEntityCode: () => isValidEntityCode,
+  isWhiteSpace: () => isWhiteSpace2,
+  lib: () => lib,
+  normalizeReference: () => normalizeReference,
+  unescapeAll: () => unescapeAll,
+  unescapeMd: () => unescapeMd
+});
+function callable(cls) {
+  const wrapper = function(...args) {
+    return Reflect.construct(cls, args, new.target && new.target !== wrapper ? new.target : cls);
+  };
+  Object.defineProperty(wrapper, "name", { value: cls.name });
+  Object.setPrototypeOf(wrapper, cls);
+  wrapper.prototype = cls.prototype;
+  return wrapper;
+}
+function arrayReplaceAt(src, pos, newElements) {
+  return [].concat(src.slice(0, pos), newElements, src.slice(pos + 1));
+}
+function isValidEntityCode(c3) {
+  if (c3 >= 55296 && c3 <= 57343) return false;
+  if (c3 >= 64976 && c3 <= 65007) return false;
+  if ((c3 & 65535) === 65535 || (c3 & 65535) === 65534) return false;
+  if (c3 >= 0 && c3 <= 8) return false;
+  if (c3 === 11) return false;
+  if (c3 >= 14 && c3 <= 31) return false;
+  if (c3 >= 127 && c3 <= 159) return false;
+  if (c3 > 1114111) return false;
+  return true;
+}
+function fromCodePoint(c3) {
+  if (c3 > 65535) {
+    c3 -= 65536;
+    const surrogate1 = 55296 + (c3 >> 10);
+    const surrogate2 = 56320 + (c3 & 1023);
+    return String.fromCharCode(surrogate1, surrogate2);
+  }
+  return String.fromCharCode(c3);
+}
+var UNESCAPE_MD_RE = /\\([!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~])/g;
+var UNESCAPE_ALL_RE = new RegExp(`${UNESCAPE_MD_RE.source}|${/&([a-z#][a-z0-9]{1,31});/gi.source}`, "gi");
+var DIGITAL_ENTITY_TEST_RE = /^#((?:x[a-f0-9]{1,8}|[0-9]{1,8}))$/i;
+function replaceEntityPattern(match, name) {
+  if (name.charCodeAt(0) === 35 && DIGITAL_ENTITY_TEST_RE.test(name)) {
+    const code2 = name[1].toLowerCase() === "x" ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10);
+    if (isValidEntityCode(code2)) return fromCodePoint(code2);
+    return match;
+  }
+  const decoded = decodeHTMLStrict(match);
+  if (decoded !== match) return decoded;
+  return match;
+}
+function unescapeMd(str2) {
+  if (str2.indexOf("\\") < 0) return str2;
+  return str2.replace(UNESCAPE_MD_RE, "$1");
+}
+function unescapeAll(str2) {
+  if (str2.indexOf("\\") < 0 && str2.indexOf("&") < 0) return str2;
+  return str2.replace(UNESCAPE_ALL_RE, function(match, escaped, entity2) {
+    if (escaped) return escaped;
+    return replaceEntityPattern(match, entity2);
+  });
+}
+var HTML_ESCAPE_TEST_RE = /[&<>"]/;
+var HTML_ESCAPE_REPLACE_RE = /[&<>"]/g;
+var HTML_REPLACEMENTS = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;"
+};
+function replaceUnsafeChar(ch2) {
+  return HTML_REPLACEMENTS[ch2];
+}
+function escapeHtml5(str2) {
+  if (HTML_ESCAPE_TEST_RE.test(str2)) return str2.replace(HTML_ESCAPE_REPLACE_RE, replaceUnsafeChar);
+  return str2;
+}
+var REGEXP_ESCAPE_RE = /[.?*+^$[\]\\(){}|-]/g;
+function escapeRE(str2) {
+  return str2.replace(REGEXP_ESCAPE_RE, "\\$&");
+}
+function isSpace(code2) {
+  switch (code2) {
+    case 9:
+    case 32:
+      return true;
+  }
+  return false;
+}
+function isWhiteSpace2(code2) {
+  if (code2 >= 8192 && code2 <= 8202) return true;
+  switch (code2) {
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 32:
+    case 160:
+    case 5760:
+    case 8239:
+    case 8287:
+    case 12288:
+      return true;
+  }
+  return false;
+}
+function isPunctChar(ch2) {
+  return P3.test(ch2) || S3.test(ch2);
+}
+function isPunctCharCode(code2) {
+  return isPunctChar(fromCodePoint(code2));
+}
+function isMdAsciiPunct(ch2) {
+  switch (ch2) {
+    case 33:
+    case 34:
+    case 35:
+    case 36:
+    case 37:
+    case 38:
+    case 39:
+    case 40:
+    case 41:
+    case 42:
+    case 43:
+    case 44:
+    case 45:
+    case 46:
+    case 47:
+    case 58:
+    case 59:
+    case 60:
+    case 61:
+    case 62:
+    case 63:
+    case 64:
+    case 91:
+    case 92:
+    case 93:
+    case 94:
+    case 95:
+    case 96:
+    case 123:
+    case 124:
+    case 125:
+    case 126:
+      return true;
+    default:
+      return false;
+  }
+}
+function normalizeReference(str2) {
+  str2 = str2.trim().replace(/\s+/g, " ");
+  return str2.toLowerCase().toUpperCase();
+}
+function isAsciiTrimmable(c3) {
+  return c3 === 32 || c3 === 9 || c3 === 10 || c3 === 13;
+}
+function asciiTrim(str2) {
+  let start2 = 0;
+  for (; start2 < str2.length; start2++) if (!isAsciiTrimmable(str2.charCodeAt(start2))) break;
+  let end = str2.length - 1;
+  for (; end >= start2; end--) if (!isAsciiTrimmable(str2.charCodeAt(end))) break;
+  return str2.slice(start2, end + 1);
+}
+var lib = {
+  mdurl: mdurl_exports,
+  ucmicro: build_exports
+};
+function parseLinkLabel(state, start2, disableNested) {
+  let level, found2, marker, prevPos;
+  const max = state.posMax;
+  const oldPos = state.pos;
+  state.pos = start2 + 1;
+  level = 1;
+  while (state.pos < max) {
+    marker = state.src.charCodeAt(state.pos);
+    if (marker === 93) {
+      level--;
+      if (level === 0) {
+        found2 = true;
+        break;
+      }
+    }
+    prevPos = state.pos;
+    state.md.inline.skipToken(state);
+    if (marker === 91) {
+      if (prevPos === state.pos - 1) level++;
+      else if (disableNested) {
+        state.pos = oldPos;
+        return -1;
+      }
+    }
+  }
+  let labelEnd = -1;
+  if (found2) labelEnd = state.pos;
+  state.pos = oldPos;
+  return labelEnd;
+}
+function parseLinkDestination(str2, start2, max) {
+  let code2;
+  let pos = start2;
+  const result = {
+    ok: false,
+    pos: 0,
+    str: ""
+  };
+  if (str2.charCodeAt(pos) === 60) {
+    pos++;
+    while (pos < max) {
+      code2 = str2.charCodeAt(pos);
+      if (code2 === 10) return result;
+      if (code2 === 60) return result;
+      if (code2 === 62) {
+        result.pos = pos + 1;
+        result.str = unescapeAll(str2.slice(start2 + 1, pos));
+        result.ok = true;
+        return result;
+      }
+      if (code2 === 92 && pos + 1 < max) {
+        pos += 2;
+        continue;
+      }
+      pos++;
+    }
+    return result;
+  }
+  let level = 0;
+  while (pos < max) {
+    code2 = str2.charCodeAt(pos);
+    if (code2 === 32) break;
+    if (code2 < 32 || code2 === 127) break;
+    if (code2 === 92 && pos + 1 < max) {
+      if (str2.charCodeAt(pos + 1) === 32) {
+        pos++;
+        continue;
+      }
+      pos += 2;
+      continue;
+    }
+    if (code2 === 40) {
+      level++;
+      if (level > 32) return result;
+    }
+    if (code2 === 41) {
+      if (level === 0) break;
+      level--;
+    }
+    pos++;
+  }
+  if (start2 === pos) return result;
+  if (level !== 0) return result;
+  result.str = unescapeAll(str2.slice(start2, pos));
+  result.pos = pos;
+  result.ok = true;
+  return result;
+}
+function parseLinkTitle(str2, start2, max, prev_state) {
+  let code2;
+  let pos = start2;
+  const state = {
+    ok: false,
+    can_continue: false,
+    pos: 0,
+    str: "",
+    marker: 0
+  };
+  if (prev_state) {
+    state.str = prev_state.str;
+    state.marker = prev_state.marker;
+  } else {
+    if (pos >= max) return state;
+    let marker = str2.charCodeAt(pos);
+    if (marker !== 34 && marker !== 39 && marker !== 40) return state;
+    start2++;
+    pos++;
+    if (marker === 40) marker = 41;
+    state.marker = marker;
+  }
+  while (pos < max) {
+    code2 = str2.charCodeAt(pos);
+    if (code2 === state.marker) {
+      state.pos = pos + 1;
+      state.str += unescapeAll(str2.slice(start2, pos));
+      state.ok = true;
+      return state;
+    } else if (code2 === 40 && state.marker === 41) return state;
+    else if (code2 === 92 && pos + 1 < max) pos++;
+    pos++;
+  }
+  state.can_continue = true;
+  state.str += unescapeAll(str2.slice(start2, pos));
+  return state;
+}
+var helpers_exports = /* @__PURE__ */ __exportAll({
+  parseLinkDestination: () => parseLinkDestination,
+  parseLinkLabel: () => parseLinkLabel,
+  parseLinkTitle: () => parseLinkTitle
+});
+function _typeof(o3) {
+  "@babel/helpers - typeof";
+  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o4) {
+    return typeof o4;
+  } : function(o4) {
+    return o4 && "function" == typeof Symbol && o4.constructor === Symbol && o4 !== Symbol.prototype ? "symbol" : typeof o4;
+  }, _typeof(o3);
+}
+function toPrimitive(t3, r3) {
+  if ("object" != _typeof(t3) || !t3) return t3;
+  var e3 = t3[Symbol.toPrimitive];
+  if (void 0 !== e3) {
+    var i3 = e3.call(t3, r3 || "default");
+    if ("object" != _typeof(i3)) return i3;
+    throw new TypeError("@@toPrimitive must return a primitive value.");
+  }
+  return ("string" === r3 ? String : Number)(t3);
+}
+function toPropertyKey(t3) {
+  var i3 = toPrimitive(t3, "string");
+  return "symbol" == _typeof(i3) ? i3 : i3 + "";
+}
+function _defineProperty(e3, r3, t3) {
+  return (r3 = toPropertyKey(r3)) in e3 ? Object.defineProperty(e3, r3, {
+    value: t3,
+    enumerable: true,
+    configurable: true,
+    writable: true
+  }) : e3[r3] = t3, e3;
+}
+var Token = class {
+  constructor(type, tag, nesting) {
+    _defineProperty(
+      this,
+      /**
+      * Source map info. Format: `[ line_begin, line_end ]`
+      */
+      "map",
+      null
+    );
+    _defineProperty(
+      this,
+      /**
+      * nesting level, the same as `state.level`
+      */
+      "level",
+      0
+    );
+    _defineProperty(
+      this,
+      /**
+      * An array of child nodes (inline and img tokens)
+      */
+      "children",
+      null
+    );
+    _defineProperty(
+      this,
+      /**
+      * In a case of self-closing tag (code, html, fence, etc.),
+      * it has contents of this tag.
+      */
+      "content",
+      ""
+    );
+    _defineProperty(
+      this,
+      /**
+      * '*' or '_' for emphasis, fence string for fence, etc.
+      */
+      "markup",
+      ""
+    );
+    _defineProperty(
+      this,
+      /**
+      * Additional information:
+      *
+      * - Info string for "fence" tokens
+      * - The value "auto" for autolink "link_open" and "link_close" tokens
+      * - The string value of the item marker for ordered-list "list_item_open" tokens
+      */
+      "info",
+      ""
+    );
+    _defineProperty(
+      this,
+      /**
+      * True for block-level tokens, false for inline tokens.
+      * Used in renderer to calculate line breaks
+      */
+      "block",
+      false
+    );
+    _defineProperty(
+      this,
+      /**
+      * If it's true, ignore this element when rendering. Used for tight lists
+      * to hide paragraphs.
+      */
+      "hidden",
+      false
+    );
+    this.type = type;
+    this.tag = tag;
+    this.attrs = null;
+    this.nesting = nesting;
+    this.meta = null;
+  }
+  /**
+  * Search attribute index by name.
+  */
+  attrIndex(name) {
+    if (!this.attrs) return -1;
+    const attrs = this.attrs;
+    for (let i3 = 0, len = attrs.length; i3 < len; i3++) if (attrs[i3][0] === name) return i3;
+    return -1;
+  }
+  /**
+  * Add `[ name, value ]` attribute to list. Init attrs if necessary
+  */
+  attrPush(attrData) {
+    if (this.attrs) this.attrs.push(attrData);
+    else this.attrs = [attrData];
+  }
+  /**
+  * Set `name` attribute to `value`. Override old value if exists.
+  */
+  attrSet(name, value2) {
+    const idx = this.attrIndex(name);
+    const attrData = [name, value2];
+    if (idx < 0) this.attrPush(attrData);
+    else this.attrs[idx] = attrData;
+  }
+  /**
+  * Get the value of attribute `name`, or null if it does not exist.
+  */
+  attrGet(name) {
+    const idx = this.attrIndex(name);
+    let value2 = null;
+    if (idx >= 0) value2 = this.attrs[idx][1];
+    return value2;
+  }
+  /**
+  * Join value to existing attribute via space. Or create new attribute if not
+  * exists. Useful to operate with token classes.
+  */
+  attrJoin(name, value2) {
+    const idx = this.attrIndex(name);
+    if (idx < 0) this.attrPush([name, value2]);
+    else this.attrs[idx][1] = `${this.attrs[idx][1]} ${value2}`;
+  }
+};
+var Ruler = class {
+  constructor() {
+    _defineProperty(
+      this,
+      /** @internal */
+      "__rules__",
+      []
+    );
+    _defineProperty(
+      this,
+      /** @internal */
+      "__cache__",
+      null
+    );
+  }
+  /** @internal */
+  __find__(name) {
+    for (let i3 = 0; i3 < this.__rules__.length; i3++) if (this.__rules__[i3].name === name) return i3;
+    return -1;
+  }
+  /** @internal */
+  __compile__() {
+    const chains = /* @__PURE__ */ new Set();
+    this.__rules__.forEach((rule) => {
+      if (!rule.enabled) return;
+      rule.alt.forEach((altName) => {
+        if (altName) chains.add(altName);
+      });
+    });
+    this.__cache__ = /* @__PURE__ */ Object.create(null);
+    this.__cache__[""] = [];
+    this.__rules__.forEach((rule) => {
+      if (rule.enabled) this.__cache__[""].push(rule.fn);
+    });
+    chains.forEach((chain) => {
+      this.__cache__[chain] = [];
+      this.__rules__.forEach((rule) => {
+        if (rule.enabled && rule.alt.indexOf(chain) >= 0) this.__cache__[chain].push(rule.fn);
+      });
+    });
+  }
+  /**
+  * Replace rule by name with new function & options. Throws error if name not
+  * found.
+  *
+  * @example Replace existing typographer replacement rule with new one
+  * ```javascript
+  * import MarkdownIt from 'markdown-it'
+  * const md = new MarkdownIt()
+  *
+  * md.core.ruler.at('replacements', function replace(state) {
+  *   //...
+  * });
+  * ```
+  */
+  at(name, fn2, options = {}) {
+    const index = this.__find__(name);
+    if (index === -1) throw new Error(`Parser rule not found: ${name}`);
+    this.__rules__[index].fn = fn2;
+    this.__rules__[index].alt = options.alt || [];
+    this.__cache__ = null;
+  }
+  /**
+  * Add new rule to chain before one with given name. See also
+  * {@link Ruler.after}, {@link Ruler.push}.
+  *
+  * @example
+  * ```javascript
+  * import MarkdownIt from 'markdown-it'
+  * const md = new MarkdownIt()
+  *
+  * md.block.ruler.before('paragraph', 'my_rule', function replace(state) {
+  *   //...
+  * });
+  * ```
+  */
+  before(beforeName, ruleName, fn2, options = {}) {
+    const index = this.__find__(beforeName);
+    if (index === -1) throw new Error(`Parser rule not found: ${beforeName}`);
+    this.__rules__.splice(index, 0, {
+      name: ruleName,
+      enabled: true,
+      fn: fn2,
+      alt: options.alt || []
+    });
+    this.__cache__ = null;
+  }
+  /**
+  * Add new rule to chain after one with given name. See also
+  * {@link Ruler.before}, {@link Ruler.push}.
+  *
+  * @example
+  * ```javascript
+  * import MarkdownIt from 'markdown-it'
+  * const md = new MarkdownIt()
+  *
+  * md.inline.ruler.after('text', 'my_rule', function replace(state) {
+  *   //...
+  * });
+  * ```
+  */
+  after(afterName, ruleName, fn2, options = {}) {
+    const index = this.__find__(afterName);
+    if (index === -1) throw new Error(`Parser rule not found: ${afterName}`);
+    this.__rules__.splice(index + 1, 0, {
+      name: ruleName,
+      enabled: true,
+      fn: fn2,
+      alt: options.alt || []
+    });
+    this.__cache__ = null;
+  }
+  /**
+  * Push new rule to the end of chain. See also
+  * {@link Ruler.before}, {@link Ruler.after}.
+  *
+  * @example
+  * ```javascript
+  * import MarkdownIt from 'markdown-it'
+  * const md = new MarkdownIt()
+  *
+  * md.core.ruler.push('my_rule', function replace(state) {
+  *   //...
+  * });
+  * ```
+  */
+  push(ruleName, fn2, options = {}) {
+    this.__rules__.push({
+      name: ruleName,
+      enabled: true,
+      fn: fn2,
+      alt: options.alt || []
+    });
+    this.__cache__ = null;
+  }
+  /**
+  * Enable rules with given names. If any rule name not found - throw Error.
+  * Errors can be disabled by second param.
+  *
+  * See also {@link Ruler.disable}, {@link Ruler.enableOnly}.
+  *
+  * Returns list of found rule names (if no exception happened).
+  */
+  enable(list4, ignoreInvalid = false) {
+    if (!Array.isArray(list4)) list4 = [list4];
+    const result = [];
+    list4.forEach((name) => {
+      const idx = this.__find__(name);
+      if (idx < 0) {
+        if (ignoreInvalid) return;
+        throw new Error(`Rules manager: invalid rule name ${name}`);
+      }
+      this.__rules__[idx].enabled = true;
+      result.push(name);
+    });
+    this.__cache__ = null;
+    return result;
+  }
+  /**
+  * Enable rules with given names, and disable everything else. If any rule name
+  * not found - throw Error. Errors can be disabled by second param.
+  *
+  * See also {@link Ruler.disable}, {@link Ruler.enable}.
+  */
+  enableOnly(list4, ignoreInvalid = false) {
+    if (!Array.isArray(list4)) list4 = [list4];
+    this.__rules__.forEach((rule) => {
+      rule.enabled = false;
+    });
+    this.enable(list4, ignoreInvalid);
+  }
+  /**
+  * Disable rules with given names. If any rule name not found - throw Error.
+  * Errors can be disabled by second param.
+  *
+  * See also {@link Ruler.enable}, {@link Ruler.enableOnly}.
+  *
+  * Returns list of found rule names (if no exception happened).
+  */
+  disable(list4, ignoreInvalid = false) {
+    if (!Array.isArray(list4)) list4 = [list4];
+    const result = [];
+    list4.forEach((name) => {
+      const idx = this.__find__(name);
+      if (idx < 0) {
+        if (ignoreInvalid) return;
+        throw new Error(`Rules manager: invalid rule name ${name}`);
+      }
+      this.__rules__[idx].enabled = false;
+      result.push(name);
+    });
+    this.__cache__ = null;
+    return result;
+  }
+  /**
+  * Return array of active functions (rules) for given chain name. It analyzes
+  * rules configuration, compiles caches if not exists and returns result.
+  *
+  * Default chain name is `''` (empty string). It can't be skipped. That's
+  * done intentionally, to keep signature monomorphic for high speed.
+  */
+  getRules(chainName) {
+    if (!this.__cache__) this.__compile__();
+    return this.__cache__[chainName] || [];
+  }
+};
+var default_rules = {};
+default_rules.code_inline = function(tokens2, idx, options, env, slf) {
+  const token = tokens2[idx];
+  return `<code${slf.renderAttrs(token)}>${escapeHtml5(token.content)}</code>`;
+};
+default_rules.code_block = function(tokens2, idx, options, env, slf) {
+  const token = tokens2[idx];
+  return `<pre${slf.renderAttrs(token)}><code>${escapeHtml5(tokens2[idx].content)}</code></pre>
+`;
+};
+default_rules.fence = function(tokens2, idx, options, env, slf) {
+  const token = tokens2[idx];
+  const info3 = token.info ? unescapeAll(token.info).trim() : "";
+  let langName = "";
+  let langAttrs = "";
+  if (info3) {
+    const arr = info3.split(/(\s+)/g);
+    langName = arr[0];
+    langAttrs = arr.slice(2).join("");
+  }
+  let highlighted;
+  if (options.highlight) highlighted = options.highlight(token.content, langName, langAttrs) || escapeHtml5(token.content);
+  else highlighted = escapeHtml5(token.content);
+  if (highlighted.indexOf("<pre") === 0) return highlighted + "\n";
+  if (info3) {
+    const i3 = token.attrIndex("class");
+    const tmpAttrs = token.attrs ? token.attrs.slice() : [];
+    if (i3 < 0) tmpAttrs.push(["class", `${options.langPrefix}${langName}`]);
+    else {
+      tmpAttrs[i3] = [tmpAttrs[i3][0], tmpAttrs[i3][1]];
+      tmpAttrs[i3][1] += ` ${options.langPrefix}${langName}`;
+    }
+    const tmpToken = { attrs: tmpAttrs };
+    return `<pre><code${slf.renderAttrs(tmpToken)}>${highlighted}</code></pre>
+`;
+  }
+  return `<pre><code${slf.renderAttrs(token)}>${highlighted}</code></pre>
+`;
+};
+default_rules.image = function(tokens2, idx, options, env, slf) {
+  const token = tokens2[idx];
+  token.attrs[token.attrIndex("alt")][1] = slf.renderInlineAsText(token.children, options, env);
+  return slf.renderToken(tokens2, idx, options);
+};
+default_rules.hardbreak = function(tokens2, idx, options) {
+  return options.xhtmlOut ? "<br />\n" : "<br>\n";
+};
+default_rules.softbreak = function(tokens2, idx, options) {
+  return options.breaks ? options.xhtmlOut ? "<br />\n" : "<br>\n" : "\n";
+};
+default_rules.text = function(tokens2, idx) {
+  return escapeHtml5(tokens2[idx].content);
+};
+default_rules.html_block = function(tokens2, idx) {
+  return tokens2[idx].content;
+};
+default_rules.html_inline = function(tokens2, idx) {
+  return tokens2[idx].content;
+};
+var Renderer = class {
+  constructor() {
+    _defineProperty(
+      this,
+      /**
+      * Contains render rules for tokens. Can be updated and extended.
+      *
+      * See [source code](https://github.com/markdown-it/markdown-it/blob/master/src/renderer.ts)
+      * for more details and examples.
+      *
+      * @example Custom render rules
+      * ```javascript
+      * import MarkdownIt from 'markdown-it'
+      * const md = new MarkdownIt()
+      *
+      * md.renderer.rules.strong_open  = function () { return '<b>'; };
+      * md.renderer.rules.strong_close = function () { return '</b>'; };
+      *
+      * const result = md.renderInline(...);
+      * ```
+      *
+      * @example Each rule is called as independent static function with fixed signature
+      * ```javascript
+      * function my_token_render(tokens, idx, options, env, renderer) {
+      *   // ...
+      *   return renderedHTML;
+      * }
+      * ```
+      */
+      "rules",
+      Object.assign({}, default_rules)
+    );
+  }
+  /**
+  * Render token attributes to string.
+  */
+  renderAttrs(token) {
+    let i3, l3, result;
+    if (!token.attrs) return "";
+    result = "";
+    for (i3 = 0, l3 = token.attrs.length; i3 < l3; i3++) result += ` ${escapeHtml5(token.attrs[i3][0])}="${escapeHtml5(String(token.attrs[i3][1]))}"`;
+    return result;
+  }
+  /**
+  * Default token renderer. Can be overriden by custom function
+  * in {@link Renderer.rules}.
+  */
+  renderToken(tokens2, idx, options) {
+    const token = tokens2[idx];
+    let result = "";
+    if (token.hidden) return "";
+    let prev = idx - 1;
+    while (prev >= 0 && tokens2[prev].hidden && tokens2[prev].nesting === 0) prev--;
+    if (token.block && token.nesting !== -1 && prev >= 0 && tokens2[prev].hidden && tokens2[prev].nesting === -1) result += "\n";
+    result += (token.nesting === -1 ? "</" : "<") + token.tag;
+    result += this.renderAttrs(token);
+    if (token.nesting === 0 && options.xhtmlOut) result += " /";
+    let needLf = false;
+    if (token.block) {
+      needLf = true;
+      if (token.nesting === 1) {
+        let next2 = idx + 1;
+        while (next2 < tokens2.length && tokens2[next2].hidden && tokens2[next2].nesting === 0) next2++;
+        if (next2 < tokens2.length) {
+          const nextToken = tokens2[next2];
+          if (nextToken.type === "inline" || nextToken.hidden) needLf = false;
+          else if (nextToken.nesting === -1 && nextToken.tag === token.tag) needLf = false;
+        }
+      }
+    }
+    result += needLf ? ">\n" : ">";
+    return result;
+  }
+  /**
+  * The same as {@link Renderer.render}, but for single token of `inline` type.
+  */
+  renderInline(tokens2, options, env) {
+    let result = "";
+    const rules = this.rules;
+    for (let i3 = 0, len = tokens2.length; i3 < len; i3++) {
+      const type = tokens2[i3].type;
+      if (typeof rules[type] !== "undefined") result += rules[type](tokens2, i3, options, env, this);
+      else result += this.renderToken(tokens2, i3, options);
+    }
+    return result;
+  }
+  /**
+  * Special kludge for image `alt` attributes to conform CommonMark spec.
+  * Don't try to use it! Spec requires to show `alt` content with stripped markup,
+  * instead of simple escaping.
+  */
+  renderInlineAsText(tokens2, options, env) {
+    let result = "";
+    for (let i3 = 0, len = tokens2.length; i3 < len; i3++) switch (tokens2[i3].type) {
+      case "text":
+      case "code_inline":
+        result += tokens2[i3].content;
+        break;
+      case "image":
+        result += this.renderInlineAsText(tokens2[i3].children, options, env);
+        break;
+      case "html_inline":
+      case "html_block":
+        result += tokens2[i3].content;
+        break;
+      case "softbreak":
+      case "hardbreak":
+        result += "\n";
+    }
+    return result;
+  }
+  /**
+  * Takes token stream and generates HTML. Probably, you will never need to call
+  * this method directly.
+  */
+  render(tokens2, options, env) {
+    let result = "";
+    const rules = this.rules;
+    for (let i3 = 0, len = tokens2.length; i3 < len; i3++) {
+      const type = tokens2[i3].type;
+      if (type === "inline") result += this.renderInline(tokens2[i3].children, options, env);
+      else if (typeof rules[type] !== "undefined") result += rules[type](tokens2, i3, options, env, this);
+      else result += this.renderToken(tokens2, i3, options);
+    }
+    return result;
+  }
+};
+var StateCore = class {
+  constructor(src, md, env) {
+    _defineProperty(this, "tokens", []);
+    _defineProperty(this, "inlineMode", false);
+    _defineProperty(this, "Token", Token);
+    this.src = src;
+    this.env = env;
+    this.md = md;
+  }
+};
+var UNNORMALIZED_NEWLINE_RE = /\r\n?/g;
+var NULL_RE = /\0/g;
+function normalize2(state) {
+  let str2;
+  str2 = state.src.replace(UNNORMALIZED_NEWLINE_RE, "\n");
+  str2 = str2.replace(NULL_RE, "\uFFFD");
+  state.src = str2;
+}
+function block2(state) {
+  let token;
+  if (state.inlineMode) {
+    token = new state.Token("inline", "", 0);
+    token.content = state.src;
+    token.map = [0, 1];
+    token.children = [];
+    state.tokens.push(token);
+  } else state.md.block.parse(state.src, state.md, state.env, state.tokens);
+}
+function strip_references(state) {
+  const tokens2 = state.tokens;
+  let last = 0;
+  for (let curr = 0; curr < tokens2.length; curr++) {
+    if (tokens2[curr].type === "reference_definition") continue;
+    if (curr !== last) tokens2[last] = tokens2[curr];
+    last++;
+  }
+  if (tokens2.length !== last) tokens2.length = last;
+}
+function inline(state) {
+  const tokens2 = state.tokens;
+  for (let i3 = 0, l3 = tokens2.length; i3 < l3; i3++) {
+    const tok = tokens2[i3];
+    if (tok.type === "inline") state.md.inline.parse(tok.content, state.md, state.env, tok.children);
+  }
+}
+function isLinkOpen$1(str2) {
+  return /^<a[>\s]/i.test(str2);
+}
+function isLinkClose$1(str2) {
+  return /^<\/a\s*>/i.test(str2);
+}
+function linkify$1(state) {
+  const blockTokens = state.tokens;
+  if (!state.md.options.linkify) return;
+  for (let j3 = 0, l3 = blockTokens.length; j3 < l3; j3++) {
+    if (blockTokens[j3].type !== "inline" || !state.md.linkify.test(blockTokens[j3].content)) continue;
+    const tokens2 = blockTokens[j3].children;
+    const replacements = [];
+    let htmlLinkLevel = 0;
+    for (let i3 = tokens2.length - 1; i3 >= 0; i3--) {
+      const currentToken = tokens2[i3];
+      if (currentToken.type === "link_close") {
+        i3--;
+        while (tokens2[i3].level !== currentToken.level && tokens2[i3].type !== "link_open") i3--;
+        continue;
+      }
+      if (currentToken.type === "html_inline") {
+        if (isLinkOpen$1(currentToken.content) && htmlLinkLevel > 0) htmlLinkLevel--;
+        if (isLinkClose$1(currentToken.content)) htmlLinkLevel++;
+      }
+      if (htmlLinkLevel > 0) continue;
+      if (currentToken.type === "text" && state.md.linkify.test(currentToken.content)) {
+        const text12 = currentToken.content;
+        let links = state.md.linkify.match(text12);
+        const nodes = [];
+        let level = currentToken.level;
+        let lastPos = 0;
+        if (links.length > 0 && links[0].index === 0 && i3 > 0 && tokens2[i3 - 1].type === "text_special") links = links.slice(1);
+        for (let ln2 = 0; ln2 < links.length; ln2++) {
+          const url = links[ln2].url;
+          const fullUrl = state.md.normalizeLink(url);
+          if (!state.md.validateLink(fullUrl)) continue;
+          let urlText = links[ln2].text;
+          if (!links[ln2].schema) urlText = state.md.normalizeLinkText(`http://${urlText}`).replace(/^http:\/\//, "");
+          else if (links[ln2].schema === "mailto:" && !/^mailto:/i.test(urlText)) urlText = state.md.normalizeLinkText(`mailto:${urlText}`).replace(/^mailto:/, "");
+          else urlText = state.md.normalizeLinkText(urlText);
+          const pos = links[ln2].index;
+          if (pos > lastPos) {
+            const token = new state.Token("text", "", 0);
+            token.content = text12.slice(lastPos, pos);
+            token.level = level;
+            nodes.push(token);
+          }
+          const token_o = new state.Token("link_open", "a", 1);
+          token_o.attrs = [["href", fullUrl]];
+          token_o.level = level++;
+          token_o.markup = "linkify";
+          token_o.info = "auto";
+          nodes.push(token_o);
+          const token_t = new state.Token("text", "", 0);
+          token_t.content = urlText;
+          token_t.level = level;
+          nodes.push(token_t);
+          const token_c = new state.Token("link_close", "a", -1);
+          token_c.level = --level;
+          token_c.markup = "linkify";
+          token_c.info = "auto";
+          nodes.push(token_c);
+          lastPos = links[ln2].lastIndex;
+        }
+        if (lastPos < text12.length) {
+          const token = new state.Token("text", "", 0);
+          token.content = text12.slice(lastPos);
+          token.level = level;
+          nodes.push(token);
+        }
+        replacements.push({
+          index: i3,
+          nodes
+        });
+      }
+    }
+    if (replacements.length > 0) {
+      let newTokensLength = tokens2.length;
+      for (const replacement of replacements) newTokensLength += replacement.nodes.length - 1;
+      const newTokens = new Array(newTokensLength);
+      let replacementIndex = 0;
+      let newTokenIndex = 0;
+      replacements.reverse();
+      for (let i3 = 0; i3 < tokens2.length; i3++) {
+        const replacement = replacements[replacementIndex];
+        if ((replacement === null || replacement === void 0 ? void 0 : replacement.index) === i3) {
+          for (const node of replacement.nodes) newTokens[newTokenIndex++] = node;
+          replacementIndex++;
+        } else newTokens[newTokenIndex++] = tokens2[i3];
+      }
+      blockTokens[j3].children = newTokens;
+    }
+  }
+}
+var RARE_RE = /\+-|\.\.|\?\?\?\?|!!!!|,,|--/;
+var SCOPED_ABBR_TEST_RE = /\((c|tm|r)\)/i;
+var SCOPED_ABBR_RE = /\((c|tm|r)\)/gi;
+var SCOPED_ABBR = {
+  c: "\xA9",
+  r: "\xAE",
+  tm: "\u2122"
+};
+function replaceFn(match, name) {
+  return SCOPED_ABBR[name.toLowerCase()];
+}
+function replace_scoped(inlineTokens) {
+  let inside_autolink = 0;
+  for (let i3 = inlineTokens.length - 1; i3 >= 0; i3--) {
+    const token = inlineTokens[i3];
+    if (token.type === "text" && !inside_autolink) token.content = token.content.replace(SCOPED_ABBR_RE, replaceFn);
+    if (token.type === "link_open" && token.info === "auto") inside_autolink--;
+    if (token.type === "link_close" && token.info === "auto") inside_autolink++;
+  }
+}
+function replace_rare(inlineTokens) {
+  let inside_autolink = 0;
+  for (let i3 = inlineTokens.length - 1; i3 >= 0; i3--) {
+    const token = inlineTokens[i3];
+    if (token.type === "text" && !inside_autolink) {
+      if (RARE_RE.test(token.content)) token.content = token.content.replace(/\+-/g, "\xB1").replace(/\.{2,}/g, "\u2026").replace(/([?!])…/g, "$1..").replace(/([?!]){4,}/g, "$1$1$1").replace(/,{2,}/g, ",").replace(/(^|[^-])---(?=[^-]|$)/gm, "$1\u2014").replace(/(^|\s)--(?=\s|$)/gm, "$1\u2013").replace(/(^|[^-\s])--(?=[^-\s]|$)/gm, "$1\u2013");
+    }
+    if (token.type === "link_open" && token.info === "auto") inside_autolink--;
+    if (token.type === "link_close" && token.info === "auto") inside_autolink++;
+  }
+}
+function replace(state) {
+  let blkIdx;
+  if (!state.md.options.typographer) return;
+  for (blkIdx = state.tokens.length - 1; blkIdx >= 0; blkIdx--) {
+    if (state.tokens[blkIdx].type !== "inline") continue;
+    if (SCOPED_ABBR_TEST_RE.test(state.tokens[blkIdx].content)) replace_scoped(state.tokens[blkIdx].children);
+    if (RARE_RE.test(state.tokens[blkIdx].content)) replace_rare(state.tokens[blkIdx].children);
+  }
+}
+var QUOTE_TEST_RE = /['"]/;
+var QUOTE_RE = /['"]/g;
+var APOSTROPHE = "\u2019";
+var MAX_OPENERS = 1e3;
+function truncateStack(stack, heads, length) {
+  while (stack.length > length) {
+    const item = stack.pop();
+    if (item.isSingleQuote) heads.single = item.prevSameQuoteIdx;
+    else heads.double = item.prevSameQuoteIdx;
+  }
+}
+function addReplacement(replacements, tokenIdx, pos, ch2) {
+  if (!replacements[tokenIdx]) replacements[tokenIdx] = [];
+  replacements[tokenIdx].push({
+    pos,
+    ch: ch2
+  });
+}
+function applyReplacements(str2, replacements) {
+  let result = "";
+  let lastPos = 0;
+  replacements.sort((a3, b3) => a3.pos - b3.pos);
+  for (let i3 = 0; i3 < replacements.length; i3++) {
+    const replacement = replacements[i3];
+    result += str2.slice(lastPos, replacement.pos) + replacement.ch;
+    lastPos = replacement.pos + 1;
+  }
+  return result + str2.slice(lastPos);
+}
+function process_inlines(tokens2, state) {
+  let j3;
+  const stack = [];
+  const heads = {
+    single: -1,
+    double: -1
+  };
+  const replacements = {};
+  for (let i3 = 0; i3 < tokens2.length; i3++) {
+    const token = tokens2[i3];
+    const thisLevel = tokens2[i3].level;
+    for (j3 = stack.length - 1; j3 >= 0; j3--) if (stack[j3].level <= thisLevel) break;
+    truncateStack(stack, heads, j3 + 1);
+    if (token.type !== "text") continue;
+    const text12 = token.content;
+    let pos = 0;
+    const max = text12.length;
+    OUTER: while (pos < max) {
+      QUOTE_RE.lastIndex = pos;
+      const t3 = QUOTE_RE.exec(text12);
+      if (!t3) break;
+      let canOpen = true;
+      let canClose = true;
+      pos = t3.index + 1;
+      const isSingle = t3[0] === "'";
+      let lastChar = 32;
+      if (t3.index - 1 >= 0) lastChar = text12.charCodeAt(t3.index - 1);
+      else for (j3 = i3 - 1; j3 >= 0; j3--) {
+        if (tokens2[j3].type === "softbreak" || tokens2[j3].type === "hardbreak") break;
+        if (!tokens2[j3].content) continue;
+        lastChar = tokens2[j3].content.charCodeAt(tokens2[j3].content.length - 1);
+        break;
+      }
+      let nextChar = 32;
+      if (pos < max) nextChar = text12.charCodeAt(pos);
+      else for (j3 = i3 + 1; j3 < tokens2.length; j3++) {
+        if (tokens2[j3].type === "softbreak" || tokens2[j3].type === "hardbreak") break;
+        if (!tokens2[j3].content) continue;
+        nextChar = tokens2[j3].content.charCodeAt(0);
+        break;
+      }
+      const isLastPunctChar = isMdAsciiPunct(lastChar) || isPunctCharCode(lastChar);
+      const isNextPunctChar = isMdAsciiPunct(nextChar) || isPunctCharCode(nextChar);
+      const isLastWhiteSpace = isWhiteSpace2(lastChar);
+      const isNextWhiteSpace = isWhiteSpace2(nextChar);
+      if (isNextWhiteSpace) canOpen = false;
+      else if (isNextPunctChar) {
+        if (!(isLastWhiteSpace || isLastPunctChar)) canOpen = false;
+      }
+      if (isLastWhiteSpace) canClose = false;
+      else if (isLastPunctChar) {
+        if (!(isNextWhiteSpace || isNextPunctChar)) canClose = false;
+      }
+      if (nextChar === 34 && t3[0] === '"') {
+        if (lastChar >= 48 && lastChar <= 57) canClose = canOpen = false;
+      }
+      if (canOpen && canClose) {
+        canOpen = isLastPunctChar;
+        canClose = isNextPunctChar;
+      }
+      if (!canOpen && !canClose) {
+        if (isSingle) addReplacement(replacements, i3, t3.index, APOSTROPHE);
+        continue;
+      }
+      if (canClose) {
+        j3 = isSingle ? heads.single : heads.double;
+        if (j3 >= 0 && stack[j3].level === thisLevel) {
+          const item = stack[j3];
+          let openQuote;
+          let closeQuote;
+          if (isSingle) {
+            openQuote = state.md.options.quotes[2];
+            closeQuote = state.md.options.quotes[3];
+          } else {
+            openQuote = state.md.options.quotes[0];
+            closeQuote = state.md.options.quotes[1];
+          }
+          addReplacement(replacements, i3, t3.index, closeQuote);
+          addReplacement(replacements, item.tokenIdx, item.contentPos, openQuote);
+          truncateStack(stack, heads, j3);
+          continue OUTER;
+        }
+      }
+      if (canOpen) {
+        if (stack.length >= MAX_OPENERS) return;
+        stack.push({
+          tokenIdx: i3,
+          contentPos: t3.index,
+          isSingleQuote: isSingle,
+          level: thisLevel,
+          prevSameQuoteIdx: isSingle ? heads.single : heads.double
+        });
+        if (isSingle) heads.single = stack.length - 1;
+        else heads.double = stack.length - 1;
+      } else if (canClose && isSingle) addReplacement(replacements, i3, t3.index, APOSTROPHE);
+    }
+  }
+  Object.keys(replacements).forEach(function(tokenIdx) {
+    const idx = Number(tokenIdx);
+    tokens2[idx].content = applyReplacements(tokens2[idx].content, replacements[tokenIdx]);
+  });
+}
+function smartquotes(state) {
+  if (!state.md.options.typographer) return;
+  for (let blkIdx = state.tokens.length - 1; blkIdx >= 0; blkIdx--) {
+    if (state.tokens[blkIdx].type !== "inline" || !QUOTE_TEST_RE.test(state.tokens[blkIdx].content)) continue;
+    process_inlines(state.tokens[blkIdx].children, state);
+  }
+}
+function join_alt(tokens2) {
+  let curr, last;
+  const max = tokens2.length;
+  for (curr = 0; curr < max; curr++) if (tokens2[curr].type === "text_special") tokens2[curr].type = "text";
+  for (curr = last = 0; curr < max; curr++) if (tokens2[curr].type === "text" && curr + 1 < max && tokens2[curr + 1].type === "text") tokens2[curr + 1].content = tokens2[curr].content + tokens2[curr + 1].content;
+  else {
+    if (curr !== last) tokens2[last] = tokens2[curr];
+    last++;
+  }
+  if (curr !== last) tokens2.length = last;
+}
+function text_join(state) {
+  let curr, last;
+  const blockTokens = state.tokens;
+  const l3 = blockTokens.length;
+  for (let j3 = 0; j3 < l3; j3++) {
+    if (blockTokens[j3].type !== "inline") continue;
+    const tokens2 = blockTokens[j3].children;
+    const max = tokens2.length;
+    for (curr = 0; curr < max; curr++) {
+      if (tokens2[curr].type === "text_special") tokens2[curr].type = "text";
+      if (tokens2[curr].children) join_alt(tokens2[curr].children);
+    }
+    for (curr = last = 0; curr < max; curr++) if (tokens2[curr].type === "text" && curr + 1 < max && tokens2[curr + 1].type === "text") tokens2[curr + 1].content = tokens2[curr].content + tokens2[curr + 1].content;
+    else {
+      if (curr !== last) tokens2[last] = tokens2[curr];
+      last++;
+    }
+    if (curr !== last) tokens2.length = last;
+  }
+}
+var _rules$2 = [
+  ["normalize", normalize2],
+  ["block", block2],
+  ["strip_references", strip_references],
+  ["inline", inline],
+  ["linkify", linkify$1],
+  ["replacements", replace],
+  ["smartquotes", smartquotes],
+  ["text_join", text_join]
+];
+var ParserCore = class {
+  constructor() {
+    _defineProperty(
+      this,
+      /**
+      * {@link Ruler} instance. Keep configuration of core rules.
+      */
+      "ruler",
+      new Ruler()
+    );
+    _defineProperty(this, "State", StateCore);
+    for (let i3 = 0; i3 < _rules$2.length; i3++) this.ruler.push(_rules$2[i3][0], _rules$2[i3][1]);
+  }
+  /**
+  * Executes core chain rules.
+  */
+  process(state) {
+    const rules = this.ruler.getRules("");
+    for (let i3 = 0, l3 = rules.length; i3 < l3; i3++) rules[i3](state);
+  }
+};
+var StateBlock = class {
+  constructor(src, md, env, tokens2) {
+    _defineProperty(this, "bMarks", []);
+    _defineProperty(this, "eMarks", []);
+    _defineProperty(this, "tShift", []);
+    _defineProperty(this, "sCount", []);
+    _defineProperty(this, "bsCount", []);
+    _defineProperty(this, "blkIndent", 0);
+    _defineProperty(this, "line", 0);
+    _defineProperty(this, "lineMax", 0);
+    _defineProperty(this, "tight", false);
+    _defineProperty(this, "listIndent", -1);
+    _defineProperty(this, "parentType", "root");
+    _defineProperty(this, "level", 0);
+    _defineProperty(this, "Token", Token);
+    this.src = src;
+    this.md = md;
+    this.env = env;
+    this.tokens = tokens2;
+    const s3 = this.src;
+    for (let start2 = 0, pos = 0, indent2 = 0, offset = 0, len = s3.length, indent_found = false; pos < len; pos++) {
+      const ch2 = s3.charCodeAt(pos);
+      if (!indent_found) {
+        if (isSpace(ch2)) {
+          indent2++;
+          if (ch2 === 9) offset += 4 - offset % 4;
+          else offset++;
+          continue;
+        } else indent_found = true;
+      }
+      if (ch2 === 10 || pos === len - 1) {
+        if (ch2 !== 10) pos++;
+        this.bMarks.push(start2);
+        this.eMarks.push(pos);
+        this.tShift.push(indent2);
+        this.sCount.push(offset);
+        this.bsCount.push(0);
+        indent_found = false;
+        indent2 = 0;
+        offset = 0;
+        start2 = pos + 1;
+      }
+    }
+    this.bMarks.push(s3.length);
+    this.eMarks.push(s3.length);
+    this.tShift.push(0);
+    this.sCount.push(0);
+    this.bsCount.push(0);
+    this.lineMax = this.bMarks.length - 1;
+  }
+  push(type, tag, nesting) {
+    const token = new Token(type, tag, nesting);
+    token.block = true;
+    if (nesting < 0) this.level--;
+    token.level = this.level;
+    if (nesting > 0) this.level++;
+    this.tokens.push(token);
+    return token;
+  }
+  isEmpty(line) {
+    return this.bMarks[line] + this.tShift[line] >= this.eMarks[line];
+  }
+  skipEmptyLines(from) {
+    for (let max = this.lineMax; from < max; from++) if (this.bMarks[from] + this.tShift[from] < this.eMarks[from]) break;
+    return from;
+  }
+  skipSpaces(pos) {
+    for (let max = this.src.length; pos < max; pos++) if (!isSpace(this.src.charCodeAt(pos))) break;
+    return pos;
+  }
+  skipSpacesBack(pos, min) {
+    if (pos <= min) return pos;
+    while (pos > min) if (!isSpace(this.src.charCodeAt(--pos))) return pos + 1;
+    return pos;
+  }
+  skipChars(pos, code2) {
+    for (let max = this.src.length; pos < max; pos++) if (this.src.charCodeAt(pos) !== code2) break;
+    return pos;
+  }
+  skipCharsBack(pos, code2, min) {
+    if (pos <= min) return pos;
+    while (pos > min) if (code2 !== this.src.charCodeAt(--pos)) return pos + 1;
+    return pos;
+  }
+  getLines(begin, end, indent2, keepLastLF) {
+    if (begin >= end) return "";
+    const queue = new Array(end - begin);
+    for (let i3 = 0, line = begin; line < end; line++, i3++) {
+      let lineIndent = 0;
+      const lineStart = this.bMarks[line];
+      let first = lineStart;
+      let last;
+      if (line + 1 < end || keepLastLF) last = this.eMarks[line] + 1;
+      else last = this.eMarks[line];
+      while (first < last && lineIndent < indent2) {
+        const ch2 = this.src.charCodeAt(first);
+        if (isSpace(ch2)) {
+          if (ch2 === 9) lineIndent += 4 - (lineIndent + this.bsCount[line]) % 4;
+          else lineIndent++;
+        } else if (first - lineStart < this.tShift[line]) lineIndent++;
+        else break;
+        first++;
+      }
+      if (lineIndent > indent2) queue[i3] = new Array(lineIndent - indent2 + 1).join(" ") + this.src.slice(first, last);
+      else queue[i3] = this.src.slice(first, last);
+    }
+    return queue.join("");
+  }
+};
+var MAX_AUTOCOMPLETED_CELLS = 65536;
+function getLine(state, line) {
+  const pos = state.bMarks[line] + state.tShift[line];
+  const max = state.eMarks[line];
+  return state.src.slice(pos, max);
+}
+function escapedSplit(str2) {
+  const result = [];
+  const max = str2.length;
+  let pos = 0;
+  let ch2 = str2.charCodeAt(pos);
+  let isEscaped = false;
+  let lastPos = 0;
+  let current = "";
+  while (pos < max) {
+    if (ch2 === 124) {
+      if (!isEscaped) {
+        result.push(current + str2.substring(lastPos, pos));
+        current = "";
+        lastPos = pos + 1;
+      } else {
+        current += str2.substring(lastPos, pos - 1);
+        lastPos = pos;
+      }
+    }
+    isEscaped = ch2 === 92;
+    pos++;
+    ch2 = str2.charCodeAt(pos);
+  }
+  result.push(current + str2.substring(lastPos));
+  return result;
+}
+function table2(state, startLine, endLine, silent) {
+  if (startLine + 2 > endLine) return false;
+  let nextLine = startLine + 1;
+  if (state.sCount[nextLine] < state.blkIndent) return false;
+  if (state.sCount[nextLine] - state.blkIndent >= 4) return false;
+  let pos = state.bMarks[nextLine] + state.tShift[nextLine];
+  if (pos >= state.eMarks[nextLine]) return false;
+  const firstCh = state.src.charCodeAt(pos++);
+  if (firstCh !== 124 && firstCh !== 45 && firstCh !== 58) return false;
+  if (pos >= state.eMarks[nextLine]) return false;
+  const secondCh = state.src.charCodeAt(pos++);
+  if (secondCh !== 124 && secondCh !== 45 && secondCh !== 58 && !isSpace(secondCh)) return false;
+  if (firstCh === 45 && isSpace(secondCh)) return false;
+  while (pos < state.eMarks[nextLine]) {
+    const ch2 = state.src.charCodeAt(pos);
+    if (ch2 !== 124 && ch2 !== 45 && ch2 !== 58 && !isSpace(ch2)) return false;
+    pos++;
+  }
+  let lineText = getLine(state, startLine + 1);
+  let columns = lineText.split("|");
+  const aligns = [];
+  for (let i3 = 0; i3 < columns.length; i3++) {
+    const t3 = columns[i3].trim();
+    if (!t3) {
+      if (i3 === 0 || i3 === columns.length - 1) continue;
+      else return false;
+    }
+    if (!/^:?-+:?$/.test(t3)) return false;
+    if (t3.charCodeAt(t3.length - 1) === 58) aligns.push(t3.charCodeAt(0) === 58 ? "center" : "right");
+    else if (t3.charCodeAt(0) === 58) aligns.push("left");
+    else aligns.push("");
+  }
+  lineText = getLine(state, startLine).trim();
+  if (lineText.indexOf("|") === -1) return false;
+  if (state.sCount[startLine] - state.blkIndent >= 4) return false;
+  columns = escapedSplit(lineText);
+  if (columns.length && columns[0] === "") columns.shift();
+  if (columns.length && columns[columns.length - 1] === "") columns.pop();
+  const columnCount = columns.length;
+  if (columnCount === 0 || columnCount !== aligns.length) return false;
+  if (silent) return true;
+  const oldParentType = state.parentType;
+  state.parentType = "table";
+  const terminatorRules = state.md.block.ruler.getRules("blockquote");
+  const token_to = state.push("table_open", "table", 1);
+  const tableLines = [startLine, 0];
+  token_to.map = tableLines;
+  const token_tho = state.push("thead_open", "thead", 1);
+  token_tho.map = [startLine, startLine + 1];
+  const token_htro = state.push("tr_open", "tr", 1);
+  token_htro.map = [startLine, startLine + 1];
+  for (let i3 = 0; i3 < columns.length; i3++) {
+    const token_ho = state.push("th_open", "th", 1);
+    if (aligns[i3]) token_ho.attrs = [["style", `text-align:${aligns[i3]}`]];
+    const token_il = state.push("inline", "", 0);
+    token_il.content = columns[i3].trim();
+    token_il.children = [];
+    state.push("th_close", "th", -1);
+  }
+  state.push("tr_close", "tr", -1);
+  state.push("thead_close", "thead", -1);
+  let tbodyLines;
+  let autocompletedCells = 0;
+  for (nextLine = startLine + 2; nextLine < endLine; nextLine++) {
+    if (state.sCount[nextLine] < state.blkIndent) break;
+    let terminate = false;
+    for (let i3 = 0, l3 = terminatorRules.length; i3 < l3; i3++) if (terminatorRules[i3](state, nextLine, endLine, true)) {
+      terminate = true;
+      break;
+    }
+    if (terminate) break;
+    lineText = getLine(state, nextLine).trim();
+    if (!lineText) break;
+    if (state.sCount[nextLine] - state.blkIndent >= 4) break;
+    columns = escapedSplit(lineText);
+    if (columns.length && columns[0] === "") columns.shift();
+    if (columns.length && columns[columns.length - 1] === "") columns.pop();
+    autocompletedCells += columnCount - columns.length;
+    if (autocompletedCells > MAX_AUTOCOMPLETED_CELLS) break;
+    if (nextLine === startLine + 2) {
+      const token_tbo = state.push("tbody_open", "tbody", 1);
+      token_tbo.map = tbodyLines = [startLine + 2, 0];
+    }
+    const token_tro = state.push("tr_open", "tr", 1);
+    token_tro.map = [nextLine, nextLine + 1];
+    for (let i3 = 0; i3 < columnCount; i3++) {
+      const token_tdo = state.push("td_open", "td", 1);
+      if (aligns[i3]) token_tdo.attrs = [["style", `text-align:${aligns[i3]}`]];
+      const token_il = state.push("inline", "", 0);
+      token_il.content = columns[i3] ? columns[i3].trim() : "";
+      token_il.children = [];
+      state.push("td_close", "td", -1);
+    }
+    state.push("tr_close", "tr", -1);
+  }
+  if (tbodyLines) {
+    state.push("tbody_close", "tbody", -1);
+    tbodyLines[1] = nextLine;
+  }
+  state.push("table_close", "table", -1);
+  tableLines[1] = nextLine;
+  state.parentType = oldParentType;
+  state.line = nextLine;
+  return true;
+}
+function code(state, startLine, endLine) {
+  if (state.sCount[startLine] - state.blkIndent < 4) return false;
+  let nextLine = startLine + 1;
+  let last = nextLine;
+  while (nextLine < endLine) {
+    if (state.isEmpty(nextLine)) {
+      nextLine++;
+      continue;
+    }
+    if (state.sCount[nextLine] - state.blkIndent >= 4) {
+      nextLine++;
+      last = nextLine;
+      continue;
+    }
+    break;
+  }
+  state.line = last;
+  const token = state.push("code_block", "code", 0);
+  token.content = state.getLines(startLine, last, 4 + state.blkIndent, false) + "\n";
+  token.map = [startLine, state.line];
+  return true;
+}
+function fence(state, startLine, endLine, silent) {
+  let pos = state.bMarks[startLine] + state.tShift[startLine];
+  let max = state.eMarks[startLine];
+  if (state.sCount[startLine] - state.blkIndent >= 4) return false;
+  if (pos + 3 > max) return false;
+  const marker = state.src.charCodeAt(pos);
+  if (marker !== 126 && marker !== 96) return false;
+  let mem = pos;
+  pos = state.skipChars(pos, marker);
+  let len = pos - mem;
+  if (len < 3) return false;
+  const markup = state.src.slice(mem, pos);
+  const params = state.src.slice(pos, max);
+  if (marker === 96) {
+    if (params.indexOf(String.fromCharCode(marker)) >= 0) return false;
+  }
+  if (silent) return true;
+  let nextLine = startLine;
+  let haveEndMarker = false;
+  for (; ; ) {
+    nextLine++;
+    if (nextLine >= endLine) break;
+    pos = mem = state.bMarks[nextLine] + state.tShift[nextLine];
+    max = state.eMarks[nextLine];
+    if (pos < max && state.sCount[nextLine] < state.blkIndent) break;
+    if (state.src.charCodeAt(pos) !== marker) continue;
+    if (state.sCount[nextLine] - state.blkIndent >= 4) continue;
+    pos = state.skipChars(pos, marker);
+    if (pos - mem < len) continue;
+    pos = state.skipSpaces(pos);
+    if (pos < max) continue;
+    haveEndMarker = true;
+    break;
+  }
+  len = state.sCount[startLine];
+  state.line = nextLine + (haveEndMarker ? 1 : 0);
+  const token = state.push("fence", "code", 0);
+  token.info = params;
+  token.content = state.getLines(startLine + 1, nextLine, len, true);
+  token.markup = markup;
+  token.map = [startLine, state.line];
+  return true;
+}
+function blockquote(state, startLine, endLine, silent) {
+  let pos = state.bMarks[startLine] + state.tShift[startLine];
+  let max = state.eMarks[startLine];
+  const oldLineMax = state.lineMax;
+  if (state.sCount[startLine] - state.blkIndent >= 4) return false;
+  if (state.src.charCodeAt(pos) !== 62) return false;
+  if (silent) return true;
+  const oldBMarks = [];
+  const oldBSCount = [];
+  const oldSCount = [];
+  const oldTShift = [];
+  const terminatorRules = state.md.block.ruler.getRules("blockquote");
+  const oldParentType = state.parentType;
+  state.parentType = "blockquote";
+  let lastLineEmpty = false;
+  let nextLine;
+  for (nextLine = startLine; nextLine < endLine; nextLine++) {
+    const isOutdented = state.sCount[nextLine] < state.blkIndent;
+    pos = state.bMarks[nextLine] + state.tShift[nextLine];
+    max = state.eMarks[nextLine];
+    if (pos >= max) break;
+    if (state.src.charCodeAt(pos++) === 62 && !isOutdented) {
+      let initial = state.sCount[nextLine] + 1;
+      let spaceAfterMarker;
+      let adjustTab;
+      if (state.src.charCodeAt(pos) === 32) {
+        pos++;
+        initial++;
+        adjustTab = false;
+        spaceAfterMarker = true;
+      } else if (state.src.charCodeAt(pos) === 9) {
+        spaceAfterMarker = true;
+        if ((state.bsCount[nextLine] + initial) % 4 === 3) {
+          pos++;
+          initial++;
+          adjustTab = false;
+        } else adjustTab = true;
+      } else spaceAfterMarker = false;
+      let offset = initial;
+      oldBMarks.push(state.bMarks[nextLine]);
+      state.bMarks[nextLine] = pos;
+      while (pos < max) {
+        const ch2 = state.src.charCodeAt(pos);
+        if (isSpace(ch2)) {
+          if (ch2 === 9) offset += 4 - (offset + state.bsCount[nextLine] + (adjustTab ? 1 : 0)) % 4;
+          else offset++;
+        } else break;
+        pos++;
+      }
+      lastLineEmpty = pos >= max;
+      oldBSCount.push(state.bsCount[nextLine]);
+      state.bsCount[nextLine] = state.sCount[nextLine] + 1 + (spaceAfterMarker ? 1 : 0);
+      oldSCount.push(state.sCount[nextLine]);
+      state.sCount[nextLine] = offset - initial;
+      oldTShift.push(state.tShift[nextLine]);
+      state.tShift[nextLine] = pos - state.bMarks[nextLine];
+      continue;
+    }
+    if (lastLineEmpty) break;
+    let terminate = false;
+    for (let i3 = 0, l3 = terminatorRules.length; i3 < l3; i3++) if (terminatorRules[i3](state, nextLine, endLine, true)) {
+      terminate = true;
+      break;
+    }
+    if (terminate) {
+      state.lineMax = nextLine;
+      if (state.blkIndent !== 0) {
+        oldBMarks.push(state.bMarks[nextLine]);
+        oldBSCount.push(state.bsCount[nextLine]);
+        oldTShift.push(state.tShift[nextLine]);
+        oldSCount.push(state.sCount[nextLine]);
+        state.sCount[nextLine] -= state.blkIndent;
+      }
+      break;
+    }
+    oldBMarks.push(state.bMarks[nextLine]);
+    oldBSCount.push(state.bsCount[nextLine]);
+    oldTShift.push(state.tShift[nextLine]);
+    oldSCount.push(state.sCount[nextLine]);
+    state.sCount[nextLine] = -1;
+  }
+  const oldIndent = state.blkIndent;
+  state.blkIndent = 0;
+  const token_o = state.push("blockquote_open", "blockquote", 1);
+  token_o.markup = ">";
+  const lines2 = [startLine, 0];
+  token_o.map = lines2;
+  state.md.block.tokenize(state, startLine, nextLine);
+  const token_c = state.push("blockquote_close", "blockquote", -1);
+  token_c.markup = ">";
+  state.lineMax = oldLineMax;
+  state.parentType = oldParentType;
+  lines2[1] = state.line;
+  for (let i3 = 0; i3 < oldTShift.length; i3++) {
+    state.bMarks[i3 + startLine] = oldBMarks[i3];
+    state.tShift[i3 + startLine] = oldTShift[i3];
+    state.sCount[i3 + startLine] = oldSCount[i3];
+    state.bsCount[i3 + startLine] = oldBSCount[i3];
+  }
+  state.blkIndent = oldIndent;
+  return true;
+}
+function hr2(state, startLine, endLine, silent) {
+  const max = state.eMarks[startLine];
+  if (state.sCount[startLine] - state.blkIndent >= 4) return false;
+  let pos = state.bMarks[startLine] + state.tShift[startLine];
+  const marker = state.src.charCodeAt(pos++);
+  if (marker !== 42 && marker !== 45 && marker !== 95) return false;
+  let cnt = 1;
+  while (pos < max) {
+    const ch2 = state.src.charCodeAt(pos++);
+    if (ch2 !== marker && !isSpace(ch2)) return false;
+    if (ch2 === marker) cnt++;
+  }
+  if (cnt < 3) return false;
+  if (silent) return true;
+  state.line = startLine + 1;
+  const token = state.push("hr", "hr", 0);
+  token.map = [startLine, state.line];
+  token.markup = Array(cnt + 1).join(String.fromCharCode(marker));
+  return true;
+}
+function skipBulletListMarker(state, startLine) {
+  const max = state.eMarks[startLine];
+  let pos = state.bMarks[startLine] + state.tShift[startLine];
+  const marker = state.src.charCodeAt(pos++);
+  if (marker !== 42 && marker !== 45 && marker !== 43) return -1;
+  if (pos < max) {
+    if (!isSpace(state.src.charCodeAt(pos))) return -1;
+  }
+  return pos;
+}
+function skipOrderedListMarker(state, startLine) {
+  const start2 = state.bMarks[startLine] + state.tShift[startLine];
+  const max = state.eMarks[startLine];
+  let pos = start2;
+  if (pos + 1 >= max) return -1;
+  let ch2 = state.src.charCodeAt(pos++);
+  if (ch2 < 48 || ch2 > 57) return -1;
+  for (; ; ) {
+    if (pos >= max) return -1;
+    ch2 = state.src.charCodeAt(pos++);
+    if (ch2 >= 48 && ch2 <= 57) {
+      if (pos - start2 >= 10) return -1;
+      continue;
+    }
+    if (ch2 === 41 || ch2 === 46) break;
+    return -1;
+  }
+  if (pos < max) {
+    ch2 = state.src.charCodeAt(pos);
+    if (!isSpace(ch2)) return -1;
+  }
+  return pos;
+}
+function markTightParagraphs(state, idx) {
+  const level = state.level + 2;
+  for (let i3 = idx + 2, l3 = state.tokens.length - 2; i3 < l3; i3++) if (state.tokens[i3].level === level && state.tokens[i3].type === "paragraph_open") {
+    state.tokens[i3 + 2].hidden = true;
+    state.tokens[i3].hidden = true;
+    i3 += 2;
+  }
+}
+function list3(state, startLine, endLine, silent) {
+  let max, pos, start2, token;
+  let nextLine = startLine;
+  let tight = true;
+  if (state.sCount[nextLine] - state.blkIndent >= 4) return false;
+  if (state.listIndent >= 0 && state.sCount[nextLine] - state.listIndent >= 4 && state.sCount[nextLine] < state.blkIndent) return false;
+  let isTerminatingParagraph = false;
+  if (silent && state.parentType === "paragraph") {
+    if (state.sCount[nextLine] >= state.blkIndent) isTerminatingParagraph = true;
+  }
+  let isOrdered;
+  let markerValue;
+  let posAfterMarker;
+  if ((posAfterMarker = skipOrderedListMarker(state, nextLine)) >= 0) {
+    isOrdered = true;
+    start2 = state.bMarks[nextLine] + state.tShift[nextLine];
+    markerValue = Number(state.src.slice(start2, posAfterMarker - 1));
+    if (isTerminatingParagraph && markerValue !== 1) return false;
+  } else if ((posAfterMarker = skipBulletListMarker(state, nextLine)) >= 0) isOrdered = false;
+  else return false;
+  if (isTerminatingParagraph) {
+    if (state.skipSpaces(posAfterMarker) >= state.eMarks[nextLine]) return false;
+  }
+  if (silent) return true;
+  const markerCharCode = state.src.charCodeAt(posAfterMarker - 1);
+  const listTokIdx = state.tokens.length;
+  if (isOrdered) {
+    token = state.push("ordered_list_open", "ol", 1);
+    if (markerValue !== 1) token.attrs = [["start", markerValue]];
+  } else token = state.push("bullet_list_open", "ul", 1);
+  const listLines = [nextLine, 0];
+  token.map = listLines;
+  token.markup = String.fromCharCode(markerCharCode);
+  let prevEmptyEnd = false;
+  const terminatorRules = state.md.block.ruler.getRules("list");
+  const oldParentType = state.parentType;
+  state.parentType = "list";
+  while (nextLine < endLine) {
+    pos = posAfterMarker;
+    max = state.eMarks[nextLine];
+    const initial = state.sCount[nextLine] + posAfterMarker - (state.bMarks[nextLine] + state.tShift[nextLine]);
+    let offset = initial;
+    while (pos < max) {
+      const ch2 = state.src.charCodeAt(pos);
+      if (ch2 === 9) offset += 4 - (offset + state.bsCount[nextLine]) % 4;
+      else if (ch2 === 32) offset++;
+      else break;
+      pos++;
+    }
+    const contentStart = pos;
+    let indentAfterMarker;
+    if (contentStart >= max) indentAfterMarker = 1;
+    else indentAfterMarker = offset - initial;
+    if (indentAfterMarker > 4) indentAfterMarker = 1;
+    const indent2 = initial + indentAfterMarker;
+    token = state.push("list_item_open", "li", 1);
+    token.markup = String.fromCharCode(markerCharCode);
+    const itemLines2 = [nextLine, 0];
+    token.map = itemLines2;
+    if (isOrdered) token.info = state.src.slice(start2, posAfterMarker - 1);
+    const oldTight = state.tight;
+    const oldTShift = state.tShift[nextLine];
+    const oldSCount = state.sCount[nextLine];
+    const oldListIndent = state.listIndent;
+    state.listIndent = state.blkIndent;
+    state.blkIndent = indent2;
+    state.tight = true;
+    state.tShift[nextLine] = contentStart - state.bMarks[nextLine];
+    state.sCount[nextLine] = offset;
+    if (contentStart >= max && state.isEmpty(nextLine + 1)) state.line = Math.min(state.line + 2, endLine);
+    else state.md.block.tokenize(state, nextLine, endLine);
+    if (!state.tight || prevEmptyEnd) tight = false;
+    prevEmptyEnd = state.line - nextLine > 1 && state.isEmpty(state.line - 1);
+    state.blkIndent = state.listIndent;
+    state.listIndent = oldListIndent;
+    state.tShift[nextLine] = oldTShift;
+    state.sCount[nextLine] = oldSCount;
+    state.tight = oldTight;
+    token = state.push("list_item_close", "li", -1);
+    token.markup = String.fromCharCode(markerCharCode);
+    nextLine = state.line;
+    itemLines2[1] = nextLine;
+    if (nextLine >= endLine) break;
+    if (state.sCount[nextLine] < state.blkIndent) break;
+    if (state.sCount[nextLine] - state.blkIndent >= 4) break;
+    let terminate = false;
+    for (let i3 = 0, l3 = terminatorRules.length; i3 < l3; i3++) if (terminatorRules[i3](state, nextLine, endLine, true)) {
+      terminate = true;
+      break;
+    }
+    if (terminate) break;
+    if (isOrdered) {
+      posAfterMarker = skipOrderedListMarker(state, nextLine);
+      if (posAfterMarker < 0) break;
+      start2 = state.bMarks[nextLine] + state.tShift[nextLine];
+    } else {
+      posAfterMarker = skipBulletListMarker(state, nextLine);
+      if (posAfterMarker < 0) break;
+    }
+    if (markerCharCode !== state.src.charCodeAt(posAfterMarker - 1)) break;
+  }
+  if (isOrdered) token = state.push("ordered_list_close", "ol", -1);
+  else token = state.push("bullet_list_close", "ul", -1);
+  token.markup = String.fromCharCode(markerCharCode);
+  listLines[1] = nextLine;
+  state.line = nextLine;
+  state.parentType = oldParentType;
+  if (tight) markTightParagraphs(state, listTokIdx);
+  return true;
+}
+var MAX_LABEL_LENGTH = 999;
+function countCodePoints(str2) {
+  let length = str2.length;
+  for (let i3 = 0; i3 < str2.length - 1; i3++) {
+    const high = str2.charCodeAt(i3);
+    if (high < 55296 || high > 56319) continue;
+    const low = str2.charCodeAt(i3 + 1);
+    if (low >= 56320 && low <= 57343) {
+      length--;
+      i3++;
+    }
+  }
+  return length;
+}
+function lineEnd(state, line) {
+  return Math.min(state.eMarks[line] + 1, state.src.length);
+}
+function getNextLinePos(state, nextLine) {
+  const endLine = state.lineMax;
+  if (nextLine >= endLine || state.isEmpty(nextLine)) return -1;
+  let isContinuation = false;
+  if (state.sCount[nextLine] - state.blkIndent > 3) isContinuation = true;
+  if (state.sCount[nextLine] < 0) isContinuation = true;
+  if (!isContinuation) {
+    const terminatorRules = state.md.block.ruler.getRules("reference");
+    const oldParentType = state.parentType;
+    state.parentType = "reference";
+    let terminate = false;
+    for (let i3 = 0, l3 = terminatorRules.length; i3 < l3; i3++) if (terminatorRules[i3](state, nextLine, endLine, true)) {
+      terminate = true;
+      break;
+    }
+    state.parentType = oldParentType;
+    if (terminate) return -1;
+  }
+  return state.bMarks[nextLine] + state.tShift[nextLine];
+}
+function reference(state, startLine, _endLine, silent) {
+  const src = state.src;
+  let pos = state.bMarks[startLine] + state.tShift[startLine];
+  let nextLine = startLine + 1;
+  if (state.sCount[startLine] - state.blkIndent >= 4) return false;
+  if (src.charCodeAt(pos) !== 91) return false;
+  let max = lineEnd(state, startLine);
+  let rawLabel = "";
+  let labelEnd = -1;
+  let segmentStart = ++pos;
+  while (pos < max) {
+    if (rawLabel.length + pos - segmentStart > MAX_LABEL_LENGTH * 2) return false;
+    let ch2 = src.charCodeAt(pos);
+    if (ch2 === 91) return false;
+    if (ch2 === 93) {
+      labelEnd = pos;
+      break;
+    }
+    if (ch2 === 92) ch2 = src.charCodeAt(++pos);
+    if (ch2 === 10 && pos < max) {
+      const nextPos = getNextLinePos(state, nextLine);
+      if (nextPos < 0) return false;
+      rawLabel += src.slice(segmentStart, max);
+      pos = segmentStart = nextPos;
+      max = lineEnd(state, nextLine++);
+      continue;
+    }
+    pos++;
+  }
+  if (labelEnd < 0 || src.charCodeAt(labelEnd + 1) !== 58) return false;
+  rawLabel += src.slice(segmentStart, labelEnd);
+  if (rawLabel.length > MAX_LABEL_LENGTH && countCodePoints(rawLabel) > MAX_LABEL_LENGTH) return false;
+  pos = labelEnd + 2;
+  while (pos < max) {
+    const ch2 = src.charCodeAt(pos);
+    if (ch2 === 10) {
+      const nextPos = getNextLinePos(state, nextLine);
+      if (nextPos < 0) break;
+      pos = nextPos;
+      max = lineEnd(state, nextLine++);
+    } else if (isSpace(ch2)) pos++;
+    else break;
+  }
+  const destRes = state.md.helpers.parseLinkDestination(src, pos, max);
+  if (!destRes.ok) return false;
+  const href = state.md.normalizeLink(destRes.str);
+  if (!state.md.validateLink(href)) return false;
+  pos = destRes.pos;
+  const destEndPos = pos;
+  const destEndMax = max;
+  const destEndLineNo = nextLine;
+  while (pos < max) {
+    const ch2 = src.charCodeAt(pos);
+    if (ch2 === 10) {
+      const nextPos = getNextLinePos(state, nextLine);
+      if (nextPos < 0) break;
+      pos = nextPos;
+      max = lineEnd(state, nextLine++);
+    } else if (isSpace(ch2)) pos++;
+    else break;
+  }
+  const titleStart = pos;
+  let titleRes = state.md.helpers.parseLinkTitle(src, pos, max);
+  while (titleRes.can_continue) {
+    const nextPos = getNextLinePos(state, nextLine);
+    if (nextPos < 0) break;
+    pos = nextPos;
+    max = lineEnd(state, nextLine++);
+    titleRes = state.md.helpers.parseLinkTitle(src, pos, max, titleRes);
+  }
+  let title2;
+  if (titleStart !== destEndPos && titleRes.ok) {
+    title2 = titleRes.str;
+    pos = titleRes.pos;
+  } else {
+    title2 = "";
+    pos = destEndPos;
+    max = destEndMax;
+    nextLine = destEndLineNo;
+  }
+  while (pos < max) {
+    if (!isSpace(src.charCodeAt(pos))) break;
+    pos++;
+  }
+  if (pos < max && src.charCodeAt(pos) !== 10) {
+    if (title2) {
+      title2 = "";
+      pos = destEndPos;
+      max = destEndMax;
+      nextLine = destEndLineNo;
+      while (pos < max) {
+        if (!isSpace(src.charCodeAt(pos))) break;
+        pos++;
+      }
+    }
+  }
+  if (pos < max && src.charCodeAt(pos) !== 10) return false;
+  const label2 = normalizeReference(rawLabel);
+  if (!label2) return false;
+  if (silent) return true;
+  if (typeof state.env.references === "undefined") state.env.references = {};
+  if (typeof state.env.references[label2] === "undefined") state.env.references[label2] = {
+    title: title2,
+    href
+  };
+  const token = state.push("reference_definition", "", 0);
+  token.map = [startLine, nextLine];
+  token.hidden = true;
+  const meta2 = /* @__PURE__ */ Object.create(null);
+  meta2.label = label2;
+  token.meta = meta2;
+  state.line = nextLine;
+  return true;
+}
+var html_blocks_default = [
+  "address",
+  "article",
+  "aside",
+  "base",
+  "basefont",
+  "blockquote",
+  "body",
+  "caption",
+  "center",
+  "col",
+  "colgroup",
+  "dd",
+  "details",
+  "dialog",
+  "dir",
+  "div",
+  "dl",
+  "dt",
+  "fieldset",
+  "figcaption",
+  "figure",
+  "footer",
+  "form",
+  "frame",
+  "frameset",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "head",
+  "header",
+  "hr",
+  "html",
+  "iframe",
+  "legend",
+  "li",
+  "link",
+  "main",
+  "menu",
+  "menuitem",
+  "nav",
+  "noframes",
+  "ol",
+  "optgroup",
+  "option",
+  "p",
+  "param",
+  "search",
+  "section",
+  "summary",
+  "table",
+  "tbody",
+  "td",
+  "tfoot",
+  "th",
+  "thead",
+  "title",
+  "tr",
+  "track",
+  "ul"
+];
+var open_tag = `<[A-Za-z][A-Za-z0-9\\-]*(?:\\s+[a-zA-Z_:][a-zA-Z0-9:._-]*(?:\\s*=\\s*(?:[^"'=<>\`\\x00-\\x20]+|'[^']*'|"[^"]*"))?)*\\s*\\/?>`;
+var close_tag = "<\\/[A-Za-z][A-Za-z0-9\\-]*\\s*>";
+new RegExp(`^(?:${open_tag}|${close_tag}|<!---?>|<!--(?:[^-]|-[^-]|--[^>])*-->|<[?][\\s\\S]*?[?]>|<![A-Za-z][^>]*>|<!\\[CDATA\\[[\\s\\S]*?\\]\\]>)`);
+var HTML_OPEN_CLOSE_TAG_RE = new RegExp(`^(?:${open_tag}|${close_tag})`);
+var HTML_SEQUENCES = [
+  [
+    /^<(script|pre|style|textarea)(?=(\s|>|$))/i,
+    /<\/(script|pre|style|textarea)>/i,
+    true
+  ],
+  [
+    /^<!--/,
+    /-->/,
+    true
+  ],
+  [
+    /^<\?/,
+    /\?>/,
+    true
+  ],
+  [
+    /^<![A-Za-z]/,
+    />/,
+    true
+  ],
+  [
+    /^<!\[CDATA\[/,
+    /\]\]>/,
+    true
+  ],
+  [
+    new RegExp(`^</?(${html_blocks_default.join("|")})(?=(\\s|/?>|$))`, "i"),
+    /^$/,
+    true
+  ],
+  [
+    new RegExp(`${HTML_OPEN_CLOSE_TAG_RE.source}\\s*$`),
+    /^$/,
+    false
+  ]
+];
+function html_block(state, startLine, endLine, silent) {
+  let pos = state.bMarks[startLine] + state.tShift[startLine];
+  let max = state.eMarks[startLine];
+  if (state.sCount[startLine] - state.blkIndent >= 4) return false;
+  if (!state.md.options.html) return false;
+  if (state.src.charCodeAt(pos) !== 60) return false;
+  let lineText = state.src.slice(pos, max);
+  let i3 = 0;
+  for (; i3 < HTML_SEQUENCES.length; i3++) if (HTML_SEQUENCES[i3][0].test(lineText)) break;
+  if (i3 === HTML_SEQUENCES.length) return false;
+  if (silent) return HTML_SEQUENCES[i3][2];
+  let nextLine = startLine + 1;
+  const endsOnBlankLine = HTML_SEQUENCES[i3][1].test("");
+  if (!HTML_SEQUENCES[i3][1].test(lineText)) for (; nextLine < endLine; nextLine++) {
+    if (state.sCount[nextLine] < state.blkIndent) {
+      if (endsOnBlankLine || !state.isEmpty(nextLine)) break;
+    }
+    pos = state.bMarks[nextLine] + state.tShift[nextLine];
+    max = state.eMarks[nextLine];
+    lineText = state.src.slice(pos, max);
+    if (HTML_SEQUENCES[i3][1].test(lineText)) {
+      if (lineText.length !== 0) nextLine++;
+      break;
+    }
+  }
+  state.line = nextLine;
+  const token = state.push("html_block", "", 0);
+  token.map = [startLine, nextLine];
+  token.content = state.getLines(startLine, nextLine, state.blkIndent, true);
+  return true;
+}
+function heading(state, startLine, endLine, silent) {
+  let pos = state.bMarks[startLine] + state.tShift[startLine];
+  let max = state.eMarks[startLine];
+  if (state.sCount[startLine] - state.blkIndent >= 4) return false;
+  let ch2 = state.src.charCodeAt(pos);
+  if (ch2 !== 35 || pos >= max) return false;
+  let level = 1;
+  ch2 = state.src.charCodeAt(++pos);
+  while (ch2 === 35 && pos < max && level <= 6) {
+    level++;
+    ch2 = state.src.charCodeAt(++pos);
+  }
+  if (level > 6 || pos < max && !isSpace(ch2)) return false;
+  if (silent) return true;
+  max = state.skipSpacesBack(max, pos);
+  const tmp = state.skipCharsBack(max, 35, pos);
+  if (tmp > pos && isSpace(state.src.charCodeAt(tmp - 1))) max = tmp;
+  state.line = startLine + 1;
+  const token_o = state.push("heading_open", `h${level}`, 1);
+  token_o.markup = "########".slice(0, level);
+  token_o.map = [startLine, state.line];
+  const token_i = state.push("inline", "", 0);
+  token_i.content = asciiTrim(state.src.slice(pos, max));
+  token_i.map = [startLine, state.line];
+  token_i.children = [];
+  const token_c = state.push("heading_close", `h${level}`, -1);
+  token_c.markup = "########".slice(0, level);
+  return true;
+}
+function lheading(state, startLine, endLine) {
+  const terminatorRules = state.md.block.ruler.getRules("paragraph");
+  if (state.sCount[startLine] - state.blkIndent >= 4) return false;
+  const oldParentType = state.parentType;
+  state.parentType = "paragraph";
+  let level = 0;
+  let marker;
+  let nextLine = startLine + 1;
+  for (; nextLine < endLine && !state.isEmpty(nextLine); nextLine++) {
+    if (state.sCount[nextLine] - state.blkIndent > 3) continue;
+    if (state.sCount[nextLine] >= state.blkIndent) {
+      let pos = state.bMarks[nextLine] + state.tShift[nextLine];
+      const max = state.eMarks[nextLine];
+      if (pos < max) {
+        marker = state.src.charCodeAt(pos);
+        if (marker === 45 || marker === 61) {
+          pos = state.skipChars(pos, marker);
+          pos = state.skipSpaces(pos);
+          if (pos >= max) {
+            level = marker === 61 ? 1 : 2;
+            break;
+          }
+        }
+      }
+    }
+    if (state.sCount[nextLine] < 0) continue;
+    let terminate = false;
+    for (let i3 = 0, l3 = terminatorRules.length; i3 < l3; i3++) if (terminatorRules[i3](state, nextLine, endLine, true)) {
+      terminate = true;
+      break;
+    }
+    if (terminate) break;
+  }
+  if (!level) {
+    state.parentType = oldParentType;
+    return false;
+  }
+  const content = asciiTrim(state.getLines(startLine, nextLine, state.blkIndent, false));
+  state.line = nextLine + 1;
+  const token_o = state.push("heading_open", `h${level}`, 1);
+  token_o.markup = String.fromCharCode(marker);
+  token_o.map = [startLine, state.line];
+  const token_i = state.push("inline", "", 0);
+  token_i.content = content;
+  token_i.map = [startLine, state.line - 1];
+  token_i.children = [];
+  const token_c = state.push("heading_close", `h${level}`, -1);
+  token_c.markup = String.fromCharCode(marker);
+  state.parentType = oldParentType;
+  return true;
+}
+function paragraph(state, startLine, endLine) {
+  const terminatorRules = state.md.block.ruler.getRules("paragraph");
+  const oldParentType = state.parentType;
+  let nextLine = startLine + 1;
+  state.parentType = "paragraph";
+  for (; nextLine < endLine && !state.isEmpty(nextLine); nextLine++) {
+    if (state.sCount[nextLine] - state.blkIndent > 3) continue;
+    if (state.sCount[nextLine] < 0) continue;
+    let terminate = false;
+    for (let i3 = 0, l3 = terminatorRules.length; i3 < l3; i3++) if (terminatorRules[i3](state, nextLine, endLine, true)) {
+      terminate = true;
+      break;
+    }
+    if (terminate) break;
+  }
+  const content = asciiTrim(state.getLines(startLine, nextLine, state.blkIndent, false));
+  state.line = nextLine;
+  const token_o = state.push("paragraph_open", "p", 1);
+  token_o.map = [startLine, state.line];
+  const token_i = state.push("inline", "", 0);
+  token_i.content = content;
+  token_i.map = [startLine, state.line];
+  token_i.children = [];
+  state.push("paragraph_close", "p", -1);
+  state.parentType = oldParentType;
+  return true;
+}
+var _rules$1 = [
+  [
+    "table",
+    table2,
+    ["paragraph", "reference"]
+  ],
+  ["code", code],
+  [
+    "fence",
+    fence,
+    [
+      "paragraph",
+      "reference",
+      "blockquote",
+      "list"
+    ]
+  ],
+  [
+    "blockquote",
+    blockquote,
+    [
+      "paragraph",
+      "reference",
+      "blockquote",
+      "list"
+    ]
+  ],
+  [
+    "hr",
+    hr2,
+    [
+      "paragraph",
+      "reference",
+      "blockquote",
+      "list"
+    ]
+  ],
+  [
+    "list",
+    list3,
+    [
+      "paragraph",
+      "reference",
+      "blockquote"
+    ]
+  ],
+  ["reference", reference],
+  [
+    "html_block",
+    html_block,
+    [
+      "paragraph",
+      "reference",
+      "blockquote"
+    ]
+  ],
+  [
+    "heading",
+    heading,
+    [
+      "paragraph",
+      "reference",
+      "blockquote"
+    ]
+  ],
+  ["lheading", lheading],
+  ["paragraph", paragraph]
+];
+var ParserBlock = class {
+  constructor() {
+    _defineProperty(
+      this,
+      /**
+      * {@link Ruler} instance. Keep configuration of block rules.
+      */
+      "ruler",
+      new Ruler()
+    );
+    _defineProperty(this, "State", StateBlock);
+    for (let i3 = 0; i3 < _rules$1.length; i3++) this.ruler.push(_rules$1[i3][0], _rules$1[i3][1], { alt: (_rules$1[i3][2] || []).slice() });
+  }
+  tokenize(state, startLine, endLine) {
+    const rules = this.ruler.getRules("");
+    const len = rules.length;
+    const maxNesting = state.md.options.maxNesting;
+    let line = startLine;
+    let hasEmptyLines = false;
+    while (line < endLine) {
+      state.line = line = state.skipEmptyLines(line);
+      if (line >= endLine) break;
+      if (state.sCount[line] < state.blkIndent) break;
+      if (state.level >= maxNesting) {
+        state.line = endLine;
+        break;
+      }
+      const prevLine = state.line;
+      let ok = false;
+      for (let i3 = 0; i3 < len; i3++) {
+        ok = rules[i3](state, line, endLine, false);
+        if (ok) {
+          if (prevLine >= state.line) throw new Error("block rule didn't increment state.line");
+          break;
+        }
+      }
+      if (!ok) throw new Error("none of the block rules matched");
+      state.tight = !hasEmptyLines;
+      if (state.isEmpty(state.line - 1)) hasEmptyLines = true;
+      line = state.line;
+      if (line < endLine && state.isEmpty(line)) {
+        hasEmptyLines = true;
+        line++;
+        state.line = line;
+      }
+    }
+  }
+  /**
+  * Process input string and push block tokens into `outTokens`
+  */
+  parse(src, md, env, outTokens) {
+    if (!src) return;
+    const state = new this.State(src, md, env, outTokens);
+    this.tokenize(state, state.line, state.lineMax);
+  }
+};
+var StateInline = class {
+  constructor(src, md, env, outTokens) {
+    _defineProperty(this, "pos", 0);
+    _defineProperty(this, "level", 0);
+    _defineProperty(this, "pending", "");
+    _defineProperty(this, "pendingLevel", 0);
+    _defineProperty(this, "cache", {});
+    _defineProperty(this, "backticks", {});
+    _defineProperty(this, "backticksScanned", false);
+    _defineProperty(this, "skipHtmlSpecial", false);
+    _defineProperty(this, "linkLevel", 0);
+    _defineProperty(this, "delimiters", []);
+    _defineProperty(this, "_prev_delimiters", []);
+    _defineProperty(this, "Token", Token);
+    this.src = src;
+    this.env = env;
+    this.md = md;
+    this.tokens = outTokens;
+    this.tokens_meta = Array(outTokens.length);
+    this.posMax = this.src.length;
+  }
+  pushPending() {
+    const token = new Token("text", "", 0);
+    token.content = this.pending;
+    token.level = this.pendingLevel;
+    this.tokens.push(token);
+    this.pending = "";
+    return token;
+  }
+  push(type, tag, nesting) {
+    if (this.pending) this.pushPending();
+    const token = new Token(type, tag, nesting);
+    let token_meta = void 0;
+    if (nesting < 0) {
+      this.level--;
+      this.delimiters = this._prev_delimiters.pop();
+    }
+    token.level = this.level;
+    if (nesting > 0) {
+      this.level++;
+      this._prev_delimiters.push(this.delimiters);
+      this.delimiters = [];
+      token_meta = { delimiters: this.delimiters };
+    }
+    this.pendingLevel = this.level;
+    this.tokens.push(token);
+    this.tokens_meta.push(token_meta);
+    return token;
+  }
+  scanDelims(start2, canSplitWord) {
+    const max = this.posMax;
+    const marker = this.src.charCodeAt(start2);
+    let lastChar;
+    if (start2 === 0) lastChar = 32;
+    else if (start2 === 1) {
+      lastChar = this.src.charCodeAt(0);
+      if ((lastChar & 63488) === 55296) lastChar = 65533;
+    } else {
+      lastChar = this.src.charCodeAt(start2 - 1);
+      if ((lastChar & 64512) === 56320) {
+        const highSurr = this.src.charCodeAt(start2 - 2);
+        lastChar = (highSurr & 64512) === 55296 ? 65536 + (highSurr - 55296 << 10) + (lastChar - 56320) : 65533;
+      } else if ((lastChar & 64512) === 55296) lastChar = 65533;
+    }
+    let pos = start2;
+    while (pos < max && this.src.charCodeAt(pos) === marker) pos++;
+    const count2 = pos - start2;
+    let nextChar = pos < max ? this.src.charCodeAt(pos) : 32;
+    if ((nextChar & 64512) === 55296) {
+      const lowSurr = this.src.charCodeAt(pos + 1);
+      nextChar = (lowSurr & 64512) === 56320 ? 65536 + (nextChar - 55296 << 10) + (lowSurr - 56320) : 65533;
+    } else if ((nextChar & 64512) === 56320) nextChar = 65533;
+    const isLastPunctChar = isMdAsciiPunct(lastChar) || isPunctCharCode(lastChar);
+    const isNextPunctChar = isMdAsciiPunct(nextChar) || isPunctCharCode(nextChar);
+    const isLastWhiteSpace = isWhiteSpace2(lastChar);
+    const isNextWhiteSpace = isWhiteSpace2(nextChar);
+    const left_flanking = !isNextWhiteSpace && (!isNextPunctChar || isLastWhiteSpace || isLastPunctChar);
+    const right_flanking = !isLastWhiteSpace && (!isLastPunctChar || isNextWhiteSpace || isNextPunctChar);
+    return {
+      can_open: left_flanking && (canSplitWord || !right_flanking || isLastPunctChar),
+      can_close: right_flanking && (canSplitWord || !left_flanking || isNextPunctChar),
+      length: count2
+    };
+  }
+};
+function isTerminatorChar(ch2) {
+  switch (ch2) {
+    case 10:
+    case 33:
+    case 35:
+    case 36:
+    case 37:
+    case 38:
+    case 42:
+    case 43:
+    case 45:
+    case 58:
+    case 60:
+    case 61:
+    case 62:
+    case 64:
+    case 91:
+    case 92:
+    case 93:
+    case 94:
+    case 95:
+    case 96:
+    case 123:
+    case 125:
+    case 126:
+      return true;
+    default:
+      return false;
+  }
+}
+function text11(state, silent) {
+  let pos = state.pos;
+  while (pos < state.posMax && !isTerminatorChar(state.src.charCodeAt(pos))) pos++;
+  if (pos === state.pos) return false;
+  if (!silent) state.pending += state.src.slice(state.pos, pos);
+  state.pos = pos;
+  return true;
+}
+function isAsciiAlpha(code2) {
+  return code2 >= 65 && code2 <= 90 || code2 >= 97 && code2 <= 122;
+}
+function isSchemeChar(code2) {
+  return code2 >= 65 && code2 <= 90 || code2 >= 97 && code2 <= 122 || code2 >= 48 && code2 <= 57 || code2 === 43 || code2 === 45 || code2 === 46;
+}
+function linkify(state, silent) {
+  if (!state.md.options.linkify) return false;
+  if (state.linkLevel > 0) return false;
+  const pos = state.pos;
+  const max = state.posMax;
+  if (pos + 3 > max) return false;
+  if (state.src.charCodeAt(pos) !== 58) return false;
+  if (state.src.charCodeAt(pos + 1) !== 47) return false;
+  if (state.src.charCodeAt(pos + 2) !== 47) return false;
+  const protoMin = pos - Math.min(10, state.pending.length, pos);
+  let protoStart = pos;
+  while (protoStart > protoMin && isSchemeChar(state.src.charCodeAt(protoStart - 1))) protoStart--;
+  if (protoStart === pos || !isAsciiAlpha(state.src.charCodeAt(protoStart))) return false;
+  const protoLength = pos - protoStart;
+  const link3 = state.md.linkify.matchAtStart(state.src.slice(protoStart));
+  if (!link3) return false;
+  let url = link3.url;
+  if (url.length <= protoLength) return false;
+  let urlEnd = url.length;
+  while (urlEnd > 0 && url.charCodeAt(urlEnd - 1) === 42) urlEnd--;
+  if (urlEnd !== url.length) url = url.slice(0, urlEnd);
+  const fullUrl = state.md.normalizeLink(url);
+  if (!state.md.validateLink(fullUrl)) return false;
+  if (!silent) {
+    state.pending = state.pending.slice(0, -protoLength);
+    const token_o = state.push("link_open", "a", 1);
+    token_o.attrs = [["href", fullUrl]];
+    token_o.markup = "linkify";
+    token_o.info = "auto";
+    const token_t = state.push("text", "", 0);
+    token_t.content = state.md.normalizeLinkText(url);
+    const token_c = state.push("link_close", "a", -1);
+    token_c.markup = "linkify";
+    token_c.info = "auto";
+  }
+  state.pos += url.length - protoLength;
+  return true;
+}
+function newline(state, silent) {
+  let pos = state.pos;
+  if (state.src.charCodeAt(pos) !== 10) return false;
+  const pmax = state.pending.length - 1;
+  const max = state.posMax;
+  if (!silent) {
+    if (pmax >= 0 && state.pending.charCodeAt(pmax) === 32) {
+      if (pmax >= 1 && state.pending.charCodeAt(pmax - 1) === 32) {
+        let ws2 = pmax - 1;
+        while (ws2 >= 1 && state.pending.charCodeAt(ws2 - 1) === 32) ws2--;
+        state.pending = state.pending.slice(0, ws2);
+        state.push("hardbreak", "br", 0);
+      } else {
+        state.pending = state.pending.slice(0, -1);
+        state.push("softbreak", "br", 0);
+      }
+    } else state.push("softbreak", "br", 0);
+  }
+  pos++;
+  while (pos < max && isSpace(state.src.charCodeAt(pos))) pos++;
+  state.pos = pos;
+  return true;
+}
+var ESCAPED = [];
+for (let i3 = 0; i3 < 256; i3++) ESCAPED.push(0);
+"\\!\"#$%&'()*+,./:;<=>?@[]^_`{|}~-".split("").forEach(function(ch2) {
+  ESCAPED[ch2.charCodeAt(0)] = 1;
+});
+function escape3(state, silent) {
+  let pos = state.pos;
+  const max = state.posMax;
+  if (state.src.charCodeAt(pos) !== 92) return false;
+  pos++;
+  if (pos >= max) return false;
+  let ch1 = state.src.charCodeAt(pos);
+  if (ch1 === 10) {
+    if (!silent) state.push("hardbreak", "br", 0);
+    pos++;
+    while (pos < max) {
+      ch1 = state.src.charCodeAt(pos);
+      if (!isSpace(ch1)) break;
+      pos++;
+    }
+    state.pos = pos;
+    return true;
+  }
+  if (ch1 === 32) {
+    if (!silent) {
+      const token = state.push("text_special", "", 0);
+      token.content = "\\";
+      token.markup = "\\";
+      token.info = "escape";
+    }
+    state.pos = pos;
+    return true;
+  }
+  let escapedStr = state.src[pos];
+  if (ch1 >= 55296 && ch1 <= 56319 && pos + 1 < max) {
+    const ch2 = state.src.charCodeAt(pos + 1);
+    if (ch2 >= 56320 && ch2 <= 57343) {
+      escapedStr += state.src[pos + 1];
+      pos++;
+    }
+  }
+  const origStr = "\\" + escapedStr;
+  if (!silent) {
+    const token = state.push("text_special", "", 0);
+    if (ch1 < 256 && ESCAPED[ch1] !== 0) token.content = escapedStr;
+    else token.content = origStr;
+    token.markup = origStr;
+    token.info = "escape";
+  }
+  state.pos = pos + 1;
+  return true;
+}
+function buildLastRuns(src) {
+  const lastRuns = {};
+  let pos = 0;
+  while ((pos = src.indexOf("`", pos)) !== -1) {
+    const start2 = pos;
+    while (src.charCodeAt(++pos) === 96) ;
+    lastRuns[pos - start2] = start2;
+  }
+  return lastRuns;
+}
+function backtick(state, silent) {
+  var _state$backticks$open;
+  const start2 = state.pos;
+  if (state.src.charCodeAt(start2) !== 96) return false;
+  const max = state.posMax;
+  let pos = start2 + 1;
+  while (pos < max && state.src.charCodeAt(pos) === 96) pos++;
+  const marker = state.src.slice(start2, pos);
+  const openerLength = marker.length;
+  if (!state.backticksScanned) {
+    state.backticks = buildLastRuns(state.src);
+    state.backticksScanned = true;
+  }
+  if (((_state$backticks$open = state.backticks[openerLength]) !== null && _state$backticks$open !== void 0 ? _state$backticks$open : -1) >= pos) {
+    let matchEnd = pos;
+    let matchStart;
+    while ((matchStart = state.src.indexOf("`", matchEnd)) !== -1 && matchStart < max) {
+      matchEnd = matchStart + 1;
+      while (state.src.charCodeAt(matchEnd) === 96) matchEnd++;
+      if (matchEnd > max) break;
+      if (matchEnd - matchStart === openerLength) {
+        if (!silent) {
+          const token = state.push("code_inline", "code", 0);
+          token.markup = marker;
+          let content = state.src.slice(pos, matchStart).replace(/\n/g, " ");
+          if (content.startsWith(" ") && content.endsWith(" ") && /[^ ]/.test(content)) content = content.slice(1, -1);
+          token.content = content;
+        }
+        state.pos = matchEnd;
+        return true;
+      }
+    }
+  }
+  if (!silent) state.pending += marker;
+  state.pos = pos;
+  return true;
+}
+function strikethrough_tokenize(state, silent) {
+  const start2 = state.pos;
+  const marker = state.src.charCodeAt(start2);
+  if (silent) return false;
+  if (marker !== 126) return false;
+  const scanned = state.scanDelims(state.pos, true);
+  let len = scanned.length;
+  const ch2 = String.fromCharCode(marker);
+  if (len < 2) return false;
+  let token;
+  if (len % 2) {
+    token = state.push("text", "", 0);
+    token.content = ch2;
+    len--;
+  }
+  for (let i3 = 0; i3 < len; i3 += 2) {
+    token = state.push("text", "", 0);
+    token.content = ch2 + ch2;
+    state.delimiters.push({
+      marker,
+      length: 0,
+      token: state.tokens.length - 1,
+      end: -1,
+      open: scanned.can_open,
+      close: scanned.can_close
+    });
+  }
+  state.pos += scanned.length;
+  return true;
+}
+function postProcess$1(state, delimiters) {
+  let token;
+  const loneMarkers = [];
+  const max = delimiters.length;
+  for (let i3 = 0; i3 < max; i3++) {
+    const startDelim = delimiters[i3];
+    if (startDelim.marker !== 126) continue;
+    if (startDelim.end === -1) continue;
+    const endDelim = delimiters[startDelim.end];
+    token = state.tokens[startDelim.token];
+    token.type = "s_open";
+    token.tag = "s";
+    token.nesting = 1;
+    token.markup = "~~";
+    token.content = "";
+    token = state.tokens[endDelim.token];
+    token.type = "s_close";
+    token.tag = "s";
+    token.nesting = -1;
+    token.markup = "~~";
+    token.content = "";
+    if (state.tokens[endDelim.token - 1].type === "text" && state.tokens[endDelim.token - 1].content === "~") loneMarkers.push(endDelim.token - 1);
+  }
+  while (loneMarkers.length) {
+    const i3 = loneMarkers.pop();
+    let j3 = i3 + 1;
+    while (j3 < state.tokens.length && state.tokens[j3].type === "s_close") j3++;
+    j3--;
+    if (i3 !== j3) {
+      token = state.tokens[j3];
+      state.tokens[j3] = state.tokens[i3];
+      state.tokens[i3] = token;
+    }
+  }
+}
+function strikethrough_postProcess(state) {
+  const tokens_meta = state.tokens_meta;
+  const max = state.tokens_meta.length;
+  postProcess$1(state, state.delimiters);
+  for (let curr = 0; curr < max; curr++) {
+    var _tokens_meta$curr;
+    const delimiters = (_tokens_meta$curr = tokens_meta[curr]) === null || _tokens_meta$curr === void 0 ? void 0 : _tokens_meta$curr.delimiters;
+    if (delimiters) postProcess$1(state, delimiters);
+  }
+}
+var strikethrough_default = {
+  tokenize: strikethrough_tokenize,
+  postProcess: strikethrough_postProcess
+};
+function emphasis_tokenize(state, silent) {
+  const start2 = state.pos;
+  const marker = state.src.charCodeAt(start2);
+  if (silent) return false;
+  if (marker !== 95 && marker !== 42) return false;
+  const scanned = state.scanDelims(state.pos, marker === 42);
+  for (let i3 = 0; i3 < scanned.length; i3++) {
+    const token = state.push("text", "", 0);
+    token.content = String.fromCharCode(marker);
+    state.delimiters.push({
+      marker,
+      length: scanned.length,
+      token: state.tokens.length - 1,
+      end: -1,
+      open: scanned.can_open,
+      close: scanned.can_close
+    });
+  }
+  state.pos += scanned.length;
+  return true;
+}
+function postProcess(state, delimiters) {
+  const max = delimiters.length;
+  for (let i3 = max - 1; i3 >= 0; i3--) {
+    const startDelim = delimiters[i3];
+    if (startDelim.marker !== 95 && startDelim.marker !== 42) continue;
+    if (startDelim.end === -1) continue;
+    const endDelim = delimiters[startDelim.end];
+    const isStrong = i3 > 0 && delimiters[i3 - 1].end === startDelim.end + 1 && delimiters[i3 - 1].marker === startDelim.marker && delimiters[i3 - 1].token === startDelim.token - 1 && delimiters[startDelim.end + 1].token === endDelim.token + 1;
+    const ch2 = String.fromCharCode(startDelim.marker);
+    const token_o = state.tokens[startDelim.token];
+    token_o.type = isStrong ? "strong_open" : "em_open";
+    token_o.tag = isStrong ? "strong" : "em";
+    token_o.nesting = 1;
+    token_o.markup = isStrong ? ch2 + ch2 : ch2;
+    token_o.content = "";
+    const token_c = state.tokens[endDelim.token];
+    token_c.type = isStrong ? "strong_close" : "em_close";
+    token_c.tag = isStrong ? "strong" : "em";
+    token_c.nesting = -1;
+    token_c.markup = isStrong ? ch2 + ch2 : ch2;
+    token_c.content = "";
+    if (isStrong) {
+      state.tokens[delimiters[i3 - 1].token].content = "";
+      state.tokens[delimiters[startDelim.end + 1].token].content = "";
+      i3--;
+    }
+  }
+}
+function emphasis_post_process(state) {
+  const tokens_meta = state.tokens_meta;
+  const max = state.tokens_meta.length;
+  postProcess(state, state.delimiters);
+  for (let curr = 0; curr < max; curr++) {
+    var _tokens_meta$curr;
+    const delimiters = (_tokens_meta$curr = tokens_meta[curr]) === null || _tokens_meta$curr === void 0 ? void 0 : _tokens_meta$curr.delimiters;
+    if (delimiters) postProcess(state, delimiters);
+  }
+}
+var emphasis_default = {
+  tokenize: emphasis_tokenize,
+  postProcess: emphasis_post_process
+};
+function link2(state, silent) {
+  let code2, label2, res, ref;
+  let href = "";
+  let title2 = "";
+  let start2 = state.pos;
+  let parseReference = true;
+  if (state.src.charCodeAt(state.pos) !== 91) return false;
+  const oldPos = state.pos;
+  const max = state.posMax;
+  const labelStart = state.pos + 1;
+  const labelEnd = state.md.helpers.parseLinkLabel(state, state.pos, true);
+  if (labelEnd < 0) return false;
+  let pos = labelEnd + 1;
+  if (pos < max && state.src.charCodeAt(pos) === 40) {
+    parseReference = false;
+    pos++;
+    for (; pos < max; pos++) {
+      code2 = state.src.charCodeAt(pos);
+      if (!isSpace(code2) && code2 !== 10) break;
+    }
+    if (pos >= max) return false;
+    start2 = pos;
+    res = state.md.helpers.parseLinkDestination(state.src, pos, state.posMax);
+    if (res.ok) {
+      href = state.md.normalizeLink(res.str);
+      if (state.md.validateLink(href)) pos = res.pos;
+      else href = "";
+      start2 = pos;
+      for (; pos < max; pos++) {
+        code2 = state.src.charCodeAt(pos);
+        if (!isSpace(code2) && code2 !== 10) break;
+      }
+      res = state.md.helpers.parseLinkTitle(state.src, pos, state.posMax);
+      if (pos < max && start2 !== pos && res.ok) {
+        title2 = res.str;
+        pos = res.pos;
+        for (; pos < max; pos++) {
+          code2 = state.src.charCodeAt(pos);
+          if (!isSpace(code2) && code2 !== 10) break;
+        }
+      }
+    }
+    if (pos >= max || state.src.charCodeAt(pos) !== 41) parseReference = true;
+    pos++;
+  }
+  if (parseReference) {
+    if (typeof state.env.references === "undefined") return false;
+    if (pos < max && state.src.charCodeAt(pos) === 91) {
+      start2 = pos + 1;
+      pos = state.md.helpers.parseLinkLabel(state, pos);
+      if (pos >= 0) label2 = state.src.slice(start2, pos++);
+      else pos = labelEnd + 1;
+    } else pos = labelEnd + 1;
+    if (!label2) label2 = state.src.slice(labelStart, labelEnd);
+    label2 = normalizeReference(label2);
+    ref = state.env.references[label2];
+    if (!ref) {
+      state.pos = oldPos;
+      return false;
+    }
+    href = ref.href;
+    title2 = ref.title;
+  }
+  if (!silent) {
+    state.pos = labelStart;
+    state.posMax = labelEnd;
+    const token_o = state.push("link_open", "a", 1);
+    const attrs = [["href", href]];
+    token_o.attrs = attrs;
+    if (title2) attrs.push(["title", title2]);
+    if (label2) {
+      const meta2 = /* @__PURE__ */ Object.create(null);
+      meta2.label = label2;
+      token_o.meta = meta2;
+    }
+    state.linkLevel++;
+    state.md.inline.tokenize(state);
+    state.linkLevel--;
+    state.push("link_close", "a", -1);
+  }
+  state.pos = pos;
+  state.posMax = max;
+  return true;
+}
+function image(state, silent) {
+  let code2, content, label2, pos, ref, res, title2, start2;
+  let href = "";
+  const oldPos = state.pos;
+  const max = state.posMax;
+  if (state.src.charCodeAt(state.pos) !== 33) return false;
+  if (state.src.charCodeAt(state.pos + 1) !== 91) return false;
+  const labelStart = state.pos + 2;
+  const labelEnd = state.md.helpers.parseLinkLabel(state, state.pos + 1, false);
+  if (labelEnd < 0) return false;
+  pos = labelEnd + 1;
+  if (pos < max && state.src.charCodeAt(pos) === 40) {
+    pos++;
+    for (; pos < max; pos++) {
+      code2 = state.src.charCodeAt(pos);
+      if (!isSpace(code2) && code2 !== 10) break;
+    }
+    if (pos >= max) return false;
+    start2 = pos;
+    res = state.md.helpers.parseLinkDestination(state.src, pos, state.posMax);
+    if (res.ok) {
+      href = state.md.normalizeLink(res.str);
+      if (state.md.validateLink(href)) pos = res.pos;
+      else href = "";
+    }
+    start2 = pos;
+    for (; pos < max; pos++) {
+      code2 = state.src.charCodeAt(pos);
+      if (!isSpace(code2) && code2 !== 10) break;
+    }
+    res = state.md.helpers.parseLinkTitle(state.src, pos, state.posMax);
+    if (pos < max && start2 !== pos && res.ok) {
+      title2 = res.str;
+      pos = res.pos;
+      for (; pos < max; pos++) {
+        code2 = state.src.charCodeAt(pos);
+        if (!isSpace(code2) && code2 !== 10) break;
+      }
+    } else title2 = "";
+    if (pos >= max || state.src.charCodeAt(pos) !== 41) {
+      state.pos = oldPos;
+      return false;
+    }
+    pos++;
+  } else {
+    if (typeof state.env.references === "undefined") return false;
+    if (pos < max && state.src.charCodeAt(pos) === 91) {
+      start2 = pos + 1;
+      pos = state.md.helpers.parseLinkLabel(state, pos);
+      if (pos >= 0) label2 = state.src.slice(start2, pos++);
+      else pos = labelEnd + 1;
+    } else pos = labelEnd + 1;
+    if (!label2) label2 = state.src.slice(labelStart, labelEnd);
+    label2 = normalizeReference(label2);
+    ref = state.env.references[label2];
+    if (!ref) {
+      state.pos = oldPos;
+      return false;
+    }
+    href = ref.href;
+    title2 = ref.title;
+  }
+  if (!silent) {
+    content = state.src.slice(labelStart, labelEnd);
+    const tokens2 = [];
+    state.md.inline.parse(content, state.md, state.env, tokens2);
+    const token = state.push("image", "img", 0);
+    const attrs = [["src", href], ["alt", ""]];
+    token.attrs = attrs;
+    token.children = tokens2;
+    token.content = content;
+    if (title2) attrs.push(["title", title2]);
+    if (label2) {
+      const meta2 = /* @__PURE__ */ Object.create(null);
+      meta2.label = label2;
+      token.meta = meta2;
+    }
+  }
+  state.pos = pos;
+  state.posMax = max;
+  return true;
+}
+var EMAIL_RE = /^([a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*)$/;
+var AUTOLINK_RE = /^([a-zA-Z][a-zA-Z0-9+.-]{1,31}):([^<>\x00-\x20]*)$/;
+function autolink(state, silent) {
+  let pos = state.pos;
+  if (state.src.charCodeAt(pos) !== 60) return false;
+  const start2 = state.pos;
+  const max = state.posMax;
+  for (; ; ) {
+    if (++pos >= max) return false;
+    const ch2 = state.src.charCodeAt(pos);
+    if (ch2 === 60) return false;
+    if (ch2 === 62) break;
+  }
+  const url = state.src.slice(start2 + 1, pos);
+  if (AUTOLINK_RE.test(url)) {
+    const fullUrl = state.md.normalizeLink(url);
+    if (!state.md.validateLink(fullUrl)) return false;
+    if (!silent) {
+      const token_o = state.push("link_open", "a", 1);
+      token_o.attrs = [["href", fullUrl]];
+      token_o.markup = "autolink";
+      token_o.info = "auto";
+      const token_t = state.push("text", "", 0);
+      token_t.content = state.md.normalizeLinkText(url);
+      const token_c = state.push("link_close", "a", -1);
+      token_c.markup = "autolink";
+      token_c.info = "auto";
+    }
+    state.pos += url.length + 2;
+    return true;
+  }
+  if (EMAIL_RE.test(url)) {
+    const fullUrl = state.md.normalizeLink(`mailto:${url}`);
+    if (!state.md.validateLink(fullUrl)) return false;
+    if (!silent) {
+      const token_o = state.push("link_open", "a", 1);
+      token_o.attrs = [["href", fullUrl]];
+      token_o.markup = "autolink";
+      token_o.info = "auto";
+      const token_t = state.push("text", "", 0);
+      token_t.content = state.md.normalizeLinkText(url);
+      const token_c = state.push("link_close", "a", -1);
+      token_c.markup = "autolink";
+      token_c.info = "auto";
+    }
+    state.pos += url.length + 2;
+    return true;
+  }
+  return false;
+}
+function isLinkOpen(str2) {
+  return /^<a[>\s]/i.test(str2);
+}
+function isLinkClose(str2) {
+  return /^<\/a\s*>/i.test(str2);
+}
+function isLetter(ch2) {
+  const lc2 = ch2 | 32;
+  return lc2 >= 97 && lc2 <= 122;
+}
+function scanSpecial(state, pos) {
+  const src = state.src;
+  let start2;
+  let terminator;
+  if (src.startsWith("<!--", pos)) {
+    if (src.startsWith(">", pos + 4)) return pos + 5;
+    if (src.startsWith("->", pos + 4)) return pos + 6;
+    start2 = pos + 4;
+    terminator = "-->";
+  } else if (src.startsWith("<![CDATA[", pos)) {
+    start2 = pos + 9;
+    terminator = "]]>";
+  } else if (src.charCodeAt(pos + 1) === 63) {
+    start2 = pos + 2;
+    terminator = "?>";
+  } else if (isLetter(src.charCodeAt(pos + 2))) {
+    start2 = pos + 3;
+    terminator = ">";
+  } else return -1;
+  if (state.skipHtmlSpecial) return -1;
+  const end = src.indexOf(terminator, start2);
+  if (end < 0) {
+    state.skipHtmlSpecial = true;
+    return -1;
+  }
+  return end + terminator.length;
+}
+function html_inline(state, silent) {
+  if (!state.md.options.html) return false;
+  const max = state.posMax;
+  const pos = state.pos;
+  if (state.src.charCodeAt(pos) !== 60 || pos + 2 >= max) return false;
+  let end;
+  const ch2 = state.src.charCodeAt(pos + 1);
+  if (ch2 === 33 || ch2 === 63) end = scanSpecial(state, pos);
+  else if (ch2 === 47 || isLetter(ch2)) {
+    const match = state.src.slice(pos).match(HTML_OPEN_CLOSE_TAG_RE);
+    end = match ? pos + match[0].length : -1;
+  } else return false;
+  if (end < 0) return false;
+  if (!silent) {
+    const token = state.push("html_inline", "", 0);
+    token.content = state.src.slice(pos, end);
+    if (isLinkOpen(token.content)) state.linkLevel++;
+    if (isLinkClose(token.content)) state.linkLevel--;
+  }
+  state.pos = end;
+  return true;
+}
+var DIGITAL_RE = /^&#((?:x[a-f0-9]{1,6}|[0-9]{1,7}));/i;
+var NAMED_RE = /^&([a-z][a-z0-9]{1,31});/i;
+function entity(state, silent) {
+  const pos = state.pos;
+  const max = state.posMax;
+  if (state.src.charCodeAt(pos) !== 38) return false;
+  if (pos + 1 >= max) return false;
+  if (state.src.charCodeAt(pos + 1) === 35) {
+    const match = state.src.slice(pos).match(DIGITAL_RE);
+    if (match) {
+      if (!silent) {
+        const code2 = match[1][0].toLowerCase() === "x" ? parseInt(match[1].slice(1), 16) : parseInt(match[1], 10);
+        const token = state.push("text_special", "", 0);
+        token.content = isValidEntityCode(code2) ? fromCodePoint(code2) : fromCodePoint(65533);
+        token.markup = match[0];
+        token.info = "entity";
+      }
+      state.pos += match[0].length;
+      return true;
+    }
+  } else {
+    const match = state.src.slice(pos).match(NAMED_RE);
+    if (match) {
+      const decoded = decodeHTMLStrict(match[0]);
+      if (decoded !== match[0]) {
+        if (!silent) {
+          const token = state.push("text_special", "", 0);
+          token.content = decoded;
+          token.markup = match[0];
+          token.info = "entity";
+        }
+        state.pos += match[0].length;
+        return true;
+      }
+    }
+  }
+  return false;
+}
+function processDelimiters(delimiters) {
+  const openersBottom = {};
+  const max = delimiters.length;
+  if (!max) return;
+  let headerIdx = 0;
+  let lastTokenIdx = -2;
+  const jumps = [];
+  for (let closerIdx = 0; closerIdx < max; closerIdx++) {
+    const closer = delimiters[closerIdx];
+    jumps.push(0);
+    if (delimiters[headerIdx].marker !== closer.marker || lastTokenIdx !== closer.token - 1) headerIdx = closerIdx;
+    lastTokenIdx = closer.token;
+    closer.length = closer.length || 0;
+    if (!closer.close) continue;
+    if (!openersBottom.hasOwnProperty(closer.marker)) openersBottom[closer.marker] = [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+    ];
+    const minOpenerIdx = openersBottom[closer.marker][(closer.open ? 3 : 0) + closer.length % 3];
+    let openerIdx = headerIdx - jumps[headerIdx] - 1;
+    let newMinOpenerIdx = openerIdx;
+    for (; openerIdx > minOpenerIdx; openerIdx -= jumps[openerIdx] + 1) {
+      const opener = delimiters[openerIdx];
+      if (opener.marker !== closer.marker) continue;
+      if (opener.open && opener.end < 0) {
+        let isOddMatch = false;
+        if (opener.close || closer.open) {
+          if ((opener.length + closer.length) % 3 === 0) {
+            if (opener.length % 3 !== 0 || closer.length % 3 !== 0) isOddMatch = true;
+          }
+        }
+        if (!isOddMatch) {
+          const lastJump = openerIdx > 0 && !delimiters[openerIdx - 1].open ? jumps[openerIdx - 1] + 1 : 0;
+          jumps[closerIdx] = closerIdx - openerIdx + lastJump;
+          jumps[openerIdx] = lastJump;
+          closer.open = false;
+          opener.end = closerIdx;
+          opener.close = false;
+          newMinOpenerIdx = -1;
+          lastTokenIdx = -2;
+          break;
+        }
+      }
+    }
+    if (newMinOpenerIdx !== -1) openersBottom[closer.marker][(closer.open ? 3 : 0) + (closer.length || 0) % 3] = newMinOpenerIdx;
+  }
+}
+function link_pairs(state) {
+  const tokens_meta = state.tokens_meta;
+  const max = state.tokens_meta.length;
+  processDelimiters(state.delimiters);
+  for (let curr = 0; curr < max; curr++) {
+    var _tokens_meta$curr;
+    const delimiters = (_tokens_meta$curr = tokens_meta[curr]) === null || _tokens_meta$curr === void 0 ? void 0 : _tokens_meta$curr.delimiters;
+    if (delimiters) processDelimiters(delimiters);
+  }
+}
+function fragments_join(state) {
+  let curr, last;
+  let level = 0;
+  const tokens2 = state.tokens;
+  const max = state.tokens.length;
+  for (curr = last = 0; curr < max; curr++) {
+    if (tokens2[curr].nesting < 0) level--;
+    tokens2[curr].level = level;
+    if (tokens2[curr].nesting > 0) level++;
+    if (tokens2[curr].type === "text" && curr + 1 < max && tokens2[curr + 1].type === "text") tokens2[curr + 1].content = tokens2[curr].content + tokens2[curr + 1].content;
+    else {
+      if (curr !== last) tokens2[last] = tokens2[curr];
+      last++;
+    }
+  }
+  if (curr !== last) tokens2.length = last;
+}
+var _rules = [
+  ["text", text11],
+  ["linkify", linkify],
+  ["newline", newline],
+  ["escape", escape3],
+  ["backticks", backtick],
+  ["strikethrough", strikethrough_default.tokenize],
+  ["emphasis", emphasis_default.tokenize],
+  ["link", link2],
+  ["image", image],
+  ["autolink", autolink],
+  ["html_inline", html_inline],
+  ["entity", entity]
+];
+var _rules2 = [
+  ["balance_pairs", link_pairs],
+  ["strikethrough", strikethrough_default.postProcess],
+  ["emphasis", emphasis_default.postProcess],
+  ["fragments_join", fragments_join]
+];
+var ParserInline = class {
+  constructor() {
+    _defineProperty(
+      this,
+      /**
+      * {@link Ruler} instance. Keep configuration of inline rules.
+      */
+      "ruler",
+      new Ruler()
+    );
+    _defineProperty(
+      this,
+      /**
+      * {@link Ruler} instance. Second ruler used for post-processing
+      * (e.g. in emphasis-like rules).
+      */
+      "ruler2",
+      new Ruler()
+    );
+    _defineProperty(this, "State", StateInline);
+    for (let i3 = 0; i3 < _rules.length; i3++) this.ruler.push(_rules[i3][0], _rules[i3][1]);
+    for (let i3 = 0; i3 < _rules2.length; i3++) this.ruler2.push(_rules2[i3][0], _rules2[i3][1]);
+  }
+  skipToken(state) {
+    const pos = state.pos;
+    const rules = this.ruler.getRules("");
+    const len = rules.length;
+    const maxNesting = state.md.options.maxNesting;
+    const cache2 = state.cache;
+    if (typeof cache2[pos] !== "undefined") {
+      state.pos = cache2[pos];
+      return;
+    }
+    let ok = false;
+    if (state.level < maxNesting) for (let i3 = 0; i3 < len; i3++) {
+      state.level++;
+      ok = rules[i3](state, true);
+      state.level--;
+      if (ok) {
+        if (pos >= state.pos) throw new Error("inline rule didn't increment state.pos");
+        break;
+      }
+    }
+    else state.pos = state.posMax;
+    if (!ok) state.pos++;
+    cache2[pos] = state.pos;
+  }
+  tokenize(state) {
+    const rules = this.ruler.getRules("");
+    const len = rules.length;
+    const end = state.posMax;
+    const maxNesting = state.md.options.maxNesting;
+    while (state.pos < end) {
+      const prevPos = state.pos;
+      let ok = false;
+      if (state.level < maxNesting) for (let i3 = 0; i3 < len; i3++) {
+        ok = rules[i3](state, false);
+        if (ok) {
+          if (prevPos >= state.pos) throw new Error("inline rule didn't increment state.pos");
+          break;
+        }
+      }
+      if (ok) {
+        if (state.pos >= end) break;
+        continue;
+      }
+      state.pending += state.src[state.pos++];
+    }
+    if (state.pending) state.pushPending();
+  }
+  /**
+  * Process input string and push inline tokens into `outTokens`
+  */
+  parse(str2, md, env, outTokens) {
+    const state = new this.State(str2, md, env, outTokens);
+    this.tokenize(state);
+    const rules = this.ruler2.getRules("");
+    const len = rules.length;
+    for (let i3 = 0; i3 < len; i3++) rules[i3](state);
+  }
+};
+var config2 = {
+  default: {
+    options: {
+      html: false,
+      xhtmlOut: false,
+      breaks: false,
+      langPrefix: "language-",
+      linkify: false,
+      typographer: false,
+      quotes: "\u201C\u201D\u2018\u2019",
+      highlight: null,
+      maxNesting: 100
+    },
+    components: {
+      core: {},
+      block: {},
+      inline: {}
+    }
+  },
+  zero: {
+    options: {
+      html: false,
+      xhtmlOut: false,
+      breaks: false,
+      langPrefix: "language-",
+      linkify: false,
+      typographer: false,
+      quotes: "\u201C\u201D\u2018\u2019",
+      highlight: null,
+      maxNesting: 20
+    },
+    components: {
+      core: { rules: [
+        "normalize",
+        "block",
+        "strip_references",
+        "inline",
+        "text_join"
+      ] },
+      block: { rules: ["paragraph"] },
+      inline: {
+        rules: ["text"],
+        rules2: ["balance_pairs", "fragments_join"]
+      }
+    }
+  },
+  commonmark: {
+    options: {
+      html: true,
+      xhtmlOut: true,
+      breaks: false,
+      langPrefix: "language-",
+      linkify: false,
+      typographer: false,
+      quotes: "\u201C\u201D\u2018\u2019",
+      highlight: null,
+      maxNesting: 20
+    },
+    components: {
+      core: { rules: [
+        "normalize",
+        "block",
+        "strip_references",
+        "inline",
+        "text_join"
+      ] },
+      block: { rules: [
+        "blockquote",
+        "code",
+        "fence",
+        "heading",
+        "hr",
+        "html_block",
+        "lheading",
+        "list",
+        "reference",
+        "paragraph"
+      ] },
+      inline: {
+        rules: [
+          "autolink",
+          "backticks",
+          "emphasis",
+          "entity",
+          "escape",
+          "html_inline",
+          "image",
+          "link",
+          "newline",
+          "text"
+        ],
+        rules2: [
+          "balance_pairs",
+          "emphasis",
+          "fragments_join"
+        ]
+      }
+    }
+  }
+};
+var BAD_PROTO_RE = /^(vbscript|javascript|file|data):/;
+var GOOD_DATA_RE = /^data:image\/(gif|png|jpeg|webp);/;
+var RECODE_HOSTNAME_FOR = [
+  "http:",
+  "https:",
+  "mailto:"
+];
+var MarkdownIt = class {
+  /**
+  * Link validation function. CommonMark allows too much in links. By default
+  * we disable `javascript:`, `vbscript:`, `file:` schemas, and almost all `data:...` schemas
+  * except some embedded image types.
+  *
+  * You can change this behaviour:
+  *
+  * @example
+  * ```javascript
+  * import MarkdownIt from 'markdown-it'
+  * const md = new MarkdownIt()
+  *
+  * // enable everything
+  * md.validateLink = function () { return true; }
+  * ```
+  */
+  validateLink(url) {
+    const str2 = url.trim().toLowerCase();
+    return BAD_PROTO_RE.test(str2) ? GOOD_DATA_RE.test(str2) : true;
+  }
+  /**
+  * Function used to encode link url to a machine-readable format,
+  * which includes url-encoding, punycode, etc.
+  */
+  normalizeLink(url) {
+    const parsed = parse_default(url, true);
+    if (parsed.hostname) {
+      if (!parsed.protocol || RECODE_HOSTNAME_FOR.indexOf(parsed.protocol) >= 0) try {
+        parsed.hostname = import_punycode.default.toASCII(parsed.hostname);
+      } catch (er2) {
+      }
+    }
+    if (parsed.auth) parsed.auth = encode_default(parsed.auth);
+    if (parsed.hostname) parsed.hostname = encode_default(parsed.hostname);
+    if (parsed.pathname) parsed.pathname = encode_default(parsed.pathname);
+    if (parsed.search) parsed.search = encode_default(parsed.search);
+    if (parsed.hash) parsed.hash = encode_default(parsed.hash);
+    return format(parsed);
+  }
+  /**
+  * Function used to decode link url to a human-readable format`
+  */
+  normalizeLinkText(url) {
+    const parsed = parse_default(url, true);
+    if (parsed.hostname) {
+      if (!parsed.protocol || RECODE_HOSTNAME_FOR.indexOf(parsed.protocol) >= 0) try {
+        parsed.hostname = import_punycode.default.toUnicode(parsed.hostname);
+      } catch (er2) {
+      }
+    }
+    return decode_default(format(parsed), decode_default.defaultChars + "%");
+  }
+  constructor(...args) {
+    _defineProperty(
+      this,
+      /**
+      * Instance of {@link ParserInline}. You may need it to add new rules when
+      * writing plugins. For simple rules control use {@link MarkdownIt.disable}
+      * and {@link MarkdownIt.enable}.
+      */
+      "inline",
+      new ParserInline()
+    );
+    _defineProperty(
+      this,
+      /**
+      * Instance of {@link ParserBlock}. You may need it to add new rules when
+      * writing plugins. For simple rules control use {@link MarkdownIt.disable}
+      * and {@link MarkdownIt.enable}.
+      */
+      "block",
+      new ParserBlock()
+    );
+    _defineProperty(
+      this,
+      /**
+      * Instance of {@link ParserCore} chain executor. You may need it to add new
+      * rules when writing plugins. For simple rules control use
+      * {@link MarkdownIt.disable} and {@link MarkdownIt.enable}.
+      */
+      "core",
+      new ParserCore()
+    );
+    _defineProperty(
+      this,
+      /**
+      * Instance of {@link Renderer}. Use it to modify output look. Or to add rendering
+      * rules for new token types, generated by plugins.
+      *
+      * See {@link Renderer} docs and
+      * [source code](https://github.com/markdown-it/markdown-it/blob/master/src/renderer.ts).
+      *
+      * @example
+      * ```javascript
+      * import MarkdownIt from 'markdown-it'
+      * const md = new MarkdownIt()
+      *
+      * function myToken(tokens, idx, options, env, self) {
+      *   //...
+      *   return result;
+      * };
+      *
+      * md.renderer.rules['my_token'] = myToken
+      * ```
+      */
+      "renderer",
+      new Renderer()
+    );
+    _defineProperty(
+      this,
+      /**
+      * [linkify-it](https://github.com/markdown-it/linkify-it) instance.
+      * Used by [linkify](https://github.com/markdown-it/markdown-it/blob/master/src/rules_core/linkify.ts)
+      * rule.
+      */
+      "linkify",
+      new LinkifyIt()
+    );
+    _defineProperty(
+      this,
+      /**
+      * Assorted utility functions, useful to write plugins. See details
+      * [here](https://github.com/markdown-it/markdown-it/blob/master/src/common/utils.ts).
+      */
+      "utils",
+      utils_exports
+    );
+    _defineProperty(
+      this,
+      /**
+      * Link components parser functions, useful to write plugins. See details
+      * [here](https://github.com/markdown-it/markdown-it/blob/master/src/helpers).
+      */
+      "helpers",
+      Object.assign({}, helpers_exports)
+    );
+    const [presetNameOrOptions, options] = args;
+    if (typeof presetNameOrOptions === "string") {
+      this.configure(presetNameOrOptions);
+      if (options) this.set(options);
+    } else {
+      this.configure("default");
+      this.set(presetNameOrOptions || {});
+    }
+  }
+  /**
+  * Set parser options (in the same format as in constructor). Probably, you
+  * will never need it, but you can change options after constructor call.
+  *
+  * __Note:__ To achieve the best possible performance, don't modify a
+  * `markdown-it` instance options on the fly. If you need multiple configurations
+  * it's best to create multiple instances and initialize each with separate
+  * config.
+  *
+  * @example
+  * ```javascript
+  * import MarkdownIt from 'markdown-it'
+  *
+  * const md = new MarkdownIt()
+  *   .set({ html: true, breaks: true })
+  *   .set({ typographer: true })
+  * ```
+  */
+  set(options) {
+    Object.assign(this.options, options);
+    return this;
+  }
+  /**
+  * Batch load of all options and compenent settings. This is internal method,
+  * and you probably will not need it. But if you will - see available presets
+  * and data structure [here](https://github.com/markdown-it/markdown-it/tree/master/src/presets)
+  *
+  * We strongly recommend to use presets instead of direct config loads. That
+  * will give better compatibility with next versions.
+  */
+  configure(presets) {
+    let p3;
+    if (typeof presets === "string") {
+      const presetName = presets;
+      p3 = config2[presetName];
+      if (!p3) throw new Error(`Wrong 'markdown-it' preset "${presetName}", check name`);
+    } else p3 = presets;
+    if (!p3) throw new Error("Wrong `markdown-it` preset, can't be empty");
+    if (p3.options) this.options = { ...p3.options };
+    const components = p3.components;
+    if (components) {
+      var _components$inline;
+      [
+        "core",
+        "block",
+        "inline"
+      ].forEach((name) => {
+        var _components$name;
+        const rules = (_components$name = components[name]) === null || _components$name === void 0 ? void 0 : _components$name.rules;
+        if (rules) this[name].ruler.enableOnly(rules);
+      });
+      const rules2 = (_components$inline = components.inline) === null || _components$inline === void 0 ? void 0 : _components$inline.rules2;
+      if (rules2) this.inline.ruler2.enableOnly(rules2);
+    }
+    return this;
+  }
+  /**
+  * Enable list or rules. It will automatically find appropriate components,
+  * containing rules with given names. If rule not found, and `ignoreInvalid`
+  * not set - throws exception.
+  *
+  * @example
+  * ```javascript
+  * import MarkdownIt from 'markdown-it'
+  *
+  * const md = new MarkdownIt()
+  *   .enable(['sub', 'sup'])
+  *   .disable('smartquotes')
+  * ```
+  */
+  enable(list4, ignoreInvalid = false) {
+    let result = [];
+    if (!Array.isArray(list4)) list4 = [list4];
+    [
+      "core",
+      "block",
+      "inline"
+    ].forEach((chain) => {
+      result = result.concat(this[chain].ruler.enable(list4, true));
+    });
+    result = result.concat(this.inline.ruler2.enable(list4, true));
+    const missed = list4.filter((name) => result.indexOf(name) < 0);
+    if (missed.length && !ignoreInvalid) throw new Error(`MarkdownIt. Failed to enable unknown rule(s): ${missed}`);
+    return this;
+  }
+  /**
+  * The same as {@link MarkdownIt.enable}, but turn specified rules off.
+  */
+  disable(list4, ignoreInvalid = false) {
+    let result = [];
+    if (!Array.isArray(list4)) list4 = [list4];
+    [
+      "core",
+      "block",
+      "inline"
+    ].forEach((chain) => {
+      result = result.concat(this[chain].ruler.disable(list4, true));
+    });
+    result = result.concat(this.inline.ruler2.disable(list4, true));
+    const missed = list4.filter((name) => result.indexOf(name) < 0);
+    if (missed.length && !ignoreInvalid) throw new Error(`MarkdownIt. Failed to disable unknown rule(s): ${missed}`);
+    return this;
+  }
+  /**
+  * Load specified plugin with given params into current parser instance.
+  * It's just a sugar to call `plugin(md, params)` with curring.
+  *
+  * @example
+  * ```javascript
+  * import MarkdownIt from 'markdown-it'
+  * import iterator from 'markdown-it-for-inline'
+  *
+  * const md = new MarkdownIt()
+  *   .use(iterator, 'foo_replace', 'text', function (tokens, idx) {
+  *     tokens[idx].content = tokens[idx].content.replace(/foo/g, 'bar')
+  *   })
+  * ```
+  */
+  use(plugin, ...params) {
+    plugin.apply(plugin, [this, ...params]);
+    return this;
+  }
+  /**
+  * Parse input string and return list of block tokens (special token type
+  * "inline" will contain list of inline tokens). You should not call this
+  * method directly, until you write custom renderer (for example, to produce
+  * AST).
+  *
+  * `env` is used to pass data between "distributed" rules and return additional
+  * metadata like reference info, needed for the renderer. It also can be used to
+  * inject data in specific cases. Usually, you will be ok to pass `{}`,
+  * and then pass updated object to renderer.
+  */
+  parse(src, env) {
+    if (typeof src !== "string") throw new Error("Input data should be a String");
+    const state = new this.core.State(src, this, env);
+    this.core.process(state);
+    return state.tokens;
+  }
+  /**
+  * Render markdown string into html. It does all magic for you :).
+  *
+  * `env` can be used to inject additional metadata (`{}` by default).
+  * But you will not need it with high probability. See also comment
+  * in {@link MarkdownIt.parse}.
+  */
+  render(src, env = {}) {
+    return this.renderer.render(this.parse(src, env), this.options, env);
+  }
+  /**
+  * The same as {@link MarkdownIt.parse} but skip all block rules. It returns
+  * the block tokens list with the single `inline` element, containing parsed
+  * inline tokens in `children` property. Also updates `env` object.
+  */
+  parseInline(src, env) {
+    const state = new this.core.State(src, this, env);
+    state.inlineMode = true;
+    this.core.process(state);
+    return state.tokens;
+  }
+  /**
+  * Similar to {@link MarkdownIt.render} but for single paragraph content.
+  * Result will NOT be wrapped into `<p>` tags.
+  */
+  renderInline(src, env = {}) {
+    return this.renderer.render(this.parseInline(src, env), this.options, env);
+  }
+};
+_defineProperty(MarkdownIt, "Token", Token);
+_defineProperty(MarkdownIt, "Ruler", Ruler);
+_defineProperty(MarkdownIt, "Renderer", Renderer);
+_defineProperty(MarkdownIt, "ParserCore", ParserCore);
+_defineProperty(MarkdownIt, "StateCore", StateCore);
+_defineProperty(MarkdownIt, "ParserBlock", ParserBlock);
+_defineProperty(MarkdownIt, "StateBlock", StateBlock);
+_defineProperty(MarkdownIt, "ParserInline", ParserInline);
+_defineProperty(MarkdownIt, "StateInline", StateInline);
+var MarkdownItCallable = callable(MarkdownIt);
 
 // src/submission/forms/seed-deferral.ts
 async function setSeedDeferral(args, env = process.env) {
@@ -130442,6 +135769,9 @@ async function cardPage(req, res, env, cardId, token) {
   }
   html(res, 200, page2);
 }
+var markdown = new MarkdownItCallable({ html: false });
+var MEMO_CSP = "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+var MEMO_STYLE = "body{max-width:50em;margin:2em auto;padding:0 1em;font:16px/1.5 system-ui,sans-serif}table{border-collapse:collapse}td,th{border:1px solid #999;padding:.3em .6em}blockquote{margin-left:0;padding-left:1em;border-left:3px solid #999}";
 async function openFileLink(req, res, env, path, token, open) {
   if (req.method !== "GET") return json3(req, res, 405, { error: "Method not allowed" });
   if (path === null || token === null || !pageApiFileTokenValid(token, path, env)) {
@@ -130450,6 +135780,10 @@ async function openFileLink(req, res, env, path, token, open) {
   const name = basename20(path);
   if (!isAbsolute12(path) || !existsSync69(path)) return filePage(res, 404, `${name} is not in the law folder now.`);
   try {
+    if (name.toLowerCase().endsWith(".md")) {
+      const body2 = markdown.render(await readFile3(path, "utf-8"));
+      return html(res, 200, `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(name)}</title><style>${MEMO_STYLE}</style></head><body>${body2}</body></html>`, { csp: MEMO_CSP });
+    }
     await open(path);
   } catch {
     return filePage(res, 500, `${name} could not be opened. Copy its path from the page to find it in File Explorer.`);
@@ -130489,8 +135823,8 @@ async function cardClick(req, res, deps, cardId, route3) {
         return json3(req, res, 200, await rejectMockup(cardId, body2.mockup, body2.reason, deps));
     }
   } catch (err) {
-    const code = err.code;
-    if (code === "not_found") return json3(req, res, 404, { error: "Not found" });
+    const code2 = err.code;
+    if (code2 === "not_found") return json3(req, res, 404, { error: "Not found" });
     if (err instanceof ValidationError) return json3(req, res, 400, { error: err.message });
     throw err;
   }
@@ -130547,3 +135881,8 @@ export {
   dispatchTool,
   start
 };
+/*! Bundled license information:
+
+markdown-it/dist/markdown-it.mjs:
+  (*! markdown-it 15.0.3 https://github.com/markdown-it/markdown-it @license MIT *)
+*/

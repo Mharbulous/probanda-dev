@@ -1,4 +1,4 @@
-// build-stamp: 309d7dd6920f
+// build-stamp: 2a0a5bb1d8e2
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -16393,11 +16393,12 @@ import { win32 as pathWin324 } from "node:path";
 
 // src/status-file.ts
 import { renameSync, unlinkSync as unlinkSync2, writeFileSync as writeFileSync2 } from "node:fs";
+import { threadId } from "node:worker_threads";
 function sleepSync(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 function writeStatusFile(target, text2, { attempts = 10, delayMs = 50 } = {}) {
-  const temp = `${target}.${process.pid}.tmp`;
+  const temp = `${target}.${process.pid}.${threadId}.tmp`;
   try {
     writeFileSync2(temp, text2, "utf-8");
   } catch (err) {
@@ -24677,7 +24678,7 @@ import { existsSync as existsSync15, realpathSync as realpathSync10, statSync as
 import { win32 as pathWin3216 } from "node:path";
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "309d7dd6920f";
+var BUILD_STAMP = false ? null : "2a0a5bb1d8e2";
 
 // src/local-page/durable.ts
 import { closeSync as closeSync4, fsyncSync as fsyncSync2, openSync as openSync4, writeSync as writeSync2 } from "node:fs";

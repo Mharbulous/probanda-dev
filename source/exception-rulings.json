@@ -162,6 +162,17 @@
         "content_sha256": "4e50ef6500645cdd577c7682cfe76a4a4e4b3b14c72409f63642c1834f657078"
       }
     ]
+  },
+  {
+    "store": "none (lawyer data bundle)",
+    "hop": "knowledge/tree.ts online-only-file error message, renamed variable in the bundle",
+    "date": "2026-11-25",
+    "ruling": "Brahm, 2026-11-25: \"Add the ruling\", choosing the option to record the one problem that check_publishable.py --propose-ruling lists. The line is the existing error message of source/lawyer/mcp/src/knowledge/tree.ts that names a file-sync product and holds no path. Adding the markdown-it dependency made the bundler rename one variable on it (code to code2), which changed its hash.",
+    "problems": [
+      {
+        "message": "contains a path from a maintainer's machine",
+        "content_sha256": "28b7806c8c949ef7392464d3b281c22ed84e507b016c30ae0965f7b6cb5ca423"
+      }
+    ]
   }
-  
 ]
