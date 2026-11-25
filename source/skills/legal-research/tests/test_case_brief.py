@@ -239,7 +239,9 @@ class Saving(unittest.TestCase):
         self.assertNotIn("or `research_filing__list_law_folder` with no board", template)
 
     def test_a_re_brief_saves_beside_the_brief_it_reuses(self):
-        self.assertIn("numbered only within one folder, so its `destination_dir` is the folder holding that brief", flat(read("shared", "case-brief-template.md")))
+        template = flat(read("shared", "case-brief-template.md"))
+        self.assertIn("The save's `destination_dir` is the folder holding that brief", template)
+        self.assertNotIn("takes the next free", template)
 
     def test_a_re_brief_of_a_sent_or_retired_writing_leaves_it_alone(self):
         self.assertIn("When that title's only Writing has `filed_on` or `retired_on` set, leave it and its statements as they are", flat(read("shared", "case-brief-template.md")))
@@ -327,7 +329,8 @@ class NoBoardOfItsOwn(unittest.TestCase):
 
 class SavedBriefLookup(unittest.TestCase):
     def test_step_six_looks_for_a_saved_brief(self):
-        self.assertIn("after looking for the case's saved briefs", read("case-brief", "SKILL.md"))
+        self.assertIn("Before choosing it, look for the case's saved briefs", flat(read("shared", "case-brief-template.md")))
+        self.assertIn('File stem: <the stem the template\'s "Saving it" chooses', read("case-brief", "SKILL.md"))
 
     def test_a_refusal_is_relayed_in_plain_words(self):
         self.assertIn("say in your relay, in plain words, what was refused", flat(read("shared", "case-brief-template.md")))
