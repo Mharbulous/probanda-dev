@@ -75,8 +75,9 @@ export interface WorkBoardTicket {
   ineligible_reasons: IneligibleReason[];
   /** Section 14 Dispatch's skip reasons for a Ready job, in that section's order; empty for the job the walk may choose, and on any job not in Ready. */
   dispatch_skips: DispatchSkip[];
-  /** The In progress card's note when an unattended run holds the lock, read off the token's class
-   * (design §5.4); null for any other holder. */
+  /** The card's note when an unattended run holds the lock, read off the token's class (design §5.4):
+   * in progress with nobody present, and on a plan that run wrote and nobody has approved, that the
+   * plan was written without the practitioner. Null for any other holder. */
   lock_note: string | null;
   /** The answers saved for this job by `research_filing__save_answer` (schema v52), in the order they
    * were saved: each file's path from its `6. LAW` segment, and the minute it was saved. Empty on a

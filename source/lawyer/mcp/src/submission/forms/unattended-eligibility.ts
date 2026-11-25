@@ -1,5 +1,6 @@
 // Whether an unattended run may take a job (design §5.3).
 
+import { PLAN_MARKER } from "./approve-plan.js";
 import { GLYPH_SLUGS } from "./proposal-inventory.js";
 import { scopesShare } from "./ticket-category.js";
 import { INELIGIBLE_REASONS, type IneligibleReason, type WorkBoardEdge, type WorkBoardTicket } from "./work-board-ticket.js";
@@ -91,12 +92,14 @@ export function ineligibleReasons(
   inProgress: readonly WorkBoardTicket[]
 ): IneligibleReason[] {
   const texts = [ticket.title, ticket.intent, ...ticket.steps.slice(0, 1).map((s) => s.text)];
+  // A plan-marker job's run writes its plan once held. It has no keys, so it needs no inventory.
+  const planMarker = ticket.steps.length === 1 && ticket.steps[0].text === PLAN_MARKER;
   const failing: Record<IneligibleReason, boolean> = {
     not_ready: ticket.category !== "ready",
     filing_filed: filed,
-    no_inventory: printed === null,
+    no_inventory: printed === null && !planMarker,
     not_one_step: ticket.steps.length !== 1,
-    no_proposal_keys: ticket.proposal_keys.length === 0,
+    no_proposal_keys: ticket.proposal_keys.length === 0 && !planMarker,
     dead_key: printed !== null && ticket.proposal_keys.some((key) => !printed.has(key)),
     reworded: printed !== null && ticket.proposal_keys.some((key) => printed.has(key) && texts.some((text) => text !== titles.get(key))),
     marker_not_eligible: ticket.proposal_keys.some((key) => !eligibleKey(key)),

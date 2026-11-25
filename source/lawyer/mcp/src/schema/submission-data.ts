@@ -489,7 +489,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "Take a Ready job in one call: every check before the assigning write that needs no judgement, then assign_job's " +
         "guarded write, then the job's `Started Job <N>: <title>.` entry in matter_root's ProceduralHistory.md, dated today. " +
         "Refused, writing nothing, on the first check that fails, with reason: not_ready, no_steps, needs_plan (the plan " +
-        "marker is the only step), long_title (over 12 words, on a job the pickup review covers: no step done, no plan " +
+        "marker is the only step, unless the token is an unattended run's), long_title (over 12 words, on a job the pickup review covers: no step done, no plan " +
         "approved, no keys, not fixed-text), duplicates (other live jobs on its Writing sharing a key, a scope entry or two " +
         "title words, each with its card; pass the ones judged not the same work in not_duplicates and call again), " +
         "restates (steps, by ordinal, equal to or containing the title or intent), and on a one-step job keys_dead, " +

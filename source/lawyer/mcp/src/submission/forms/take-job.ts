@@ -1,7 +1,7 @@
 // drafting_data__take_job: take a Ready job in one call (work/references/job-session.md, Assign).
 // It runs, in code, every check before the assigning write that needs no judgement, in this order,
 // and refuses on the first that fails, writing nothing: the job is Ready (a Bring Forward job
-// returns before_bf); it has steps, and not only the plan marker; on a job the pickup review covers,
+// returns before_bf); it has steps, and not only the plan marker unless the caller is an unattended run; on a job the pickup review covers,
 // its title is at most 12 words; no other live job on its Writing overlaps it (a shared key, a shared
 // scope entry, or two shared title words of four letters or more) unless the caller has judged it
 // not the same work (not_duplicates); no step not yet done equals or contains the title or the
@@ -27,6 +27,7 @@ import { BRIEF_JOB_PREFIX } from "./brief-job.js";
 import { fetchBoardFilings, proceedingJobBoard } from "./query.js";
 import { isResearchTitle, RESEARCH_JOB_PREFIX } from "./research-job.js";
 import { nowStamp } from "./timings.js";
+import { UNATTENDED_TOKEN_PREFIX } from "./unattended-eligibility.js";
 import type { WorkBoardData } from "./render-work-board.js";
 import type { WorkBoardTicket } from "./work-board-ticket.js";
 
@@ -171,7 +172,10 @@ export async function submissionDataTakeJob(args: TakeJobArgs, env: NodeJS.Proce
   }
   if (job.category !== "ready") return refuse("not_ready", `Job ${id} is not Ready: its card reads ${LANE[job.category] ?? job.category}. Re-render; never re-run to win.`);
   if (job.steps.length === 0) return refuse("no_steps", `Job ${id} has no steps. What steps will complete it?`);
-  if (job.steps.length === 1 && job.steps[0].text === PLAN_MARKER) return refuse("needs_plan", `Job ${id} needs a plan: its only step is the plan marker.`);
+  // An unattended run takes a plan-marker job and writes its plan once held; any other session plans it first.
+  if (job.steps.length === 1 && job.steps[0].text === PLAN_MARKER && !args.session_token.startsWith(UNATTENDED_TOKEN_PREFIX)) {
+    return refuse("needs_plan", `Job ${id} needs a plan: its only step is the plan marker.`);
+  }
 
   const reviewed = !fixedText(job.title) && job.proposal_keys.length === 0 && job.steps.every((s) => s.done_at === null) && !planApproved(args.db_path, id);
   const titleLength = job.title.trim().split(/\s+/).length;

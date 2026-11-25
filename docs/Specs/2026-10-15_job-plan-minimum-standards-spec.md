@@ -38,7 +38,7 @@ Goal: (a) a shared job-planning rule file setting the minimum content of any job
 - Only `/legal-research` states law; the planning stage names issues and sources, never answers them.
 - The restating check stays.
 - Deadline isolation: no plan step computes or mentions a deadline.
-- Unattended runs never pause for approval; an unattended run that meets a sub-minimum plan reports it and stops, as the restating check does.
+- Unattended runs never pause for approval; an unattended run that meets a sub-minimum plan reports it and stops, as the restating check does. Superseded by `2026-11-24_unattended-runs-plan-and-work-plan-marker-jobs-spec.md`.
 
 ## 6. Options considered
 

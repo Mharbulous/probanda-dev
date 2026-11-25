@@ -1826,7 +1826,8 @@ test("tickets: each eligibility condition alone defeats eligible, and the one me
            ${fixed(8, "Locate the exhibit pinpoint: A fact on the court record")},
            ${fixed(9, pin("statements_of_fact", 9))},
            ${fixed(10, "The other way of doing it")},
-           ${fixed(11, "A job an unattended run holds", "wip", "sess-unattended-0a1b2c")};
+           ${fixed(11, "A job an unattended run holds", "wip", "sess-unattended-0a1b2c")},
+           ${fixed(12, "Research the limitation question")};
        INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, created)
          VALUES (6, 1, 1, 'Pinpoint the witness', '${pin("statements_of_fact", 6)}', 'queued', 0, 'work', 'L9002|facts', '2026-09-24T09:00');
        INSERT INTO ticket_steps (ticket_id, ordinal, text)
@@ -1841,7 +1842,8 @@ test("tickets: each eligibility condition alone defeats eligible, and the one me
            (7, 1, 'Quote the exhibit: A. Witness: fact statements_of_fact 7'),
            (8, 1, 'Locate the exhibit pinpoint: A fact on the court record'),
            (9, 1, '${pin("statements_of_fact", 9)}'),
-           (10, 1, 'The other way of doing it');
+           (10, 1, 'The other way of doing it'),
+           (12, 1, 'Create a plan for how to complete this job.');
        INSERT INTO ticket_proposals (ticket_id, proposal_key, item)
          VALUES
            (1, 'testimony-pinpoint:statements_of_fact:1', 'A. Witness: fact statements_of_fact 1'),
@@ -1858,8 +1860,8 @@ test("tickets: each eligibility condition alone defeats eligible, and the one me
     const data = boardWithInventory(f.dbPath, inventory);
     assert.deepEqual(
       data.tickets.filter((t) => t.eligible).map((t) => t.id),
-      [1],
-      "not Ready (2), two steps (3), no keys (4), a dead key (5), an edited title (6), a 📑 key (7), a court-record 📌 key (8) and a live either/or partner (9) each defeat it"
+      [1, 12],
+      "a plan-marker job (12) needs no keys; not Ready (2), two steps (3), no keys (4), a dead key (5), an edited title (6), a 📑 key (7), a court-record 📌 key (8) and a live either/or partner (9) each defeat it"
     );
     for (const t of data.tickets) assert.equal(t.eligible, t.ineligible_reasons.length === 0, `ticket ${t.id}: eligible is exactly no reasons`);
     const alone = [
@@ -1907,7 +1909,8 @@ test("tickets: each eligibility condition alone defeats eligible, and the one me
       lifecycle: { state: "drafting", since: null, readyToRetire: false },
       inventory: null,
     });
-    for (const t of noInventory.tickets) assert.ok(t.ineligible_reasons.includes("no_inventory"), `ticket ${t.id} carries the no-inventory code`);
+    for (const t of noInventory.tickets.filter((x) => x.id !== 12)) assert.ok(t.ineligible_reasons.includes("no_inventory"), `ticket ${t.id} carries the no-inventory code`);
+    assert.deepEqual(ticketIn(noInventory, 12).ineligible_reasons, ["filing_filed"], "a plan-marker job has no keys to read against an inventory");
   } finally {
     f.cleanup();
   }
@@ -2115,7 +2118,11 @@ test("tickets: a wip job with every step done stays In Progress, and shares no m
     assert.equal(ticketIn(data, 1).eligible, true);
     assert.deepEqual(ticketIn(data, 2).ineligible_reasons, ["shared_material"], "an in-progress job with an open step still holds its material");
     assert.equal(ticketIn(data, 20).lock_note, null, "an ordinary session's lock carries no note");
-    assert.equal(ticketIn(data, 24).lock_note, "In progress with nobody present", "an unattended run that stopped short of closing still says nobody is present");
+    assert.equal(
+      ticketIn(data, 24).lock_note,
+      "In progress with nobody present · Plan written without you: review, change or approve",
+      "an unattended run that stopped short of closing still says nobody is present, and its keyless plan, never approved, is one it wrote"
+    );
 
     const [row] = submissionDataQuery(f.dbPath, "SELECT status, locked_by FROM tickets WHERE id = 20").rows;
     assert.deepEqual({ status: row.status, locked_by: row.locked_by }, { status: "wip", locked_by: "sess-dead" }, "the render closes nothing");

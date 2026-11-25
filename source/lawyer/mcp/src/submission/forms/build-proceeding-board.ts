@@ -22,6 +22,7 @@ import { fetchJobActivity } from "./job-activity.js";
 import { activeAt, classify, holdsMaterial, lapsesAt, lockLapsed, reachesItself, scopesShare, supersededReason } from "./ticket-category.js";
 import { nowStamp } from "./timings.js";
 import { UNATTENDED_TOKEN_PREFIX } from "./unattended-eligibility.js";
+import { PLAN_MARKER } from "./approve-plan.js";
 
 function groupBy<T>(items: T[], key: (item: T) => number): Map<number, T[]> {
   const map = new Map<number, T[]>();
@@ -45,6 +46,18 @@ export interface ProceedingBoard {
   holders: Map<string, { ticket_id: number; filing_id: number | null }>;
   /** The proceeding's deleted jobs, in id order. They are on no card, in no count and in no summary. */
   deleted: DeletedTicket[];
+}
+
+/** A card's note on an unattended run's lock (design §5.4): in progress with nobody present, and, on
+ * a plan that run wrote, that the practitioner has not approved it. An unattended run never stamps a
+ * plan's approval and takes a job with no keys only when the plan marker was its one step, so a
+ * keyless job with a plan under its lock and none approved holds a plan it wrote. The note goes when a
+ * session announces the plan (approve_plan), takes the job over, or completes it. */
+function lockNote(category: string, lock: string | null, approved: string | null, steps: StepRow[], keyed: boolean): string | null {
+  if (!lock?.startsWith(UNATTENDED_TOKEN_PREFIX)) return null;
+  const planned = !keyed && approved === null && steps.length > 0 && !(steps.length === 1 && steps[0].text === PLAN_MARKER);
+  const notes = [...(category === "wip" ? ["In progress with nobody present"] : []), ...(planned ? ["Plan written without you: review, change or approve"] : [])];
+  return notes.length === 0 ? null : notes.join(" · ");
 }
 
 /** `rendered` is the local minute the Bring Forward lane (its date) and lapsed locks read against: a
@@ -104,6 +117,8 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, rende
   const released = <T extends (typeof heldTickets)[number]>(t: T) => ({ ...t, status: "queued" as const, locked_by: null, locked_at: null });
   const timed = (t: (typeof heldTickets)[number]) => ({ ...t, last_activity_at: lastActivity(t), steps: stepsByTicket.get(t.id) ?? [] });
   const proceedingTickets = heldTickets.map((t) => (lockLapsed(timed(t), rendered) ? released(t) : t));
+  // The lock as stored, lapsed or not: it stays on the row until assign_job takes the job.
+  const heldLock = new Map(heldTickets.map((t) => [t.id, t.locked_by]));
   const ticketById = new Map(proceedingTickets.map((t) => [t.id, t]));
   const activeById = new Map(
     rows<{ key: string; value: string }>(dbPath, "SELECT key, value FROM db_meta WHERE key LIKE 'job_active:%'").map((r) => [Number(r.key.slice("job_active:".length)), r.value]),
@@ -171,7 +186,7 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, rende
       // A board with no filing has no inventory; a filing's board replaces this.
       ineligible_reasons: ["no_inventory"],
       dispatch_skips: [],
-      lock_note: category === "wip" && t.locked_by?.startsWith(UNATTENDED_TOKEN_PREFIX) ? "In progress with nobody present" : null,
+      lock_note: lockNote(category, heldLock.get(t.id) ?? null, t.plan_approved_at, stepsByTicket.get(t.id) ?? [], proposalsByTicket.has(t.id)),
       answers: (answersByTicket.get(t.id) ?? []).map((a) => ({ file_path: a.file_path, saved_at: a.saved_at })),
       sources: (sourcesByTicket.get(t.id) ?? []).map((s) => ({ kind: s.kind, label: s.label, outcome: s.outcome, reason: s.reason })),
       last_activity_at: lastActivity(t),

@@ -12,6 +12,7 @@ const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { callTool } = await import("../build/dispatch.js");
 const { premiseOf, restatingSteps } = await import("../build/submission/forms/take-job.js");
+const { buildProceedingBoard } = await import("../build/submission/forms/build-proceeding-board.js");
 
 const TOOL = "drafting_data__take_job";
 const job = (id, title, intent = "Answer the letter.", extra = "") =>
@@ -78,6 +79,24 @@ test("each refusal names its check and writes nothing", async (t) => {
   assert.equal(existsSync(join(m.matterRoot, "ProceduralHistory.md")), false, "no history entry for a refusal");
   await assert.rejects(take(m, { ticket_id: 1, matter_root: join(m.matterRoot, "missing") }), (err) => err.code === "invalid_root");
   assert.equal(lock(m.dbPath, 1).locked_by, null, "a folder the entry cannot go to assigns nothing");
+});
+
+test("an unattended run takes a plan-marker job, writes its plan held, and the board marks it unratified until approved", async (t) => {
+  const m = await seeded(t);
+  const token = "sess-unattended-0a1b2c";
+  const note = () => buildProceedingBoard(m.dbPath, 1).tickets.find((x) => x.ticket.id === 2).ticket.lock_note;
+  const taken = await take(m, { ticket_id: 2, session_token: token });
+  assert.equal(taken.outcome, "assigned", taken.note);
+  assert.equal(note(), "In progress with nobody present", "the marker alone is no plan yet");
+  const plan = ["Read the file.", "Save the answer to the matter folder."];
+  const rewritten = await callTool({}, "drafting_data__rewrite_job", { db_path: m.dbPath, ticket_id: 2, steps: plan, held: true, session_token: token, claim_no: taken.claim_no });
+  assert.equal(rewritten.outcome, "rewritten", rewritten.note);
+  assert.deepEqual(rewritten.steps.map((s) => s.text), plan, "the marker is replaced by the plan");
+  assert.equal(rewritten.plan_approved_at, null, "a plan written unattended carries no approval");
+  assert.equal(note(), "In progress with nobody present · Plan written without you: review, change or approve");
+  const approved = await callTool({}, "drafting_data__approve_plan", { db_path: m.dbPath, ticket_id: 2, session_token: token, claim_no: taken.claim_no });
+  assert.equal(approved.outcome, "approved", approved.note);
+  assert.equal(note(), "In progress with nobody present", "approving the plan clears the label");
 });
 
 test("an overlapping live job refuses with its card until the session clears it in not_duplicates", async (t) => {
