@@ -75,3 +75,18 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 
 Confirm each quoted clause in §2 exists at HEAD and where. Confirm how `no_proposal_keys` is computed. Confirm whether a plan-approval state already exists that can serve as "unratified". Record results in a table appended to this spec.
+
+### Verification at HEAD (7d6c12f7, 2026-11-24)
+
+| Item | Found at HEAD | Where |
+|---|---|---|
+| §2 quote 1, "In an unattended run nothing is written: the job is not assigned, and the run reports that it needs a plan and stops." | Present, verbatim | `source/skills/work/references/job-session.md`, "A job that needs a plan" (served under atom `work.steps.restated`) |
+| §2 quote 2, job-planning §3 "Unattended" | Present, verbatim | `source/skills/shared/job-planning.md` §3 |
+| §2 quote 3, an unattended run "never rewrites" | Present, but in `/work`, not in `unattended-run.md` | `source/skills/work/references/job-session.md`, pickup review: "An unattended run never rewrites: it takes only a job holding keys". `draft/references/unattended-run.md` step 2 only says the run chooses the first `eligible: yes` job |
+| The tool refusal behind quote 1 | `drafting_data__take_job` refuses any job whose only step is the plan marker with `needs_plan`, for every session | `source/lawyer/mcp/src/submission/forms/take-job.ts` |
+| How `no_proposal_keys` is computed | `ticket.proposal_keys.length === 0`, the keys being the job's `ticket_proposals` rows. A plan-marker job has none, so it always fails | `unattended-eligibility.ts` `ineligibleReasons`; keys read in `build-proceeding-board.ts` |
+| Other reasons a plan-marker job fails | On a Writing's board with an inventory, none. A research Writing's job is judged with no inventory by design, so it also fails `no_inventory`. On a Work Board with no Writing every job keeps the default `no_inventory` | `build-work-board.ts`; `build-proceeding-board.ts` |
+| An existing plan-approval state | `tickets.plan_approved_at`, stamped by `drafting_data__approve_plan`. An attended session stamps it when it announces the plan, before the first step; an unattended run never stamps it | `approve-plan.ts`; `draft/references/job-session.md`, Announce and proceed |
+| Can it serve as "unratified"? | Not alone: every Ready job not yet announced also has it NULL. Read with the unattended-class lock the board already reads (`locked_by` starting `sess-unattended-`, which drives "In progress with nobody present") and the absence of Proposal keys (an unattended run takes a keyless job only when it is a plan-marker job), it names exactly a plan an unattended run wrote and nobody has approved. No schema change and no new stored field | `build-proceeding-board.ts` `lock_note`; `unattended-eligibility.ts` `UNATTENDED_TOKEN_PREFIX` |
+| A rules-map node holding the same rule | None | `source/skills/draft/rules/nodes/*.md` |
+| `2026-10-15_job-plan-minimum-standards-spec.md` | States the old behaviour: an unattended run that meets a sub-minimum plan reports it and stops | that spec, design bullet on unattended runs |
