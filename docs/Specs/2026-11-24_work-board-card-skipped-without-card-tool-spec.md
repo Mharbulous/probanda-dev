@@ -54,3 +54,13 @@ None.
 ## 10. Verify against HEAD before building
 
 Confirm where the card instruction lives (the `/work` SKILL.md, `shared/present-files.md`, or an entry hook's output) and edit it there.
+
+### Verification against HEAD (2026-11-24, at 7d6c12f7)
+
+| Claim | Finding at HEAD |
+|---|---|
+| `/work` "Rules for each step" holds the entry card rule | Confirmed: `source/skills/work/SKILL.md`, atom `work.each-step`. It names the card tools and defers to `shared/present-files.md` for which one to use. It says nothing about a session with neither. |
+| The no-card-tool behaviour lives in `shared/present-files.md` | Confirmed: `source/skills/shared/present-files.md` line 5, "When neither is listed, say in one plain line which folder holds the file." This is the line the subagents followed. |
+| An entry hook's output also demands the card | Confirmed: `source/skills/drafting-data/hooks/milestone-card-gate.py`. Its PostToolUse note fires in a subagent too and ends "If neither is listed, say in one line that the page is in the matter's draft folder." Its Stop block fires only in a main session (a subagent ends on SubagentStop). |
+| A main session can tell it is unattended, a subagent that it is a subagent | `/work` already passes the fact `unattended` to `rules__move`, and a subagent knows it runs under a dispatching session. The hook could tell a subagent by `agent_id` but not an unattended main session, so the fix keeps the decision in the shared rule. |
+| HTML pages are never read by the model | Unchanged: `shared/html-pages.md` and the hook's "Never read the page." are not touched. |
