@@ -1,5 +1,5 @@
 // drafting_forms__focus_view_page (submission/forms/focus-view-page.ts) and the listener's POST /focus
-// (page-api/server.ts): a session points the Arguments page at a card, the number checked against the
+// (page-api/server.ts): a session points the Arguments page at an argument number, checked against the
 // page's own data, and the page reads the pointer back only with its page's token.
 
 import assert from "node:assert/strict";
@@ -40,8 +40,9 @@ async function fixture(t) {
     dbPath,
     `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L9999 - Test', 'CAN/BC/Vancouver-International-Arbitration-Centre');
      INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (1, 1, 'submissions_package', 'opening', 'Opening');
-     INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'Held in reserve.', 1);
-     INSERT INTO anticipated_points (id, proceeding_id, point) VALUES (1, 1, 'One.'), (2, 1, 'Two.');`
+     INSERT INTO arguments (id, proceeding_id, contention, ordinal, side, number, anticipated) VALUES
+       (1, 1, 'Held in reserve.', 1, 'ours', NULL, 0), (2, 1, 'One.', 2, 'opposing', 1, 1), (3, 1, 'Two.', 3, 'opposing', 2, 1);
+     INSERT INTO argument_rebuts (rebuttal_id, argument_id) VALUES (1, 2);`
   );
   return { port, env, dbPath };
 }
@@ -67,11 +68,11 @@ test("a pointer is written for a card the page has and read back with the page's
   const body = { db_path: f.dbPath, proceeding_id: 1, token: pageApiToken(f.dbPath, 1, f.env), filing_ids: [1] };
 
   assert.deepEqual((await postFocus(f.port, body)).body, { focus: null });
-  const result = submissionFormsFocusViewPage(args(f, "counter", 2), f.env);
+  const result = submissionFormsFocusViewPage(args(f, "arguments", 2), f.env);
   assert.equal(result.focused, true);
   const read = await postFocus(f.port, body);
   assert.equal(read.status, 200);
-  assert.equal(read.body.focus.section, "counter");
+  assert.equal(read.body.focus.section, "arguments");
   assert.equal(read.body.focus.number, 2);
 
   submissionFormsFocusViewPage({ ...args(f, "rebuttals"), item: 1 }, f.env);
@@ -79,7 +80,7 @@ test("a pointer is written for a card the page has and read back with the page's
   assert.equal(next.section, "rebuttals");
   assert.equal(next.number, 1);
   assert.notEqual(next.id, read.body.focus.id);
-  assert.equal(submissionFormsFocusViewPage({ ...args(f, "counter"), item: "anticipated:2" }, f.env).number, 2, "an item resolves to its page number");
+  assert.equal(submissionFormsFocusViewPage({ ...args(f, "arguments"), item: 3 }, f.env).number, 2, "an item resolves to its argument number");
 
   assert.equal((await postFocus(f.port, { ...body, token: "0".repeat(64) })).status, 403);
   assert.equal((await postFocus(f.port, { ...body, filing_ids: ["1"] })).status, 400);
@@ -87,11 +88,12 @@ test("a pointer is written for a card the page has and read back with the page's
 
 test("a card the page lacks, or another page, is refused and writes nothing", async (t) => {
   const f = await fixture(t);
-  assert.throws(() => submissionFormsFocusViewPage(args(f, "counter", 3), f.env), (e) => e.code === "no_such_card");
-  assert.throws(() => submissionFormsFocusViewPage(args(f, "submissions", 1), f.env), (e) => e.code === "no_such_card");
-  assert.throws(() => submissionFormsFocusViewPage({ ...args(f, "counter", 1), page: "Legal Research" }, f.env), (e) => e.code === "unsupported_page");
-  assert.throws(() => submissionFormsFocusViewPage({ ...args(f, "counter"), item: "raised:1" }, f.env), (e) => e.code === "no_such_card");
-  assert.throws(() => submissionFormsFocusViewPage({ ...args(f, "counter", 1), item: "anticipated:1" }, f.env), (e) => e.code === "invalid_target");
+  assert.throws(() => submissionFormsFocusViewPage(args(f, "arguments", 3), f.env), (e) => e.code === "no_such_card");
+  assert.throws(() => submissionFormsFocusViewPage(args(f, "rebuttals", 2), f.env), (e) => e.code === "no_such_card");
+  assert.throws(() => submissionFormsFocusViewPage(args(f, "counter", 1), f.env), (e) => e.code === "invalid_section");
+  assert.throws(() => submissionFormsFocusViewPage({ ...args(f, "arguments", 1), page: "Legal Research" }, f.env), (e) => e.code === "unsupported_page");
+  assert.throws(() => submissionFormsFocusViewPage({ ...args(f, "arguments"), item: 1 }, f.env), (e) => e.code === "no_such_card");
+  assert.throws(() => submissionFormsFocusViewPage({ ...args(f, "arguments", 1), item: 2 }, f.env), (e) => e.code === "invalid_target");
   const api = await startPageApi(f.env, { log: () => {} });
   t.after(() => api.close());
   const read = await postFocus(f.port, { db_path: f.dbPath, proceeding_id: 1, token: pageApiToken(f.dbPath, 1, f.env), filing_ids: [1] });

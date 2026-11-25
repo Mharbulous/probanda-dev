@@ -9,7 +9,7 @@ Fixed-text jobs `/prepare` may offer per Writing kind (the 2026-09-21 design §6
 |---|---|
 | Notice of Application | `Availability letter` (opening stage), `Serve the application` (after the gate job completes), `Set down for hearing` and optionally `Reply affidavits` (once each response is in or its time has run), `Application book` (after set-down), `Reset for hearing` (once adjourned generally). `File and serve` (after the gate job completes) only for a notice filed under the rule before B.C. Reg. 105/2026 |
 | Application Response | `Serve the response` (after the gate job completes), `File the served response` (once the notice of hearing is filed or served). `File and serve` (after the gate job completes) only for a response filed under the rule before B.C. Reg. 105/2026 |
-| Either | `Review the opposing arguments`, one per document setting out an opposing party's arguments, at any stage. Its step 4 writes `Answer opposing point` jobs |
+| Either | `Review the opposing arguments`, one per document setting out an opposing party's arguments, at any stage. Its step 4 writes `Answer opposing argument` jobs |
 | A letter kind (any `_NoVenue` letter kind, or a venue's `letter` kind) | `Deliver` alone, at the letter's save (ADR 0024 D10; a letter saved before 2026-10-23 also holds `Draft the letter`) |
 | `internal-memo` | `Deliver` alone, at the memo's save, with the memo's own intent and steps below (#1161: a memo is sent like a letter; a memo saved before 2026-10-23 also holds `Draft the letter`) |
 | `unstructured` (a venue's stock type for a document type with no type file of its own), or `unstructured-<recipient>` (a `_NoVenue` recipient's) other than `unstructured-internal` | `Draft the Writing` and `Deliver`, both at the Writing's save |
@@ -104,18 +104,18 @@ On a contempt application, Step 1 instead reads `Serve the unfiled notice and it
 - Step 1: `Record each argument the document makes, in rank order: those citing legal authority first, then strongest to weakest by what the document cites and argues`
 - Step 2: `Record each authority the document cites`
 - Step 3: `Show the practitioner the ranked list and record any reorder they give`
-- Step 4: `Create one Answer opposing point job per argument in rank order, then stop; where the document makes one argument only, answer it under this job instead`
-- Scope: `('documents', <its id>)`, `('opposing_points', NULL)` and `('opposing_authorities', NULL)`. Step 1 writes `opposing_points` rows (`filing-checklists.md` §1, "`opposing_points`"), Step 2 `opposing_authorities` rows with this `document_id`.
+- Step 4: `Create one Answer opposing argument job per argument in rank order, then stop; where the document makes one argument only, answer it under this job instead`
+- Scope: `('documents', <its id>)`, `('submissions', NULL)` and `('opposing_authorities', NULL)`. Step 1 writes `arguments` rows with `side = 'opposing'` and a `number` (`filing-checklists.md` §1, "Recording an argument or a rebuttal"), Step 2 `opposing_authorities` rows with this `document_id`.
 
-**`Answer opposing point <opposing_points.id>: <component> <pinpoint>`.** Written by the review job's Step 4, one per `opposing_points` row, in rank order, `billing_anchor` the review job's, `priority` `bottom` on the first and the returned `priority` on the rest. A reader matches it by the prefix `Answer opposing point `.
+**`Answer opposing argument <arguments.id>: <component> <pinpoint>`.** Written by the review job's Step 4, one per opposing `arguments` row, in rank order, `billing_anchor` the review job's, `priority` `bottom` on the first and the returned `priority` on the rest. A reader matches it by the prefix `Answer opposing argument `.
 
-- Intent: `Decide and record our answer to this opposing point.`
+- Intent: `Decide and record our answer to this opposing argument.`
 - Step 1: `Read the point at its pinpoint and each authority cited for it`
 - Step 2: `Check the record for what the point relies on`
 - Step 3: `Record the practitioner's answer, or their decision to hold or decline the point`
-- Scope: `('opposing_points', <its id>)`, one `('opposing_authorities', <id>)` per authority the document cites for this argument, and `('submissions', NULL)`. The scope rows are the argument's link to its authorities.
+- Scope: `('submissions', <its id>)`, one `('opposing_authorities', <id>)` per authority the document cites for this argument, and `('submissions', NULL)`. The scope rows are the argument's link to its authorities.
 
-Both take `guard: "title_and_step_any_status"` in place of `"none"`, so a document or a point never gets a second job.
+Both take `guard: "title_and_step_any_status"` in place of `"none"`, so a document or an argument never gets a second job.
 
 **`Draft the letter`.** One step. No longer written: since 2026-10-23 a letter's or a memo's save writes `Deliver` alone. A letter or memo saved before then still holds it, `filing_id` the Writing's own id, worked and completed as an ordinary job, and it keeps its place in every exclusion keyed by title.
 
@@ -206,7 +206,7 @@ Two fixed-text jobs a Writing gains once every completion criterion printed abov
 
 - Intent: `Counsel reviews every paragraph of this Writing, in document order, against its source pages.`
 - Step 1: `Review every paragraph and resolve every discussion point`
-- Scope: `entity_id` NULL on every substance table of the Writing (design §4 step 3), so any change the practitioner dictates during the review is in scope. That is the reviewed tables `statements_of_law`, `statements_of_fact`, `law_assertions`, `facts`, `submissions`, `order_sought` and `rhetorical_paragraphs`; the other proceeding-scoped substance `parties`, `documents`, `witnesses`, `authorities`, `opposing_points` and `gaps`; and the Writing's own join and prose tables `filing_facts`, `filing_submissions`, `filing_orders`, `filing_rhetoric`, `filing_documents`, `filing_positions`, `filing_chronology` and `filing_prose`.
+- Scope: `entity_id` NULL on every substance table of the Writing (design §4 step 3), so any change the practitioner dictates during the review is in scope. That is the reviewed tables `statements_of_law`, `statements_of_fact`, `law_assertions`, `facts`, `submissions`, `order_sought` and `rhetorical_paragraphs`; the other proceeding-scoped substance `parties`, `documents`, `witnesses`, `authorities` and `gaps`; and the Writing's own join and prose tables `filing_facts`, `filing_submissions`, `filing_orders`, `filing_rhetoric`, `filing_documents`, `filing_positions`, `filing_chronology` and `filing_prose`.
 - Blocked on `Prepare the review pages`, one `ticket_blocks` edge.
 
 Both are written as `kind = 'work'`, with `billing_anchor` by §3's rule, `priority` one above the highest §3's priority read returns, and `filing_id` the Writing's own id, never NULL. `Prepare the review pages` is inserted first, so at equal priority it heads the Ready queue (`priority DESC, id`).
@@ -255,7 +255,6 @@ INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (10, 'parties', N
 INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (10, 'documents', NULL);
 INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (10, 'witnesses', NULL);
 INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (10, 'authorities', NULL);
-INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (10, 'opposing_points', NULL);
 INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (10, 'gaps', NULL);
 INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (10, 'filing_facts', NULL);
 INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (10, 'filing_submissions', NULL);

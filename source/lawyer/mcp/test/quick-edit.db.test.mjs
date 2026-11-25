@@ -35,7 +35,7 @@ async function matter(t) {
     `UPDATE filings SET kind = 'notice_of_application', subkind = NULL, title = 'Notice of Application' WHERE id = 1;
      INSERT INTO facts (id, proceeding_id, postulate) VALUES ${FACTS.map((p, i) => `(${i + 1}, 1, ${quote(p)})`).join(", ")};
      INSERT INTO filing_facts (filing_id, fact_id, document, part, ordinal) VALUES (1, 1, 'form', 'part2', 1), (1, 2, 'form', 'part2', 2), (1, 3, 'form', 'part2', 3);
-     INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES ${SUBMISSIONS.map((c, i) => `(${i + 1}, 1, ${quote(c)}, ${i + 1})`).join(", ")};
+     INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES ${SUBMISSIONS.map((c, i) => `(${i + 1}, 1, ${quote(c)}, ${i + 1})`).join(", ")};
      INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1), (1, 2, 'form', 2);`
   );
   const rendered = submissionFormsRender(f.dbPath, 1, ASHBOURNE);
@@ -94,7 +94,7 @@ test("a remove on a row changed after the preview refuses stale_preview and writ
     ops: [{ op: "remove", target: target("3", 2), document: "form" }],
   });
   assert.equal(preview.appliable, true, preview.note);
-  await submissionDataExecute(dbPath, "UPDATE submissions SET contention = 'The arrears are owing in full.' WHERE id = 2;");
+  await submissionDataExecute(dbPath, "UPDATE arguments SET contention = 'The arrears are owing in full.' WHERE id = 2;");
   const applied = await submissionFormsApplyEdit({ db_path: dbPath, preview_token: preview.preview_token, session_token: SESSION });
   assert.equal(applied.refused, "stale_preview");
   assert.equal(rows(dbPath, "SELECT COUNT(*) AS n FROM filing_submissions WHERE filing_id = 1").at(0).n, 2);
@@ -156,17 +156,17 @@ test("a recast makes a Part 2 fact a new Part 3 submission at its anchor and tak
   assert.deepEqual(preview.recast_menu, ["submission"]);
   const applied = await submissionFormsApplyEdit({ db_path: dbPath, preview_token: preview.preview_token, session_token: SESSION });
   assert.equal(applied.applied, true, applied.note);
-  const placed = rows(dbPath, "SELECT s.contention FROM filing_submissions fs JOIN submissions s ON s.id = fs.submission_id WHERE fs.filing_id = 1 AND fs.document = 'form' ORDER BY fs.ordinal");
+  const placed = rows(dbPath, "SELECT s.contention FROM filing_submissions fs JOIN arguments s ON s.id = fs.submission_id WHERE fs.filing_id = 1 AND fs.document = 'form' ORDER BY fs.ordinal");
   assert.deepEqual(placed.map((r) => r.contention), [SUBMISSIONS[0], FACTS[1], SUBMISSIONS[1]]);
   assert.deepEqual(rows(dbPath, "SELECT fact_id FROM filing_facts WHERE filing_id = 1 AND document = 'form' ORDER BY ordinal").map((r) => r.fact_id), [1, 3]);
-  const created = rows(dbPath, "SELECT id FROM submissions WHERE contention = ?", [FACTS[1]]).at(0).id;
+  const created = rows(dbPath, "SELECT id FROM arguments WHERE contention = ?", [FACTS[1]]).at(0).id;
   assert.deepEqual(logLines(dbPath).map((l) => [l.op, l.entity, l.entity_id]), [["remove", "facts", 2], ["recast", "submissions", created]]);
   assert.equal(rows(dbPath, "SELECT COUNT(*) AS n FROM paragraph_revisions").at(0).n, 0);
 });
 
-test("apply_edit succeeds on a database at schema version 81", async (t) => {
+test("apply_edit succeeds on a database at schema version 82", async (t) => {
   const { dbPath, revision } = await matter(t);
-  assert.equal(Number(rows(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'").at(0).value), 81);
+  assert.equal(Number(rows(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'").at(0).value), 82);
   const preview = await submissionFormsPreviewEdit({
     db_path: dbPath, filing_id: 1, session_token: SESSION, seen_revision: revision,
     ops: [{ op: "move", target: target("3", 2), anchor: { ...target("3", 1), position: "before" } }],

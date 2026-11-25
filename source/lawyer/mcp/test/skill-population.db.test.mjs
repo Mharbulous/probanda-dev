@@ -143,7 +143,7 @@ test("VanIAC submissions package renders clean from checklist-only population", 
       INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, kind, weight, treatment)
         VALUES (1, 1, 'Bellweather Holdings v. Stone', '2023 BCCA 55', 'case', 'binding', 'good_law');
 
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal)
         VALUES (1, 1, 'The Respondent breached clause 4.2 of the Fabrication Agreement.', 1);
       INSERT INTO law_assertions (id, proceeding_id, proposition, dead_end)
         VALUES (1, 1, 'breach of a delivery condition', 0);
@@ -254,7 +254,7 @@ test("BCSC Notice of Application renders clean from checklist-only population", 
         VALUES (1, 1, 'an order requiring production of the 2025 financial statements');
       INSERT INTO order_sought_requires (order_sought_id, excerpt_id, basis_state) VALUES (1, 2, 'filled');
 
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal)
         VALUES (1, 1, 'The court has jurisdiction under Rule 7-1 to compel document production.', 1);
       INSERT INTO law_assertions (id, proceeding_id, proposition, dead_end)
         VALUES (1, 1, 'production jurisdiction', 0);
@@ -372,7 +372,7 @@ test("BCSC default-judgment requisition and Form 8 render clean from checklist-o
       -- (deployed via document='written_argument' below) -- deploying it
       -- there, not on the form, both satisfies order_sought_served_by's FK
       -- and keeps it out of the reserve (deployed, so no 🂡).
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'Damages and costs are owed on the default.', 1);
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'Damages and costs are owed on the default.', 1);
       INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'written_argument', 1);
       INSERT INTO order_sought_served_by (order_sought_id, submission_id) VALUES (1, 1), (2, 1);
 
@@ -421,7 +421,7 @@ test("BCSC consent-order requisition and consent order render clean from checkli
       INSERT INTO order_sought (id, proceeding_id, wording)
         VALUES (1, 1, 'the style of cause is corrected to reflect the Defendant''s full corporate name');
 
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'Both parties consent to the corrected style of cause.', 1);
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'Both parties consent to the corrected style of cause.', 1);
       INSERT INTO order_sought_served_by (order_sought_id, submission_id) VALUES (1, 1);
 
       INSERT INTO filings (id, proceeding_id, kind, subkind, round, title)
@@ -504,7 +504,7 @@ test("BCSC Application Response renders clean from checklist-only population (is
       -- (📖 fires only on a law_assertions row with no statement, not on a
       -- submission with no law_assertions row -- checklist §5 does not
       -- direct populating law for a purely factual submission).
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal)
         VALUES (1, 1, 'The requested accounting has already been provided in full.', 1);
       INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);
 

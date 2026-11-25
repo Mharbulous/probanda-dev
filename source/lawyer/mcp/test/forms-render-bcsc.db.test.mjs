@@ -106,7 +106,7 @@ test("renders BCSC Form 32 notice of application", async () => {
       -- captured statement of law.
       INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, kind, weight, treatment)
         VALUES (1, 1, 'Miazga v. Kvello Estate', '2009 SCC 51', 'case', 'binding', 'good_law');
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal)
         VALUES (1, 1, 'Corbin Vasey is in default under the Rules.', 1);
       INSERT INTO law_assertions (id, proceeding_id, proposition, dead_end)
         VALUES (1, 1, 'a defendant who fails to file a response to civil claim within the prescribed time is in default', 0);
@@ -356,13 +356,13 @@ test("Notice of Application PART 3 references a linked fact already in PART 2 by
           (4, 1, 'Fact four is argued in the Written Arguments only.');
       INSERT INTO filing_facts (filing_id, fact_id, document, part, ordinal)
         VALUES (1, 3, 'form', 'part2', 1), (1, 1, 'form', 'part2', 2), (1, 2, 'form', 'part2', 3), (1, 4, 'written_argument', 'part2', 1);
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal)
         VALUES
           (1, 1, 'Submission A rests on three Part 2 facts.', 1),
           (2, 1, 'Submission B states no fact.', 2),
           (3, 1, 'Submission C needs no stated fact.', 3),
           (4, 1, 'Submission D rests on a fact outside Part 2.', 4);
-      UPDATE submissions SET no_facts_needed_on = '2026-10-04', no_facts_needed_note = 'C turns on the Rules alone.',
+      UPDATE arguments SET no_facts_needed_on = '2026-10-04', no_facts_needed_note = 'C turns on the Rules alone.',
                              no_facts_needed_contention = contention WHERE id = 3;
       INSERT INTO submission_facts (submission_id, fact_id) VALUES (1, 1), (1, 2), (1, 3), (4, 4);
       INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal)
@@ -430,12 +430,12 @@ test("Notice of Application PART 3 marks a contention with no linked proposition
       UPDATE filings SET kind = 'notice_of_application', subkind = NULL, title = 'Notice of Application' WHERE id = 1;
       INSERT INTO facts (id, proceeding_id, postulate) VALUES (1, 1, 'Fact one is first in Part 2.');
       INSERT INTO filing_facts (filing_id, fact_id, document, part, ordinal) VALUES (1, 1, 'form', 'part2', 1);
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal)
         VALUES
           (1, 1, 'Submission A rests on a Part 2 fact.', 1),
           (2, 1, 'Submission B states neither fact nor law.', 2),
           (3, 1, 'Submission C needs no stated law.', 3);
-      UPDATE submissions SET no_law_needed_on = '2026-10-06', no_law_needed_note = 'C is a question of fact alone.',
+      UPDATE arguments SET no_law_needed_on = '2026-10-06', no_law_needed_note = 'C is a question of fact alone.',
                              no_law_needed_contention = contention WHERE id = 3;
       INSERT INTO submission_facts (submission_id, fact_id) VALUES (1, 1), (3, 1);
       INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal)
@@ -498,7 +498,7 @@ test("an attached fact missing from PART 2 prints NOT PLACED on the mockup, and 
       INSERT INTO documents (id, proceeding_id, label) VALUES (2, 1, 'Affidavit of a site witness');
       INSERT INTO facts (id, proceeding_id, postulate, court_record)
         VALUES (1, 1, 'Fact one is placed in Part 2.', 2), (2, 1, 'Fact two was never placed.', NULL);
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'Submission A rests on a placed fact and an unplaced one.', 1);
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'Submission A rests on a placed fact and an unplaced one.', 1);
       INSERT INTO submission_facts (submission_id, fact_id) VALUES (1, 1), (1, 2);
       INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);
       INSERT INTO filing_facts (filing_id, fact_id, document, part, ordinal) VALUES (1, 1, 'form', 'part2', 1), (1, 1, 'written_argument', 'part2', 1);

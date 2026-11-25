@@ -567,7 +567,7 @@ test("an internal memo prints every DB-backed projection, each heading numbering
 INSERT INTO parties (id, proceeding_id, name, role, ordinal, is_client, case_party_id) VALUES (10, 4, 'Ada Client', 'Petitioner', 1, 1, 1), (11, 4, 'Bert Other', 'Respondent', 2, 0, 2);
 INSERT INTO order_sought (id, proceeding_id, wording) VALUES (20, 4, 'An order that the respondent pay costs.'), (21, 4, 'An order for an accounting.');
 INSERT INTO filing_orders (filing_id, order_sought_id, document, ordinal) VALUES (${id}, 20, 'form', 1), (${id}, 21, 'form', 2);
-INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (30, 4, 'The respondent breached the agreement.', 1), (31, 4, 'The breach caused the loss.', 2);
+INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (30, 4, 'The respondent breached the agreement.', 1), (31, 4, 'The breach caused the loss.', 2);
 INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (${id}, 30, 'form', 1), (${id}, 31, 'form', 2);
 INSERT INTO documents (id, proceeding_id, label, document_date) VALUES (40, 4, 'Agreement', '2026-01-15'), (41, 4, 'Demand letter', NULL);
 INSERT INTO filing_documents (filing_id, document_id, ordinal, role) VALUES (${id}, 40, 1, 'evidence'), (${id}, 41, 2, 'evidence');

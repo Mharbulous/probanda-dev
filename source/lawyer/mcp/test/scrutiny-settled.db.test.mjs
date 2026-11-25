@@ -52,7 +52,7 @@ INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, k
     (5, 1, 'Settled Power v. O', '2019 BCCA 15', 'case', NULL, 'good_law', NULL),
     (6, 1, 'Lead Power v. P', '2018 BCCA 16', 'case', NULL, 'good_law', NULL);
 
-INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+INSERT INTO arguments (id, proceeding_id, contention, ordinal)
   VALUES (1, 1, 'A deployed contention.', 1), (2, 1, 'A reserved contention.', 2);
 INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);
 
@@ -233,7 +233,7 @@ test("a reserved submission's lead keeps 🔬 while a live-deployed submission s
     {
       name: "shared with a submission another live filing deploys",
       sql: `INSERT INTO filings (id, proceeding_id, kind, subkind, round, title) VALUES (2, 1, 'submissions_package', NULL, 'reply', 'Reply Package');
-            INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (3, 1, 'A contention on filing 2.', 3);
+            INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (3, 1, 'A contention on filing 2.', 3);
             INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (2, 3, 'form', 1);
             INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (3, 4);`,
       scrutiny: true,
@@ -241,7 +241,7 @@ test("a reserved submission's lead keeps 🔬 while a live-deployed submission s
     {
       name: "shared with a submission only a retired filing deploys",
       sql: `INSERT INTO filings (id, proceeding_id, kind, subkind, round, title) VALUES (2, 1, 'submissions_package', NULL, 'reply', 'Reply Package');
-            INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (3, 1, 'A contention on filing 2.', 3);
+            INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (3, 1, 'A contention on filing 2.', 3);
             INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (2, 3, 'form', 1);
             INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (3, 4);
             UPDATE filings SET retired_on = '2026-10-01', retirement_reason = 'abandoned' WHERE id = 2;`,
@@ -251,13 +251,13 @@ test("a reserved submission's lead keeps 🔬 while a live-deployed submission s
       // v58: a sent Writing keeps a later-killed submission's row, and the kill still drops it here.
       name: "shared with a killed submission a sent filing keeps",
       sql: `INSERT INTO filings (id, proceeding_id, kind, subkind, round, title) VALUES (2, 1, 'submissions_package', NULL, 'reply', 'Reply Package');
-            INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (3, 1, 'A contention on filing 2.', 3);
+            INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (3, 1, 'A contention on filing 2.', 3);
             INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (2, 3, 'form', 1);
             INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (3, 4);
             INSERT INTO parties_snapshot (filing_id, party_id, name, role, ordinal, is_client, is_applicant, to_be_served, address_for_service_filed)
               VALUES (2, 1, 'A Party', 'claimant', 1, 1, 0, 0, '');
             UPDATE filings SET filed_on = '2026-10-01' WHERE id = 2;
-            UPDATE submissions SET killed_on = '2026-10-02' WHERE id = 3;`,
+            UPDATE arguments SET killed_on = '2026-10-02' WHERE id = 3;`,
       scrutiny: false,
     },
   ];

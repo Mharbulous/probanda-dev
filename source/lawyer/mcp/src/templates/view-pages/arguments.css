@@ -8,7 +8,11 @@ article.arg{background:var(--card);border:2px solid var(--frame);border-radius:1
 .arg>.text::before{content:"▸";display:inline-block;margin-right:6px;color:var(--frame);transition:transform .15s}
 .arg.open>.text::before{transform:rotate(90deg)}
 .arg>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}
-.arg .tag{position:absolute;right:0;bottom:0;padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}
+.arg .tags{position:absolute;right:0;bottom:0;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px}
+.arg .tag.flag{background:#a8691c}
+article.arg.killed{opacity:.55}
+.folder section>h2 .count{font-size:13px;font-weight:600;color:var(--muted)}
+.arg .tag{padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}
 .arg .detail{display:flex;flex-direction:column;gap:6px}
 .arg .where,.arg .label,.arg .none{margin:0;font-size:12.5px;color:var(--muted)}
 .arg .head{margin:4px 0 0;font-size:17px;font-weight:700}

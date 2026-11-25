@@ -51,7 +51,7 @@ async function seedNoticeOfApplicationWithWitnessStatementFirst(dbPath) {
       VALUES (1, 1, 1, 1, 1, 2, 'para 1', 'Total due: $4,200', 'p. 1', 1);
 
     -- One submission on both faces, citing the invoice through fact 1's statement.
-    INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'Corbin Vasey owes the invoiced amount.', 1);
+    INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'Corbin Vasey owes the invoiced amount.', 1);
     INSERT INTO submission_facts (submission_id, fact_id) VALUES (1, 1);
     INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal)
       VALUES (1, 1, 'form', 1), (1, 1, 'written_argument', 1);

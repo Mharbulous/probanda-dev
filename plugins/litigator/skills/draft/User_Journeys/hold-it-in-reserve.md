@@ -2,7 +2,7 @@
 journey: Hold it in reserve (and bring it back)
 kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `source/skills/drafting-data/User_Journeys/`.
 actor: practitioner
-trigger: mid-drafting, the practitioner says "don't put that in yet" about a submission, an authority, or a piece of evidence
+trigger: mid-drafting, the practitioner says "don't put that in yet" about an argument, an authority, or a piece of evidence
 outcome: the material moves to the mockup's trailing *Held in reserve* section — always visible to the practitioner, never on the filed face — and one later sentence brings it back
 path: happy
 status: aspirational (desired UX — not yet verified against the implementation; scoped to the VanIAC submissions package below — the BCSC Notice of Application does not have a trailing *Held in reserve* section at all, so this journey's defining mechanism does not apply there, see [#367](https://github.com/Mharbulous/CoClerk/issues/367) and the reserved-vs-crossed-out design ticket it opened)

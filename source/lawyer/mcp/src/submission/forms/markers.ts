@@ -487,8 +487,9 @@ export function printMarkerSets(sets: Array<string | null | undefined>): string 
   return out.join(" ");
 }
 
-export function rebuttalMarker(answeredBySubmissionId: number | null): string {
-  return answeredBySubmissionId === null ? "↩️" : "";
+/** ↩️ on an opposing argument: printed while no live rebuttal answers it (argument_rebuts, v82). */
+export function rebuttalMarker(rebutted: boolean): string {
+  return rebutted ? "" : "↩️";
 }
 
 /**

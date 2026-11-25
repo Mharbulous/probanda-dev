@@ -121,7 +121,7 @@ test("fetchReviewState reads each proceeding's prose slots through their filing,
   const { filing_id: second } = await g.createLetter({ proceeding_id: 2 });
   await g.prose(first, "body", "The first letter.");
   await g.prose(second, "body", "The second letter.");
-  await g.execute("INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (5, 1, 'A contention.', 1);");
+  await g.execute("INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (5, 1, 'A contention.', 1);");
   const [firstRow] = g.query("SELECT id FROM filing_prose WHERE filing_id = ?", [first]);
   const [secondRow] = g.query("SELECT id FROM filing_prose WHERE filing_id = ?", [second]);
 

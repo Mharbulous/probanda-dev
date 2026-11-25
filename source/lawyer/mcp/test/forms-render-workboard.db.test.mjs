@@ -868,7 +868,7 @@ test("a submission counsel has recorded as needing no stated fact leaves the ope
     await seedNoticeOfApplication(f.dbPath);
     await submissionDataExecute(
       f.dbPath,
-      `INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The court has jurisdiction to make the order.', 1);
+      `INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The court has jurisdiction to make the order.', 1);
        INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1), (1, 1, 'written_argument', 1);
        INSERT INTO law_assertions (id, proceeding_id, proposition, dead_end) VALUES (1, 1, 'The statute confers the jurisdiction.', 0);
        INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (1, 1);`
@@ -880,7 +880,7 @@ test("a submission counsel has recorded as needing no stated fact leaves the ope
 
     await submissionDataExecute(
       f.dbPath,
-      `UPDATE submissions SET no_facts_needed_on = '2026-10-04', no_facts_needed_note = 'Jurisdiction is a question of law on the statute''s face.',
+      `UPDATE arguments SET no_facts_needed_on = '2026-10-04', no_facts_needed_note = 'Jurisdiction is a question of law on the statute''s face.',
                               no_facts_needed_contention = contention WHERE id = 1;`
     );
     const entries = ownEntries();
@@ -901,7 +901,7 @@ test("a submission with no linked proposition counts as one open item until a pr
     await seedNoticeOfApplication(f.dbPath);
     await submissionDataExecute(
       f.dbPath,
-      `INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The respondent breached the agreement.', 1);
+      `INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The respondent breached the agreement.', 1);
        INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1), (1, 1, 'written_argument', 1);
        INSERT INTO facts (id, proceeding_id, postulate) VALUES (1, 1, 'The respondent did not deliver the goods.');
        INSERT INTO submission_facts (submission_id, fact_id) VALUES (1, 1);`
@@ -919,7 +919,7 @@ test("a submission with no linked proposition counts as one open item until a pr
 
     await submissionDataExecute(
       f.dbPath,
-      `UPDATE submissions SET no_law_needed_on = '2026-10-06', no_law_needed_note = 'The breach is admitted on the pleadings.',
+      `UPDATE arguments SET no_law_needed_on = '2026-10-06', no_law_needed_note = 'The breach is admitted on the pleadings.',
                               no_law_needed_contention = contention WHERE id = 1;`
     );
     const recorded = ownEntries();
@@ -928,7 +928,7 @@ test("a submission with no linked proposition counts as one open item until a pr
 
     await submissionDataExecute(
       f.dbPath,
-      `UPDATE submissions SET no_law_needed_on = NULL, no_law_needed_note = NULL, no_law_needed_contention = NULL WHERE id = 1;
+      `UPDATE arguments SET no_law_needed_on = NULL, no_law_needed_note = NULL, no_law_needed_contention = NULL WHERE id = 1;
        INSERT INTO law_assertions (id, proceeding_id, proposition, dead_end) VALUES (1, 1, 'A party who fails to perform is in breach.', 0);
        INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (1, 1);`
     );
@@ -984,7 +984,7 @@ test("one unrated authority with two statements yields exactly one authority-rat
          VALUES
            (1, 1, 1, 1, 'para 3', 'The first passage.', NULL, 'verified'),
            (2, 1, 1, 1, 'para 9', 'The second passage.', NULL, 'verified');
-       INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The applicant is entitled to the order.', 1);
+       INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The applicant is entitled to the order.', 1);
        INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (1, 1);
        INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);`
     );
@@ -1083,7 +1083,7 @@ test("goal: an Excerpts criterion is unmet when its only entry is a proposition 
        INSERT INTO law_assertions (id, proceeding_id, proposition, dead_end) VALUES (1, 1, 'a proposition resting only on an unverified lead', 0);
        INSERT INTO statements_of_law (id, proceeding_id, law_assertion_id, authority_id, pinpoint, excerpt, source, verification)
          VALUES (1, 1, 1, 1, 'para 4', 'The lead passage.', 'primary', 'lead');
-       INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The applicant is entitled to the order.', 1);
+       INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The applicant is entitled to the order.', 1);
        INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (1, 1);
        INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);`
     );
@@ -1133,7 +1133,7 @@ test("goal: a proposition whose only statement failed scrutiny prints 📖, prop
        INSERT INTO law_assertions (id, proceeding_id, proposition, dead_end) VALUES (1, 1, 'a proposition whose only statement failed scrutiny', 0);
        INSERT INTO statements_of_law (id, proceeding_id, law_assertion_id, authority_id, pinpoint, excerpt, source, doubt, verification)
          VALUES (1, 1, 1, 1, 'para 4', 'The failed passage.', 'primary', 'Scrutiny failed 2026-10-02: fit failed.', 'failed');
-       INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The applicant is entitled to the order.', 1);
+       INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The applicant is entitled to the order.', 1);
        INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (1, 1);
        INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);`
     );
@@ -1181,7 +1181,7 @@ test("goal: a statement printing 📜 📍 counts once, at its current rung, and
                                       scrutinized_authority_id, scrutinized_pinpoint, scrutinized_excerpt)
          VALUES (5, 1, 1, 1, 'para 1', NULL, 'primary', 'verified', 1, NULL, NULL);
        UPDATE statements_of_law SET pinpoint = NULL WHERE id = 5;
-       INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The applicant is entitled to the order.', 1);
+       INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The applicant is entitled to the order.', 1);
        INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (1, 1);
        INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);`
     );
@@ -1217,7 +1217,7 @@ test("goal: a marker recorded only by the reserve inventory leaves its criterion
     await submissionDataExecute(
       f.dbPath,
       `INSERT INTO law_assertions (id, proceeding_id, proposition, dead_end) VALUES (1, 1, 'a proposition argued only in reserve', 0);
-       INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'A reserved fallback argument.', 1);
+       INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'A reserved fallback argument.', 1);
        INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (1, 1);`
     );
 
@@ -1606,7 +1606,7 @@ test("goal: one keyed row counts once however many entries record its glyph", as
   }
 });
 
-test("goal: an Application Response carries its eight declared criteria, orders-positioned first, then the gate, with opposing points driven by ↩️", async () => {
+test("goal: an Application Response carries its eight declared criteria, orders-positioned first, then the gate, with opposing arguments driven by ↩️", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -1614,8 +1614,8 @@ test("goal: an Application Response carries its eight declared criteria, orders-
     await snapshotFromShipped(f.dbPath, 1, "application-response");
     await submissionDataExecute(
       f.dbPath,
-      `INSERT INTO opposing_points (id, proceeding_id, component, pinpoint, verbatim_words, answered_by_submission_id, ordinal)
-         VALUES (1, 1, 'Notice of Application Part 3', 'para 4', 'the defendant is a flight risk', NULL, 1);`
+      `INSERT INTO arguments (id, proceeding_id, component, pinpoint, contention, ordinal, side)
+         VALUES (101, 1, 'Notice of Application Part 3', 'para 4', 'the defendant is a flight risk', 1, 'opposing');`
     );
 
     const result = submissionFormsRender(f.dbPath, 1, ASHBOURNE);
@@ -1629,7 +1629,7 @@ test("goal: an Application Response carries its eight declared criteria, orders-
     assert.deepEqual(criterionOf(data, "orders-positioned").text, "Every order the applicant asks for has a position");
     assert.deepEqual(criterionOf(data, "opposing-points"), {
       id: "opposing-points",
-      text: "Every opposing point is answered",
+      text: "Every opposing argument has a rebuttal",
       state: "unmet",
       outstanding: 1,
       items: ['Notice of Application Part 3, para 4: "the defendant is a flight risk"'],
@@ -2196,7 +2196,7 @@ async function seedReviewCase(dbPath) {
      INSERT INTO facts (id, proceeding_id, postulate) VALUES (1, 1, 'The defendant was served on 1 September.');
      INSERT INTO statements_of_fact (id, proceeding_id, fact_id, witness_id, instrument, pinpoint, interviewed, excerpt)
        VALUES (1, 1, 1, 1, 2, 'para 3', 1, 'I served the defendant.');
-     INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The applicant is entitled to the order.', 1);
+     INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The applicant is entitled to the order.', 1);
      INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (1, 1);
      INSERT INTO submission_facts (submission_id, fact_id) VALUES (1, 1);
      -- Deploying the submission to the form places fact 1 in Part 2 and on the Written Arguments (schema v59).
@@ -2664,7 +2664,7 @@ test("final review: a Form 8 order printing ⬜ carries no 🧐, and a clean one
     // No 🦵 on a Form 8 (#960); order 1's template is unchosen, so its provision prints ⬜.
     await submissionDataExecute(
       f.dbPath,
-      `INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The defendant is in default.', 1);
+      `INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The defendant is in default.', 1);
        INSERT INTO order_sought_served_by (order_sought_id, submission_id) VALUES (1, 1), (2, 1);
        UPDATE order_sought SET template_key = NULL WHERE id = 1;`
     );

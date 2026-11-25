@@ -23,7 +23,7 @@ const { ALL_MARKER_GLYPHS } = await import("../../build/submission/forms/markers
 const MOCKUP_ONLY_HEADINGS = [
   "Source trace",
   "Facts attributed to this witness, not yet in this statement",
-  "Opposing points",
+  "Opposing arguments",
   "Positions not yet taken",
   "Points not yet answered",
   "Court rules not in this appendix",

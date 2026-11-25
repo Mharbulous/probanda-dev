@@ -284,7 +284,7 @@ INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (2, 1, 'Find and reco
 **The submission's rows.** A task typed with the invocation, or a filter the practitioner names, that names a submission picks the `lane: proposed` lines whose key's table and id, the text between the key's first and second `:` and the id after the second, is a row this read returns. A submission named by its number is the `filing_submissions` row with that `ordinal` on the open Writing; one named by its words is the submission whose `contention` the practitioner quotes; ask when neither picks out one. Here the submission is `3`:
 
 ```sql
-SELECT 'submissions' AS tbl, id FROM submissions WHERE id = 3
+SELECT 'submissions' AS tbl, id FROM arguments WHERE id = 3
 UNION SELECT 'filing_submissions', id FROM filing_submissions WHERE submission_id = 3
 UNION SELECT 'facts', fact_id FROM submission_facts WHERE submission_id = 3
 UNION SELECT 'statements_of_fact', s.id FROM statements_of_fact s JOIN submission_facts sf ON sf.fact_id = s.fact_id WHERE sf.submission_id = 3

@@ -187,7 +187,7 @@ test("BCCA stay response Part 3 dedupes a law assertion shared by two submission
 INSERT INTO filing_positions (id, filing_id, opposing_order_id, position) VALUES
   (1, 1, 1, 'opposed'),
   (2, 1, 2, 'opposed');
-INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES
+INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES
   (2, 1, 'The same tripartite test forecloses a stay on this record too.', 2);
 INSERT INTO filing_submissions (id, filing_id, submission_id, document, ordinal) VALUES (2, 1, 2, 'form', 2);
 INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (2, 1);

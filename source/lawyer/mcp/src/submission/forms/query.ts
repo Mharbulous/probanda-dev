@@ -495,18 +495,27 @@ export function linkedProvisionsColumn(dbPath: string): string {
                AND oa.kind IN ('statute', 'regulation', 'rule') AND oa.killed_on IS NULL) AS linked_provisions`;
 }
 
+/** The FROM source of the points table, for a read a render makes. Schema v82 renamed `submissions` to
+ * `arguments` and added side, number, anticipated, component and pinpoint. A database held below v82
+ * (MIN_READABLE_SCHEMA_VERSION) reads its `submissions` rows as our own arguments, as the hop does. */
+export function argumentsTable(dbPath: string): string {
+  return hasTable(dbPath, "arguments")
+    ? "arguments"
+    : "(SELECT *, 'ours' AS side, NULL AS number, 0 AS anticipated, NULL AS component, NULL AS pinpoint FROM submissions)";
+}
+
 /** The select expression for a submission's `no_facts_needed_on` (table alias `s`): the column, or
  * NULL on a database held below v48, where counsel can have recorded no such decision, so 🧾 reads the
  * linked facts alone. It keeps v42 readable, as `settledOnColumn` does. */
 export function noFactsNeededColumn(dbPath: string): string {
-  return hasColumn(dbPath, "submissions", "no_facts_needed_on") ? "s.no_facts_needed_on" : "NULL AS no_facts_needed_on";
+  return hasColumn(dbPath, "arguments", "no_facts_needed_on") || hasColumn(dbPath, "submissions", "no_facts_needed_on") ? "s.no_facts_needed_on" : "NULL AS no_facts_needed_on";
 }
 
 /** The select expression for a submission's `no_law_needed_on` (table alias `s`): the column, or NULL
  * on a database held below v60, where counsel can have recorded no such decision, so 📚 reads the
  * linked propositions alone. It keeps v42 readable, as `noFactsNeededColumn` does. */
 export function noLawNeededColumn(dbPath: string): string {
-  return hasColumn(dbPath, "submissions", "no_law_needed_on") ? "s.no_law_needed_on" : "NULL AS no_law_needed_on";
+  return hasColumn(dbPath, "arguments", "no_law_needed_on") || hasColumn(dbPath, "submissions", "no_law_needed_on") ? "s.no_law_needed_on" : "NULL AS no_law_needed_on";
 }
 
 /** The facts among `factIds` whose 👤 counsel has suppressed (schema v69): empty on a database held

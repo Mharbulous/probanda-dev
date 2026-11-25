@@ -23,7 +23,7 @@
 
 import { lawStatementCitationLine, type LawStatementLine } from "./law-statement-line.js";
 import { statementNoteUp, treatmentWord, type NoteUpStatus } from "./note-up-status.js";
-import { excerptSpeakerColumn, type FilingRow, isResearchWriting, settledOnColumn, treatmentNoteColumn } from "./query.js";
+import { argumentsTable, excerptSpeakerColumn, type FilingRow, isResearchWriting, settledOnColumn, treatmentNoteColumn } from "./query.js";
 import { rows } from "../query-rows.js";
 import { hasColumn } from "../schema-capabilities.js";
 
@@ -200,23 +200,23 @@ function propositionsFor(dbPath: string, proceedingId: number, ids: number[], me
   const links = rows<SubmissionLinkRow>(
     dbPath,
     `SELECT sbl.law_assertion_id, s.id AS submission_id, s.contention, s.killed_on
-     FROM submission_law sbl JOIN submissions s ON s.id = sbl.submission_id
-     WHERE s.proceeding_id = ?
+     FROM submission_law sbl JOIN ${argumentsTable(dbPath)} s ON s.id = sbl.submission_id
+     WHERE s.proceeding_id = ? AND s.side = 'ours'
      ORDER BY s.ordinal, s.id`,
     [proceedingId]
   );
   const onFiling = rows<SubmissionRow>(
     dbPath,
     `SELECT s.id, s.contention
-     FROM filing_submissions fs JOIN submissions s ON s.id = fs.submission_id
+     FROM filing_submissions fs JOIN ${argumentsTable(dbPath)} s ON s.id = fs.submission_id
      WHERE fs.filing_id IN ${inIds} AND s.killed_on IS NULL
      ORDER BY CASE fs.document WHEN 'form' THEN 0 ELSE 1 END, fs.ordinal, fs.id`,
     ids
   );
   const elsewhere = rows<SubmissionRow>(
     dbPath,
-    `SELECT s.id, s.contention FROM submissions s
-     WHERE s.proceeding_id = ? AND s.killed_on IS NULL
+    `SELECT s.id, s.contention FROM ${argumentsTable(dbPath)} s
+     WHERE s.proceeding_id = ? AND s.killed_on IS NULL AND s.side = 'ours'
        AND NOT EXISTS (SELECT 1 FROM filing_submissions fs WHERE fs.submission_id = s.id AND fs.filing_id IN ${inIds})
      ORDER BY s.ordinal, s.id`,
     [proceedingId, ...ids]

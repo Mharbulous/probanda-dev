@@ -394,6 +394,15 @@ class ParagraphRevisionTest(GateTestCase):
         self.approved(REVISED)
         self.assertPassed(self.run_hook(revision(REVISED, "proposed", "practitioner")))
 
+    def test_a_revision_keyed_submissions_writes_the_arguments_table(self):
+        self.approved(REVISED)
+        sql = (revision(REVISED, "proposed", "practitioner")
+               .replace("UPDATE facts SET postulate", "UPDATE arguments SET contention")
+               .replace("'facts', 12, 'postulate'", "'submissions', 12, 'contention'"))
+        self.assertPassed(self.run_hook(sql))
+        self.assertRefused(self.run_hook(sql.replace("UPDATE arguments", "UPDATE submissions")),
+                           "not the text this script writes into the paragraph")
+
     def test_the_models_paragraph_shown_and_approved_passes(self):
         self.approved(ALTERNATIVE)
         self.assertPassed(self.run_hook(revision(ALTERNATIVE, "alternative", "model")))
@@ -444,7 +453,7 @@ class ParagraphRevisionTest(GateTestCase):
     def test_a_revision_whose_update_writes_other_text_is_refused(self):
         self.write_transcript(turn_line(ASK))
         for sql in (revision(REVISED, "proposed", "practitioner", update_text=ALTERNATIVE),
-                    revision(REVISED, "proposed", "practitioner").replace("UPDATE facts", "UPDATE submissions")):
+                    revision(REVISED, "proposed", "practitioner").replace("UPDATE facts", "UPDATE arguments")):
             with self.subTest(sql=sql[:60]):
                 self.assertRefused(self.run_hook(sql), "field: the revised text",
                                    "not the text this script writes into the paragraph")

@@ -23,7 +23,7 @@ test("an order or submission deployed only on another filing raises no reserve P
       f.dbPath,
       `
       INSERT INTO order_sought (id, proceeding_id, wording) VALUES (4, 1, 'an order deployed nowhere'), (5, 1, 'an order on a live filing');
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal)
         VALUES (1, 1, 'Argued on the retired filing.', 1), (2, 1, 'Drafted but deployed nowhere.', 2);
       INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);
       UPDATE filings SET decided_on = '2026-09-02', retired_on = '2026-09-10', retirement_reason = 'decided' WHERE id = 1;

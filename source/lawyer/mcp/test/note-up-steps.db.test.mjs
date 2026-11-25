@@ -43,7 +43,7 @@ test("a rule cited at three pinpoints and once in a contention's text: four step
        INSERT INTO statements_of_law (id, proceeding_id, law_assertion_id, authority_id, pinpoint, excerpt, source, verification)
          VALUES (7, 1, 5, 1, 'r. 3-4(7.1)', 'The subrule as it reads.', 'primary', 'verified');
        INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (1, 5);
-       UPDATE submissions SET contention = 'The respondent should also have its costs under Rule 14-1(12).' WHERE id = 2;`
+       UPDATE arguments SET contention = 'The respondent should also have its costs under Rule 14-1(12).' WHERE id = 2;`
     );
     submissionFormsRender(f.dbPath, 1, ASHBOURNE);
     const proposed = card(f.dbPath, { lanes: ["proposed"] });
@@ -111,7 +111,7 @@ test("a rule with no pinpoint derives no note-up Proposal, so intake writes no j
       `UPDATE authorities SET style_of_cause_or_title = 'Supreme Court Civil Rules', citation = 'B.C. Reg. 168/2009', kind = 'rule', treatment = NULL WHERE id = 3;
        UPDATE statements_of_law SET verification = 'verified', scrutinized_authority_id = authority_id, scrutinized_pinpoint = NULL, scrutinized_excerpt = excerpt WHERE id = 2;
        UPDATE statements_of_law SET pinpoint = NULL WHERE id = 2;
-       UPDATE submissions SET contention = 'Costs under Rule 14-1(12).' WHERE id = 2;`
+       UPDATE arguments SET contention = 'Costs under Rule 14-1(12).' WHERE id = 2;`
     );
     submissionFormsRender(f.dbPath, 1, ASHBOURNE);
     const proposed = card(f.dbPath, { lanes: ["proposed"] });

@@ -1,33 +1,37 @@
-// The opposing points of a proceeding.
+// The opposing arguments of a proceeding.
 
 import { rows } from "../query-rows.js";
 
 
-export interface OpposingPointRow {
+export interface OpposingArgumentRow {
   id: number;
-  component: string;
+  component: string | null;
   pinpoint: string | null;
-  verbatim_words: string | null;
-  answered_by_submission_id: number | null;
-  answered_by_contention: string | null;
+  contention: string;
+  /** Its live rebuttals (argument_rebuts), in link order. Empty while it needs one (↩️). */
+  rebuttals: { id: number; contention: string }[];
 }
 
-/** opposing_points (build #359): proceeding-scoped -- the table carries no
- * filing/round column, and a coverage inventory is meant to read across the
- * whole proceeding, not just this filing. Rendered as a mockup-only
- * "Opposing points" section (↩️ is a work marker like any other, so it
- * renders for the human and is stripped from the filed face, filed-face.ts)
- * -- the filed answer to a point is the responsive submission's own
- * verbatim-quoted anchor, not this inventory. */
-export function fetchOpposingPoints(dbPath: string, proceedingId: number): OpposingPointRow[] {
-  return rows<OpposingPointRow>(
+/** The live opposing arguments raised against us (`arguments`, side 'opposing', not anticipated;
+ * schema v82): proceeding-scoped -- an argument carries no filing/round column, and a coverage
+ * inventory is meant to read across the whole proceeding, not just this filing. Rendered as a
+ * mockup-only "Opposing arguments" section (↩️ is a work marker like any other, so it renders for
+ * the human and is stripped from the filed face, filed-face.ts) -- the filed answer to an argument
+ * is the responsive submission's own verbatim-quoted anchor, not this inventory. */
+export function fetchOpposingArguments(dbPath: string, proceedingId: number): OpposingArgumentRow[] {
+  const points = rows<Omit<OpposingArgumentRow, "rebuttals">>(
     dbPath,
-    `SELECT op.id, op.component, op.pinpoint, op.verbatim_words, op.answered_by_submission_id,
-            s.contention AS answered_by_contention
-     FROM opposing_points op
-     LEFT JOIN submissions s ON s.id = op.answered_by_submission_id
-     WHERE op.proceeding_id = ?
-     ORDER BY op.ordinal`,
+    `SELECT id, component, pinpoint, contention FROM arguments
+     WHERE proceeding_id = ? AND side = 'opposing' AND anticipated = 0 AND killed_on IS NULL
+     ORDER BY ordinal, id`,
     [proceedingId]
   );
+  const links = rows<{ argument_id: number; id: number; contention: string }>(
+    dbPath,
+    `SELECT r.argument_id, a.id, a.contention FROM argument_rebuts r
+     JOIN arguments a ON a.id = r.rebuttal_id AND a.killed_on IS NULL
+     WHERE a.proceeding_id = ? ORDER BY r.rowid`,
+    [proceedingId]
+  );
+  return points.map((p) => ({ ...p, rebuttals: links.filter((l) => l.argument_id === p.id).map((l) => ({ id: l.id, contention: l.contention })) }));
 }

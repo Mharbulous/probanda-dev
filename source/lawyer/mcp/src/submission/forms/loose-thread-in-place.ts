@@ -14,7 +14,7 @@ import { hasColumn } from "../schema-capabilities.js";
 import { writingFolders } from "../writing-folder.js";
 import { buildProceedingBoard } from "./build-proceeding-board.js";
 import { buildLegalMemosData } from "./legal-memos.js";
-import { liveTicketClause, MILESTONE_KIND } from "./query.js";
+import { argumentsTable, liveTicketClause, MILESTONE_KIND } from "./query.js";
 import { LETTER_KIND } from "./render-matter-board.js";
 import { killedPropositions } from "./research-propositions.js";
 
@@ -22,7 +22,7 @@ export type PageTab = "jobs" | "ideas" | "propositions" | "memos" | "corresponde
 
 export interface InPlaceCard {
   tab: PageTab;
-  /** The record it stays on: `Job #12`, `Submission #4`. A memo's is its folder under 6. LAW. */
+  /** The record it stays on: `Job #12`, `Argument #4`. A memo's is its folder under 6. LAW. */
   record: string;
   /** Its own words, read from that record at this write. */
   title: string;
@@ -90,11 +90,11 @@ export function inPlaceCards(dbPath: string, proceedings: number[], draftDir?: s
     .filter((f) => f.kind === MILESTONE_KIND)
     .map((f): InPlaceCard => ({ tab: "work_boards", record: `Work Board #${f.id}`, title: f.title, status: "Closed", date: f.retired_on, url: null, path: null }));
 
-  const killed = rows<{ id: number; contention: string; killed_on: string }>(
+  const killed = rows<{ id: number; number: number | null; contention: string; killed_on: string }>(
     dbPath,
-    `SELECT id, contention, killed_on FROM submissions WHERE killed_on IS NOT NULL AND proceeding_id IN (${list(proceedings)}) ORDER BY killed_on DESC, id`,
+    `SELECT id, number, contention, killed_on FROM ${argumentsTable(dbPath)} WHERE killed_on IS NOT NULL AND side = 'ours' AND proceeding_id IN (${list(proceedings)}) ORDER BY killed_on DESC, id`,
     proceedings
-  ).map((s): InPlaceCard => ({ tab: "arguments", record: `Submission #${s.id}`, title: s.contention, status: "Killed", date: s.killed_on, url: null, path: null }));
+  ).map((s): InPlaceCard => ({ tab: "arguments", record: s.number === null ? `Argument id ${s.id}` : `Argument #${s.number}`, title: s.contention, status: "Killed", date: s.killed_on, url: null, path: null }));
 
   return [...jobs, ...propositions, ...memos, ...letters, ...killed, ...closed];
 }

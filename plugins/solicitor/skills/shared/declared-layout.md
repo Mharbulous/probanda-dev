@@ -87,7 +87,7 @@ Both are closed and owned by the runtime. A name outside them fails.
 | `noting-up` | Note up all cited authorities |
 | `evidence` | Every fact is proved by evidence in hand |
 | `open-items` | Nothing is left open on the form |
-| `opposing-points` | Every opposing point is answered |
+| `opposing-points` | Every opposing argument has a rebuttal |
 | `counsel-review` | Counsel has reviewed every paragraph |
 | `terms-traced` | Every clause traces to the offer or acceptance |
 | `recipients` | The Writing is addressed to a recipient |

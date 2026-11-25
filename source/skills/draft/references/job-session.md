@@ -3,7 +3,7 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 
 <!-- atom id=draft.js.contents ops=none -->
 ## Contents
-- Branch A: a job is chosen (Plan, Executing the plan as a worklist, Opposing points, Complete)
+- Branch A: a job is chosen (Plan, Executing the plan as a worklist, Opposing arguments, Complete)
 - Assign, the checks before the assigning write, and Branch B, new work (outlining): `work/references/job-session.md`
 
 ## Branch A: a job is chosen
@@ -87,9 +87,9 @@ The markers on the mockup are the worklist. There is no second task list to buil
 - **Regeneration:** one regeneration at the end of a dispatched batch, revision bumped, presented as a file card (`shared/present-files.md`). Markers whose work finished are gone; human-only markers remain until the practitioner clears them.
 
 <!-- atom id=draft.opposing ops=opposing_points -->
-### Opposing points
+### Opposing arguments
 
-Where a point attacks is asked, never inferred, offered as the Writing's own fixed list of submissions and orders. A document setting out an opposing party's arguments, forwarded in any session, gets its review job (`drafting-data/references/jobs-stock.md` §3b, `Review the opposing arguments`) and nothing more: that job records its points, and no rebuttal starts before it completes. Where an answer leaves part of a point unmet, ask about that part, never compose the rest (facts the matter already holds may be offered for the practitioner to pick from). Deliberate silence is recorded, not implied: a point held for the hearing, or declined outright, is a decision on the record. The finish line is zero unrecorded rebuttals, not zero unanswered points.
+Where an opposing argument attacks is asked, never inferred, offered as the Writing's own fixed list of arguments and orders. A document setting out an opposing party's arguments, forwarded in any session, gets its review job (`drafting-data/references/jobs-stock.md` §3b, `Review the opposing arguments`) and nothing more: that job records its arguments, and no rebuttal starts before it completes. Where a rebuttal leaves part of an argument unmet, ask about that part, never compose the rest (facts the matter already holds may be offered for the practitioner to pick from). Deliberate silence is recorded, not implied: an argument held for the hearing, or declined outright, is a decision on the record. The finish line is zero unrecorded rebuttals, not zero unanswered arguments.
 
 <!-- atom id=draft.complete ops=complete -->
 ### Complete

@@ -1,20 +1,15 @@
 // The Arguments view page: one `Arguments - Work Board <id>.html` per live Writing, written by the
-// view-page registry (../view-pages.ts), listing the submissions and counter-arguments the drafting
-// database records for the filing's proceeding in four kinds:
-//   submission       -- a live submission deployed by a document of some filing of the proceeding:
-//                       this filing's first (the venue form's, then the Written Arguments'), then
-//                       those only on another filing.
-//   rebuttal         -- a live submission held in reserve: deployed by no document of any filing of
-//                       the proceeding (terms-and-symbols.md, Deployment). Derived, never stored.
-//   counter-argument -- an opposing point (raised, in a served document) or an anticipated point
-//                       (the practitioner's own prediction).
-//   killed           -- a submission the practitioner reviewed and rejected (submissions.killed_on,
-//                       schema v16), in kill-date order, kept so it is never re-proposed.
-// Each submission, rebuttal and killed submission shows the facts and propositions of law linked to
-// it. Only live submissions are listed under a counter-argument. A rebuttal is
-// grouped with the counter-arguments it answers by the advisory rebuts links (schema v65), which are
-// neither complete nor exhaustive: the page never calls a counter-argument unanswered for want of a
-// link, and never reads answered_by_submission_id or its ↩️ marker.
+// view-page registry (../view-pages.ts), listing the `arguments` rows the drafting database records
+// for the filing's proceeding (schema v82) on two tabs:
+//   arguments -- every row with no `argument_rebuts` link out, ours, opposing or neutral, by its
+//                fixed per-proceeding number (#2).
+//   rebuttals -- every row with a link out, labelled under its lowest-numbered target (#2.a, and
+//                #1.a.i for a rebuttal of a rebuttal). Its other targets show "see #2.a".
+// Both are derived from the links, never stored. A killed row stays on its tab, last, in kill-date
+// order, so it is never re-proposed. Each card shows its tags ("Held in reserve" for one of ours
+// deployed by no document of the proceeding, "Killed <date>", "Anticipated", and "No rebuttal" for a
+// live opposing argument no live rebuttal answers), the facts and propositions of law linked to it, and its
+// cross-links.
 //
 // A human interface generated from the database (ADR 0033): no session reads, greps, parses or
 // screenshots it. Sessions read submissions through /drafting-data and the mockups.
@@ -32,11 +27,10 @@ import viewFolderCss from "../../templates/view-pages/view-folder.css.js";
 import viewHeadHtml from "../../templates/view-pages/view-head.html.js";
 import type { ViewPage } from "../view-pages.js";
 import type { FilingRow } from "./query.js";
-import { fetchOpposingPoints } from "./opposing-points.js";
 import { rows } from "../query-rows.js";
-import { hasColumn, hasTable } from "../schema-capabilities.js";
+import { hasColumn } from "../schema-capabilities.js";
 
-export type SubmissionKind = "submission" | "rebuttal" | "killed";
+export type Side = "ours" | "opposing" | "neutral";
 
 export interface SubmissionLaw {
   text: string;
@@ -44,65 +38,80 @@ export interface SubmissionLaw {
   killed_on: string | null;
 }
 
-export interface PageSubmission {
+export interface PageCard {
+  /** The `arguments` row. */
   id: number;
-  kind: SubmissionKind;
+  /** "#2" for an argument; "#2.a", or "#1.a.i" under a rebuttal, for a rebuttal; "#?" with no number to hang on. */
+  label: string;
+  /** The argument number the card opens with: its own, or its label's for a rebuttal. Null with none. */
+  number: number | null;
+  side: Side;
   contention: string;
-  /** Where it is deployed: "On this Writing", "On <filing title>[ (retired)]", "Held in reserve", or
-   * "Killed <date>". */
-  where: string;
+  /** Where it is deployed ("On this Writing", "On <filing title>[ (retired)]") or, unless deployed,
+   * where the other side raised it (component, pinpoint); else null. */
+  where: string | null;
+  /** "Held in reserve", "Anticipated", "No rebuttal", "Killed <date>". */
+  tags: string[];
+  killed: boolean;
   facts: string[];
   law: SubmissionLaw[];
-  /** The keys of the counter-arguments it is linked to, in the page's counter-argument order. */
+  /** The labels of the cards it answers, lowest-numbered first. */
   rebuts: string[];
-}
-
-export interface CounterArgument {
-  /** `raised:<opposing point id>` or `anticipated:<anticipated point id>`. */
-  key: string;
-  kind: "raised" | "anticipated";
-  text: string;
-  /** A raised point's component and pinpoint in the served document; null for an anticipated one. */
-  source: string | null;
-  /** The ids of the submissions and rebuttals linked to it. */
-  linked: number[];
+  /** Its rebuttals' labels in link order, "see #2.a" for one labelled under another target. */
+  rebutted_by: string[];
 }
 
 export interface ArgumentsData {
-  submissions: PageSubmission[];
-  counter_arguments: CounterArgument[];
+  arguments: PageCard[];
+  rebuttals: PageCard[];
 }
 
 /** The page's data for one filing, from the drafting database alone. */
 export function buildArgumentsData(dbPath: string, filing: FilingRow | FilingRow[]): ArgumentsData {
   // A merged board's page (ADR 0010): each proceeding's arguments read against the board's Writings in it.
   const filings = Array.isArray(filing) ? filing : [filing];
-  const out: ArgumentsData = { submissions: [], counter_arguments: [] };
+  const out: ArgumentsData = { arguments: [], rebuttals: [] };
   for (const proceedingId of [...new Set(filings.map((f) => f.proceeding_id))]) {
     const part = argumentsFor(dbPath, proceedingId, filings.filter((f) => f.proceeding_id === proceedingId).map((f) => f.id), filings.length > 1);
-    out.submissions.push(...part.submissions);
-    out.counter_arguments.push(...part.counter_arguments);
+    out.arguments.push(...part.arguments);
+    out.rebuttals.push(...part.rebuttals);
   }
   return out;
 }
 
+interface ArgumentRow {
+  id: number;
+  contention: string;
+  side: Side;
+  number: number | null;
+  anticipated: number;
+  component: string | null;
+  pinpoint: string | null;
+  killed_on: string | null;
+}
+
+const letter = (i: number): string => String.fromCharCode(97 + (i % 26)).repeat(Math.floor(i / 26) + 1);
+
+function roman(n: number): string {
+  const steps: [number, string][] = [[1000, "m"], [900, "cm"], [500, "d"], [400, "cd"], [100, "c"], [90, "xc"], [50, "l"], [40, "xl"], [10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"]];
+  let out = "";
+  for (const [value, digits] of steps) for (; n >= value; n -= value) out += digits;
+  return out;
+}
+
 function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merged: boolean): ArgumentsData {
-  const inIds = `(${ids.map(() => "?").join(", ")})`;
-  const submissions = rows<{ id: number; contention: string }>(
+  const all = rows<ArgumentRow>(
     dbPath,
-    `SELECT s.id, s.contention FROM submissions s
-     LEFT JOIN filing_submissions fs ON fs.submission_id = s.id AND fs.filing_id IN ${inIds}
-     WHERE s.proceeding_id = ? AND s.killed_on IS NULL
-     GROUP BY s.id
-     ORDER BY MIN(fs.id) IS NULL, MIN(CASE fs.document WHEN 'form' THEN 0 ELSE 1 END),
-              MIN(CASE fs.document WHEN 'form' THEN fs.ordinal END), MIN(fs.ordinal), s.ordinal, s.id`,
-    [...ids, proceedingId]
-  );
-  const killed = rows<{ id: number; contention: string; killed_on: string }>(
-    dbPath,
-    "SELECT id, contention, killed_on FROM submissions WHERE proceeding_id = ? AND killed_on IS NOT NULL ORDER BY killed_on, id",
+    "SELECT id, contention, side, number, anticipated, component, pinpoint, killed_on FROM arguments WHERE proceeding_id = ? ORDER BY id",
     [proceedingId]
   );
+  const byId = new Map(all.map((a) => [a.id, a]));
+  const links = rows<{ rebuttal_id: number; argument_id: number }>(
+    dbPath,
+    `SELECT r.rebuttal_id, r.argument_id FROM argument_rebuts r JOIN arguments a ON a.id = r.argument_id
+     WHERE a.proceeding_id = ? ORDER BY r.rowid`,
+    [proceedingId]
+  ).filter((l) => byId.has(l.rebuttal_id));
   const deployments = rows<{ submission_id: number; filing_id: number; title: string; retired_on: string | null }>(
     dbPath,
     `SELECT DISTINCT fs.submission_id, f.id AS filing_id, f.title, f.retired_on
@@ -125,67 +134,107 @@ function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merge
      WHERE la.proceeding_id = ? ORDER BY la.id`,
     [proceedingId]
   );
-  // The rebuts links (schema v65); a database below it has none.
-  const raisedLinks = hasTable(dbPath, "submission_rebuts_opposing_points")
-    ? rows<{ submission_id: number; point_id: number }>(dbPath, "SELECT submission_id, opposing_point_id AS point_id FROM submission_rebuts_opposing_points")
-    : [];
-  const anticipatedLinks = hasTable(dbPath, "submission_rebuts_anticipated_points")
-    ? rows<{ submission_id: number; point_id: number }>(dbPath, "SELECT submission_id, anticipated_point_id AS point_id FROM submission_rebuts_anticipated_points")
-    : [];
-  const links = [
-    ...raisedLinks.map((l) => ({ submission_id: l.submission_id, key: `raised:${l.point_id}` })),
-    ...anticipatedLinks.map((l) => ({ submission_id: l.submission_id, key: `anticipated:${l.point_id}` })),
-  ];
 
-  const live = new Set(submissions.map((s) => s.id));
-  const counterArguments: CounterArgument[] = [
-    ...fetchOpposingPoints(dbPath, proceedingId).map((p): CounterArgument => ({
-      key: `raised:${p.id}`,
-      kind: "raised",
-      text: p.verbatim_words ?? "(no words recorded)",
-      source: [p.component, p.pinpoint].filter((part) => part !== null && part !== "").join(", "),
-      linked: [],
-    })),
-    ...rows<{ id: number; point: string }>(dbPath, "SELECT id, point FROM anticipated_points WHERE proceeding_id = ? ORDER BY id", [proceedingId]).map(
-      (p): CounterArgument => ({ key: `anticipated:${p.id}`, kind: "anticipated", text: p.point, source: null, linked: [] })
-    ),
-  ];
-  const counterByKey = new Map(counterArguments.map((c) => [c.key, c]));
+  const targetsOf = new Map<number, number[]>();
+  const rebuttalsOf = new Map<number, number[]>();
   for (const l of links) {
-    const counter = counterByKey.get(l.key);
-    if (counter !== undefined && live.has(l.submission_id) && !counter.linked.includes(l.submission_id)) counter.linked.push(l.submission_id);
+    targetsOf.set(l.rebuttal_id, [...(targetsOf.get(l.rebuttal_id) ?? []), l.argument_id]);
+    rebuttalsOf.set(l.argument_id, [...(rebuttalsOf.get(l.argument_id) ?? []), l.rebuttal_id]);
   }
-  const counterOrder = new Map(counterArguments.map((c, i) => [c.key, i]));
 
-  const item = (s: { id: number; contention: string }, kind: SubmissionKind, where: string): PageSubmission => ({
-    id: s.id,
-    kind,
-    contention: s.contention,
-    where,
-    facts: facts.filter((f) => f.submission_id === s.id).map((f) => f.postulate),
-    law: law.filter((l) => l.submission_id === s.id).map((l) => ({ text: l.proposition, killed_on: l.killed_on })),
-    rebuts: links
-      .filter((l) => l.submission_id === s.id && counterByKey.has(l.key))
-      .map((l) => l.key)
-      .sort((a, b) => (counterOrder.get(a) ?? 0) - (counterOrder.get(b) ?? 0)),
-  });
-  const items = submissions.map((s): PageSubmission => {
-    const deployedOn = deployments.filter((d) => d.submission_id === s.id);
+  // A rebuttal's number is its lowest-numbered target's. A loop of rebuttals with no argument has none.
+  const numbers = new Map<number, number | null>();
+  const numberOf = (id: number, seen = new Set<number>()): number | null => {
+    const targets = targetsOf.get(id);
+    if (targets === undefined) return byId.get(id)?.number ?? null;
+    if (numbers.has(id)) return numbers.get(id) as number | null;
+    if (seen.has(id)) return null;
+    seen.add(id);
+    const found = targets.map((t) => numberOf(t, seen)).filter((n): n is number => n !== null);
+    const n = found.length > 0 ? Math.min(...found) : null;
+    numbers.set(id, n);
+    return n;
+  };
+  /** The target a rebuttal is labelled under: its lowest-numbered one, the first linked on a tie. */
+  const primaryOf = (id: number): number => {
+    const targets = targetsOf.get(id) as number[];
+    const n = numberOf(id);
+    return targets.find((t) => numberOf(t) === n) ?? targets[0];
+  };
+  const labels = new Map<number, { label: string; path: number[] }>();
+  const labelOf = (id: number, seen = new Set<number>()): { label: string; path: number[] } => {
+    const known = labels.get(id);
+    if (known !== undefined) return known;
+    let out: { label: string; path: number[] };
+    const n = numberOf(id);
+    if (!targetsOf.has(id)) out = { label: n === null ? "#?" : `#${n}`, path: [] };
+    else if (seen.has(id)) out = { label: "#?", path: [] };
+    else {
+      seen.add(id);
+      const parent = primaryOf(id);
+      const base = labelOf(parent, seen);
+      const i = (rebuttalsOf.get(parent) ?? []).filter((r) => primaryOf(r) === parent).indexOf(id);
+      out = { label: `${base.label}.${base.path.length % 2 === 0 ? letter(i) : roman(i + 1)}`, path: [...base.path, i] };
+    }
+    labels.set(id, out);
+    return out;
+  };
+  const byNumber = (a: number, b: number): number => {
+    const x = numberOf(a);
+    const y = numberOf(b);
+    return x === y ? 0 : x === null ? 1 : y === null ? -1 : x - y;
+  };
+
+  const card = (a: ArgumentRow): PageCard => {
+    const deployedOn = deployments.filter((d) => d.submission_id === a.id);
     const here = deployedOn.filter((d) => ids.includes(d.filing_id));
     const elsewhere = deployedOn.map((d) => (d.retired_on === null ? d.title : `${d.title} (retired)`)).join("; ");
+    const source = [a.component, a.pinpoint].filter((part) => part !== null && part !== "").join(", ");
     const where =
-      here.length > 0 ? (merged ? `On this board: ${here.map((d) => d.title).join("; ")}` : "On this Writing") : deployedOn.length > 0 ? `On ${elsewhere}` : "Held in reserve";
-    return item(s, deployedOn.length > 0 ? "submission" : "rebuttal", where);
-  });
-  for (const s of killed) items.push(item(s, "killed", `Killed ${s.killed_on}`));
-  return { submissions: items, counter_arguments: counterArguments };
+      here.length > 0 ? (merged ? `On this board: ${here.map((d) => d.title).join("; ")}` : "On this Writing") : deployedOn.length > 0 ? `On ${elsewhere}` : source || null;
+    const rebuttals = rebuttalsOf.get(a.id) ?? [];
+    const tags: string[] = [];
+    if (a.side === "ours" && a.killed_on === null && deployedOn.length === 0) tags.push("Held in reserve");
+    if (a.anticipated === 1) tags.push("Anticipated");
+    if (a.side === "opposing" && a.killed_on === null && !targetsOf.has(a.id) && !rebuttals.some((r) => byId.get(r)?.killed_on === null)) tags.push("No rebuttal");
+    if (a.killed_on !== null) tags.push(`Killed ${a.killed_on}`);
+    return {
+      id: a.id,
+      label: labelOf(a.id).label,
+      number: numberOf(a.id),
+      side: a.side,
+      contention: a.contention,
+      where,
+      tags,
+      killed: a.killed_on !== null,
+      facts: facts.filter((f) => f.submission_id === a.id).map((f) => f.postulate),
+      law: law.filter((l) => l.submission_id === a.id).map((l) => ({ text: l.proposition, killed_on: l.killed_on })),
+      rebuts: [...(targetsOf.get(a.id) ?? [])].sort(byNumber).map((t) => labelOf(t).label),
+      rebutted_by: rebuttals.map((r) => (primaryOf(r) === a.id ? labelOf(r).label : `see ${labelOf(r).label}`)),
+    };
+  };
+  // Live cards first, by number and then label; killed ones last, in kill-date order.
+  const order = (x: ArgumentRow, y: ArgumentRow): number => {
+    if ((x.killed_on === null) !== (y.killed_on === null)) return x.killed_on === null ? -1 : 1;
+    if (x.killed_on !== null && y.killed_on !== null && x.killed_on !== y.killed_on) return x.killed_on < y.killed_on ? -1 : 1;
+    const byN = byNumber(x.id, y.id);
+    if (byN !== 0) return byN;
+    const px = labelOf(x.id).path;
+    const py = labelOf(y.id).path;
+    for (let i = 0; i < Math.min(px.length, py.length); i++) if (px[i] !== py[i]) return px[i] - py[i];
+    return px.length - py.length || x.id - y.id;
+  };
+  const sorted = [...all].sort(order);
+  return {
+    arguments: sorted.filter((a) => !targetsOf.has(a.id)).map(card),
+    rebuttals: sorted.filter((a) => targetsOf.has(a.id)).map(card),
+  };
 }
 
-// The page's script (arguments.js) draws window.VIEW_PAGE.data into .board as folder tabs over one
-// panel holding four sections, Killed only on its own tab. Each
-// section numbers its cards 1..N in page order: a picker of those numbers in its heading lists only
-// the selected card, and each card's tag ends its statement with the same number. A counter-argument lists the arguments linked to it, so a rebuttal linked to two
-// counter-arguments shows under both. One with no link shows no link line.
+// The page's script (arguments.js) draws window.VIEW_PAGE.data into .board as two folder tabs,
+// Arguments and Rebuttals. A picker of the card labels in each tab's heading lists only the selected
+// card. One open number is shared by both tabs: opening Argument #2 opens Rebuttals #2.a, #2.b and
+// #2.a.i on the other tab, and the reverse.
 /** The page's view-page registry entry (../view-pages.ts VIEW_PAGES). */
 export const ARGUMENTS_PAGE: ViewPage = {
   name: "Arguments",

@@ -278,8 +278,10 @@ export const SYMBOLS: readonly SymbolRow[] = [
     meaning: "their statement, of fact or law, is unanswered",
     work: "answer it",
     actor: "drafter",
-    condition: "`opposing_point.answered_by` ∅ (→ submission)",
-    history: "v1; target renamed v3 (#323: answers are submissions)",
+    condition:
+      "a live `arguments` row (`killed_on` ∅) with `side='opposing'` and `anticipated=0` that no `argument_rebuts` row " +
+      "links to from a live rebuttal",
+    history: "v1; target renamed v3 (#323: answers are submissions); v82: one `arguments` table, and every `argument_rebuts` link answers",
   },
   {
     glyph: "👃", name: "suspicious (fact) or dubious (law)", group: "work",
@@ -855,18 +857,18 @@ export const SYMBOLS: readonly SymbolRow[] = [
     actor: "practitioner",
     modelNote:
       "The pipeline never decides whether disclosure is required; that question goes through /legal-research. When a " +
-      "predicted point is actually raised, record it as their point to answer and remove the prediction; no link is kept.",
+      "predicted argument is actually raised, one update records it: anticipated = 0 with its component and pinpoint.",
     condition:
       "🚩 **adverse** — disclosure judgment (candour) and rebuttal preparation deferred → practitioner, at " +
       "application review; printed on no page — the pipeline never decides whether disclosure " +
       "is required (routes through `/legal-research`). Two predicates, one posture: `facts.adverse=1` " +
-      "(assertion level) ⊕ an `anticipated_points` row existing (the practitioner's own prediction of a point " +
-      "the other side may run, not yet raised). Orthogonal to 🂡, not a subset of it like 🤥 — reads no " +
-      "deployment state at all: `anticipated_points` is never pointed to by any document, so it must never be " +
-      "read by 🂡's \"deployed by no document\" predicate (which would otherwise fire vacuously on every row); a " +
+      "(assertion level) ⊕ a live `arguments` row with `anticipated=1` (the practitioner's own prediction of an " +
+      "argument the other side may run, not yet raised). Orthogonal to 🂡, not a subset of it like 🤥 — reads no " +
+      "deployment state at all: an anticipated argument has `side='opposing'` and is never pointed to by any " +
+      "document, and 🂡 reads `side='ours'` rows only, so its \"deployed by no document\" predicate never fires on it; a " +
       "`facts.adverse` flag is likewise silent to deployment, so an adverse fact can be deployed — even " +
       "disclosed — and still carry 🚩 (§4 → adverse orthogonal).",
-    history: "",
+    history: "v82: the prediction is an `arguments` row with `anticipated=1`, was an `anticipated_points` row",
   },
 ];
 

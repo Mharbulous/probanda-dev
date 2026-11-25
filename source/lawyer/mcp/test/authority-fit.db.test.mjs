@@ -46,7 +46,7 @@ INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, k
     (4, 1, 'Revised Example Act', 'RSBC 1996, c 1', 'statute', 'binding', NULL, 'current', '2026-10-01'),
     (5, 1, 'Mid Case v. Example', '2010 BCCA 3', 'case', 'binding', 'good_law', NULL, NULL);
 
-INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'A deployed contention.', 1);
+INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'A deployed contention.', 1);
 INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);
 
 INSERT INTO law_assertions (id, proceeding_id, proposition, dead_end)

@@ -5360,10 +5360,119 @@ class TestV81OpposingFiling(unittest.TestCase):
 
     def test_a_fresh_database_holds_the_kind(self):
         engine.run({"db_path": str(self.db_path)})
-        self.assertEqual(schema_version(self.db_path), 81)
+        self.assertEqual(schema_version(self.db_path), engine.TARGET_SCHEMA_VERSION)
         con = sqlite3.connect(str(self.db_path))
         self.addCleanup(con.close)
         self.assertIn("'opposing_filing'", con.execute("SELECT sql FROM sqlite_master WHERE name = 'board_attachments'").fetchone()[0])
+
+
+class TestV82Arguments(unittest.TestCase):
+    """v82: submissions becomes arguments, opposing and anticipated points move into it, and
+    argument_rebuts holds every link (Brahm, 2026-11-25). Rows keep their ids, a linked row is a
+    rebuttal, an unlinked one an argument with a side and a number, and a filed render reads the
+    same rows."""
+
+    SEED = """
+        INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L0000', 'CAN/BC/BCSC');
+        INSERT INTO filings (id, proceeding_id, kind, title) VALUES (1, 1, 'notice_of_application', 'Notice of Application');
+        INSERT INTO submissions (id, proceeding_id, contention, ordinal, killed_on) VALUES
+            (1, 1, 'On the filed Writing.', 1, NULL),
+            (2, 1, 'Answers two points.', 2, NULL),
+            (3, 1, 'Unlinked.', 3, NULL),
+            (4, 1, 'Killed.', 4, '2026-11-01'),
+            (5, 1, 'Answers a prediction.', 5, NULL);
+        INSERT INTO filing_submissions (id, filing_id, submission_id, document, ordinal) VALUES (10, 1, 1, 'form', 1);
+        UPDATE filings SET filed_on = '2026-11-02' WHERE id = 1;
+        INSERT INTO opposing_points (id, proceeding_id, component, pinpoint, verbatim_words, answered_by_submission_id, ordinal) VALUES
+            (1, 1, 'Part 3', 'para 1', 'No standing.', 2, 1),
+            (2, 1, 'Part 3', 'para 2', 'Out of time.', 2, 2),
+            (3, 1, 'Part 3', 'para 4', NULL, NULL, 3);
+        INSERT INTO submission_rebuts_opposing_points (submission_id, opposing_point_id) VALUES (2, 1);
+        INSERT INTO anticipated_points (id, proceeding_id, point) VALUES (1, 1, 'They will say laches.');
+        INSERT INTO submission_rebuts_anticipated_points (submission_id, anticipated_point_id) VALUES (5, 1);
+        INSERT INTO rhetorical_paragraphs (id, proceeding_id, wording, states_law, states_fact) VALUES (1, 1, 'In short.', 0, 0);
+        INSERT INTO rhetorical_paragraph_opposing_points (rhetorical_paragraph_id, opposing_point_id) VALUES (1, 3);
+        INSERT INTO tickets (id, proceeding_id, title, intent, kind, billing_anchor, created) VALUES
+            (1, 1, 'Answer opposing point 3: Part 3 para 4', 'Answer it.', 'work', 'L0000|x', '2026-11-03T09:00'),
+            (2, 1, 'Review the opposing arguments in Response (document 9)', 'Review.', 'work', 'L0000|x', '2026-11-03T09:00');
+        INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES
+            (1, 'opposing_points', 3), (1, 'opposing_points', NULL), (1, 'opposing_points', 99),
+            (2, 'opposing_points', NULL), (2, 'submissions', NULL);
+    """
+    FILED = """SELECT fs.id, s.id, s.contention, fs.document, fs.ordinal FROM filing_submissions fs
+               JOIN {table} s ON s.id = fs.submission_id ORDER BY fs.id"""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.db_path = Path(self._tmp.name) / "submission.sqlite"
+
+    def _hop(self):
+        self.assertEqual(engine.migrate(str(self.db_path), target_version=81)[-1], (80, 81))
+        con = sqlite3.connect(str(self.db_path))
+        con.executescript(self.SEED)
+        con.commit()
+        self.filed = con.execute(self.FILED.format(table="submissions")).fetchall()
+        con.close()
+        self.assertEqual(engine.run({"db_path": str(self.db_path), "target_version": 82})["applied"], [{"from": 81, "to": 82}])
+        con = sqlite3.connect(str(self.db_path))
+        self.addCleanup(con.close)
+        return con
+
+    def test_every_row_moves_in_and_keeps_its_id(self):
+        con = self._hop()
+        self.assertEqual(schema_version(self.db_path), 82)
+        self.assertEqual(
+            con.execute("SELECT id, side, anticipated, contention, component, pinpoint FROM arguments ORDER BY id").fetchall(),
+            [(1, "ours", 0, "On the filed Writing.", None, None), (2, "ours", 0, "Answers two points.", None, None),
+             (3, "ours", 0, "Unlinked.", None, None), (4, "ours", 0, "Killed.", None, None),
+             (5, "ours", 0, "Answers a prediction.", None, None),
+             (6, "opposing", 0, "No standing.", "Part 3", "para 1"), (7, "opposing", 0, "Out of time.", "Part 3", "para 2"),
+             (8, "opposing", 0, "Part 3", "Part 3", "para 4"), (9, "opposing", 1, "They will say laches.", None, None)],
+        )
+        self.assertEqual(con.execute("SELECT killed_on FROM arguments WHERE id = 4").fetchone(), ("2026-11-01",))
+        for gone in ("submissions", "opposing_points", "anticipated_points", "submission_rebuts_opposing_points",
+                     "submission_rebuts_anticipated_points", "rhetorical_paragraph_opposing_points", "v82_point_map"):
+            self.assertEqual(con.execute("SELECT COUNT(*) FROM sqlite_master WHERE name = ?", (gone,)).fetchone(), (0,), gone)
+        self.assertEqual(con.execute("PRAGMA integrity_check").fetchone(), ("ok",))
+        self.assertEqual(con.execute("PRAGMA foreign_key_check").fetchall(), [])
+
+    def test_every_link_moves_once_and_many_to_one_is_kept(self):
+        con = self._hop()
+        self.assertEqual(con.execute("SELECT rebuttal_id, argument_id FROM argument_rebuts ORDER BY 1, 2").fetchall(),
+                         [(2, 6), (2, 7), (5, 9)])
+        self.assertEqual(con.execute("SELECT rhetorical_paragraph_id, submission_id FROM rhetorical_paragraph_submissions").fetchall(),
+                         [(1, 8)])
+        with self.assertRaises(sqlite3.IntegrityError):
+            con.execute("INSERT INTO argument_rebuts VALUES (3, 3)")
+
+    def test_unlinked_rows_are_numbered_and_rebuttals_are_not(self):
+        con = self._hop()
+        self.assertEqual(con.execute("SELECT id, number FROM arguments ORDER BY id").fetchall(),
+                         [(1, 1), (2, None), (3, 2), (4, 3), (5, None), (6, 4), (7, 5), (8, 6), (9, 7)])
+        with self.assertRaises(sqlite3.IntegrityError):
+            con.execute("UPDATE arguments SET number = 1 WHERE id = 3")
+
+    def test_a_filed_render_reads_the_same_rows(self):
+        con = self._hop()
+        self.assertEqual(con.execute(self.FILED.format(table="arguments")).fetchall(), self.filed)
+
+    def test_jobs_name_the_moved_points(self):
+        con = self._hop()
+        self.assertEqual(con.execute("SELECT id, title FROM tickets ORDER BY id").fetchall(),
+                         [(1, "Answer opposing argument 8: Part 3 para 4"),
+                          (2, "Review the opposing arguments in Response (document 9)")])
+        self.assertEqual(con.execute("SELECT ticket_id, entity, entity_id FROM ticket_scope ORDER BY ticket_id, entity_id").fetchall(),
+                         [(1, "submissions", None), (1, "submissions", 8), (2, "submissions", None)])
+
+    def test_a_fresh_database_matches(self):
+        hopped = self._hop()
+        fresh_path = Path(self._tmp.name) / "fresh.sqlite"
+        engine.run({"db_path": str(fresh_path)})
+        fresh = sqlite3.connect(str(fresh_path))
+        self.addCleanup(fresh.close)
+        shape = "SELECT type, name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name"
+        self.assertEqual(hopped.execute(shape).fetchall(), fresh.execute(shape).fetchall())
 
 
 if __name__ == "__main__":

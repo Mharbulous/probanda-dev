@@ -26,7 +26,7 @@ export const LOOSE_THREADS_FIXTURE: { meta: ViewPageMeta; data: LooseIdeasData }
     ],
     in_place: [
       { tab: "jobs", record: "Job #9", title: "Compare the two expert reports", status: "Shelved", date: "2026-01-08", url: null, path: null },
-      { tab: "arguments", record: "Submission #4", title: "The delay alone defeats the application.", status: "Killed", date: "2026-01-06", url: null, path: null },
+      { tab: "arguments", record: "Argument #4", title: "The delay alone defeats the application.", status: "Killed", date: "2026-01-06", url: null, path: null },
     ],
     api: { port: 0, db_path: "", proceeding_id: 1, token: "" },
   },

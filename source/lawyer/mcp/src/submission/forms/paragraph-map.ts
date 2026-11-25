@@ -24,9 +24,9 @@ import { join } from "node:path";
 
 import { submissionDataQuery } from "../backend.js";
 
-/** The schema the quick-edit statements are written against (v79). Below it no map is written and the
+/** The schema the quick-edit statements are written against (v82, which names the `arguments` table). Below it no map is written and the
  * quick-edit tools refuse. The quick edits' audit is a log file, so they need no schema of their own. */
-export const QUICK_EDIT_MIN_SCHEMA = 79;
+export const QUICK_EDIT_MIN_SCHEMA = 82;
 
 const MAP_KEEP = 20;
 
@@ -117,6 +117,12 @@ export const TEXT_COLUMN: Record<MapEntity, string> = {
   statements_of_fact: "excerpt",
   statements_of_law: "excerpt",
 };
+
+/** The table an entity's rows live in. "submissions" stays the stored key (ticket_scope, paragraph_revisions,
+ * review_approvals, the quick-edits log) of the `arguments` table (schema v82). */
+export function entityTable(entity: string): string {
+  return entity === "submissions" ? "arguments" : entity;
+}
 
 export function sha256Text(text: string): string {
   return createHash("sha256").update(text, "utf-8").digest("hex");
@@ -213,7 +219,7 @@ export function readTexts(dbPath: string, entity: MapEntity, ids: readonly numbe
   if (unique.length === 0) return out;
   const marks = unique.map(() => "?").join(", ");
   const column = entity === "statements_of_fact" ? "CASE WHEN exhibit_id IS NOT NULL THEN exhibit_excerpt ELSE excerpt END" : TEXT_COLUMN[entity];
-  for (const r of rows(dbPath, `SELECT id, ${column} AS text FROM ${entity} WHERE id IN (${marks})`, unique)) {
+  for (const r of rows(dbPath, `SELECT id, ${column} AS text FROM ${entityTable(entity)} WHERE id IN (${marks})`, unique)) {
     out.set(Number(r.id), String(r.text ?? ""));
   }
   return out;

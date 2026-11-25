@@ -345,7 +345,7 @@ async function briefsFixture(t, files) {
      UPDATE authorities SET killed_on = '2026-10-01' WHERE id = 7;
      INSERT INTO law_assertions (id, proceeding_id, proposition) VALUES (1, 1, 'A placed proposition.'), (2, 1, 'An unplaced proposition.'), (3, 1, 'An omitted proposition.');
      UPDATE law_assertions SET killed_on = '2026-10-01' WHERE id = 3;
-     INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'A submission.', 1);
+     INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'A submission.', 1);
      INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);
      INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (1, 1), (1, 3);
      INSERT INTO statements_of_law (id, proceeding_id, authority_id, law_assertion_id, pinpoint, excerpt, source, verification) VALUES

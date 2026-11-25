@@ -48,14 +48,14 @@ export const GAP_LINE_RE = /^🧩 _+ <!-- (.*) -->[ \t]*\n?/gm;
 const MOCKUP_ONLY_HEADINGS = [
   "Source trace",
   "Facts attributed to this witness, not yet in this statement",
-  "Opposing points",
+  "Opposing arguments",
   // Application Response (build #386): opposing_orders with no filing_positions row for this
   // filing -- belt-and-suspenders, since Form 33's real filed face comes from the separate
   // assembly-mode emitter (assembly-application-response.ts), not this transform. BCCA stay
   // response (renderer compliance fix following #436): emitted as #### inside "### Part 2:
   // Issues" -- stripSections' level-aware matching handles both without a kind-specific branch.
   "Positions not yet taken",
-  // BCCA factum (#648): opposing points no submission answers yet, the Enactments appendix's
+  // BCCA factum (#648): opposing arguments no submission answers yet, the Enactments appendix's
   // held-back court rules, and the page budget estimate.
   "Points not yet answered",
   "Court rules not in this appendix",
@@ -219,7 +219,7 @@ function tidy(markdown: string): string {
 /**
  * The mockup's document minus everything human-side (#358): the frontmatter
  * stamp block, HTML comment id-traces, work-marker glyphs, mockup-only
- * sections (Source trace / Facts attributed... / Opposing points), any
+ * sections (Source trace / Facts attributed... / Opposing arguments), any
  * inline crossed-out (~~...~~) line rendered outside those sections (#380 --
  * a struck order/submission on the venue form or the Written Arguments), and
  * the handful of human-side inline/whole-line tags a glyph strip alone would

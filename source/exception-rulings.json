@@ -70,7 +70,7 @@
         "content_sha256": "b81ae95f8ca996a12de3c6d2cd3d49b275ddce8faa4e7a28fec1ee55bce2055b"
       }
     ]
-  }, 
+  },
   {
     "store": "time-pipeline",
     "hop": "timekeeping bundle (issue 284)",
@@ -172,6 +172,102 @@
       {
         "message": "contains a path from a maintainer's machine",
         "content_sha256": "28b7806c8c949ef7392464d3b281c22ed84e507b016c30ae0965f7b6cb5ca423"
+      }
+    ]
+  },
+  {
+    "store": "drafting-data",
+    "hop": "81 -> 82",
+    "date": "2026-11-25",
+    "ruling": "Brahm, 2026-11-25: \"Yes, I so rule\", giving this ruling as drafted: \"I rule that the drafting-data hop 81 -> 82 may stand. It merges the submissions, opposing_points and anticipated_points tables into one arguments table, and replaces opposing_points.answered_by_submission_id and the two submission_rebuts_* tables with one argument_rebuts table. It drops five tables and one column, and adds one table and five columns to the renamed table, so the store relies on the Exception less than it did. Record the 22 problems that check_publishable.py --propose-ruling lists for this hop.\"",
+    "problems": [
+      {
+        "message": "forbidden file type",
+        "content_sha256": "3101306bc645d2540f367945ec9401b21125ce5d2acd55e78b4d058fa5a6947a"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "297b8704b6c7ff568c0c6624dd57c2444b6ecacf322506f63e74a729853c0ae7"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "da4cce1aa913c08533e7cddc3462d02f37357f4c0c18cc5b8891cb59a29996fb"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "cb34cbba5a426a7663305e71b6e1ded22201ae84f0a83e715be2c100839f66b5"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "ba3aa38f06ef6f649a9d2fa63aeb060f7e00339c396e85c12701fa36a41039c4"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "139b954eee72a7c26e2a47092637e7c9f2470b02080a24eb308a3a39169b3554"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "9165750dbce19438ea45322cddc03f07121ac8c4b3e3aa7f4849549c9e78295f"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "166e6acb5a912c31ba9f993bdfe2f43c57775c29c1a024b462b8617197d0aee6"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "e3c8cc1f65ca77025e2058348ee080d4a6f31c235fc8b9044331218d25482a73"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "decc489f7d412da9f63cd46197e09fefa075aced945776aeff1b5fbbb348f696"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "9d4ae02678d008819826b55f7b6a26f8d516cfaeacf6366a6a73e4c894afca50"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "3c4ec4f4fe5653737e6638fbf3602367f7aa54139e8c57621c66bb747fb72077"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "6718725e0a347e565bed69789c5076bed148e9d7c2b38f5e9f29fe174db67db0"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "c3d5854a24813a69ab706d8d793b2288685b534388bbeeeca1b066f1a5dd0765"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "b1156b33123b3fdc4b5e32335f3e85210015d8a8bd6a52d69ac9a56e71caa6e9"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "77a94c86aeb914ce48361a522bc17c2065b3b95a77d5d528c0e3ebf7498e1fad"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "5df4950a8e5509d5c1705704378f3861a9d4026fcd332483ea9508a9820332bd"
+      },
+      {
+        "message": "forbidden file type",
+        "content_sha256": "9d550bcb52aa2ba73324680b9dc00fed6db5b0ac0d0aeb9abeefa9dd0d71408d"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "b6c4b6ea1898b38aacfec40a95f66439ee2acffe9052c972d4b195dfa320990f"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "9c2f1ee16c1b83835128d9542b4addce3f4ffa1b4f35d260f2a8405c1a9be6ee"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "d593349346cec46ee96119894638a82094eeb82e18723d1b29a966dee0d0d546"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "55a4ff039713429d17fa234fa8ea5fdf93d875c4be5d54e4893a2d943da00b65"
       }
     ]
   }

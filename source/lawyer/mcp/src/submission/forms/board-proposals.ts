@@ -5,6 +5,7 @@ import { deriveProposals, withNoteUpSteps, type MarkerInventory, type Proposal, 
 import type { FilingTitleRow, RejectionRow } from "./work-board-reads.js";
 import type { ProceedingBoard } from "./build-proceeding-board.js";
 import { rows } from "../query-rows.js";
+import { argumentsTable } from "./query.js";
 
 /** What proposalsFor reads of a render context, so the Sent write's hold can derive the same sets. */
 interface ProposalScope {
@@ -63,7 +64,7 @@ export function proposalsFor(
   );
   const contentions = rows<{ contention: string }>(
     ctx.dbPath,
-    `SELECT s.contention FROM filing_submissions fs JOIN submissions s ON s.id = fs.submission_id
+    `SELECT s.contention FROM filing_submissions fs JOIN ${argumentsTable(ctx.dbPath)} s ON s.id = fs.submission_id
       WHERE fs.filing_id = ? AND s.killed_on IS NULL ORDER BY fs.document, fs.ordinal`,
     [ctx.filing.id]
   ).map((r) => r.contention);

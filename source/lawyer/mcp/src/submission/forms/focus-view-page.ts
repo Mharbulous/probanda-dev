@@ -13,10 +13,10 @@ export interface FocusViewPageArgs {
   filing_id: number;
   page: "Arguments";
   section: FocusSection;
-  /** The card's number in its section, as its tag shows it. Exactly one of number and item. */
+  /** The argument number, as the card's tag shows it (#2, or #2 for Rebuttal #2.a). Exactly one of number and item. */
   number?: number;
-  /** The card's record: a submission's id, or a counter-argument's `raised:<id>` or `anticipated:<id>`. */
-  item?: number | string;
+  /** The card's `arguments` row id. */
+  item?: number;
 }
 
 export function submissionFormsFocusViewPage(args: FocusViewPageArgs, env: NodeJS.ProcessEnv = process.env): { focused: true; section: FocusSection; number: number; note: string } {
@@ -32,20 +32,18 @@ export function submissionFormsFocusViewPage(args: FocusViewPageArgs, env: NodeJ
     .filter((f) => !f.retired_on &&!isJobOnlyBoard(f));
   if (writings.length === 0) throw new ValidationError("That board holds no live Writing, so it has no Arguments page.", "no_page");
   const data = buildArgumentsData(args.db_path, writings);
-  // Each card's id, in the page's order: a submission's id, or a counter-argument's key.
-  const kind = { submissions: "submission", counter: null, rebuttals: "rebuttal", killed: "killed" }[args.section];
-  const keys: string[] = kind === null ? data.counter_arguments.map((c) => c.key) : data.submissions.filter((s) => s.kind === kind).map((s) => String(s.id));
+  const cards = data[args.section];
   if ((args.number === undefined) === (args.item === undefined)) throw new ValidationError("Pass exactly one of number and item.", "invalid_target");
-  const number = args.item !== undefined ? keys.indexOf(String(args.item)) + 1 : (args.number as number);
-  if (args.item !== undefined && number === 0) throw new ValidationError(`The ${args.section} section has no card for ${args.item}.`, "no_such_card");
-  if (!Number.isInteger(number) || number < 1 || number > keys.length) {
-    throw new ValidationError(`The ${args.section} section has ${keys.length} card${keys.length === 1 ? "" : "s"}, so there is no #${number}.`, "no_such_card");
+  const card = args.item !== undefined ? cards.find((c) => c.id === Number(args.item)) : cards.find((c) => c.number === args.number);
+  if (card === undefined || card.number === null) {
+    throw new ValidationError(`The ${args.section} tab has no card for ${args.item !== undefined ? `argument id ${args.item}` : `#${args.number}`}.`, "no_such_card");
   }
+  const number = card.number;
   writeFocus(args.db_path, args.filing_id, args.section, number, env);
   return {
     focused: true,
     section: args.section,
     number,
-    note: "An open Arguments page that can reach the data server moves to this card within a few seconds. Whether it moved is not known here.",
+    note: "An open Arguments page that can reach the data server opens this number within a few seconds. Whether it moved is not known here.",
   };
 }

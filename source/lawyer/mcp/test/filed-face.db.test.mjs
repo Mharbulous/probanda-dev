@@ -70,13 +70,13 @@ test("removes a mockup-only section through to the next heading", () => {
       "1. **Included.**\n\n" +
         "## Source trace\n\n" +
         "- Ex. 1 — some/path.pdf\n\n" +
-        "## Opposing points\n\n" +
+        "## Opposing arguments\n\n" +
         "- Their point. ↩️\n"
     )
   );
   assert.match(out, /1\. \*\*Included\.\*\*/);
   assert.doesNotMatch(out, /## Source trace|some\/path\.pdf/);
-  assert.doesNotMatch(out, /## Opposing points|Their point/);
+  assert.doesNotMatch(out, /## Opposing arguments|Their point/);
 });
 
 test("removes a crossed-out (struck) line entirely, renumbering is left to the caller", () => {
@@ -112,13 +112,13 @@ test("removes a level-2 mockup-only section that itself contains deeper subheadi
         "## Source trace\n\n" +
         "### A nested subheading inside the stripped section\n\n" +
         "- Ex. 1 — some/path.pdf\n\n" +
-        "## Opposing points\n\n" +
+        "## Opposing arguments\n\n" +
         "- Their point. ↩️\n"
     )
   );
   assert.match(out, /1\. \*\*Included\.\*\*/);
   assert.doesNotMatch(out, /## Source trace|A nested subheading|some\/path\.pdf/);
-  assert.doesNotMatch(out, /## Opposing points|Their point/);
+  assert.doesNotMatch(out, /## Opposing arguments|Their point/);
 });
 
 test("removes a mockup-only section that runs to end of document", () => {
@@ -289,7 +289,7 @@ test("filed-mode render refuses when a deployed statement of law has no authorit
       INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, kind, weight, treatment)
         VALUES (1, 1, 'Unreported Authority v. Nobody', NULL, 'case', 'binding', NULL);
 
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal)
         VALUES (1, 1, 'A submission resting on an uncited authority.', 1);
       INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);
       INSERT INTO law_assertions (id, proceeding_id, proposition, dead_end)
@@ -348,7 +348,7 @@ test("killed submission and killed authority: absent from the filed face, never 
         VALUES (1, 1, 'Killed Authority v. Nobody', '2020 BCSC 1', 'case', 'persuasive', NULL, '2026-09-06');
 
       -- A live submission requiring that killed authority -- deployed on the venue document.
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal)
         VALUES (1, 1, 'A live submission requiring a killed authority.', 1);
       INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);
       INSERT INTO law_assertions (id, proceeding_id, proposition, dead_end)
@@ -359,7 +359,7 @@ test("killed submission and killed authority: absent from the filed face, never 
 
       -- A killed submission (schema v16): reviewed and rejected, never deployed -- kept intact,
       -- not deleted, so a later drafting pass recognizes it was already considered.
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal, killed_on)
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal, killed_on)
         VALUES (2, 1, 'A killed submission, already considered and rejected.', 2, '2026-09-06');
 
       -- Revision reset LAST: schema v21 triggers move db_meta.revision on every seeded row (#607).
@@ -377,7 +377,7 @@ test("killed submission and killed authority: absent from the filed face, never 
 
     // Never deleted: both rows are still in the database, exactly so a later research or drafting
     // pass can recognize they were already considered rather than re-proposing them.
-    const rows = submissionDataQuery(dbPath, `SELECT killed_on FROM submissions WHERE id = 2`).rows;
+    const rows = submissionDataQuery(dbPath, `SELECT killed_on FROM arguments WHERE id = 2`).rows;
     assert.equal(rows[0]?.killed_on, "2026-09-06");
     const authRows = submissionDataQuery(dbPath, `SELECT killed_on FROM authorities WHERE id = 1`).rows;
     assert.equal(authRows[0]?.killed_on, "2026-09-06");

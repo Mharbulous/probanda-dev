@@ -38,7 +38,7 @@ on-the-fly revision of one reviewed paragraph (paragraph-revision.md). Its choic
 entity, field, old_text and new_text must each be a plain string literal, and a choice other than
 'current', 'proposed', 'alternative' or 'other' is refused as unreadable. A choice of 'current'
 passes when new_text equals old_text, and nothing else is checked. Any other choice is a wording
-revision and needs an UPDATE <entity> ... SET <field> = '<new_text>' in the same script, the
+revision and needs an UPDATE <entity> (the table arguments for the key 'submissions') ... SET <field> = '<new_text>' in the same script, the
 identical literal, which ties the audited text to the text written. A wording revision is one
 paragraph, shown whole and approved: the session's visible reply (not a subagent's) between the
 previous practitioner turn and the last one holds exactly one fenced code block, counting the text
@@ -115,6 +115,7 @@ ECHO = 300  # the most of a nearest turn a refusal shows
 SET_ENDS = {"where", "from", "returning", "order", "limit"}
 COMPOUND = {"union", "intersect", "except"}
 REVISIONS = "paragraph_revisions"
+ENTITY_TABLE = {"submissions": "arguments"}  # a stored entity key whose table was renamed (schema v82)
 REVISION_READ = ("choice", "origin", "entity", "field", "old_text", "new_text")
 # Plain words for each read column, for a refusal (shared/internals-confidentiality.md).
 PLAIN = {"choice": "choice", "origin": "origin", "entity": "subject", "field": "field",
@@ -391,7 +392,7 @@ def revision_failures(rows, stmts, turns=None, last_raw="", last_fences=()):
                 if new != row["old_text"]:
                     out.append(f"{REVISION_FIELD} differs from the text it replaces, and keeping the current "
                                f"wording leaves it unchanged.\n{wrote}\n  was: {row['old_text']}")
-            elif not sets_literal(stmts, row["entity"], row["field"], new):
+            elif not sets_literal(stmts, ENTITY_TABLE.get(row["entity"], row["entity"]), row["field"], new):
                 out.append(f"{REVISION_FIELD} is not the text this script writes into the paragraph, so the "
                            f"record would not match the paragraph.\n{wrote}")
         elif row["choice"] == "current":

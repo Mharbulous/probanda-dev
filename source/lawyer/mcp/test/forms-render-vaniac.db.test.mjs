@@ -21,7 +21,7 @@ const { currentSchemaVersion } = await import("../build/submission/migrate.js");
 // paragraph, followed by several standalone numbered paragraphs (one per
 // postulate/proposition it rests on or requires). The contention sentence
 // also prints elsewhere in the document (a struck-submission summary line,
-// and the "Opposing points" section's "— answered by:" label, both
+// and the "Opposing arguments" section's "— answered by:" label, both
 // deliberately unchanged), so a raw
 // contention-substring search can match the wrong section entirely. Delimit
 // by the submission's own `<!-- submission_id N -->` trace comment instead
@@ -226,17 +226,17 @@ test("renders the VanIAC submissions package (written argument, witness statemen
     assert.doesNotMatch(sourceTraceSection, /Ex\. 2/, "expected no source-trace line for the document with a NULL file_path");
     assertMatchesGolden("evidence-index", evidenceIndex);
 
-    // Build #359: opposing_points -- an answered point names its answering
+    // Build #359: opposing arguments -- a rebutted one names its rebuttal
     // submission and carries no ↩️; an unanswered one does.
-    const opposingSection = writtenArgument.split("## Opposing points")[1];
-    assert.ok(opposingSection, "expected the Opposing points section to render");
-    const point1Line = opposingSection.split("\n").find((l) => l.includes("<!-- opposing_point_id 1 -->"));
+    const opposingSection = writtenArgument.split("## Opposing arguments")[1];
+    assert.ok(opposingSection, "expected the Opposing arguments section to render");
+    const point1Line = opposingSection.split("\n").find((l) => l.includes("<!-- opposing_argument_id 101 -->"));
     assert.match(point1Line, /the Agreement was never validly executed/);
     assert.match(point1Line, /— answered by: The Respondent owes \$150,000/);
-    assert.doesNotMatch(point1Line, /↩️/, "expected no rebuttal marker on an answered opposing point");
-    const point2Line = opposingSection.split("\n").find((l) => l.includes("<!-- opposing_point_id 2 -->"));
+    assert.doesNotMatch(point1Line, /↩️/, "expected no rebuttal marker on a rebutted opposing argument");
+    const point2Line = opposingSection.split("\n").find((l) => l.includes("<!-- opposing_argument_id 102 -->"));
     assert.match(point2Line, /the delivery schedule was informal only/);
-    assert.match(point2Line, /↩️/, "expected the rebuttal marker on an unanswered opposing point");
+    assert.match(point2Line, /↩️/, "expected the rebuttal marker on an unrebutted opposing argument");
   } finally {
     f.cleanup();
   }
@@ -355,7 +355,7 @@ test("a submission with no linked facts and no linked law still renders a number
 
       -- Submission 1 has neither a rested-on fact nor a required law
       -- assertion: it must still render its contention as paragraph 1.
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal)
         VALUES (1, 1, 'An empty submission with nothing linked yet.', 1);
       INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);
 
@@ -364,7 +364,7 @@ test("a submission with no linked facts and no linked law still renders a number
       -- consumed paragraph 1.
       INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, kind, weight, treatment)
         VALUES (1, 1, 'Some Authority v. Other', '2020 BCCA 1', 'case', 'binding', 'good_law');
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal)
         VALUES (2, 1, 'A submission with real content.', 2);
       INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 2, 'form', 2);
       INSERT INTO law_assertions (id, proceeding_id, proposition, dead_end)
@@ -438,9 +438,9 @@ test("a submission counsel has recorded as needing no stated fact raises no 🧾
         VALUES (1, 1, 'Claimant Co.', 'Claimant', 1, 1, 1, 0, 1), (2, 1, 'Respondent Co.', 'Respondent', 2, 0, 0, 1, 2);
       INSERT INTO filings (id, proceeding_id, kind, subkind, round, title)
         VALUES (1, 1, 'submissions_package', NULL, 'opening', 'Opening Submissions Package');
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The tribunal has jurisdiction.', 1);
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The tribunal has jurisdiction.', 1);
       INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);
-      UPDATE submissions SET no_facts_needed_on = '2026-10-04', no_facts_needed_note = 'Jurisdiction turns on the arbitration agreement''s words alone.',
+      UPDATE arguments SET no_facts_needed_on = '2026-10-04', no_facts_needed_note = 'Jurisdiction turns on the arbitration agreement''s words alone.',
                              no_facts_needed_contention = contention WHERE id = 1;
       `.trim()
     );
@@ -465,7 +465,7 @@ test("a submission counsel has recorded as needing no stated fact raises no 🧾
     assert.match(filedWrittenArgument, /^1\. The tribunal has jurisdiction\.$/m);
     assert.doesNotMatch(filedWrittenArgument, /no stated fact needed/);
 
-    await submissionDataExecute(f.dbPath, "UPDATE submissions SET contention = 'The tribunal has jurisdiction over the counterclaim.' WHERE id = 1;");
+    await submissionDataExecute(f.dbPath, "UPDATE arguments SET contention = 'The tribunal has jurisdiction over the counterclaim.' WHERE id = 1;");
     const reworded = render("mockup");
     const line = contentionLine(reworded, "Written_arguments");
     assert.match(line, /^1\. The tribunal has jurisdiction over the counterclaim\. 🧾/, line);
@@ -497,11 +497,11 @@ test("a submission with a recorded no-facts-needed decision and a linked fact pr
         VALUES (1, 1, 'Claimant Co.', 'Claimant', 1, 1, 1, 0, 1), (2, 1, 'Respondent Co.', 'Respondent', 2, 0, 0, 1, 2);
       INSERT INTO filings (id, proceeding_id, kind, subkind, round, title)
         VALUES (1, 1, 'submissions_package', NULL, 'opening', 'Opening Submissions Package');
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The tribunal has jurisdiction.', 1);
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'The tribunal has jurisdiction.', 1);
       INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);
       INSERT INTO facts (id, proceeding_id, postulate) VALUES (1, 1, 'The parties signed the arbitration agreement.');
       INSERT INTO submission_facts (submission_id, fact_id) VALUES (1, 1);
-      UPDATE submissions SET no_facts_needed_on = '2026-10-04', no_facts_needed_note = 'Jurisdiction turns on the arbitration agreement''s words alone.',
+      UPDATE arguments SET no_facts_needed_on = '2026-10-04', no_facts_needed_note = 'Jurisdiction turns on the arbitration agreement''s words alone.',
                              no_facts_needed_contention = contention WHERE id = 1;
       `.trim()
     );
@@ -539,7 +539,7 @@ test("📚 marks a contention with no linked proposition, holds 🧐 back, and c
         VALUES (1, 1, 'Claimant Co.', 'Claimant', 1, 1, 1, 0, 1), (2, 1, 'Respondent Co.', 'Respondent', 2, 0, 0, 1, 2);
       INSERT INTO filings (id, proceeding_id, kind, subkind, round, title)
         VALUES (1, 1, 'submissions_package', NULL, 'opening', 'Opening Submissions Package');
-      INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+      INSERT INTO arguments (id, proceeding_id, contention, ordinal)
         VALUES (1, 1, 'The respondent received the notice.', 1), (2, 1, 'The notice was delivered on time.', 2);
       INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1), (1, 2, 'form', 2);
       INSERT INTO facts (id, proceeding_id, postulate) VALUES (1, 1, 'The courier left the notice at the office on the second day.');
@@ -575,7 +575,7 @@ test("📚 marks a contention with no linked proposition, holds 🧐 back, and c
     // Counsel records that submission 2 needs no stated law: no 📚, the tag on the mockup only.
     await submissionDataExecute(
       f.dbPath,
-      `UPDATE submissions SET no_law_needed_on = '2026-10-06', no_law_needed_note = 'Delivery is a question of fact alone.',
+      `UPDATE arguments SET no_law_needed_on = '2026-10-06', no_law_needed_note = 'Delivery is a question of fact alone.',
                               no_law_needed_contention = contention WHERE id = 2;`
     );
     const decided = render("mockup");
@@ -593,7 +593,7 @@ test("📚 marks a contention with no linked proposition, holds 🧐 back, and c
     assert.doesNotMatch(filedWrittenArgument, /no stated law needed|📚/);
 
     // Rewording the contention clears the decision, so 📚 returns.
-    await submissionDataExecute(f.dbPath, "UPDATE submissions SET contention = 'The notice was delivered before the deadline.' WHERE id = 2;");
+    await submissionDataExecute(f.dbPath, "UPDATE arguments SET contention = 'The notice was delivered before the deadline.' WHERE id = 2;");
     const reworded = render("mockup");
     const line = contentionLine(reworded, "Written_arguments", 2);
     assert.match(line, /^\d+\. The notice was delivered before the deadline\. 📚 <!-- submission_id 2 -->$/, line);

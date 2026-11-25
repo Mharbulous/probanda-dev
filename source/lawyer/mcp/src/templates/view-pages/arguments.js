@@ -17,60 +17,66 @@
     items.forEach(function (item) { ul.appendChild(el("li", cls ? cls(item) : "", typeof item === "string" ? item : item.text)); });
     return ul;
   }
+  function links(label, items) {
+    var linked = el("div", "linked");
+    linked.appendChild(el("p", "label", label));
+    linked.appendChild(list(items));
+    return linked;
+  }
 
-  var byId = {};
-  data.submissions.forEach(function (a) { byId[a.id] = a; });
-  var counterByKey = {};
-  data.counter_arguments.forEach(function (c) { counterByKey[c.key] = c; });
-  var KIND_LABEL = { submission: "Submission", rebuttal: "Rebuttal", killed: "Killed", raised: "Raised", anticipated: "Anticipated" };
+  // One open number for both tabs: a card opens with every card of its number on either tab. A card
+  // with no number opens alone.
+  function keyOf(a) { return a.number !== null ? "n" + a.number : "id" + a.id; }
+  var openKey = null;
+  var allCards = [];
+  function setOpen(key) {
+    openKey = key;
+    allCards.forEach(function (c) {
+      var on = c.key === key;
+      c.node.classList.toggle("open", on);
+      c.detail.hidden = !on;
+      c.title.setAttribute("aria-expanded", String(on));
+    });
+  }
 
-  // A card: its statement, which toggles it and ends in its tag, then its detail.
-  function card(cls, kind, text, n) {
-    var node = el("article", cls);
+  // A card: its statement, which toggles it and ends in its tags, then its detail.
+  function card(a, noun) {
+    var node = el("article", "arg " + a.side + (a.killed ? " killed" : ""));
     var title = el("p", "text");
     title.setAttribute("role", "button");
     title.tabIndex = 0;
-    title.appendChild(el("span", "", text));
-    title.appendChild(el("span", "tag", KIND_LABEL[kind] + " #" + n));
+    title.appendChild(el("span", "", a.contention));
+    var tags = el("span", "tags");
+    tags.appendChild(el("span", "tag", noun + " " + a.label));
+    a.tags.forEach(function (t) { tags.appendChild(el("span", "tag flag", t)); });
+    title.appendChild(tags);
     node.appendChild(title);
     var detail = el("div", "detail");
     node.appendChild(detail);
-    return { node: node, title: title, detail: detail };
-  }
-  function argumentCard(a, i) {
-    var c = card("arg " + a.kind, a.kind, a.contention, i + 1);
-    c.detail.appendChild(el("p", "where", a.where));
+    if (a.where) detail.appendChild(el("p", "where", a.where));
     if (a.law.length > 0) {
-      c.detail.appendChild(el("p", "head", "Law"));
-      c.detail.appendChild(list(a.law.map(function (l) {
+      detail.appendChild(el("p", "head", "Law"));
+      detail.appendChild(list(a.law.map(function (l) {
         return { text: l.killed_on ? l.text + " (omitted " + l.killed_on + ")" : l.text, omitted: !!l.killed_on };
       }), function (l) { return l.omitted ? "omitted" : ""; }));
     } else {
-      c.detail.appendChild(el("p", "none", "No law linked"));
+      detail.appendChild(el("p", "none", "No law linked"));
     }
     if (a.facts.length > 0) {
-      c.detail.appendChild(el("p", "head", "Facts"));
-      c.detail.appendChild(list(a.facts));
+      detail.appendChild(el("p", "head", "Facts"));
+      detail.appendChild(list(a.facts));
     } else {
-      c.detail.appendChild(el("p", "none", "No facts linked"));
+      detail.appendChild(el("p", "none", "No facts linked"));
     }
-    if (a.rebuts.length > 0) {
-      var linked = el("div", "linked");
-      linked.appendChild(el("p", "label", "Linked to counter-arguments"));
-      linked.appendChild(list(a.rebuts.map(function (k) { return KIND_LABEL[counterByKey[k].kind] + ": " + counterByKey[k].text; })));
-      c.detail.appendChild(linked);
-    }
-    return c;
-  }
-  function counterCard(x, i) {
-    var c = card("arg counter", x.kind, x.text, i + 1);
-    if (x.source) c.detail.appendChild(el("p", "where", x.source));
-    if (x.linked.length > 0) {
-      var linked = el("div", "linked");
-      linked.appendChild(el("p", "label", "Linked arguments"));
-      linked.appendChild(list(x.linked.map(function (id) { return KIND_LABEL[byId[id].kind] + ": " + byId[id].contention; })));
-      c.detail.appendChild(linked);
-    }
+    if (a.rebuts.length > 0) detail.appendChild(links("Rebuts", a.rebuts));
+    if (a.rebutted_by.length > 0) detail.appendChild(links("Rebuttals", a.rebutted_by));
+    var c = { node: node, title: title, detail: detail, key: keyOf(a), number: a.number };
+    function toggle() { setOpen(openKey === c.key ? null : c.key); }
+    title.addEventListener("click", toggle);
+    title.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
+    });
+    allCards.push(c);
     return c;
   }
 
@@ -83,12 +89,14 @@
   folder.setAttribute("role", "tabpanel");
   board.appendChild(folder);
 
-  // One section, its picker and its cards. The picker's selected number lists that card alone, and
-  // none selected lists them all. A statement opens or closes its card, at most one open.
+  // One tab's section, its picker and its cards. The picker's selected label lists that card alone,
+  // and none selected lists them all.
   var sections = {};
-  function section(name, heading, cards) {
+  function section(name, heading, items, noun, note) {
+    var cards = items.map(function (a) { return card(a, noun); });
     var sec = el("section");
     var h2 = el("h2", "", heading);
+    if (note) h2.appendChild(el("span", "count", note));
     var picker = el("span", "picker");
     picker.setAttribute("role", "radiogroup");
     picker.setAttribute("aria-label", heading + ": show card");
@@ -97,36 +105,28 @@
     var stack = el("div", "stack");
     sec.appendChild(stack);
     folder.appendChild(sec);
-    var opened = -1;
     var radios = [];
-    // A session's pointer (focus): every card listed, this one opened.
-    function show(index) {
-      radios.forEach(function (r) { r.checked = false; });
-      filter(-1);
-      open(index);
-      cards[index].node.scrollIntoView({ block: "start" });
-    }
-    sections[name] = { node: sec, size: cards.length, show: show };
-
-    function open(index) {
-      opened = index;
-      cards.forEach(function (c, i) {
-        var on = i === index;
-        c.node.classList.toggle("open", on);
-        c.detail.hidden = !on;
-        c.title.setAttribute("aria-expanded", String(on));
-      });
-    }
     function filter(index) {
       cards.forEach(function (c, i) { c.node.hidden = index >= 0 && i !== index; });
     }
+    // A session's pointer (focus): every card listed, that number opened.
+    function show(number) {
+      var first = cards.filter(function (c) { return c.number === number; })[0];
+      if (!first) return false;
+      radios.forEach(function (r) { r.checked = false; });
+      filter(-1);
+      setOpen(first.key);
+      first.node.scrollIntoView({ block: "start" });
+      return true;
+    }
+    sections[name] = { node: sec, size: cards.length, show: show };
     cards.forEach(function (c, i) {
       var input = el("input");
       input.type = "radio";
       input.name = "pick-" + name;
       input.id = "pick-" + name + "-" + (i + 1);
       radios.push(input);
-      var label = el("label", "", String(i + 1));
+      var label = el("label", "", items[i].label.replace("#", ""));
       label.htmlFor = input.id;
       picker.appendChild(input);
       picker.appendChild(label);
@@ -134,22 +134,17 @@
       input.addEventListener("change", function () { if (input.checked) filter(i); });
       label.addEventListener("click", function (e) { if (input.checked) clear(e); });
       input.addEventListener("keydown", function (e) { if (e.key === " " && input.checked) clear(e); });
-      c.title.addEventListener("click", function () { open(opened === i ? -1 : i); });
-      c.title.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(opened === i ? -1 : i); }
-      });
       stack.appendChild(c.node);
     });
-    open(-1);
   }
-  section("submissions", "Submissions", data.submissions.filter(function (a) { return a.kind === "submission"; }).map(argumentCard));
-  section("counter", "Counter-arguments", data.counter_arguments.map(counterCard));
-  section("rebuttals", "Rebuttals", data.submissions.filter(function (a) { return a.kind === "rebuttal"; }).map(argumentCard));
-  section("killed", "Killed", data.submissions.filter(function (a) { return a.kind === "killed"; }).map(argumentCard));
-  var empty = el("p", "empty", "Nothing recorded under this filter.");
+  var unanswered = data.arguments.filter(function (a) { return a.tags.indexOf("No rebuttal") >= 0; }).length;
+  section("arguments", "Arguments", data.arguments, "Argument", unanswered + " with no rebuttal");
+  section("rebuttals", "Rebuttals", data.rebuttals, "Rebuttal", null);
+  setOpen(null);
+  var empty = el("p", "empty", "Nothing recorded on this tab.");
   folder.appendChild(empty);
 
-  var TABS = [["all", "All"], ["submissions", "Submissions"], ["counter", "Counter-arguments"], ["rebuttals", "Rebuttals"], ["killed", "Killed"]];
+  var TABS = [["arguments", "Arguments"], ["rebuttals", "Rebuttals"]];
   var tabs = TABS.map(function (t) {
     var b = el("button", "", t[1]);
     b.type = "button";
@@ -161,26 +156,20 @@
     return b;
   });
 
-  var current = "all";
+  var current = "arguments";
   try {
     var saved = localStorage.getItem(KEY);
     if (TABS.some(function (t) { return t[0] === saved; })) current = saved;
   } catch (e) {}
   function apply() {
-    var any = false;
-    Object.keys(sections).forEach(function (name) {
-      var size = sections[name].size;
-      var on = current === name ? size > 0 : current === "all" && name !== "killed" && (size > 0 || name === "submissions");
-      sections[name].node.hidden = !on;
-      if (on) any = true;
-    });
+    Object.keys(sections).forEach(function (name) { sections[name].node.hidden = name !== current; });
     tabs.forEach(function (b) {
       var on = b.getAttribute("data-filter") === current;
       b.setAttribute("aria-selected", String(on));
       b.tabIndex = on ? 0 : -1;
       if (on) folder.setAttribute("aria-labelledby", b.id);
     });
-    empty.hidden = any;
+    empty.hidden = sections[current].size > 0;
   }
   function select(b) {
     current = b.getAttribute("data-filter");
@@ -200,9 +189,9 @@
   });
   apply();
 
-  // A session can point this page at a card (drafting_forms__focus_view_page): the page asks the data
-  // server's listener every 2 s and moves to each new pointer. A pointer older than 30 s when the
-  // page opens is old news and left alone. Without the listener the page stays as it is.
+  // A session can point this page at an argument number (drafting_forms__focus_view_page): the page
+  // asks the data server's listener every 2 s and moves to each new pointer. A pointer older than 30 s
+  // when the page opens is old news and left alone. Without the listener the page stays as it is.
   var api = data.api;
   if (!api) return;
   var seen = null;
@@ -219,9 +208,9 @@
       if (!f || f.id === seen) return;
       seen = f.id;
       var s = sections[f.section];
-      if (!fresh || !s || f.number < 1 || f.number > s.size) return;
-      select(tabs.filter(function (b) { return b.getAttribute("data-filter") === f.section; })[0]);
-      s.show(f.number - 1);
+      if (!fresh || !s) return;
+      var tab = tabs.filter(function (b) { return b.getAttribute("data-filter") === f.section; })[0];
+      if (s.show(f.number)) select(tab);
     }).catch(function () {}).then(function () { setTimeout(poll, 2000); });
   }
   poll();

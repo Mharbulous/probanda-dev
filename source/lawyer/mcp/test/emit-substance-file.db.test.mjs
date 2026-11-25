@@ -75,7 +75,7 @@ async function seedNoticeOfApplication(dbPath) {
 
     INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, kind, weight, treatment)
       VALUES (1, 1, 'Miazga v. Kvello Estate', '2009 SCC 51', 'case', 'binding', 'good_law');
-    INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+    INSERT INTO arguments (id, proceeding_id, contention, ordinal)
       VALUES (1, 1, 'Corbin Vasey is in default under the Rules.', 1);
     INSERT INTO law_assertions (id, proceeding_id, proposition, dead_end)
       VALUES (1, 1, 'a defendant who fails to file a response to civil claim within the prescribed time is in default', 0);

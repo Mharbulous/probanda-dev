@@ -14,7 +14,7 @@ The route revises the text the mockup prints for the paragraph:
 | statement of fact (evidence) | `statements_of_fact` | `excerpt` | `<!-- statement_of_fact_id N -->` |
 | proposition of law | `law_assertions` | `proposition` | `<!-- law_assertion_id N -->` |
 | statement of law | `statements_of_law` | `excerpt` | `<!-- statement_of_law_id N -->` |
-| submission | `submissions` | `contention` | `<!-- submission_id N -->` |
+| argument or rebuttal | `submissions` (table `arguments`) | `contention` | `<!-- submission_id N -->` |
 | order sought | `order_sought` | `wording` | `<!-- order_sought_id N -->` |
 | order sought, printed with this Writing's own wording | `filing_orders` | `wording_override` | (the order's) |
 | rhetorical paragraph | `rhetorical_paragraphs` | `wording` | `<!-- rhetorical_paragraph_id N -->` |

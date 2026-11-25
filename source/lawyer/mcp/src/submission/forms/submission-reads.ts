@@ -1,6 +1,6 @@
 // The submission-side rows a render reads: submissions, their law and facts, and fact statements.
 
-import { courtRecordDocumentColumns, excerptSpeakerColumn, linkedProvisionsColumn, noFactsNeededColumn, noLawNeededColumn, servedOrderWordingsColumn, settledOnColumn, treatmentNoteColumn } from "./query.js";
+import { argumentsTable, courtRecordDocumentColumns, excerptSpeakerColumn, linkedProvisionsColumn, noFactsNeededColumn, noLawNeededColumn, servedOrderWordingsColumn, settledOnColumn, treatmentNoteColumn } from "./query.js";
 import { rows } from "../query-rows.js";
 import { STATEMENT_PARAGRAPH_COLUMNS, type StatementParagraphState } from "./filing-facts.js";
 
@@ -94,7 +94,7 @@ export function fetchSubmissions(dbPath: string, filingId: number, document: Poi
     dbPath,
     `SELECT s.id, s.contention, fs.ordinal AS filing_ordinal, fs.id AS pointer_id, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()}
      FROM filing_submissions fs
-     JOIN submissions s ON s.id = fs.submission_id
+     JOIN ${argumentsTable(dbPath)} s ON s.id = fs.submission_id
      WHERE fs.filing_id = ? AND fs.document = ? AND s.killed_on IS NULL
      ORDER BY fs.ordinal`,
     [filingId, document]
@@ -178,7 +178,7 @@ export function fetchDeployedIds(dbPath: string, filingId: number, document: Poi
       rows<{ submission_id: number }>(
         dbPath,
         `SELECT fs.submission_id FROM filing_submissions fs
-         JOIN submissions s ON s.id = fs.submission_id
+         JOIN ${argumentsTable(dbPath)} s ON s.id = fs.submission_id
          WHERE fs.filing_id = ? AND fs.document = ? AND s.killed_on IS NULL`,
         [filingId, document]
       ).map((r) => r.submission_id)

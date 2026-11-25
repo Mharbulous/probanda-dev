@@ -29,7 +29,7 @@ import { captionHeadingFor, opposingPartyIds } from "./query.js";
 import { exhibitNumbersFromOrderedIds, fetchDocumentLabels, fetchFilingDocuments, fetchNotBestCopyMarkers } from "./exhibit-documents.js";
 import { fetchFactAdmissionAnnotations } from "./admission-annotations.js";
 import { fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions } from "./submission-reads.js";
-import { fetchOpposingPoints } from "./opposing-points.js";
+import { fetchOpposingArguments } from "./opposing-points.js";
 import { fetchOrdersSought } from "./orders-sought.js";
 import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
 import { orderReviewMarkerFor } from "./review-state.js";
@@ -296,7 +296,7 @@ export function renderBccaFactum(ctx: RenderContext): string {
   const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
   const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
   const orders = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
-  const points = fetchOpposingPoints(ctx.dbPath, ctx.proceeding.id);
+  const points = fetchOpposingArguments(ctx.dbPath, ctx.proceeding.id);
 
   const contacts: BccaCoverPageContact[] = roleGroups.map((g) => {
     const rep = ctx.parties.find((p) => p.role === g.role);
@@ -411,16 +411,16 @@ export function renderBccaFactum(ctx: RenderContext): string {
   }
   submissions.forEach((s) => {
     para += 1;
-    const answers = points.filter((pt) => pt.answered_by_submission_id === s.id).map((pt) => pt.component);
+    const answers = points.filter((pt) => pt.rebuttals.some((r) => r.id === s.id)).map((pt) => pt.component ?? pt.contention);
     lines.push(`${para}. ${s.contention}${answers.length > 0 ? ` <!-- answers: ${answers.join("; ")} -->` : ""}`);
   });
   lines.push("");
-  const unanswered = points.filter((pt) => pt.answered_by_submission_id === null);
+  const unanswered = points.filter((pt) => pt.rebuttals.length === 0);
   if (unanswered.length > 0) {
     lines.push("#### Points not yet answered");
     lines.push("");
     unanswered.forEach((pt) => {
-      lines.push(`- ${pt.component}${pt.pinpoint ? ` (${pt.pinpoint})` : ""}: ${pt.verbatim_words ?? ""} ${rebuttalMarker(null)} <!-- opposing_point ${pt.id} -->`);
+      lines.push(`- ${pt.component ?? ""}${pt.pinpoint ? ` (${pt.pinpoint})` : ""}: ${pt.contention !== pt.component ? pt.contention : ""} ${rebuttalMarker(false)} <!-- opposing_argument ${pt.id} -->`);
     });
     lines.push("");
   }

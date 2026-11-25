@@ -103,7 +103,7 @@ test("page budget and unanswered points render on the mockup and never on the fi
   assert.ok(text.includes("## Page budget"), "page budget section");
   assert.match(text, /- Parts 1-4: \d+ words, about 1 page of the 30-page limit\./, "Parts 1-4 against the 30-page cap");
   assert.match(text, /- Opening Statement: \d+ words, about 1 page of the 1-page limit\./, "opening statement against its 1-page cap");
-  assert.ok(text.includes("#### Points not yet answered"), "unanswered opposing point listed");
+  assert.ok(text.includes("#### Points not yet answered"), "unanswered opposing argument listed");
   assert.ok(text.includes("The judge ignored the evidence. ↩️"), "rebuttal marker on the unanswered point");
 
   const { text: filed } = await renderFactum("", "filed");
@@ -118,6 +118,6 @@ test("page budget and unanswered points render on the mockup and never on the fi
 
 test("a long argument trips the 30-page flag without refusing", async () => {
   const long = "word ".repeat(9200).trim();
-  const { text } = await renderFactum(`UPDATE submissions SET contention = '${long}' WHERE id = 2;`);
+  const { text } = await renderFactum(`UPDATE arguments SET contention = '${long}' WHERE id = 2;`);
   assert.match(text, /- Parts 1-4: \d+ words, about \d+ pages of the 30-page limit\. \*\*Over the limit\*\*/, "over-limit flag");
 });

@@ -3,7 +3,7 @@
 import { counselReviewMarker, REVIEW_SNAPSHOT_FIELDS, reviewKey, reviewSnapshotSql, type ReviewedTable } from "./markers.js";
 import type { OrderSoughtRow } from "./orders-sought.js";
 import { recordCriterionGlyphs, type MarkerInventory } from "./proposal-inventory.js";
-import { rhetoricHeld, treatmentNoteHeld } from "./query.js";
+import { argumentsTable, rhetoricHeld, treatmentNoteHeld } from "./query.js";
 import { rows } from "../query-rows.js";
 
 /** Every reviewed object's current snapshot and its latest approval (review.md). Keyed `${table}:${id}`. */
@@ -28,7 +28,7 @@ export function fetchReviewState(dbPath: string, proceedingId: number): ReviewSt
   const current = rows<{ entity: string; entity_id: number; snapshot: string }>(
     dbPath,
     tables
-      .map((t) => `SELECT '${t}' AS entity, id AS entity_id, ${reviewSnapshotSql(t, noteHeld)} AS snapshot FROM ${t} WHERE ${scope(t)}`)
+      .map((t) => `SELECT '${t}' AS entity, id AS entity_id, ${reviewSnapshotSql(t, noteHeld)} AS snapshot FROM ${t === "submissions" ? argumentsTable(dbPath) : t} WHERE ${scope(t)}`)
       .join(" UNION ALL "),
     Array(tables.length).fill(proceedingId)
   );

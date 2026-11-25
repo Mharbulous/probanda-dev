@@ -3,6 +3,7 @@
 import type { JurisdictionRequiresEdge } from "./markers.js";
 import type { PointerDocument } from "./submission-reads.js";
 import { rows } from "../query-rows.js";
+import { argumentsTable } from "./query.js";
 
 /** One order_sought row deployed by one filing document, its jurisdictional-basis edges
  * (order_sought_requires, 0..N -- schema v10 #380 replaced the old single jurisdiction_slot_state
@@ -45,7 +46,7 @@ export function fetchOrdersSought(dbPath: string, filingId: number, document: Po
             o.crossed_out_on, fo.ordinal AS filing_ordinal, fo.id AS pointer_id,
             EXISTS(
               SELECT 1 FROM order_sought_served_by sb
-              JOIN submissions s ON s.id = sb.submission_id
+              JOIN ${argumentsTable(dbPath)} s ON s.id = sb.submission_id
               WHERE sb.order_sought_id = o.id AND s.killed_on IS NULL
             ) AS has_served_by
      FROM filing_orders fo

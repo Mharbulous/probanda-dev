@@ -68,7 +68,7 @@ export async function seedVaniacProceeding(dbPath) {
     -- disposition retired (schema v10, #380): submission 3 stays a pool row
     -- with no filing_submissions pointer at all (below) -- deployed by
     -- nothing, so it renders nowhere (derived 🂡); the reserve inventory records it.
-    INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+    INSERT INTO arguments (id, proceeding_id, contention, ordinal)
       VALUES
         (1, 1, 'The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement.', 1),
         (2, 1, 'No authority has yet been located for the second submission.', 2),
@@ -393,18 +393,18 @@ export async function seedVaniacProceeding(dbPath) {
       VALUES (7, 1, 13, 3, 7, 'Week 12: crew on site until 21:00 each day', 1);
     INSERT INTO submission_facts (submission_id, fact_id) VALUES (2, 13);
 
-    -- Build #359: opposing_points -- one answered (clears ↩️, names the
-    -- answering submission), one not (renders ↩️). Proceeding-scoped, no
-    -- filing_id column on the table.
-    INSERT INTO opposing_points (id, proceeding_id, component, pinpoint, verbatim_words, answered_by_submission_id, ordinal)
+    -- Build #359 (schema v82): opposing arguments -- one rebutted by submission 1 (clears ↩️, names
+    -- the rebuttal), one not (renders ↩️). Proceeding-scoped, no filing_id column on the table.
+    INSERT INTO arguments (id, proceeding_id, component, pinpoint, contention, ordinal, side)
       VALUES
-        (1, 1, 'Opposing written argument', 'Submission 3', 'the Agreement was never validly executed', 1, 1),
-        (2, 1, 'Witness statement of R. Opposing', 'para 6', 'the delivery schedule was informal only', NULL, 2);
+        (101, 1, 'Opposing written argument', 'Submission 3', 'the Agreement was never validly executed', 1, 'opposing'),
+        (102, 1, 'Witness statement of R. Opposing', 'para 6', 'the delivery schedule was informal only', 2, 'opposing');
+    INSERT INTO argument_rebuts (rebuttal_id, argument_id) VALUES (1, 101);
 
-    -- #401: anticipated_points -- the practitioner's own prediction of a point the other side may
-    -- run, not yet raised. Distinct from opposing_points above (real, served points that drive ↩️).
-    INSERT INTO anticipated_points (id, proceeding_id, point)
-      VALUES (1, 1, 'The Respondent may argue the change order was never authorized in writing.');
+    -- #401: an anticipated argument -- the practitioner's own prediction of an argument the other
+    -- side may run, not yet raised. Distinct from the raised ones above (which drive ↩️).
+    INSERT INTO arguments (id, proceeding_id, contention, ordinal, side, anticipated)
+      VALUES (103, 1, 'The Respondent may argue the change order was never authorized in writing.', 1, 'opposing', 1);
 
     -- Revision reset LAST: schema v21 triggers move db_meta.revision on every seeded row (#607).
     UPDATE db_meta SET value = '1' WHERE key = 'revision';
@@ -579,7 +579,7 @@ export async function seedApplicationResponse(dbPath) {
         (3, 1, 'The defendant has never previously failed to satisfy a costs award.');
     INSERT INTO filing_facts (filing_id, fact_id, document, part, ordinal) VALUES (1, 1, 'form', 'part4', 1), (1, 2, 'form', 'part4', 2);
 
-    INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+    INSERT INTO ${schemaVersion >= 82 ? "arguments" : "submissions"} (id, proceeding_id, contention, ordinal)
       VALUES (1, 1, 'Security for costs is unwarranted given the defendant''s assets in this jurisdiction.', 1);
     INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);
     INSERT INTO submission_facts (submission_id, fact_id) VALUES (1, 3);

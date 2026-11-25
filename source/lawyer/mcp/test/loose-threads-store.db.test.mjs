@@ -221,7 +221,7 @@ test("each tab's cards come from their own place, and a live letter is on none",
       (6, 1, 'task-board', 'Open board', NULL, NULL, NULL);
     INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created, rejected_at) VALUES (11, 1, 'Shelved job', 'Do it.', 'queued', 'work', 'L8470|x', '2026-10-01T09:00', '2026-10-08T09:00');
     INSERT INTO law_assertions (id, proceeding_id, proposition, killed_on) VALUES (1, 1, 'A killed proposition.', '2026-10-09'), (2, 1, 'An undecided proposition.', NULL);
-    INSERT INTO submissions (id, proceeding_id, contention, ordinal, killed_on) VALUES (1, 1, 'A killed submission.', 1, '2026-10-10'), (2, 1, 'A live submission.', 2, NULL);`);
+    INSERT INTO arguments (id, proceeding_id, contention, ordinal, killed_on, number) VALUES (1, 1, 'A killed submission.', 1, '2026-10-10', 1), (2, 1, 'A live submission.', 2, NULL, 2);`);
   mkdirSync(draft, { recursive: true });
   const law = join(dir, "L8470 Larchmont", "6. LAW", "Issue");
   mkdirSync(law, { recursive: true });
@@ -243,7 +243,7 @@ test("each tab's cards come from their own place, and a live letter is on none",
   assert.deepEqual(cards("correspondence"), [["Writing #3", "Abandoned letter", "Retired"]], "no live letter and no delivered one");
   assert.deepEqual(threads("correspondence"), ["An abandoned draft."]);
   assert.equal(data.ideas.find((i) => i.tab === "correspondence").ref, "draft.eml");
-  assert.deepEqual(cards("arguments"), [["Submission #1", "A killed submission.", "Killed"]]);
+  assert.deepEqual(cards("arguments"), [["Argument #1", "A killed submission.", "Killed"]]);
   assert.deepEqual(threads("arguments"), ["Considered, never drafted."]);
   assert.deepEqual(cards("work_boards"), [["Work Board #5", "Closed board", "Closed"]]);
   assert.deepEqual(threads("work_boards"), ["A board never created."]);

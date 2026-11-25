@@ -92,7 +92,7 @@ const DECLARABLE_LIST: StockCriterion[] = [
   EXCERPTS,
   NOTING_UP,
   EVIDENCE,
-  { id: "opposing-points", text: "Every opposing point is answered", members: glyph("↩️") },
+  { id: "opposing-points", text: "Every opposing argument has a rebuttal", members: glyph("↩️") },
   COUNSEL_REVIEW,
   // 📌 and 📍 on clause rows (shared/declared-layout.md section 6).
   { id: "terms-traced", text: "Every clause traces to the offer or acceptance", members: (e) => e.table === "clauses" && (e.marker === "📑" || e.marker === "📌" || e.marker === "📍") },

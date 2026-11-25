@@ -26,7 +26,7 @@ import { hasColumn } from "../schema-capabilities.js";
 import { baseName, dateOf, isCaseBriefFile, lawDirOf, modified, scanLawFolder, titleOf, versionOf } from "./legal-memos.js";
 import { BRIEF_JOB_PREFIX, citationKey, citationParts, squashed } from "./brief-job.js";
 import { authorityNoteUp, treatmentWord, type NoteUpStatus } from "./note-up-status.js";
-import { liveTicketClause, ticketAnswersHeld } from "./query.js";
+import { argumentsTable, liveTicketClause, ticketAnswersHeld } from "./query.js";
 
 export type BriefStatus = "briefed" | "requested" | "not_briefed";
 
@@ -102,7 +102,7 @@ export function reliedOn(dbPath: string, filingIds: number[], kinds: readonly st
          OR sl.law_assertion_id IN (SELECT r.law_assertion_id FROM order_sought_requires r JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id WHERE fo.filing_id IN ${inIds})
          OR sl.law_assertion_id IN (
            SELECT sbl.law_assertion_id FROM submission_law sbl
-           JOIN submissions s ON s.id = sbl.submission_id AND s.killed_on IS NULL
+           JOIN ${argumentsTable(dbPath)} s ON s.id = sbl.submission_id AND s.killed_on IS NULL
            JOIN filing_submissions fs ON fs.submission_id = s.id
            WHERE fs.filing_id IN ${inIds}))
      ORDER BY a.style_of_cause_or_title, a.id`,

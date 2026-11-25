@@ -12,14 +12,14 @@ import { dirname, join } from "node:path";
 import { configPath } from "../config-path.js";
 import { writeTextAtomic } from "../file-lock.js";
 
-export const FOCUS_SECTIONS = ["submissions", "counter", "rebuttals", "killed"] as const;
+export const FOCUS_SECTIONS = ["arguments", "rebuttals"] as const;
 export type FocusSection = (typeof FOCUS_SECTIONS)[number];
 
 export interface FocusRecord {
   /** New on every write, so the page acts once per request. */
   id: string;
   section: FocusSection;
-  /** The card's number in its section, 1..N, as the page tags it. */
+  /** The argument number to open: an argument's own (#2), or the number its rebuttals are labelled under (#2.a). */
   number: number;
   at: string;
 }

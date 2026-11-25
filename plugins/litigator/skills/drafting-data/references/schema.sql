@@ -3,7 +3,7 @@
 -- via references/scripts/migrate_engine.py. Do not hand-edit: regenerate
 -- after any change to migrations.sql so this file matches the live schema
 -- byte-for-byte (this is the acceptance test for issue 295).
--- Current version: db_meta.schema_version = 81
+-- Current version: db_meta.schema_version = 82
 
 
 CREATE TABLE db_meta (
@@ -104,11 +104,11 @@ CREATE TABLE paragraph_statements_of_fact (
     PRIMARY KEY (statement_paragraph_id, statement_of_fact_id)
 );
 
-CREATE TABLE submissions (
+CREATE TABLE "arguments" (
     id            INTEGER PRIMARY KEY,
     proceeding_id INTEGER NOT NULL REFERENCES proceedings(id),
     contention    TEXT NOT NULL,
-    ordinal       INTEGER NOT NULL, killed_on DATE, no_facts_needed_on TEXT CHECK (no_facts_needed_on IS NULL OR no_facts_needed_on GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'), no_facts_needed_note TEXT, no_facts_needed_contention TEXT CHECK ((no_facts_needed_on IS NULL) = (no_facts_needed_note IS NULL) AND (no_facts_needed_on IS NULL) = (no_facts_needed_contention IS NULL)), no_law_needed_on TEXT CHECK (no_law_needed_on IS NULL OR no_law_needed_on GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]') CHECK (no_law_needed_on IS NULL OR no_facts_needed_on IS NULL), no_law_needed_note TEXT, no_law_needed_contention TEXT CHECK ((no_law_needed_on IS NULL) = (no_law_needed_note IS NULL) AND (no_law_needed_on IS NULL) = (no_law_needed_contention IS NULL)));
+    ordinal       INTEGER NOT NULL, killed_on DATE, no_facts_needed_on TEXT CHECK (no_facts_needed_on IS NULL OR no_facts_needed_on GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'), no_facts_needed_note TEXT, no_facts_needed_contention TEXT CHECK ((no_facts_needed_on IS NULL) = (no_facts_needed_note IS NULL) AND (no_facts_needed_on IS NULL) = (no_facts_needed_contention IS NULL)), no_law_needed_on TEXT CHECK (no_law_needed_on IS NULL OR no_law_needed_on GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]') CHECK (no_law_needed_on IS NULL OR no_facts_needed_on IS NULL), no_law_needed_note TEXT, no_law_needed_contention TEXT CHECK ((no_law_needed_on IS NULL) = (no_law_needed_note IS NULL) AND (no_law_needed_on IS NULL) = (no_law_needed_contention IS NULL)), side TEXT NOT NULL DEFAULT 'ours' CHECK (side IN ('ours', 'opposing', 'neutral')), number INTEGER CHECK (number IS NULL OR number > 0), anticipated INTEGER NOT NULL DEFAULT 0 CHECK (anticipated IN (0, 1)), component TEXT, pinpoint TEXT);
 
 CREATE TABLE law_assertions (
     id            INTEGER PRIMARY KEY,
@@ -118,25 +118,15 @@ CREATE TABLE law_assertions (
 , killed_on TEXT CHECK (killed_on IS NULL OR killed_on GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'));
 
 CREATE TABLE submission_facts (
-    submission_id INTEGER NOT NULL REFERENCES submissions(id),
+    submission_id INTEGER NOT NULL REFERENCES "arguments"(id),
     fact_id       INTEGER NOT NULL REFERENCES facts(id),
     PRIMARY KEY (submission_id, fact_id)
 );
 
 CREATE TABLE submission_law (
-    submission_id     INTEGER NOT NULL REFERENCES submissions(id),
+    submission_id     INTEGER NOT NULL REFERENCES "arguments"(id),
     law_assertion_id  INTEGER NOT NULL REFERENCES law_assertions(id),
     PRIMARY KEY (submission_id, law_assertion_id)
-);
-
-CREATE TABLE opposing_points (
-    id                        INTEGER PRIMARY KEY,
-    proceeding_id             INTEGER NOT NULL REFERENCES proceedings(id),
-    component                 TEXT NOT NULL,
-    pinpoint                  TEXT,
-    verbatim_words            TEXT,
-    answered_by_submission_id INTEGER REFERENCES submissions(id),
-    ordinal                   INTEGER NOT NULL
 );
 
 CREATE INDEX idx_facts_proceeding ON facts(proceeding_id);
@@ -145,15 +135,13 @@ CREATE INDEX idx_statements_of_fact_proceeding ON statements_of_fact(proceeding_
 
 CREATE INDEX idx_statements_of_fact_fact ON statements_of_fact(fact_id);
 
-CREATE INDEX idx_submissions_proceeding ON submissions(proceeding_id);
+CREATE INDEX idx_submissions_proceeding ON "arguments"(proceeding_id);
 
 CREATE INDEX idx_law_assertions_proceeding ON law_assertions(proceeding_id);
 
 CREATE INDEX idx_submission_law_law_assertion ON submission_law(law_assertion_id);
 
 CREATE INDEX idx_submission_facts_fact ON submission_facts(fact_id);
-
-CREATE INDEX idx_opposing_points_proceeding ON opposing_points(proceeding_id);
 
 CREATE INDEX idx_statement_paragraphs_document ON statement_paragraphs(document_id);
 
@@ -203,7 +191,7 @@ CREATE TABLE order_sought_requires (
 
 CREATE TABLE order_sought_served_by (
     order_sought_id INTEGER NOT NULL REFERENCES order_sought(id),
-    submission_id   INTEGER NOT NULL REFERENCES submissions(id),
+    submission_id   INTEGER NOT NULL REFERENCES "arguments"(id),
     PRIMARY KEY (order_sought_id, submission_id)
 );
 
@@ -219,7 +207,7 @@ CREATE TABLE filing_facts (
 CREATE TABLE filing_submissions (
     id            INTEGER PRIMARY KEY,
     filing_id     INTEGER NOT NULL REFERENCES filings(id),
-    submission_id INTEGER NOT NULL REFERENCES submissions(id),
+    submission_id INTEGER NOT NULL REFERENCES "arguments"(id),
     document      TEXT NOT NULL CHECK (document IN ('form', 'written_argument')),
     ordinal       INTEGER NOT NULL
 );
@@ -278,14 +266,6 @@ CREATE INDEX idx_filing_orders_filing ON filing_orders(filing_id);
 CREATE INDEX idx_opposing_orders_proceeding ON opposing_orders(proceeding_id);
 
 CREATE INDEX idx_filing_positions_filing ON filing_positions(filing_id);
-
-CREATE TABLE anticipated_points (
-    id            INTEGER PRIMARY KEY,
-    proceeding_id INTEGER NOT NULL REFERENCES proceedings(id),
-    point         TEXT NOT NULL
-);
-
-CREATE INDEX idx_anticipated_points_proceeding ON anticipated_points(proceeding_id);
 
 CREATE TABLE opposing_authorities (
     id                      INTEGER PRIMARY KEY,
@@ -407,12 +387,6 @@ CREATE TRIGGER rev_paragraph_statements_of_fact_upd AFTER UPDATE ON paragraph_st
 
 CREATE TRIGGER rev_paragraph_statements_of_fact_del AFTER DELETE ON paragraph_statements_of_fact BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
 
-CREATE TRIGGER rev_submissions_ins AFTER INSERT ON submissions BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TRIGGER rev_submissions_upd AFTER UPDATE ON submissions BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TRIGGER rev_submissions_del AFTER DELETE ON submissions BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
 CREATE TRIGGER rev_law_assertions_ins AFTER INSERT ON law_assertions BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
 
 CREATE TRIGGER rev_law_assertions_upd AFTER UPDATE ON law_assertions BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
@@ -430,12 +404,6 @@ CREATE TRIGGER rev_submission_law_ins AFTER INSERT ON submission_law BEGIN UPDAT
 CREATE TRIGGER rev_submission_law_upd AFTER UPDATE ON submission_law BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
 
 CREATE TRIGGER rev_submission_law_del AFTER DELETE ON submission_law BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TRIGGER rev_opposing_points_ins AFTER INSERT ON opposing_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TRIGGER rev_opposing_points_upd AFTER UPDATE ON opposing_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TRIGGER rev_opposing_points_del AFTER DELETE ON opposing_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
 
 CREATE TRIGGER rev_admissions_ins AFTER INSERT ON admissions BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
 
@@ -496,12 +464,6 @@ CREATE TRIGGER rev_filing_positions_ins AFTER INSERT ON filing_positions BEGIN U
 CREATE TRIGGER rev_filing_positions_upd AFTER UPDATE ON filing_positions BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
 
 CREATE TRIGGER rev_filing_positions_del AFTER DELETE ON filing_positions BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TRIGGER rev_anticipated_points_ins AFTER INSERT ON anticipated_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TRIGGER rev_anticipated_points_upd AFTER UPDATE ON anticipated_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TRIGGER rev_anticipated_points_del AFTER DELETE ON anticipated_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
 
 CREATE TRIGGER rev_opposing_authorities_ins AFTER INSERT ON opposing_authorities BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
 
@@ -952,10 +914,10 @@ WHEN NEW.verification IN ('verified', 'settled')
    OR NEW.excerpt IS NOT NEW.scrutinized_excerpt)
 BEGIN UPDATE statements_of_law SET verification = 'lead' WHERE id = NEW.id; END;
 
-CREATE TRIGGER reset_no_facts_needed_on_contention_change AFTER UPDATE OF contention ON submissions
+CREATE TRIGGER reset_no_facts_needed_on_contention_change AFTER UPDATE OF contention ON "arguments"
 WHEN NEW.no_facts_needed_on IS NOT NULL
  AND NEW.contention IS NOT NEW.no_facts_needed_contention
-BEGIN UPDATE submissions SET no_facts_needed_on = NULL, no_facts_needed_note = NULL, no_facts_needed_contention = NULL WHERE id = NEW.id; END;
+BEGIN UPDATE "arguments" SET no_facts_needed_on = NULL, no_facts_needed_note = NULL, no_facts_needed_contention = NULL WHERE id = NEW.id; END;
 
 CREATE TRIGGER reset_pure_law_on_fact_ins AFTER INSERT ON filing_facts
 WHEN NEW.document = 'form' AND (SELECT pure_law_on FROM filings WHERE id = NEW.filing_id) IS NOT NULL
@@ -1162,10 +1124,10 @@ BEGIN
        AND NOT EXISTS (SELECT 1 FROM filing_facts ff WHERE ff.filing_id = NEW.filing_id AND ff.document = 'written_argument' AND ff.fact_id = sf.fact_id);
 END;
 
-CREATE TRIGGER reset_no_law_needed_on_contention_change AFTER UPDATE OF contention ON submissions
+CREATE TRIGGER reset_no_law_needed_on_contention_change AFTER UPDATE OF contention ON "arguments"
 WHEN NEW.no_law_needed_on IS NOT NULL
  AND NEW.contention IS NOT NEW.no_law_needed_contention
-BEGIN UPDATE submissions SET no_law_needed_on = NULL, no_law_needed_note = NULL, no_law_needed_contention = NULL WHERE id = NEW.id; END;
+BEGIN UPDATE "arguments" SET no_law_needed_on = NULL, no_law_needed_note = NULL, no_law_needed_contention = NULL WHERE id = NEW.id; END;
 
 CREATE TRIGGER guard_verified_pinpoint_ins BEFORE INSERT ON statements_of_law
 WHEN NEW.verification = 'verified' AND (NEW.pinpoint IS NULL OR TRIM(NEW.pinpoint) = '')
@@ -1175,30 +1137,6 @@ CREATE TRIGGER guard_verified_pinpoint_upd BEFORE UPDATE OF verification ON stat
 WHEN NEW.verification = 'verified' AND OLD.verification IS NOT 'verified'
  AND (NEW.pinpoint IS NULL OR TRIM(NEW.pinpoint) = '')
 BEGIN SELECT RAISE(ABORT, 'a verified statement of law needs a pinpoint: record the pinpoint the research lawyer returned in the same write'); END;
-
-CREATE TABLE submission_rebuts_opposing_points (
-    submission_id     INTEGER NOT NULL REFERENCES submissions(id),
-    opposing_point_id INTEGER NOT NULL REFERENCES opposing_points(id),
-    PRIMARY KEY (submission_id, opposing_point_id)
-);
-
-CREATE TRIGGER rev_submission_rebuts_opposing_points_ins AFTER INSERT ON submission_rebuts_opposing_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TRIGGER rev_submission_rebuts_opposing_points_upd AFTER UPDATE ON submission_rebuts_opposing_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TRIGGER rev_submission_rebuts_opposing_points_del AFTER DELETE ON submission_rebuts_opposing_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TABLE submission_rebuts_anticipated_points (
-    submission_id        INTEGER NOT NULL REFERENCES submissions(id),
-    anticipated_point_id INTEGER NOT NULL REFERENCES anticipated_points(id),
-    PRIMARY KEY (submission_id, anticipated_point_id)
-);
-
-CREATE TRIGGER rev_submission_rebuts_anticipated_points_ins AFTER INSERT ON submission_rebuts_anticipated_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TRIGGER rev_submission_rebuts_anticipated_points_upd AFTER UPDATE ON submission_rebuts_anticipated_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TRIGGER rev_submission_rebuts_anticipated_points_del AFTER DELETE ON submission_rebuts_anticipated_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
 
 CREATE TABLE marker_suppressions (
     marker        TEXT NOT NULL CHECK (marker IN ('👤')),
@@ -1240,7 +1178,7 @@ CREATE TRIGGER rev_rhetorical_paragraphs_del AFTER DELETE ON rhetorical_paragrap
 
 CREATE TABLE rhetorical_paragraph_submissions (
     rhetorical_paragraph_id INTEGER NOT NULL REFERENCES rhetorical_paragraphs(id),
-    submission_id           INTEGER NOT NULL REFERENCES submissions(id),
+    submission_id           INTEGER NOT NULL REFERENCES "arguments"(id),
     PRIMARY KEY (rhetorical_paragraph_id, submission_id)
 );
 
@@ -1249,18 +1187,6 @@ CREATE TRIGGER rev_rhetorical_paragraph_submissions_ins AFTER INSERT ON rhetoric
 CREATE TRIGGER rev_rhetorical_paragraph_submissions_upd AFTER UPDATE ON rhetorical_paragraph_submissions BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
 
 CREATE TRIGGER rev_rhetorical_paragraph_submissions_del AFTER DELETE ON rhetorical_paragraph_submissions BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TABLE rhetorical_paragraph_opposing_points (
-    rhetorical_paragraph_id INTEGER NOT NULL REFERENCES rhetorical_paragraphs(id),
-    opposing_point_id       INTEGER NOT NULL REFERENCES opposing_points(id),
-    PRIMARY KEY (rhetorical_paragraph_id, opposing_point_id)
-);
-
-CREATE TRIGGER rev_rhetorical_paragraph_opposing_points_ins AFTER INSERT ON rhetorical_paragraph_opposing_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TRIGGER rev_rhetorical_paragraph_opposing_points_upd AFTER UPDATE ON rhetorical_paragraph_opposing_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
-
-CREATE TRIGGER rev_rhetorical_paragraph_opposing_points_del AFTER DELETE ON rhetorical_paragraph_opposing_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
 
 CREATE TABLE rhetorical_paragraph_facts (
     rhetorical_paragraph_id INTEGER NOT NULL REFERENCES rhetorical_paragraphs(id),
@@ -1450,3 +1376,26 @@ WHEN OLD.retired_on IS NULL AND NEW.retired_on IS NOT NULL
       OR (EXISTS (SELECT 1 FROM board_attachments WHERE filing_id IS NULL AND proceeding_id = NEW.proceeding_id)
           AND NOT EXISTS (SELECT 1 FROM filings WHERE proceeding_id = NEW.proceeding_id AND id <> NEW.id AND retired_on IS NULL)))
 BEGIN SELECT RAISE(ABORT, 'a draft is attached to this Writing''s Milestone: move or detach each attachment before retiring it (ADR 0042)'); END;
+
+CREATE TRIGGER rev_arguments_ins AFTER INSERT ON arguments BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
+
+CREATE TRIGGER rev_arguments_upd AFTER UPDATE ON arguments BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
+
+CREATE TRIGGER rev_arguments_del AFTER DELETE ON arguments BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
+
+CREATE UNIQUE INDEX idx_arguments_number ON arguments(proceeding_id, number);
+
+CREATE TABLE argument_rebuts (
+    rebuttal_id INTEGER NOT NULL REFERENCES arguments(id),
+    argument_id INTEGER NOT NULL REFERENCES arguments(id),
+    PRIMARY KEY (rebuttal_id, argument_id),
+    CHECK (rebuttal_id <> argument_id)
+);
+
+CREATE INDEX idx_argument_rebuts_argument ON argument_rebuts(argument_id);
+
+CREATE TRIGGER rev_argument_rebuts_ins AFTER INSERT ON argument_rebuts BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
+
+CREATE TRIGGER rev_argument_rebuts_upd AFTER UPDATE ON argument_rebuts BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
+
+CREATE TRIGGER rev_argument_rebuts_del AFTER DELETE ON argument_rebuts BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;

@@ -79,7 +79,7 @@ INSERT INTO facts (id, proceeding_id, postulate) VALUES (1, 1, 'The arbitration 
 INSERT INTO filing_facts (id, filing_id, fact_id, document, part, ordinal) VALUES (1, 1, 1, 'form', 'part2', 1);
 INSERT INTO statements_of_fact (id, proceeding_id, fact_id, witness_id, instrument, pinpoint, interviewed, excerpt)
   VALUES (1, 1, 1, 1, 11, 'para 4', 1, 'The arbitration was commenced on 12 May 2026.');
-INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES
+INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES
   (1, 1, 'The appeal raises no serious question to be tried.', 1);
 INSERT INTO filing_submissions (id, filing_id, submission_id, document, ordinal) VALUES (1, 1, 1, 'form', 1);
 INSERT INTO submission_facts (submission_id, fact_id) VALUES (1, 1);

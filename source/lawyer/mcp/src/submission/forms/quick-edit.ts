@@ -36,6 +36,7 @@ import {
   factPart,
   mapSources,
   normalizePart,
+  entityTable,
   QUICK_EDIT_MIN_SCHEMA,
   readParagraphMap,
   readTexts,
@@ -57,7 +58,7 @@ const TOKEN_PRUNE_MS = 24 * 60 * 60 * 1000;
 const TRIAL_TABLES = [
   "facts",
   "statements_of_fact",
-  "submissions",
+  "arguments",
   "law_assertions",
   "statements_of_law",
   "order_sought",
@@ -547,7 +548,7 @@ function planReword(plan: Plan, op: Extract<EditOp, { op: "reword" }>, t: MapEnt
       values.push(op.states_fact ? 1 : 0);
     }
   }
-  plan.push(`reword ${entity} ${rowId}`, `UPDATE ${entity} SET ${sets.join(", ")} WHERE id = ? AND ${field} = ?`, [...values, rowId, current], 1);
+  plan.push(`reword ${entity} ${rowId}`, `UPDATE ${entityTable(entity)} SET ${sets.join(", ")} WHERE id = ? AND ${field} = ?`, [...values, rowId, current], 1);
   plan.written.add(`${entity}:${rowId}`);
   plan.audit({ op: "reword", document: t.document, entity, entity_id: rowId, deployment_id: null, from: null, to: null, old_hash: sha256Text(current), new_hash: sha256Text(op.new_text) });
   rewords.push({ new_text: op.new_text, choice: op.choice });
@@ -635,7 +636,7 @@ function planRecast(plan: Plan, op: Extract<EditOp, { op: "recast" }>, t: MapEnt
     }
     plan.push(
       `${label}: create the submission`,
-      "INSERT INTO submissions (proceeding_id, contention, ordinal) SELECT ?, ?, COALESCE(MAX(ordinal), 0) + 1 FROM submissions WHERE proceeding_id = ?",
+      "INSERT INTO arguments (proceeding_id, contention, ordinal, number) SELECT ?, ?, COALESCE(MAX(ordinal), 0) + 1, COALESCE(MAX(number), 0) + 1 FROM arguments WHERE proceeding_id = ?",
       [plan.filing.proceeding_id, text, plan.filing.proceeding_id],
       1
     );
@@ -712,7 +713,7 @@ function planKill(plan: Plan, t: MapEntry): void {
   if (t.sub !== 0 || (t.entity !== "submissions" && t.entity !== "law_assertions")) {
     throw new Refusal("unsupported", `${describe(t)} is a ${t.sub ? "statement printed under a paragraph" : KIND[t.entity]}; only a submission or a proposition is killed.`);
   }
-  plan.push(`kill ${KIND[t.entity]} ${t.row_id}`, `UPDATE ${t.entity} SET killed_on = ${todaySql()} WHERE id = ? AND killed_on IS NULL`, [t.row_id], 1);
+  plan.push(`kill ${KIND[t.entity]} ${t.row_id}`, `UPDATE ${entityTable(t.entity)} SET killed_on = ${todaySql()} WHERE id = ? AND killed_on IS NULL`, [t.row_id], 1);
   plan.written.add(`${t.entity}:${t.row_id}`);
   if (t.entity === "submissions") {
     // Killing a submission takes it off every drafting Writing in the same write; a sent or retired Writing keeps its row.
@@ -754,7 +755,7 @@ function foreignJobs(db: string, session: string, pairs: ReadonlyMap<string, Set
   for (const [table, ids] of pairs) {
     const list = [...ids].filter((id) => id > 0);
     clauses.push(`(s.entity = ? AND (s.entity_id IS NULL${list.length > 0 ? ` OR s.entity_id IN (${list.map(() => "?").join(", ")})` : ""}))`);
-    params.push(table, ...list);
+    params.push(table === "arguments" ? "submissions" : table, ...list);
   }
   if (clauses.length === 0) return [];
   return rows(
@@ -1085,7 +1086,7 @@ export async function submissionFormsPreviewEdit(args: PreviewEditArgs): Promise
       const k = `${table}:${id}`;
       if (rowsSeen.has(k) || id <= 0) return;
       rowsSeen.add(k);
-      const sql = `SELECT * FROM "${table}" WHERE rowid = ?`;
+      const sql = `SELECT * FROM "${entityTable(table)}" WHERE rowid = ?`;
       preconditions.push({ label: `${table} row ${id}`, sql, params: [id], hash: hashRows(db, sql, [id]) });
     };
     for (const r of resolved) {
@@ -1242,7 +1243,7 @@ function appendLog(db: string, stored: StoredPreview, results: { rowid: number }
   const text = stored.log
     .map((e) => {
       const entityId = id(e.entity_id) as number;
-      const to = e.op === "kill" ? String(rows(db, `SELECT killed_on FROM "${e.entity}" WHERE id = ?`, [entityId])[0].killed_on) : e.to;
+      const to = e.op === "kill" ? String(rows(db, `SELECT killed_on FROM "${entityTable(e.entity)}" WHERE id = ?`, [entityId])[0].killed_on) : e.to;
       return JSON.stringify({
         applied_at: appliedAt,
         session_token: stored.session_token,

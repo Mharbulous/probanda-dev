@@ -52,7 +52,7 @@ INSERT INTO documents (id, proceeding_id, label) VALUES (20, 1, 'Appeal Record')
 INSERT INTO facts (id, proceeding_id, postulate, court_record, court_record_pinpoint) VALUES
   (1, 1, 'The arbitration was commenced on 12 May 2026.', 20, 'Appeal Record, Vol. 1, p. 12');
 INSERT INTO filing_facts (filing_id, fact_id, document, part, ordinal) VALUES (1, 1, 'form', 'part2', 1);
-INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES
+INSERT INTO arguments (id, proceeding_id, contention, ordinal) VALUES
   (1, 1, 'The chambers judge applied the correct test.', 1),
   (2, 1, 'The order was within the judge''s discretion.', 2);
 INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1), (1, 2, 'form', 2);
@@ -73,9 +73,10 @@ INSERT INTO statements_of_law (proceeding_id, law_assertion_id, authority_id, pi
   (1, 2, 2, 's 7', '7 (1) If a party to an arbitration agreement commences legal proceedings, the court must stay them.', 'primary', 'verified'),
   (1, 2, 3, 'R 25', 'A respondent must file a factum.', 'primary', 'verified'),
   (1, 2, 4, 'para 1', 'lead text', 'primary', 'lead');
-INSERT INTO opposing_points (proceeding_id, component, pinpoint, verbatim_words, answered_by_submission_id, ordinal) VALUES
-  (1, 'Appellants'' factum, Part 2', 'para 1', 'The judge applied the wrong test.', 1, 1),
-  (1, 'Appellants'' factum, Part 2', 'para 2', 'The judge ignored the evidence.', NULL, 2);
+INSERT INTO arguments (id, proceeding_id, component, pinpoint, contention, ordinal, side) VALUES
+  (101, 1, 'Appellants'' factum, Part 2', 'para 1', 'The judge applied the wrong test.', 1, 'opposing'),
+  (102, 1, 'Appellants'' factum, Part 2', 'para 2', 'The judge ignored the evidence.', 2, 'opposing');
+INSERT INTO argument_rebuts (rebuttal_id, argument_id) VALUES (1, 101);
 INSERT INTO order_sought (id, proceeding_id, wording) VALUES (1, 1, 'that the appeal be dismissed, with costs to the respondents.');
 INSERT INTO filing_orders (filing_id, order_sought_id, document, ordinal) VALUES (1, 1, 'form', 1);
 `;

@@ -24,7 +24,7 @@ const PY_CANDIDATES = [process.env.COCLERK_PYTHON, "python", "python3"].filter(B
 
 const { freshSubmissionDb, submissionDbAt } = await import("./helpers/template-db.mjs");
 const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
-const { submissionDataExecute } = await import("../build/submission/backend.js");
+const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { submissionFormsEmitForm32, submissionFormsRender } = await import("../build/submission/forms.js");
 const { ALL_MARKER_GLYPHS } = await import("../build/submission/forms/markers.js");
 
@@ -48,6 +48,8 @@ function seededDbFixture() {
 // ordinal 2, one filing_document -- plus Part 2 citation rows of its own.
 async function seedNoticeOfApplication(dbPath) {
   writePartiesOfRecord(dirname(dbPath), DEFAULT_JUDGMENT_CASE_DATA);
+  // Schema v82 renamed submissions to arguments; a test holding an older database seeds the old name.
+  const points = Number(submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'").rows[0].value) >= 82 ? "arguments" : "submissions";
   await submissionDataExecute(
     dbPath,
     `
@@ -97,7 +99,7 @@ async function seedNoticeOfApplication(dbPath) {
 
     INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, kind, weight, treatment)
       VALUES (1, 1, 'Miazga v. Kvello Estate', '2009 SCC 51', 'case', 'binding', 'good_law');
-    INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+    INSERT INTO ${points} (id, proceeding_id, contention, ordinal)
       VALUES (1, 1, 'Corbin Vasey is in default under the Rules.', 1);
     INSERT INTO law_assertions (id, proceeding_id, proposition, dead_end)
       VALUES (1, 1, 'a defendant who fails to file a response to civil claim within the prescribed time is in default', 0);

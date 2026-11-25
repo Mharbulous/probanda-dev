@@ -22,7 +22,7 @@ import { exhibitNumbersForFiling, fetchDocumentLabels, fetchFilingDocuments, fet
 import { fetchDeployedIds, fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions, type PointerDocument } from "./submission-reads.js";
 import { fetchFactAdmissionAnnotations } from "./admission-annotations.js";
 import { fetchJurisdictionEdges, fetchOrdersSought } from "./orders-sought.js";
-import { fetchOpposingPoints } from "./opposing-points.js";
+import { fetchOpposingArguments } from "./opposing-points.js";
 import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
 import { orderReviewMarkerFor } from "./review-state.js";
 import { recordParagraph, renderSubmissionParagraphs } from "./submission-paragraphs.js";
@@ -30,7 +30,7 @@ import { hasWrittenArguments, type RenderContext } from "./render-context.js";
 import { recordCriterionGlyphs, recordGlyphs, recordJurisdictionLadder } from "./proposal-inventory.js";
 import { fetchPlacedAlternativeIds } from "./render-requisition.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
-import { captionHeadingFor, MILESTONE_KIND, noFactsNeededColumn, noLawNeededColumn, opposingPartyIds, servedOrderWordingsColumn, venueHeadingFor, type ProceedingRow } from "./query.js";
+import { argumentsTable, captionHeadingFor, MILESTONE_KIND, noFactsNeededColumn, noLawNeededColumn, opposingPartyIds, servedOrderWordingsColumn, venueHeadingFor, type ProceedingRow } from "./query.js";
 import { rows } from "../query-rows.js";
 
 /** What the Written Arguments prints differently by venue, keyed by the proceeding's tree key: who
@@ -81,7 +81,7 @@ function frontmatterFor(ctx: RenderContext, documentType: string): string {
  * Written Arguments: caption, numbered Submissions (each with its argument
  * body), crossed-out submissions below the numbered paragraphs referencing
  * the order they support (#380's Rendering rule), a relief/orders block, and
- * a mockup-only Opposing points section. No trailing Held-in-reserve --
+ * a mockup-only Opposing arguments section. No trailing Held-in-reserve --
  * reserved material (deployed by no document of this filing) never reaches
  * this document's own queries at all (fetchSubmissions/fetchOrdersSought
  * already filter to `documentKey`); recordReserveInventory records its Proposals.
@@ -258,18 +258,19 @@ export function renderWrittenArguments(ctx: RenderContext, documentKey: PointerD
   }
   if (crossedOutRelief.length > 0) lines.push("");
 
-  const opposingPoints = fetchOpposingPoints(ctx.dbPath, ctx.proceeding.id);
-  if (opposingPoints.length > 0) {
-    lines.push("## Opposing points");
+  const opposingArguments = fetchOpposingArguments(ctx.dbPath, ctx.proceeding.id);
+  if (opposingArguments.length > 0) {
+    lines.push("## Opposing arguments");
     lines.push("");
-    for (const op of opposingPoints) {
+    for (const op of opposingArguments) {
+      const component = op.component ?? "";
       const pinpointPart = op.pinpoint ? `, ${op.pinpoint}` : "";
-      const quotePart = op.verbatim_words ? `: "${op.verbatim_words}"` : "";
-      const rebuttal = rebuttalMarker(op.answered_by_submission_id);
-      const status = op.answered_by_submission_id === null ? rebuttal : `— answered by: ${op.answered_by_contention}`;
-      // ↩️ generates nothing; the Goal card counts it on the opposing point (design §2.7).
-      recordCriterionGlyphs(ctx.inventory, rebuttal, ["↩️"], { table: "opposing_points", id: op.id, item: `${op.component}${pinpointPart}${quotePart}` });
-      lines.push(`- ${op.component}${pinpointPart}${quotePart}${status ? ` ${status}` : ""} <!-- opposing_point_id ${op.id} -->`);
+      const quotePart = op.contention !== op.component ? `: "${op.contention}"` : "";
+      const rebuttal = rebuttalMarker(op.rebuttals.length > 0);
+      const status = op.rebuttals.length === 0 ? rebuttal : `— answered by: ${op.rebuttals.map((r) => r.contention).join("; ")}`;
+      // ↩️ generates nothing; the Goal card counts it on the opposing argument (design §2.7).
+      recordCriterionGlyphs(ctx.inventory, rebuttal, ["↩️"], { table: "submissions", id: op.id, item: `${component}${pinpointPart}${quotePart}` });
+      lines.push(`- ${component}${pinpointPart}${quotePart}${status ? ` ${status}` : ""} <!-- opposing_argument_id ${op.id} -->`);
     }
     lines.push("");
   }
@@ -291,8 +292,8 @@ function fetchProceedingOrders(dbPath: string, proceedingId: number): PoolOrderR
     `SELECT o.id, o.wording, o.crossed_out_on,
             EXISTS(
               SELECT 1 FROM order_sought_served_by sb
-              JOIN submissions s ON s.id = sb.submission_id
-              WHERE sb.order_sought_id = o.id AND s.killed_on IS NULL
+              JOIN ${argumentsTable(dbPath)} s ON s.id = sb.submission_id
+              WHERE sb.order_sought_id = o.id AND s.killed_on IS NULL AND s.side = 'ours'
             ) AS has_served_by
      FROM order_sought o WHERE o.proceeding_id = ? ORDER BY o.id`,
     [proceedingId]
@@ -338,7 +339,7 @@ function fetchLiveReliedLawAssertions(dbPath: string, proceedingId: number): Set
     dbPath,
     `SELECT sl.law_assertion_id FROM submission_law sl
        JOIN filing_submissions fs ON fs.submission_id = sl.submission_id
-       JOIN submissions s ON s.id = fs.submission_id AND s.killed_on IS NULL
+       JOIN ${argumentsTable(dbPath)} s ON s.id = fs.submission_id AND s.killed_on IS NULL
        JOIN filings f ON f.id = fs.filing_id
       WHERE f.proceeding_id = ? AND f.retired_on IS NULL
      UNION
@@ -366,7 +367,7 @@ interface PoolSubmissionRow {
 function fetchProceedingSubmissions(dbPath: string, proceedingId: number): PoolSubmissionRow[] {
   return rows<PoolSubmissionRow>(
     dbPath,
-    `SELECT s.id, s.contention, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()} FROM submissions s WHERE s.proceeding_id = ? AND s.killed_on IS NULL ORDER BY s.ordinal, s.id`,
+    `SELECT s.id, s.contention, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()} FROM ${argumentsTable(dbPath)} s WHERE s.proceeding_id = ? AND s.killed_on IS NULL AND s.side = 'ours' ORDER BY s.ordinal, s.id`,
     [proceedingId]
   );
 }

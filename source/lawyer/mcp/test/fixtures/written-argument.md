@@ -82,10 +82,10 @@ Rendered: <TIMESTAMP>
    (b) interest;
    (c) costs.
 
-## Opposing points
+## Opposing arguments
 
-- Opposing written argument, Submission 3: "the Agreement was never validly executed" — answered by: The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement. <!-- opposing_point_id 1 -->
-- Witness statement of R. Opposing, para 6: "the delivery schedule was informal only" ↩️ <!-- opposing_point_id 2 -->
+- Opposing written argument, Submission 3: "the Agreement was never validly executed" — answered by: The Respondent owes $150,000 under the plain words of the Asset Purchase Agreement. <!-- opposing_argument_id 101 -->
+- Witness statement of R. Opposing, para 6: "the delivery schedule was informal only" ↩️ <!-- opposing_argument_id 102 -->
 
 ## Legend
 

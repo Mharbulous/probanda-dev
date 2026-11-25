@@ -119,7 +119,8 @@ class KeyTypeTableTests(unittest.TestCase):
         for key, (keyed, _, writes, _) in self.rows.items():
             for name in re.findall(r"`([a-z_]+)`", keyed + " " + writes):
                 with self.subTest(key=key, table=name):
-                    self.assertIn(name, tables)
+                    # The stored key 'submissions' kept its name when the table became arguments (v82).
+                    self.assertIn({"submissions": "arguments"}.get(name, name), tables)
 
     def test_intakes_single_step_example_is_its_frame(self):
         frame = frames(self.rows["exhibit-pinpoint"][1])[0]
@@ -177,7 +178,7 @@ class SubmissionRowsTests(unittest.TestCase):
             INSERT INTO law_assertions (id, proceeding_id, proposition) VALUES (90, 1, 'Proposition one.'), (91, 1, 'Proposition two.');
             INSERT INTO statements_of_law (id, proceeding_id, law_assertion_id, authority_id, verification)
               VALUES (100, 1, 90, 80, 'lead'), (101, 1, 91, 81, 'lead');
-            INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (3, 1, 'Contention three.', 1), (4, 1, 'Contention four.', 2);
+            INSERT INTO arguments (id, proceeding_id, contention, ordinal, number) VALUES (3, 1, 'Contention three.', 1, 1), (4, 1, 'Contention four.', 2, 2);
             INSERT INTO filing_submissions (id, filing_id, submission_id, document, ordinal) VALUES (110, 8, 3, 'form', 1), (111, 8, 4, 'form', 2);
             INSERT INTO submission_facts (submission_id, fact_id) VALUES (3, 60), (4, 61);
             INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (3, 90), (4, 91);

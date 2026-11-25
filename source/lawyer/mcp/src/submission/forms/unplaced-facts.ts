@@ -10,7 +10,7 @@
 import { ValidationError } from "../../errors.js";
 import { submissionDataQuery } from "../backend.js";
 import { factsPart } from "./filing-facts.js";
-import type { FilingRow } from "./query.js";
+import { argumentsTable, type FilingRow } from "./query.js";
 
 export interface UnplacedFact {
   submission_id: number;
@@ -31,7 +31,7 @@ export function fetchUnplacedFacts(dbPath: string, filing: Pick<FilingRow, "id" 
     dbPath,
     `SELECT fs.submission_id, sf.fact_id, f.postulate
      FROM filing_submissions fs
-     JOIN submissions s ON s.id = fs.submission_id AND s.killed_on IS NULL
+     JOIN ${argumentsTable(dbPath)} s ON s.id = fs.submission_id AND s.killed_on IS NULL
      JOIN submission_facts sf ON sf.submission_id = fs.submission_id
      JOIN facts f ON f.id = sf.fact_id
      WHERE fs.filing_id = ? AND fs.document = 'form'

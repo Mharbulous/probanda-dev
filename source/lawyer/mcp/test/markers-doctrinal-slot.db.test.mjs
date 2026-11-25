@@ -53,7 +53,7 @@ INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, k
     -- to be good law, but the practitioner has not yet rejected it.
     (4, 1, 'Overruled Authority v. W', '2020 BCSC 4', 'case', NULL, 'overruled', NULL);
 
-INSERT INTO submissions (id, proceeding_id, contention, ordinal)
+INSERT INTO arguments (id, proceeding_id, contention, ordinal)
   VALUES (1, 1, 'One contention requiring four propositions.', 1);
 INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);
 

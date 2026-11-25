@@ -5117,3 +5117,126 @@ WHEN OLD.retired_on IS NULL AND NEW.retired_on IS NOT NULL
 BEGIN SELECT RAISE(ABORT, 'a draft is attached to this Writing''s Milestone: move or detach each attachment before retiring it (ADR 0042)'); END;
 
 UPDATE db_meta SET value = '81' WHERE key = 'schema_version';
+
+-- MIGRATE 81 -> 82
+-- One table of points and one link table (Brahm, 2026-11-25). The Arguments page mixed four
+-- vocabularies, and three link mechanisms (opposing_points.answered_by_submission_id and the two
+-- submission_rebuts_* tables) held one idea across three point tables. submissions becomes
+-- arguments, and opposing and anticipated points move into it with side = 'opposing'.
+-- argument_rebuts(rebuttal_id, argument_id) holds every link. Never stored, always derived: a row
+-- with a link out is a rebuttal, any other row an argument. Every link now answers its target, so
+-- a link from the old advisory tables clears ↩️ as the column did.
+--
+-- New columns on arguments: side ('ours', 'opposing' or 'neutral'), number (an argument's fixed
+-- per-proceeding number, never reused, NULL on a row that has only ever been a rebuttal),
+-- anticipated (1 on a predicted opposing argument), and an opposing argument's component and
+-- pinpoint. An opposing point's verbatim words become its contention, or its component when it
+-- recorded none.
+--
+-- The rename keeps every id, so filing_submissions, submission_facts, submission_law,
+-- order_sought_served_by and rhetorical_paragraph_submissions still point at the same rows, and
+-- SQLite rewrites their references and the triggers. Those tables, the stored key 'submissions'
+-- in ticket_scope and paragraph_revisions, and the index and reset_* trigger names keep their
+-- names. The three rev_submissions_* triggers become rev_arguments_*, the name the revision check
+-- looks for. The hop writes no filing_submissions row, so its frozen-Writing guards never fire.
+--
+-- A moved point takes a new id after the highest one in arguments. v82_point_map holds the old id
+-- against the new for this hop only. Each ticket_scope row naming an opposing or anticipated point
+-- becomes ('submissions', <new id>), a scope row naming a point that no longer exists is dropped,
+-- a whole-table scope row becomes ('submissions', NULL) once per job, and each "Answer opposing
+-- point <id>:" job title becomes "Answer opposing argument <new id>:", so its title guard still
+-- finds the job.
+--
+-- Numbers are given once per proceeding to the rows with no link out: ours by ordinal, then raised
+-- opposing arguments by ordinal, then anticipated ones by old id.
+--
+-- The hop writes rows, so it moves the revision and every page re-renders.
+ALTER TABLE submissions RENAME TO arguments;
+DROP TRIGGER rev_submissions_ins;
+DROP TRIGGER rev_submissions_upd;
+DROP TRIGGER rev_submissions_del;
+CREATE TRIGGER rev_arguments_ins AFTER INSERT ON arguments BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
+CREATE TRIGGER rev_arguments_upd AFTER UPDATE ON arguments BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
+CREATE TRIGGER rev_arguments_del AFTER DELETE ON arguments BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
+ALTER TABLE arguments ADD COLUMN side TEXT NOT NULL DEFAULT 'ours' CHECK (side IN ('ours', 'opposing', 'neutral'));
+ALTER TABLE arguments ADD COLUMN number INTEGER CHECK (number IS NULL OR number > 0);
+ALTER TABLE arguments ADD COLUMN anticipated INTEGER NOT NULL DEFAULT 0 CHECK (anticipated IN (0, 1));
+ALTER TABLE arguments ADD COLUMN component TEXT;
+ALTER TABLE arguments ADD COLUMN pinpoint TEXT;
+CREATE UNIQUE INDEX idx_arguments_number ON arguments(proceeding_id, number);
+
+CREATE TABLE argument_rebuts (
+    rebuttal_id INTEGER NOT NULL REFERENCES arguments(id),
+    argument_id INTEGER NOT NULL REFERENCES arguments(id),
+    PRIMARY KEY (rebuttal_id, argument_id),
+    CHECK (rebuttal_id <> argument_id)
+);
+
+CREATE INDEX idx_argument_rebuts_argument ON argument_rebuts(argument_id);
+
+CREATE TRIGGER rev_argument_rebuts_ins AFTER INSERT ON argument_rebuts BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
+CREATE TRIGGER rev_argument_rebuts_upd AFTER UPDATE ON argument_rebuts BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
+CREATE TRIGGER rev_argument_rebuts_del AFTER DELETE ON argument_rebuts BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
+
+CREATE TABLE v82_point_map (kind TEXT NOT NULL, old_id INTEGER NOT NULL, new_id INTEGER NOT NULL UNIQUE, PRIMARY KEY (kind, old_id));
+INSERT INTO v82_point_map (kind, old_id, new_id)
+SELECT 'opposing_points', id, (SELECT COALESCE(MAX(id), 0) FROM arguments) + ROW_NUMBER() OVER (ORDER BY id) FROM opposing_points;
+INSERT INTO v82_point_map (kind, old_id, new_id)
+SELECT 'anticipated_points', id,
+       (SELECT MAX(top) FROM (SELECT COALESCE(MAX(id), 0) AS top FROM arguments UNION ALL SELECT COALESCE(MAX(new_id), 0) FROM v82_point_map))
+       + ROW_NUMBER() OVER (ORDER BY id)
+FROM anticipated_points;
+
+INSERT INTO arguments (id, proceeding_id, contention, ordinal, side, component, pinpoint)
+SELECT m.new_id, o.proceeding_id, COALESCE(o.verbatim_words, o.component), o.ordinal, 'opposing', o.component, o.pinpoint
+FROM opposing_points o JOIN v82_point_map m ON m.kind = 'opposing_points' AND m.old_id = o.id;
+INSERT INTO arguments (id, proceeding_id, contention, ordinal, side, anticipated)
+SELECT m.new_id, a.proceeding_id, a.point, ROW_NUMBER() OVER (PARTITION BY a.proceeding_id ORDER BY a.id), 'opposing', 1
+FROM anticipated_points a JOIN v82_point_map m ON m.kind = 'anticipated_points' AND m.old_id = a.id;
+
+INSERT OR IGNORE INTO argument_rebuts (rebuttal_id, argument_id)
+SELECT o.answered_by_submission_id, m.new_id
+FROM opposing_points o JOIN v82_point_map m ON m.kind = 'opposing_points' AND m.old_id = o.id
+WHERE o.answered_by_submission_id IS NOT NULL;
+INSERT OR IGNORE INTO argument_rebuts (rebuttal_id, argument_id)
+SELECT r.submission_id, m.new_id
+FROM submission_rebuts_opposing_points r JOIN v82_point_map m ON m.kind = 'opposing_points' AND m.old_id = r.opposing_point_id;
+INSERT OR IGNORE INTO argument_rebuts (rebuttal_id, argument_id)
+SELECT r.submission_id, m.new_id
+FROM submission_rebuts_anticipated_points r JOIN v82_point_map m ON m.kind = 'anticipated_points' AND m.old_id = r.anticipated_point_id;
+
+INSERT OR IGNORE INTO rhetorical_paragraph_submissions (rhetorical_paragraph_id, submission_id)
+SELECT r.rhetorical_paragraph_id, m.new_id
+FROM rhetorical_paragraph_opposing_points r JOIN v82_point_map m ON m.kind = 'opposing_points' AND m.old_id = r.opposing_point_id;
+
+UPDATE ticket_scope SET entity = 'submissions', entity_id = m.new_id
+FROM v82_point_map m
+WHERE m.kind = ticket_scope.entity AND m.old_id = ticket_scope.entity_id;
+DELETE FROM ticket_scope WHERE entity IN ('opposing_points', 'anticipated_points') AND entity_id IS NOT NULL;
+DELETE FROM ticket_scope WHERE entity IN ('opposing_points', 'anticipated_points') AND (
+      EXISTS (SELECT 1 FROM ticket_scope t WHERE t.ticket_id = ticket_scope.ticket_id AND t.entity = 'submissions' AND t.entity_id IS NULL)
+      OR id NOT IN (SELECT MIN(id) FROM ticket_scope WHERE entity IN ('opposing_points', 'anticipated_points') GROUP BY ticket_id));
+UPDATE ticket_scope SET entity = 'submissions' WHERE entity IN ('opposing_points', 'anticipated_points');
+
+UPDATE tickets SET title = 'Answer opposing argument ' || m.new_id || substr(tickets.title, 22 + instr(substr(tickets.title, 23), ':'))
+FROM v82_point_map m
+WHERE tickets.title LIKE 'Answer opposing point %:%' AND m.kind = 'opposing_points'
+  AND m.old_id = CAST(substr(tickets.title, 23, instr(substr(tickets.title, 23), ':') - 1) AS INTEGER);
+
+UPDATE arguments SET number = x.n
+FROM (SELECT a.id, ROW_NUMBER() OVER (
+          PARTITION BY a.proceeding_id
+          ORDER BY CASE WHEN a.side = 'ours' THEN 0 WHEN a.anticipated = 0 THEN 1 ELSE 2 END,
+                   CASE WHEN a.anticipated = 1 THEN NULL ELSE a.ordinal END, a.id) AS n
+      FROM arguments a
+      WHERE NOT EXISTS (SELECT 1 FROM argument_rebuts r WHERE r.rebuttal_id = a.id)) x
+WHERE x.id = arguments.id;
+
+DROP TABLE rhetorical_paragraph_opposing_points;
+DROP TABLE submission_rebuts_opposing_points;
+DROP TABLE submission_rebuts_anticipated_points;
+DROP TABLE opposing_points;
+DROP TABLE anticipated_points;
+DROP TABLE v82_point_map;
+
+UPDATE db_meta SET value = '82' WHERE key = 'schema_version';
