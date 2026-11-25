@@ -76,7 +76,7 @@ nothing. Each other question it held is one the practitioner raised (below). An 
 run reports and stops.
 
 **A new question is a new job or a new scope.** When the practitioner raises a question this
-research does not hold, ask exactly one question: "Do you want this investigated as an
+research does not hold, ask exactly one question: "Do you want this researched as an
 additional issue (a new research job), or are you changing the scope of this job?" On the
 first, write it as a research job by `drafting-data/references/jobs-stock.md` §3l, on their approval of its issue. On the second, reword the question (a held job by §3m) and
 research that. Offer no third path.

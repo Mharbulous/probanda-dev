@@ -73,6 +73,7 @@ terms:
   - Hunch
   - Inferred proposition
   - Instrument
+  - Investigation
   - Issue
   - Item
   - Job
@@ -132,6 +133,7 @@ terms:
   - Redirect
   - Reliance on a rule
   - Representative
+  - Research
   - Reserve
   - Retire
   - Revision stamp
@@ -466,6 +468,10 @@ A research memo's Rule item, its sentence opening `inferred:`, that states a rul
 The executed or served document through which something reaches the forum — two vehicles, both fact-domain. The **witness's instrument** carries a witness's words: an affidavit or a witness statement (`statement.instrument`); execution is the signing or swearing (🖋️ sign it ⊕ ✒️ swear it), and an account with no instrument yet is ✍️ draft it. The **admission instrument** is the document through which an admission is sought from a party — notice to admit, pleading, interrogatories, or the examination transcript (`admissions.instrument`); its work is service (🎾). Fact domain only: published law arrives already executed.
 _Avoid_: vehicle (generic, used only in design prose); document (too wide); affidavit, notice (one kind each); request, demand, ask (no single word covers the four methods).
 
+**Investigation**:
+Searching for and marshalling evidence (documents, exhibits, affidavits, correspondence, contract terms) to establish what happened. Reviewing an evidence document is investigation. Defined in `source/skills/shared/paralegal-posture.md`, section 6.
+_Avoid_: research for fact-finding.
+
 **Issue**:
 A question in dispute, typed as **factual** (a question of fact), **legal** (a question of law), or **mixed** (a question of mixed fact and law). Issues connect facts and legal criteria to the practitioner's strategic view of what is contested.
 
@@ -716,6 +722,10 @@ _Avoid_: relying party (the party who must establish an **Element**).
 
 **Representative**:
 The principle a **Variant** points at. In the pool it is a principle whose `variant_of` field is empty, and its cluster is that principle with every variant that points at it, one level deep. The word matters only where a variant points at the principle.
+
+**Research**:
+Searching for and reviewing authorities (cases, legislation, rules, secondary sources) to state what the law is. Only `/legal-research` does it. Defined in `source/skills/shared/paralegal-posture.md`, section 6.
+_Avoid_: investigate for a question of law; research for reviewing evidence.
 
 **Reserve**:
 Whether a postulate, statement, authority, argument or order sought is held back — stored and drafted, rendered only in the Mockup's trailing "Held in reserve" section, marked 🂡, never in the filed face — or deployed into the body. How held-in-reserve material lives in the same database as delivered material. A reserved row is still work (deploy-or-abandon is deferred, not absent).

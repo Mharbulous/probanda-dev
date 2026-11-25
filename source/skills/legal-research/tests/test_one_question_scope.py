@@ -27,7 +27,7 @@ def step_2a():
     return flat(text[start:text.index("\n3. ", start)])
 
 
-TWO_OPTIONS = ('"Do you want this investigated as an additional issue (a new research job), or are you '
+TWO_OPTIONS = ('"Do you want this researched as an additional issue (a new research job), or are you '
                'changing the scope of this job?"')
 
 
