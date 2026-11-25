@@ -90,8 +90,7 @@ def how_to_present(paths):
             "device_request_folder_access call for the matter folder, and call SendUserFile on the staged path, "
             "never the PC path. If "
             "device_stage_files is not in your tool list after the folder grant, load it with a select: ToolSearch "
-            "first. If neither is listed, "
-            "say in one line that the page is in the matter's draft folder. Never read the page.")
+            "first. Never read the page.")
 
 
 def post_tool_use(payload):

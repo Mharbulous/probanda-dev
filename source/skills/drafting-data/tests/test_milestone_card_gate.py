@@ -130,6 +130,11 @@ class PostToolUseTest(unittest.TestCase):
         self.assertIn("never the PC path", context)
         self.assertIn("select: ToolSearch", context)
 
+    def test_no_card_tool_case_is_left_to_the_shared_rule(self):
+        context = self.post(OPEN, mcp_text({"milestone_path": PAGE}))
+        self.assertIn("presenting a file", context)
+        self.assertNotIn("If neither is listed", context)
+
     def test_response_given_as_object_or_content_dict(self):
         self.assertIn(PAGE, self.post(COMPLETE, {"pages_written": True, "board_changed": True, "milestone_path": PAGE}))
         self.assertIn(PAGE, self.post(RENDER, {"content": mcp_text(filing_render(True, True))}))
