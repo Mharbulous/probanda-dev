@@ -1,4 +1,4 @@
-// build-stamp: 050c025a3be1
+// build-stamp: 5910872b953b
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75267,7 +75267,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "050c025a3be1";
+var BUILD_STAMP = false ? null : "5910872b953b";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -115486,7 +115486,7 @@ var CONVERTERS = {
 var LATER = ["efiling_statement", "register_only"];
 var CLOSABLE = ["facts", "attachment", "affidavit_body", "affidavit_exhibits", "sought_orders", "caselaw", "provision"];
 var ROUTED_ONLY = ["attachment", "caselaw", "provision", "affidavit_body", "affidavit_exhibits"];
-var COUNTS = ["facts", "positions", "relief", "links", "exhibits"];
+var COUNTS = ["facts", "positions", "relief", "links", "exhibits", "issues"];
 var RESULT_CAP = 600;
 var SAY_REFUSED = {
   waiting: "This part will be recorded once the rest of its document is in.",
@@ -115885,7 +115885,7 @@ async function write(args, env, run2, filePath, fileHash, results, dropAlso, loc
   }
   if (plan2.summary) report.unshift(plan2.summary);
   else if (plan2.title && !plan2.failed) {
-    report.unshift(`${plan2.title.slice(0, 60)}: ${counts3.facts} facts, ${counts3.positions} positions, ${counts3.relief} relief items, ${counts3.links} evidence links${counts3.exhibits ? `, ${counts3.exhibits} exhibits` : ""}.`);
+    report.unshift(`${plan2.title.slice(0, 60)}: ${counts3.facts} facts, ${counts3.positions} positions, ${counts3.relief} relief items, ${counts3.links} evidence links${counts3.exhibits ? `, ${counts3.exhibits} exhibits` : ""}${counts3.issues ? `, ${counts3.issues} issues` : ""}.`);
   }
   if (plan2.failed && !plan2.summary) report.unshift(`${(plan2.title ?? "This document").slice(0, 60)} could not be read and is recorded as not read.`);
   const asked = asks.filter((a3) => !(args.contract === "affidavit_exhibits" && badLetters.includes(a3.ref)));

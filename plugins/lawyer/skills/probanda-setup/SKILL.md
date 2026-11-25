@@ -3,7 +3,7 @@ name: probanda-setup
 description: "Set Probanda up on a device where it has never been set up: a practice_data tool reports probanda.json not found, or practice_data__config_status reports exists false. Finds the practitioner's 0. CASE DATA folder (or where to create one), writes this device's probanda.json, creates the practice database, records who uses this device, connects the folder suggestions are shown from, and records where the practitioner keeps each kind of document (their folder map). Also use it, on a device already set up, when another skill reports that Probanda does not yet know where the practitioner keeps each kind of document: it then runs only that step. Not for a settings file that exists but is broken (practice-data's repair), or for a tool that fails on a device already set up."
 ---
 
-<!-- lawyer v0.32.0 -->
+<!-- lawyer v0.32.1 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.
