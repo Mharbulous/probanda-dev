@@ -4,7 +4,7 @@ user-invocable: false
 description: Internal writer of every skill's knowledge tree. Learns a venue's or audience's requirements for one or two document kinds from official published sources and records them in the calling skill's tree, or confirms, corrects, refreshes or retires a learned file. Invoked by name by a tree-owning skill (draft, publish, or the docket-clerk agent's caller), never by the user.
 ---
 
-<!-- lawyer v0.32.1 -->
+<!-- lawyer v0.32.2 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

@@ -4,7 +4,7 @@ disable-model-invocation: true
 description: Review a draft invoice against time entries and invoice data before sending. Use to check, review, or sanity-check a draft invoice or a matter's billing before sending, or whether entries are missing or amounts look unusual.
 ---
 
-<!-- billing v0.8.0 -->
+<!-- billing v0.8.1 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

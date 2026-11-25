@@ -4,7 +4,7 @@ description: >
   Brief one court decision in someone else's case: a one-page structured summary (Case, Facts, Procedural history, Issues, Holding, Ratio decidendi, Obiter dicta, Disposition), saved in the matter's law folder and listed on the Legal Research page. Use when the practitioner asks to brief a case, or works a case brief job. Never for a decision in the matter's own litigation. Whether a case helps this matter -> /apply-to-facts.
 ---
 
-<!-- researcher v0.22.0 -->
+<!-- researcher v0.22.1 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

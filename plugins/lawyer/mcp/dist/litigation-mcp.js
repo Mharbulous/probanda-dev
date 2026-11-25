@@ -1,4 +1,4 @@
-// build-stamp: 5910872b953b
+// build-stamp: 0debc1920a4e
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75267,7 +75267,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "5910872b953b";
+var BUILD_STAMP = false ? null : "0debc1920a4e";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -79390,7 +79390,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("take_job"),
-      description: "Take a Ready job in one call: every check before the assigning write that needs no judgement, then assign_job's guarded write, then the job's `Started Job <N>: <title>.` entry in matter_root's ProceduralHistory.md, dated today. Refused, writing nothing, on the first check that fails, with reason: not_ready, no_steps, needs_plan (the plan marker is the only step), long_title (over 12 words, on a job the pickup review covers: no step done, no plan approved, no keys, not fixed-text), duplicates (other live jobs on its Writing sharing a key, a scope entry or two title words, each with its card; pass the ones judged not the same work in not_duplicates and call again), restates (steps, by ordinal, equal to or containing the title or intent), and on a one-step job keys_dead, some_keys_dead or item_changed (a fast-path job's item reworded). A rewrite goes through drafting_data__rewrite_job, then take_job again. Otherwise returns assign_job's outcome: before_bf (with bf_on), lost_race, not_created_here, no_match, each writing nothing; or assigned with claim_no, header (`# Job <N>: <title>`), card (as drafting_forms__board_card prints the job), premise {state: holds|failed|none, line} and history {added, note}. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. Never retry to win. It moves no revision.",
+      description: "Take a Ready job in one call: every check before the assigning write that needs no judgement, then assign_job's guarded write, then the job's `Started Job <N>: <title>.` entry in matter_root's ProceduralHistory.md, dated today. Refused, writing nothing, on the first check that fails, with reason: not_ready, no_steps, needs_plan (the plan marker is the only step, unless the token is an unattended run's), long_title (over 12 words, on a job the pickup review covers: no step done, no plan approved, no keys, not fixed-text), duplicates (other live jobs on its Writing sharing a key, a scope entry or two title words, each with its card; pass the ones judged not the same work in not_duplicates and call again), restates (steps, by ordinal, equal to or containing the title or intent), and on a one-step job keys_dead, some_keys_dead or item_changed (a fast-path job's item reworded). A rewrite goes through drafting_data__rewrite_job, then take_job again. Otherwise returns assign_job's outcome: before_bf (with bf_on), lost_race, not_created_here, no_match, each writing nothing; or assigned with claim_no, header (`# Job <N>: <title>`), card (as drafting_forms__board_card prints the job), premise {state: holds|failed|none, line} and history {added, note}. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. Never retry to win. It moves no revision.",
       inputSchema: {
         type: "object",
         properties: {
@@ -88821,6 +88821,71 @@ async function submissionDataTrackSource(args, env = process.env) {
   };
 }
 
+// src/submission/forms/approve-plan.ts
+var TOOL2 = "drafting_data__approve_plan";
+var PLAN_MARKER = "Create a plan for how to complete this job.";
+async function submissionDataApprovePlan(args, env = process.env) {
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL2}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
+    throw new ValidationError(`${TOOL2}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+  }
+  const id = args.ticket_id;
+  const [job] = submissionDataQuery(
+    args.db_path,
+    "SELECT (SELECT COUNT(*) FROM ticket_steps WHERE ticket_id = tickets.id) AS steps, (SELECT COUNT(*) FROM ticket_steps WHERE ticket_id = tickets.id AND text = ?) AS markers FROM tickets WHERE id = ?",
+    [PLAN_MARKER, id]
+  ).rows;
+  if (job === void 0) throw new NotFoundError(`${TOOL2}: no job ${id} in ${args.db_path}`, "not_found");
+  if (job.steps === 0) throw new DataServerError(`${TOOL2}: job ${id} has no steps, so there is no plan to approve; nothing was written`, "no_steps");
+  if (job.steps === 1 && job.markers === 1) {
+    throw new DataServerError(`${TOOL2}: job ${id}'s only step is "${PLAN_MARKER}" and nothing was written. What steps will complete this job?`, "plan_marker_only");
+  }
+  const held2 = heldBy(args.db_path, args.session_token, checkClaim(TOOL2, args.db_path, id, args.session_token, args.claim_no));
+  const written = await submissionDataWriteAll(
+    args.db_path,
+    [
+      { sql: `UPDATE tickets SET plan_approved_at = ${nowMinuteSql()} WHERE id = ? AND ${held2.sql} AND plan_approved_at IS NULL`, params: [id, ...held2.params] },
+      ...touchStatements(args.db_path, id, held2)
+    ],
+    env
+  );
+  const changes = written.ok ? written.results[0].changes : written.changes;
+  const [read3] = submissionDataQuery(args.db_path, "SELECT id, status, rejected_at, locked_by, plan_approved_at FROM tickets WHERE id = ?", [id]).rows;
+  if (read3 === void 0) throw new NotFoundError(`${TOOL2}: no job ${id} in ${args.db_path}`, "not_found");
+  let outcome;
+  let note;
+  if (changes === 1) {
+    outcome = "approved";
+    note = `Job ${id}'s plan is approved as its steps stand (plan_approved_at ${read3.plan_approved_at}).`;
+  } else if (read3.locked_by === args.session_token && read3.plan_approved_at !== null) {
+    outcome = "already_approved";
+    note = `Job ${id}'s plan was already approved at ${read3.plan_approved_at}; nothing was written, and its steps and their stamps stand.`;
+  } else if (read3.locked_by !== null && read3.locked_by !== args.session_token) {
+    outcome = "not_held";
+    note = `Job ${id}'s plan was not approved: another session holds it (taken over), so nothing was written. Report it and stop; never re-run.`;
+  } else if (read3.locked_by === null && read3.rejected_at !== null) {
+    outcome = "shelved";
+    note = `Job ${id}'s plan was not approved: it is shelved (rejected_at ${read3.rejected_at}), so nothing was written. Report it and stop.`;
+  } else if (read3.status === "completed") {
+    outcome = "completed";
+    note = `Job ${id}'s plan was not approved: it is completed, so nothing was written. Report it and stop.`;
+  } else {
+    outcome = "no_match";
+    note = `Job ${id}'s plan was not approved: its row is status=${read3.status}, locked_by=${read3.locked_by === null ? "NULL" : "set"}, rejected_at=${read3.rejected_at ?? "NULL"}, so the guards matched nothing. Report it and stop; never re-run.`;
+  }
+  return {
+    ticket_id: id,
+    outcome,
+    changes,
+    plan_approved_at: read3.plan_approved_at,
+    locked_by: read3.locked_by,
+    status: read3.status,
+    rejected_at: read3.rejected_at,
+    note,
+    ...written.warning ? { warning: written.warning } : {}
+  };
+}
+
 // src/submission/forms/markers.ts
 function gapMarker(wrapper) {
   switch (wrapper) {
@@ -89718,12 +89783,13 @@ function eligibleKey(key) {
 var livePartner = (p3) => p3.status === null || (p3.status === "queued" || p3.status === "wip") && !p3.rejected;
 function ineligibleReasons(ticket, filed, printed, titles, inProgress2) {
   const texts = [ticket.title, ticket.intent, ...ticket.steps.slice(0, 1).map((s3) => s3.text)];
+  const planMarker = ticket.steps.length === 1 && ticket.steps[0].text === PLAN_MARKER;
   const failing = {
     not_ready: ticket.category !== "ready",
     filing_filed: filed,
-    no_inventory: printed === null,
+    no_inventory: printed === null && !planMarker,
     not_one_step: ticket.steps.length !== 1,
-    no_proposal_keys: ticket.proposal_keys.length === 0,
+    no_proposal_keys: ticket.proposal_keys.length === 0 && !planMarker,
     dead_key: printed !== null && ticket.proposal_keys.some((key) => !printed.has(key)),
     reworded: printed !== null && ticket.proposal_keys.some((key) => printed.has(key) && texts.some((text11) => text11 !== titles.get(key))),
     marker_not_eligible: ticket.proposal_keys.some((key) => !eligibleKey(key)),
@@ -89742,6 +89808,12 @@ function groupBy2(items2, key) {
     map.set(key(item), list3);
   }
   return map;
+}
+function lockNote(category, lock, approved, steps, keyed) {
+  if (!lock?.startsWith(UNATTENDED_TOKEN_PREFIX)) return null;
+  const planned = !keyed && approved === null && steps.length > 0 && !(steps.length === 1 && steps[0].text === PLAN_MARKER);
+  const notes = [...category === "wip" ? ["In progress with nobody present"] : [], ...planned ? ["Plan written without you: review, change or approve"] : []];
+  return notes.length === 0 ? null : notes.join(" \xB7 ");
 }
 function buildProceedingBoard(dbPath, proceedingId, rendered = nowStamp()) {
   const today3 = rendered.slice(0, 10);
@@ -89774,6 +89846,7 @@ function buildProceedingBoard(dbPath, proceedingId, rendered = nowStamp()) {
   const released = (t3) => ({ ...t3, status: "queued", locked_by: null, locked_at: null });
   const timed2 = (t3) => ({ ...t3, last_activity_at: lastActivity(t3), steps: stepsByTicket.get(t3.id) ?? [] });
   const proceedingTickets = heldTickets.map((t3) => lockLapsed(timed2(t3), rendered) ? released(t3) : t3);
+  const heldLock = new Map(heldTickets.map((t3) => [t3.id, t3.locked_by]));
   const ticketById = new Map(proceedingTickets.map((t3) => [t3.id, t3]));
   const activeById = new Map(
     rows(dbPath, "SELECT key, value FROM db_meta WHERE key LIKE 'job_active:%'").map((r3) => [Number(r3.key.slice("job_active:".length)), r3.value])
@@ -89834,7 +89907,7 @@ function buildProceedingBoard(dbPath, proceedingId, rendered = nowStamp()) {
       // A board with no filing has no inventory; a filing's board replaces this.
       ineligible_reasons: ["no_inventory"],
       dispatch_skips: [],
-      lock_note: category === "wip" && t3.locked_by?.startsWith(UNATTENDED_TOKEN_PREFIX) ? "In progress with nobody present" : null,
+      lock_note: lockNote(category, heldLock.get(t3.id) ?? null, t3.plan_approved_at, stepsByTicket.get(t3.id) ?? [], proposalsByTicket.has(t3.id)),
       answers: (answersByTicket.get(t3.id) ?? []).map((a3) => ({ file_path: a3.file_path, saved_at: a3.saved_at })),
       sources: (sourcesByTicket.get(t3.id) ?? []).map((s3) => ({ kind: s3.kind, label: s3.label, outcome: s3.outcome, reason: s3.reason })),
       last_activity_at: lastActivity(t3),
@@ -96255,42 +96328,42 @@ function rendererKind(venue, typeFile, candidates, seams = {}) {
 }
 
 // src/submission/forms/layout-snapshot.ts
-var TOOL2 = "drafting_data__create_writing";
+var TOOL3 = "drafting_data__create_writing";
 function isObject6(value2) {
   return typeof value2 === "object" && value2 !== null && !Array.isArray(value2);
 }
 function treeKeyOf(raw) {
-  if (!isObject6(raw)) throw new ValidationError(`${TOOL2}.tree must be {country, jurisdiction, venue}`);
+  if (!isObject6(raw)) throw new ValidationError(`${TOOL3}.tree must be {country, jurisdiction, venue}`);
   const extra = Object.keys(raw).filter((k3) => !["country", "jurisdiction", "venue"].includes(k3));
-  if (extra.length > 0) throw new ValidationError(`${TOOL2}.tree has unknown field(s) ${extra.join(", ")} (allowed: country, jurisdiction, venue)`);
+  if (extra.length > 0) throw new ValidationError(`${TOOL3}.tree has unknown field(s) ${extra.join(", ")} (allowed: country, jurisdiction, venue)`);
   const segments = ["country", "jurisdiction", "venue"].map((field) => {
     const value2 = raw[field];
     if (typeof value2 !== "string" || value2 === "" || /[\\/]/.test(value2)) {
-      throw new ValidationError(`${TOOL2}.tree.${field} must be one folder name of /draft's knowledge tree`);
+      throw new ValidationError(`${TOOL3}.tree.${field} must be one folder name of /draft's knowledge tree`);
     }
     return value2;
   });
   const key = segments.join("/");
-  parseKnowledgePath(`draft/${key}`, `${TOOL2}.tree`);
+  parseKnowledgePath(`draft/${key}`, `${TOOL3}.tree`);
   return { segments, key, noVenue: segments[2] === NO_VENUE };
 }
 function buildSnapshot(args, seams = {}) {
   const { segments, key, noVenue } = treeKeyOf(args.tree);
   if (noVenue && args.recipient === void 0) {
-    throw new ValidationError(`${TOOL2}: a _NoVenue kind needs recipient (${AUDIENCES.join(", ")})`);
+    throw new ValidationError(`${TOOL3}: a _NoVenue kind needs recipient (${AUDIENCES.join(", ")})`);
   }
   if (!noVenue && args.recipient !== void 0) {
-    throw new ValidationError(`${TOOL2}: recipient applies only under _NoVenue; a venue's kinds carry no recipient`);
+    throw new ValidationError(`${TOOL3}: recipient applies only under _NoVenue; a venue's kinds carry no recipient`);
   }
   if (args.recipient !== void 0 && !AUDIENCES.includes(args.recipient)) {
-    throw new ValidationError(`${TOOL2}: recipient must be one of ${AUDIENCES.join(", ")}`);
+    throw new ValidationError(`${TOOL3}: recipient must be one of ${AUDIENCES.join(", ")}`);
   }
   const [country, jurisdiction, venue] = segments;
   const composed = composeLayoutSnapshot({ country, jurisdiction, venue, kind: args.kind }, seams);
   const typeFile = composed.stored.type_file;
   if (noVenue && composed.recipient !== args.recipient) {
     throw new ValidationError(
-      `${TOOL2}: kind "${args.kind}" is ${typeFile}, whose recipient is ${composed.recipient}, but recipient ${args.recipient} was passed`,
+      `${TOOL3}: kind "${args.kind}" is ${typeFile}, whose recipient is ${composed.recipient}, but recipient ${args.recipient} was passed`,
       "recipient_mismatch"
     );
   }
@@ -96298,10 +96371,10 @@ function buildSnapshot(args, seams = {}) {
   const { proceeding: proceeding2 } = args;
   if (!noVenue && proceeding2.forum !== key) {
     if (proceeding2.forum === null && needsForum) {
-      throw new DataServerError(`${TOOL2}: proceeding ${proceeding2.id} has no forum, and ${typeFile} needs forum parts; choose the forum first`, "needs_forum");
+      throw new DataServerError(`${TOOL3}: proceeding ${proceeding2.id} has no forum, and ${typeFile} needs forum parts; choose the forum first`, "needs_forum");
     }
     throw new DataServerError(
-      `${TOOL2}: tree key ${key} is not proceeding ${proceeding2.id}'s forum (${proceeding2.forum ?? "not chosen"}); a venue's Writing sits on a proceeding in that venue`,
+      `${TOOL3}: tree key ${key} is not proceeding ${proceeding2.id}'s forum (${proceeding2.forum ?? "not chosen"}); a venue's Writing sits on a proceeding in that venue`,
       "forum_mismatch"
     );
   }
@@ -96334,7 +96407,7 @@ function citedStates(stored, filing, seams = {}) {
   return out;
 }
 function signerRefused(message) {
-  return new DataServerError(`${TOOL2}: ${message}`, "invalid_signer");
+  return new DataServerError(`${TOOL3}: ${message}`, "invalid_signer");
 }
 function activeLawyer(profile, key) {
   return profile.roster.some((entry4) => entry4.key === key && entry4.role === "lawyer" && entry4.active !== false);
@@ -96367,14 +96440,14 @@ function chooseSigner(layout, args, proceeding2, env, fallback) {
 async function submissionDataCreateWriting(args, seams = {}) {
   const env = seams.env ?? process.env;
   if (args.kind === MILESTONE_KIND) {
-    throw new ValidationError(`${TOOL2}.kind "${MILESTONE_KIND}" is reserved for a Work Board with no Writing; create one through drafting_data__create_milestone`, "reserved_kind");
+    throw new ValidationError(`${TOOL3}.kind "${MILESTONE_KIND}" is reserved for a Work Board with no Writing; create one through drafting_data__create_milestone`, "reserved_kind");
   }
   const proceeding2 = fetchProceeding(args.db_path, args.proceeding_id);
   const styleSuffix = proceeding2.style_of_cause ? ` - ${proceeding2.style_of_cause}` : null;
   const title2 = args.title.trim();
   if (styleSuffix !== null && title2.endsWith(styleSuffix)) {
     throw new ValidationError(
-      `${TOOL2}.title "${title2}" ends with the proceeding's style of proceeding; a title names the Writing only. Nothing was written. Pass "${title2.slice(0, -styleSuffix.length).trim()}" instead.`,
+      `${TOOL3}.title "${title2}" ends with the proceeding's style of proceeding; a title names the Writing only. Nothing was written. Pass "${title2.slice(0, -styleSuffix.length).trim()}" instead.`,
       "title_holds_style"
     );
   }
@@ -96417,7 +96490,7 @@ async function submissionDataCreateWriting(args, seams = {}) {
   }
   if (!written.ok) {
     throw new DataServerError(
-      `${TOOL2}: proceeding ${proceeding2.id}'s forum changed from ${built.forum} while the Writing was being created; nothing was written`,
+      `${TOOL3}: proceeding ${proceeding2.id}'s forum changed from ${built.forum} while the Writing was being created; nothing was written`,
       "forum_mismatch"
     );
   }
@@ -96885,7 +96958,7 @@ function unmetPositionConflictCriterion(dbPath, filing) {
 }
 
 // src/submission/forms/board-goals.ts
-var TOOL3 = "drafting_data__set_board_goal";
+var TOOL4 = "drafting_data__set_board_goal";
 var FILING_PREFIX = "board_goal:filing:";
 var PROCEEDING_PREFIX = "board_goal:proceeding:";
 var STATUSES = ["confirmed", "inferred", "declined"];
@@ -96933,30 +97006,30 @@ function framingWarning(statement, description) {
 }
 async function submissionDataSetBoardGoal(args, env = process.env) {
   if (args.filing_id === void 0 === (args.proceeding_id === void 0)) {
-    throw new ValidationError(`${TOOL3} takes exactly one of filing_id and proceeding_id`, "invalid_board");
+    throw new ValidationError(`${TOOL4} takes exactly one of filing_id and proceeding_id`, "invalid_board");
   }
   const id = args.filing_id ?? args.proceeding_id;
-  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL3}: the board id must be a positive integer`, "invalid_board");
+  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL4}: the board id must be a positive integer`, "invalid_board");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL3}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL4}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const status3 = args.status;
-  if (!STATUSES.includes(status3)) throw new ValidationError(`${TOOL3}.status must be confirmed, inferred or declined`, "invalid_status");
+  if (!STATUSES.includes(status3)) throw new ValidationError(`${TOOL4}.status must be confirmed, inferred or declined`, "invalid_status");
   const statement = args.statement ?? null;
   if (status3 === "declined" ? statement !== null : typeof statement !== "string" || statement.trim() === "") {
     throw new ValidationError(
-      status3 === "declined" ? `${TOOL3}: a declined statement of goals carries no statement` : `${TOOL3}.statement must be the statement of goals, not blank`,
+      status3 === "declined" ? `${TOOL4}: a declined statement of goals carries no statement` : `${TOOL4}.statement must be the statement of goals, not blank`,
       "invalid_statement"
     );
   }
   if (args.description !== void 0 && (typeof args.description !== "string" || args.description.trim() === "")) {
-    throw new ValidationError(`${TOOL3}.description must not be blank; omit it to keep the stored or default description`, "invalid_description");
+    throw new ValidationError(`${TOOL4}.description must not be blank; omit it to keep the stored or default description`, "invalid_description");
   }
   const onFiling = args.filing_id !== void 0;
   if (onFiling) {
     const [f3] = submissionDataQuery(args.db_path, "SELECT kind FROM filings WHERE id = ?", [id]).rows;
-    if (f3 === void 0) throw new NotFoundError(`${TOOL3}: no Writing or Work Board ${id} in ${args.db_path}`, "not_found");
-    if (isResearchWriting(f3)) throw new ValidationError(`${TOOL3}: Writing ${id} is a research result, which has no board and so no goal -- set the goal on its proceeding's board`, "research_writing");
+    if (f3 === void 0) throw new NotFoundError(`${TOOL4}: no Writing or Work Board ${id} in ${args.db_path}`, "not_found");
+    if (isResearchWriting(f3)) throw new ValidationError(`${TOOL4}: Writing ${id} is a research result, which has no board and so no goal -- set the goal on its proceeding's board`, "research_writing");
   } else {
     if (submissionDataQuery(args.db_path, "SELECT 1 FROM proceedings WHERE id = ?", [id]).rows.length === 0) {
       throw new NotFoundError("That proceeding is not in this matter's drafting records", "not_found");
@@ -96970,7 +97043,7 @@ async function submissionDataSetBoardGoal(args, env = process.env) {
   if (index.absorbed(board)) {
     const s3 = index.survivorOf(board);
     throw new ValidationError(
-      `${TOOL3}: ${onFiling ? `Work Board ${id}` : `proceeding ${id}'s board`} is merged into ${s3.filing_id === null ? `proceeding ${s3.proceeding_id}'s board` : `Work Board ${s3.filing_id}`}; set the goal there`,
+      `${TOOL4}: ${onFiling ? `Work Board ${id}` : `proceeding ${id}'s board`} is merged into ${s3.filing_id === null ? `proceeding ${s3.proceeding_id}'s board` : `Work Board ${s3.filing_id}`}; set the goal there`,
       "board_merged"
     );
   }
@@ -96979,10 +97052,10 @@ async function submissionDataSetBoardGoal(args, env = process.env) {
   const merged = prior?.merged ?? [];
   const at = args.merged_index;
   if (at !== void 0 && (!Number.isInteger(at) || at < 1 || at > merged.length)) {
-    throw new ValidationError(`${TOOL3}.merged_index must be between 1 and ${merged.length}, the board's merged statements`, "invalid_merged_index");
+    throw new ValidationError(`${TOOL4}.merged_index must be between 1 and ${merged.length}, the board's merged statements`, "invalid_merged_index");
   }
   if (at !== void 0 && status3 === "declined") {
-    throw new ValidationError(`${TOOL3}: a merged statement is confirmed or inferred, never declined`, "invalid_status");
+    throw new ValidationError(`${TOOL4}: a merged statement is confirmed or inferred, never declined`, "invalid_status");
   }
   const description = args.description ?? (at === void 0 ? prior?.description : merged[at - 1].description) ?? null;
   const stale = submissionDataQuery(
@@ -97005,9 +97078,9 @@ async function submissionDataSetBoardGoal(args, env = process.env) {
     ],
     env
   );
-  if (!written.ok) throw new DataServerError(`${TOOL3}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
+  if (!written.ok) throw new DataServerError(`${TOOL4}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
   const whole = readStored(args.db_path, key);
-  if (whole === null) throw new DataServerError(`${TOOL3}: ${key} is missing after the write`, "write_failed");
+  if (whole === null) throw new DataServerError(`${TOOL4}: ${key} is missing after the write`, "write_failed");
   const stored = at === void 0 ? whole : whole.merged[at - 1];
   const label2 = `${onFiling ? `Work Board ${id}` : `proceeding ${id}'s board`}${at === void 0 ? "" : ` (merged statement ${at})`}`;
   const note = status3 === "confirmed" ? `The statement of goals on ${label2} is recorded as confirmed (approved_at ${stored.approved_at}). Re-render to show it.` : status3 === "inferred" ? `The statement of goals on ${label2} is recorded as inferred: the session's wording, not confirmed. Re-render to show it.` : `The practitioner's decline is recorded on ${label2}: no statement is stored. Re-render to show it.`;
@@ -101062,7 +101135,7 @@ ${page2.tail}`;
 }
 
 // src/submission/forms/board-viewed.ts
-var TOOL4 = "drafting_data__record_viewed";
+var TOOL5 = "drafting_data__record_viewed";
 function viewedKey(board) {
   return `board_viewed:${boardKey(board)}`;
 }
@@ -101124,7 +101197,7 @@ function stripTargets(dbPath) {
 }
 async function submissionDataRecordViewed(args, env = process.env) {
   if (!Array.isArray(args.paths) || args.paths.length === 0 || !args.paths.every((p3) => typeof p3 === "string" && p3.trim() !== "")) {
-    throw new ValidationError(`${TOOL4}.paths must list the presented paths, none blank`, "invalid_paths");
+    throw new ValidationError(`${TOOL5}.paths must list the presented paths, none blank`, "invalid_paths");
   }
   const targets = stripTargets(args.db_path);
   const matched = args.paths.map((path) => {
@@ -101132,10 +101205,10 @@ async function submissionDataRecordViewed(args, env = process.env) {
     let hits = targets.filter((t3) => t3.file.toLowerCase() === name);
     if (hits.length > 1) hits = hits.filter((t3) => inFolderOf(t3, path));
     if (hits.length !== 1 && targets.some((t3) => t3.file.toLowerCase() === name)) {
-      throw new ValidationError(`${TOOL4}: several thumbnails are named ${name} and its folder holds none of them; pass the path in its Writing's own folder. Nothing was written.`, "ambiguous_path");
+      throw new ValidationError(`${TOOL5}: several thumbnails are named ${name} and its folder holds none of them; pass the path in its Writing's own folder. Nothing was written.`, "ambiguous_path");
     }
     if (hits.length === 0) {
-      throw new ValidationError(`${TOOL4}: ${path} is no thumbnail on a Work Board: neither a view page nor a Writing's mockup. Nothing was written.`, "not_a_strip_item");
+      throw new ValidationError(`${TOOL5}: ${path} is no thumbnail on a Work Board: neither a view page nor a Writing's mockup. Nothing was written.`, "not_a_strip_item");
     }
     return hits[0];
   });
@@ -101154,7 +101227,7 @@ async function submissionDataRecordViewed(args, env = process.env) {
     rows5.map((r3) => ({ sql: "INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ?)", params: [r3.key, r3.value], expect_changes: 1 })),
     env
   );
-  if (!written.ok) throw new DataServerError(`${TOOL4}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
+  if (!written.ok) throw new DataServerError(`${TOOL5}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
   return {
     keys: rows5.map((r3) => r3.key),
     note: "Recorded. The Work Board shows the new order the next time its page is written; this call does not rewrite it.",
@@ -116627,10 +116700,10 @@ function repointThreads(dbPath, from, to2, env = process.env) {
 }
 
 // src/submission/forms/create-milestone.ts
-var TOOL5 = "drafting_data__create_milestone";
+var TOOL6 = "drafting_data__create_milestone";
 async function submissionDataCreateMilestone(args, env = process.env) {
   if (typeof args.title !== "string" || args.title.trim() === "") {
-    throw new ValidationError(`${TOOL5}.title must name the Work Board`, "invalid_title");
+    throw new ValidationError(`${TOOL6}.title must name the Work Board`, "invalid_title");
   }
   const title2 = args.title.trim();
   const proceeding2 = fetchProceeding(args.db_path, args.proceeding_id);
@@ -116648,7 +116721,7 @@ async function submissionDataCreateMilestone(args, env = process.env) {
   );
   if (!written.ok) {
     throw new DataServerError(
-      `${TOOL5}: proceeding ${proceeding2.id} has no Writing, so its own Work Board already holds jobs with no Writing; nothing was written. Outline the work on that board (render it by proceeding_id)`,
+      `${TOOL6}: proceeding ${proceeding2.id} has no Writing, so its own Work Board already holds jobs with no Writing; nothing was written. Outline the work on that board (render it by proceeding_id)`,
       "no_writing"
     );
   }
@@ -116661,7 +116734,7 @@ async function submissionDataCreateMilestone(args, env = process.env) {
 }
 
 // src/submission/forms/merge-milestones.ts
-var TOOL6 = "drafting_data__merge_milestones";
+var TOOL7 = "drafting_data__merge_milestones";
 function boardOfKey(key) {
   const m3 = /filing:(\d+)$/.exec(key);
   return { filing_id: m3 === null ? null : Number(m3[1]) };
@@ -116671,15 +116744,15 @@ function label(b3) {
 }
 function resolve8(dbPath, arg, i3) {
   if (arg?.filing_id === void 0 === (arg?.proceeding_id === void 0)) {
-    throw new ValidationError(`${TOOL6}.boards[${i3}] takes exactly one of filing_id and proceeding_id`, "invalid_board");
+    throw new ValidationError(`${TOOL7}.boards[${i3}] takes exactly one of filing_id and proceeding_id`, "invalid_board");
   }
   const id = arg.filing_id ?? arg.proceeding_id;
-  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL6}.boards[${i3}]: the board id must be a positive integer`, "invalid_board");
+  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL7}.boards[${i3}]: the board id must be a positive integer`, "invalid_board");
   if (arg.filing_id !== void 0) {
     const [f3] = submissionDataQuery(dbPath, "SELECT proceeding_id, retired_on, kind FROM filings WHERE id = ?", [id]).rows;
-    if (f3 === void 0) throw new NotFoundError(`${TOOL6}: no Writing or Work Board ${id} in ${dbPath}`, "not_found");
-    if (isResearchWriting(f3)) throw new ValidationError(`${TOOL6}: Writing ${id} is a research result, which has no board to merge -- name a board that has a Work Board page`, "research_writing");
-    if (f3.retired_on !== null) throw new ValidationError(`${TOOL6}: Work Board ${id} is retired or closed, so it has no board to merge`, "board_retired");
+    if (f3 === void 0) throw new NotFoundError(`${TOOL7}: no Writing or Work Board ${id} in ${dbPath}`, "not_found");
+    if (isResearchWriting(f3)) throw new ValidationError(`${TOOL7}: Writing ${id} is a research result, which has no board to merge -- name a board that has a Work Board page`, "research_writing");
+    if (f3.retired_on !== null) throw new ValidationError(`${TOOL7}: Work Board ${id} is retired or closed, so it has no board to merge`, "board_retired");
     return { filing_id: id, proceeding_id: f3.proceeding_id };
   }
   if (submissionDataQuery(dbPath, "SELECT 1 FROM proceedings WHERE id = ?", [id]).rows.length === 0) throw new NotFoundError("That proceeding is not in this matter's drafting records", "not_found");
@@ -116687,29 +116760,29 @@ function resolve8(dbPath, arg, i3) {
   return { filing_id: null, proceeding_id: id };
 }
 async function submissionDataMergeMilestones(args, env = process.env) {
-  if (!Array.isArray(args.boards) || args.boards.length !== 2) throw new ValidationError(`${TOOL6}.boards must name exactly two boards`, "invalid_boards");
+  if (!Array.isArray(args.boards) || args.boards.length !== 2) throw new ValidationError(`${TOOL7}.boards must name exactly two boards`, "invalid_boards");
   if (args.confirmed !== true) {
     throw new ValidationError(
-      `${TOOL6}: show the practitioner both boards' statements of goals and ask whether they overlap or cohere; pass confirmed: true only on their yes. Nothing was written`,
+      `${TOOL7}: show the practitioner both boards' statements of goals and ask whether they overlap or cohere; pass confirmed: true only on their yes. Nothing was written`,
       "not_confirmed"
     );
   }
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL6}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL7}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const statement = args.goal_statement;
   if (statement !== void 0 && (typeof statement !== "string" || statement.trim() === "")) {
-    throw new ValidationError(`${TOOL6}.goal_statement must be the merged board's one goal, not blank; omit it to leave the board needing one`, "invalid_statement");
+    throw new ValidationError(`${TOOL7}.goal_statement must be the merged board's one goal, not blank; omit it to leave the board needing one`, "invalid_statement");
   }
   if (args.goal_description !== void 0 && (statement === void 0 || typeof args.goal_description !== "string" || args.goal_description.trim() === "")) {
-    throw new ValidationError(`${TOOL6}.goal_description must not be blank, and is given only with goal_statement`, "invalid_description");
+    throw new ValidationError(`${TOOL7}.goal_description must not be blank, and is given only with goal_statement`, "invalid_description");
   }
   const [a3, b3] = args.boards.map((arg, i3) => resolve8(args.db_path, arg, i3));
   const index = new BoardIndex(args.db_path);
   for (const x3 of [a3, b3]) {
-    if (index.absorbed(x3)) throw new ValidationError(`${TOOL6}: ${label(x3)} is already merged into ${label(index.survivorOf(x3))}; name that board instead`, "board_merged");
+    if (index.absorbed(x3)) throw new ValidationError(`${TOOL7}: ${label(x3)} is already merged into ${label(index.survivorOf(x3))}; name that board instead`, "board_merged");
   }
-  if (sameBoard(index.survivorOf(a3), index.survivorOf(b3))) throw new ValidationError(`${TOOL6}: ${label(a3)} and ${label(b3)} are already one board`, "same_board");
+  if (sameBoard(index.survivorOf(a3), index.survivorOf(b3))) throw new ValidationError(`${TOOL7}: ${label(a3)} and ${label(b3)} are already one board`, "same_board");
   const [ra2, rb] = [index.rank(a3), index.rank(b3)];
   const aWins = ra2[0] !== rb[0] ? ra2[0] < rb[0] : ra2[1] < rb[1];
   const survivor = index.survivorOf(aWins ? a3 : b3);
@@ -116740,7 +116813,7 @@ async function submissionDataMergeMilestones(args, env = process.env) {
     ],
     env
   );
-  if (!written.ok) throw new DataServerError(`${TOOL6}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
+  if (!written.ok) throw new DataServerError(`${TOOL7}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
   let threadsNote = "";
   if (survivor.filing_id !== null) {
     const from = new Set([absorbed, ...index.membersOf(absorbed).map(boardOfKey)].flatMap((b4) => b4.filing_id === null ? [] : [b4.filing_id]));
@@ -116806,13 +116879,13 @@ function partiesSnapshotStatements(dbPath, filing, tool, env = process.env) {
 // src/submission/forms/sent-write.ts
 import { existsSync as existsSync51 } from "node:fs";
 import { extname as extname5, join as join56 } from "node:path";
-var TOOL7 = "drafting_data__record_sent";
+var TOOL8 = "drafting_data__record_sent";
 var DELIVER_TITLE = "Deliver";
 var WAIVER2 = " \u2014 WAIVED: ";
 var PRE_SEND_INTENT = "Meet or waive each criterion that holds this Writing back from being recorded as sent.";
 var MISMATCH_CAP = 20;
 function refused2(message, code, details) {
-  return new DataServerError(`${TOOL7}: ${message}`, code, details);
+  return new DataServerError(`${TOOL8}: ${message}`, code, details);
 }
 function revisionMoved(title2, expected, current) {
   return new DataServerError(
@@ -116932,19 +117005,19 @@ function isCalendarDate(text11) {
 }
 function checkArgs(args) {
   if (!isCalendarDate(args.sent_on)) {
-    throw new ValidationError(`${TOOL7}.sent_on must be a calendar date, YYYY-MM-DD`, "invalid_sent_on");
+    throw new ValidationError(`${TOOL8}.sent_on must be a calendar date, YYYY-MM-DD`, "invalid_sent_on");
   }
   if (args.sent_copy_path === void 0 === (args.sent_copy_text === void 0)) {
-    throw new ValidationError(`${TOOL7} takes exactly one of sent_copy_path and sent_copy_text`, "invalid_sent_copy");
+    throw new ValidationError(`${TOOL8} takes exactly one of sent_copy_path and sent_copy_text`, "invalid_sent_copy");
   }
   if (args.sent_copy_path !== void 0) {
     if (![".eml", ".pdf", ".msg"].includes(extname5(args.sent_copy_path).toLowerCase())) {
-      throw new ValidationError(`${TOOL7}.sent_copy_path must be a .eml, .pdf or .msg file: ${args.sent_copy_path}`, "invalid_sent_copy");
+      throw new ValidationError(`${TOOL8}.sent_copy_path must be a .eml, .pdf or .msg file: ${args.sent_copy_path}`, "invalid_sent_copy");
     }
-    if (!existsSync51(args.sent_copy_path)) throw new ValidationError(`${TOOL7}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
+    if (!existsSync51(args.sent_copy_path)) throw new ValidationError(`${TOOL8}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
   }
   if (args.send_anyway !== void 0 && args.send_anyway.trim() === "") {
-    throw new ValidationError(`${TOOL7}.send_anyway must carry the practitioner's own words`, "invalid_send_anyway");
+    throw new ValidationError(`${TOOL8}.send_anyway must carry the practitioner's own words`, "invalid_send_anyway");
   }
 }
 async function submissionDataRecordSent(args, env = process.env) {
@@ -116970,7 +117043,7 @@ async function submissionDataRecordSent(args, env = process.env) {
       "no_stored_text"
     );
   }
-  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL7, env);
+  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL8, env);
   const held2 = unmetHeldCriteria(args.db_path, filing, latestInventory(args.db_path, filing, revision));
   const currency = unmetCurrencyCriterion(args.db_path, filing);
   if (currency !== null) held2.push(currency);
@@ -117072,12 +117145,12 @@ ${unlisted} more not listed.` : "") + "\nCorrect the stored text to what was sen
 }
 
 // src/submission/forms/filed-write.ts
-var TOOL8 = "drafting_data__record_filed";
+var TOOL9 = "drafting_data__record_filed";
 function refused3(message, code) {
-  return new DataServerError(`${TOOL8}: ${message}`, code);
+  return new DataServerError(`${TOOL9}: ${message}`, code);
 }
 async function submissionDataRecordFiled(args, env = process.env) {
-  if (!isCalendarDate(args.filed_on)) throw new ValidationError(`${TOOL8}.filed_on must be a calendar date, YYYY-MM-DD`, "invalid_filed_on");
+  if (!isCalendarDate(args.filed_on)) throw new ValidationError(`${TOOL9}.filed_on must be a calendar date, YYYY-MM-DD`, "invalid_filed_on");
   const [filing] = submissionDataQuery(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]).rows;
   if (filing === void 0) throw new NotFoundError("That Writing is not in this matter's drafting records", "not_found");
   if (isJobOnlyBoard(filing)) throw refused3(`Work Board ${filing.id} has no Writing, so there is nothing to record as filed`, "milestone_only");
@@ -117094,7 +117167,7 @@ async function submissionDataRecordFiled(args, env = process.env) {
   }
   const revision = fetchRevision(args.db_path);
   if (revision !== args.expect_revision) throw revisionMoved(filing.title, args.expect_revision, revision);
-  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL8, env);
+  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL9, env);
   const written = await submissionDataWriteAll(
     args.db_path,
     [
@@ -117124,14 +117197,14 @@ async function submissionDataRecordFiled(args, env = process.env) {
 
 // src/submission/forms/served-write.ts
 import { existsSync as existsSync52 } from "node:fs";
-var TOOL9 = "drafting_data__record_served";
+var TOOL10 = "drafting_data__record_served";
 function refused4(message, code) {
-  return new DataServerError(`${TOOL9}: ${message}`, code);
+  return new DataServerError(`${TOOL10}: ${message}`, code);
 }
 async function submissionDataRecordServed(args, env = process.env) {
-  if (!isCalendarDate(args.served_on)) throw new ValidationError(`${TOOL9}.served_on must be a calendar date, YYYY-MM-DD`, "invalid_served_on");
+  if (!isCalendarDate(args.served_on)) throw new ValidationError(`${TOOL10}.served_on must be a calendar date, YYYY-MM-DD`, "invalid_served_on");
   if (args.served_copy_path !== void 0 && !existsSync52(args.served_copy_path)) {
-    throw new ValidationError(`${TOOL9}.served_copy_path does not exist: ${args.served_copy_path}`, "invalid_served_copy");
+    throw new ValidationError(`${TOOL10}.served_copy_path does not exist: ${args.served_copy_path}`, "invalid_served_copy");
   }
   const [filing] = submissionDataQuery(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]).rows;
   if (filing === void 0) throw new NotFoundError("That Writing is not in this matter's drafting records", "not_found");
@@ -117146,7 +117219,7 @@ async function submissionDataRecordServed(args, env = process.env) {
   }
   const revision = fetchRevision(args.db_path);
   if (revision !== args.expect_revision) throw revisionMoved(filing.title, args.expect_revision, revision);
-  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL9, env);
+  const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL10, env);
   const written = await submissionDataWriteAll(
     args.db_path,
     [
@@ -117187,22 +117260,22 @@ async function submissionDataRecordServed(args, env = process.env) {
 }
 
 // src/submission/forms/assign-job.ts
-var TOOL10 = "drafting_data__assign_job";
+var TOOL11 = "drafting_data__assign_job";
 async function submissionDataAssignJob(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL10}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL11}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL10}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL11}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   if (args.takeover === true && (typeof args.expected_holder !== "string" || args.expected_holder.trim().length !== 8)) {
-    throw new ValidationError(`${TOOL10}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL11}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
   }
   if (args.takeover !== true && args.expected_holder !== void 0) {
-    throw new ValidationError(`${TOOL10}.expected_holder is passed only with takeover: true`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL11}.expected_holder is passed only with takeover: true`, "invalid_expected_holder");
   }
   if (args.takeover === true ? typeof args.expected_last_activity !== "string" || args.expected_last_activity.trim() === "" : args.expected_last_activity !== void 0) {
-    throw new ValidationError(`${TOOL10}.expected_last_activity is the last activity: minute off the job's card, passed with takeover: true and only then`, "invalid_expected_last_activity");
+    throw new ValidationError(`${TOOL11}.expected_last_activity is the last activity: minute off the job's card, passed with takeover: true and only then`, "invalid_expected_last_activity");
   }
-  if (args.reopen === true && args.takeover === true) throw new ValidationError(`${TOOL10}.reopen and takeover are never passed together`, "invalid_reopen");
+  if (args.reopen === true && args.takeover === true) throw new ValidationError(`${TOOL11}.reopen and takeover are never passed together`, "invalid_reopen");
   const takeover = args.takeover === true;
   const reopen = args.reopen === true;
   const live = liveTicketClause(args.db_path);
@@ -117232,7 +117305,7 @@ async function submissionDataAssignJob(args, env = process.env) {
   const tookLapsed = !reopen && written.ok && record2.length === 1 && written.results[0].changes === 1;
   const columns = `locked_by, locked_at, status, rejected_at, ${lapsed} AS lapsed, ${last} AS last_activity${kv ? `, ${claimSql()} AS claim_no` : ""}${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${arrived} AS before_bf` : ""}`;
   const [read3] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM tickets WHERE id = ?`, [args.ticket_id]).rows;
-  if (read3 === void 0) throw new NotFoundError(`${TOOL10}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
+  if (read3 === void 0) throw new NotFoundError(`${TOOL11}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
   let outcome;
   let note;
@@ -117277,71 +117350,6 @@ async function submissionDataAssignJob(args, env = process.env) {
 }
 function createdAny(dbPath, sessionToken) {
   return submissionDataQuery(dbPath, "SELECT 1 FROM tickets WHERE created_by = ? LIMIT 1", [sessionToken]).rows.length > 0;
-}
-
-// src/submission/forms/approve-plan.ts
-var TOOL11 = "drafting_data__approve_plan";
-var PLAN_MARKER = "Create a plan for how to complete this job.";
-async function submissionDataApprovePlan(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL11}.ticket_id must be a positive integer`, "invalid_ticket_id");
-  if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL11}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
-  }
-  const id = args.ticket_id;
-  const [job] = submissionDataQuery(
-    args.db_path,
-    "SELECT (SELECT COUNT(*) FROM ticket_steps WHERE ticket_id = tickets.id) AS steps, (SELECT COUNT(*) FROM ticket_steps WHERE ticket_id = tickets.id AND text = ?) AS markers FROM tickets WHERE id = ?",
-    [PLAN_MARKER, id]
-  ).rows;
-  if (job === void 0) throw new NotFoundError(`${TOOL11}: no job ${id} in ${args.db_path}`, "not_found");
-  if (job.steps === 0) throw new DataServerError(`${TOOL11}: job ${id} has no steps, so there is no plan to approve; nothing was written`, "no_steps");
-  if (job.steps === 1 && job.markers === 1) {
-    throw new DataServerError(`${TOOL11}: job ${id}'s only step is "${PLAN_MARKER}" and nothing was written. What steps will complete this job?`, "plan_marker_only");
-  }
-  const held2 = heldBy(args.db_path, args.session_token, checkClaim(TOOL11, args.db_path, id, args.session_token, args.claim_no));
-  const written = await submissionDataWriteAll(
-    args.db_path,
-    [
-      { sql: `UPDATE tickets SET plan_approved_at = ${nowMinuteSql()} WHERE id = ? AND ${held2.sql} AND plan_approved_at IS NULL`, params: [id, ...held2.params] },
-      ...touchStatements(args.db_path, id, held2)
-    ],
-    env
-  );
-  const changes = written.ok ? written.results[0].changes : written.changes;
-  const [read3] = submissionDataQuery(args.db_path, "SELECT id, status, rejected_at, locked_by, plan_approved_at FROM tickets WHERE id = ?", [id]).rows;
-  if (read3 === void 0) throw new NotFoundError(`${TOOL11}: no job ${id} in ${args.db_path}`, "not_found");
-  let outcome;
-  let note;
-  if (changes === 1) {
-    outcome = "approved";
-    note = `Job ${id}'s plan is approved as its steps stand (plan_approved_at ${read3.plan_approved_at}).`;
-  } else if (read3.locked_by === args.session_token && read3.plan_approved_at !== null) {
-    outcome = "already_approved";
-    note = `Job ${id}'s plan was already approved at ${read3.plan_approved_at}; nothing was written, and its steps and their stamps stand.`;
-  } else if (read3.locked_by !== null && read3.locked_by !== args.session_token) {
-    outcome = "not_held";
-    note = `Job ${id}'s plan was not approved: another session holds it (taken over), so nothing was written. Report it and stop; never re-run.`;
-  } else if (read3.locked_by === null && read3.rejected_at !== null) {
-    outcome = "shelved";
-    note = `Job ${id}'s plan was not approved: it is shelved (rejected_at ${read3.rejected_at}), so nothing was written. Report it and stop.`;
-  } else if (read3.status === "completed") {
-    outcome = "completed";
-    note = `Job ${id}'s plan was not approved: it is completed, so nothing was written. Report it and stop.`;
-  } else {
-    outcome = "no_match";
-    note = `Job ${id}'s plan was not approved: its row is status=${read3.status}, locked_by=${read3.locked_by === null ? "NULL" : "set"}, rejected_at=${read3.rejected_at ?? "NULL"}, so the guards matched nothing. Report it and stop; never re-run.`;
-  }
-  return {
-    ticket_id: id,
-    outcome,
-    changes,
-    plan_approved_at: read3.plan_approved_at,
-    locked_by: read3.locked_by,
-    status: read3.status,
-    rejected_at: read3.rejected_at,
-    note,
-    ...written.warning ? { warning: written.warning } : {}
-  };
 }
 
 // src/submission/forms/take-job.ts
@@ -117418,7 +117426,9 @@ async function submissionDataTakeJob(args, env = process.env) {
   }
   if (job.category !== "ready") return refuse2("not_ready", `Job ${id} is not Ready: its card reads ${LANE[job.category] ?? job.category}. Re-render; never re-run to win.`);
   if (job.steps.length === 0) return refuse2("no_steps", `Job ${id} has no steps. What steps will complete it?`);
-  if (job.steps.length === 1 && job.steps[0].text === PLAN_MARKER) return refuse2("needs_plan", `Job ${id} needs a plan: its only step is the plan marker.`);
+  if (job.steps.length === 1 && job.steps[0].text === PLAN_MARKER && !args.session_token.startsWith(UNATTENDED_TOKEN_PREFIX)) {
+    return refuse2("needs_plan", `Job ${id} needs a plan: its only step is the plan marker.`);
+  }
   const reviewed = !fixedText(job.title) && job.proposal_keys.length === 0 && job.steps.every((s3) => s3.done_at === null) && !planApproved(args.db_path, id);
   const titleLength = job.title.trim().split(/\s+/).length;
   if (reviewed && !isResearchTitle(job.title) && titleLength > TITLE_MAX_WORDS) return refuse2("long_title", `Job ${id}'s title is ${titleLength} words, more than ${TITLE_MAX_WORDS}. What shorter phrase names the work?`);
