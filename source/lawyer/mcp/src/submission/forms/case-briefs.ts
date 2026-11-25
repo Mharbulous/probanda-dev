@@ -272,7 +272,7 @@ export function buildCaseBriefsData(dbPath: string, filingIds: number[], matterD
         return { key, own: version, date: version > 1 ? written : named, written: written ?? "", file, url: pageApiFileUrl(path), path, on_disk: found !== undefined || mtime !== null };
       });
     // Each stem's versions stay together in their own order. Stems go by when each last gained a version
-    // (only a ` vN` is written after its name's date, since a save never overwrites), then by file date.
+    // (only a ` vN`, from before a same-day save replaced its file, was written after its name's date), then by file date.
     const stems = new Map<string, { gained: string; written: string }>();
     for (const v of versions) {
       const stem = stems.get(v.key) ?? { gained: "", written: "" };

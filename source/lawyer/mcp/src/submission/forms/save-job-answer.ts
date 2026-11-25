@@ -91,13 +91,16 @@ export async function saveAnswerTool(args: SaveAnswerArgs, env: NodeJS.ProcessEn
       "not_research_job"
     );
   }
-  const saved =saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch, args.from_render);
+  const saved = saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch, args.from_render);
   let written: Awaited<ReturnType<typeof submissionDataWriteAll>>;
+  const file = lawRelativePath(saved.path);
   try {
     written = await submissionDataWriteAll(
       dbPath,
       [
-        { sql: `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${nowMinuteSql()} FROM tickets WHERE id = ? AND ${held.sql}`, params: [lawRelativePath(saved.path), id, ...held.params] },
+        // A same-day save replaces its file, so the job lists it once, at its latest save.
+        { sql: `DELETE FROM ticket_answers WHERE ticket_id = ? AND file_path = ? AND EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${held.sql})`, params: [id, file, id, ...held.params] },
+        { sql: `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${nowMinuteSql()} FROM tickets WHERE id = ? AND ${held.sql}`, params: [file, id, ...held.params] },
         ...touchStatements(dbPath, id, held),
       ],
       env
@@ -106,7 +109,7 @@ export async function saveAnswerTool(args: SaveAnswerArgs, env: NodeJS.ProcessEn
     throw new DataServerError(`The answer was saved at ${saved.path}, but recording it against job ${id} failed: ${(err as Error).message}. Do not save it again.`, "record_failed");
   }
   const warning = written.warning ? { warning: written.warning } : {};
-  if (written.ok && written.results[0].changes === 1) {
+  if (written.ok && written.results[1].changes === 1) {
     return { ...saved, job: { ticket_id: id, recorded: true, note: `Recorded against job ${id}: its card lists the answer.` }, ...warning };
   }
   const [row] = submissionDataQuery(dbPath, "SELECT locked_by, status, rejected_at FROM tickets WHERE id = ?", [id]).rows as unknown as HolderRow[];

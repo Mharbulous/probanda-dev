@@ -32,7 +32,7 @@ One brief is one decision. For several decisions, run the steps once per decisio
    Matter root: <the matter folder's host path, as research_filing__save_answer takes it>
    Decision: <absolute path>
    Decision text: <the text_path, or none>
-   File stem: <the stem the template's "Saving it" chooses, after looking for the case's saved briefs as it says: a saved brief's when the case has one, else YYYY-MM-DD case brief <style of cause>, <citation>>
+   File stem: <the stem the template's "Saving it" chooses: YYYY-MM-DD case brief <style of cause>, <citation>, today's date>
    Style of cause: <style of cause>
    Citation: <citation>
    Focus: <the issues the practitioner narrowed it to, or all>

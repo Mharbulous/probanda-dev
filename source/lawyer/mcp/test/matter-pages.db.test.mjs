@@ -1191,6 +1191,21 @@ test("save_answer with the job's id lists the answer on its card and restarts it
   assert.ok(card.endsWith(`\n  answers: 6. LAW\\Limitation\\2026-10-16 research-lawyer answer.md (${row.saved_at})`), card);
   const live = renderLiveLanes(buildPreFilingBoardData(f.dbPath, fetchProceeding(f.dbPath, 1), { revision: 1, matter: "", client: "", rendered: now }));
   assert.equal(live.find((line) => line.startsWith("- Job #1 ")), "- Job #1 Legal research: When did time start to run? · In Progress 0/1", "no idle tag right after the save");
+
+  // A same-day correction replaces the file, and the card still lists the answer once.
+  const again = await callTool({}, "research_filing__save_answer", {
+    destination_dir: join(law, "Limitation"),
+    filename: "2026-10-16 research-lawyer answer.md",
+    text: "Corrected answer text.\n",
+    db_path: f.dbPath,
+    ticket_id: 1,
+    session_token: "sess-holder",
+  });
+  assert.equal(again.path, saved.path);
+  assert.equal(again.job.recorded, true);
+  assert.deepEqual(readdirSync(join(law, "Limitation")), ["2026-10-16 research-lawyer answer.md"]);
+  assert.match(readFileSync(again.path, "utf-8"), /^Corrected answer text\./);
+  assert.equal(submissionDataQuery(f.dbPath, "SELECT COUNT(*) AS n FROM ticket_answers WHERE ticket_id = 1").rows[0].n, 1);
 });
 
 test("save_answer refuses a job this session no longer holds, and saves no file", async (t) => {

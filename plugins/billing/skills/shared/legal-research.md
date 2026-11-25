@@ -482,8 +482,8 @@ complete before the session ends: never leave a session with a cited decision un
 
    When a `drafting_*` tool refuses, write nothing more to the Writing: save the `Memo scratch:`
    path as `from_scratch` (the memo as `text` only when the return has no such line) and name
-   the refusal in your relay. `save_answer` never overwrites, even a file another session
-   wrote, and takes the next free ` vN` itself. The generated Legend is the only definition of a
+   the refusal in your relay. `foreign_file` means the name holds a file Probanda did not save
+   or that was edited since: relay it and stop. The generated Legend is the only definition of a
    symbol in the memo. Never use the claude.ai Project.
 2. For every court decision the answer cites (in support, distinguished, or
    rejected) that case data does not already hold and that is not already on disk

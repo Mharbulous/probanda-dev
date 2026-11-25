@@ -2,6 +2,7 @@
 // submission/render-job.ts so the files server can use it without carrying the render job (#186).
 
 import { renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { threadId } from "node:worker_threads";
 
 export function sleepSync(ms: number): void {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -17,7 +18,8 @@ export function writeStatusFile(
   text: string,
   { attempts = 10, delayMs = 50 }: { attempts?: number; delayMs?: number } = {}
 ): string | null {
-  const temp = `${target}.${process.pid}.tmp`;
+  // The thread too: two threads of one process writing one target must not share a temp file.
+  const temp = `${target}.${process.pid}.${threadId}.tmp`;
   try {
     writeFileSync(temp, text, "utf-8");
   } catch (err) {

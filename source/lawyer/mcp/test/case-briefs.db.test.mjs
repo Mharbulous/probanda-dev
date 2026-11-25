@@ -585,18 +585,18 @@ test("a request in another proceeding reads as no request, as the guard treats i
   assert.equal(cases(m, [2]).find((c) => c.jobs.length > 0).jobs[0].id, there.ticket_id);
 });
 
-test("the template tells a re-brief to reuse the stem and the Writing", () => {
+test("the template tells a re-brief to take today's stem and reuse the Writing", () => {
   const template = readFileSync(new URL("../../../../source/skills/shared/case-brief-template.md", import.meta.url), "utf-8");
-  assert.match(template, /A re-brief of a case that already has a saved brief reuses that brief's file stem, date included, and saves onto the same Writing/);
-  assert.match(template, /so the save is that brief's next version/);
+  assert.match(template, /A re-brief of a case that already has a saved brief saves onto the `case_brief` Writing titled with that brief's stem, the latest brief's when there are several\./);
+  assert.doesNotMatch(template, /date included|next free ` vN`|never overwrites/);
   assert.doesNotMatch(template, /every saved version is the same brief/);
-  assert.match(template, /A case with more than one saved brief reuses the latest\./);
   assert.match(template, /creates no Writing unless that title has none/);
   assert.match(template, /no other `filing_law`, `order_sought_requires` or `clauses` row and no job's `ticket_scope` row names/);
 });
 
-test("a re-brief by the template's steps is the same Writing's next version, one row, and leaves no stale item", async (t) => {
+test("a re-brief by the template's steps on a later date is the same Writing's next version, one row, and leaves no stale item", async (t) => {
   const stem = "2026-10-01 case brief Alpha v Beta, 2020 BCCA 1";
+  const later = "2026-10-20 case brief Alpha v Beta, 2020 BCCA 1";
   const m = await matter(t, { authorities: [[60, "Alpha v Beta", "2020 BCCA 1"]] });
   const { filing_id: id } = await submissionDataCreateWriting({ db_path: m.dbPath, proceeding_id: 1, tree: { country: "CAN", jurisdiction: "BC", venue: "_NoVenue" }, kind: "case_brief", recipient: "internal", title: stem });
   const prose = (slot, text) => `INSERT INTO filing_prose (filing_id, slot, text) VALUES (${id}, '${slot}', '${text}');`;
@@ -608,9 +608,9 @@ test("a re-brief by the template's steps is the same Writing's next version, one
        ${prose("case", "Alpha v Beta, 2020 BCCA 1.\nNot noted up by this brief.")}${prose("facts", "A fact.")}${prose("procedural-history", "An appeal.")}${prose("issues", "An issue?")}
        ${prose("holding", `${holding} <!-- statement_of_law_id ${statement} -->`)}${prose("ratio", "None.")}${prose("obiter", "None.")}${prose("disposition", "Dismissed.")}`
     );
-  const save = () => {
+  const save = (fileStem) => {
     const r = submissionFormsRender(m.dbPath, id, {}, "mockup", ["General_writing"], undefined, undefined, NOW, "tok");
-    return saveAnswer(m.law, `${stem}.md`, undefined, undefined, r.documents.find((d) => d.document_type === "General_writing").path);
+    return saveAnswer(m.law, `${fileStem}.md`, undefined, undefined, r.documents.find((d) => d.document_type === "General_writing").path);
   };
   await write(100, "First holding.");
   // Two more of the brief's items, one an order relies on and one a job's scope names: the template keeps both.
@@ -623,7 +623,7 @@ test("a re-brief by the template's steps is the same Writing's next version, one
      INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, ${JOB}) VALUES (50, 1, 1, 'Review scrutiny finding: x', 'x', 'queued', 0, 'work', 'L', '2026-10-01 08:00');
      INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (50, 'statements_of_law', 99);`
   );
-  save();
+  const first = save(stem);
   // The template's re-brief, through the real tool: the Writing's rows replaced, then the same render and save.
   const oldItems = submissionDataQuery(m.dbPath, "SELECT statement_id FROM filing_law WHERE filing_id = ?", [id]).rows.map((r) => r.statement_id).join(", ");
   await callTool({}, "drafting_data__execute", {
@@ -638,8 +638,9 @@ test("a re-brief by the template's steps is the same Writing's next version, one
   });
   assert.deepEqual(submissionDataQuery(m.dbPath, "SELECT id FROM statements_of_law WHERE id IN (98, 99, 100) ORDER BY id").rows.map((r) => r.id), [98, 99], "the order's and the job's stay, the rest go");
   await write(101, "Second holding.");
-  const saved = save();
-  assert.match(saved.path, / v2\.md$/);
+  const saved = save(later);
+  assert.equal(saved.filename, `${later}.md`);
+  assert.match(readFileSync(first.path, "utf-8"), /First holding\./, "the earlier date's brief stays");
   assert.match(readFileSync(saved.path, "utf-8"), /Second holding\./);
   assert.doesNotMatch(readFileSync(saved.path, "utf-8"), /First holding\./);
   const { rows } = submissionDataQuery(m.dbPath, "SELECT COUNT(*) AS n FROM filings WHERE kind = 'case_brief'");

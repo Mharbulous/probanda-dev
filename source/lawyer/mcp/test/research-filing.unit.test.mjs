@@ -207,44 +207,55 @@ test("append_manifest creates the JSONL file and counts records", () => {
 // Line endings, non-ASCII and no trailing newline: a byte-faithful save keeps all three.
 const ANSWER = "Confidence summary: high\r\nÉtienne v. Ng, 2024 BCCA 1 at para 3 — § 3(1)\n\nCoverage: complete";
 
-test("save_answer saves byte-faithfully and takes the next vN, never touching an existing file", () => {
+const MARKER = /\n\n<!-- probanda-save sha256:([0-9a-f]{64}) -->\n$/;
+
+test("save_answer saves byte-faithfully under a marker, and a same-day save replaces its own file", () => {
   const f = fixture();
   try {
-    writeFileSync(join(f.law, "other.md"), "someone else's\n");
-    const first = saveAnswer(f.law, "2026-10-02 research-lawyer answer.md", ANSWER);
-    const second = saveAnswer(f.law, "2026-10-02 research-lawyer answer.md", ANSWER);
-    assert.equal(first.filename, "2026-10-02 research-lawyer answer.md");
-    assert.equal(second.filename, "2026-10-02 research-lawyer answer v2.md");
-    assert.notEqual(first.path, second.path);
+    const name = "2026-10-02 research-lawyer answer.md";
+    const first = saveAnswer(f.law, name, ANSWER);
+    assert.equal(first.filename, name);
     assert.equal(first.created_dir, false);
-    for (const r of [first, second]) {
-      assert.deepEqual(readFileSync(r.path), Buffer.from(ANSWER, "utf-8"));
-      assert.equal(r.bytes, Buffer.byteLength(ANSWER, "utf-8"));
-    }
+    const saved = readFileSync(first.path, "utf-8");
+    const marker = MARKER.exec(saved);
+    assert.equal(saved.slice(0, marker.index), ANSWER, "the text above the marker is the answer, byte for byte");
+    assert.equal(marker[1], createHash("sha256").update(ANSWER, "utf-8").digest("hex"));
 
-    // A file another session wrote is never overwritten: its content survives a third save.
-    writeFileSync(join(f.law, "2026-10-02 research-lawyer answer v3.md"), "another session\n");
-    const fourth = saveAnswer(f.law, "2026-10-02 research-lawyer answer.md", ANSWER);
-    assert.equal(fourth.filename, "2026-10-02 research-lawyer answer v4.md");
-    assert.equal(readFileSync(join(f.law, "2026-10-02 research-lawyer answer v3.md"), "utf-8"), "another session\n");
-    assert.equal(readFileSync(join(f.law, "other.md"), "utf-8"), "someone else's\n");
+    const corrected = ANSWER.replace("high", "moderate");
+    const second = saveAnswer(f.law, name, corrected);
+    assert.equal(second.path, first.path);
+    assert.deepEqual(readdirSync(f.law).filter((n) => n.startsWith("2026-10-02")), [name], "one file, no v2 and no temp file left");
+    const bytes = readFileSync(second.path);
+    assert.match(bytes.toString("utf-8"), /moderate/);
+    assert.equal(second.sha256, createHash("sha256").update(bytes).digest("hex"), "sha256 is of the file as written");
+    assert.equal(second.bytes, bytes.length);
+
+    // A saved file sent back as text keeps one marker, not two.
+    saveAnswer(f.law, name, readFileSync(second.path, "utf-8"));
+    assert.equal(readFileSync(second.path, "utf-8").match(/probanda-save/g).length, 1);
+
+    // A later date is a file of its own.
+    const later = saveAnswer(f.law, "2026-10-03 research-lawyer answer.md", ANSWER);
+    assert.notEqual(later.path, first.path);
+    assert.match(readFileSync(first.path, "utf-8"), /moderate/);
   } finally {
     f.cleanup();
   }
 });
 
-test("save_answer numbers one above the highest vN, matching names case-insensitively", () => {
+test("save_answer refuses foreign_file, writing nothing, over a file it did not save or that was edited since", () => {
   const f = fixture();
   try {
-    writeFileSync(join(f.law, "answer.md"), "1\n");
-    writeFileSync(join(f.law, "ANSWER V7.MD"), "7\n");
-    writeFileSync(join(f.law, "answer v9 draft.md"), "not a version\n");
-    writeFileSync(join(f.law, "other answer v20.md"), "different stem\n");
-    assert.equal(saveAnswer(f.law, "answer.md", ANSWER).filename, "answer v8.md");
+    writeFileSync(join(f.law, "theirs.md"), "someone else's\n");
+    assert.equal(codeOf(() => saveAnswer(f.law, "theirs.md", ANSWER)), "foreign_file");
+    assert.equal(readFileSync(join(f.law, "theirs.md"), "utf-8"), "someone else's\n");
 
-    // A version with no base file still counts.
-    writeFileSync(join(f.law, "memo v2.md"), "2\n");
-    assert.equal(saveAnswer(f.law, "memo.md", ANSWER).filename, "memo v3.md");
+    const mine = saveAnswer(f.law, "mine.md", ANSWER);
+    const edited = readFileSync(mine.path, "utf-8").replace("high", "edited by hand");
+    writeFileSync(mine.path, edited);
+    assert.equal(codeOf(() => saveAnswer(f.law, "MINE.md", ANSWER)), "foreign_file", "matched case-insensitively, as Windows names are");
+    assert.equal(readFileSync(mine.path, "utf-8"), edited);
+    assert.deepEqual(readdirSync(f.law).filter((n) => /mine/i.test(n)), ["mine.md"]);
   } finally {
     f.cleanup();
   }
@@ -257,7 +268,7 @@ test("save_answer creates only a missing final folder whose parent is in a 6. LA
     const created = saveAnswer(fresh, "answer.md", ANSWER);
     assert.equal(created.created_dir, true);
     assert.equal(created.path.toLowerCase(), join(fresh, "answer.md").toLowerCase());
-    assert.equal(saveAnswer(fresh, "answer.md", ANSWER).created_dir, false);
+    assert.equal(saveAnswer(fresh, "answer.md", ANSWER).created_dir, false, "the second save replaces the first in the folder it made");
 
     const deep = join(f.matter, "6. LAW", "Missing", "Deeper");
     assert.equal(codeOf(() => saveAnswer(deep, "answer.md", ANSWER)), "not_found");
@@ -297,7 +308,7 @@ test("save_answer refuses, creating nothing, outside 6. LAW and on bad input", (
   }
 });
 
-test("save_answer under a race: two threads saving at once lose nothing and overwrite nothing", async () => {
+test("save_answer under a race: two threads saving one name at once leave one whole file", async () => {
   const f = fixture();
   const workers = [];
   try {
@@ -309,17 +320,25 @@ test("save_answer under a race: two threads saving at once lose nothing and over
       import(workerData.moduleUrl).then(({ saveAnswer }) => {
         parentPort.postMessage("ready");
         Atomics.wait(workerData.gate, 0, 0);
-        const names = [];
+        // Each save's outcome: "ok", or the refusal's code. A thread that reads the other's first
+        // create before it is whole is refused foreign_file, which writes nothing.
+        const outcomes = [];
         for (let i = 0; i < workerData.perThread; i++) {
-          names.push(saveAnswer(workerData.dir, "answer.md", workerData.text).filename);
+          try {
+            saveAnswer(workerData.dir, "answer.md", workerData.text);
+            outcomes.push("ok");
+          } catch (err) {
+            outcomes.push(err.code ?? String(err));
+          }
         }
-        parentPort.postMessage(names);
+        parentPort.postMessage(outcomes);
       });
     `;
-    const runs = [0, 1].map(() => {
+    const texts = [ANSWER, `${ANSWER}\nfrom the other thread`];
+    const runs = texts.map((text) => {
       const worker = new Worker(source, {
         eval: true,
-        workerData: { moduleUrl, gate, perThread, dir: f.law, text: ANSWER },
+        workerData: { moduleUrl, gate, perThread, dir: f.law, text },
       });
       workers.push(worker);
       let onReady;
@@ -333,13 +352,15 @@ test("save_answer under a race: two threads saving at once lose nothing and over
     await Promise.all(runs.map((r) => r.ready));
     Atomics.store(gate, 0, 1);
     Atomics.notify(gate, 0);
-    const names = (await Promise.all(runs.map((r) => r.done))).flat();
+    const outcomes = (await Promise.all(runs.map((r) => r.done))).flat();
 
-    const expected = ["answer.md", ...Array.from({ length: 2 * perThread - 1 }, (_, i) => `answer v${i + 2}.md`)];
-    assert.deepEqual([...names].sort(), [...expected].sort(), "every save got its own name");
-    const onDisk = readdirSync(f.law).filter((n) => n.startsWith("answer"));
-    assert.deepEqual(onDisk.sort(), [...expected].sort());
-    for (const name of onDisk) assert.deepEqual(readFileSync(join(f.law, name)), Buffer.from(ANSWER, "utf-8"));
+    assert.deepEqual([...new Set(outcomes)].filter((o) => o !== "ok" && o !== "foreign_file"), [], "no save failed any other way");
+    assert.ok(outcomes.filter((o) => o === "ok").length > perThread, "most saves replaced the file");
+    assert.deepEqual(readdirSync(f.law).filter((n) => n.startsWith("answer")), ["answer.md"], "one file, no vN and no temp file");
+    const final = readFileSync(join(f.law, "answer.md"), "utf-8");
+    const marker = MARKER.exec(final);
+    assert.ok(texts.includes(final.slice(0, marker.index)), "the file is one thread's whole save");
+    assert.equal(marker[1], createHash("sha256").update(final.slice(0, marker.index), "utf-8").digest("hex"));
   } finally {
     // Stop a thread still writing after the other failed, so cleanup cannot mask the failure.
     await Promise.all(workers.map((w) => w.terminate()));
@@ -349,25 +370,17 @@ test("save_answer under a race: two threads saving at once lose nothing and over
 
 const MEMO = "---\r\nDocument: MEMORANDUM OF LAW\nRe: \"Étienne v. Ng\" — § 3(1)\n---\n\n## Conclusion";
 
-test("save_answer from_scratch copies the memo byte for byte, keeps the scratch file and takes the next vN", () => {
+test("save_answer from_scratch copies the memo byte for byte and keeps the scratch file", () => {
   const f = fixture();
   try {
     const scratch = writeScratch(f.matter, "2026-10-05 stem memo.md", MEMO);
     const first = saveAnswer(f.law, "2026-10-05 stem.md", undefined, scratch.path);
-    const second = saveAnswer(f.law, "2026-10-05 stem.md", undefined, scratch.path);
     assert.equal(first.filename, "2026-10-05 stem.md");
-    assert.equal(second.filename, "2026-10-05 stem v2.md");
-    const expected = createHash("sha256").update(readFileSync(scratch.path)).digest("hex");
-    for (const r of [first, second]) {
-      assert.deepEqual(readFileSync(r.path), Buffer.from(MEMO, "utf-8"));
-      assert.equal(r.bytes, Buffer.byteLength(MEMO, "utf-8"));
-      assert.equal(r.sha256, expected);
-    }
+    const written = readFileSync(first.path);
+    assert.equal(written.toString("utf-8").replace(MARKER, ""), MEMO);
+    assert.equal(first.bytes, written.length);
+    assert.equal(first.sha256, createHash("sha256").update(written).digest("hex"));
     assert.deepEqual(readFileSync(scratch.path), Buffer.from(MEMO, "utf-8"), "the scratch file is kept");
-
-    // A text save reports the digest of what it wrote too.
-    const text = saveAnswer(f.law, "typed.md", ANSWER);
-    assert.equal(text.sha256, createHash("sha256").update(Buffer.from(ANSWER, "utf-8")).digest("hex"));
 
     // A missing final folder is created from a scratch source as from text.
     const fresh = join(f.matter, "6. LAW", "New issue");
@@ -386,9 +399,10 @@ test("save_answer replaces a hand-written legend with the generated one, from te
     assert.ok(!generated.includes("not read and classified"));
     const scratch = writeScratch(f.matter, "memo.md", typed);
     for (const r of [saveAnswer(f.law, "memo.md", typed), saveAnswer(f.law, "memo.md", undefined, scratch.path)]) {
-      assert.equal(readFileSync(r.path, "utf-8"), generated);
-      assert.equal(r.bytes, Buffer.byteLength(generated, "utf-8"));
-      assert.equal(r.sha256, createHash("sha256").update(generated, "utf-8").digest("hex"));
+      const written = readFileSync(r.path);
+      assert.equal(written.toString("utf-8").replace(MARKER, ""), generated);
+      assert.equal(r.bytes, written.length);
+      assert.equal(r.sha256, createHash("sha256").update(written).digest("hex"));
     }
   } finally {
     f.cleanup();

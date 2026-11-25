@@ -7,7 +7,7 @@
 // the source is a bare filename inside Downloads, the destination a realpath-resolved folder
 // carrying a `6. LAW` segment. The fifth, `saveAnswer` (#1406), writes caller-supplied text, or the
 // bytes of a file in the same matter's research-agent scratchpad, with the generated Legend, as a
-// new `.md` file in such a folder and never overwrites. The sixth, `fileFetched`, files the bytes
+// `.md` file in such a folder, replacing only a file it saved there itself and nobody edited since. The sixth, `fileFetched`, files the bytes
 // of a page `sources__fetch` already fetched (read back from the fetch memo, never re-requested)
 // into such a folder, never overwriting, and appends its manifest record in the same call. The
 // seventh, `writeScratch`, writes the research agent's internal notes as a new `.md` file in the
@@ -40,6 +40,7 @@ import { GAP_LINE_RE, MOCKUP_ONLY_LINE_RE, stripSections, toFiledFace } from "..
 import { withLegend } from "../submission/forms/legend.js";
 import { MOCKUP_ONLY_TAG } from "../submission/forms/markers.js";
 import { findDraftDir, validateMatterRoot } from "./matter-root.js";
+import { writeStatusFile } from "../status-file.js";
 import { canonicalRoot } from "./scope.js";
 import { extractText } from "./text-extract.js";
 import { nextVersionName } from "./version-name.js";
@@ -145,11 +146,11 @@ export function appendManifest(destinationDir: string, record: unknown): { path:
 }
 
 /**
- * Save `text` byte-for-byte as a new file named `filename` in a `6. LAW` folder, its legend at the end
- * replaced by the one legend.ts generates for the symbols it prints (none when it prints none). If that name is
- * taken, the file is `<stem> vN.md`, N one above the highest version present (the bare name counts
- * as v1). The exclusive create (`wx`) is what makes this race-safe: a name another session took
- * between the scan and the write fails EEXIST and the next attempt re-scans. A missing destination
+ * Save `text` byte-for-byte as the file named `filename` in a `6. LAW` folder, its legend at the end
+ * replaced by the one legend.ts generates for the symbols it prints (none when it prints none), and its
+ * save marker last (writeOwnFile). A taken name is replaced only when it holds this tool's own unedited
+ * save; any other file there is refused `foreign_file`. The file name carries the date, so a save on a
+ * later date is a new file. A missing destination
  * is created when its parent is already in a `6. LAW` tree -- the final folder only.
  *
  * Exactly one of `text`, `fromScratch` and `fromRender` is given. `fromScratch` is a file `writeScratch`
@@ -194,12 +195,44 @@ export function saveAnswer(
       }
       source = Buffer.from(text, "utf-8");
     }
-    body = Buffer.from(withLegend(source.toString("utf-8"), "").markdown, "utf-8");
+    // A saved file sent back as text loses its old marker, so the file never carries two.
+    body = Buffer.from(withLegend(source.toString("utf-8").replace(SAVE_MARKER, ""), "").markdown, "utf-8");
   }
   const { dir, created } = resolveOrCreateLawDir(destinationDir);
-  const saved = writeNewVersion(dir, filename, body);
-  const sha256 = createHash("sha256").update(body).digest("hex");
-  return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created, sha256, ...(mockupOnly.length > 0 ? { mockup_only_lines: mockupOnly } : {}) };
+  const saved = writeOwnFile(dir, filename, body.toString("utf-8"));
+  const sha256 = createHash("sha256").update(saved.bytes).digest("hex");
+  return { path: saved.path, filename, bytes: saved.bytes.length, created_dir: created, sha256, ...(mockupOnly.length > 0 ? { mockup_only_lines: mockupOnly } : {}) };
+}
+
+/** A saved answer's last line: the sha256 of the text above it, so a later save can tell its own unedited file. */
+const SAVE_MARKER = /\n\n<!-- probanda-save sha256:([0-9a-f]{64}) -->\n$/;
+
+const sha256Of = (text: string) => createHash("sha256").update(text, "utf-8").digest("hex");
+
+/**
+ * Write `text` and its save marker as `<dir>\<filename>`. A free name is claimed by an exclusive create.
+ * A taken name is replaced through a temp file and a rename (writeStatusFile), so no reader sees half a
+ * file, but only when its marker matches the text above it: a file with no marker, or edited since its
+ * save, is the practitioner's or another tool's and is refused `foreign_file`, nothing written.
+ */
+function writeOwnFile(dir: string, filename: string, text: string): { path: string; bytes: Buffer } {
+  const content = `${text}\n\n<!-- probanda-save sha256:${sha256Of(text)} -->\n`;
+  const bytes = Buffer.from(content, "utf-8");
+  const path = pathWin32.join(dir, filename);
+  try {
+    writeFileSync(path, bytes, { flag: "wx" });
+    return { path, bytes };
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
+  }
+  const existing = readFileSync(path, "utf-8");
+  const marker = SAVE_MARKER.exec(existing);
+  if (marker === null || sha256Of(existing.slice(0, marker.index)) !== marker[1]) {
+    throw new DataServerError(`${path} was not saved by Probanda, or was edited after its save, so it is not overwritten; nothing was saved`, "foreign_file");
+  }
+  const code = writeStatusFile(path, content);
+  if (code) throw new DataServerError(`could not replace ${path}: ${code}`);
+  return { path, bytes };
 }
 
 /** The bytes of `fromScratch`, refused unless its real path is a non-empty file directly in the
@@ -310,7 +343,7 @@ function renderBytes(destinationDir: string, fromRender: string): { body: Buffer
  * Scratchpad\research-agent\`, the research agent's internal notes. `AI Scratchpad` and
  * `research-agent` are created when absent; the 0. DRAFT folder never is. A draft folder whose real
  * path is in a privileged or disclosed tree is refused, the test resolveDraftDir makes. Never
- * overwrites: a taken name gets the next " vN", as saveAnswer does. With `kind` "research-notes" the
+ * overwrites: a taken name gets the next " vN" (writeNewVersion). With `kind` "research-notes" the
  * notes' coverage line must match its fixed shape (checkCoverageLine), or nothing is written.
  */
 export function writeScratch(
@@ -678,7 +711,7 @@ export interface FileFetchedSeams {
  * written as `.md`, a front matter header and then the page text one block per line, the whole
  * page (the 200 KB cut applies only to what `sources__fetch` returns). A PDF is written as its own
  * bytes. `filename` must end in the extension of what was fetched. Never overwrites: a taken name
- * gets the next " vN", as saveAnswer does.
+ * gets the next " vN" (writeNewVersion).
  */
 export function fileFetched(
   url: string,

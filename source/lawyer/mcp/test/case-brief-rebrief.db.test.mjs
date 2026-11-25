@@ -43,11 +43,11 @@ test("the template finds a saved brief through the whole law tree and re-saves i
   const template = readFileSync(new URL("../../../../source/skills/shared/case-brief-template.md", import.meta.url), "utf-8");
   assert.match(template, /with no board, look through `6\. LAW` and every folder under it by `case-brief\/SKILL\.md` step 3's route/);
   assert.doesNotMatch(template, /or `research_filing__list_law_folder` with no board/);
-  assert.match(template, /numbered only within one folder, so its `destination_dir` is the folder holding that brief/);
+  assert.match(template, /The save's `destination_dir` is the folder holding that brief\./);
   assert.match(template, /When that title's only Writing has `filed_on` or `retired_on` set/);
 });
 
-test("a re-brief of a sent or retired Writing leaves it alone and saves the next version on a new Writing of that title", async (t) => {
+test("a re-brief of a sent or retired Writing leaves it alone and saves today's file on a new Writing of that title", async (t) => {
   const base = mkdtempSync(join(tmpdir(), "coclerk-case-brief-rebrief-"));
   t.after(async () => {
     await awaitBackgroundJobs();
@@ -77,20 +77,21 @@ test("a re-brief of a sent or retired Writing leaves it alone and saves the next
        ${prose(id, "case", "Alpha v Beta, 2020 BCCA 1.\nNot noted up by this brief.")}${prose(id, "facts", "A fact.")}${prose(id, "procedural-history", "An appeal.")}${prose(id, "issues", "An issue?")}
        ${prose(id, "holding", `${holding} <!-- statement_of_law_id ${statement} -->`)}${prose(id, "ratio", "None.")}${prose(id, "obiter", "None.")}${prose(id, "disposition", "Dismissed.")}`
     );
-  const save = (id) => {
+  const save = (id, fileStem) => {
     const r = submissionFormsRender(dbPath, id, {}, "mockup", ["General_writing"], undefined, undefined, NOW, "tok");
-    return saveAnswer(law, `${stem}.md`, undefined, undefined, r.documents.find((d) => d.document_type === "General_writing").path);
+    return saveAnswer(law, `${fileStem}.md`, undefined, undefined, r.documents.find((d) => d.document_type === "General_writing").path);
   };
   const { filing_id: first } = await create();
   await write(first, 100, "First holding.");
-  save(first);
+  const firstSaved = save(first, stem);
   await submissionDataExecute(dbPath, `UPDATE filings SET retired_on = '2026-10-10' WHERE id = ${first}`);
   await assert.rejects(submissionDataExecute(dbPath, `DELETE FROM filing_law WHERE filing_id = ${first}`), /do not change/, "the template's delete script stops on it");
   const { filing_id: second } = await create();
   assert.notEqual(second, first);
   await write(second, 101, "Second holding.");
-  const saved = save(second);
-  assert.match(saved.path, / v2\.md$/);
+  const saved = save(second, "2026-10-20 case brief Alpha v Beta, 2020 BCCA 1");
+  assert.notEqual(saved.path, firstSaved.path, "a later date is a file of its own");
+  assert.match(readFileSync(firstSaved.path, "utf-8"), /First holding\./, "the sent brief's copy stays");
   assert.match(readFileSync(saved.path, "utf-8"), /Second holding\./);
   assert.deepEqual(submissionDataQuery(dbPath, `SELECT statement_id FROM filing_law WHERE filing_id = ${first}`).rows.map((r) => r.statement_id), [100], "the retired Writing keeps its item");
 });
