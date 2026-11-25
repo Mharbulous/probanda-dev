@@ -6,9 +6,9 @@
 // mockup page's "Not like this" (POST /cards/<card id>/<state|submit|resolve|dismiss|restore|mockup|
 // reject>, ../suggestions/card.ts), each completed here with no agent needed, so Submit and Dismiss
 // work after the session that showed the card has ended. It also serves a card's page (GET
-// /cards/<card id>?token=...), the link a card copy that cannot reach this listener offers. It opens a
-// file in its default app (GET /files/open?path=...&token=..., ./open-file.ts), the Legal Research page's
-// link to a memo or brief. And one read: the Arguments page asks which card a session pointed it at
+// /cards/<card id>?token=...), the link a card copy that cannot reach this listener offers. It answers a
+// page's link to a file (GET /files/open?path=...&token=...): a `.md`, the Legal Research page's memo or
+// brief, is shown formatted, and any other file opens in its default app (./open-file.ts). And one read: the Arguments page asks which card a session pointed it at
 // (POST /focus, ./focus.ts).
 //
 // index.ts starts it once the MCP transport is connected, and nothing it does reaches start():
@@ -29,8 +29,11 @@
 // holds no state of its own.
 
 import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { basename, isAbsolute } from "node:path";
+
+import MarkdownIt from "markdown-it";
 
 import { BUILD_STAMP } from "../build-stamp.js";
 import { ValidationError } from "../errors.js";
@@ -222,7 +225,13 @@ async function cardPage(req: IncomingMessage, res: ServerResponse, env: NodeJS.P
   html(res, 200, page);
 }
 
-/** A page's link to a file. It arrives as a new browser tab, so each answer is a short page in plain words.
+/** A memo may quote untrusted text: its raw HTML is escaped, and its page runs no script and loads nothing. */
+const markdown = new MarkdownIt({ html: false });
+const MEMO_CSP = "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+const MEMO_STYLE = "body{max-width:50em;margin:2em auto;padding:0 1em;font:16px/1.5 system-ui,sans-serif}table{border-collapse:collapse}td,th{border:1px solid #999;padding:.3em .6em}blockquote{margin-left:0;padding-left:1em;border-left:3px solid #999}";
+
+/** A page's link to a file. It arrives as a new browser tab, so each answer is a page: a `.md` formatted, and
+ * for any other file a short one in plain words once its default app has it.
  * Only a path whose token a render wrote is opened (token.ts), and the reply names only the file. */
 async function openFileLink(req: IncomingMessage, res: ServerResponse, env: NodeJS.ProcessEnv, path: string | null, token: string | null, open: (path: string) => Promise<void>): Promise<void> {
   if (req.method !== "GET") return json(req, res, 405, { error: "Method not allowed" });
@@ -232,6 +241,10 @@ async function openFileLink(req: IncomingMessage, res: ServerResponse, env: Node
   const name = basename(path);
   if (!isAbsolute(path) || !existsSync(path)) return filePage(res, 404, `${name} is not in the law folder now.`);
   try {
+    if (name.toLowerCase().endsWith(".md")) {
+      const body = markdown.render(await readFile(path, "utf-8"));
+      return html(res, 200, `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(name)}</title><style>${MEMO_STYLE}</style></head><body>${body}</body></html>`, { csp: MEMO_CSP });
+    }
     await open(path);
   } catch {
     return filePage(res, 500, `${name} could not be opened. Copy its path from the page to find it in File Explorer.`);

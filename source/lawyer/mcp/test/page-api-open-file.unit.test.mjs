@@ -34,7 +34,7 @@ async function fixture(t, openFile) {
   const opened = [];
   const api = await startPageApi(env, { log: () => {}, openFile: openFile ?? (async (p) => void opened.push(p)) });
   t.after(() => api.close());
-  const file = join(dir, "2026-01-05 note-up A & B Ltd., 2019 BCSC 1 #2 +v2.md");
+  const file = join(dir, "2026-01-05 report A & B Ltd., 2019 BCSC 1 #2 +v2.docx");
   writeFileSync(file, "x");
   return { dir, env, opened, file };
 }
@@ -85,6 +85,54 @@ test("a file gone since the render, and a file nothing can open, each get a plai
   assert.equal(failed.status, 500);
   assert.ok(failed.body.includes("could not be opened"), failed.body);
   assert.equal(failed.body.includes("no app"), false);
+});
+
+const MEMO = [
+  "# Issue & answer",
+  "",
+  "| Case | Held |",
+  "| --- | --- |",
+  "| A v B | yes |",
+  "",
+  "<script>alert(1)</script>",
+  "",
+  "[click](javascript:alert(1))",
+  "",
+].join("\n");
+
+test("a link to a .md shows it formatted, runs nothing from it and opens no app", async (t) => {
+  const f = await fixture(t);
+  const memo = join(f.dir, "2026-01-05 ML re A & B.md");
+  writeFileSync(memo, MEMO);
+  const res = await open(pageApiFileUrl(memo, f.env));
+  assert.equal(res.status, 200);
+  assert.deepEqual(f.opened, []);
+  assert.equal(res.headers["content-type"], "text/html; charset=utf-8");
+  assert.ok(res.body.includes("<h1>Issue &amp; answer</h1>"), res.body);
+  assert.ok(res.body.includes("<table>") && res.body.includes("<td>A v B</td>"), res.body);
+  assert.equal(res.body.includes("You can close this tab"), false);
+  assert.equal(res.body.includes("<script"), false, "raw HTML is escaped");
+  assert.ok(res.body.includes("&lt;script&gt;"), res.body);
+  assert.equal(/href="javascript:/i.test(res.body), false, "a javascript: link is no link");
+  assert.ok(res.body.includes("<title>2026-01-05 ML re A &#38; B.md</title>"), "the name is escaped");
+  assert.equal(res.body.includes(f.dir), false, "the reply never shows the folder");
+  const csp = res.headers["content-security-policy"];
+  assert.ok(csp.includes("default-src 'none'") && !csp.includes("script-src"), csp);
+  assert.equal(res.headers["referrer-policy"], "no-referrer");
+});
+
+test("a .md reached by another path, or with a wrong or missing token, is not shown", async (t) => {
+  const f = await fixture(t);
+  const memo = join(f.dir, "memo.md");
+  writeFileSync(memo, MEMO);
+  const base = pageApiFileUrl(memo, f.env).split("?")[0];
+  const token = pageApiFileToken(memo, f.env);
+  const q = (path, tok) => `${base}?path=${encodeURIComponent(path)}${tok === null ? "" : `&token=${tok}`}`;
+  for (const url of [q(`${f.dir}/sub/../memo.md`, token), q(memo, "0".repeat(64)), q(memo, null)]) {
+    const res = await open(url);
+    assert.equal(res.status, 403, url);
+    assert.equal(res.body.includes("Issue"), false);
+  }
 });
 
 test("the listener opens a file only on GET", async (t) => {
