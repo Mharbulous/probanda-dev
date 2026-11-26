@@ -1,4 +1,4 @@
-// build-stamp: cab3cc526382
+// build-stamp: 44dcf82c2e96
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75506,7 +75506,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "cab3cc526382";
+var BUILD_STAMP = false ? null : "44dcf82c2e96";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -88594,6 +88594,17 @@ var SYMBOLS = [
     condition: "no other 1a work marker renders on the object's line (on a merged line, such as a Notice of Application fact line joining a postulate with its statements of fact, every object's markers count) \u2227 no approval matches its current content: its stored fields as reviewed (statement, paragraph or slot text, excerpt, pinpoint \u2014 never the rendered wording) differ byte for byte from its latest approval snapshot, or it has none. Computed, never stored: any later change re-raises it with no trigger and no invalidation write. Attaches to statements of law, statements of fact, propositions, postulates, submissions, orders sought, clauses, prose slots and rhetorical paragraphs \u2014 never a whole document. A prose slot is one slot of a Writing's own text (a `filing_prose` row that a `slot:<name>`, `addressee` or `sender` part of its stored layout renders), reviewed whole and marked once, on its last line. The last rung before clean on both ladders (\xA75). \u26A0\uFE0F \u2295 \u{1F6A8}, and \u{1F570}\uFE0F (\xA71 \u2192 Fit tells), render beside it as bare events \u2014 they route no 1a work, and the routing decision is counsel's, taken in the review, so the \u{1F9D0} on that statement carries counsel's review of the treatment, including one set in the noting-up sweep. The authority's treatment is part of the statement snapshot (review.md), so any later change of it re-raises \u{1F9D0} on an approved statement. The order's line takes the same rule for its basis: \u26A0\uFE0F \u2295 \u{1F6A8} from a jurisdictional statement's ladder render beside the order's \u{1F9D0}, and the statement filling each of the order's `filled` edges, with its authority's treatment, is part of the order snapshot (review.md), so a later change of treatment, or of which statement fills the basis, re-raises \u{1F9D0} on an approved order. The kill is not part of it, as elsewhere. Killed and overruled silence it as every 1a row (\xA71). An overruling does not silence \u{1F9D0} on the proposition's line, which is not the authority's own line: while a counted statement survives, a proposition with an overruled statement carries \u26D4 beside \u{1F9D0} wherever \u{1F9D0} fires, until approved, the review confirming the overruling. Which of its statements are overruled is part of the proposition snapshot (review.md), so a later overruling re-raises \u{1F9D0} on an approved proposition, and a later kill does not. Which statements support it, and the words each quotes, are part of it too (review.md `supporting_statements`), so linking, unlinking or replacing a statement, or an in-place change of its excerpt, re-raises \u{1F9D0} on an approved proposition, and an approved order takes the same rule for the statements on its `filled` edges (`basis_excerpts`); a pinpoint-only correction re-raises neither. The `(overruled: \u2026)` tag beside that \u26D4 (\xA71) is not part of it, so an edit of the authority's title or citation re-raises nothing. Neither the kill nor the overruling silences \u{1F9D0} on the clause line, which is neither the cited authority's own line nor its statement's and takes no \u{1F3DB}\uFE0F \u2295 \u{1F4D6} reopen prefix (\u{1F4CD} row): until approved, a clause citing an overruled authority reads \u26D4 \u{1F9D0}, the review confirming the overruling as well as the wording, and one citing a killed authority reads `(killed <date>)` \u{1F9D0}, the statement counting as none. Whether the cited authority is overruled is part of the clause snapshot (review.md), so a later overruling re-raises \u{1F9D0} on an approved clause; its `killed_on` is not, since the kill is counsel's own act. Once approved, the bare \u26D4 names the routing work (Types), and the `(killed <date>)` tag keeps the clean line from being read as finished (\xA74 (ii), rule 6). Content filled by an unattended run carries it like any other unapproved content. Documents that are sent only (a Filing, or a Writing that is sent, an internal memo included) \u2014 the reserve inventory records none. Renders for the human on every mockup of such a document; never on a filed or sent face",
     history: "`review_approvals` v27 (#868 \u2014 append-only, revision-exempt); marker admitted #861 as \u{1F4CB} *counsel's review*, re-glyphed and renamed 2026-09-24 (\xA76); render shipped #912, glyph shipped #1061; clause kind admitted #1122 (review.md snapshot row), render shipped #1126; prose slot kind admitted #1207 (review.md snapshot row), render shipped #1207; rhetorical paragraph kind admitted v71 (review.md snapshot row, wording alone; its plain-text tells hold nothing back); supporting_statements and basis_excerpts snapshot keys 2026-10-08 (CoClerk spec 2026-10-08_review-snapshot-supporting-statements-spec.md; practitioner's decision on pinpoint and authority recorded in review.md)"
   },
+  {
+    glyph: "\u{1F46F}",
+    name: "duplicate",
+    group: "work",
+    meaning: "this paragraph shares most of its wording with another paragraph of the same Part, so the two appear to state the same fact",
+    work: "cite the other paragraph instead of restating it, or cut one copy",
+    actor: "drafter; practitioner where the wording was dictated",
+    modelNote: "The marker only flags. Never rewrite wording the practitioner dictated without their approval, even to clear it.",
+    condition: "a BCCA respondent's factum, Part 1: a `filing_prose` `slot='facts_position'` paragraph and a Part 1 fact (`filing_facts` `document='form'` `part='part2'`) whose `postulate` shares at least 5 distinct content words with it (runs of letters and digits, 4 characters or more, lower-cased, with HTML comments and the fixed `STOPWORDS` list of `render-bcca-factum.ts` left out) that make up at least 60% of the postulate's own; a rhetorical paragraph of the Part is never compared; derived, never stored. Prints on both paragraphs, after the position paragraph's text and in the fact line's marker set, each line then carrying `<!-- repeats para. N -->` (`paras. N, M` for several) naming the other. Generates nothing. Counts toward `open-items`, once per flagged paragraph. Being a 1a work marker, it holds \u{1F9D0} back on the fact's line, for the fact and its statements alike; the position paragraph prints no \u{1F9D0}. Rendered for the human on the mockup; never on the filed face, which the emitter builds without it",
+    history: "admitted 2026-11-26 (practitioner + Fable; spec 2026-11-25_factum-part1-duplicate-facts-spec.md); derived, no column; render shipped on the BCCA factum's Part 1 only"
+  },
   // Table 1b, events: the work column is the work each routes.
   {
     glyph: "\u{1F6A7}",
@@ -89148,6 +89159,13 @@ var MOCKUP_ONLY_TAG = "<!-- mockup-only -->";
 function mockupMessage(glyph2, text12) {
   return `${glyph2} ${text12} ${MOCKUP_ONLY_TAG}`;
 }
+var DUPLICATE_GLYPH = "\u{1F46F}";
+function repeatsPhrase(paras) {
+  return `repeats ${paras.length === 1 ? "para." : "paras."} ${paras.join(", ")}`;
+}
+function repeatsComment(paras) {
+  return `<!-- ${repeatsPhrase(paras)} -->`;
+}
 function jurisdictionSlotMarker(state) {
   if (state === "needed") return "\u{1F3DB}\uFE0F";
   if (state === "dead_end") return "\u{1F6A7}";
@@ -89679,16 +89697,21 @@ function quotingTag(row2) {
 function lawStatementCitationLine(row2) {
   const tags = `${quotingTag(row2)}${row2.authority_killed_on !== null ? ` (killed ${row2.authority_killed_on})` : ""}${scrutinyFailedTag([row2])}${settledTag(row2)}${noteUpTag(row2)}`;
   if (row2.authority_title === null) return row2.pinpoint ? `> ${row2.pinpoint}${tags}` : null;
-  const citation = row2.authority_citation ?? CITATION_MISSING;
+  return `> ${authorityCitation(row2.authority_title, row2)}${tags}`;
+}
+function authorityName(title2, kind) {
+  return kind === "doctrine" ? title2 : `*${title2}*`;
+}
+function authorityCitation(title2, row2) {
   const pin = printedPinpoint(row2.authority_citation, row2.pinpoint);
-  return `> *${row2.authority_title}*, ${citation}${pin ? `, ${pin}` : ""}${tags}`;
+  return `${authorityName(title2, row2.authority_kind)}, ${row2.authority_citation ?? CITATION_MISSING}${pin ? `, ${pin}` : ""}`;
 }
 function printedPinpoint(citation, pinpoint) {
   if (!pinpoint || !citation) return pinpoint;
   if (citation.trimEnd().endsWith(`, ${pinpoint.trim()}`)) return null;
   return pinpoint.startsWith(citation) ? pinpoint.slice(citation.length).replace(/^[\s,;]+/, "") || null : pinpoint;
 }
-function lawStatementMarkers(row2, deployed = true) {
+function lawStatementMarkers(row2, deployed = true, research = false) {
   if (row2.authority_killed_on !== null) return "";
   const doubt = row2.verification === "settled" ? "" : doubtMarker(row2.doubt);
   if (row2.treatment === "overruled") {
@@ -89701,7 +89724,7 @@ function lawStatementMarkers(row2, deployed = true) {
     // 🔬 sits between 📍 and 📇 on the authority-support ladder (work-markers.md §5). Not on a
     // statement deployed on no live Writing (R6).
     deployed ? scrutinizeMarker(row2.verification, row2.authority_killed_on) : "",
-    treatmentMarker(row2.treatment),
+    research && row2.treatment === "distinguishable" ? "" : treatmentMarker(row2.treatment),
     // 🕰️ (schema v61) is an event, like ⚠️: a case decided before a provision the same
     // proposition cites came into force. It holds back no 🧐 and names no work of its own.
     anachronismMarker(predatedProvision(row2, parseLinkedProvisions(row2.linked_provisions)) !== null),
@@ -89711,7 +89734,7 @@ function lawStatementMarkers(row2, deployed = true) {
 }
 
 // src/submission/forms/proposal-inventory.ts
-var NON_GENERATING_GLYPHS = ["\u{1F9E9}", "\u{1F575}\uFE0F", "\u2B1C", "\u{1F464}", "\u{1F6A7}", "\u{1F443}", "\u21A9\uFE0F", "\u{1F3C6}", "\u{1F9D0}", "\u{1F3C5}", "\u{1F52C}", "\u{1F4D6}", "\u{1F4C7}"];
+var NON_GENERATING_GLYPHS = ["\u{1F9E9}", "\u{1F575}\uFE0F", "\u2B1C", "\u{1F464}", "\u{1F6A7}", "\u{1F443}", "\u21A9\uFE0F", "\u{1F3C6}", "\u{1F9D0}", "\u{1F3C5}", "\u{1F52C}", "\u{1F4D6}", "\u{1F4C7}", "\u{1F46F}"];
 function proposalKey(e3) {
   return `${e3.slug}:${e3.table}:${e3.id}` + (e3.qualifier ? `:${e3.qualifier}` : "");
 }
@@ -90017,7 +90040,8 @@ var UNATTENDED_ELIGIBLE = /* @__PURE__ */ new Map([
   ["\u{1F9F5}", []],
   ["\u{1F9FE}", []],
   ["\u{1F4DA}", []],
-  ["\u{1F9D0}", []]
+  ["\u{1F9D0}", []],
+  ["\u{1F46F}", []]
 ]);
 function eligibleKey(key) {
   const [slug, table3] = key.split(":");
@@ -93411,7 +93435,7 @@ function itemLines(ctx, state, id, law) {
     if (missing.length > 0) return gap(ctx, state, `statement_of_law ${id} has no ${missing.join(" and no ")}`);
   }
   const excerpt = (row2.excerpt ?? "").trim() === "" ? null : row2.excerpt;
-  return statementBlock(excerpt, lawStatementCitationLine(row2) ?? `> ${CITATION_MISSING}`, lawStatementMarkers(row2), "statement_of_law_id", id, "").join("\n");
+  return statementBlock(excerpt, lawStatementCitationLine(row2) ?? `> ${CITATION_MISSING}`, lawStatementMarkers(row2, true, isResearchWriting(ctx.filing)), "statement_of_law_id", id, "").join("\n");
 }
 function memoHeader(text12) {
   const value2 = (key) => new RegExp(`^${key}:[ \\t]*(.*?)[ \\t]*$`, "m").exec(text12)?.[1];
@@ -94034,6 +94058,439 @@ function renderStateFor(dbPath, stamp3, filing, digest) {
   return state === "fresh" && hasLiveTags(generalLayoutFor(filing)) ? "stale" : state;
 }
 
+// src/page-api/token.ts
+var DEFAULT_PAGE_API_PORT = DEFAULT_PAGE_PORTS.lawyer;
+function pageApiPort(env = process.env) {
+  try {
+    return pagePort("lawyer", env);
+  } catch (err) {
+    if (err instanceof PagePortError) throw new ValidationError(err.message, err.code);
+    throw err;
+  }
+}
+function pageApiToken(dbPath, proceedingId, env = process.env) {
+  return signTarget("proceeding", `${dbPath}
+${proceedingId}`, env);
+}
+function pageApiTokenValid(token, dbPath, proceedingId, env = process.env) {
+  return verifyTarget("proceeding", `${dbPath}
+${proceedingId}`, token, env);
+}
+function pageApiSuggestionToken(recordId, env = process.env) {
+  return signTarget("suggestion", recordId, env);
+}
+function pageApiSuggestionTokenValid(token, recordId, env = process.env) {
+  return verifyTarget("suggestion", recordId, token, env);
+}
+function pageApiFileToken(path, env = process.env) {
+  return signTarget("file", path, env);
+}
+function pageApiFileTokenValid(token, path, env = process.env) {
+  return verifyTarget("file", path, token, env);
+}
+function pageApiFileUrl(path, env = process.env) {
+  return `http://127.0.0.1:${pageApiPort(env)}/files/open?path=${encodeURIComponent(path)}&token=${pageApiFileToken(path, env)}`;
+}
+function pageApiCardToken(cardId, env = process.env) {
+  return signTarget("card", cardId, env);
+}
+function pageApiCardTokenValid(token, cardId, env = process.env) {
+  return verifyTarget("card", cardId, token, env);
+}
+
+// src/templates/view-pages/arguments.css.ts
+var arguments_css_default = '.picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}\n.picker input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}\n.picker label{display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #1d5e4a;color:#025056;font-family:var(--sans);font-size:13px;font-weight:600;line-height:1;padding-bottom:1px;font-variant-numeric:tabular-nums;cursor:pointer}\n.picker input:checked+label{width:31px;height:31px;background:#a8691c;border-color:#a8691c;color:#fff;font-size:15px;font-weight:800}\n.picker input:focus-visible+label{outline:2px solid #1d5e4a;outline-offset:2px}\narticle.arg{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.arg>.text{position:relative;font-weight:400;margin:0;padding-bottom:22px;white-space:pre-wrap;cursor:pointer}\n.arg>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:var(--frame);transition:transform .15s}\n.arg.open>.text::before{transform:rotate(90deg)}\n.arg>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.arg .tags{position:absolute;right:0;bottom:0;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px}\n.arg .tag.flag{background:#a8691c}\narticle.arg.killed{opacity:.55}\n.folder section>h2 .count{font-size:13px;font-weight:600;color:var(--muted)}\n.arg .tag{padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}\n.arg .detail{display:flex;flex-direction:column;gap:6px}\n.arg .where,.arg .label,.arg .none{margin:0;font-size:12.5px;color:var(--muted)}\n.arg .head{margin:4px 0 0;font-size:17px;font-weight:700}\n.arg ul{margin:0;padding-left:20px}\n.arg li{margin:2px 0;white-space:pre-wrap}\n.arg li.omitted{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}\n.arg .linked{border-top:1px solid var(--line);padding-top:6px}';
+
+// src/templates/view-pages/arguments.html.ts
+var arguments_html_default = '@@include(view-head.html)@@\n<title>Arguments</title>\n<style>\n@@include(board.css)@@\n\n\n@@include(view-folder.css)@@\n\n@@include(arguments.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Arguments</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(arguments.js)@@\n</script>\n</body>\n</html>\n';
+
+// src/templates/view-pages/arguments.js.ts
+var arguments_js_default = `(function () {
+  "use strict";
+  var view = window.VIEW_PAGE;
+  if (!view) return;
+  var data = view.data;
+  var board = document.querySelector(".board");
+  var KEY = "arguments-filter";
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+  function list(items, cls) {
+    var ul = el("ul");
+    items.forEach(function (item) { ul.appendChild(el("li", cls ? cls(item) : "", typeof item === "string" ? item : item.text)); });
+    return ul;
+  }
+  function links(label, items) {
+    var linked = el("div", "linked");
+    linked.appendChild(el("p", "label", label));
+    linked.appendChild(list(items));
+    return linked;
+  }
+
+  // One open number for both tabs: a card opens with every card of its number on either tab. A card
+  // with no number opens alone.
+  function keyOf(a) { return a.number !== null ? "n" + a.number : "id" + a.id; }
+  var openKey = null;
+  var allCards = [];
+  function setOpen(key) {
+    openKey = key;
+    allCards.forEach(function (c) {
+      var on = c.key === key;
+      c.node.classList.toggle("open", on);
+      c.detail.hidden = !on;
+      c.title.setAttribute("aria-expanded", String(on));
+    });
+  }
+
+  // A card: its statement, which toggles it and ends in its tags, then its detail.
+  function card(a, noun) {
+    var node = el("article", "arg " + a.side + (a.killed ? " killed" : ""));
+    var title = el("p", "text");
+    title.setAttribute("role", "button");
+    title.tabIndex = 0;
+    title.appendChild(el("span", "", a.contention));
+    var tags = el("span", "tags");
+    tags.appendChild(el("span", "tag", noun + " " + a.label));
+    a.tags.forEach(function (t) { tags.appendChild(el("span", "tag flag", t)); });
+    title.appendChild(tags);
+    node.appendChild(title);
+    var detail = el("div", "detail");
+    node.appendChild(detail);
+    if (a.where) detail.appendChild(el("p", "where", a.where));
+    if (a.law.length > 0) {
+      detail.appendChild(el("p", "head", "Law"));
+      detail.appendChild(list(a.law.map(function (l) {
+        return { text: l.killed_on ? l.text + " (omitted " + l.killed_on + ")" : l.text, omitted: !!l.killed_on };
+      }), function (l) { return l.omitted ? "omitted" : ""; }));
+    } else {
+      detail.appendChild(el("p", "none", "No law linked"));
+    }
+    if (a.facts.length > 0) {
+      detail.appendChild(el("p", "head", "Facts"));
+      detail.appendChild(list(a.facts));
+    } else {
+      detail.appendChild(el("p", "none", "No facts linked"));
+    }
+    if (a.rebuts.length > 0) detail.appendChild(links("Rebuts", a.rebuts));
+    if (a.rebutted_by.length > 0) detail.appendChild(links("Rebuttals", a.rebutted_by));
+    var c = { node: node, title: title, detail: detail, key: keyOf(a), number: a.number };
+    function toggle() { setOpen(openKey === c.key ? null : c.key); }
+    title.addEventListener("click", toggle);
+    title.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
+    });
+    allCards.push(c);
+    return c;
+  }
+
+  var tablist = el("div", "tabs");
+  tablist.setAttribute("role", "tablist");
+  tablist.setAttribute("aria-label", "Show");
+  board.appendChild(tablist);
+  var folder = el("div", "folder");
+  folder.id = "arguments-panel";
+  folder.setAttribute("role", "tabpanel");
+  board.appendChild(folder);
+
+  // One tab's section, its picker and its cards. The picker's selected label lists that card alone,
+  // and none selected lists them all.
+  var sections = {};
+  function section(name, heading, items, noun, note) {
+    var cards = items.map(function (a) { return card(a, noun); });
+    var sec = el("section");
+    var h2 = el("h2", "", heading);
+    if (note) h2.appendChild(el("span", "count", note));
+    var picker = el("span", "picker");
+    picker.setAttribute("role", "radiogroup");
+    picker.setAttribute("aria-label", heading + ": show card");
+    h2.appendChild(picker);
+    sec.appendChild(h2);
+    var stack = el("div", "stack");
+    sec.appendChild(stack);
+    folder.appendChild(sec);
+    var radios = [];
+    function filter(index) {
+      cards.forEach(function (c, i) { c.node.hidden = index >= 0 && i !== index; });
+    }
+    // A session's pointer (focus): every card listed, that number opened.
+    function show(number) {
+      var first = cards.filter(function (c) { return c.number === number; })[0];
+      if (!first) return false;
+      radios.forEach(function (r) { r.checked = false; });
+      filter(-1);
+      setOpen(first.key);
+      first.node.scrollIntoView({ block: "start" });
+      return true;
+    }
+    sections[name] = { node: sec, size: cards.length, show: show };
+    cards.forEach(function (c, i) {
+      var input = el("input");
+      input.type = "radio";
+      input.name = "pick-" + name;
+      input.id = "pick-" + name + "-" + (i + 1);
+      radios.push(input);
+      var label = el("label", "", items[i].label.replace("#", ""));
+      label.htmlFor = input.id;
+      picker.appendChild(input);
+      picker.appendChild(label);
+      function clear(e) { e.preventDefault(); input.checked = false; filter(-1); }
+      input.addEventListener("change", function () { if (input.checked) filter(i); });
+      label.addEventListener("click", function (e) { if (input.checked) clear(e); });
+      input.addEventListener("keydown", function (e) { if (e.key === " " && input.checked) clear(e); });
+      stack.appendChild(c.node);
+    });
+  }
+  var unanswered = data.arguments.filter(function (a) { return a.tags.indexOf("No rebuttal") >= 0; }).length;
+  section("arguments", "Arguments", data.arguments, "Argument", unanswered + " with no rebuttal");
+  section("rebuttals", "Rebuttals", data.rebuttals, "Rebuttal", null);
+  setOpen(null);
+  var empty = el("p", "empty", "Nothing recorded on this tab.");
+  folder.appendChild(empty);
+
+  var TABS = [["arguments", "Arguments"], ["rebuttals", "Rebuttals"]];
+  var tabs = TABS.map(function (t) {
+    var b = el("button", "", t[1]);
+    b.type = "button";
+    b.id = "tab-" + t[0];
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-controls", folder.id);
+    b.setAttribute("data-filter", t[0]);
+    tablist.appendChild(b);
+    return b;
+  });
+
+  var current = "arguments";
+  try {
+    var saved = localStorage.getItem(KEY);
+    if (TABS.some(function (t) { return t[0] === saved; })) current = saved;
+  } catch (e) {}
+  function apply() {
+    Object.keys(sections).forEach(function (name) { sections[name].node.hidden = name !== current; });
+    tabs.forEach(function (b) {
+      var on = b.getAttribute("data-filter") === current;
+      b.setAttribute("aria-selected", String(on));
+      b.tabIndex = on ? 0 : -1;
+      if (on) folder.setAttribute("aria-labelledby", b.id);
+    });
+    empty.hidden = sections[current].size > 0;
+  }
+  function select(b) {
+    current = b.getAttribute("data-filter");
+    try { localStorage.setItem(KEY, current); } catch (e) {}
+    apply();
+  }
+  tabs.forEach(function (b, i) {
+    b.addEventListener("click", function () { select(b); });
+    b.addEventListener("keydown", function (e) {
+      var step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+      if (step === 0) return;
+      e.preventDefault();
+      var next = tabs[(i + step + tabs.length) % tabs.length];
+      select(next);
+      next.focus();
+    });
+  });
+  apply();
+
+  // A session can point this page at an argument number (drafting_forms__focus_view_page): the page
+  // asks the data server's listener every 2 s and moves to each new pointer. A pointer older than 30 s
+  // when the page opens is old news and left alone. Without the listener the page stays as it is.
+  var api = data.api;
+  if (!api) return;
+  var seen = null;
+  var first = true;
+  function poll() {
+    fetch("http://127.0.0.1:" + api.port + "/focus", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ db_path: api.db_path, proceeding_id: api.proceeding_id, token: api.token, filing_ids: api.filing_ids })
+    }).then(function (res) { return res.ok ? res.json() : null; }).then(function (body) {
+      var f = body && body.focus;
+      var fresh = !first || (f && Date.now() - Date.parse(f.at) < 30000);
+      first = false;
+      if (!f || f.id === seen) return;
+      seen = f.id;
+      var s = sections[f.section];
+      if (!fresh || !s) return;
+      var tab = tabs.filter(function (b) { return b.getAttribute("data-filter") === f.section; })[0];
+      if (s.show(f.number)) select(tab);
+    }).catch(function () {}).then(function () { setTimeout(poll, 2000); });
+  }
+  poll();
+})();`;
+
+// src/templates/view-pages/shared.js.ts
+var shared_js_default = '(function () {\n  "use strict";\n  var view = window.VIEW_PAGE;\n  if (!view) return;\n  var meta = view.meta;\n  if (meta.filing !== "") document.title = view.name + " \u2014 " + meta.filing;\n  var row = document.querySelector("header .meta");\n  [\n    ["Writing", meta.filing],\n    ["Matter", meta.matter],\n    ["Client", meta.client],\n    ["Rev", String(meta.revision)]\n  ].concat(view.extra || [], [["Rendered", meta.rendered]]).forEach(function (pair) {\n    if (pair[1] === "") return;\n    var span = document.createElement("span");\n    span.textContent = pair[1];\n    span.setAttribute("data-k", pair[0]);\n    row.appendChild(span);\n  });\n})();';
+
+// src/templates/view-pages/view-folder.css.ts
+var view_folder_css_default = '.board{gap:0}\n.tabs{display:flex;align-items:flex-end;padding:0 10px;position:relative}\n.tabs [role=tab]{position:relative;z-index:1;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:inherit;font-size:13px;font-weight:600;color:#3d5c50;background:none;border:0;padding:7px 18px 6px;margin-left:-6px;cursor:pointer}\n.tabs [role=tab]:first-child{margin-left:0}\n.tabs [role=tab]::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(#c4dacd,#aecaba);border:1px solid #8fb3a0;border-bottom:0;border-radius:9px 9px 0 0;box-shadow:inset 0 -4px 5px -3px rgba(0,0,0,.22);transform:perspective(10px) rotateX(1.6deg);transform-origin:bottom}\n.tabs [role=tab][aria-selected=true]{z-index:3;padding-top:10px;padding-bottom:8px;margin-bottom:-1px;color:#1d5e4a;font-weight:800}\n.tabs [role=tab][aria-selected=true]::before{background:linear-gradient(#eaf5ee,#cfe6d8);box-shadow:none}\n.tabs [role=tab]:focus-visible{outline:2px solid #1d5e4a;outline-offset:-5px}\n.folder{position:relative;z-index:2;background:#cfe6d8;border:1px solid #8fb3a0;border-radius:0 12px 12px 12px;padding:18px;display:flex;flex-direction:column;gap:28px}\n.folder section{background:none;padding:0;border-radius:0}\n.folder section>h2{font-size:22px;font-weight:800;color:#1d5e4a;border-bottom:2px solid #1d5e4a;align-items:center;flex-wrap:wrap;gap:10px}\n.folder>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}\n[hidden]{display:none!important}\n@media (max-width:600px){main{padding:16px}}\n@media (max-width:520px){\n.tabs{padding:0 4px}\n.tabs [role=tab]{font-size:11.5px;padding:6px 9px 5px}\n.tabs [role=tab][aria-selected=true]{padding-top:8px;padding-bottom:7px}\n.folder{padding:12px}\n}';
+
+// src/templates/view-pages/view-head.html.ts
+var view_head_html_default = '<!doctype html>\n<html lang="en" data-view-page>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">';
+
+// src/submission/forms/arguments-page.ts
+function buildArgumentsData(dbPath, filing) {
+  const filings = Array.isArray(filing) ? filing : [filing];
+  const out = { arguments: [], rebuttals: [] };
+  for (const proceedingId of [...new Set(filings.map((f3) => f3.proceeding_id))]) {
+    const part = argumentsFor(dbPath, proceedingId, filings.filter((f3) => f3.proceeding_id === proceedingId).map((f3) => f3.id), filings.length > 1);
+    out.arguments.push(...part.arguments);
+    out.rebuttals.push(...part.rebuttals);
+  }
+  return out;
+}
+var letter = (i3) => String.fromCharCode(97 + i3 % 26).repeat(Math.floor(i3 / 26) + 1);
+function roman(n3) {
+  const steps = [[1e3, "m"], [900, "cm"], [500, "d"], [400, "cd"], [100, "c"], [90, "xc"], [50, "l"], [40, "xl"], [10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"]];
+  let out = "";
+  for (const [value2, digits2] of steps) for (; n3 >= value2; n3 -= value2) out += digits2;
+  return out;
+}
+function argumentsFor(dbPath, proceedingId, ids, merged) {
+  const all = rows(
+    dbPath,
+    "SELECT id, contention, side, number, anticipated, component, pinpoint, killed_on FROM arguments WHERE proceeding_id = ? ORDER BY id",
+    [proceedingId]
+  );
+  const byId2 = new Map(all.map((a3) => [a3.id, a3]));
+  const links = rows(
+    dbPath,
+    `SELECT r.rebuttal_id, r.argument_id FROM argument_rebuts r JOIN arguments a ON a.id = r.argument_id
+     WHERE a.proceeding_id = ? ORDER BY r.rowid`,
+    [proceedingId]
+  ).filter((l3) => byId2.has(l3.rebuttal_id));
+  const deployments = rows(
+    dbPath,
+    `SELECT DISTINCT fs.submission_id, f.id AS filing_id, f.title, f.retired_on
+     FROM filing_submissions fs JOIN filings f ON f.id = fs.filing_id
+     WHERE f.proceeding_id = ?
+     ORDER BY f.id`,
+    [proceedingId]
+  );
+  const facts = rows(
+    dbPath,
+    `SELECT sf.submission_id, f.postulate FROM submission_facts sf JOIN facts f ON f.id = sf.fact_id
+     WHERE f.proceeding_id = ? ORDER BY f.id`,
+    [proceedingId]
+  );
+  const killedOn = hasColumn(dbPath, "law_assertions", "killed_on") ? "la.killed_on" : "NULL AS killed_on";
+  const law = rows(
+    dbPath,
+    `SELECT sl.submission_id, la.proposition, ${killedOn}
+     FROM submission_law sl JOIN law_assertions la ON la.id = sl.law_assertion_id
+     WHERE la.proceeding_id = ? ORDER BY la.id`,
+    [proceedingId]
+  );
+  const targetOf = /* @__PURE__ */ new Map();
+  const rebuttalsOf = /* @__PURE__ */ new Map();
+  for (const l3 of links) {
+    targetOf.set(l3.rebuttal_id, l3.argument_id);
+    rebuttalsOf.set(l3.argument_id, [...rebuttalsOf.get(l3.argument_id) ?? [], l3.rebuttal_id]);
+  }
+  const numberOf = (id, seen = /* @__PURE__ */ new Set()) => {
+    const target2 = targetOf.get(id);
+    if (target2 === void 0) return byId2.get(id)?.number ?? null;
+    if (seen.has(id)) return null;
+    seen.add(id);
+    return numberOf(target2, seen);
+  };
+  const labels = /* @__PURE__ */ new Map();
+  const labelOf = (id, seen = /* @__PURE__ */ new Set()) => {
+    const known = labels.get(id);
+    if (known !== void 0) return known;
+    let out;
+    const n3 = numberOf(id);
+    const parent = targetOf.get(id);
+    if (parent === void 0) out = { label: n3 === null ? "#?" : `#${n3}`, path: [] };
+    else if (seen.has(id)) out = { label: "#?", path: [] };
+    else {
+      seen.add(id);
+      const base = labelOf(parent, seen);
+      const i3 = (rebuttalsOf.get(parent) ?? []).indexOf(id);
+      out = { label: `${base.label}.${base.path.length % 2 === 0 ? letter(i3) : roman(i3 + 1)}`, path: [...base.path, i3] };
+    }
+    labels.set(id, out);
+    return out;
+  };
+  const byNumber = (a3, b3) => {
+    const x3 = numberOf(a3);
+    const y3 = numberOf(b3);
+    return x3 === y3 ? 0 : x3 === null ? 1 : y3 === null ? -1 : x3 - y3;
+  };
+  const card2 = (a3) => {
+    const deployedOn = deployments.filter((d3) => d3.submission_id === a3.id);
+    const here = deployedOn.filter((d3) => ids.includes(d3.filing_id));
+    const elsewhere = deployedOn.map((d3) => d3.retired_on === null ? d3.title : `${d3.title} (retired)`).join("; ");
+    const source = [a3.component, a3.pinpoint].filter((part) => part !== null && part !== "").join(", ");
+    const where = here.length > 0 ? merged ? `On this board: ${here.map((d3) => d3.title).join("; ")}` : "On this Writing" : deployedOn.length > 0 ? `On ${elsewhere}` : source || null;
+    const rebuttals = rebuttalsOf.get(a3.id) ?? [];
+    const tags = [];
+    if (a3.side === "ours" && a3.killed_on === null && deployedOn.length === 0) tags.push("Held in reserve");
+    if (a3.anticipated === 1) tags.push("Anticipated");
+    if (a3.side === "opposing" && a3.killed_on === null && !targetOf.has(a3.id) && !rebuttals.some((r3) => byId2.get(r3)?.killed_on === null)) tags.push("No rebuttal");
+    if (a3.killed_on !== null) tags.push(`Killed ${a3.killed_on}`);
+    return {
+      id: a3.id,
+      label: labelOf(a3.id).label,
+      number: numberOf(a3.id),
+      side: a3.side,
+      contention: a3.contention,
+      where,
+      tags,
+      killed: a3.killed_on !== null,
+      facts: facts.filter((f3) => f3.submission_id === a3.id).map((f3) => f3.postulate),
+      law: law.filter((l3) => l3.submission_id === a3.id).map((l3) => ({ text: l3.proposition, killed_on: l3.killed_on })),
+      rebuts: targetOf.has(a3.id) ? [labelOf(targetOf.get(a3.id)).label] : [],
+      rebutted_by: rebuttals.map((r3) => labelOf(r3).label)
+    };
+  };
+  const order = (x3, y3) => {
+    if (x3.killed_on === null !== (y3.killed_on === null)) return x3.killed_on === null ? -1 : 1;
+    if (x3.killed_on !== null && y3.killed_on !== null && x3.killed_on !== y3.killed_on) return x3.killed_on < y3.killed_on ? -1 : 1;
+    const byN = byNumber(x3.id, y3.id);
+    if (byN !== 0) return byN;
+    const px = labelOf(x3.id).path;
+    const py = labelOf(y3.id).path;
+    for (let i3 = 0; i3 < Math.min(px.length, py.length); i3++) if (px[i3] !== py[i3]) return px[i3] - py[i3];
+    return px.length - py.length || x3.id - y3.id;
+  };
+  const sorted = [...all].sort(order);
+  return {
+    arguments: sorted.filter((a3) => !targetOf.has(a3.id)).map(card2),
+    rebuttals: sorted.filter((a3) => targetOf.has(a3.id)).map(card2)
+  };
+}
+var ARGUMENTS_PAGE = {
+  name: "Arguments",
+  ...templated({
+    entry: "arguments.html",
+    files: {
+      "arguments.html": arguments_html_default,
+      "view-head.html": view_head_html_default,
+      "board.css": board_css_default,
+      "view-folder.css": view_folder_css_default,
+      "arguments.css": arguments_css_default,
+      "shared.js": shared_js_default,
+      "arguments.js": arguments_js_default
+    }
+  }),
+  // The listener the page asks which card a session pointed it at (../../page-api/focus.ts).
+  data: (ctx) => ({
+    ...buildArgumentsData(ctx.dbPath, ctx.writings.map((w3) => w3.filing)),
+    api: {
+      port: pageApiPort(),
+      db_path: ctx.dbPath,
+      proceeding_id: ctx.proceeding.id,
+      token: pageApiToken(ctx.dbPath, ctx.proceeding.id),
+      filing_ids: ctx.writings.map((w3) => w3.filing.id)
+    }
+  })
+};
+
 // src/submission/forms/opposing-points.ts
 function fetchOpposingArguments(dbPath, proceedingId) {
   const points = rows(
@@ -94072,7 +94529,7 @@ function filingFrontmatter(proceeding2, ctx, documentType) {
 }
 
 // src/submission/forms/render-bcca-stay-response.ts
-function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, inventory, review) {
+function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, inventory, review, repeatsByFact) {
   const statementsByFact = /* @__PURE__ */ new Map();
   for (const stmt of fetchStatementsOfFact(dbPath, facts.map((f3) => f3.id))) {
     const list4 = statementsByFact.get(stmt.fact_id) ?? [];
@@ -94093,6 +94550,11 @@ function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFac
       suppressMarker(noWitnessMarker(courtRecordLinked, stmts.length > 0, admitted, spentGlyphByFact.get(f3.id) ?? ""), suppressedFactIds.has(f3.id)),
       courtRecordPin
     ];
+    const repeats = repeatsByFact?.get(f3.id);
+    if (repeats) {
+      factTokens.push(DUPLICATE_GLYPH);
+      recordCriterionGlyphs(inventory, DUPLICATE_GLYPH, [DUPLICATE_GLYPH], { table: "facts", id: f3.id, item: `Part 1 para. ${para2}: ${repeatsPhrase(repeats)}` });
+    }
     const tokens2 = [...factTokens];
     const statementSets = [];
     const guarded = isAdmittedGuard(courtRecordLinked, admitted);
@@ -94120,18 +94582,19 @@ function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFac
       if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(review, inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
     });
     const glyphs = printMarkerSets([dedupeLineMarkers(factTokens), ...statementSets.map(dedupeLineMarkers)]);
-    lines2.push(`${para2}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${courtRecordCite ? "" : ` <!-- fact ${para2} -->`}`);
+    const repeatsNote = repeats ? ` ${repeatsComment(repeats)}` : "";
+    lines2.push(`${para2}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${repeatsNote}${courtRecordCite ? "" : ` <!-- fact ${para2} -->`}`);
     if (courtRecordCite) lines2.push(`   > ${courtRecordCite} <!-- fact ${para2} -->`);
   });
   return { lines: lines2, nextPara: para2 };
 }
-function renderFactParagraphsWithRhetoric(ctx, facts, rhetoric, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds) {
+function renderFactParagraphsWithRhetoric(ctx, facts, rhetoric, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, repeatsByFact) {
   const lines2 = [];
   let para2 = startPara;
   let run2 = [];
   const flush = () => {
     if (run2.length === 0) return;
-    const result = renderFactParagraphs(ctx.dbPath, run2, para2, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, ctx.inventory, ctx.review);
+    const result = renderFactParagraphs(ctx.dbPath, run2, para2, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, ctx.inventory, ctx.review, repeatsByFact);
     lines2.push(...result.lines);
     para2 = result.nextPara;
     run2 = [];
@@ -94164,7 +94627,7 @@ function fetchAffidavitDetails(dbPath, documentIds) {
 function fetchCitedAuthorities(dbPath, filingId, proceedingId) {
   return rows(
     dbPath,
-    `SELECT MIN(a.id) AS id, a.style_of_cause_or_title, a.citation
+    `SELECT MIN(a.id) AS id, a.style_of_cause_or_title, a.citation, MIN(a.kind) AS kind
      FROM filing_submissions fs
      JOIN submission_law slk ON slk.submission_id = fs.submission_id
      JOIN statements_of_law sl ON sl.law_assertion_id = slk.law_assertion_id
@@ -94499,7 +94962,7 @@ function renderBccaStayResponse(ctx) {
     authorities.forEach((a3, i3) => {
       const citation = a3.citation ? `, ${a3.citation}` : ` ${gapMarker("gap")}`;
       recordCriterionGlyphs(ctx.inventory, citation, ["\u{1F9E9}"], { table: "authority_citations", id: a3.id, item: `${a3.style_of_cause_or_title}: citation` });
-      lines2.push(`${i3 + 1}. ${a3.style_of_cause_or_title}${citation}`);
+      lines2.push(`${i3 + 1}. ${authorityName(a3.style_of_cause_or_title, a3.kind)}${citation}`);
     });
     if (unverifiedDelta) {
       lines2.push(
@@ -94546,6 +95009,16 @@ function fetchProseParagraphs(dbPath, filingId) {
     ])
   );
 }
+var ISSUE_ARGUMENTS = /\s*<!--\s*arguments\s+([\d,\s]*?)\s*-->\s*$/;
+function factumIssues(prose) {
+  const [leadIn, ...rest] = prose.get("issues") ?? [];
+  const issues = rest.map((p3) => {
+    const m3 = ISSUE_ARGUMENTS.exec(p3);
+    if (!m3) return { text: p3, argumentIds: [] };
+    return { text: p3.slice(0, m3.index).trim(), argumentIds: m3[1].split(/[\s,]+/).filter((x3) => x3 !== "").map(Number) };
+  });
+  return { leadIn: leadIn ?? null, issues };
+}
 function fetchCitedStatements(dbPath, lawAssertionIds) {
   if (lawAssertionIds.length === 0) return [];
   const placeholders = lawAssertionIds.map(() => "?").join(",");
@@ -94563,7 +95036,7 @@ function fetchCitedStatements(dbPath, lawAssertionIds) {
 function factumAuthorities(dbPath, lawParas) {
   const byAuthority = /* @__PURE__ */ new Map();
   for (const s3 of fetchCitedStatements(dbPath, [...lawParas.keys()])) {
-    const entry4 = byAuthority.get(s3.authority_id) ?? { authority_id: s3.authority_id, authority: s3.title, citation: s3.citation, paras: [] };
+    const entry4 = byAuthority.get(s3.authority_id) ?? { authority_id: s3.authority_id, authority: s3.title, citation: s3.citation, kind: s3.kind, paras: [] };
     const para2 = lawParas.get(s3.law_assertion_id);
     if (!entry4.paras.includes(para2)) entry4.paras.push(para2);
     byAuthority.set(s3.authority_id, entry4);
@@ -94627,6 +95100,113 @@ function pageBudgetLine(label2, words2, limit, limitNote) {
   const pages = Math.max(1, Math.ceil(words2 / WORDS_PER_PAGE));
   const over = words2 > limit * WORDS_PER_PAGE;
   return `- ${label2}: ${words2} words, about ${pages} page${pages === 1 ? "" : "s"} of the ${limit}-page limit.${over ? ` **Over the limit** -- ${limitNote}` : ""}`;
+}
+var STOPWORDS = /* @__PURE__ */ new Set([
+  "about",
+  "above",
+  "after",
+  "again",
+  "also",
+  "among",
+  "been",
+  "before",
+  "being",
+  "below",
+  "between",
+  "both",
+  "came",
+  "come",
+  "could",
+  "does",
+  "done",
+  "down",
+  "during",
+  "each",
+  "either",
+  "even",
+  "every",
+  "from",
+  "further",
+  "have",
+  "having",
+  "here",
+  "into",
+  "just",
+  "made",
+  "make",
+  "many",
+  "more",
+  "most",
+  "much",
+  "must",
+  "neither",
+  "only",
+  "other",
+  "ought",
+  "over",
+  "said",
+  "same",
+  "shall",
+  "should",
+  "since",
+  "some",
+  "such",
+  "than",
+  "that",
+  "their",
+  "them",
+  "then",
+  "there",
+  "these",
+  "they",
+  "this",
+  "those",
+  "through",
+  "under",
+  "until",
+  "upon",
+  "very",
+  "were",
+  "what",
+  "when",
+  "where",
+  "whether",
+  "which",
+  "while",
+  "whom",
+  "whose",
+  "will",
+  "with",
+  "within",
+  "without",
+  "would",
+  "your"
+]);
+function contentWords(text12) {
+  const words2 = text12.replace(/<!--[\s\S]*?-->/g, " ").toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+  return new Set(words2.filter((w3) => w3.length >= 4 && !STOPWORDS.has(w3)));
+}
+function restatesFact(position2, fact) {
+  const factWords = contentWords(fact);
+  const positionWords = contentWords(position2);
+  let shared = 0;
+  for (const w3 of factWords) if (positionWords.has(w3)) shared += 1;
+  return shared >= 5 && shared >= 0.6 * factWords.size;
+}
+function part1Repeats(position2, facts, rhetoric) {
+  const byPosition = /* @__PURE__ */ new Map();
+  const byFact = /* @__PURE__ */ new Map();
+  let para2 = position2.length;
+  for (const entry4 of interleave(facts, rhetoric, (f3) => f3.filing_ordinal)) {
+    para2 += 1;
+    if (entry4.kind !== "host") continue;
+    position2.forEach((text12, i3) => {
+      if (!restatesFact(text12, entry4.item.postulate)) return;
+      byPosition.set(i3 + 1, [...byPosition.get(i3 + 1) ?? [], para2]);
+      byFact.set(entry4.item.id, [...byFact.get(entry4.item.id) ?? [], i3 + 1]);
+    });
+  }
+  return { byPosition, byFact };
 }
 function renderBccaFactum(ctx) {
   const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
@@ -94751,25 +95331,38 @@ function renderBccaFactum(ctx) {
   if (factsPosition.length === 0) {
     pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No position on the appellants' statement of facts recorded."), 2, "Position on the appellants' statement of facts");
   }
+  const factsRhetoric = fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts");
+  const repeats = part1Repeats(factsPosition, facts, factsRhetoric);
   factsPosition.forEach((p3) => {
     para2 += 1;
-    lines2.push(`${para2}. ${p3}`);
+    const repeated = repeats.byPosition.get(para2);
+    if (repeated) {
+      recordCriterionGlyphs(ctx.inventory, DUPLICATE_GLYPH, [DUPLICATE_GLYPH], { table: "filing_prose.facts_position", id: para2, item: `Part 1 para. ${para2}: ${repeatsPhrase(repeated)}` });
+    }
+    lines2.push(`${para2}. ${p3}${repeated ? ` ${DUPLICATE_GLYPH} ${repeatsComment(repeated)}` : ""}`);
   });
-  const factResult = renderFactParagraphsWithRhetoric(ctx, facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), para2, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  const factResult = renderFactParagraphsWithRhetoric(ctx, facts, factsRhetoric, para2, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, repeats.byFact);
   lines2.push(...factResult.lines);
   para2 = factResult.nextPara;
   lines2.push("");
   lines2.push("## PART 2 - ISSUES ON APPEAL");
   lines2.push("");
-  if (submissions.length === 0) {
-    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No submissions deployed to this factum."), 3, "Submissions");
+  const { leadIn, issues } = factumIssues(prose);
+  if (leadIn === null || issues.length === 0) {
+    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No issues on appeal recorded."), 7, "Issues on appeal");
   }
-  submissions.forEach((s3) => {
+  if (leadIn !== null) {
     para2 += 1;
-    const answers = points.filter((pt3) => pt3.rebuttals.some((r3) => r3.id === s3.id)).map((pt3) => pt3.component ?? pt3.contention);
-    lines2.push(`${para2}. ${s3.contention}${answers.length > 0 ? ` <!-- answers: ${answers.join("; ")} -->` : ""}`);
+    lines2.push(`${para2}. ${leadIn}`, "");
+  }
+  issues.forEach((issue2, i3) => {
+    lines2.push(`(${letter(i3)}) ${issue2.text}${issue2.argumentIds.length > 0 ? ` <!-- arguments ${issue2.argumentIds.join(", ")} -->` : ""}`);
+    if (!issue2.argumentIds.some((id) => submissionIds.includes(id))) {
+      pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "This issue names no argument in Part 3."), 7, `Issue (${letter(i3)}): arguments`);
+    }
+    lines2.push("");
   });
-  lines2.push("");
+  const framed = new Set(issues.flatMap((issue2) => issue2.argumentIds));
   const unanswered = points.filter((pt3) => pt3.rebuttals.length === 0);
   if (unanswered.length > 0) {
     lines2.push("#### Points not yet answered");
@@ -94781,6 +95374,9 @@ function renderBccaFactum(ctx) {
   }
   lines2.push("## PART 3 - ARGUMENT");
   lines2.push("");
+  if (submissions.length === 0) {
+    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No submissions deployed to this factum."), 3, "Submissions");
+  }
   const renderedLawAssertions = /* @__PURE__ */ new Map();
   for (const entry4 of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
     if (entry4.kind === "rhetoric") {
@@ -94804,6 +95400,9 @@ function renderBccaFactum(ctx) {
       { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
     );
     lines2.push(...result.lines);
+    if (!framed.has(s3.id)) {
+      pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No issue in Part 2 names this argument."), 3, `Argument ${s3.id}: issue`);
+    }
     lines2.push("");
     para2 = result.nextPara;
   }
@@ -94857,7 +95456,7 @@ function renderBccaFactum(ctx) {
     authorities.forEach((a3) => {
       const citation = a3.citation ?? gapMarker("gap");
       recordCriterionGlyphs(ctx.inventory, citation, ["\u{1F9E9}"], { table: "authority_citations", id: a3.authority_id, item: `${a3.authority}: citation` });
-      lines2.push(`| ${a3.authority}, ${citation} | (fills in Word) | ${a3.paras.join(", ")} |`);
+      lines2.push(`| ${authorityName(a3.authority, a3.kind)}, ${citation} | (fills in Word) | ${a3.paras.join(", ")} |`);
     });
   }
   lines2.push("");
@@ -96773,7 +97372,7 @@ function confirmationGate(states) {
   };
 }
 var ROMAN = [[1e3, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"], [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]];
-function roman(n3) {
+function roman2(n3) {
   let out = "";
   for (const [value2, numeral] of ROMAN) {
     while (n3 >= value2) {
@@ -96786,7 +97385,7 @@ function roman(n3) {
 function headingLine(part, n3) {
   switch (part.heading_numbering) {
     case "part-roman":
-      return `## Part ${roman(n3)} \u2014 ${part.heading}`;
+      return `## Part ${roman2(n3)} \u2014 ${part.heading}`;
     case "part-arabic":
       return `## Part ${n3} \u2014 ${part.heading}`;
     case "letter":
@@ -96822,7 +97421,7 @@ function authorityUnconfirmed(filing, layout) {
   return filing.needs_forum_parts === 0 && filing.filed_on === null && filing.authority_confirmed_on === null && Array.isArray(layout.goal_criteria) && layout.goal_criteria.includes("primary-authority") && !layout.goal_criteria.includes("noting-up");
 }
 function authorityCitedLine(ctx, row2) {
-  const glyphs = lawStatementMarkers(row2);
+  const glyphs = lawStatementMarkers(row2, true, isResearchWriting(ctx.filing));
   recordLawStatementGlyphs(ctx.inventory, glyphs, row2);
   const review = row2.authority_killed_on === null ? reviewMarkerFor(ctx.review, ctx.inventory, glyphs, "statements_of_law", row2.statement_id, lawItem(row2)) : "";
   return [lawStatementCitationLine(row2), printMarkerSets([dedupeLineMarkers([glyphs, review])]), `<!-- statement_of_law_id ${row2.statement_id} -->`].filter(Boolean).join(" ");
@@ -96949,7 +97548,7 @@ var EVIDENCE = {
   )
 };
 var OPEN_ITEMS_TEXT = "Nothing is left open on the form";
-var OPEN_ITEMS_COMMON = anyOf(slugs("loose-thread", "factual-basis", "proposition", "not-recorded", "unchosen", "choose-template"), glyph("\u{1F9E9}"), glyph("\u{1F575}\uFE0F"));
+var OPEN_ITEMS_COMMON = anyOf(slugs("loose-thread", "factual-basis", "proposition", "not-recorded", "unchosen", "choose-template"), glyph("\u{1F9E9}"), glyph("\u{1F575}\uFE0F"), glyph("\u{1F46F}"));
 var COUNSEL_REVIEW = { id: "counsel-review", text: "Counsel has reviewed every paragraph", members: glyph("\u{1F9D0}") };
 var NO_TO_RECIPIENT = (e3) => glyph("\u{1F9E9}")(e3) && e3.table === NO_TO_RECIPIENT_TABLE;
 var DECLARABLE_LIST = [
@@ -97988,7 +98587,7 @@ function withPartiesDriftLines(markdown2, rows5) {
 }
 
 // src/submission/schema-ceiling.ts
-var BAKED_SCHEMA_VERSION = false ? null : 82;
+var BAKED_SCHEMA_VERSION = false ? null : 83;
 var OVERRIDE_ENV = "COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA";
 var CEILING_SEAM_ENV = "COCLERK_SUBMISSION_BUNDLE_SCHEMA_VERSION";
 var OFF = /* @__PURE__ */ new Set(["", "0", "false", "no", "off"]);
@@ -98197,46 +98796,6 @@ import { pathToFileURL } from "node:url";
 // src/suggestions/page.ts
 import { mkdirSync as mkdirSync16 } from "node:fs";
 import { dirname as dirname19, join as join29 } from "node:path";
-
-// src/page-api/token.ts
-var DEFAULT_PAGE_API_PORT = DEFAULT_PAGE_PORTS.lawyer;
-function pageApiPort(env = process.env) {
-  try {
-    return pagePort("lawyer", env);
-  } catch (err) {
-    if (err instanceof PagePortError) throw new ValidationError(err.message, err.code);
-    throw err;
-  }
-}
-function pageApiToken(dbPath, proceedingId, env = process.env) {
-  return signTarget("proceeding", `${dbPath}
-${proceedingId}`, env);
-}
-function pageApiTokenValid(token, dbPath, proceedingId, env = process.env) {
-  return verifyTarget("proceeding", `${dbPath}
-${proceedingId}`, token, env);
-}
-function pageApiSuggestionToken(recordId, env = process.env) {
-  return signTarget("suggestion", recordId, env);
-}
-function pageApiSuggestionTokenValid(token, recordId, env = process.env) {
-  return verifyTarget("suggestion", recordId, token, env);
-}
-function pageApiFileToken(path, env = process.env) {
-  return signTarget("file", path, env);
-}
-function pageApiFileTokenValid(token, path, env = process.env) {
-  return verifyTarget("file", path, token, env);
-}
-function pageApiFileUrl(path, env = process.env) {
-  return `http://127.0.0.1:${pageApiPort(env)}/files/open?path=${encodeURIComponent(path)}&token=${pageApiFileToken(path, env)}`;
-}
-function pageApiCardToken(cardId, env = process.env) {
-  return signTarget("card", cardId, env);
-}
-function pageApiCardTokenValid(token, cardId, env = process.env) {
-  return verifyTarget("card", cardId, token, env);
-}
 
 // src/suggestions/store.ts
 import { randomUUID as randomUUID9 } from "node:crypto";
@@ -98610,12 +99169,6 @@ var cast_of_characters_html_default = "@@include(view-head.html)@@\n<title>Chara
 
 // src/templates/view-pages/cast-of-characters.js.ts
 var cast_of_characters_js_default = '// Characters: everything is in the markup, and tabs and cards work in CSS. This script only adds\n// the Esc key, the remembered tab and the copy buttons (spec 4.4). It writes nothing but the\n// clipboard and one localStorage key.\n(function () {\n  "use strict";\n  var KEY = "cast-of-characters-tab";\n  var none = document.getElementById("o-none");\n\n  document.addEventListener("keydown", function (e) { if (e.key === "Escape") none.checked = true; });\n\n  var tabs = document.querySelectorAll(".tabr");\n  try {\n    var saved = localStorage.getItem(KEY);\n    tabs.forEach(function (r) { if (r.id === saved) r.checked = true; });\n  } catch (e) {}\n  tabs.forEach(function (r) {\n    r.addEventListener("change", function () {\n      none.checked = true;\n      try { localStorage.setItem(KEY, r.id); } catch (e) {}\n    });\n  });\n\n  // A copy button copies its data-copy text; where the clipboard is refused it shows the text instead.\n  document.querySelectorAll("button[data-copy]").forEach(function (b) {\n    var label = b.textContent;\n    var text = b.getAttribute("data-copy");\n    function show() { b.textContent = text; }\n    b.addEventListener("click", function (event) {\n      event.preventDefault();\n      event.stopPropagation();\n      if (!navigator.clipboard || !navigator.clipboard.writeText) { show(); return; }\n      navigator.clipboard.writeText(text).then(function () {\n        b.textContent = "Copied";\n        setTimeout(function () { b.textContent = label; }, 1500);\n      }, show);\n    });\n  });\n})();';
-
-// src/templates/view-pages/view-folder.css.ts
-var view_folder_css_default = '.board{gap:0}\n.tabs{display:flex;align-items:flex-end;padding:0 10px;position:relative}\n.tabs [role=tab]{position:relative;z-index:1;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:inherit;font-size:13px;font-weight:600;color:#3d5c50;background:none;border:0;padding:7px 18px 6px;margin-left:-6px;cursor:pointer}\n.tabs [role=tab]:first-child{margin-left:0}\n.tabs [role=tab]::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(#c4dacd,#aecaba);border:1px solid #8fb3a0;border-bottom:0;border-radius:9px 9px 0 0;box-shadow:inset 0 -4px 5px -3px rgba(0,0,0,.22);transform:perspective(10px) rotateX(1.6deg);transform-origin:bottom}\n.tabs [role=tab][aria-selected=true]{z-index:3;padding-top:10px;padding-bottom:8px;margin-bottom:-1px;color:#1d5e4a;font-weight:800}\n.tabs [role=tab][aria-selected=true]::before{background:linear-gradient(#eaf5ee,#cfe6d8);box-shadow:none}\n.tabs [role=tab]:focus-visible{outline:2px solid #1d5e4a;outline-offset:-5px}\n.folder{position:relative;z-index:2;background:#cfe6d8;border:1px solid #8fb3a0;border-radius:0 12px 12px 12px;padding:18px;display:flex;flex-direction:column;gap:28px}\n.folder section{background:none;padding:0;border-radius:0}\n.folder section>h2{font-size:22px;font-weight:800;color:#1d5e4a;border-bottom:2px solid #1d5e4a;align-items:center;flex-wrap:wrap;gap:10px}\n.folder>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}\n[hidden]{display:none!important}\n@media (max-width:600px){main{padding:16px}}\n@media (max-width:520px){\n.tabs{padding:0 4px}\n.tabs [role=tab]{font-size:11.5px;padding:6px 9px 5px}\n.tabs [role=tab][aria-selected=true]{padding-top:8px;padding-bottom:7px}\n.folder{padding:12px}\n}';
-
-// src/templates/view-pages/view-head.html.ts
-var view_head_html_default = '<!doctype html>\n<html lang="en" data-view-page>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">';
 
 // src/cast/cast-data.ts
 var FLAG_LABELS = {
@@ -99299,403 +99852,6 @@ import { basename as basename7, dirname as dirname22, join as join35, resolve as
 
 // src/submission/view-pages.ts
 import { join as join34 } from "node:path";
-
-// src/templates/view-pages/arguments.css.ts
-var arguments_css_default = '.picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}\n.picker input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}\n.picker label{display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #1d5e4a;color:#025056;font-family:var(--sans);font-size:13px;font-weight:600;line-height:1;padding-bottom:1px;font-variant-numeric:tabular-nums;cursor:pointer}\n.picker input:checked+label{width:31px;height:31px;background:#a8691c;border-color:#a8691c;color:#fff;font-size:15px;font-weight:800}\n.picker input:focus-visible+label{outline:2px solid #1d5e4a;outline-offset:2px}\narticle.arg{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.arg>.text{position:relative;font-weight:400;margin:0;padding-bottom:22px;white-space:pre-wrap;cursor:pointer}\n.arg>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:var(--frame);transition:transform .15s}\n.arg.open>.text::before{transform:rotate(90deg)}\n.arg>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.arg .tags{position:absolute;right:0;bottom:0;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px}\n.arg .tag.flag{background:#a8691c}\narticle.arg.killed{opacity:.55}\n.folder section>h2 .count{font-size:13px;font-weight:600;color:var(--muted)}\n.arg .tag{padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}\n.arg .detail{display:flex;flex-direction:column;gap:6px}\n.arg .where,.arg .label,.arg .none{margin:0;font-size:12.5px;color:var(--muted)}\n.arg .head{margin:4px 0 0;font-size:17px;font-weight:700}\n.arg ul{margin:0;padding-left:20px}\n.arg li{margin:2px 0;white-space:pre-wrap}\n.arg li.omitted{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}\n.arg .linked{border-top:1px solid var(--line);padding-top:6px}';
-
-// src/templates/view-pages/arguments.html.ts
-var arguments_html_default = '@@include(view-head.html)@@\n<title>Arguments</title>\n<style>\n@@include(board.css)@@\n\n\n@@include(view-folder.css)@@\n\n@@include(arguments.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Arguments</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(arguments.js)@@\n</script>\n</body>\n</html>\n';
-
-// src/templates/view-pages/arguments.js.ts
-var arguments_js_default = `(function () {
-  "use strict";
-  var view = window.VIEW_PAGE;
-  if (!view) return;
-  var data = view.data;
-  var board = document.querySelector(".board");
-  var KEY = "arguments-filter";
-
-  function el(tag, cls, text) {
-    var node = document.createElement(tag);
-    if (cls) node.className = cls;
-    if (text !== undefined) node.textContent = text;
-    return node;
-  }
-  function list(items, cls) {
-    var ul = el("ul");
-    items.forEach(function (item) { ul.appendChild(el("li", cls ? cls(item) : "", typeof item === "string" ? item : item.text)); });
-    return ul;
-  }
-  function links(label, items) {
-    var linked = el("div", "linked");
-    linked.appendChild(el("p", "label", label));
-    linked.appendChild(list(items));
-    return linked;
-  }
-
-  // One open number for both tabs: a card opens with every card of its number on either tab. A card
-  // with no number opens alone.
-  function keyOf(a) { return a.number !== null ? "n" + a.number : "id" + a.id; }
-  var openKey = null;
-  var allCards = [];
-  function setOpen(key) {
-    openKey = key;
-    allCards.forEach(function (c) {
-      var on = c.key === key;
-      c.node.classList.toggle("open", on);
-      c.detail.hidden = !on;
-      c.title.setAttribute("aria-expanded", String(on));
-    });
-  }
-
-  // A card: its statement, which toggles it and ends in its tags, then its detail.
-  function card(a, noun) {
-    var node = el("article", "arg " + a.side + (a.killed ? " killed" : ""));
-    var title = el("p", "text");
-    title.setAttribute("role", "button");
-    title.tabIndex = 0;
-    title.appendChild(el("span", "", a.contention));
-    var tags = el("span", "tags");
-    tags.appendChild(el("span", "tag", noun + " " + a.label));
-    a.tags.forEach(function (t) { tags.appendChild(el("span", "tag flag", t)); });
-    title.appendChild(tags);
-    node.appendChild(title);
-    var detail = el("div", "detail");
-    node.appendChild(detail);
-    if (a.where) detail.appendChild(el("p", "where", a.where));
-    if (a.law.length > 0) {
-      detail.appendChild(el("p", "head", "Law"));
-      detail.appendChild(list(a.law.map(function (l) {
-        return { text: l.killed_on ? l.text + " (omitted " + l.killed_on + ")" : l.text, omitted: !!l.killed_on };
-      }), function (l) { return l.omitted ? "omitted" : ""; }));
-    } else {
-      detail.appendChild(el("p", "none", "No law linked"));
-    }
-    if (a.facts.length > 0) {
-      detail.appendChild(el("p", "head", "Facts"));
-      detail.appendChild(list(a.facts));
-    } else {
-      detail.appendChild(el("p", "none", "No facts linked"));
-    }
-    if (a.rebuts.length > 0) detail.appendChild(links("Rebuts", a.rebuts));
-    if (a.rebutted_by.length > 0) detail.appendChild(links("Rebuttals", a.rebutted_by));
-    var c = { node: node, title: title, detail: detail, key: keyOf(a), number: a.number };
-    function toggle() { setOpen(openKey === c.key ? null : c.key); }
-    title.addEventListener("click", toggle);
-    title.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
-    });
-    allCards.push(c);
-    return c;
-  }
-
-  var tablist = el("div", "tabs");
-  tablist.setAttribute("role", "tablist");
-  tablist.setAttribute("aria-label", "Show");
-  board.appendChild(tablist);
-  var folder = el("div", "folder");
-  folder.id = "arguments-panel";
-  folder.setAttribute("role", "tabpanel");
-  board.appendChild(folder);
-
-  // One tab's section, its picker and its cards. The picker's selected label lists that card alone,
-  // and none selected lists them all.
-  var sections = {};
-  function section(name, heading, items, noun, note) {
-    var cards = items.map(function (a) { return card(a, noun); });
-    var sec = el("section");
-    var h2 = el("h2", "", heading);
-    if (note) h2.appendChild(el("span", "count", note));
-    var picker = el("span", "picker");
-    picker.setAttribute("role", "radiogroup");
-    picker.setAttribute("aria-label", heading + ": show card");
-    h2.appendChild(picker);
-    sec.appendChild(h2);
-    var stack = el("div", "stack");
-    sec.appendChild(stack);
-    folder.appendChild(sec);
-    var radios = [];
-    function filter(index) {
-      cards.forEach(function (c, i) { c.node.hidden = index >= 0 && i !== index; });
-    }
-    // A session's pointer (focus): every card listed, that number opened.
-    function show(number) {
-      var first = cards.filter(function (c) { return c.number === number; })[0];
-      if (!first) return false;
-      radios.forEach(function (r) { r.checked = false; });
-      filter(-1);
-      setOpen(first.key);
-      first.node.scrollIntoView({ block: "start" });
-      return true;
-    }
-    sections[name] = { node: sec, size: cards.length, show: show };
-    cards.forEach(function (c, i) {
-      var input = el("input");
-      input.type = "radio";
-      input.name = "pick-" + name;
-      input.id = "pick-" + name + "-" + (i + 1);
-      radios.push(input);
-      var label = el("label", "", items[i].label.replace("#", ""));
-      label.htmlFor = input.id;
-      picker.appendChild(input);
-      picker.appendChild(label);
-      function clear(e) { e.preventDefault(); input.checked = false; filter(-1); }
-      input.addEventListener("change", function () { if (input.checked) filter(i); });
-      label.addEventListener("click", function (e) { if (input.checked) clear(e); });
-      input.addEventListener("keydown", function (e) { if (e.key === " " && input.checked) clear(e); });
-      stack.appendChild(c.node);
-    });
-  }
-  var unanswered = data.arguments.filter(function (a) { return a.tags.indexOf("No rebuttal") >= 0; }).length;
-  section("arguments", "Arguments", data.arguments, "Argument", unanswered + " with no rebuttal");
-  section("rebuttals", "Rebuttals", data.rebuttals, "Rebuttal", null);
-  setOpen(null);
-  var empty = el("p", "empty", "Nothing recorded on this tab.");
-  folder.appendChild(empty);
-
-  var TABS = [["arguments", "Arguments"], ["rebuttals", "Rebuttals"]];
-  var tabs = TABS.map(function (t) {
-    var b = el("button", "", t[1]);
-    b.type = "button";
-    b.id = "tab-" + t[0];
-    b.setAttribute("role", "tab");
-    b.setAttribute("aria-controls", folder.id);
-    b.setAttribute("data-filter", t[0]);
-    tablist.appendChild(b);
-    return b;
-  });
-
-  var current = "arguments";
-  try {
-    var saved = localStorage.getItem(KEY);
-    if (TABS.some(function (t) { return t[0] === saved; })) current = saved;
-  } catch (e) {}
-  function apply() {
-    Object.keys(sections).forEach(function (name) { sections[name].node.hidden = name !== current; });
-    tabs.forEach(function (b) {
-      var on = b.getAttribute("data-filter") === current;
-      b.setAttribute("aria-selected", String(on));
-      b.tabIndex = on ? 0 : -1;
-      if (on) folder.setAttribute("aria-labelledby", b.id);
-    });
-    empty.hidden = sections[current].size > 0;
-  }
-  function select(b) {
-    current = b.getAttribute("data-filter");
-    try { localStorage.setItem(KEY, current); } catch (e) {}
-    apply();
-  }
-  tabs.forEach(function (b, i) {
-    b.addEventListener("click", function () { select(b); });
-    b.addEventListener("keydown", function (e) {
-      var step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-      if (step === 0) return;
-      e.preventDefault();
-      var next = tabs[(i + step + tabs.length) % tabs.length];
-      select(next);
-      next.focus();
-    });
-  });
-  apply();
-
-  // A session can point this page at an argument number (drafting_forms__focus_view_page): the page
-  // asks the data server's listener every 2 s and moves to each new pointer. A pointer older than 30 s
-  // when the page opens is old news and left alone. Without the listener the page stays as it is.
-  var api = data.api;
-  if (!api) return;
-  var seen = null;
-  var first = true;
-  function poll() {
-    fetch("http://127.0.0.1:" + api.port + "/focus", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ db_path: api.db_path, proceeding_id: api.proceeding_id, token: api.token, filing_ids: api.filing_ids })
-    }).then(function (res) { return res.ok ? res.json() : null; }).then(function (body) {
-      var f = body && body.focus;
-      var fresh = !first || (f && Date.now() - Date.parse(f.at) < 30000);
-      first = false;
-      if (!f || f.id === seen) return;
-      seen = f.id;
-      var s = sections[f.section];
-      if (!fresh || !s) return;
-      var tab = tabs.filter(function (b) { return b.getAttribute("data-filter") === f.section; })[0];
-      if (s.show(f.number)) select(tab);
-    }).catch(function () {}).then(function () { setTimeout(poll, 2000); });
-  }
-  poll();
-})();`;
-
-// src/templates/view-pages/shared.js.ts
-var shared_js_default = '(function () {\n  "use strict";\n  var view = window.VIEW_PAGE;\n  if (!view) return;\n  var meta = view.meta;\n  if (meta.filing !== "") document.title = view.name + " \u2014 " + meta.filing;\n  var row = document.querySelector("header .meta");\n  [\n    ["Writing", meta.filing],\n    ["Matter", meta.matter],\n    ["Client", meta.client],\n    ["Rev", String(meta.revision)]\n  ].concat(view.extra || [], [["Rendered", meta.rendered]]).forEach(function (pair) {\n    if (pair[1] === "") return;\n    var span = document.createElement("span");\n    span.textContent = pair[1];\n    span.setAttribute("data-k", pair[0]);\n    row.appendChild(span);\n  });\n})();';
-
-// src/submission/forms/arguments-page.ts
-function buildArgumentsData(dbPath, filing) {
-  const filings = Array.isArray(filing) ? filing : [filing];
-  const out = { arguments: [], rebuttals: [] };
-  for (const proceedingId of [...new Set(filings.map((f3) => f3.proceeding_id))]) {
-    const part = argumentsFor(dbPath, proceedingId, filings.filter((f3) => f3.proceeding_id === proceedingId).map((f3) => f3.id), filings.length > 1);
-    out.arguments.push(...part.arguments);
-    out.rebuttals.push(...part.rebuttals);
-  }
-  return out;
-}
-var letter = (i3) => String.fromCharCode(97 + i3 % 26).repeat(Math.floor(i3 / 26) + 1);
-function roman2(n3) {
-  const steps = [[1e3, "m"], [900, "cm"], [500, "d"], [400, "cd"], [100, "c"], [90, "xc"], [50, "l"], [40, "xl"], [10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"]];
-  let out = "";
-  for (const [value2, digits2] of steps) for (; n3 >= value2; n3 -= value2) out += digits2;
-  return out;
-}
-function argumentsFor(dbPath, proceedingId, ids, merged) {
-  const all = rows(
-    dbPath,
-    "SELECT id, contention, side, number, anticipated, component, pinpoint, killed_on FROM arguments WHERE proceeding_id = ? ORDER BY id",
-    [proceedingId]
-  );
-  const byId2 = new Map(all.map((a3) => [a3.id, a3]));
-  const links = rows(
-    dbPath,
-    `SELECT r.rebuttal_id, r.argument_id FROM argument_rebuts r JOIN arguments a ON a.id = r.argument_id
-     WHERE a.proceeding_id = ? ORDER BY r.rowid`,
-    [proceedingId]
-  ).filter((l3) => byId2.has(l3.rebuttal_id));
-  const deployments = rows(
-    dbPath,
-    `SELECT DISTINCT fs.submission_id, f.id AS filing_id, f.title, f.retired_on
-     FROM filing_submissions fs JOIN filings f ON f.id = fs.filing_id
-     WHERE f.proceeding_id = ?
-     ORDER BY f.id`,
-    [proceedingId]
-  );
-  const facts = rows(
-    dbPath,
-    `SELECT sf.submission_id, f.postulate FROM submission_facts sf JOIN facts f ON f.id = sf.fact_id
-     WHERE f.proceeding_id = ? ORDER BY f.id`,
-    [proceedingId]
-  );
-  const killedOn = hasColumn(dbPath, "law_assertions", "killed_on") ? "la.killed_on" : "NULL AS killed_on";
-  const law = rows(
-    dbPath,
-    `SELECT sl.submission_id, la.proposition, ${killedOn}
-     FROM submission_law sl JOIN law_assertions la ON la.id = sl.law_assertion_id
-     WHERE la.proceeding_id = ? ORDER BY la.id`,
-    [proceedingId]
-  );
-  const targetsOf = /* @__PURE__ */ new Map();
-  const rebuttalsOf = /* @__PURE__ */ new Map();
-  for (const l3 of links) {
-    targetsOf.set(l3.rebuttal_id, [...targetsOf.get(l3.rebuttal_id) ?? [], l3.argument_id]);
-    rebuttalsOf.set(l3.argument_id, [...rebuttalsOf.get(l3.argument_id) ?? [], l3.rebuttal_id]);
-  }
-  const numbers = /* @__PURE__ */ new Map();
-  const numberOf = (id, seen = /* @__PURE__ */ new Set()) => {
-    const targets = targetsOf.get(id);
-    if (targets === void 0) return byId2.get(id)?.number ?? null;
-    if (numbers.has(id)) return numbers.get(id);
-    if (seen.has(id)) return null;
-    seen.add(id);
-    const found2 = targets.map((t3) => numberOf(t3, seen)).filter((n4) => n4 !== null);
-    const n3 = found2.length > 0 ? Math.min(...found2) : null;
-    numbers.set(id, n3);
-    return n3;
-  };
-  const primaryOf = (id) => {
-    const targets = targetsOf.get(id);
-    const n3 = numberOf(id);
-    return targets.find((t3) => numberOf(t3) === n3) ?? targets[0];
-  };
-  const labels = /* @__PURE__ */ new Map();
-  const labelOf = (id, seen = /* @__PURE__ */ new Set()) => {
-    const known = labels.get(id);
-    if (known !== void 0) return known;
-    let out;
-    const n3 = numberOf(id);
-    if (!targetsOf.has(id)) out = { label: n3 === null ? "#?" : `#${n3}`, path: [] };
-    else if (seen.has(id)) out = { label: "#?", path: [] };
-    else {
-      seen.add(id);
-      const parent = primaryOf(id);
-      const base = labelOf(parent, seen);
-      const i3 = (rebuttalsOf.get(parent) ?? []).filter((r3) => primaryOf(r3) === parent).indexOf(id);
-      out = { label: `${base.label}.${base.path.length % 2 === 0 ? letter(i3) : roman2(i3 + 1)}`, path: [...base.path, i3] };
-    }
-    labels.set(id, out);
-    return out;
-  };
-  const byNumber = (a3, b3) => {
-    const x3 = numberOf(a3);
-    const y3 = numberOf(b3);
-    return x3 === y3 ? 0 : x3 === null ? 1 : y3 === null ? -1 : x3 - y3;
-  };
-  const card2 = (a3) => {
-    const deployedOn = deployments.filter((d3) => d3.submission_id === a3.id);
-    const here = deployedOn.filter((d3) => ids.includes(d3.filing_id));
-    const elsewhere = deployedOn.map((d3) => d3.retired_on === null ? d3.title : `${d3.title} (retired)`).join("; ");
-    const source = [a3.component, a3.pinpoint].filter((part) => part !== null && part !== "").join(", ");
-    const where = here.length > 0 ? merged ? `On this board: ${here.map((d3) => d3.title).join("; ")}` : "On this Writing" : deployedOn.length > 0 ? `On ${elsewhere}` : source || null;
-    const rebuttals = rebuttalsOf.get(a3.id) ?? [];
-    const tags = [];
-    if (a3.side === "ours" && a3.killed_on === null && deployedOn.length === 0) tags.push("Held in reserve");
-    if (a3.anticipated === 1) tags.push("Anticipated");
-    if (a3.side === "opposing" && a3.killed_on === null && !targetsOf.has(a3.id) && !rebuttals.some((r3) => byId2.get(r3)?.killed_on === null)) tags.push("No rebuttal");
-    if (a3.killed_on !== null) tags.push(`Killed ${a3.killed_on}`);
-    return {
-      id: a3.id,
-      label: labelOf(a3.id).label,
-      number: numberOf(a3.id),
-      side: a3.side,
-      contention: a3.contention,
-      where,
-      tags,
-      killed: a3.killed_on !== null,
-      facts: facts.filter((f3) => f3.submission_id === a3.id).map((f3) => f3.postulate),
-      law: law.filter((l3) => l3.submission_id === a3.id).map((l3) => ({ text: l3.proposition, killed_on: l3.killed_on })),
-      rebuts: [...targetsOf.get(a3.id) ?? []].sort(byNumber).map((t3) => labelOf(t3).label),
-      rebutted_by: rebuttals.map((r3) => primaryOf(r3) === a3.id ? labelOf(r3).label : `see ${labelOf(r3).label}`)
-    };
-  };
-  const order = (x3, y3) => {
-    if (x3.killed_on === null !== (y3.killed_on === null)) return x3.killed_on === null ? -1 : 1;
-    if (x3.killed_on !== null && y3.killed_on !== null && x3.killed_on !== y3.killed_on) return x3.killed_on < y3.killed_on ? -1 : 1;
-    const byN = byNumber(x3.id, y3.id);
-    if (byN !== 0) return byN;
-    const px = labelOf(x3.id).path;
-    const py = labelOf(y3.id).path;
-    for (let i3 = 0; i3 < Math.min(px.length, py.length); i3++) if (px[i3] !== py[i3]) return px[i3] - py[i3];
-    return px.length - py.length || x3.id - y3.id;
-  };
-  const sorted = [...all].sort(order);
-  return {
-    arguments: sorted.filter((a3) => !targetsOf.has(a3.id)).map(card2),
-    rebuttals: sorted.filter((a3) => targetsOf.has(a3.id)).map(card2)
-  };
-}
-var ARGUMENTS_PAGE = {
-  name: "Arguments",
-  ...templated({
-    entry: "arguments.html",
-    files: {
-      "arguments.html": arguments_html_default,
-      "view-head.html": view_head_html_default,
-      "board.css": board_css_default,
-      "view-folder.css": view_folder_css_default,
-      "arguments.css": arguments_css_default,
-      "shared.js": shared_js_default,
-      "arguments.js": arguments_js_default
-    }
-  }),
-  // The listener the page asks which card a session pointed it at (../../page-api/focus.ts).
-  data: (ctx) => ({
-    ...buildArgumentsData(ctx.dbPath, ctx.writings.map((w3) => w3.filing)),
-    api: {
-      port: pageApiPort(),
-      db_path: ctx.dbPath,
-      proceeding_id: ctx.proceeding.id,
-      token: pageApiToken(ctx.dbPath, ctx.proceeding.id),
-      filing_ids: ctx.writings.map((w3) => w3.filing.id)
-    }
-  })
-};
 
 // src/templates/view-pages/facts.css.ts
 var facts_css_default = '.controls{display:flex;flex-direction:column;gap:8px}\n.controls .counts{margin:0;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 16px}\n.controls .counts span::before{content:attr(data-k) " ";color:var(--muted)}\n.controls label{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer}\np.note{margin:0 0 12px;font-size:13px;color:var(--muted)}\nul.facts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}\nli.fact{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\nli.fact .head{display:flex;gap:10px;align-items:baseline}\nli.fact .num{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:2.5em}\nli.fact .date{font-family:var(--mono);font-size:12px;white-space:nowrap}\nli.fact .basis{margin:0 0 0 calc(2.5em + 10px);font-size:13px;color:var(--muted)}\nul.evidence{list-style:none;margin:0 0 0 calc(2.5em + 10px);padding:0;display:flex;flex-direction:column;gap:2px;font-size:13px}\nul.evidence .chip{font-family:var(--mono);font-size:11px;border:1px solid var(--line-strong);border-radius:999px;padding:0 6px;margin-left:6px;color:var(--muted)}\nul.evidence .flag{color:var(--accent);cursor:help;margin-left:6px}\nul.evidence .decision{display:block;color:var(--deleted)}\nli.fact[data-class="pending"]{opacity:.5;border-style:dashed}\nli.fact[data-class="inadmissible"] .text{text-decoration:line-through}\n.board:not(.show-pending) li.fact[data-class="pending"],.board:not(.show-inadmissible) li.fact[data-class="inadmissible"]{display:none}';
@@ -105499,9 +105655,7 @@ function fetchHearingDetails3(dbPath, filingId) {
 }
 function lawStatementCitationLine2(row2) {
   if (row2.authority_title === null) return row2.pinpoint ? `>> ${row2.pinpoint}` : null;
-  const citation = row2.authority_citation ?? CITATION_MISSING;
-  const pin = printedPinpoint(row2.authority_citation, row2.pinpoint);
-  return `>> *${row2.authority_title}*, ${citation}${pin ? `, ${pin}` : ""}`;
+  return `>> ${authorityCitation(row2.authority_title, row2)}`;
 }
 function evidenceReference(document2, pinpoint) {
   let pin = pinpoint?.trim() ? pinpoint.trim().replace(/\b(paras?)\.(?=\s)/gi, "$1") : null;
@@ -105516,7 +105670,7 @@ var ITALIC_SPAN = /(?<!\*)\*[^*\n]+\*(?!\*)/g;
 function authorityNamePattern(dbPath, proceedingId) {
   const names = [
     ...new Set(
-      rows(dbPath, "SELECT style_of_cause_or_title AS name FROM authorities WHERE proceeding_id = ?", [proceedingId]).map(
+      rows(dbPath, "SELECT style_of_cause_or_title AS name FROM authorities WHERE proceeding_id = ? AND kind <> 'doctrine'", [proceedingId]).map(
         (r3) => r3.name.trim()
       )
     )
@@ -105766,9 +105920,7 @@ var TIME_ESTIMATE_PLACEHOLDER = "[time estimate]";
 var NO_FACTUAL_BASIS2 = "[factual basis: no facts recorded]";
 function lawStatementCitationLine3(row2) {
   if (row2.authority_title === null) return row2.pinpoint ? `> ${row2.pinpoint}` : null;
-  const citation = row2.authority_citation ?? CITATION_MISSING;
-  const pin = printedPinpoint(row2.authority_citation, row2.pinpoint);
-  return `> *${row2.authority_title}*, ${citation}${pin ? `, ${pin}` : ""}`;
+  return `> ${authorityCitation(row2.authority_title, row2)}`;
 }
 function struckSubmissionIds(dbPath, submissionIds) {
   if (submissionIds.length === 0) return /* @__PURE__ */ new Set();
@@ -106393,10 +106545,6 @@ function pushExcerpt(lines2, excerpt, cite) {
   }
   if (cite) lines2.push(`cite: ${cite}`);
 }
-function lawCite(row2) {
-  const pin = printedPinpoint(row2.authority_citation, row2.pinpoint);
-  return `${row2.authority_title}, ${row2.authority_citation}${pin ? `, ${pin}` : ""}`;
-}
 function renderBccaFactumFiledFace(ctx, datedOn) {
   const { filing, proceeding: proceeding2 } = ctx;
   const refuse2 = (what) => {
@@ -106430,7 +106578,9 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
   const factsRhetoric = fetchRhetoric(ctx.dbPath, filing.id, "form", "facts");
   if (factsPosition.length === 0 && facts.length === 0 && factsRhetoric.length === 0) refuse2("Part 1 has neither a position on the appellants' facts nor any fact");
   const submissions = fetchSubmissions(ctx.dbPath, filing.id, "form");
-  if (submissions.length === 0) refuse2("no submission is deployed to this factum (Parts 2 and 3 would be empty)");
+  const { leadIn, issues } = factumIssues(prose);
+  if (leadIn === null || issues.length === 0) refuse2("Part 2 needs the lead-in stating the respondents' position and at least one issue on appeal");
+  if (submissions.length === 0) refuse2("no submission is deployed to this factum (Part 3 would be empty)");
   const submissionIds = submissions.map((s3) => s3.id);
   const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, submissionIds));
   const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
@@ -106470,7 +106620,8 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
   }
   body2.push("");
   body2.push("## PART 2 - ISSUES ON APPEAL", "");
-  submissions.forEach((s3) => body2.push(`${++n3}. ${oneLine2(s3.contention)}`));
+  body2.push(`${++n3}. ${oneLine2(leadIn)}`);
+  issues.forEach((issue2, i3) => body2.push(`(${letter(i3)}) ${oneLine2(issue2.text)}`));
   body2.push("");
   body2.push("## PART 3 - ARGUMENT", "");
   const lawParas = /* @__PURE__ */ new Map();
@@ -106497,7 +106648,7 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
       }
       lawParas.set(la2.lawAssertionId, n3);
       body2.push(`${n3}. ${oneLine2(la2.proposition)}`);
-      for (const st3 of printedLaw(la2)) pushExcerpt(body2, st3.excerpt, lawCite(st3));
+      for (const st3 of printedLaw(la2)) pushExcerpt(body2, st3.excerpt, authorityCitation(st3.authority_title, st3));
     }
   }
   body2.push("");
@@ -127705,7 +127856,7 @@ var ARGUMENTS_FIXTURE = {
         facts: [],
         law: [],
         rebuts: [],
-        rebutted_by: ["see #2.a"]
+        rebutted_by: []
       },
       {
         id: 3,
@@ -127734,7 +127885,7 @@ var ARGUMENTS_FIXTURE = {
         killed: false,
         facts: ["The buyer paid the deposit of $10,000 on 10 March 2025."],
         law: [{ text: "Punitive damages follow any breach.", killed_on: "2026-01-09" }],
-        rebuts: ["#2", "#3"],
+        rebuts: ["#2"],
         rebutted_by: []
       }
     ]

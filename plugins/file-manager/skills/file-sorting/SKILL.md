@@ -4,7 +4,7 @@ user-invocable: false
 description: Resolve a folder's filing profile — a litigation matter (renames files in place) or the firm's accounting root (routes loose files to sibling destination folders) — which of its subfolders or destinations are in scope, and how that profile's review record is looked up and recorded. Domain-aware companion to /file-naming — knows folder layouts, not naming grammar. Used internally by /housekeeping and /route-accounting.
 ---
 
-<!-- file-manager v0.21.0 -->
+<!-- file-manager v0.22.0 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

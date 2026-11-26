@@ -3,7 +3,7 @@ name: view-key-requests
 description: Use only when Brahm invokes /view-key-requests in a Claude Code session in the probanda-dev repo. Lists the queue of practitioners' requests for Probanda's key, oldest first, and records each request's outcome once Brahm says he issued the key or declined it. Never mints, sends or shows a key.
 ---
 
-<!-- developer v0.15.0 -->
+<!-- developer v0.16.0 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

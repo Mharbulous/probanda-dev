@@ -3,7 +3,7 @@ name: find-document
 description: "Find and present a matter document or email the practitioner asks to see ('show me the affidavit of X', 'where is the NOCC', 'the tribunal's emails from last month'): search the matter's folder fresh this turn, and its mail folder for what someone said or sent, name every copy found with its date, send one as a file card with no approval asked, and say what was searched before claiming anything is absent."
 ---
 
-<!-- lawyer v0.33.0 -->
+<!-- lawyer v0.34.0 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

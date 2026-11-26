@@ -4,7 +4,7 @@ disable-model-invocation: true
 description: Import invoice CSV exports (LEAP, PCLaw, Clio, UNITY, etc.) and store normalized invoice state in the practice database. Use when an invoice export CSV is uploaded or mentioned, to import or update invoice records, or to ask which matters have outstanding invoices. Stores state only; performs no billing-period reasoning.
 ---
 
-<!-- billing v0.9.0 -->
+<!-- billing v0.10.0 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.
