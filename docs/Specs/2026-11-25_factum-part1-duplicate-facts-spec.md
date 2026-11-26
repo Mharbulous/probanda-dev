@@ -57,3 +57,12 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 - §12 Part 1 reads as quoted in §2.
 - Whether any duplicate-text marker already exists for other kinds.
+
+### Verification against HEAD (2026-11-26, at f9d42d09)
+
+| Claim | Found at HEAD | Result |
+|---|---|---|
+| §12 Part 1 reads as quoted in §2 | `source/skills/drafting-data/references/filing-checklists.md` §12 Part 1: position in `filing_prose` `slot='facts_position'` (numbered from 1), then other facts in `facts` + `filing_facts(document='form', part='part2', ordinal)`. Two parentheticals were added since the quote (the type file owns how the position answers a disputed fact and its review; the record on appeal is defined in the type file). No link between a position paragraph and a fact row. | Holds |
+| Paths are as seen in the installed copy | Type file `source/skills/draft/references/CAN/BC/BCCA/Documents/respondent-factum.md`; renderer `source/lawyer/mcp/src/submission/forms/render-bcca-factum.ts` (Part 1 at `renderBccaFactum`, position paragraphs then `renderFactParagraphsWithRhetoric`); emitter `emit-bcca-factum.ts` | Holds |
+| A duplicate-text marker exists for other kinds | None. `symbol-table.ts`, `work-markers.md` and `terms-and-symbols.md` hold no marker for repeated or overlapping text. `render-general.ts`, `render-bcca-factum.ts` and the other renderers run no text-overlap check. The nearest existing checks are `take-job.ts`'s job-title overlap (Work Board, not a Writing) and `citation-scan.ts`'s repeat-citation skip. The 🧩 prose-format instance flags a line's own wording, not overlap with another line. | No marker to reuse |
+| The position prose can be matched to a fact's source | `filing_prose` has `filing_id`, `slot` and `text` only: no source column. Fact rows carry `court_record` + `court_record_pinpoint`. A shared pinpoint is derivable only where the drafter typed the pinpoint into the position's text. | §9 Q1's default is only partly derivable |
