@@ -36,7 +36,7 @@ overwrite an existing file.
 Usage:
     python render_letterhead.py payload.json --profile profile.json --out letter.docx
 
-Stdlib only.
+Stdlib, plus lxml through fill_general and docx_helpers.
 """
 
 import argparse

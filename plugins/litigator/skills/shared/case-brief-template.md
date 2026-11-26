@@ -14,7 +14,7 @@ A case brief is a one-page structured summary of one decision in someone else's 
 
 ## Shape
 
-Eight parts, in this order. Each item is one numbered paragraph, numbered from 1 through the whole brief and never restarted at a heading. A part with nothing to say holds one item reading `None.`, which is no item of law: it carries no pinpoint and no passage, and has no stored statement. Together they fit on one page, so keep only what the holding turns on.
+Eight parts, in this order. Each item is one numbered paragraph, numbered from 1 through the whole brief and never restarted at a heading. A part with nothing to say holds one item reading `None.`, which is no item of law: it carries no pinpoint and no passage, and has no stored statement. Together they fit on one page, so keep only what the holding turns on. Authority names follow `shared/authority-italics.md`.
 
 | Part | Slot | What it holds |
 |---|---|---|

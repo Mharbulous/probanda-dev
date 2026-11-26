@@ -84,7 +84,7 @@ the same filing and bound the normal way.
 | `party_groups` | yes | JSON array, at least two: `{"role", "names": [...], "lower_court_role"?}`; `role` as printed (pluralized) |
 | `contacts` | yes | JSON array of exactly two: the appellant side, then the respondent side. `{"role", "names", "counsel_name"?, "counsel_firm"?, "address"?, "phone"?, "email"?}` |
 | `chronology` | yes | JSON array, non-empty: `{"date": "YYYY-MM-DD", "event"}` |
-| `authorities` | yes | JSON array, possibly empty, alphabetical: `{"authority", "citation", "paras": [n, ...]}`; each para at most the last numbered paragraph |
+| `authorities` | yes | JSON array, possibly empty, alphabetical: `{"authority", "citation", "paras": [n, ...]}`, plus an optional `"kind"`; each para at most the last numbered paragraph. The List of Authorities prints a name roman when its `kind` is `doctrine` (a secondary source) and italic otherwise |
 | `enactments` | yes | JSON array, possibly empty: `{"title", "citation" (or null), "excerpts": [{"pinpoint" (or null), "text"}]}` |
 | `signing_place` | yes | City for "Dated at the City of …" |
 | `dated_on` | yes | `YYYY-MM-DD`; printed "this September 16 of 2026" (template Part 4 step 5) |
@@ -121,6 +121,9 @@ Blank lines are ignored. Other lines take one of four forms:
   more unnumbered order paragraphs, then the numbered closing line ("All of
   which is respectfully submitted.").
 - No `<!--` and no `**` anywhere.
+- In every line but a `> ` quote line, `*text*` or `_text_` prints italic with
+  its markers dropped. A `> ` line is verbatim and prints its characters as
+  they stand.
 
 ## Validator error codes
 

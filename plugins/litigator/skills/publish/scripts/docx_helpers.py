@@ -1,12 +1,10 @@
-"""Self-contained OOXML zip/lxml helpers for filling the BCCA book templates.
+"""OOXML zip/lxml helpers shared by /publish's fill scripts, and the one markdown inline-emphasis
+parser every one of them uses.
 
-Not imported from publish-bcsc-form (different plugin, no cross-plugin import
-path at runtime) -- this module reimplements only the small slice of that
-skill's fill_plain.py technique this skill needs: open a .dotx/.docx as a
-zip, edit word/document.xml with lxml (never stdlib xml.etree -- it silently
-drops mc:Ignorable namespace declarations and corrupts a court template's own
-structure), and write the result back out as a new zip with the template's
-content type corrected to a plain document.
+Open a .dotx/.docx as a zip, edit word/document.xml with lxml (never stdlib
+xml.etree -- it silently drops mc:Ignorable namespace declarations and corrupts
+a court template's own structure), and write the result back out as a new zip
+with the template's content type corrected to a plain document.
 """
 from __future__ import annotations
 
@@ -71,6 +69,80 @@ def set_run_text(run: etree._Element, text: str) -> None:
     else:
         if XMLSPACE in t.attrib:
             del t.attrib[XMLSPACE]
+
+
+# The characters a backslash makes literal.
+_ESCAPABLE = '\\*_`#>-'
+
+
+def emphasis_runs(text: str) -> list[tuple[str, bool, bool]]:
+    """Markdown inline emphasis as (text, bold, italic) runs.
+
+    `**` toggles bold; `*` or `_` toggles italic at a word edge; a backslash makes the
+    next markup character literal. This is the rule of inlineRuns in
+    source/lawyer/mcp/src/correspondence/docx.ts, with two safeguards: a marker still
+    open at the end of the text prints as itself, and an `_` beside another `_` is
+    literal, so a stray asterisk or a blank line `____` keeps its characters.
+    """
+    runs: list[tuple[str, bool, bool]] = []
+    bold = italic = False
+    opened = {}  # 'bold' / 'italic' -> where its last marker stands
+    buf = ''
+    i = 0
+    while i < len(text):
+        c = text[i]
+        prev = text[i - 1] if i else ' '
+        nxt = text[i + 1] if i + 1 < len(text) else ' '
+        if c == '\\' and i + 1 < len(text) and nxt in _ESCAPABLE:
+            buf += nxt
+            i += 2
+            continue
+        marker = None
+        if c == '*' and nxt == '*':
+            marker = 'bold'
+        elif c in '*_' and not (c == '_' and '_' in (prev, nxt)):
+            opens = not italic and not nxt.isspace() and (c == '*' or not prev.isalnum())
+            closes = italic and not prev.isspace() and (c == '*' or not nxt.isalnum())
+            if opens or closes:
+                marker = 'italic'
+        if marker is None:
+            buf += c
+            i += 1
+            continue
+        if buf:
+            runs.append((buf, bold, italic))
+        buf = ''
+        opened[marker] = i
+        if marker == 'bold':
+            bold = not bold
+            i += 2
+        else:
+            italic = not italic
+            i += 1
+    if buf:
+        runs.append((buf, bold, italic))
+    if bold or italic:
+        at = opened['bold' if bold else 'italic']
+        width = 2 if bold else 1
+        return emphasis_runs(text[:at] + '\\' + '\\'.join(text[at:at + width]) + text[at + width:])
+    return runs
+
+
+def append_emphasis_runs(parent: etree._Element, text: str,
+                         rpr: etree._Element | None = None) -> None:
+    """Append text to parent as one <w:r> per emphasis_runs run. Each run's <w:rPr> is a copy
+    of rpr, or empty, plus <w:b/><w:bCs/> and <w:i/><w:iCs/> where the run needs them,
+    placed after any rStyle and rFonts as the schema orders them."""
+    for piece, bold, italic in emphasis_runs(text):
+        run = etree.SubElement(parent, wn('r'))
+        props = copy.deepcopy(rpr) if rpr is not None else etree.Element(wn('rPr'))
+        at = sum(1 for child in props if child.tag in (wn('rStyle'), wn('rFonts')))
+        wanted = ['b', 'bCs'] * bold + ['i', 'iCs'] * italic
+        for tag in reversed([t for t in wanted if props.find(wn(t)) is None]):
+            props.insert(at, etree.Element(wn(tag)))
+        if len(props):
+            run.append(props)
+        set_run_text(run, piece)
 
 
 def make_para(text: str, ppr_template: etree._Element | None = None,

@@ -73,8 +73,9 @@ The body runs the format's sections in order and closes with the sources relied 
 ### Secondary sources
 ```
 
-Each source is one bullet, `<full citation>, <each pinpoint relied on>`, a case's style of cause
-in italics as on the citation lines: `- *Alpha v Beta*, 2020 BCCA 1, paras 5, 9`. Statutes also holds
+Each source is one bullet, `<full citation>, <each pinpoint relied on>`:
+`- *Alpha v Beta*, 2020 BCCA 1, paras 5, 9`. Authority names here and in the body follow
+`shared/authority-italics.md`. Statutes also holds
 regulations and rules. Omit a subsection with no entries. Sources are listed here and
 nowhere else. Define an abbreviation in parentheses where the body first uses it.
 

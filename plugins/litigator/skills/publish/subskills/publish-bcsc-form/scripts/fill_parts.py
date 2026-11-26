@@ -48,7 +48,6 @@ PART2_CITATION_MARKER = '[Include pinpoint citation'
 
 # NOA blockquote lines (assembly-input-contract.md): `> ` is a quoted excerpt,
 # `>> ` its citation, or in Part 2 an evidence reference.
-NOA_EXCERPT_STYLE = 'Excerpt'
 NOA_CITATION_STYLES = {'part2': 'EvidenceRef'}   # any other Part: 'Citation'
 
 
@@ -71,12 +70,14 @@ def replace_part_bodies(body: etree._Element, parts: dict[str, list[str]],
     Part 2's num instance), so Word numbers them sequentially across both
     parts (BC court requirement).
 
-    Blockquote and italics handling (NOA only):
-    - The template has a separate citation instruction paragraph (pStyle="Citation")
+    Blockquote handling:
+    - NOA: the template has a separate citation instruction paragraph (pStyle="Citation")
       after the Part 2 instruction.  It is removed when Part 2 content is inserted.
-    - A ``> `` line becomes an ``Excerpt`` paragraph; a ``>> `` line becomes an
-      ``EvidenceRef`` paragraph in Part 2 and a ``Citation`` paragraph elsewhere.
-    - Every ``*…*`` span becomes an italic run.
+    - NOA and Form 33: a ``> `` line becomes an ``Excerpt`` paragraph. In the NOA a
+      ``>> `` line becomes an ``EvidenceRef`` paragraph in Part 2 and a ``Citation``
+      paragraph elsewhere; Form 33 has no ``>> `` line, so its citation is a ``> `` line.
+    - On every line, markdown emphasis becomes bold and italic runs
+      (docx_helpers.emphasis_runs).
     """
     part_markers = FORM_PART_MARKERS.get(form, {})
     if not part_markers:
@@ -142,15 +143,12 @@ def replace_part_bodies(body: etree._Element, parts: dict[str, list[str]],
 
         # Insert user paragraphs
         for j, line in enumerate(content_lines):
-            if form == 'form-33' and line.startswith('> '):
+            if form == 'noa' and line.startswith('>> '):
+                new_p = _make_styled_para(NOA_CITATION_STYLES.get(part_key, 'Citation'), line[3:])
+            elif form in ('noa', 'form-33') and line.startswith('> '):
                 new_p = _make_excerpt_para(line[2:])
-            elif form == 'noa' and line.startswith('>> '):
-                new_p = _make_styled_para(
-                    NOA_CITATION_STYLES.get(part_key, 'Citation'), line[3:], italics=True)
-            elif form == 'noa' and line.startswith('> '):
-                new_p = _make_styled_para(NOA_EXCERPT_STYLE, line[2:], italics=True)
             elif form == 'form-33':
                 new_p = _make_form33_para(num_template, line)
             else:
-                new_p = _make_numbered_para(num_template, line, italics=form == 'noa')
+                new_p = _make_numbered_para(num_template, line)
             body.insert(insert_idx + j, new_p)

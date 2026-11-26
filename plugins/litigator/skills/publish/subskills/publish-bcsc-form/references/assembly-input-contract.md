@@ -103,8 +103,9 @@ order, nothing before the first heading:
   (right-aligned). In Part 2, a `>> ` line is an evidence reference naming
   the document and pinpoint ("Affidavit #2 of <deponent>, at paras 2-4;
   Exhibit A") and is filled in `EvidenceRef`.
-- **Italics (Form 32):** the fill turns every `*text*` span, in any Part,
-  into an italic run with no asterisks. The emitter wraps each authority name
+- **Italics (Forms 32 and 33):** the fill turns every `*text*` span, in any
+  Part, excerpt and citation lines included, into an italic run with no
+  asterisks (`docx_helpers.emphasis_runs`, which also reads `_text_`). The emitter wraps each authority name
   the drafting database holds (case names and statute, regulation and rule
   titles) in `*…*` wherever it appears in Parts 2–4, excerpts and citations
   included.

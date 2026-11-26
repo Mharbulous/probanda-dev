@@ -12,7 +12,7 @@ Read when: the scrivener drafts or revises any correspondence (`shared/correspon
 
 Draft argument-first. The first draft's only job is to construct the most compelling case the facts support: do not constrain it with consistency checks, hedges or anticipated objections while composing. Those are the checks of section 2, run against the draft after it exists. A draft written under all constraints at once is weaker than a free draft corrected afterward.
 
-Cite a case only where the request asks for authority. Never add one on your own. Give a case's full style of cause and citation at its first mention, and a short form after that.
+Cite a case only where the request asks for authority. Never add one on your own. Give a case's full style of cause and citation at its first mention, and a short form after that. Mark authority names as `shared/authority-italics.md` says.
 
 Whatever the recipient:
 
