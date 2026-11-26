@@ -270,5 +270,33 @@
         "content_sha256": "55a4ff039713429d17fa234fa8ea5fdf93d875c4be5d54e4893a2d943da00b65"
       }
     ]
+  },
+  {
+    "store": "drafting-data",
+    "hop": "82 -> 83",
+    "date": "2026-11-26",
+    "ruling": "Brahm, 2026-11-26: \"Yes, I so rule\", giving this ruling as drafted: \"I rule that the drafting-data hop 82 -> 83 may stand. It rebuilds argument_rebuts so that each rebuttal names one argument, using two temporary tables the hop drops. It adds no table, column or link role, so the store relies on the Exception no more than it did. Record the 5 problems that check_publishable.py --propose-ruling lists for this hop.\"",
+    "problems": [
+      {
+        "message": "forbidden file type",
+        "content_sha256": "3542977f4ab16cf9fdec99bccccd6a2713f13444a2308b7f8bb76607bc725538"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "932225c83f4f4d0b1373c7e86be70c19ab79899a1c691e092c9ddea01631688f"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "421a512d54dd770795d3d4a03a59e2b6fd6edf63f26caa2551a78fd23d58a5fe"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "f17bf8c7f947d6d1c18e70e31140fec4b0087b19203adafd2b513351f2f53fbe"
+      },
+      {
+        "message": "forbidden file type",
+        "content_sha256": "510a2071c5ca45f272e40662d17636d84fcfb813b1ed5251de96437cbb804783"
+      }
+    ]
   }
 ]
