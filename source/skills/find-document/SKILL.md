@@ -1,6 +1,6 @@
 ---
 name: find-document
-description: "Use when the practitioner asks to see or locate an existing matter document or email ('show me the affidavit of X', 'where is the NOCC', 'the tribunal's emails from last month'), whatever form it is in: a draft mockup, a Word file or a filed PDF. Not for an approval ask."
+description: "Use for any 'show me', 'open', 'pull up' or 'where is' request for an existing matter document or email, before listing or sending any file yourself. Sends every form of it unless one is named. Not for an approval ask."
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
