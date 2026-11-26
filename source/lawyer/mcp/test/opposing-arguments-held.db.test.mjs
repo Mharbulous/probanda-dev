@@ -4,36 +4,26 @@
 
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fetchOpposingArguments } from "../build/submission/forms/opposing-points.js";
 import { buildArgumentsData } from "../build/submission/forms/arguments-page.js";
+import { seedSql, submissionDbAt } from "./helpers/template-db.mjs";
 
 const dir = mkdtempSync(join(tmpdir(), "coclerk-opposing-held-"));
 after(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
 
+/** A drafting database migrated to v42 by the engine, holding one deployed submission. */
 function heldDb(name) {
   const dbPath = join(dir, name);
-  const py = process.env.COCLERK_PYTHON || "python";
-  execFileSync(py, ["-c", [
-    "import sqlite3, sys",
-    "con = sqlite3.connect(sys.argv[1])",
-    "con.executescript('''",
-    "CREATE TABLE filings (id INTEGER PRIMARY KEY, proceeding_id INTEGER, title TEXT, retired_on TEXT);",
-    "CREATE TABLE submissions (id INTEGER PRIMARY KEY, proceeding_id INTEGER, contention TEXT, ordinal INTEGER, killed_on TEXT);",
-    "CREATE TABLE filing_submissions (filing_id INTEGER, submission_id INTEGER);",
-    "CREATE TABLE facts (id INTEGER PRIMARY KEY, proceeding_id INTEGER, postulate TEXT);",
-    "CREATE TABLE submission_facts (submission_id INTEGER, fact_id INTEGER);",
-    "CREATE TABLE law_assertions (id INTEGER PRIMARY KEY, proceeding_id INTEGER, proposition TEXT);",
-    "CREATE TABLE submission_law (submission_id INTEGER, law_assertion_id INTEGER);",
-    "INSERT INTO filings VALUES (1, 1, 'An invented writing', NULL);",
-    "INSERT INTO submissions VALUES (1, 1, 'An invented contention.', 1, NULL);",
-    "INSERT INTO filing_submissions VALUES (1, 1);",
-    "''')",
-    "con.commit()",
-  ].join("\n"), dbPath]);
+  submissionDbAt(dbPath, 42);
+  seedSql(dbPath, `
+INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L9999 - Held', 'CAN/BC/Vancouver-International-Arbitration-Centre');
+INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (1, 1, 'submissions_package', 'opening', 'An invented writing');
+INSERT INTO submissions (id, proceeding_id, contention, ordinal) VALUES (1, 1, 'An invented contention.', 1);
+INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (1, 1, 'form', 1);
+`);
   return dbPath;
 }
 
