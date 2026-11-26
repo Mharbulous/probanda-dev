@@ -107,6 +107,20 @@ class SourceTraceContractTests(unittest.TestCase):
         self.assertIn("Run no other search", agent)
         self.assertIn("verified | attribute | trace_needed | cut | accepted", agent)
 
+    def test_factum_facts_position_is_reviewed_and_absence_needs_a_full_search(self):
+        factum = (REFS / "CAN" / "BC" / "BCCA" / "Documents" / "respondent-factum.md").read_text(encoding="utf-8")
+        part1 = next(line for line in factum.splitlines() if line.startswith("- **Part 1,"))
+        self.assertIn("**The record on appeal** is", part1)
+        self.assertIn("No evidence in the record on appeal supports", part1)
+        self.assertIn("searching every book of the record on appeal", part1)
+        for word in ("nothing in the record", "the only", "only as"):
+            with self.subTest(word=word):
+                self.assertIn(f'"{word}"', part1)
+        self.assertIn("references/source-trace.md", part1)
+        for text in (STAGE.read_text(encoding="utf-8"), AGENT.read_text(encoding="utf-8")):
+            self.assertIn("`facts_position`", text)
+        self.assertIn("searched every one of them", AGENT.read_text(encoding="utf-8"))
+
     def test_reviewer_never_takes_the_drafter_word(self):
         agent = AGENT.read_text(encoding="utf-8")
         self.assertIn("Read every source yourself", agent)

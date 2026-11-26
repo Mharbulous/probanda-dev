@@ -1,6 +1,6 @@
 # Source-trace review
 
-Read when: a letter, email or memo mockup is about to be presented, any email is about to be written by `shared/email.md`'s `write_email` (an email Writing, a covering email, or a reply on the reply route), or the practitioner asks whether a draft's facts are sourced. This file is the one source for the review. SKILL.md ban 20 makes it a gate.
+Read when: a letter, email or memo mockup, or a respondent's factum mockup whose facts position changed, is about to be presented, any email is about to be written by `shared/email.md`'s `write_email` (an email Writing, a covering email, or a reply on the reply route), or the practitioner asks whether a draft's facts are sourced. This file is the one source for the review. SKILL.md ban 20 makes it a gate.
 
 Every letter can be used as evidence of what it states. The review checks each fact the text states against its primary source, in an agent isolated from the drafting session, so that a fact taken on another person's say-so never leaves the firm as the firm's own. It runs on every letter, email, memo and reply, scheduling and transmittal notes included. It does not replace the passes of `references/letters.md` §4 or `references/overstatement.md`, and it states no law.
 
@@ -9,6 +9,7 @@ Every letter can be used as evidence of what it states. The review checks each f
 - Before each presentation of a letter, email or memo mockup whose text changed since its last review.
 - Before each `write_email` call. The covering email of a letter is reviewed on its own body. A letter it encloses was reviewed at its mockup. An empty body states nothing and needs no review.
 - On the reply route, before the `.eml` of `references/reply.md` §6.
+- Before each presentation of a respondent's factum mockup whose facts position (`filing_prose` `slot='facts_position'`) changed since its last review. `kind` is `facts_position`, `audience` the court, `text` that prose as rendered, and `sources` the locator of every book of the record on appeal (the type file's Part 1). A finding's revision is an ordinary revision through `/drafting-data` (SKILL.md section 12), not the scrivener's.
 
 ## 2. Spawn the reviewer
 
