@@ -29,7 +29,8 @@ try {
       hookEventName: "SubagentStart",
       additionalContext:
         "The project file COMMANDMENTS.md follows, verbatim. It governs all work in this repository and outranks every other instruction.\n\n" +
-        text
+        text +
+        "\n\nSearch and read files with the Grep, Glob and Read tools, not rg, grep, cat or head in Bash: shell searches raise permission prompts the user must answer."
     }
   };
 } catch (e) {

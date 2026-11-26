@@ -18,8 +18,8 @@
 // Do not restrict: reads of either file neither approve nor publish, so these pass without asking:
 // git ls-files, ls-tree and blame; rg (but not --pre or --pre-glob, which run a program); jq with
 // no redirect (it cannot write a file); ls; echo; sed -n printing a line range (N,Mp) with no
-// other option; a pipe into grep, head, tail, wc or sort (but not -o,
-// which writes); pytest of the test file with -q, -v or -k <word>; and a ; or | inside a quoted
+// other option; a pipe into grep, head, tail, wc, cut or sort (but not -o,
+// which writes); a Bash 2>/dev/null, which discards error text; pytest of the test file with -q, -v or -k <word>; and a ; or | inside a quoted
 // Bash argument such as a grep pattern, which the shell takes literally.
 const fs = require("fs");
 const { spawnSync } = require("child_process");
@@ -52,7 +52,7 @@ const EXPANDS = /[*?[$]/;
 // takes abbreviations such as --op, and -O inside a cluster such as -nO), rg --pre/--pre-glob.
 const OPTION_RUNS = /--o(?:p|ut)|--pre(?:-glob)?(?:[=\s]|$)|(?:^|\s)-[A-Za-z]*O/;
 // A pipe may feed only these readers, with no -o/--output/--compress-program (sort -o writes).
-const PIPE_TAIL = /^ *(?:grep|head|tail|wc|sort)(?: +(?!-\S*o|--(?:o|comp))\S+)* *$/;
+const PIPE_TAIL = /^ *(?:grep|head|tail|wc|cut|sort)(?: +(?!-\S*o|--(?:o|comp))\S+)* *$/;
 const quoted = (file) => `(?:"(?:[^"\\n]*[\\\\/])?${file}"|'(?:[^'\\n]*[\\\\/])?${file}'|(?:\\S*[\\\\/])?${file})`;
 const SHOW_ONLY = new RegExp(`^python3? ${quoted("scripts[\\\\/]approve_public\\.py")}$`);
 const PYTEST_OPT = "(?: (?:-[qv]+|-k \\w+))*";
@@ -87,7 +87,9 @@ if (typeof input.command === "string") {
       ask("This checkout's remote is Probanda-app/Legal, so this push publishes to the public repository.");
     }
   }
-  const plain = literalBlanked(command);
+  // A Bash 2>/dev/null only discards error text, so it is dropped before the checks.
+  const blanked = literalBlanked(command);
+  const plain = data.tool_name === "Bash" ? blanked.replace(/ 2>\/dev\/null(?=[ ;|]|$)/g, "") : blanked;
   const parts = plain.split(";").map((part) => part.trim());
   const partHarmless = (part) => {
     const [first, ...piped] = part.split("|");

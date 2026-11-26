@@ -40,6 +40,9 @@ const PASS = [
   // The two commands that stalled the first /triage-issue pilots (2026-10-25).
   'sed -n 60,70p scripts/build_plugin.py; sed -n 278,292p scripts/build_plugin.py; grep -n "is_cutover\|cutover\|None\|SINGLE" scripts/check_layering.py scripts/check_plugin.py scripts/approve_public.py scripts/check_plugin_*.py | sort -u | head -60',
   'grep -rn "is_cutover\|--out" scripts/*.py .github/workflows/* | head -30; echo ---; sed -n 25,110p scripts/check_plugin.py; echo ---; grep -n "def load_script\|spec_from_file_location" scripts/check_public_tree.py scripts/approve_public.py',
+  // Two plan-mode research commands that asked (2026-11-26); the second had its wildcard removed.
+  "rg -n -o -P '.{0,90}(Probanda-app|Probanda_Legal(?!_experimental)|public/|Public Folder|publish-public|approve_public|public plugin).{0,90}' CLAUDE.md source/skills/shared/correspondence-isolation.md; echo ==; rg -n -i 'public' source/exception-rulings.json scripts/check_plugin_sources.py | cut -c1-200; echo; cat public/README.md | head -30; echo; head -12 public/CHANGELOG.md",
+  "rg -c --hidden -P -e 'Probanda-app' -e 'approve_public' -e 'public-approved' docs | sort -t: -k2 -nr; echo ==; rg -n -i 'implemented|shipped' source/skills/suggestion source/lawyer/mcp/src/suggestion 2>/dev/null | head; echo ==; rg -n '\"(TLDR|dyu)\"' source/assignment.json",
 ];
 
 const ASK = [
@@ -80,6 +83,10 @@ const ASK = [
   "git ls-files | sort -o public/public-approved.json",
   "git ls-files || cp x public/public-approved.json",
   "git ls-files |& cp x public/public-approved.json",
+  "rg -n x public/public-approved.json 2>out.txt",
+  "rg -n x public/public-approved.json 2>/dev/null > public/public-approved.json",
+  "rg -n x source/suggestion* scripts/approve_public.py 2>/dev/null | head",
+  "cat public/public-approved.json | cut -c1-9 > public/public-approved.json",
   // Quote tricks: a separator that looks quoted but is not.
   "grep \\' ; cp x public/public-approved.json ; echo \\'",
   "grep \"$a\" ; cp x public/public-approved.json ; echo \"z\"",
