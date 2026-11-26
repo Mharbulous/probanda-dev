@@ -63,7 +63,7 @@ This supersedes `venue-knowledge`'s "Adding a venue" and its update procedure.
 
 ## 4. Spawning the helper
 
-Spawn `lawyer:localize-helper` by an explicit fresh-context Agent-tool Task spawn. Never run it inline or with `context: fork`. Hand it, as one JSON object, every argument of section 1 plus `run: "repo" | "matter"`. It reads its own playbook.
+Run `lawyer:localize-helper` through the `lawyer:run-localize-helper` skill, which runs the helper agent itself, with its own instructions, tools and model, in a fresh context. Never run its work inline, and never in a fork that does not name the helper as its agent. Call the Skill tool with skill `lawyer:run-localize-helper` and, as args, one JSON object holding every argument of section 1 plus `run: "repo" | "matter"`. It reads its own playbook.
 
 ## 5. Returns
 

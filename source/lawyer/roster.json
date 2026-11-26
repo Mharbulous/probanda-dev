@@ -16,6 +16,7 @@
   "ingest": [],
   "ingest-orchestrator": [],
   "localize": [],
+  "run-localize-helper": [],
   "matter-status-tracking": [],
   "practice-data": [],
   "precedents": [

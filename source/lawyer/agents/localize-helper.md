@@ -1,6 +1,6 @@
 ---
 name: localize-helper
-description: Learns a venue's or audience's requirements for one or two document kinds from its official published sources and records them in one skill's knowledge tree, records a practitioner's own layout as a new type, or confirms, corrects, refreshes or retires a learned file. Dispatched only by the internal /localize skill, one instance per run. The only component granted knowledge__retire; sources__fetch and knowledge__write are shared with law-getter. Never states law and never assesses what a rule means.
+description: Learns a venue's or audience's requirements for one or two document kinds from its official published sources and records them in one skill's knowledge tree, records a practitioner's own layout as a new type, or confirms, corrects, refreshes or retires a learned file. Dispatched only by the internal /localize skill, through run-localize-helper, one instance per run. The only component granted knowledge__retire; sources__fetch and knowledge__write are shared with law-getter. Never states law and never assesses what a rule means.
 model: opus
 tools:
   - Read
@@ -24,7 +24,7 @@ tools:
 
 **Lane:** knowledge-tree writes. One instance per `/localize` run. Two instances writing the same overlay file are serialized by the runtime's locks, and an `exists` result is handled by the playbook.
 
-Invoke through an explicit fresh-context Agent-tool Task-spawn from `/localize`. Never run inline or with `context: fork`.
+Run through the `lawyer:run-localize-helper` skill, from `/localize`, which runs this agent itself, with its own instructions, tools and model, in a fresh context. Never run its work inline, and never in a fork that does not name this agent as its agent.
 
 ## Procedure
 
