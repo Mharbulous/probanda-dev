@@ -17,7 +17,9 @@ Signature" of each account in the Outlook profiles whose "Account Name" is that 
 distinct name gives %APPDATA%\\Microsoft\\Signatures\\<name>.htm (its images, whether files in
 <name>_files or base64 data: URIs, become inline cid: parts) with <name>.txt, and a
 multipart/alternative message. None, several, no Windows, or a missing .htm
-gives a plain-text message, "signature": null and a "signature_note" saying why. The result's
+gives "signature": null and a "signature_note" saying why, and a plain-text message, unless the body
+has markdown bold or italic. The HTML part prints that emphasis (/publish's emphasis.py), so an
+authority's *Name* shows italic, and then a body without a signature has one too. The result's
 "signature_source" is "template", "outlook" or null. While a signature applies, a body whose last
 lines repeat closing or from_name is refused (signoff_duplicates_signature): the signature supplies them.
 
@@ -29,6 +31,7 @@ file back gives the body unchanged. The result never carries file content.
 
 import base64
 import html
+import importlib.util
 import json
 import mimetypes
 import os
@@ -166,11 +169,41 @@ def unquote(src):
                   lambda m: bytes.fromhex(m.group(0).replace("%", "")).decode("utf-8", "replace"), src)
 
 
+def load_emphasis_runs():
+    """/publish's emphasis_runs (skills/publish/scripts/emphasis.py, standard library only), loaded by
+    path because it lives in another skill of the same plugin."""
+    path = Path(__file__).resolve().parents[2] / "publish" / "scripts" / "emphasis.py"
+    spec = importlib.util.spec_from_file_location("emphasis", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.emphasis_runs
+
+
+emphasis_runs = load_emphasis_runs()
+
+
+def inline_html(text):
+    """Escaped text with markdown bold and italic as <b> and <i>, so an authority's *Name* prints italic."""
+    out = []
+    for piece, bold, italic in emphasis_runs(text):
+        piece = html.escape(piece)
+        if italic:
+            piece = "<i>%s</i>" % piece
+        if bold:
+            piece = "<b>%s</b>" % piece
+        out.append(piece)
+    return "".join(out)
+
+
 def body_html(body):
     """The body as HTML paragraphs: blank lines split paragraphs, single newlines are <br>."""
     text = body.replace("\r\n", "\n").strip("\n")
     paragraphs = re.split(r"\n(?:[ \t]*\n)+", text)
-    return "".join("<p>%s</p>" % html.escape(p).replace("\n", "<br>") for p in paragraphs) + "<p>&nbsp;</p>"
+    return "".join("<p>%s</p>" % inline_html(p).replace("\n", "<br>") for p in paragraphs) + "<p>&nbsp;</p>"
+
+
+def has_emphasis(body):
+    return any(bold or italic for _, bold, italic in emphasis_runs(body))
 
 
 def data_image(src, htm):
@@ -345,6 +378,9 @@ def run(req, read_accounts=read_outlook_accounts, signatures_dir=None):
         for cid, ctype, data, filename in images:
             maintype, subtype = ctype.split("/", 1)
             related.add_related(data, maintype, subtype, cid="<%s>" % cid, disposition="inline", filename=filename)
+    elif has_emphasis(body):
+        msg.add_alternative('<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+                            "</head><body>%s</body></html>" % body_html(body), subtype="html")
 
     attached = []
     for path in attachments:

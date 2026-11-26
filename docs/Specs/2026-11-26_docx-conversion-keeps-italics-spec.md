@@ -103,3 +103,4 @@ No path writes footnotes from markdown.
 - **Notice of Civil Claim, Petition and Response to Civil Claim** numbered paragraphs, and party captions built by the same helper, now read emphasis too. Before, they printed every asterisk.
 - **Factum authorities.** `fill_factum.py` accepts an optional `kind` on each authorities entry and prints a `doctrine` name roman, any other name, or one with no `kind`, italic (bcca-factum-contract.md).
 - **Validators unchanged.**
+- **Email drafts, later the same day.** The parser moved to `publish/scripts/emphasis.py` (standard library only), which `docx_helpers` imports. `/draft`'s `write_eml.py` loads it by path and prints markdown bold and italic as `<b>` and `<i>` in the email's HTML part, adding that part to a draft with no signature when its body has emphasis. The plain-text part stays the body's exact text.

@@ -249,6 +249,31 @@ def test_a_taken_name_versions_to_v2_and_leaves_the_first_copy(tmp_path):
     assert sorted(os.listdir(tmp_path)) == ["2026-10-02 EM Bert re invoice v2.eml", "2026-10-02 EM Bert re invoice.eml"]
 
 
+ITALIC_BODY = "Dear Bert,\n\nSection 7 of the *Arbitration Act*, SBC 2020, c 2, applies. See *Alpha v Beta*.\n\nThank you"
+ITALIC_HTML = ("<p>Dear Bert,</p><p>Section 7 of the <i>Arbitration Act</i>, SBC 2020, c 2, applies. "
+               "See <i>Alpha v Beta</i>.</p><p>Thank you</p>")
+
+
+def test_authority_names_print_italic_without_a_signature(tmp_path):
+    msg = parse(write_eml.run(request(tmp_path, body=ITALIC_BODY), no_accounts, tmp_path)["path"])
+    assert msg.get_content_type() == "multipart/alternative"
+    assert msg.get_body(("plain",)).get_content() == ITALIC_BODY
+    page = msg.get_body(("html",)).get_content()
+    assert ITALIC_HTML in page and "*" not in page
+
+
+def test_authority_names_print_italic_with_a_signature(tmp_path, signatures):
+    accounts = lambda: [(SENDER, "Logica Law")]
+    msg = parse(write_eml.run(request(tmp_path, body=ITALIC_BODY), accounts, signatures)["path"])
+    page = msg.get_body(("html",)).get_content()
+    assert ITALIC_HTML in page and "*" not in page
+
+
+def test_body_html_escapes_inside_emphasis_and_keeps_a_lone_asterisk():
+    assert write_eml.body_html("**a <b>** and *x & y* 5 * 3") == (
+        "<p><b>a &lt;b&gt;</b> and <i>x &amp; y</i> 5 * 3</p><p>&nbsp;</p>")
+
+
 def test_imports_only_the_standard_library():
     tree = ast.parse(SCRIPT.read_text(encoding="utf-8"))
     modules = set()
