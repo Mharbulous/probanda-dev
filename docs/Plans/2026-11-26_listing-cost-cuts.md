@@ -36,24 +36,25 @@ Candidates (never parallel, never background), with listing size in characters a
 |---|---|---|
 | `lawyer:docket-clerk` | 2,162 | 24 |
 | `lawyer:scrivener` | 1,780 | 12 |
-| `lawyer:localize-helper` | 1,261 | 2 |
 | `researcher:tech-support` | 1,243 | 4 |
 | `lawyer:technical-writer` | 878 | 3 |
 | `lawyer:spec-backstop` | 823 | 3 |
 | `lawyer:migration-runner` | small | 7 |
 
-Expected saving: about 8,000 characters, roughly 2.0K tokens, less one listing line per run skill (about 0.3K). Net about 1.7K of the 9.8K.
+`lawyer:localize-helper` (1,261 characters) left the listing another way: algorithm-cycle `localize-helper-2026-11/c01` deleted it on 2026-11-26 (commit ea2de26e), and `/localize` now follows its playbook itself. The spike below was first built on it (commit 611f1e94) and never tested.
 
-B1. **Spike first, on one agent (`lawyer:localize-helper`, two dispatch files).** Add `source/skills/run-localize-helper/SKILL.md` (`context: fork`, `agent: lawyer:localize-helper`, body `$ARGUMENTS` plus one line telling the agent to follow its instructions), assign it to `lawyer` in `source/assignment.json`, and change both dispatch sites to call the Skill tool with the brief as args. Build and add `"Agent(lawyer:localize-helper)"` to the user settings deny list. Check three things:
+Expected saving for the six left: about 6,700 characters, roughly 1.7K tokens, less one listing line per run skill (about 0.3K). Net about 1.4K of the 9.8K.
+
+B1. **Spike first, on one agent (`lawyer:technical-writer`, three dispatch files).** Add `source/skills/run-technical-writer/SKILL.md` (`context: fork`, `agent: lawyer:technical-writer`, body `$ARGUMENTS` plus one line telling the agent to follow its instructions), assign it to `lawyer` in `source/assignment.json`, and change each dispatch site to call the Skill tool with the brief as args. Build and add `"Agent(lawyer:technical-writer)"` to the user settings deny list. Check three things:
 - in the Code tab: the agent is gone from the listing, and a direct Agent call is refused;
-- `/localize` still completes through the run skill;
+- `/lawyer:suggestion`'s write-up still completes through the run skill;
 - in Cowork: the run skill works there too. The fork mechanics were tested only in the CLI. If it fails in Cowork, stop Part B.
 
-B2. **Roll out to the other six** in descending size. Each dispatch site changes from an Agent call to the run skill. This includes the session-start note in `source/lawyer/hooks/hidden-skills-note.py`, which tells sessions to call the Agent tool by the agent's name. It must name the run skill for these seven. `docket-clerk`'s 24 sites go last and in their own commit.
+B2. **Roll out to the other five** in descending size. Each dispatch site changes from an Agent call to the run skill. This includes the session-start note in `source/lawyer/hooks/hidden-skills-note.py`, which tells sessions to call the Agent tool by the agent's name. It must name the run skill for these six. `docket-clerk`'s 24 sites go last and in their own commit.
 
 B3. **Release.** The change is a patch: old and new copies dispatch the same agent and share the same data. Run `python scripts/build_plugin.py`, `python scripts/check_plugin.py`, `python scripts/check_layering.py` and `/release`.
 
-Done when: `/context` in a new session shows the Custom agents row about 1.7K lower, and one real task through each changed skill completes.
+Done when: `/context` in a new session shows the Custom agents row about 1.4K lower, and one real task through each changed skill completes.
 
 ## Not pursued
 
