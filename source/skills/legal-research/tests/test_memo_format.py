@@ -104,8 +104,15 @@ class ProtocolStepSixTests(unittest.TestCase):
                                              "### Secondary sources\n")]
         self.assertEqual(order, sorted(order))
         # 2026-11-17: Sources printed case names plain. The writer fills the slot, so the rule is here.
-        self.assertIn("a case's style of cause in italics as on the citation lines: "
-                      "`- *Alpha v Beta*, 2020 BCCA 1, paras 5, 9`", flat(template))
+        # 2026-11-26: the italics rule moved to shared/authority-italics.md, which covers every
+        # primary authority. The template keeps the example and points there.
+        self.assertIn("`- *Alpha v Beta*, 2020 BCCA 1, paras 5, 9`", flat(template))
+        self.assertIn("Authority names here and in the body follow `shared/authority-italics.md`.",
+                      flat(template))
+        italics = flat(read("authority-italics.md"))
+        self.assertIn("Italicize the name of every primary authority: a case, statute, regulation or rule.",
+                      italics)
+        self.assertIn("Italicize only the name. The citation after it stays roman:", italics)
         self.assertNotIn("Authorities", template)
         self.assertNotIn("Question presented", template)
 
