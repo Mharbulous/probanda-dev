@@ -65,3 +65,16 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - §12 Part 2 and the type file's Part 2 bullet read as quoted in §2.
 - Where the factum renderer and `emit_bcca_factum` build Part 2.
 - Whether any issues table already exists (e.g. the stay-response "Issues" derived from positions).
+
+### Verification against HEAD (0aef41fc, 2026-11-26)
+
+| Claim | Found at HEAD | Result |
+|---|---|---|
+| §12 Part 2 reads "One numbered paragraph per deployed submission's `contention`, in `filing_submissions` order." | `source/skills/drafting-data/references/filing-checklists.md` §12, Part 2 bullet. The same bullet now names opposing `arguments` rows and `argument_rebuts` (schema v82) for the appellants' points and the mockup-only "Points not yet answered" listing. | Confirmed |
+| §12 Part 3 reads "`submissions`/`filing_submissions(document='form')` ... rendered as in §10's Analysis." | Same file, Part 3 bullet. | Confirmed |
+| The type file's Part 2 bullet frames Part 2 as the appellants' points, transcribed verbatim | `source/skills/draft/references/CAN/BC/BCCA/Documents/respondent-factum.md` line 26, word for word as quoted in §2. | Confirmed |
+| Where the mockup builds Part 2 | `source/lawyer/mcp/src/submission/forms/render-bcca-factum.ts` `renderBccaFactum`: one numbered paragraph per `fetchSubmissions(..., "form")` row's `contention`, with an `answers:` comment naming the opposing arguments it rebuts, then "Points not yet answered" from `fetchOpposingArguments`. Part 3 prints the same contentions again. | Confirmed: the duplication is in code |
+| Where `emit_bcca_factum` builds Part 2 | `source/lawyer/mcp/src/submission/forms/emit-bcca-factum.ts` `renderBccaFactumFiledFace`: `submissions.forEach((s) => body.push(\`${++n}. ${oneLine(s.contention)}\`))`. | Confirmed |
+| An issues store already exists | None in drafting-data. The stay response's "Part 2: Issues" (`render-bcca-stay-response.ts`) is derived from the positions on the notice of application's orders, not stored. matter-data has `issues` (with `issue_facts`, `issue_proceedings`), a separate store with no link to drafting-data's `arguments`. | No reusable issues store |
+| Storage that needs no DDL | `filing_prose.slot` is open text (no CHECK), so a new slot needs no schema change. `rhetorical_paragraphs` + `rhetorical_paragraph_submissions` link a paragraph to arguments, but `filing_rhetoric.part` is CHECK-limited to `facts`, `submissions`, `orders`, so a rhetorical paragraph cannot be placed in Part 2 without a table rebuild. No existing link table ties a `filing_prose` slot to an argument. | §9 Q1 cannot be met with links in data without DDL |
+| Paths in the spec | The spec's installed-copy paths (litigator 0.28.2) match the source paths above under `source/`. | Confirmed |
