@@ -66,3 +66,19 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - Where `suggestion_card__build`'s check reads each record kind, and how it resolves their locations.
 - How the matter-data and practice-data tools resolve the same records.
 - §6 of the suggestion skill reads as quoted in §2.
+
+## 11. Verification against HEAD (2026-11-26, at 34f0ef2d)
+
+| Item | Found at HEAD |
+|---|---|
+| Where the build's check reads each kind | `source/lawyer/mcp/src/suggestions/records.ts` `readRecordTexts`. `client`, and the practice half of `matter`, `contact` and `folder_name`, come from the practice store (`PracticeStore.items()`). `folder_name` also takes the folder map (`readFolderMap`). The case-data half of `matter`, `contact`, `folder_name`, `document_title` and `file_name` comes from every matter's matter-data folder, found by `matterDataFolders` (`tools/practice/contacts.ts`) and read in one spawn of `list_record_names.py` (`case/list-record-names.ts`). One folder read `unavailable`, or one matter `matterDataFolders` cannot place, marks all five case-data kinds failed. |
+| How it resolves locations | Practice store and folder map: the same `configPath` (APPDATA) and `case_data_root` the practice-data tools use. Matter-data folders: `case_data_root`, then each matter's own `0. CASE DATA` or a child of the root, matched by matter number. No separate path logic beyond that. |
+| How the matter-data and practice-data tools resolve the same records | Practice-data tools: the same `PracticeStore` and config. Matter-data tools: one matter at a time, from the `matter_root` the session passes, through its pointer (`case/backend.ts`, `resolve_paths.resolve_pointer`). They refuse a database below v9.1 exactly as the check's script does. They read only the matter the session works in. The check reads every matter. |
+| The version guard | `list_record_names.py` calls `parties_of_record._behind`, which returns `unavailable` for any `main.sqlite` below `EXPECTED_USER_VERSION` (v9.1). |
+| Columns the script reads | `sources.title`, `sources.file_path`, `parties.name`, `parties.lawyer_name`, `parties.lawyer_firm`, `proceedings.file_number`, `proceedings.style_of_cause`. No hop in `migrations.sql` (62 to 91) adds, renames or rebuilds any of them. The 90 to 91 hop changes only `issues`. |
+| Skill §6 | Reads as quoted in §2. |
+| Reproduction | Run locally on the developer's own machine, not a remote host, against its real records (states and counts only were printed): `client` read, the other five `partial`. 26 matter-data folders found, none unplaced; 25 read `unavailable` at v9.0 against the v9.1 the guard needs, 1 read `ok`. |
+
+**Cause.** Not the host. The check refuses on any host where any matter's case data is behind the current schema, because the names script applies the version guard of a script that needs the newest columns, although the seven columns it reads predate every migration. The session's own matter had been migrated, so its matter-data tools worked; the other matters had not. `client` was readable because it never touches case data.
+
+**Design consequence.** Option 1 becomes: drop the version guard from the names script, on design decision #61's footing (columns that predate every migration need no guard). A database that truly lacks a column still fails its read and reads `unavailable`, so the check is not weakened. Option 2 (§9 Q1 default) still applies to what can remain genuinely unreadable: a matter with no matter number or two folders with one, a damaged database, or a read that times out.
