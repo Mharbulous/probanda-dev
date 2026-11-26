@@ -199,8 +199,8 @@ class Fixture:
 
     def assign(self):
         """Write source/assignment.json: the one plugin litigator ships the roster skills,
-        legal-commons, every public skill and every agent file in its source."""
-        skills = set(self.roster) | {"legal-commons"} | set(check_plugin_sources.public_skill_dirs(self.root))
+        legal-commons and every agent file in its source."""
+        skills = set(self.roster) | {"legal-commons"}
         agents = [fn[:-3] for fn in os.listdir(os.path.join(self.root, "source", "litigator", "agents"))]
         fake_repo.write_assignment(self.root, {"litigator": {
             "skills": sorted(skills), "agents": sorted(agents), "servers": ["data", "canlii", "commons"]}})
@@ -583,47 +583,9 @@ class TestShippedTreePurity(FixtureTest):
         hits, _ = self.fixture.purity()
         self.assertEqual(hits, [])
 
-
-class TestPublicSkill(FixtureTest):
-    """A skill under public/ ships whole and unstamped, and lives in one place only."""
-
-    PUBLIC = "public/plugins/practice/skills/"
-
-    def setUp(self):
-        super().setUp()
-        self.fixture.write(self.PUBLIC + "beta/SKILL.md", skill_md("beta", "A public skill."))
-        self.fixture.write(self.PUBLIC + "beta/references/style.md", "style\n")
-        for rel in ("beta/SKILL.md", "beta/references/style.md"):
-            self.fixture.write("plugins/litigator/skills/" + rel, read(self.fixture.root, self.PUBLIC + rel))
-
-    def test_public_skill_shipped_as_it_is_passes_every_check(self):
-        self.assertEqual({n: d for n, (ok, d) in self.fixture.results().items() if not ok}, {})
-        self.assertIn("beta", check_plugin_sources.skill_names(self.fixture.root, self.fixture.plugin))
-
-    def test_stamped_or_edited_copy_fails(self):
-        self.fixture.write("plugins/litigator/skills/beta/SKILL.md", skill_md("beta", "Edited."))
-        self.assertOnlyFails("shipped-tree-purity", "differs from its public source: skills/beta/SKILL.md")
-
-    def test_public_file_missing_from_the_build_fails(self):
-        os.remove(os.path.join(self.fixture.root, "plugins", "litigator", "skills", "beta", "references", "style.md"))
-        self.assertOnlyFails("shipped-tree-purity", "missing from payload: skills/beta/references/style.md")
-
-    def test_shipped_file_with_no_public_source_fails(self):
-        self.fixture.write("plugins/litigator/skills/beta/extra.md", "x\n")
-        self.assertOnlyFails("shipped-tree-purity", "no public source file: skills/beta/extra.md")
-
-    def test_skill_in_both_places_fails(self):
-        self.fixture.write("source/skills/beta/SKILL.md", skill_md("beta", "A private copy."))
-        self.assertOnlyFails("shipped-tree-purity", "skill in both public/ and source/skills/: beta")
-
     def test_skill_folder_in_claude_skills_fails(self):
         self.fixture.write(".claude/skills/alpha/SKILL.md", skill_md("alpha", "A project-skill copy."))
         self.assertOnlyFails("shipped-tree-purity", "skill folder in .claude/skills/ (the source is source/skills/): alpha")
-
-    def test_overlong_public_description_fails(self):
-        self.fixture.write(self.PUBLIC + "beta/SKILL.md", skill_md("beta", "x" * 1100))
-        self.fixture.write("plugins/litigator/skills/beta/SKILL.md", read(self.fixture.root, self.PUBLIC + "beta/SKILL.md"))
-        self.assertOnlyFails("description-length", "beta: 1100 chars")
 
 
 class TestReferenceToUnshippedFile(FixtureTest):

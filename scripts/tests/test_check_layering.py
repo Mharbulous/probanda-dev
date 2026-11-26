@@ -78,19 +78,19 @@ class ScanTest(unittest.TestCase):
             [("source/practice/agents/docket-clerk.md", "commons server"),
              ("source/practice/agents/docket-clerk.md", "drafting_data__*")])
 
-    def test_agents_are_read_from_each_plugin_folder_and_skills_from_any_public_plugin(self):
+    def test_agents_are_read_from_each_plugin_folder(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             plugins = make_repo(root, {"show-me/SKILL.md": "x\n"},
                                 agents={"docket-clerk": "- mcp__plugin_practice_data__rules__at\n"})
             plugins["practice"]["skills"].append("tldr")
             fake_repo.write_assignment(root, plugins)
-            for rel, text in (("public/plugins/practice/skills/tldr/SKILL.md", "Ask `/matter-data`.\n"),):
+            for rel, text in (("source/skills/tldr/SKILL.md", "Ask `/matter-data`.\n"),):
                 (root / rel).parent.mkdir(parents=True)
                 (root / rel).write_text(text, encoding="utf-8")
             self.assertEqual(sorted({(f["file"], f["target"]) for f in check_layering.scan(root, plugins)}),
-                             [("public/plugins/practice/skills/tldr/SKILL.md", "matter-data"),
-                              ("source/practice/agents/docket-clerk.md", "rules__*")])
+                             [("source/practice/agents/docket-clerk.md", "rules__*"),
+                              ("source/skills/tldr/SKILL.md", "matter-data")])
 
     def test_tests_folder_is_not_scanned(self):
         self.assertEqual(self.pairs({"show-me/tests/test_x.py": "# /matter-data\n"}), [])

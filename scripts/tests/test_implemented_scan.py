@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-implemented_scan: a publication marks implemented exactly the approved items
-whose fix commits reached a public plugin, and the scan starts at the newest
-commit whose public/ files are the public repository's.
+implemented_scan: a plugin release marks implemented exactly the approved items
+whose fix commits changed a path under one of that plugin's source roots, and a backfill gives each
+item the release that first shipped it.
 
 Run: python -m pytest -q scripts/tests/test_implemented_scan.py
 
@@ -34,13 +34,18 @@ D = "66666666-7777-4888-9999-aaaaaaaaaaaa"
 E = "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff"
 KEY = "sb_secret_test_only_value"
 
-LAWYER_SKILL = "public/plugins/lawyer/skills/dyu/SKILL.md"
-RESEARCHER_SKILL = "public/plugins/researcher/skills/legal-citation/SKILL.md"
-DEV_SKILL = "source/skills/draft/SKILL.md"
+LAWYER_SKILL = "plugins/lawyer/skills/dyu/SKILL.md"
+RESEARCHER_SKILL = "plugins/researcher/skills/legal-citation/SKILL.md"
+SOURCE_SKILL = "source/skills/draft/SKILL.md"  # a skill tree no plugin ships
+ASSIGNMENT = json.dumps({"status": "cutover", "plugins": {
+    "lawyer": {"requires": [], "servers": [], "skills": ["dyu", "common"], "agents": []},
+    "researcher": {"requires": [], "servers": [], "skills": ["legal-citation", "common"], "agents": []},
+    # timecamp's build folder is source/lawyer/mcp, outside source/billing/.
+    "billing": {"requires": [], "servers": ["timecamp"], "skills": [], "agents": []}}})
 
 
-def plugin_json(name, version):
-    return json.dumps({"name": name, "version": version}, indent=2) + "\n"
+def manifest(name, version):
+    return {f"plugins/{name}/.claude-plugin/plugin.json": json.dumps({"name": name, "version": version}) + "\n"}
 
 
 class Repo:
@@ -51,6 +56,7 @@ class Repo:
         self.git("config", "user.name", "Test")
         self.git("config", "user.email", "test@example.invalid")
         self.git("config", "commit.gpgsign", "false")
+        self.tick = 1_800_000_000
 
     def git(self, *args):
         return subprocess.run(["git", "-C", str(self.root), *args], check=True, capture_output=True,
@@ -64,7 +70,10 @@ class Repo:
             self.git("add", rel)
         for rel in remove:
             self.git("rm", "-q", rel)
-        self.git("commit", "-q", "--allow-empty", "-m", message)
+        self.tick += 60  # distinct, increasing commit dates
+        stamp = f"@{self.tick} +0000"
+        with mock.patch.dict(os.environ, {"GIT_AUTHOR_DATE": stamp, "GIT_COMMITTER_DATE": stamp}):
+            self.git("commit", "-q", "--allow-empty", "-m", message)
         return self.git("rev-parse", "HEAD")
 
 
@@ -72,42 +81,39 @@ def fix(subject, sid, item):
     return f"{subject}\n\nWhat changed, in the maintainer's words.\n\nSuggestion {sid} item {item}\n"
 
 
-def build_range(root):
-    """(repo, previous published sha, sha being published)."""
+def build(root):
+    """The repository and its marks: {"base", "first", "pushed_from", "head"}."""
     repo = Repo(root)
-    repo.commit("base", {
-        "public/plugins/lawyer/.claude-plugin/plugin.json": plugin_json("lawyer", "0.0.1"),
-        "public/plugins/researcher/.claude-plugin/plugin.json": plugin_json("researcher", "0.0.1"),
-        LAWYER_SKILL: "dyu v1\n",
-        RESEARCHER_SKILL: "citation v1\n",
-        "public/README.md": "readme v1\n",
-        DEV_SKILL: "draft v1\n",
-    })
-    # Published before the range: never called again.
-    repo.commit(fix("Earlier fix", E, 1), {LAWYER_SKILL: "dyu v1.1\n"})
-    previous = repo.git("rev-parse", "HEAD")
-    # Reaches lawyer.
-    repo.commit(fix("Fix the dyu prompt", A, 1), {LAWYER_SKILL: "dyu v2\n"})
-    # A skill not yet under public/: stays Approved.
-    repo.commit(fix("Fix the draft skill", A, 2), {DEV_SKILL: "draft v2\n"})
-    # A worktree branch merged into main: its commits are reached only through the merge.
+    marks = {}
+    repo.commit("base", {"source/assignment.json": ASSIGNMENT, **manifest("lawyer", "0.0.1"),
+                         **manifest("researcher", "0.0.1"), LAWYER_SKILL: "dyu v1\n",
+                         RESEARCHER_SKILL: "citation v1\n", SOURCE_SKILL: "draft v1\n"})
+    marks["base"] = repo.git("rev-parse", "HEAD")
+    # First release window: B item 2 reaches lawyer here and reaches researcher only later.
+    repo.commit(fix("Fix both", B, 2), {LAWYER_SKILL: "dyu v2\n"})
+    marks["first"] = repo.commit("Lawyer 0.0.2", manifest("lawyer", "0.0.2"))
+    marks["pushed_from"] = marks["first"]
+    # The push being scanned: a worktree branch merged into main, then the release.
+    repo.commit(fix("Fix the dyu prompt", A, 1), {LAWYER_SKILL: "dyu v3\n"})
+    repo.commit(fix("Fix the draft source only", A, 2), {SOURCE_SKILL: "draft v2\n"})
     repo.git("checkout", "-q", "-b", "worktree-fix")
     repo.commit(fix("Fix citation", B, 1), {RESEARCHER_SKILL: "citation v2\n"})
-    repo.commit(fix("Fix both", B, 2), {LAWYER_SKILL: "dyu v3\n", RESEARCHER_SKILL: "citation v3\n"})
+    repo.commit(fix("Fix both, researcher side", B, 2), {RESEARCHER_SKILL: "citation v3\n"})
     repo.git("checkout", "-q", "main")
     repo.commit("unrelated work on main", {"docs/note.md": "note\n"})
     repo.git("merge", "-q", "--no-ff", "-m", "Merge worktree-fix", "worktree-fix")
-    # Changed and changed back inside the range: nothing of it is published.
-    repo.commit(fix("Add a temporary file", C, 1), {"public/plugins/lawyer/skills/dyu/temp.md": "temp\n"})
-    repo.commit("Take the temporary file out", remove=["public/plugins/lawyer/skills/dyu/temp.md"])
-    # Outside public/plugins/: reaches no plugin.
-    repo.commit(fix("Reword the readme", D, 1), {"public/README.md": "readme v2\n"})
-    # The release commit names no item.
-    repo.commit("Release", {
-        "public/plugins/lawyer/.claude-plugin/plugin.json": plugin_json("lawyer", "0.0.2"),
-        "public/plugins/researcher/.claude-plugin/plugin.json": plugin_json("researcher", "0.1.0"),
-    })
-    return repo, previous, repo.git("rev-parse", "HEAD")
+    # Under plugins/lawyer/, even though it is changed back before the release.
+    repo.commit(fix("Add a temporary file", C, 1), {"plugins/lawyer/skills/dyu/temp.md": "temp\n"})
+    repo.commit("Take the temporary file out", remove=["plugins/lawyer/skills/dyu/temp.md"])
+    # Outside plugins/: reaches no plugin.
+    repo.commit(fix("Reword a note", D, 1), {"docs/note.md": "note v2\n"})
+    # A plugin.json edit that keeps the version is not a release.
+    repo.commit("Describe researcher", {"plugins/researcher/.claude-plugin/plugin.json":
+                                        json.dumps({"name": "researcher", "version": "0.0.1",
+                                                    "description": "x"}) + "\n"})
+    marks["head"] = repo.commit("Lawyer 0.0.3, Researcher 0.1.0", {**manifest("lawyer", "0.0.3"),
+                                                                   **manifest("researcher", "0.1.0")})
+    return repo, marks
 
 
 class Stub:
@@ -148,155 +154,119 @@ class Stub:
 ENV = {scan_mod.KEY_ENV: KEY, "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"}
 
 
+def call(sid, item, release):
+    return {"suggestion_id": sid, "item": item, "status": "implemented", "implemented_in": release}
+
+
 class ScanTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.repo, self.prev, self.cur = build_range(Path(self.tmp.name) / "dev")
+        self.repo, self.marks = build(Path(self.tmp.name) / "dev")
 
     def tearDown(self):
         self.tmp.cleanup()
 
-    def run_scan(self, answers=None, dry_run=False):
+    def run_scan(self, answers=None, dry_run=False, **start):
+        start = start or {"before": self.marks["pushed_from"]}
         stub = Stub(answers)
         lines = []
         try:
             with mock.patch.dict(os.environ, ENV):
-                code = scan_mod.scan(self.repo.root, self.prev, self.cur,
+                code = scan_mod.scan(self.repo.root, self.marks["head"], **start,
                                      post=functools.partial(scan_mod.post_status, endpoint=stub.url),
                                      dry_run=dry_run, out=lines.append)
         finally:
             stub.close()
         return code, stub, "\n".join(lines)
 
-    def test_sets_exactly_the_items_that_reached_a_public_plugin(self):
+    def test_push_marks_each_item_whose_fix_reached_the_plugin_with_its_new_version(self):
         code, stub, out = self.run_scan()
         self.assertEqual(code, 0, out)
         self.assertEqual(stub.calls, [
-            {"suggestion_id": A, "item": 1, "status": "implemented", "implemented_in": "lawyer 0.0.2"},
-            {"suggestion_id": B, "item": 1, "status": "implemented", "implemented_in": "researcher 0.1.0"},
-            {"suggestion_id": B, "item": 2, "status": "implemented", "implemented_in": "lawyer 0.0.2"},
+            call(C, 1, "lawyer 0.0.3"),
+            call(A, 1, "lawyer 0.0.3"),
+            call(B, 1, "researcher 0.1.0"),
+            call(B, 2, "researcher 0.1.0"),
         ])
-        self.assertEqual(stub.keys, [KEY] * 3)
-        self.assertIn("also reached researcher", out)
+        self.assertEqual(stub.keys, [KEY] * 4)
 
-    def test_fixes_that_reached_no_public_plugin_are_skipped_with_no_call(self):
+    def test_a_fix_that_reached_no_plugin_is_skipped_with_no_call(self):
         code, stub, out = self.run_scan()
         called = {(c["suggestion_id"], c["item"]) for c in stub.calls}
-        for skipped in [(A, 2), (C, 1), (D, 1)]:
+        for skipped in [(A, 2), (D, 1)]:
             self.assertNotIn(skipped, called)
             self.assertIn(f"stays Approved: Suggestion {skipped[0]} item {skipped[1]}", out)
-        self.assertNotIn((E, 1), called)
-        self.assertNotIn(E, out)
+
+    def test_a_plugin_whose_version_did_not_change_is_not_scanned(self):
+        self.repo.commit(fix("Fix citation again", E, 1), {RESEARCHER_SKILL: "citation v4\n"})
+        lawyer_only = self.repo.commit("Lawyer 0.0.4", manifest("lawyer", "0.0.4"))
+        result = scan_mod.plan(self.repo.root, lawyer_only, before=self.marks["head"])
+        self.assertEqual([(r[0], r[3]) for r in result["releases"]], [("lawyer", "0.0.4")])
+        self.assertEqual(result["set"], [])
+        self.assertEqual([(s[0], s[1]) for s in result["skipped"]], [(E, 1)])
+
+    def test_backfill_gives_each_item_the_earliest_release_that_shipped_it(self):
+        code, stub, out = self.run_scan(since=self.marks["base"])
+        self.assertEqual(code, 0, out)
+        self.assertEqual(stub.calls, [
+            call(C, 1, "lawyer 0.0.3"),
+            call(A, 1, "lawyer 0.0.3"),
+            call(B, 1, "researcher 0.1.0"),
+            call(B, 2, "lawyer 0.0.2"),
+        ])
+        self.assertIn("also reached researcher 0.1.0", out)
+
+    def test_a_skill_source_change_reaches_every_plugin_that_ships_the_skill(self):
+        self.repo.commit(fix("Fix the common skill", E, 1), {"source/skills/common/SKILL.md": "common v2\n"})
+        self.repo.commit(fix("Fix dyu in source", E, 2), {"source/skills/dyu/SKILL.md": "dyu source v2\n"})
+        self.repo.commit("Lawyer 0.0.4", manifest("lawyer", "0.0.4"))
+        to = self.repo.commit("Researcher 0.1.1", manifest("researcher", "0.1.1"))
+        result = scan_mod.plan(self.repo.root, to, before=self.marks["head"])
+        self.assertEqual([s[:3] + s[4:] for s in result["set"]], [
+            (E, 1, "lawyer 0.0.4", ["researcher 0.1.1"]),
+            (E, 2, "lawyer 0.0.4", []),
+        ])
+
+    def test_a_server_build_folder_change_reaches_the_plugin_that_ships_the_server(self):
+        before = self.repo.commit("Billing 0.0.1", manifest("billing", "0.0.1"))
+        self.repo.commit(fix("Fix the timecamp server", E, 1), {"source/lawyer/mcp/src/timecamp.ts": "v2\n"})
+        to = self.repo.commit("Researcher 0.1.1, Billing 0.0.2", {**manifest("researcher", "0.1.1"),
+                                                                    **manifest("billing", "0.0.2")})
+        result = scan_mod.plan(self.repo.root, to, before=before)
+        self.assertEqual([s[:3] + s[4:] for s in result["set"]], [(E, 1, "billing 0.0.2", [])])
+
+    def test_backfill_takes_a_date(self):
+        _code, stub, _out = self.run_scan(since="2000-01-01")
+        self.assertIn(call(B, 2, "lawyer 0.0.2"), stub.calls)
 
     def test_a_refused_item_is_reported_not_forced(self):
         refusal = (409, {"error": "Not saved. Was this item approved before its fix shipped, and in which release?"})
         code, stub, out = self.run_scan({(B, 1): refusal})
         self.assertEqual(code, 0)
-        self.assertEqual(len(stub.calls), 3)
+        self.assertEqual(len(stub.calls), 4)
         self.assertIn(f"::warning::not saved, refused by the Suggestion Box: Suggestion {B} item 1", out)
 
     def test_a_failed_call_fails_loudly_with_the_command_to_run_again_and_never_the_key(self):
         code, _stub, out = self.run_scan({(A, 1): (502, {"error": "the status was not saved"})})
         self.assertEqual(code, 1)
         self.assertIn(f"::error::not saved: Suggestion {A} item 1", out)
-        self.assertIn(f"implemented_scan.py scan --from {self.prev} --to {self.cur}", out)
+        self.assertIn(f"implemented_scan.py scan --before {self.marks['pushed_from']} --to {self.marks['head']}",
+                      out)
         self.assertNotIn(KEY, out)
-
-    def test_running_again_over_the_same_range_makes_the_same_calls(self):
-        _c, first, _o = self.run_scan()
-        _c, second, _o = self.run_scan()
-        self.assertEqual(first.calls, second.calls)
 
     def test_dry_run_calls_nothing(self):
         code, stub, out = self.run_scan(dry_run=True)
         self.assertEqual((code, stub.calls), (0, []))
-        self.assertIn(f"would mark: Suggestion {A} item 1: lawyer 0.0.2", out)
+        self.assertIn(f"would mark: Suggestion {A} item 1: lawyer 0.0.3", out)
 
     def test_without_the_key_nothing_is_saved_and_the_run_fails(self):
         lines = []
         with mock.patch.dict(os.environ, {}, clear=False):
             os.environ.pop(scan_mod.KEY_ENV, None)
-            code = scan_mod.scan(self.repo.root, self.prev, self.cur, out=lines.append)
+            code = scan_mod.scan(self.repo.root, self.marks["head"], before=self.marks["pushed_from"],
+                                 out=lines.append)
         self.assertEqual(code, 1)
         self.assertIn(f"{scan_mod.KEY_ENV} is not set", "\n".join(lines))
-
-    def test_a_range_whose_start_is_not_an_ancestor_is_refused(self):
-        with self.assertRaises(scan_mod.ScanError):
-            scan_mod.plan(self.repo.root, self.cur, self.prev)
-
-
-APPROVED_ENTRY = "Better prompts for dyu\n\n- dyu restates the request more briefly."
-
-
-def mirror(repo, public, commit):
-    """Write public/ at `commit` into a fresh public checkout and commit it, as an export does."""
-    for path in repo.git("ls-tree", "-r", "--name-only", commit, "public/").splitlines():
-        dest = public.root / path[len("public/"):]
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_bytes(subprocess.run(["git", "-C", str(repo.root), "show", f"{commit}:{path}"],
-                                        check=True, capture_output=True).stdout)
-    public.git("add", "-A")
-    return public.commit(APPROVED_ENTRY + "\n")
-
-
-class PreviousTest(unittest.TestCase):
-    def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
-        self.repo, self.prev, self.cur = build_range(Path(self.tmp.name) / "dev")
-        self.public = Repo(Path(self.tmp.name) / "public")
-
-    def tearDown(self):
-        self.tmp.cleanup()
-
-    def test_the_commit_whose_public_files_match_is_found(self):
-        target = self.repo.git("rev-parse", "HEAD~1")  # the readme reworded, before the release commit
-        mirror(self.repo, self.public, target)
-        self.assertEqual(scan_mod.previous(self.public.root, self.repo.root, self.cur), target)
-
-    def test_the_public_commit_message_is_only_the_approved_entry(self):
-        mirror(self.repo, self.public, self.cur)
-        self.assertEqual(self.public.git("log", "-1", "--format=%B"), APPROVED_ENTRY)
-        self.assertFalse(hasattr(scan_mod, "stamp"))
-
-    def test_with_no_matching_commit_it_fails(self):
-        self.public.commit("Not from this repository", {"README.md": "something else\n"})
-        with self.assertRaises(scan_mod.ScanError):
-            scan_mod.previous(self.public.root, self.repo.root, self.cur)
-
-    def test_with_an_empty_public_repository_it_fails(self):
-        with self.assertRaises(scan_mod.ScanError):
-            scan_mod.previous(self.public.root, self.repo.root, self.cur)
-
-    def test_an_item_named_while_public_was_unchanged_after_the_publication_gets_no_call(self):
-        published = self.cur
-        mirror(self.repo, self.public, published)
-        # After the real publication: several commits that leave public/ as it was, one naming an item.
-        self.repo.commit("Notes", {"docs/after.md": "after\n"})
-        self.repo.commit(fix("Fix the draft skill again", E, 2), {DEV_SKILL: "draft v3\n"})
-        self.repo.commit("More notes", {"docs/after.md": "after, again\n"})
-        newest_unchanged = self.repo.git("rev-parse", "HEAD")
-        # Then a fix that does reach lawyer, and its release.
-        self.repo.commit(fix("Fix dyu again", A, 3), {LAWYER_SKILL: "dyu v4\n"})
-        self.repo.commit("Release", {
-            "public/plugins/lawyer/.claude-plugin/plugin.json": plugin_json("lawyer", "0.0.3")})
-        head = self.repo.git("rev-parse", "HEAD")
-        start = scan_mod.previous(self.public.root, self.repo.root, head)
-        self.assertEqual(start, newest_unchanged)
-        stub = Stub()
-        lines = []
-        try:
-            with mock.patch.dict(os.environ, ENV):
-                code = scan_mod.scan(self.repo.root, start, head,
-                                     post=functools.partial(scan_mod.post_status, endpoint=stub.url),
-                                     out=lines.append)
-        finally:
-            stub.close()
-        self.assertEqual(code, 0, lines)
-        self.assertEqual(stub.calls, [{"suggestion_id": A, "item": 3, "status": "implemented",
-                                       "implemented_in": "lawyer 0.0.3"}])
-        # Started from the real publication point instead, that item still reaches nothing.
-        self.assertEqual([(s[0], s[1]) for s in scan_mod.plan(self.repo.root, published, head)["skipped"]],
-                         [(E, 2)])
 
 
 if __name__ == "__main__":

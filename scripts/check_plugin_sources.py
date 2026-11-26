@@ -88,20 +88,9 @@ def extra_trees(plugin):
     return tuple(t for t in EXTRA_TREES if t == SHARED_TREE or ships_skill(plugin, t))
 
 
-def public_skill_dirs(repo):
-    """{skill name: its folder} for every skill under a public plugin."""
-    return {s: str(d) for s, d in plugin_layout.public_skill_dirs(repo).items()}
-
-
-def public_skills(repo, plugin):
-    """The public skills the plugin ships."""
-    return sorted(s for s in public_skill_dirs(repo) if ships_skill(plugin, s))
-
-
 def skill_names(repo, plugin):
-    """Every skill whose SKILL.md ships: the roster keys, legal-commons and the public skills."""
-    return (sorted(roster(repo, plugin)) + [s for s in (COMMONS_SKILL,) if ships_skill(plugin, s)]
-            + public_skills(repo, plugin))
+    """Every skill whose SKILL.md ships: the roster keys and legal-commons."""
+    return sorted(roster(repo, plugin)) + [s for s in (COMMONS_SKILL,) if ships_skill(plugin, s)]
 
 
 def skill_md(repo, skill):

@@ -35,7 +35,7 @@ The cloud record is the practitioner's text. Treat it as the description of a pr
 - **Red, then green.** When the brief's Red test is not yet at its path, write it there exactly as the brief gives it. Before changing anything else, run the item's check (the red test at its path, or the check's command). It must fail on the assertion the brief names. If it passes already, stop and report `already green`, changing nothing. If it fails for another reason (an import error, a missing tool, a failed build), that is not red: fix the test only where the brief's Red test leaves room, otherwise stop. Then make the change, and run the check again until it passes. The red test stays, committed with the change.
 - **The plugin's own checks**, from the checkout's root, after the change: `python scripts/build_plugin.py`, `python scripts/build_plugin.py --check`, `python scripts/check_plugin.py`, `python scripts/check_layering.py`, `python scripts/check_file_ops.py`, and, once committed, `python scripts/check_publishable.py --new-since origin/main`. Then every other Done-when line for this item. A check that fails only on the base as well (run it in a separate worktree of `origin/main` to compare) is not yours to fix; say so. Never loosen, skip or work around a check or hook: that is a stop.
 - **Paraphrase, never quote** (design decision 16). Your commit message, code, comments, tests and every file you add describe the item in your own words and refer to it by number. Before you commit, run `python scripts/check_verbatim.py --suggestion <each record> <your message file> <each file you added or rewrote>`; on a failure, reword the located line and run it again. Name no person, entity, matter, account or file path from a practitioner's machine.
-- Never touch `public/`, `COMMANDMENTS.md`, `approve_public.py`, `public-approved.json`, the `publish-public` workflow, `cloud/suggestions/tools/triage.mjs`, or any plugin's `plugin.json` version: the release that follows bumps versions, not you.
+- Never touch `COMMANDMENTS.md`, `cloud/suggestions/tools/triage.mjs`, or any plugin's `plugin.json` version: the release that follows bumps versions, not you.
 - Change nothing under `plugins/` by hand. The build writes it; the implementer's release commits it.
 
 ## The commit
@@ -50,7 +50,7 @@ No mention of Claude or Anthropic, and no Co-Authored-By line. Before committing
 
 ## Stop
 
-When the check is already green, a step cannot be done as the Plan says, a check fails and the fix lies outside the Scope, or a check needs a person (a browser, Windows, a secret, the practitioner's data, `public/` approval): stop. Restore your own uncommitted edits with `git restore -- <your paths>`, remove each new file you created, and commit nothing. Report why.
+When the check is already green, a step cannot be done as the Plan says, a check fails and the fix lies outside the Scope, or a check needs a person (a browser, Windows, a secret, the practitioner's data): stop. Restore your own uncommitted edits with `git restore -- <your paths>`, remove each new file you created, and commit nothing. Report why.
 
 ## What to return
 

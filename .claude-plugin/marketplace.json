@@ -2,51 +2,50 @@
   "name": "Probanda_Legal_experimental",
   "description": "Probanda, Claude Cowork plugins for legal practice in British Columbia",
   "owner": {
-    "name": "Probanda Legal (experimental)",
-    "url": "https://github.com/Probanda-app"
+    "name": "Probanda Legal (experimental)"
   },
   "forceRemoveDeletedPlugins": true,
   "plugins": [
     {
       "name": "lawyer",
       "source": "./plugins/lawyer",
-      "author": {"name": "Probanda Legal (experimental)", "url": "https://github.com/Probanda-app"},
+      "author": {"name": "Probanda Legal (experimental)"},
       "description": "The core plugin: firm records, time, billing, case data and deadlines, and skills for any lawyer (restate a request before acting, summarize a session). Requires nothing. Install it first: every other Probanda plugin requires it."
     },
     {
       "name": "researcher",
       "source": "./plugins/researcher",
-      "author": {"name": "Probanda Legal (experimental)", "url": "https://github.com/Probanda-app"},
+      "author": {"name": "Probanda Legal (experimental)"},
       "description": "What the law is: legal research, citation and verification. Requires lawyer. Install lawyer first, then researcher."
     },
     {
       "name": "litigator",
       "source": "./plugins/litigator",
-      "author": {"name": "Probanda Legal (experimental)", "url": "https://github.com/Probanda-app"},
+      "author": {"name": "Probanda Legal (experimental)"},
       "description": "Court work on a matter: applying the law to the facts, drafting, court forms and filing packages. Requires lawyer and researcher. Install lawyer, then researcher, then litigator."
     },
     {
       "name": "solicitor",
       "source": "./plugins/solicitor",
-      "author": {"name": "Probanda Legal (experimental)", "url": "https://github.com/Probanda-app"},
+      "author": {"name": "Probanda Legal (experimental)"},
       "description": "Reserved for solicitor's work. Ships no skills yet. Requires lawyer. Install lawyer first."
     },
     {
       "name": "file-manager",
       "source": "./plugins/file-manager",
-      "author": {"name": "Probanda Legal (experimental)", "url": "https://github.com/Probanda-app"},
+      "author": {"name": "Probanda Legal (experimental)"},
       "description": "Optional. Every Probanda tool that renames, moves, changes or deletes files on your computer that Probanda did not create: matter housekeeping, routing accounting files, applying approved renames. Without it, Probanda only reads or copies those files. Requires lawyer. Install lawyer first, then file-manager."
     },
     {
       "name": "billing",
       "source": "./plugins/billing",
-      "author": {"name": "Probanda Legal (experimental)", "url": "https://github.com/Probanda-app"},
+      "author": {"name": "Probanda Legal (experimental)"},
       "description": "Optional. Time tracking and billing: gathers the evidence of a day's work, sorts it to client matters, corrects TimeCamp, drafts time entries, bills matters, records and reviews invoices, and follows up what clients owe. Requires lawyer. Install lawyer first, then billing."
     },
     {
       "name": "developer",
       "source": "./plugins/developer",
-      "author": {"name": "Probanda Legal (experimental)", "url": "https://github.com/Probanda-app"},
+      "author": {"name": "Probanda Legal (experimental)"},
       "description": "Maintainer-only, never public. Tools for developing Probanda: viewing and triaging the Suggestion Box, run from the probanda-dev checkout. Requires lawyer. Install lawyer first, then developer."
     }
   ]

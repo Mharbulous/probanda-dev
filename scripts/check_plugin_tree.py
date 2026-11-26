@@ -10,7 +10,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from check_plugin_sources import (  # noqa: E402
     BASELINES, EXTRA_TREES, HOST_PATH, skills_root, source_path, server_path, roster, packaged_assets,
-    extra_trees, public_skill_dirs, public_skills)
+    extra_trees)
 from check_plugin_skill_md import skill_uses_html_pages, stamp_skill_md  # noqa: E402
 
 # shipped-tree-purity re-derives the build's selection independently -- its own
@@ -139,30 +139,17 @@ def shipped_tree_purity(repo, plugin, manifest, roster_names, assets, baseline, 
     tops = set(roster_names) | set(extra)
     hits = []
     shipped = set()
-    public_dirs, public = public_skill_dirs(repo), set(public_skills(repo, plugin))
-    for top in sorted(set(public_dirs) & (tops | set(os.listdir(root) if os.path.isdir(root) else ()))):
-        hits.append(f"skill in both public/ and source/skills/: {top}")
     # Claude Code loads every skill folder under .claude/skills/ as a project skill, so a skill
     # there would list a second copy beside the plugin's. The source lives in source/skills/.
     project_skills = os.path.join(repo, ".claude", "skills")
     for top in sorted(os.listdir(project_skills) if os.path.isdir(project_skills) else ()):
         if os.path.isfile(os.path.join(project_skills, top, "SKILL.md")):
             hits.append(f"skill folder in .claude/skills/ (the source is source/skills/): {top}")
-    public_shipped = set()
     for sha, arcname in manifest:
         if not arcname.startswith(SHIPPED_PREFIX):
             continue
         rel = arcname[len(SHIPPED_PREFIX):]
         parts = rel.split("/")
-        if parts[0] in public:
-            # A public skill ships whole and byte for byte, with no preamble.
-            public_shipped.add(rel)
-            source = os.path.join(public_dirs[parts[0]], *parts[1:])
-            if not os.path.isfile(source):
-                hits.append(f"no public source file: {arcname}")
-            elif sha256_file(source) != sha:
-                hits.append(f"differs from its public source: {arcname}")
-            continue
         shipped.add(rel)
         if any(p in TREE_EXCLUDE_DIRS for p in parts[:-1]) or parts[-1].endswith(".pyc"):
             hits.append(f"excluded path shipped: {arcname}")
@@ -196,12 +183,6 @@ def shipped_tree_purity(repo, plugin, manifest, roster_names, assets, baseline, 
             hits.append(f"differs from source: {arcname}")
     for rel in sorted(skill_source_expected(root, roster_names, assets, extra) - shipped):
         hits.append(f"missing from payload: {SHIPPED_PREFIX}{rel}")
-    for top in sorted(public):
-        for dirpath, _dirs, files in os.walk(public_dirs[top]):
-            for fn in files:
-                rel = top + "/" + os.path.relpath(os.path.join(dirpath, fn), public_dirs[top]).replace(os.sep, "/")
-                if rel not in public_shipped:
-                    hits.append(f"missing from payload: {SHIPPED_PREFIX}{rel}")
 
     # VISION.md ships at the plugin root, byte for byte.
     vision_shas = [sha for sha, arcname in manifest if arcname == VISION_FILE]

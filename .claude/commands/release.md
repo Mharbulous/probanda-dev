@@ -10,7 +10,7 @@ Run commands from the repo root. Call git as `git -C <repo root>`.
 
 ## 1. Start
 
-`git pull --ff-only`. Check: the source changes being released are committed on `main`, and `git status` shows no uncommitted change under `source/` or `public/`.
+`git pull --ff-only`. Check: the source changes being released are committed on `main`, and `git status` shows no uncommitted change under `source/`.
 
 ## 2. What changed
 

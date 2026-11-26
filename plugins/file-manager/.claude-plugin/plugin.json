@@ -4,11 +4,8 @@
   "version": "0.22.0",
   "description": "Optional Probanda plugin for British Columbia lawyers that renames, moves, changes and deletes files on your computer that Probanda did not create: matter housekeeping, routing loose accounting files and applying approved renames. While it is enabled, a delete becomes a move to a TRASH folder (the matter's own, or one in your home folder), so it can be undone. Without it, Probanda cannot rename, move, change or delete any file it did not create: it only reads or copies them. Requires the lawyer plugin: install lawyer first.",
   "author": {
-    "name": "Probanda Legal",
-    "url": "https://github.com/Probanda-app"
+    "name": "Probanda Legal"
   },
-  "homepage": "https://github.com/Probanda-app/Legal",
-  "repository": "https://github.com/Probanda-app/Legal",
   "dependencies": [
     {
       "name": "lawyer",

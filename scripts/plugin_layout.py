@@ -7,7 +7,7 @@ with the skills, agents, hooks and servers the file gives it. The file's "status
 "cutover"; the single-plugin layout it replaced is gone.
 
 Imported by build_plugin.py, check_plugin.py, check_plugin_agents.py,
-check_plugin_bundles.py, check_plugin_sources.py, check_public_tree.py,
+check_plugin_bundles.py, check_plugin_sources.py,
 check_layering.py, check_file_ops.py, check_internals.py, release_changes.py and
 stamp_dependencies.py, so the file is read, and the layout is walked, in one place.
 Standard library only.
@@ -45,12 +45,8 @@ SERVERS = {
                                  "purity": True, "host_path": True},
 }
 SERVER_DIRS = {key: server["dir"] for key, server in SERVERS.items()}
-# Skills already free of Trade Secrets live under public/, the source of the public
-# repository, one skills folder per public plugin (a glob from the repo root). A skill
-# lives there or under source/skills/, never both.
-PUBLIC_SKILLS = "public/plugins/*/skills"
-# Private skills, and one skills folder per public plugin (globs from the repo root).
-SKILL_ROOTS = ("source/skills", PUBLIC_SKILLS)
+# Where skills live (a glob from the repo root).
+SKILL_ROOTS = ("source/skills",)
 
 
 def stop(message):
@@ -93,20 +89,9 @@ def server_owner(repo, server):
     return owners[0]
 
 
-def public_skill_dirs(repo):
-    """{skill name: its folder} for every skill under a public plugin."""
-    found = {}
-    for path in sorted(Path(repo).glob(PUBLIC_SKILLS + "/*")):
-        if path.is_dir():
-            if path.name in found:
-                stop(f"skill '{path.name}' is under two public plugins: {found[path.name]} and {path}")
-            found[path.name] = path
-    return found
-
-
 def skill_dir(repo, skill):
-    """A skill's source folder: its public folder if it has one, else under source/skills/."""
-    return public_skill_dirs(repo).get(skill) or Path(repo) / "source" / "skills" / skill
+    """A skill's source folder, under source/skills/."""
+    return Path(repo) / "source" / "skills" / skill
 
 
 def skill_owners(plugins):

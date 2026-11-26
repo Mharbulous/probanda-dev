@@ -13,8 +13,8 @@ other file goes through file-manager, conditionally: without it the step stops
 and tells the practitioner.
 
 What is scanned: every file the other plugins ship from source. Their skill
-folders per source/assignment.json (under source/skills/, including shared/,
-and public/plugins/*/skills/), their agents and hooks under source/<plugin>/,
+folders per source/assignment.json (under source/skills/, including shared/),
+their agents and hooks under source/<plugin>/,
 and the source of each MCP server they ship, read by following relative imports
 from the server's entry point (so the file-manager entry point's own modules are
 not read). Tests, dist/ bundles and node_modules are skipped.

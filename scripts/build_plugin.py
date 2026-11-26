@@ -13,8 +13,7 @@ P, the whole shared/ tree and the bundles of the servers the assignment gives P.
 --out <dir> holds one folder per plugin, <dir>/P/. A folder under plugins/ that
 no plugin builds is reported stale by --check and removed by a build.
 
-A skill is found at source/skills/<name>/ or at public/plugins/*/skills/<name>/,
-never both. The skill selection and the SKILL.md stamp are ported from CoClerk's
+A skill is found at source/skills/<name>/. The skill selection and the SKILL.md stamp are ported from CoClerk's
 plugin-packager build_plugin.py (native-tree path).
 
 A built file is mode 755 when it ends in .py, and 644 otherwise. --check also compares each built file's mode
@@ -47,8 +46,6 @@ REPO = Path(__file__).resolve().parent.parent
 # every plugin, legal-commons in the plugin the assignment gives it to.
 SHARED_TREE = "shared"
 EXTRA_TREES = (SHARED_TREE, "legal-commons")
-# Public skills (plugin_layout.PUBLIC_SKILLS) ship as they are, unstamped and whole,
-# so the development plugin runs the published bytes.
 TREE_EXCLUDE_DIRS = ("__pycache__", "sessions", "tests", "determinizing-tests", "evals", ".pytest_cache")
 # Text ships by extension; anything else ships only inside a roster-declared
 # asset dir. Office lock files (~$*) are never wanted, even there.
@@ -173,16 +170,11 @@ def collect(repo, spec):
     if RESERVED.search(name):
         stop(f"reserved word 'claude' in plugin name '{name}'")
 
-    public = plugin_layout.public_skill_dirs(repo)
-    both = [t for t in public if t in roster or t in EXTRA_TREES or (skills_root / t).exists()]
-    if both:
-        stop("skill in both public/ and source/skills/ (a skill lives in one): " + ", ".join(both))
     # The assignment says which skills and agents the plugin ships, and the
     # plugin's source says which folders of a private skill are assets and
     # holds the agent files, so the two must agree.
-    public = {t: public[t] for t in sorted(spec["skills"]) if t in public}
     extra = [t for t in EXTRA_TREES if t == SHARED_TREE or t in spec["skills"]]
-    private = {t for t in spec["skills"] if t not in public and t not in EXTRA_TREES}
+    private = {t for t in spec["skills"] if t not in EXTRA_TREES}
     if private != set(roster):
         stop(f"{src / 'roster.json'} and source/assignment.json disagree on the private skills of '{name}': "
              + ", ".join(sorted(private ^ set(roster))))
@@ -195,7 +187,6 @@ def collect(repo, spec):
     if declared != sorted(spec["servers"]):
         stop(f"{src / '.mcp.json'} declares the servers {declared}, but '{name}' ships {sorted(spec['servers'])}")
     check_skills({t: skills_root / t for t in sorted(roster) + [t for t in extra if t != SHARED_TREE]})
-    check_skills(public)
 
     files = {".claude-plugin/plugin.json": (json.dumps(manifest, indent=2) + "\n").encode("utf-8")}
     for fname in (".mcp.json", "README.md", "VISION.md"):
@@ -208,10 +199,6 @@ def collect(repo, spec):
         files.update(collect_tree(skills_root, top, roster[top], stamp=(name, version)))
     for top in extra:
         files.update(collect_tree(skills_root, top, (), stamp=None))
-    for top, folder in public.items():
-        for path in sorted(folder.rglob("*")):
-            if path.is_file():
-                files[f"skills/{top}/{path.relative_to(folder).as_posix()}"] = path.read_bytes()
     for text_path in [p for p in files if Path(p).suffix.lower() in TEXT_SUFFIXES]:
         files[text_path] = files[text_path].replace(b"\r\n", b"\n")
     # The bundles are built elsewhere and ship byte-for-byte.

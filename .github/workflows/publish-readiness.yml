@@ -1,8 +1,8 @@
 name: publish-readiness
 
 # A pull request or a push to main fails only for a problem the change adds (--new-since).
-# A run started by hand from the Actions tab does the full scan, which fails while the
-# repo is not publishable.
+# A run started by hand from the Actions tab does the full scan, which fails while any
+# problem remains.
 on:
   pull_request:
   push:
@@ -17,8 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      # public/ is the source of the public repository: it must be clean on every commit.
-      - run: python3 scripts/check_public_tree.py
       # Every upward reference between plugins, and every file-changing operation outside
       # file-manager (Commandment 7), has a ruling.
       - run: python3 scripts/check_layering.py

@@ -26,11 +26,9 @@ def build(*args):
 
 
 def copy_repo(repo):
-    """Copy what a build reads into `repo`: source/ (the skills and the plugin sources) and the public skills."""
+    """Copy what a build reads into `repo`: source/ (the skills and the plugin sources)."""
     skip = shutil.ignore_patterns("tests", "test", "src", "build", "__pycache__", "node_modules")
     shutil.copytree(SOURCE, repo / "source", ignore=skip)
-    # A hook of the lawyer plugin runs a script in a public skill.
-    shutil.copytree(REPO / "public" / "plugins", repo / "public" / "plugins", ignore=skip)
 
 
 class BuildPluginTest(unittest.TestCase):
@@ -125,32 +123,6 @@ class BuildPluginTest(unittest.TestCase):
             self.assertIn("1024", result.stderr)
             self.assertFalse(out.exists())
 
-    def test_public_skill_ships_unstamped_and_may_not_also_be_private(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            repo = Path(tmp)
-            copy_repo(repo)
-            text = "---\nname: zz-public\ndescription: A public skill.\n---\n\nBody.\n"
-            # Any public plugin's skills folder is searched, whatever the plugin is called.
-            public = repo / "public" / "plugins" / "another" / "skills" / "zz-public"
-            (public / "references").mkdir(parents=True)
-            (public / "SKILL.md").write_bytes(text.encode("utf-8"))
-            (public / "references" / "notes.txt").write_bytes(b"shipped whole\n")
-            assignment = json.loads((repo / "source" / "assignment.json").read_text(encoding="utf-8"))
-            assignment["plugins"]["lawyer"]["skills"].append("zz-public")
-            fake_repo.write_assignment(repo, assignment["plugins"], status=assignment["status"])
-            out = repo / "out"
-            result = build("--repo", str(repo), "--out", str(out))
-            self.assertEqual(result.returncode, 0, result.stderr)
-            shipped = out / "lawyer" / "skills" / "zz-public"
-            self.assertEqual((shipped / "SKILL.md").read_bytes(), text.encode("utf-8"))
-            self.assertTrue((shipped / "references" / "notes.txt").is_file())
-            self.assertFalse((out / "researcher" / "skills" / "zz-public").exists())
-
-            (repo / "source" / "skills" / "zz-public").mkdir()
-            result = build("--repo", str(repo), "--out", str(repo / "out2"))
-            self.assertEqual(result.returncode, 2)
-            self.assertIn("skill in both public/ and source/skills/", result.stderr)
-
 
 def skill(name):
     return f"---\nname: {name}\ndescription: Fixture skill {name}.\n---\n\n# {name}\n"
@@ -160,12 +132,11 @@ HOOK = "${CLAUDE_PLUGIN_ROOT}/skills/shared/hooks/guard.py"
 PRACTICE = {"name": "practice", "version": "0.2.0", "hooks": {"PreToolUse": [
     {"matcher": "Bash", "hooks": [{"type": "command", "command": "python3", "args": [HOOK]}]}]}}
 ASSIGNMENT = {"status": "cutover", "plugins": {
-    "practice": {"requires": [], "skills": ["alpha", "pub-one"], "agents": ["clerk"], "hooks": {}, "servers": ["data"]},
-    "research": {"requires": ["practice"], "skills": ["beta", "legal-commons", "pub-two"], "agents": [],
+    "practice": {"requires": [], "skills": ["alpha"], "agents": ["clerk"], "hooks": {}, "servers": ["data"]},
+    "research": {"requires": ["practice"], "skills": ["beta", "legal-commons"], "agents": [],
                  "hooks": {}, "servers": []},
 }}
-# A two-plugin repo at cutover: one private skill each, one public skill each under
-# differently named public plugins, and a leftover plugins/probanda/ folder.
+# A two-plugin repo at cutover: one private skill each, and a leftover plugins/probanda/ folder.
 CUTOVER_REPO = {
     "source/practice/plugin.json": json.dumps(PRACTICE),
     "source/practice/roster.json": json.dumps({"alpha": ["assets"]}),
@@ -181,8 +152,6 @@ CUTOVER_REPO = {
     "source/skills/legal-commons/SKILL.md": skill("legal-commons"),
     "source/skills/shared/hooks/guard.py": "print('guard')\n",
     "source/skills/shared/x.md": "shared\n",
-    "public/plugins/practice/skills/pub-one/SKILL.md": skill("pub-one"),
-    "public/plugins/probanda/skills/pub-two/SKILL.md": skill("pub-two"),
     "plugins/probanda/old.md": "left over from the single plugin\n",
 }
 
@@ -223,13 +192,11 @@ class CutoverBuildTest(unittest.TestCase):
         self.assertIn("\n<!-- practice v0.2.0 -->\n", (practice / "skills" / "alpha" / "SKILL.md").read_text("utf-8"))
         self.assertIn("\n<!-- research v0.3.1 -->\n", (research / "skills" / "beta" / "SKILL.md").read_text("utf-8"))
         self.assertTrue((practice / "skills" / "alpha" / "assets" / "form.bin").is_file())
-        # A public skill is found under any public plugin, and ships unstamped. So does legal-commons.
-        self.assertEqual((practice / "skills" / "pub-one" / "SKILL.md").read_text("utf-8"), skill("pub-one"))
-        self.assertEqual((research / "skills" / "pub-two" / "SKILL.md").read_text("utf-8"), skill("pub-two"))
+        # legal-commons ships unstamped.
         self.assertEqual((research / "skills" / "legal-commons" / "SKILL.md").read_text("utf-8"), skill("legal-commons"))
-        self.assertEqual(sorted(p.name for p in (practice / "skills").iterdir()), ["alpha", "pub-one", "shared"])
+        self.assertEqual(sorted(p.name for p in (practice / "skills").iterdir()), ["alpha", "shared"])
         self.assertEqual(sorted(p.name for p in (research / "skills").iterdir()),
-                         ["beta", "legal-commons", "pub-two", "shared"])
+                         ["beta", "legal-commons", "shared"])
         # Servers, agents and the optional root files follow the plugin that has them.
         self.assertTrue((practice / "mcp" / "dist" / "server.js").is_file())
         self.assertTrue((practice / "agents" / "clerk.md").is_file())

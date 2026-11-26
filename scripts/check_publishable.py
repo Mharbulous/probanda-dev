@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail if the files git tracks are unsafe to publish in a public repository.
+"""Fail if the files git tracks hold anything this repository must never commit.
 
 Usage: python scripts/check_publishable.py
        python scripts/check_publishable.py --new-since <commit>
@@ -34,7 +34,7 @@ from collections import Counter
 from pathlib import Path, PurePosixPath
 
 # Names that are permanent once published. Adding a name here is a deliberate act.
-ALLOWED_NAMES = {"Probanda_Legal", "Probanda_Legal_experimental", "probanda","practice", "legal", "research", "researcher", "litigator", "solicitor", "file-manager", "billing", "timekeeper", "developer", "lawyer", "tokeneconomizer"}
+ALLOWED_NAMES = {"Probanda_Legal_experimental", "probanda","practice", "legal", "research", "researcher", "litigator", "solicitor", "file-manager", "billing", "timekeeper", "developer", "lawyer", "tokeneconomizer"}
 
 FORBIDDEN_SUFFIXES = (".sql", ".db", ".sqlite", ".sqlite3", ".plugin", ".env", ".pem", ".key")
 
@@ -124,7 +124,7 @@ def file_problems(path, data):
 
 # The pool's cloud side. Its schema files are kept in this private repo by design
 # and are never published, so a scan of the repo does not report them. file_problems
-# makes no such exception: the public tree and the export are scanned in full.
+# itself makes no such exception.
 CLOUD_ROOT = "cloud"
 
 

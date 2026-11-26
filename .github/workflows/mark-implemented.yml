@@ -1,0 +1,47 @@
+name: mark-implemented
+
+# Marks implemented each approved suggestion item whose fix commit a plugin release shipped
+# (scripts/implemented_scan.py; lifecycle plan Phase 9). A release is a push to main that changes
+# the version in plugins/<plugin>/.claude-plugin/plugin.json. On such a push the scan covers the
+# releases the push brought. Started by hand, it covers every release since the date or commit
+# given in `since`, giving each item the release that first shipped it.
+#
+# The scan reads the repository secret SUPABASE_SUGGESTIONS_SECRET_KEY, a Supabase project secret
+# key, in its own step only. A failed scan shows as a failed run and prints the command to run
+# again; the scan is safe to repeat.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/*/.claude-plugin/plugin.json'
+  workflow_dispatch:
+    inputs:
+      since:
+        description: 'Mark items shipped by every release after this date (YYYY-MM-DD) or commit'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency: mark-implemented
+
+jobs:
+  scan:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The scan reads every commit since each plugin's previous release.
+          fetch-depth: 0
+      - name: Mark the suggestion items these releases shipped as implemented
+        env:
+          SUPABASE_SUGGESTIONS_SECRET_KEY: ${{ secrets.SUPABASE_SUGGESTIONS_SECRET_KEY }}
+          BEFORE: ${{ github.event.before }}
+          SINCE: ${{ inputs.since }}
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            python3 scripts/implemented_scan.py scan --before "$BEFORE" --to "$GITHUB_SHA"
+          else
+            python3 scripts/implemented_scan.py scan --since "$SINCE" --to "$GITHUB_SHA"
+          fi

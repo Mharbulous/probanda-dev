@@ -1,69 +1,65 @@
 #!/usr/bin/env python3
 """
-implemented_scan: mark each suggestion item a publication shipped as implemented.
+implemented_scan: mark each suggestion item a plugin release shipped as implemented.
 
-  python scripts/implemented_scan.py previous --public <public checkout> [--repo <path>] [--to <sha>]
-  python scripts/implemented_scan.py scan --from <sha> --to <sha> [--repo <path>] [--dry-run]
+  python scripts/implemented_scan.py scan --to <sha> --before <sha> [--repo <path>] [--dry-run]
+  python scripts/implemented_scan.py scan --to <sha> --since <commit or date> [--repo <path>] [--dry-run]
 
-An item becomes Implemented when the public publication that includes the fix
-commit naming it is published (design decision 17; lifecycle plan Phase 9 and
-open decision 3 (a)). publish-public (.github/workflows/publish-public.yml)
-runs both commands.
+An item becomes Implemented when the plugin release that includes the fix
+commit naming it is pushed to main (design decision 17; lifecycle plan Phase 9).
+A release of plugin P is a commit that changes the `version` in
+plugins/P/.claude-plugin/plugin.json (the /release command makes it).
+.github/workflows/mark-implemented.yml runs it on each push to main that changes
+a plugin.json (`--before`), and by hand for a backfill (`--since`).
 
-Where the scan starts. Nothing about this repository is written into the public
-repository: its commit message stays exactly the approved top entry of
-public/CHANGELOG.md, and no identifier of this private repository enters public
-history (COMMANDMENTS.md, Commandments 2 and 4). `previous`, run on a clone of
-the public repository before the new commit, prints the newest commit on --to's
-first-parent line whose public/ files are, path for path and byte for byte, the
-public repository's files (file modes are ignored: the export writes plain
-files). That is the state last published. It may be later than the commit the
-publication actually ran from, but every commit between the two left public/
-as it was, so under the rule below none of them reaches a public plugin, and
-starting from the newest match drops no fix. It fails when no commit matches,
-and names the command to run by hand.
+Which releases are scanned. For each plugin in source/assignment.json, its
+releases up to --to are the commits that set a new version, oldest first. With
+--before, the scan takes each release not reachable from --before (the ones
+this push brought); a plugin whose version did not change has none. With
+--since, it takes each release after that commit, or after that date (by commit
+date). Each release R of P has a range: from P's release before R (the start
+of history when R is P's first) to R.
 
-The scan, over the range --from..--to (--from the previous publication's commit,
---to the one just published):
-- Commits: every non-merge commit reachable from --to and not from --from, on
-  any parent. Fix commits are built on worktree branches that are merged into
-  main, so the commit naming an item is often reached only through a merge's
-  second parent: a first-parent walk would see the merge and miss it. A merge
-  is skipped, as scripts/check_fix_commit.py skips it: it names no item, and its
-  diff repeats its branch's commits.
+The scan, for one range of plugin P:
+- Commits: every non-merge commit reachable from R and not from the range's
+  start, on any parent. Fix commits are built on worktree branches that are
+  merged into main, so the commit naming an item is often reached only through a
+  merge's second parent. A merge is skipped, as scripts/check_fix_commit.py
+  skips it: it names no item, and its diff repeats its branch's commits.
 - Each `Suggestion <id> item <n>` line in a commit's message names an item
   (the form scripts/check_fix_commit.py requires of a fix commit).
-- What this publication publishes for plugin P is the set of paths under
-  public/plugins/P/ whose content at --to differs from --from (added, changed or
-  removed; renames count as a removal and an addition). public/ is exported file
-  for file (scripts/export_public.py), so nothing else reaches P.
-- A commit reaches P when a path it changed (against its first parent) is in
-  that set. A commit that changed only a path the range left as it was (changed
-  and changed back), or only paths outside public/plugins/, reaches nothing.
-- An item is implemented in P when a commit in the range naming it reaches P.
-  When its commits reach more than one plugin, P is the first of them in the
-  order lawyer, researcher, litigator, solicitor, and the others are reported.
-  Its release is `P <version>`, the version in
-  public/plugins/P/.claude-plugin/plugin.json at --to.
-- An item named only by commits that reached no public plugin is skipped and
-  left Approved: its fix has not reached practitioners (open decision 3's note).
-  No call is made for it.
+- P's source roots are the folders scripts/build_plugin.py builds plugins/P/
+  from, read through scripts/plugin_layout.py: source/P/; source/skills/<top>/
+  for each skill tree P ships (its skills in source/assignment.json, and
+  shared/, which every plugin ships); the build folder of each server P ships
+  (plugin_layout.SERVERS); and plugins/P/ itself. A fix commit usually changes
+  only source, and the release rebuilds plugins/P/ from it.
+- A commit reaches P when a path it changed (against its first parent) lies
+  under one of P's source roots. Test files count like any other. A commit
+  that changed only paths outside every root of P, such as docs/, reaches
+  nothing. Only P's roots count in P's range.
+- An item is implemented in R when a commit in R's range naming it reaches P.
+  Its release is `P <version>`, the version in plugins/P/.claude-plugin/plugin.json
+  at R. Ranges are taken oldest release first (by commit date, then in
+  source/assignment.json's plugin order), and the first release that reaches an
+  item wins: a later one is reported as `also reached` and sends nothing.
+- An item named only by commits that reached no plugin is skipped and left
+  Approved: its fix has not shipped. No call is made for it.
 - Each other item is set once, through suggestion-set-status's implemented form
   (cloud/legal-commons/supabase/functions/suggestion-set-status/), with the
   project secret key from the environment variable SUPABASE_SUGGESTIONS_SECRET_KEY. The
   function refuses an item that is not approved (declined, undecided, or
   already implemented in another release) with a 409; that is reported and not
   retried. The same item with the same release is saved again, so the scan can
-  be run again over the same range.
+  be run again with the same arguments.
 
 Nothing printed holds the key or any suggestion text: only commit ids, item ids
 and numbers, releases, badges and the function's fixed replies. `--dry-run`
 prints what would be set and calls nothing.
 
 Exit 0: every call was saved or refused by the function (each refusal is
-reported). Exit 1: a call failed some other way, or no previous publication was
-found. Exit 2: the arguments or git could not be read. On exit 1 it prints the
-command that runs it again.
+reported). Exit 1: a call failed some other way. Exit 2: the arguments or git
+could not be read. On exit 1 it prints the command that runs it again.
 """
 
 import argparse
@@ -80,24 +76,23 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 sys.path.insert(0, str(HERE))
-import export_public  # noqa: E402
+import plugin_layout  # noqa: E402
 
 _spec = importlib.util.spec_from_file_location("check_fix_commit", HERE / "check_fix_commit.py")
 check_fix_commit = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(check_fix_commit)
 
-PUBLIC_PLUGINS = export_public.PUBLIC_PLUGINS
 VERSION = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 ENDPOINT = "https://nbzkuhgiqscjkypedqff.supabase.co/functions/v1/suggestion-set-status"
 KEY_ENV = "SUPABASE_SUGGESTIONS_SECRET_KEY"
 
 
 class ScanError(Exception):
-    """The arguments, git or the repositories could not be read."""
+    """The arguments or git could not be read."""
 
 
-def git(repo, *args, stdin=None):
-    out = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, input=stdin)
+def git(repo, *args):
+    out = subprocess.run(["git", "-C", str(repo), *args], capture_output=True)
     if out.returncode != 0:
         raise ScanError(f"git {' '.join(args)} failed: {out.stderr.decode('utf-8', 'replace').strip()}")
     return out.stdout.decode("utf-8")
@@ -109,50 +104,85 @@ def commit_of(repo, rev):
     return git(repo, "rev-parse", "--verify", "--quiet", f"{rev}^{{commit}}").strip()
 
 
-def is_ancestor(repo, older, newer):
-    return subprocess.run(["git", "-C", str(repo), "merge-base", "--is-ancestor", older, newer],
-                          capture_output=True).returncode == 0
+def manifest(plugin):
+    return f"plugins/{plugin}/.claude-plugin/plugin.json"
 
 
-# --- Where the scan starts ----------------------------------------------------------------
+# --- Which releases are scanned -----------------------------------------------------------
 
-def has_commits(public):
-    return subprocess.run(["git", "-C", str(public), "rev-parse", "--verify", "--quiet", "HEAD"],
-                          capture_output=True).returncode == 0
-
-
-def files_at(repo, tree):
-    """{path: blob id} of every file in a tree (modes ignored: the export writes plain files)."""
-    out = {}
-    for entry in git(repo, "ls-tree", "-r", "-z", tree).split("\0"):
-        if not entry:
+def blobs(repo, specs):
+    """{`<rev>:<path>`: its bytes, or None when missing} for each spec, in one git call."""
+    out = subprocess.run(["git", "-C", str(repo), "cat-file", "--batch"],
+                         input="".join(f"{s}\n" for s in specs).encode(), capture_output=True)
+    if out.returncode != 0:
+        raise ScanError(f"git cat-file failed: {out.stderr.decode('utf-8', 'replace').strip()}")
+    data, pos, found = out.stdout, 0, {}
+    for spec in specs:
+        end = data.index(b"\n", pos)
+        header = data[pos:end].decode("utf-8", "replace").split()
+        pos = end + 1
+        if len(header) != 3:  # `<spec> missing`
+            found[spec] = None
             continue
-        meta, path = entry.split("\t", 1)
-        _mode, kind, blob = meta.split()
-        if kind == "blob":
-            out[path] = blob
+        size = int(header[2])
+        found[spec] = data[pos:pos + size]
+        pos += size + 1
+    return found
+
+
+def version_of(blob, where):
+    if blob is None:
+        return None
+    try:
+        version = json.loads(blob).get("version")
+    except (ValueError, AttributeError) as err:
+        raise ScanError(f"{where} could not be read: {err}")
+    if not isinstance(version, str) or not VERSION.match(version):
+        raise ScanError(f"{where} has no x.y.z version")
+    return version
+
+
+def releases(repo, plugin, to):
+    """[(commit, commit time, version)], oldest first: each commit up to `to` that set a new version of plugin."""
+    path = manifest(plugin)
+    log = [line.split() for line in git(repo, "log", "--topo-order", "--reverse", "--format=%H %ct",
+                                        to, "--", path).splitlines()]
+    found = blobs(repo, [f"{c}{s}:{path}" for c, _t in log for s in ("", "^")])
+    out = []
+    for commit, when in log:
+        new = version_of(found[f"{commit}:{path}"], f"{path} at {commit[:12]}")
+        old = version_of(found[f"{commit}^:{path}"], f"{path} at {commit[:12]}^")
+        # A merge can repeat a version its branch already set: that is not a new release.
+        if new is not None and new != old and (not out or out[-1][2] != new):
+            out.append((commit, int(when), new))
     return out
 
 
-def previous(public, repo, to):
-    """The newest commit on `to`'s first-parent line whose public/ files are the public repository's."""
-    to = commit_of(repo, to)
-    if not has_commits(public):
-        raise ScanError(f"{public} has no commits, so no earlier publication")
-    published = files_at(public, "HEAD")
-    commits = git(repo, "rev-list", "--first-parent", to).split()
-    lookup = "".join(f"{c}:{export_public.public_tree.PUBLIC}\n" for c in commits).encode()
-    seen = {}
-    for commit, line in zip(commits, git(repo, "cat-file", "--batch-check", stdin=lookup).splitlines()):
-        parts = line.split()
-        if len(parts) != 3 or parts[1] != "tree":
-            continue
-        tree = parts[0]
-        if tree not in seen:
-            seen[tree] = files_at(repo, tree) == published
-        if seen[tree]:
-            return commit
-    raise ScanError("no commit on the first-parent line holds the public repository's files under public/")
+def source_roots(spec):
+    """The folders (each ending in /) whose files feed plugin `spec` when it is built."""
+    tops = set(spec["skills"]) | {"shared"}
+    return (f"source/{spec['name']}/", f"plugins/{spec['name']}/",
+            *(f"source/skills/{top}/" for top in sorted(tops)),
+            *(f"{plugin_layout.SERVERS[key]['build']}/" for key in spec["servers"]))
+
+
+def ranges(repo, specs, to, before=None, since=None):
+    """[(plugin, start or None, release commit, version)] for each release scanned, oldest first."""
+    if before:
+        limit = [f"^{commit_of(repo, before)}"]
+    else:
+        try:
+            limit = [f"^{commit_of(repo, since)}"]
+        except ScanError:
+            limit = [f"--since-as-filter={since}"]  # --since is a date, not a commit
+    new = set(git(repo, "rev-list", *limit, to).split())
+    out = []
+    for order, plugin in enumerate(specs):
+        found = releases(repo, plugin, to)
+        for i, (commit, when, version) in enumerate(found):
+            if commit in new:
+                out.append((when, order, plugin, found[i - 1][0] if i else None, commit, version))
+    return [r[2:] for r in sorted(out)]
 
 
 # --- The scan -----------------------------------------------------------------------------
@@ -161,56 +191,49 @@ def changed_paths(repo, *args):
     return {p for p in git(repo, *args).split("\0") if p}
 
 
-def published_paths(repo, frm, to):
-    """{plugin: paths under public/plugins/<plugin>/ whose content differs between frm and to}."""
-    out = {}
-    for path in changed_paths(repo, "diff", "--name-only", "--no-renames", "-z", frm, to, "--", "public/plugins/"):
-        parts = path.split("/")
-        if len(parts) > 3 and parts[2] in PUBLIC_PLUGINS:
-            out.setdefault(parts[2], set()).add(path)
+def named_commits(repo, start, end):
+    """[(sha, refs)] for each non-merge commit in start..end whose message names an item."""
+    parts = git(repo, "log", "--no-merges", "--format=%H%x00%B%x00", end,
+                *([f"^{start}"] if start else [])).split("\0")
+    out = []
+    for sha, message in zip(parts[0:-1:2], parts[1::2]):
+        refs, _bare = check_fix_commit.refs_in(message)
+        if refs:
+            out.append((sha.strip(), refs))
     return out
 
 
-def version_at(repo, to, plugin):
-    path = f"public/plugins/{plugin}/.claude-plugin/plugin.json"
-    try:
-        version = json.loads(git(repo, "show", f"{to}:{path}")).get("version")
-    except (ScanError, ValueError, AttributeError) as err:
-        raise ScanError(f"{path} at {to[:12]} could not be read: {err}")
-    if not isinstance(version, str) or not VERSION.match(version):
-        raise ScanError(f"{path} at {to[:12]} has no x.y.z version")
-    return version
-
-
-def plan(repo, frm, to):
-    """What the scan would set: {"set": [(id, item, release, commits, also)], "skipped": [(id, item, commits)]}."""
-    frm, to = commit_of(repo, frm), commit_of(repo, to)
-    if not is_ancestor(repo, frm, to):
-        raise ScanError(f"{frm} is not an ancestor of {to}")
-    published = published_paths(repo, frm, to)
-    reached, named = {}, {}
-    for sha in git(repo, "rev-list", "--no-merges", "--reverse", f"{frm}..{to}").split():
-        refs, _bare = check_fix_commit.refs_in(git(repo, "log", "-1", "--format=%B", sha))
-        if not refs:
-            continue
-        changed = changed_paths(repo, "diff-tree", "-r", "--root", "--no-commit-id", "--name-only",
-                                "--no-renames", "-z", sha)
-        plugins = [p for p in PUBLIC_PLUGINS if changed & published.get(p, set())]
-        for ref in refs:
-            named.setdefault(ref, []).append(sha[:12])
-            reached.setdefault(ref, [])
-            reached[ref] += [p for p in plugins if p not in reached[ref]]
-    versions = {}
-    out = {"set": [], "skipped": []}
+def plan(repo, to, before=None, since=None):
+    """What the scan would set: {"releases": [(plugin, start, commit, version)],
+    "set": [(id, item, release, commits, also)], "skipped": [(id, item, commits)]}."""
+    to = commit_of(repo, to)
+    specs = plugin_layout.plugins(repo)
+    scanned = ranges(repo, specs, to, before, since)
+    touched, named, won = {}, {}, {}
+    for plugin, start, end, version in scanned:
+        release = f"{plugin} {version}"
+        roots = source_roots(specs[plugin])
+        for sha, refs in named_commits(repo, start, end):
+            for ref in refs:
+                named.setdefault(ref, set()).add(sha[:12])
+            if sha not in touched:
+                touched[sha] = changed_paths(repo, "diff-tree", "-r", "--root", "--no-commit-id", "--name-only",
+                                             "--no-renames", "-z", sha)
+            if not any(path.startswith(roots) for path in touched[sha]):
+                continue
+            for ref in refs:
+                entry = won.setdefault(ref, {"release": release, "commits": [], "also": []})
+                if entry["release"] == release:
+                    entry["commits"].append(sha[:12])
+                elif release not in entry["also"]:
+                    entry["also"].append(release)
+    out = {"releases": scanned, "set": [], "skipped": []}
     for ref in sorted(named):
-        plugins = sorted(reached[ref], key=PUBLIC_PLUGINS.index)
-        if not plugins:
-            out["skipped"].append((*ref, named[ref]))
-            continue
-        plugin = plugins[0]
-        if plugin not in versions:
-            versions[plugin] = version_at(repo, to, plugin)
-        out["set"].append((*ref, f"{plugin} {versions[plugin]}", named[ref], plugins[1:]))
+        if ref in won:
+            e = won[ref]
+            out["set"].append((*ref, e["release"], e["commits"], e["also"]))
+        else:
+            out["skipped"].append((*ref, sorted(named[ref])))
     return out
 
 
@@ -239,15 +262,16 @@ def name_of(sid, item):
     return f"Suggestion {sid} item {item}"
 
 
-def scan(repo, frm, to, post=post_status, dry_run=False, out=print):
+def scan(repo, to, before=None, since=None, post=post_status, dry_run=False, out=print):
     """Run the scan. Returns the exit code."""
-    frm, to = commit_of(repo, frm), commit_of(repo, to)
-    result = plan(repo, frm, to)
-    out(f"implemented_scan: {frm[:12]}..{to[:12]}: {len(result['set'])} item(s) to mark, "
-        f"{len(result['skipped'])} skipped")
+    to = commit_of(repo, to)
+    result = plan(repo, to, before, since)
+    for plugin, start, end, version in result["releases"]:
+        out(f"release {plugin} {version} at {end[:12]} (range from {start[:12] if start else 'the start'})")
+    out(f"implemented_scan: {len(result['releases'])} release(s) up to {to[:12]}: "
+        f"{len(result['set'])} item(s) to mark, {len(result['skipped'])} skipped")
     for sid, item, commits in result["skipped"]:
-        out(f"skipped, reached no public plugin, stays Approved: {name_of(sid, item)} "
-            f"(commit {', '.join(commits)})")
+        out(f"skipped, reached no plugin, stays Approved: {name_of(sid, item)} (commit {', '.join(commits)})")
     failed = 0
     for sid, item, release, commits, also in result["set"]:
         note = f" (commit {', '.join(commits)}" + (f"; also reached {', '.join(also)}" if also else "") + ")"
@@ -266,9 +290,10 @@ def scan(repo, frm, to, post=post_status, dry_run=False, out=print):
             out(f"::error::not saved: {name_of(sid, item)}: {release}: "
                 f"{status if status is not None else 'no HTTP status'} {reply.get('error')}{note}")
     if failed:
+        start = f"--before {before}" if before else f"--since {since}"
         out(f"::error::{failed} item(s) were not marked. Run again, from a checkout of probanda-dev with full "
             f"history and with {KEY_ENV} set in your own terminal: python3 scripts/implemented_scan.py scan "
-            f"--from {frm} --to {to}")
+            f"{start} --to {to}")
         return 1
     return 0
 
@@ -277,39 +302,19 @@ def main(argv):
     sys.stdout.reconfigure(errors="backslashreplace")
     parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
-    p = sub.add_parser("previous")
-    p.add_argument("--public", type=Path, required=True)
-    p.add_argument("--repo", type=Path, default=REPO)
-    p.add_argument("--to", default="HEAD")
     c = sub.add_parser("scan")
-    c.add_argument("--from", dest="frm", default="")
     c.add_argument("--to", required=True)
+    start = c.add_mutually_exclusive_group(required=True)
+    start.add_argument("--before")
+    start.add_argument("--since")
     c.add_argument("--repo", type=Path, default=REPO)
     c.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
     try:
-        if args.command == "previous":
-            try:
-                sha = previous(args.public, args.repo, args.to)
-            except ScanError as err:
-                print(f"::error::implemented_scan previous: {err}. The publication goes ahead; mark its items "
-                      "by hand with: python3 scripts/implemented_scan.py scan --from <the commit last published> "
-                      "--to <the commit published now>", file=sys.stderr)
-                return 1
-            print(f"implemented_scan previous: {sha} (the newest commit whose public/ matches the public "
-                  "repository)", file=sys.stderr)
-            print(sha)
-        else:
-            if not args.frm:
-                print("::error::implemented_scan: the commit last published is unknown (see the step that finds "
-                      "it), so nothing was marked. Run by hand: python3 scripts/implemented_scan.py scan "
-                      f"--from <the commit last published> --to {args.to}")
-                return 1
-            return scan(args.repo, args.frm, args.to, dry_run=args.dry_run)
+        return scan(args.repo, args.to, args.before, args.since, dry_run=args.dry_run)
     except (OSError, ScanError) as err:
         print(f"::error::implemented_scan: {err}", file=sys.stderr)
         return 2
-    return 0
 
 
 if __name__ == "__main__":

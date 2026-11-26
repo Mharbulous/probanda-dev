@@ -235,7 +235,7 @@ The status a practitioner sees for a **Suggestion** they sent, under Past sugges
 - **Under Review**: triage has opened it, and at least one item is still undecided.
 - **Approved**: at least one item is approved, and not every approved item has shipped. It reads **Approved (n of m)** when some items were declined: n items approved of m in all.
 - **Declined**: every item is declined.
-- **Implemented in <plugin> <version>**: every approved item has shipped, naming each plugin's release. An item ships when a public publication includes a fix commit that names it; a fix published only to the maintainer's machines leaves it Approved.
+- **Implemented in <plugin> <version>**: every approved item has shipped, naming each plugin's release. An item is Implemented when a plugin release (a version bump pushed to main) includes a fix commit that names it. A fix that no release has shipped leaves it Approved.
 - **Withdrawn**: the sender withdrew it.
 Past suggestions also shows each item's status and reason, and a declined item's category. Only Approved and Declined, each with its reason, are set by a person; the rest are set by Probanda's automation or, for Withdrawn, by the sender's own computer.
 _Avoid_: status for the badge (the stored values it is computed from); badge for a **Work marker**.
