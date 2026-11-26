@@ -708,6 +708,38 @@ INSERT INTO filing_law (filing_id, statement_id) VALUES (${id}, 70), (${id}, 71)
   );
 });
 
+test("a research memo prints no ⚠️ for a distinguishable authority, nor its Legend row, while an internal memo citing it does; 🚨, 📇 and the killed tag still print", async (t) => {
+  const g = await generalWritingFixture(t);
+  await g.execute("INSERT INTO proceedings (id, matter_reference, forum) VALUES (4, 'L0000', NULL);");
+  const shipped = readFileSync(new URL("../../../../source/skills/legal-research/references/CAN/BC/_NoVenue/Documents/research-memo.md", import.meta.url), "utf-8");
+  const memoDocs = `legal-research/${NO_VENUE_TREE.country}/${NO_VENUE_TREE.jurisdiction}/_NoVenue/Documents`;
+  g.f.local(`${memoDocs}/kinds.local.json`, {
+    kinds: [{ file: "research-memo", name: "Research memo", recipient: "internal", aliases: [{ name: "research_memo", source: "agent", ref: "L0000", recorded: "2026-10-31" }] }],
+  });
+  g.f.local(`${memoDocs}/research-memo.md`, shipped);
+  const { filing_id: memo } = await g.create({ proceeding_id: 4, tree: NO_VENUE_TREE, kind: "research_memo", recipient: "internal", title: "2026-10-31 ML re test" });
+  const { filing_id: advocacy } = await g.create({ proceeding_id: 4, tree: NO_VENUE_TREE, kind: "internal_memo", recipient: "internal", title: "Memo" });
+  await g.execute(`
+INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, kind, treatment) VALUES (60, 4, 'Alpha v Beta', '2020 BCCA 1', 'case', 'distinguishable');
+INSERT INTO statements_of_law (id, proceeding_id, authority_id, pinpoint, excerpt, source, verification) VALUES (70, 4, 60, 'para. 5', 'The first passage.', 'primary', 'lead');
+INSERT INTO filing_law (filing_id, statement_id) VALUES (${memo}, 70), (${advocacy}, 70);
+`);
+  await g.prose(memo, "rule", "The first rule. <!-- statement_of_law_id 70 -->");
+
+  const memoMd = () => docOf(render(g, memo), "General_writing").markdown;
+  const lineWith = (md, text) => md.split("\n").find((l) => l.includes(text)) ?? "";
+  assert.doesNotMatch(memoMd(), /⚠️/, "no ⚠️ on the item line, the Authorities section or the Legend");
+  assert.doesNotMatch(lineWith(memoMd(), "para. 5"), /📇/, "a noted-up authority owes no note-up");
+  assert.match(docOf(render(g, advocacy), "General_writing").markdown, /⚠️/, "a Writing that can hold matter facts keeps ⚠️");
+
+  await g.execute("UPDATE authorities SET treatment = 'negative' WHERE id = 60;");
+  assert.match(memoMd(), /🚨/);
+  await g.execute("UPDATE authorities SET treatment = NULL WHERE id = 60;");
+  assert.match(lineWith(memoMd(), "para. 5"), /📇/);
+  await g.execute("UPDATE authorities SET killed_on = '2026-09-26' WHERE id = 60;");
+  assert.match(memoMd(), /\(killed 2026-09-26\)/);
+});
+
 test("a caption part under BCSC prints the BC Supreme Court caption from the stored venue block, with no title row", async (t) => {
   const g = await generalWritingFixture(t);
   installCaptionedNote(g, "BCSC");

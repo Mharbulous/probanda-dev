@@ -105,6 +105,15 @@ test("a case is unchanged: 📇 on treatment ∅ whatever its currency, and the 
   assert.deepEqual(noteUpKeys(cleared("case", null, "good_law")), []);
 });
 
+test("a research Writing's line drops ⚠️ distinguishable alone; 🚨, ⛔ and 📇 still print, and an advocacy line keeps ⚠️", () => {
+  const research = (treatment) => glyphsOf(lawStatementMarkers(cleared("case", null, treatment), true, true));
+  assert.deepEqual(research("distinguishable"), []);
+  assert.deepEqual(research("negative"), ["🚨"]);
+  assert.deepEqual(research("overruled"), ["⛔"]);
+  assert.deepEqual(research(null), ["📇"]);
+  assert.deepEqual(glyphsOf(lawStatementMarkers(cleared("case", null, "distinguishable"))), ["⚠️"]);
+});
+
 // A note-up of a statute, regulation or rule is done provision by provision: its Proposal carries
 // one step per provision the filing cites, never one that restates its title.
 const RULES = { authority_id: 1, authority_title: "Supreme Court Civil Rules", authority_citation: "B.C. Reg. 168/2009" };

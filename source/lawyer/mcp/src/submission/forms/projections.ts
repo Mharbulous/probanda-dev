@@ -28,7 +28,7 @@ import { orderReviewMarkerFor, reviewMarkerFor } from "./review-state.js";
 import { recordParagraph, renderSubmissionParagraphs } from "./submission-paragraphs.js";
 import type { RenderContext } from "./render-context.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
-import { captionHeadingFor, clientParty, fetchFilingLaw, opposingPartyIds, type FilingLawRow } from "./query.js";
+import { captionHeadingFor, clientParty, fetchFilingLaw, isResearchWriting, opposingPartyIds, type FilingLawRow } from "./query.js";
 import { BLANK_UNDERLINE, pluralizeRole, styleOfProceedingCaption } from "./components.js";
 import { formatFlag, proseFormatRules, REFUSED_FORMAT_RULES } from "./prose-format.js";
 import { hasTable } from "../schema-capabilities.js";
@@ -173,7 +173,7 @@ function itemLines(ctx: RenderContext, state: ProjectionState, id: number, law: 
     if (missing.length > 0) return gap(ctx, state, `statement_of_law ${id} has no ${missing.join(" and no ")}`);
   }
   const excerpt = (row.excerpt ?? "").trim() === "" ? null : row.excerpt;
-  return statementBlock(excerpt, lawStatementCitationLine(row) ?? `> ${CITATION_MISSING}`, lawStatementMarkers(row), "statement_of_law_id", id, "").join("\n");
+  return statementBlock(excerpt, lawStatementCitationLine(row) ?? `> ${CITATION_MISSING}`, lawStatementMarkers(row, true, isResearchWriting(ctx.filing)), "statement_of_law_id", id, "").join("\n");
 }
 
 /** A research memo's stored header (shared/research-memo-template.md) in the current form, whatever form

@@ -17,7 +17,7 @@ import { lawStatementCitationLine, lawStatementMarkers } from "./law-statement-l
 import { dedupeLineMarkers, gapMarker, mockupMessage, printMarkerSets } from "./markers.js";
 import { gap, renderPart, type CurrencyWithheld, type LayoutPart, type ProjectionState, type ProseFormatHit } from "./projections.js";
 import { lawItem, recordLawStatementGlyphs } from "./proposal-inventory.js";
-import { fetchFilingLaw, fetchFilingRecipients, fetchProse, mergeSharedRecipients, type FilingLawRow, type FilingRecipientRow, type FilingRow } from "./query.js";
+import { fetchFilingLaw, fetchFilingRecipients, fetchProse, isResearchWriting, mergeSharedRecipients, type FilingLawRow, type FilingRecipientRow, type FilingRow } from "./query.js";
 import { scalarValue, type CitedState, type StoredLayout } from "./layout-snapshot.js";
 import { reviewMarkerFor } from "./review-state.js";
 import type { RenderContext } from "./render-context.js";
@@ -139,7 +139,7 @@ export function authorityUnconfirmed(filing: FilingRow, layout: StoredLayout["la
  * on the inventory as there, and its own 🧐. A lead prints, the section reaching no sent face. A
  * killed authority's line carries its `(killed <date>)` tag and no marker at all, 🧐 included. */
 function authorityCitedLine(ctx: RenderContext, row: FilingLawRow): string {
-  const glyphs = lawStatementMarkers(row);
+  const glyphs = lawStatementMarkers(row, true, isResearchWriting(ctx.filing));
   recordLawStatementGlyphs(ctx.inventory, glyphs, row);
   const review =
     row.authority_killed_on === null ? reviewMarkerFor(ctx.review, ctx.inventory, glyphs, "statements_of_law", row.statement_id, lawItem(row)) : "";

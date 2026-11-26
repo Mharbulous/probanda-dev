@@ -116,8 +116,9 @@ export function printedPinpoint(citation: string | null, pinpoint: string | null
 /** `deployed` is false for a statement nothing on a live Writing relies on (spec R6, schema v47):
  * a doctrinal statement whose law assertion no submission or order deployed on a live Writing
  * requires. 🔬 does not derive there, so no Scrutinize Proposal is raised. Re-linking it makes 🔬
- * derive again. */
-export function lawStatementMarkers(row: LawStatementLine, deployed = true): string {
+ * derive again. `research` is true on a research memo or case brief: ⚠️ distinguishable is a
+ * judgement on a matter's facts, which such a Writing does not hold, so it does not print there. */
+export function lawStatementMarkers(row: LawStatementLine, deployed = true, research = false): string {
   // A killed item's own lines render no marker of any type, work or event (design §4 of
   // planning/1. Design/2026-09-15_work-board-proposals-design.md; §8 names markers printed on
   // killed-authority statements a defect to fix before the collector ships). The statement's
@@ -146,7 +147,7 @@ export function lawStatementMarkers(row: LawStatementLine, deployed = true): str
     // 🔬 sits between 📍 and 📇 on the authority-support ladder (work-markers.md §5). Not on a
     // statement deployed on no live Writing (R6).
     deployed ? scrutinizeMarker(row.verification, row.authority_killed_on) : "",
-    treatmentMarker(row.treatment),
+    research && row.treatment === "distinguishable" ? "" : treatmentMarker(row.treatment),
     // 🕰️ (schema v61) is an event, like ⚠️: a case decided before a provision the same
     // proposition cites came into force. It holds back no 🧐 and names no work of its own.
     anachronismMarker(predatedProvision(row, parseLinkedProvisions(row.linked_provisions)) !== null),
