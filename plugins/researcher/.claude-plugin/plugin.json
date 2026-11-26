@@ -1,7 +1,7 @@
 {
   "name": "researcher",
   "displayName": "Researcher",
-  "version": "0.24.0",
+  "version": "0.24.1",
   "description": "What the law is, for British Columbia lawyers: legal research, citation and verification against audited authorities. Requires the lawyer plugin: install lawyer first, then researcher.",
   "author": {
     "name": "Probanda Legal"
@@ -10,7 +10,7 @@
     {
       "name": "lawyer",
       "marketplace": "Probanda_Legal_experimental",
-      "version": "^0.34.0"
+      "version": "^0.34.2"
     }
   ],
   "mcpServers": "./.mcp.json",

@@ -4,7 +4,7 @@ user-invocable: false
 description: Sole gatekeeper for the timecamping database — evidence-source tables (TimeCamp time entries, TimeCamp computer activity, SyncoPaid screen captures, Telus call log, Google Calendar events, iCloud calendar events, sent mail), the assembly gate, inference proposals, practitioner determinations, and identifier-to-matter presumptions. Serves /timecamping's evidence-first pipeline (Engineering/1. Design/2026-08-28_timecamping-evidence-first-design.md). Not the authority on what happened in a matter (matter-data) or on billed time (practice-data) — this is a single, fixed, per-practitioner database, not per-matter.
 ---
 
-<!-- billing v0.10.0 -->
+<!-- billing v0.10.1 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

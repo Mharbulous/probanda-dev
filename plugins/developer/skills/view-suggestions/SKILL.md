@@ -3,7 +3,7 @@ name: view-suggestions
 description: Use only when Brahm invokes /view-suggestions in a Claude Code session in the probanda-dev repo. Shows every suggestion in Probanda's Suggestion Box as a table, oldest first, whatever its status, and re-renders it with the filter, sort or columns Brahm asks for. Read-only. Triaging a suggestion -> /hitl-triage.
 ---
 
-<!-- developer v0.16.0 -->
+<!-- developer v0.16.1 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

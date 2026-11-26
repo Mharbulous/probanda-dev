@@ -4,7 +4,7 @@ user-invocable: false
 description: The firm's practice records for each client and matter. Look up or update trust and retainer balances, unbilled time, time entries, invoices, amounts owing, tasks or file status. Not for deadlines (docket-clerk) or case facts (matter-data).
 ---
 
-<!-- lawyer v0.34.1 -->
+<!-- lawyer v0.34.2 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.
