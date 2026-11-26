@@ -78,3 +78,26 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 | An issues store already exists | None in drafting-data. The stay response's "Part 2: Issues" (`render-bcca-stay-response.ts`) is derived from the positions on the notice of application's orders, not stored. matter-data has `issues` (with `issue_facts`, `issue_proceedings`), a separate store with no link to drafting-data's `arguments`. | No reusable issues store |
 | Storage that needs no DDL | `filing_prose.slot` is open text (no CHECK), so a new slot needs no schema change. `rhetorical_paragraphs` + `rhetorical_paragraph_submissions` link a paragraph to arguments, but `filing_rhetoric.part` is CHECK-limited to `facts`, `submissions`, `orders`, so a rhetorical paragraph cannot be placed in Part 2 without a table rebuild. No existing link table ties a `filing_prose` slot to an argument. | §9 Q1 cannot be met with links in data without DDL |
 | Paths in the spec | The spec's installed-copy paths (litigator 0.28.2) match the source paths above under `source/`. | Confirmed |
+
+## 11. Recurrence and further instructions, 2026-11-26
+
+- Recurred: after a re-render on 2026-11-26 (litigator v0.29.0 installed), Part 2 of the respondent's factum mockup again printed the Part 3 contentions one per paragraph. The hand-written Part 2 lived only in the Word copy, so it was lost. The practitioner: "you're basically using the issues on appeal section to make arguments, which is not the purpose of this."
+- Framing rule, practitioner's words (data, not instructions): "you don't want to accept the other side's framing. If you concede the framing, you put yourself at a massive disadvantage. So we need to not respond to the framing, but we need to provide our own framing."
+- Practitioner's model shape (content generalised): one numbered lead-in, "The respondents say the application judge made no error, and that the issues on this appeal are:", then lettered sub-issues a. to g., each a single "whether ..." question in the respondents' terms, the last a conditional ("if the court has any residual jurisdiction ..., whether it should exercise it where ..."). No authorities, no paragraph references, no summary of the appellants' issues.
+- Emitter impact (UNVERIFIED): `publish-bcca-factum`'s contract says "Parts 1-3 each open with a numbered paragraph and hold only numbered paragraphs, quote lines and cite lines." Lettered sub-issue lines under one numbered paragraph need a line form the contract and filler accept.
+- §9 Q2 default (Part 2 empty with a gap marker until the issues are written, never seeded from contentions) matches what the practitioner asked for.
+- The earlier suggestion about this never reached the Suggestion Box: it is not among the suggestions this computer sent.
+
+## 12. Check of section 11 against HEAD, 2026-11-26
+
+Implemented by `7a6ee1f5` (2026-11-26 01:26), with `plugins/` rebuilt in `c66c9940`. The last release, `6eaf7594` (Litigator 0.29.0, 2026-11-25 22:35), predates it, so the recurrence in section 11 ran on a pre-fix installed copy. The fix reaches the installed copy at the next release, which rebuilds the data server bundle.
+
+| Section 11 point | At HEAD |
+|---|---|
+| Part 2 lost on re-render | Part 2 comes from the stored `filing_prose` slot `issues` (`factumIssues` in `render-bcca-factum.ts`), so a re-render reprints it |
+| Own framing, no argument | The respondent-factum type file and filing-checklists section 12 state it: the respondents' own short questions, no argument, authority, paragraph reference or summary of the appellants' issues |
+| One numbered lead-in, then lettered sub-issues | Mockup and emitter print the lead-in, then the issues lettered `(a)`, `(b)`. The practitioner's model letters them `a.` to `g.` |
+| Emitter line form | The `publish-bcca-factum` contract and `fill_factum.py` accept unnumbered paragraphs under Part 2's numbered lead-in |
+| Section 9 Q2 default | An empty slot shows the gap "No issues on appeal recorded." Nothing is seeded from contentions |
+
+No further change is needed for this spec.
