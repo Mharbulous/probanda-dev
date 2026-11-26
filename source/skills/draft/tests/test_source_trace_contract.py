@@ -121,6 +121,27 @@ class SourceTraceContractTests(unittest.TestCase):
             self.assertIn("`facts_position`", text)
         self.assertIn("searched every one of them", AGENT.read_text(encoding="utf-8"))
 
+    def test_factum_part1_gets_the_three_record_checks_once(self):
+        agent = AGENT.read_text(encoding="utf-8")
+        stage = STAGE.read_text(encoding="utf-8")
+        for check in ("**Sworn text.**", "**Contradicting affidavits.**", "**Adverse evidence.**"):
+            with self.subTest(check=check):
+                self.assertEqual(agent.count(check), 1)
+                self.assertNotIn(check, stage)
+        self.assertIn("once for each group of assertions that cite the same document", agent)
+        self.assertIn("Its words control", agent)
+        self.assertIn("An adverse item is reported, never weighed", agent)
+        for field in ('"sworn_text"', '"adverse"'):
+            with self.subTest(field=field):
+                self.assertIn(field, agent)
+        self.assertIn("**`adverse`.** Beside the mockup", stage)
+        self.assertIn("whose Part 1", stage)
+        self.assertIn("Part 1 changed", (REFS / "procedure.md").read_text(encoding="utf-8"))
+        # Reliance mode stays excerpts-only: the record checks belong to the factum's review.
+        reliance = agent.split("## 6. Reliance mode")[1]
+        self.assertIn("in this mode the excerpts are the source", reliance)
+        self.assertNotIn("adverse", reliance)
+
     def test_reviewer_never_takes_the_drafter_word(self):
         agent = AGENT.read_text(encoding="utf-8")
         self.assertIn("Read every source yourself", agent)

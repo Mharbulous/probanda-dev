@@ -1,6 +1,6 @@
 # Source-trace review
 
-Read when: a letter, email or memo mockup, or a respondent's factum mockup whose facts position changed, is about to be presented, any email is about to be written by `shared/email.md`'s `write_email` (an email Writing, a covering email, or a reply on the reply route), or the practitioner asks whether a draft's facts are sourced. This file is the one source for the review. SKILL.md ban 20 makes it a gate.
+Read when: a letter, email or memo mockup, or a respondent's factum mockup whose Part 1 changed, is about to be presented, any email is about to be written by `shared/email.md`'s `write_email` (an email Writing, a covering email, or a reply on the reply route), or the practitioner asks whether a draft's facts are sourced. This file is the one source for the review. SKILL.md ban 20 makes it a gate.
 
 Every letter can be used as evidence of what it states. The review checks each fact the text states against its primary source, in an agent isolated from the drafting session, so that a fact taken on another person's say-so never leaves the firm as the firm's own. It runs on every letter, email, memo and reply, scheduling and transmittal notes included. It does not replace the passes of `references/letters.md` §4 or `references/overstatement.md`, and it states no law.
 
@@ -9,7 +9,7 @@ Every letter can be used as evidence of what it states. The review checks each f
 - Before each presentation of a letter, email or memo mockup whose text changed since its last review.
 - Before each `write_email` call. The covering email of a letter is reviewed on its own body. A letter it encloses was reviewed at its mockup. An empty body states nothing and needs no review.
 - On the reply route, before the `.eml` of `references/reply.md` §6.
-- Before each presentation of a respondent's factum mockup whose facts position (`filing_prose` `slot='facts_position'`) changed since its last review. `kind` is `facts_position`, `audience` the court, `text` that prose as rendered, and `sources` the locator of every book of the record on appeal (the type file's Part 1). A finding's revision is an ordinary revision through `/drafting-data` (SKILL.md section 12), not the scrivener's.
+- Before each presentation of a respondent's factum mockup whose Part 1 (the facts position, `filing_prose` `slot='facts_position'`, or any other fact of Part 1) changed since its last review. `kind` is `facts_position`, `audience` the court, `text` Part 1 as rendered, each fact with its record citation, and `sources` the locator of every book of the record on appeal (the type file's Part 1). A finding's revision is an ordinary revision through `/drafting-data` (SKILL.md section 12), not the scrivener's.
 
 ## 2. Spawn the reviewer
 
@@ -29,6 +29,7 @@ Spawn the `litigator:source-tracer` agent once for the text, from the main sessi
 - **`attribute`** and **`cut`.** Revise the text to `proposed_text`. These need no question: the text then says only what a source supports. The revision is the scrivener's: send it the finding and its `proposed_text` as its `instruction` (`references/letters.md` section 5, `shared/correspondence-isolation.md`).
 - **`trace_needed`.** Ask the practitioner, one finding at a time, by `/show-me`: the draft's words, what was checked, and the record that would settle it, with the file card of the source the claim came from. Their choices: point to a source (re-review), attribute it, leave it out of the text, or accept it as their own knowledge. An accepted assertion goes into `accepted` for the next round.
 - **`unanswered`.** Ask, one at a time, by `/show-me`, whether the text should answer the characterization. Never answer it on the practitioner's behalf.
+- **`adverse`.** Beside the mockup, in the same turn, give one line per item: the Part 1 paragraph it bears on, then the item's book, pinpoint and quote. It holds nothing back. What the item means for the fact is the practitioner's call: never weigh it for them.
 - **`unread_sources`.** Say in one line which sources could not be opened.
 - **`accepted`.** Nothing to do.
 
