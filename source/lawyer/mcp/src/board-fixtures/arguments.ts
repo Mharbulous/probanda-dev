@@ -49,7 +49,7 @@ export const ARGUMENTS_FIXTURE: { meta: ViewPageMeta; data: ArgumentsData } = {
         facts: [],
         law: [],
         rebuts: [],
-        rebutted_by: ["see #2.a"],
+        rebutted_by: [],
       },
       {
         id: 3,
@@ -78,7 +78,7 @@ export const ARGUMENTS_FIXTURE: { meta: ViewPageMeta; data: ArgumentsData } = {
         killed: false,
         facts: ["The buyer paid the deposit of $10,000 on 10 March 2025."],
         law: [{ text: "Punitive damages follow any breach.", killed_on: "2026-01-09" }],
-        rebuts: ["#2", "#3"],
+        rebuts: ["#2"],
         rebutted_by: [],
       },
     ],

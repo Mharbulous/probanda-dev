@@ -51,7 +51,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-TARGET_SCHEMA_VERSION = 82
+TARGET_SCHEMA_VERSION = 83
 
 # The schema's guard_filing_facts_attached_del trigger needs SQLite 3.47.0 (migrations.sql notes it at
 # that hop). An older SQLite reports "malformed database schema", which reads as damage, so every Python

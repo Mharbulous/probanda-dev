@@ -5468,11 +5468,70 @@ class TestV82Arguments(unittest.TestCase):
     def test_a_fresh_database_matches(self):
         hopped = self._hop()
         fresh_path = Path(self._tmp.name) / "fresh.sqlite"
-        engine.run({"db_path": str(fresh_path)})
+        engine.run({"db_path": str(fresh_path), "target_version": 82})
         fresh = sqlite3.connect(str(fresh_path))
         self.addCleanup(fresh.close)
         shape = "SELECT type, name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name"
         self.assertEqual(hopped.execute(shape).fetchall(), fresh.execute(shape).fetchall())
+
+
+class TestV83OneTarget(unittest.TestCase):
+    """v83: a rebuttal answers exactly one argument (Brahm, 2026-11-26). A rebuttal keeps its
+    lowest-numbered target; each other target gets a copy in the same words with the same law,
+    unless it already has a rebuttal in those words."""
+
+    SEED = """
+        INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L0000', 'CAN/BC/BCSC');
+        INSERT INTO arguments (id, proceeding_id, contention, ordinal, side, number, killed_on) VALUES
+            (1, 1, 'Ours.', 1, 'ours', 1, NULL),
+            (2, 1, 'X.', 2, 'opposing', 2, NULL),
+            (3, 1, 'Y.', 3, 'opposing', 3, NULL),
+            (4, 1, 'Z.', 4, 'opposing', 4, NULL),
+            (5, 1, 'Answers three.', 5, 'ours', NULL, NULL),
+            (6, 1, 'Answers three.', 6, 'ours', NULL, NULL),
+            (7, 1, 'Old.', 7, 'ours', NULL, '2026-11-01');
+        INSERT INTO argument_rebuts (rebuttal_id, argument_id) VALUES (5, 3), (5, 2), (5, 4), (6, 4), (7, 2), (7, 3);
+        INSERT INTO law_assertions (id, proceeding_id, proposition) VALUES (1, 1, 'The law.');
+        INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (5, 1);
+    """
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.db_path = Path(self._tmp.name) / "submission.sqlite"
+        engine.run({"db_path": str(self.db_path), "target_version": 82})
+        con = sqlite3.connect(str(self.db_path))
+        con.executescript(self.SEED)
+        con.commit()
+        con.close()
+        self.assertEqual(engine.run({"db_path": str(self.db_path)})["applied"], [{"from": 82, "to": 83}])
+        self.con = sqlite3.connect(str(self.db_path))
+        self.addCleanup(self.con.close)
+
+    def test_each_rebuttal_keeps_its_lowest_target_and_copies_answer_the_rest(self):
+        self.assertEqual(self.con.execute("SELECT rebuttal_id, argument_id FROM argument_rebuts ORDER BY rowid").fetchall(),
+                         [(5, 2), (6, 4), (7, 2), (8, 3), (9, 3)])
+        self.assertEqual(self.con.execute("SELECT id, contention, ordinal, number, killed_on FROM arguments WHERE id > 7 ORDER BY id").fetchall(),
+                         [(8, "Answers three.", 8, None, None), (9, "Old.", 9, None, "2026-11-01")])
+        self.assertEqual(self.con.execute("SELECT submission_id, law_assertion_id FROM submission_law ORDER BY 1").fetchall(),
+                         [(5, 1), (8, 1)])
+        self.assertEqual(self.con.execute("SELECT id, number FROM arguments WHERE id <= 4 ORDER BY id").fetchall(),
+                         [(1, 1), (2, 2), (3, 3), (4, 4)])
+
+    def test_a_second_target_is_refused(self):
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.con.execute("INSERT INTO argument_rebuts (rebuttal_id, argument_id) VALUES (5, 3)")
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.con.execute("INSERT INTO argument_rebuts (rebuttal_id, argument_id) VALUES (1, 1)")
+
+    def test_a_fresh_database_matches(self):
+        fresh_path = Path(self._tmp.name) / "fresh.sqlite"
+        engine.run({"db_path": str(fresh_path)})
+        fresh = sqlite3.connect(str(fresh_path))
+        self.addCleanup(fresh.close)
+        shape = "SELECT type, name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name"
+        self.assertEqual(self.con.execute(shape).fetchall(), fresh.execute(shape).fetchall())
+        self.assertEqual(self.con.execute("PRAGMA foreign_key_check").fetchall(), [])
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 -- via references/scripts/migrate_engine.py. Do not hand-edit: regenerate
 -- after any change to migrations.sql so this file matches the live schema
 -- byte-for-byte (this is the acceptance test for issue 295).
--- Current version: db_meta.schema_version = 82
+-- Current version: db_meta.schema_version = 83
 
 
 CREATE TABLE db_meta (
@@ -1386,9 +1386,8 @@ CREATE TRIGGER rev_arguments_del AFTER DELETE ON arguments BEGIN UPDATE db_meta 
 CREATE UNIQUE INDEX idx_arguments_number ON arguments(proceeding_id, number);
 
 CREATE TABLE argument_rebuts (
-    rebuttal_id INTEGER NOT NULL REFERENCES arguments(id),
+    rebuttal_id INTEGER NOT NULL UNIQUE REFERENCES arguments(id),
     argument_id INTEGER NOT NULL REFERENCES arguments(id),
-    PRIMARY KEY (rebuttal_id, argument_id),
     CHECK (rebuttal_id <> argument_id)
 );
 

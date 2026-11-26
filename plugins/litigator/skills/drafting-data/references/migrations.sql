@@ -5240,3 +5240,71 @@ DROP TABLE anticipated_points;
 DROP TABLE v82_point_map;
 
 UPDATE db_meta SET value = '82' WHERE key = 'schema_version';
+
+-- MIGRATE 82 -> 83
+-- One target per rebuttal (Brahm, 2026-11-26). A rebuttal answering several arguments was shown
+-- once, under its lowest-numbered target, and every other target showed only "see #2.a", so the
+-- practitioner could not tell which answer belonged to which argument. Each rebuttal now answers
+-- exactly one argument; the same words may answer another argument as a second rebuttal row.
+--
+-- A rebuttal keeps its first link: the lowest-numbered target, the first linked on a tie, the one
+-- the page labelled it under, so no existing label moves. For each other link, a target that
+-- already has a rebuttal in identical words through its kept link just loses the extra link;
+-- any other target gets a copy of the rebuttal (every column, a new id after the highest, number
+-- NULL, the next ordinal in its proceeding) with its facts and law, linked to it. A copy is in no
+-- Writing, so the frozen-Writing guards never fire, and carries no review approvals.
+--
+-- rebuttal_id becomes UNIQUE in a rebuilt argument_rebuts. The kept links go in first, in their
+-- old order, then the copies' links, so each target's rebuttals keep their letters and a copy
+-- takes the next one. The hop writes rows when there are copies, so it moves the revision then.
+CREATE TABLE v83_links AS
+SELECT r.rowid AS link, r.rebuttal_id, r.argument_id,
+       ROW_NUMBER() OVER (PARTITION BY r.rebuttal_id ORDER BY t.number IS NULL, t.number, r.rowid) AS k
+FROM argument_rebuts r JOIN arguments t ON t.id = r.argument_id;
+DELETE FROM v83_links
+WHERE k > 1 AND EXISTS (
+    SELECT 1 FROM v83_links o JOIN arguments ob ON ob.id = o.rebuttal_id JOIN arguments me ON me.id = v83_links.rebuttal_id
+    WHERE o.k = 1 AND o.argument_id = v83_links.argument_id AND ob.contention = me.contention);
+CREATE TABLE v83_copies AS
+SELECT l.link, l.rebuttal_id, l.argument_id,
+       (SELECT MAX(id) FROM arguments) + ROW_NUMBER() OVER (ORDER BY l.link) AS new_id,
+       (SELECT MAX(ordinal) FROM arguments x WHERE x.proceeding_id = a.proceeding_id)
+         + ROW_NUMBER() OVER (PARTITION BY a.proceeding_id ORDER BY l.link) AS new_ordinal
+FROM v83_links l JOIN arguments a ON a.id = l.rebuttal_id
+WHERE l.k > 1;
+
+INSERT INTO arguments (id, proceeding_id, contention, ordinal, killed_on,
+    no_facts_needed_on, no_facts_needed_note, no_facts_needed_contention,
+    no_law_needed_on, no_law_needed_note, no_law_needed_contention,
+    side, number, anticipated, component, pinpoint)
+SELECT c.new_id, a.proceeding_id, a.contention, c.new_ordinal, a.killed_on,
+    a.no_facts_needed_on, a.no_facts_needed_note, a.no_facts_needed_contention,
+    a.no_law_needed_on, a.no_law_needed_note, a.no_law_needed_contention,
+    a.side, NULL, a.anticipated, a.component, a.pinpoint
+FROM v83_copies c JOIN arguments a ON a.id = c.rebuttal_id;
+INSERT INTO submission_facts (submission_id, fact_id)
+SELECT c.new_id, f.fact_id FROM v83_copies c JOIN submission_facts f ON f.submission_id = c.rebuttal_id;
+INSERT INTO submission_law (submission_id, law_assertion_id)
+SELECT c.new_id, l.law_assertion_id FROM v83_copies c JOIN submission_law l ON l.submission_id = c.rebuttal_id;
+
+ALTER TABLE argument_rebuts RENAME TO argument_rebuts_v82;
+CREATE TABLE argument_rebuts (
+    rebuttal_id INTEGER NOT NULL UNIQUE REFERENCES arguments(id),
+    argument_id INTEGER NOT NULL REFERENCES arguments(id),
+    CHECK (rebuttal_id <> argument_id)
+);
+INSERT INTO argument_rebuts (rebuttal_id, argument_id)
+SELECT rebuttal_id, argument_id FROM v83_links WHERE k = 1 ORDER BY link;
+INSERT INTO argument_rebuts (rebuttal_id, argument_id)
+SELECT new_id, argument_id FROM v83_copies ORDER BY link;
+DROP TABLE argument_rebuts_v82;
+DROP TABLE v83_copies;
+DROP TABLE v83_links;
+
+CREATE INDEX idx_argument_rebuts_argument ON argument_rebuts(argument_id);
+
+CREATE TRIGGER rev_argument_rebuts_ins AFTER INSERT ON argument_rebuts BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
+CREATE TRIGGER rev_argument_rebuts_upd AFTER UPDATE ON argument_rebuts BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
+CREATE TRIGGER rev_argument_rebuts_del AFTER DELETE ON argument_rebuts BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
+
+UPDATE db_meta SET value = '83' WHERE key = 'schema_version';

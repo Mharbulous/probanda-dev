@@ -1,10 +1,10 @@
 // The Arguments view page: one `Arguments - Work Board <id>.html` per live Writing, written by the
 // view-page registry (../view-pages.ts), listing the `arguments` rows the drafting database records
-// for the filing's proceeding (schema v82) on two tabs:
+// for the filing's proceeding (schema v83) on two tabs:
 //   arguments -- every row with no `argument_rebuts` link out, ours, opposing or neutral, by its
 //                fixed per-proceeding number (#2).
-//   rebuttals -- every row with a link out, labelled under its lowest-numbered target (#2.a, and
-//                #1.a.i for a rebuttal of a rebuttal). Its other targets show "see #2.a".
+//   rebuttals -- every row with a link out, labelled under the one row it answers (#2.a, and
+//                #1.a.i for a rebuttal of a rebuttal).
 // Both are derived from the links, never stored. A killed row stays on its tab, last, in kill-date
 // order, so it is never re-proposed. Each card shows its tags ("Held in reserve" for one of ours
 // deployed by no document of the proceeding, "Killed <date>", "Anticipated", and "No rebuttal" for a
@@ -55,9 +55,9 @@ export interface PageCard {
   killed: boolean;
   facts: string[];
   law: SubmissionLaw[];
-  /** The labels of the cards it answers, lowest-numbered first. */
+  /** The label of the card it answers, or none. */
   rebuts: string[];
-  /** Its rebuttals' labels in link order, "see #2.a" for one labelled under another target. */
+  /** Its rebuttals' labels in link order. */
   rebutted_by: string[];
 }
 
@@ -135,31 +135,20 @@ function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merge
     [proceedingId]
   );
 
-  const targetsOf = new Map<number, number[]>();
+  const targetOf = new Map<number, number>();
   const rebuttalsOf = new Map<number, number[]>();
   for (const l of links) {
-    targetsOf.set(l.rebuttal_id, [...(targetsOf.get(l.rebuttal_id) ?? []), l.argument_id]);
+    targetOf.set(l.rebuttal_id, l.argument_id);
     rebuttalsOf.set(l.argument_id, [...(rebuttalsOf.get(l.argument_id) ?? []), l.rebuttal_id]);
   }
 
-  // A rebuttal's number is its lowest-numbered target's. A loop of rebuttals with no argument has none.
-  const numbers = new Map<number, number | null>();
+  // A rebuttal's number is its target's. A loop of rebuttals with no argument has none.
   const numberOf = (id: number, seen = new Set<number>()): number | null => {
-    const targets = targetsOf.get(id);
-    if (targets === undefined) return byId.get(id)?.number ?? null;
-    if (numbers.has(id)) return numbers.get(id) as number | null;
+    const target = targetOf.get(id);
+    if (target === undefined) return byId.get(id)?.number ?? null;
     if (seen.has(id)) return null;
     seen.add(id);
-    const found = targets.map((t) => numberOf(t, seen)).filter((n): n is number => n !== null);
-    const n = found.length > 0 ? Math.min(...found) : null;
-    numbers.set(id, n);
-    return n;
-  };
-  /** The target a rebuttal is labelled under: its lowest-numbered one, the first linked on a tie. */
-  const primaryOf = (id: number): number => {
-    const targets = targetsOf.get(id) as number[];
-    const n = numberOf(id);
-    return targets.find((t) => numberOf(t) === n) ?? targets[0];
+    return numberOf(target, seen);
   };
   const labels = new Map<number, { label: string; path: number[] }>();
   const labelOf = (id: number, seen = new Set<number>()): { label: string; path: number[] } => {
@@ -167,13 +156,13 @@ function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merge
     if (known !== undefined) return known;
     let out: { label: string; path: number[] };
     const n = numberOf(id);
-    if (!targetsOf.has(id)) out = { label: n === null ? "#?" : `#${n}`, path: [] };
+    const parent = targetOf.get(id);
+    if (parent === undefined) out = { label: n === null ? "#?" : `#${n}`, path: [] };
     else if (seen.has(id)) out = { label: "#?", path: [] };
     else {
       seen.add(id);
-      const parent = primaryOf(id);
       const base = labelOf(parent, seen);
-      const i = (rebuttalsOf.get(parent) ?? []).filter((r) => primaryOf(r) === parent).indexOf(id);
+      const i = (rebuttalsOf.get(parent) ?? []).indexOf(id);
       out = { label: `${base.label}.${base.path.length % 2 === 0 ? letter(i) : roman(i + 1)}`, path: [...base.path, i] };
     }
     labels.set(id, out);
@@ -196,7 +185,7 @@ function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merge
     const tags: string[] = [];
     if (a.side === "ours" && a.killed_on === null && deployedOn.length === 0) tags.push("Held in reserve");
     if (a.anticipated === 1) tags.push("Anticipated");
-    if (a.side === "opposing" && a.killed_on === null && !targetsOf.has(a.id) && !rebuttals.some((r) => byId.get(r)?.killed_on === null)) tags.push("No rebuttal");
+    if (a.side === "opposing" && a.killed_on === null && !targetOf.has(a.id) && !rebuttals.some((r) => byId.get(r)?.killed_on === null)) tags.push("No rebuttal");
     if (a.killed_on !== null) tags.push(`Killed ${a.killed_on}`);
     return {
       id: a.id,
@@ -209,8 +198,8 @@ function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merge
       killed: a.killed_on !== null,
       facts: facts.filter((f) => f.submission_id === a.id).map((f) => f.postulate),
       law: law.filter((l) => l.submission_id === a.id).map((l) => ({ text: l.proposition, killed_on: l.killed_on })),
-      rebuts: [...(targetsOf.get(a.id) ?? [])].sort(byNumber).map((t) => labelOf(t).label),
-      rebutted_by: rebuttals.map((r) => (primaryOf(r) === a.id ? labelOf(r).label : `see ${labelOf(r).label}`)),
+      rebuts: targetOf.has(a.id) ? [labelOf(targetOf.get(a.id) as number).label] : [],
+      rebutted_by: rebuttals.map((r) => labelOf(r).label),
     };
   };
   // Live cards first, by number and then label; killed ones last, in kill-date order.
@@ -226,8 +215,8 @@ function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merge
   };
   const sorted = [...all].sort(order);
   return {
-    arguments: sorted.filter((a) => !targetsOf.has(a.id)).map(card),
-    rebuttals: sorted.filter((a) => targetsOf.has(a.id)).map(card),
+    arguments: sorted.filter((a) => !targetOf.has(a.id)).map(card),
+    rebuttals: sorted.filter((a) => targetOf.has(a.id)).map(card),
   };
 }
 
