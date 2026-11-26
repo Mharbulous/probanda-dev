@@ -44,14 +44,16 @@ test("arguments by number, rebuttals by label, killed rows last on their tab", a
   assert.deepEqual(
     data.rebuttals.map((r) => [r.id, r.label, r.number, r.tags, r.rebuts, r.rebutted_by]),
     [
-      [1, "#1.a", 1, ["Held in reserve"], ["#1"], ["#1.a.i"]],
-      [6, "#1.a.i", 1, ["Held in reserve"], ["#1.a"], []],
-      [7, "#2.a", 2, ["Held in reserve"], ["#2"], []],
-      [2, "#1.b", 1, ["Killed 2026-10-05"], ["#1"], []],
+      // An argument's only live rebuttal takes its bare number, a killed one beside it a letter, and
+      // a rebuttal of a rebuttal keeps its numeral.
+      [1, "#1", 1, ["Held in reserve"], ["#1"], ["#1.i"]],
+      [6, "#1.i", 1, ["Held in reserve"], ["#1"], []],
+      [7, "#2", 2, ["Held in reserve"], ["#2"], []],
+      [2, "#1.a", 1, ["Killed 2026-10-05"], ["#1"], []],
     ]
   );
-  assert.deepEqual(data.arguments.find((a) => a.id === 4).rebutted_by, ["#1.a", "#1.b"]);
-  assert.deepEqual(data.arguments.find((a) => a.id === 5).rebutted_by, ["#2.a"]);
+  assert.deepEqual(data.arguments.find((a) => a.id === 4).rebutted_by, ["#1", "#1.a"]);
+  assert.deepEqual(data.arguments.find((a) => a.id === 5).rebutted_by, ["#2"]);
 
   // Merging a duplicate deployed in a retired Writing: its rebuttals move to the kept argument and
   // it is killed, while the retired Writing keeps its row.
@@ -72,6 +74,7 @@ test("arguments by number, rebuttals by label, killed rows last on their tab", a
      DELETE FROM filing_submissions WHERE submission_id = 8 AND filing_id IN (SELECT id FROM filings WHERE filed_on IS NULL AND retired_on IS NULL);`
   );
   const merged = buildArgumentsData(dbPath, { id: 1, proceeding_id: 1 });
+  // Two live rebuttals take letters in link order.
   assert.deepEqual(merged.arguments.find((a) => a.id === 5).rebutted_by, ["#2.a", "#2.b"]);
   const gone = merged.arguments.find((a) => a.id === 8);
   assert.deepEqual([gone.label, gone.where, gone.tags], ["#4", "On Reply (retired)", ["Killed 2026-10-08"]]);
@@ -83,4 +86,6 @@ test("arguments by number, rebuttals by label, killed rows last on their tab", a
     after.arguments.filter((a) => a.tags.includes("No rebuttal")).map((a) => a.label),
     ["#1"]
   );
+  // With none live, both killed rebuttals take letters.
+  assert.deepEqual(after.arguments.find((a) => a.id === 4).rebutted_by, ["#1.a", "#1.b"]);
 });

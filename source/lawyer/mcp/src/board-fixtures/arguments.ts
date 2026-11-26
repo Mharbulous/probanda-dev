@@ -35,7 +35,7 @@ export const ARGUMENTS_FIXTURE: { meta: ViewPageMeta; data: ArgumentsData } = {
         facts: [],
         law: [],
         rebuts: [],
-        rebutted_by: ["#2.a"],
+        rebutted_by: ["#2"],
       },
       {
         id: 5,
@@ -69,7 +69,7 @@ export const ARGUMENTS_FIXTURE: { meta: ViewPageMeta; data: ArgumentsData } = {
     rebuttals: [
       {
         id: 2,
-        label: "#2.a",
+        label: "#2",
         number: 2,
         side: "ours",
         contention: "The goods were ordered: the order log records the order.",

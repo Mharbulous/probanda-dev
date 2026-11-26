@@ -54,7 +54,7 @@ class Node {
 const card = (id, label, number, extra = {}) => ({ id, label, number, side: "ours", contention: "C" + id, where: null, tags: [], killed: false, law: [], facts: [], rebuts: [], rebutted_by: [], ...extra });
 const DATA = {
   arguments: [card(1, "#1", 1), card(2, "#2", 2, { tags: ["No rebuttal"] }), card(3, "#3", 3, { killed: true, tags: ["Killed 2026-10-01"] })],
-  rebuttals: [card(4, "#1.a", 1), card(5, "#1.b", 1), card(6, "#3.a", 3)],
+  rebuttals: [card(4, "#1.a", 1), card(5, "#1.b", 1), card(6, "#3", 3)],
 };
 
 function load(data = DATA, extra = {}) {
@@ -113,7 +113,9 @@ test("a card carries its label and tags, and the Arguments heading counts those 
   const s = load().section("Arguments");
   const tags = (c) => [...c.walk()].filter((n) => n.className === "tag" || n.className === "tag flag").map((n) => n.text);
   assert.deepEqual(tags(s.cards[1]), ["Argument #2", "No rebuttal"]);
-  assert.deepEqual(tags(load().section("Rebuttals").cards[0]), ["Rebuttal #1.a"]);
+  const r = load().section("Rebuttals");
+  assert.deepEqual(r.cards.map((c) => tags(c)[0]), ["Rebuttal #1.a", "Rebuttal #1.b", "Rebuttal #3"]);
+  assert.deepEqual(r.labels.map((l) => l.text), ["1.a", "1.b", "3"], "the strip reads the cards' labels");
   assert.equal(s.heading.children.find((n) => n.className === "count").text, "1 with no rebuttal");
 });
 

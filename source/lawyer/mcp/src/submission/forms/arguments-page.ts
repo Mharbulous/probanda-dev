@@ -3,8 +3,9 @@
 // for the filing's proceeding (schema v83) on two tabs:
 //   arguments -- every row with no `argument_rebuts` link out, ours, opposing or neutral, by its
 //                fixed per-proceeding number (#2).
-//   rebuttals -- every row with a link out, labelled under the one row it answers (#2.a, and
-//                #1.a.i for a rebuttal of a rebuttal).
+//   rebuttals -- every row with a link out, labelled under the one row it answers: #2 for an
+//                argument's only live rebuttal, #2.a and #2.b when it has several, and #2.i or
+//                #1.a.i for a rebuttal of a rebuttal.
 // Both are derived from the links, never stored. A killed row stays on its tab, last, in kill-date
 // order, so it is never re-proposed. Each card shows its tags ("Held in reserve" for one of ours
 // deployed by no document of the proceeding, "Killed <date>", "Anticipated", and "No rebuttal" for a
@@ -41,7 +42,7 @@ export interface SubmissionLaw {
 export interface PageCard {
   /** The `arguments` row. */
   id: number;
-  /** "#2" for an argument; "#2.a", or "#1.a.i" under a rebuttal, for a rebuttal; "#?" with no number to hang on. */
+  /** "#2" for an argument and its only live rebuttal; "#2.a" for one of several, or "#1.a.i" under a rebuttal; "#?" with no number to hang on. */
   label: string;
   /** The argument number the card opens with: its own, or its label's for a rebuttal. Null with none. */
   number: number | null;
@@ -155,6 +156,12 @@ function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merge
     seen.add(id);
     return numberOf(target, seen);
   };
+  // An argument's only live rebuttal, or its only rebuttal, takes the argument's bare number.
+  const soleRebuttalOf = (argument: number): number | undefined => {
+    const all = rebuttalsOf.get(argument) ?? [];
+    const live = all.filter((r) => byId.get(r)?.killed_on === null);
+    return live.length === 1 ? live[0] : all.length === 1 ? all[0] : undefined;
+  };
   const labels = new Map<number, { label: string; path: number[] }>();
   const labelOf = (id: number, seen = new Set<number>()): { label: string; path: number[] } => {
     const known = labels.get(id);
@@ -167,8 +174,13 @@ function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merge
     else {
       seen.add(id);
       const base = labelOf(parent, seen);
-      const i = (rebuttalsOf.get(parent) ?? []).indexOf(id);
-      out = { label: `${base.label}.${base.path.length % 2 === 0 ? letter(i) : roman(i + 1)}`, path: [...base.path, i] };
+      // A rebuttal of a rebuttal always keeps its numeral, or it would share its target's label on the Rebuttals tab.
+      const sole = targetOf.has(parent) ? undefined : soleRebuttalOf(parent);
+      const i = (rebuttalsOf.get(parent) ?? []).filter((r) => r !== sole).indexOf(id);
+      out =
+        id === sole
+          ? { label: base.label, path: [...base.path, -1] }
+          : { label: `${base.label}.${base.path.length % 2 === 0 ? letter(i) : roman(i + 1)}`, path: [...base.path, i] };
     }
     labels.set(id, out);
     return out;
