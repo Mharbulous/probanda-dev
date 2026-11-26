@@ -1,0 +1,30 @@
+{
+  "schema_version": "2",
+  "series": "localize-helper-2026-11",
+  "cycle": "c01",
+  "target": {
+    "repo": "Mharbulous/probanda-dev",
+    "path": "source/lawyer/agents/localize-helper.md"
+  },
+  "phase": "question",
+  "cycles_completed": 0,
+  "related_specs": [
+    "docs/Plans/2026-11-26_listing-cost-cuts.md"
+  ],
+  "scenarios": [],
+  "passes": [],
+  "notes": [
+    {
+      "when": "2026-11-26T17:39:44Z",
+      "text": "started"
+    },
+    {
+      "when": "2026-11-26T17:39:44Z",
+      "text": "Series named after the target file, not its folder (agents), so it names what it questions."
+    },
+    {
+      "when": "2026-11-26T17:39:44Z",
+      "text": "related_specs found by the session: no open issue mentions localize, no uncommitted edits to the target; docs/Plans/2026-10-13_four-plugin-split.md mentions the agent but is finished."
+    }
+  ]
+}

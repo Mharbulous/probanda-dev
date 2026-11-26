@@ -1,0 +1,206 @@
+{
+  "schema_version": "2",
+  "entries": [
+    {
+      "q_id": "Q-001",
+      "requirement": "A separate helper agent, not the /localize session itself, fetches venue sources and writes, confirms, corrects, refreshes or retires knowledge-tree files.",
+      "wording": "The whole agent file source/lawyer/agents/localize-helper.md (lawyer:localize-helper).",
+      "where": [
+        {
+          "file": "source/lawyer/agents/localize-helper.md",
+          "anchor": "whole file"
+        }
+      ],
+      "record": "localize-helper-agent",
+      "maker": null,
+      "class": "unknown_owner",
+      "lines": 43,
+      "exercised_by": [],
+      "lean": "remove",
+      "advocate": {
+        "status": "undefended",
+        "record": "localize-helper-agent"
+      },
+      "mark": "strike",
+      "mark_words": "Strike Q-001",
+      "reason_new": null,
+      "reason_recorded": false
+    },
+    {
+      "q_id": "Q-002",
+      "requirement": "The helper fetches its playbook and the shared tree, layout or format files, follows the playbook section for the operation, handles a practitioner_layout create by playbook section 3a, and returns one JSON object.",
+      "wording": "## Procedure (steps 1 to 3)",
+      "where": [
+        {
+          "file": "source/lawyer/agents/localize-helper.md",
+          "anchor": "## Procedure"
+        }
+      ],
+      "record": null,
+      "maker": null,
+      "class": "unknown_owner",
+      "lines": 5,
+      "exercised_by": [],
+      "lean": null,
+      "advocate": null,
+      "mark": null,
+      "mark_words": null,
+      "reason_new": null,
+      "reason_recorded": false
+    },
+    {
+      "q_id": "Q-003",
+      "requirement": "The helper halts with refused/tool_unavailable when a playbook tool is missing, treats a tool refusal as a result and never retries except where the playbook allows one, and uses Read only on files the playbook allows.",
+      "wording": "## Restrictions (three bullets)",
+      "where": [
+        {
+          "file": "source/lawyer/agents/localize-helper.md",
+          "anchor": "## Restrictions"
+        }
+      ],
+      "record": null,
+      "maker": null,
+      "class": "unknown_owner",
+      "lines": 5,
+      "exercised_by": [],
+      "lean": null,
+      "advocate": null,
+      "mark": null,
+      "mark_words": null,
+      "reason_new": null,
+      "reason_recorded": false
+    },
+    {
+      "q_id": "Q-004",
+      "requirement": "The helper is told its tool calls and results may be visible in the parent session's transcript.",
+      "wording": "Your tool calls, and the text they return, may be visible in the parent session's transcript. Nothing you do is hidden from the session that spawned you.",
+      "where": [
+        {
+          "file": "source/lawyer/agents/localize-helper.md",
+          "anchor": "## Residual"
+        }
+      ],
+      "record": null,
+      "maker": null,
+      "class": "unknown_owner",
+      "lines": 3,
+      "exercised_by": [],
+      "lean": null,
+      "advocate": null,
+      "mark": null,
+      "mark_words": null,
+      "reason_new": null,
+      "reason_recorded": false
+    },
+    {
+      "q_id": "Q-005",
+      "requirement": "The helper runs only through lawyer:run-localize-helper from /localize, never inline and never in a fork that does not name it as its agent.",
+      "wording": "Run through the `lawyer:run-localize-helper` skill, from `/localize`, which runs this agent itself, with its own instructions, tools and model, in a fresh context. Never run its work inline, and never in a fork that does not name this agent as its agent.",
+      "where": [
+        {
+          "file": "source/lawyer/agents/localize-helper.md",
+          "anchor": "line after **Lane:**"
+        }
+      ],
+      "record": "localize-helper-fresh-context-spawn",
+      "maker": null,
+      "class": "unknown_owner",
+      "lines": 1,
+      "exercised_by": [],
+      "lean": null,
+      "advocate": null,
+      "mark": null,
+      "mark_words": null,
+      "reason_new": null,
+      "reason_recorded": false
+    },
+    {
+      "q_id": "Q-006",
+      "requirement": "The helper is told its lane is knowledge-tree writes, one instance per /localize run, with concurrent writes serialized by the runtime's locks and exists results handled by the playbook.",
+      "wording": "**Lane:** knowledge-tree writes. One instance per `/localize` run. Two instances writing the same overlay file are serialized by the runtime's locks, and an `exists` result is handled by the playbook.",
+      "where": [
+        {
+          "file": "source/lawyer/agents/localize-helper.md",
+          "anchor": "**Lane:**"
+        }
+      ],
+      "record": null,
+      "maker": null,
+      "class": "unknown_owner",
+      "lines": 1,
+      "exercised_by": [],
+      "lean": null,
+      "advocate": null,
+      "mark": null,
+      "mark_words": null,
+      "reason_new": null,
+      "reason_recorded": false
+    },
+    {
+      "q_id": "Q-007",
+      "requirement": "The helper always runs on Opus.",
+      "wording": "model: opus",
+      "where": [
+        {
+          "file": "source/lawyer/agents/localize-helper.md",
+          "anchor": "frontmatter model"
+        }
+      ],
+      "record": null,
+      "maker": null,
+      "class": "unknown_owner",
+      "lines": 1,
+      "exercised_by": [],
+      "lean": null,
+      "advocate": null,
+      "mark": null,
+      "mark_words": null,
+      "reason_new": null,
+      "reason_recorded": false
+    },
+    {
+      "q_id": "Q-008",
+      "requirement": "The agent listing carries the helper's description (what it does, who dispatches it, its unique knowledge__retire grant, never states law).",
+      "wording": "description: Learns a venue's or audience's requirements ... Never states law and never assesses what a rule means.",
+      "where": [
+        {
+          "file": "source/lawyer/agents/localize-helper.md",
+          "anchor": "frontmatter description"
+        }
+      ],
+      "record": null,
+      "maker": null,
+      "class": "unknown_owner",
+      "lines": 1,
+      "exercised_by": [],
+      "lean": null,
+      "advocate": null,
+      "mark": null,
+      "mark_words": null,
+      "reason_new": null,
+      "reason_recorded": false
+    },
+    {
+      "q_id": "Q-009",
+      "requirement": "The helper's tools are limited to Read and the data server's skill_source, sources and knowledge tools; it is the only component granted knowledge__retire.",
+      "wording": "tools: Read, skill_source__read, sources__fetch, sources__check, knowledge__read, knowledge__list, knowledge__write, knowledge__retire (each also under mcp__remote-devices__)",
+      "where": [
+        {
+          "file": "source/lawyer/agents/localize-helper.md",
+          "anchor": "frontmatter tools"
+        }
+      ],
+      "record": null,
+      "maker": null,
+      "class": "protected",
+      "lines": 16,
+      "exercised_by": [],
+      "lean": null,
+      "advocate": null,
+      "mark": "strike",
+      "mark_words": "strike Q-009",
+      "reason_new": null,
+      "reason_recorded": false
+    }
+  ]
+}
