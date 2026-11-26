@@ -21,7 +21,7 @@ import {
   hearingDateSentence,
   resolveRespondedToDocument,
 } from "./render-application-response.js";
-import { CITATION_MISSING, printedPinpoint } from "./law-statement-line.js";
+import { authorityCitation, CITATION_MISSING } from "./law-statement-line.js";
 import { exhibitNumbersFromOrderedIds, fetchDocumentLabels, fetchFilingDocuments } from "./exhibit-documents.js";
 import { fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions, type LawAssertionRow } from "./submission-reads.js";
 import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
@@ -38,12 +38,10 @@ const HEARING_DATE_PLACEHOLDER = "[agree, or propose other hearing date(s)]";
 const TIME_ESTIMATE_PLACEHOLDER = "[time estimate]";
 const NO_FACTUAL_BASIS = "[factual basis: no facts recorded]";
 
-/** Mirrors render-form32-filed-face.ts's own copy. authority_title === null is structurally unreachable via groupSubmissionLaw's output -- kept defensive, not deleted. */
+/** law-statement-line.ts's line of this name with no tag. authority_title === null is structurally unreachable via groupSubmissionLaw's output -- kept defensive, not deleted. */
 function lawStatementCitationLine(row: LawAssertionRow): string | null {
   if (row.authority_title === null) return row.pinpoint ? `> ${row.pinpoint}` : null;
-  const citation = row.authority_citation ?? CITATION_MISSING;
-  const pin = printedPinpoint(row.authority_citation, row.pinpoint);
-  return `> *${row.authority_title}*, ${citation}${pin ? `, ${pin}` : ""}`;
+  return `> ${authorityCitation(row.authority_title, row)}`;
 }
 
 /** Submissions cascade-struck the same way the Written Arguments renders them (render-companions.ts's

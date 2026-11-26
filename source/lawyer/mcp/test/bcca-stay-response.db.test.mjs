@@ -151,6 +151,32 @@ INSERT INTO opposing_authorities (id, proceeding_id, document_id, ordinal, style
   }
 });
 
+test("BCCA stay response Part 3 prints a case italic and a secondary source roman, each citation roman (shared/authority-italics.md)", async () => {
+  const f = fixture();
+  try {
+    await freshSubmissionDb(f.dbPath);
+    writePartiesOfRecord(dirname(f.dbPath), STAY_RESPONSE_CASE_DATA);
+    await submissionDataExecute(
+      f.dbPath,
+      SEED +
+        `
+INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, kind, treatment, weight)
+  VALUES (2, 1, 'Stays Pending Appeal', '(Vancouver: Example Press, 2024)', 'doctrine', 'good_law', 'persuasive');
+INSERT INTO law_assertions (id, proceeding_id, proposition) VALUES (2, 1, 'A stay is discretionary.');
+INSERT INTO submission_law (submission_id, law_assertion_id) VALUES (1, 2);
+INSERT INTO statements_of_law (id, proceeding_id, law_assertion_id, authority_id, pinpoint, excerpt, source, verification)
+  VALUES (2, 1, 2, 2, 'at 12', 'a stay is in the court''s discretion', 'primary', 'verified');
+`
+    );
+    const text = submissionFormsRender(f.dbPath, 1, {}).documents.find((d) => d.document_type === "Response_book").markdown;
+    const toa = text.slice(text.indexOf("## PART 3: TABLE OF AUTHORITIES (OPTIONAL)"));
+    assert.match(toa, /^1\. \*RJR-MacDonald Inc\. v\. Canada \(Attorney General\)\*, \[1994\] 1 SCR 311$/m, "case italic, citation roman");
+    assert.match(toa, /^2\. Stays Pending Appeal, \(Vancouver: Example Press, 2024\)$/m, "secondary source roman");
+  } finally {
+    f.cleanup();
+  }
+});
+
 test("BCCA stay response Part 3 fires the unverified-delta marker when no opposing_authorities rows exist yet", async () => {
   const f = fixture();
   try {

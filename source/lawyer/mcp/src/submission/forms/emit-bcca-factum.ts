@@ -24,7 +24,7 @@ import {
 import { factsPart, fetchFacts } from "./filing-facts.js";
 import { exhibitNumbersFromOrderedIds, fetchDocumentLabels, fetchFilingDocuments } from "./exhibit-documents.js";
 import { fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions, type LawAssertionRow } from "./submission-reads.js";
-import { printedPinpoint } from "./law-statement-line.js";
+import { authorityCitation } from "./law-statement-line.js";
 import { factStatementCitationLine } from "./statement-lines.js";
 import { fetchOrdersSought } from "./orders-sought.js";
 import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
@@ -40,11 +40,6 @@ function oneLine(text: string): string {
 function pushExcerpt(lines: string[], excerpt: string | null, cite: string | null): void {
   if (excerpt) for (const l of excerpt.split("\n")) if (l.trim() !== "") lines.push(`> ${l.trim()}`);
   if (cite) lines.push(`cite: ${cite}`);
-}
-
-function lawCite(row: LawAssertionRow): string {
-  const pin = printedPinpoint(row.authority_citation, row.pinpoint);
-  return `${row.authority_title}, ${row.authority_citation}${pin ? `, ${pin}` : ""}`;
 }
 
 export function renderBccaFactumFiledFace(ctx: RenderContext, datedOn: string): string {
@@ -164,7 +159,7 @@ export function renderBccaFactumFiledFace(ctx: RenderContext, datedOn: string): 
       }
       lawParas.set(la.lawAssertionId, n);
       body.push(`${n}. ${oneLine(la.proposition)}`);
-      for (const st of printedLaw(la)) pushExcerpt(body, st.excerpt, lawCite(st));
+      for (const st of printedLaw(la)) pushExcerpt(body, st.excerpt, authorityCitation(st.authority_title!, st));
     }
   }
   body.push("");

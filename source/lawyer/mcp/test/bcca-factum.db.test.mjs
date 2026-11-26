@@ -86,16 +86,32 @@ test("authorities are alphabetical with paragraphs; enactments hold statutes; ru
   const { text } = await renderFactum();
   const list = text.slice(text.indexOf("## APPENDICES: LIST OF AUTHORITIES"), text.indexOf("## APPENDICES: ENACTMENTS"));
   const rows = [...list.matchAll(/^\| ([^|]+) \| \(fills in Word\) \| ([\d, ]+) \|$/gm)].map((m) => m[1]);
-  assert.deepEqual(rows, ["Arbitration Act, SBC 2020, c 2", "Court of Appeal Rules, BC Reg 120/2022", "Housen v Nikolaisen, 2002 SCC 33"]);
+  assert.deepEqual(rows, ["*Arbitration Act*, SBC 2020, c 2", "*Court of Appeal Rules*, BC Reg 120/2022", "*Housen v Nikolaisen*, 2002 SCC 33"]);
   assert.doesNotMatch(list, /Anonymous Lead/, "lead authority never listed");
 
   const housenPara = Number(/^(\d+)\. The standard of review on a question of law is correctness\./m.exec(text)[1]);
-  assert.match(list, new RegExp(`Housen v Nikolaisen, 2002 SCC 33 \\| \\(fills in Word\\) \\| ${housenPara} \\|`), "para # is the paragraph the authority supports");
+  assert.match(list, new RegExp(`\\*Housen v Nikolaisen\\*, 2002 SCC 33 \\| \\(fills in Word\\) \\| ${housenPara} \\|`), "para # is the paragraph the authority supports");
 
   const enactments = text.slice(text.indexOf("## APPENDICES: ENACTMENTS"));
   assert.ok(enactments.includes("**Arbitration Act**, SBC 2020, c 2"), "statute in the enactments appendix");
   assert.ok(enactments.includes("> 7 (1) If a party to an arbitration agreement"), "statute excerpt reproduced");
   assert.ok(enactments.includes("#### Court rules not in this appendix"), "rule held back for the practitioner");
+});
+
+// shared/authority-italics.md: a case and a statute print italic in the source line and the table,
+// a secondary source ('doctrine') roman, and only the name is italic, never the citation after it.
+test("authority names are italic by kind in source lines and the authorities table, in mockup and filed face", async () => {
+  for (const mode of ["mockup", "filed"]) {
+    const { text } = await renderFactum("UPDATE authorities SET kind = 'doctrine' WHERE id = 1;", mode);
+    const list = text.slice(text.indexOf("## APPENDICES: LIST OF AUTHORITIES"), text.indexOf("## APPENDICES: ENACTMENTS"));
+    assert.match(text, /^\s*> \*Arbitration Act\*, SBC 2020, c 2, s 7(?: |$)/m, `${mode}: statute source line italic, citation roman`);
+    assert.match(text, /^\s*> Housen v Nikolaisen, 2002 SCC 33, para 8(?: |$)/m, `${mode}: secondary source line roman`);
+    assert.match(text, /^\s*7 \(1\) If a party to an arbitration agreement commences legal proceedings, the court must stay them\.$/m, `${mode}: excerpt unchanged`);
+    assert.match(list, /^\| \*Arbitration Act\*, SBC 2020, c 2 \|/m, `${mode}: statute italic in the table`);
+    assert.match(list, /^\| Housen v Nikolaisen, 2002 SCC 33 \|/m, `${mode}: secondary source roman in the table`);
+  }
+  const { text } = await renderFactum();
+  assert.match(text, /^\s*> \*Housen v Nikolaisen\*, 2002 SCC 33, para 8/m, "a case's source line is italic");
 });
 
 test("Part 2 prints the lead-in and the lettered issues, never Part 3's contentions", async () => {

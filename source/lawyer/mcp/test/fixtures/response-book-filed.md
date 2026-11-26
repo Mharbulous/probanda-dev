@@ -109,7 +109,7 @@ Prepared by: Elena Marsh
 
 ## PART 3: TABLE OF AUTHORITIES (OPTIONAL)
 
-1. RJR-MacDonald Inc. v. Canada (Attorney General), [1994] 1 SCR 311
+1. *RJR-MacDonald Inc. v. Canada (Attorney General)*, [1994] 1 SCR 311
 
 Date: ________________
 Signature of Elena Marsh, lawyer for the Respondent, Merrow Clothing Manufacturers Ltd.

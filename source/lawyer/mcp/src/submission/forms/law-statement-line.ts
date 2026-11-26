@@ -82,7 +82,7 @@ function quotingTag(row: Pick<LawStatementLine, "excerpt_speaker">): string {
   return speaker === "" ? "" : ` (quoting ${speaker})`;
 }
 
-/** Law-side twin of factStatementCitationLine: `> *{style of cause}*, {citation or
+/** Law-side twin of factStatementCitationLine: `> {authorityName}, {citation or
  * CITATION_MISSING} {pinpoint}`. row.authority_title === null is structurally unreachable via
  * SubmissionLawGroup.statements (groupSubmissionLaw only ever pushes rows with statement_id !==
  * null, and statements_of_law.authority_id is NOT NULL) -- kept as a defensive fallback, not
@@ -99,9 +99,20 @@ export function lawStatementCitationLine(row: LawStatementLine): string | null {
   // tag (schema v61) comes first, right after the pinpoint, stripped the same way (see quotingTag).
   const tags = `${quotingTag(row)}${row.authority_killed_on !== null ? ` (killed ${row.authority_killed_on})` : ""}${scrutinyFailedTag([row])}${settledTag(row)}${noteUpTag(row)}`;
   if (row.authority_title === null) return row.pinpoint ? `> ${row.pinpoint}${tags}` : null;
-  const citation = row.authority_citation ?? CITATION_MISSING;
+  return `> ${authorityCitation(row.authority_title, row)}${tags}`;
+}
+
+/** An authority's name as every rendered writing prints it (shared/authority-italics.md): a primary
+ * authority's title in `*…*`, a secondary source's (kind 'doctrine') roman. The one place this is decided. */
+export function authorityName(title: string, kind: string | null): string {
+  return kind === "doctrine" ? title : `*${title}*`;
+}
+
+/** `{authorityName}, {citation or CITATION_MISSING}[, {pinpoint}]`, with no prefix and no tag: the
+ * citation every statement-of-law line prints, the filed faces' included. The citation stays roman. */
+export function authorityCitation(title: string, row: Pick<LawStatementLine, "authority_kind" | "authority_citation" | "pinpoint">): string {
   const pin = printedPinpoint(row.authority_citation, row.pinpoint);
-  return `> *${row.authority_title}*, ${citation}${pin ? `, ${pin}` : ""}${tags}`;
+  return `${authorityName(title, row.authority_kind)}, ${row.authority_citation ?? CITATION_MISSING}${pin ? `, ${pin}` : ""}`;
 }
 
 /** The pinpoint a citation line prints after the citation, so neither prints twice: a stored pinpoint

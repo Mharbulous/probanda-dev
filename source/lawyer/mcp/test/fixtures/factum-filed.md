@@ -111,9 +111,9 @@ Counsel for the Respondents
 
 | Authorities | Page # in factum | Para # in factum |
 | :--- | :---: | :---: |
-| Arbitration Act, SBC 2020, c 2 | (fills in Word) | 8 |
-| Court of Appeal Rules, BC Reg 120/2022 | (fills in Word) | 8 |
-| Housen v Nikolaisen, 2002 SCC 33 | (fills in Word) | 6 |
+| *Arbitration Act*, SBC 2020, c 2 | (fills in Word) | 8 |
+| *Court of Appeal Rules*, BC Reg 120/2022 | (fills in Word) | 8 |
+| *Housen v Nikolaisen*, 2002 SCC 33 | (fills in Word) | 6 |
 
 ## APPENDICES: ENACTMENTS
 

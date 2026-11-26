@@ -66,7 +66,7 @@ function authoritiesOf(md) {
 /** The authority's item in the Authorities section, split into its printed sets; `glyphs`
  * splits those sets further, for a line whose tail is markers only. */
 function citedLine(md) {
-  const m = /^- > \*Example v\. Authority\*, 2020 BCSC 1(.*?) <!-- statement_of_law_id (\d+) -->$/m.exec(authoritiesOf(md));
+  const m = /^- > (?:\*Example v\. Authority\*|Example v\. Authority), 2020 BCSC 1(.*?) <!-- statement_of_law_id (\d+) -->$/m.exec(authoritiesOf(md));
   assert.ok(m, md);
   const sets = m[1].trim().split(" ").filter(Boolean);
   return { text: m[0], sets, get glyphs() { return sets.flatMap(splitGlyphs); }, statementId: Number(m[2]) };
@@ -224,6 +224,19 @@ test("a prose-cited statute's 📇 follows its currency, not its treatment, and 
   assert.deepEqual(await noteUp(`UPDATE authorities SET currency_checked_on = '${today}' WHERE id = 4;`), [false, "met", 0], "current, checked today, treatment ∅");
   assert.deepEqual(await noteUp("UPDATE authorities SET currency_status = 'repealed' WHERE id = 4;"), [true, "unmet", 1], "repealed: 📇, no job, still outstanding");
   assert.deepEqual(await noteUp("UPDATE authorities SET kind = 'doctrine', currency_status = NULL WHERE id = 4;"), [false, "met", 0]);
+});
+
+// shared/authority-italics.md: the Authorities list prints a primary authority's name italic and a
+// secondary source's roman, its citation roman either way, on the mockup and the filed face alike.
+test("the Authorities list italicizes a case and a statute and prints a secondary source roman", async (t) => {
+  const { g, id } = await drafted(t);
+  const line = async (kind) => {
+    await g.execute(`UPDATE authorities SET kind = '${kind}' WHERE id = 4;`);
+    return citedLine(letterOf(render(g, id))).text;
+  };
+  assert.match(await line("case"), /^- > \*Example v\. Authority\*, 2020 BCSC 1[ <]/);
+  assert.match(await line("statute"), /^- > \*Example v\. Authority\*, 2020 BCSC 1[ <]/);
+  assert.match(await line("doctrine"), /^- > Example v\. Authority, 2020 BCSC 1[ <]/);
 });
 
 test("a killed authority's line keeps its killed tag and prints no marker, 🧐 included; an overruled one prints ⛔", async (t) => {

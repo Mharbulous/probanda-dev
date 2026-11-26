@@ -10,7 +10,7 @@ filing_party_phrase: Merrow Clothing Manufacturers Ltd. and Adrian Renwick
 party_groups: [{"role":"Appellant","names":["Tidewater Outfitters Inc."],"lower_court_role":"Respondent"},{"role":"Respondents","names":["Merrow Clothing Manufacturers Ltd.","Adrian Renwick"],"lower_court_role":"Petitioner"}]
 contacts: [{"role":"Appellant","names":["Tidewater Outfitters Inc."],"counsel_name":"Ian Kerr","counsel_firm":"Caldwell, Fenn & Roe LLP","address":"410 - 1290 Beatty Street, Vancouver, BC V6B 2M8","phone":"(604) 555-0142","email":"ikerr@cfr-law.ca"},{"role":"Respondents","names":["Merrow Clothing Manufacturers Ltd.","Adrian Renwick"],"counsel_name":"Elena Marsh","counsel_firm":"Beacon Law","address":"320 - 240 Cambie Street, Vancouver, BC V6B 2N7","phone":"(604) 555-0188","email":"emarsh@beaconlaw.ca"}]
 chronology: [{"date":"2026-06-29","event":"Order under appeal pronounced"},{"date":"2026-07-28","event":"Notice of appeal filed"}]
-authorities: [{"authority":"Arbitration Act","citation":"SBC 2020, c 2","paras":[8]},{"authority":"Court of Appeal Rules","citation":"BC Reg 120/2022","paras":[8]},{"authority":"Housen v Nikolaisen","citation":"2002 SCC 33","paras":[6]}]
+authorities: [{"authority":"Arbitration Act","citation":"SBC 2020, c 2","kind":"statute","paras":[8]},{"authority":"Court of Appeal Rules","citation":"BC Reg 120/2022","kind":"rule","paras":[8]},{"authority":"Housen v Nikolaisen","citation":"2002 SCC 33","kind":"case","paras":[6]}]
 enactments: [{"title":"Arbitration Act","citation":"SBC 2020, c 2","excerpts":[{"pinpoint":"s 7","text":"7 (1) If a party to an arbitration agreement commences legal proceedings, the court must stay them."}]}]
 signing_place: Vancouver
 dated_on: 2026-09-16
@@ -42,13 +42,13 @@ cite: (Appeal Record, Vol. 1, p. 12)
 5. The arbitration was commenced on 12 May 2026. (Appeal Record, Vol. 1, p. 12)
 6. The standard of review on a question of law is correctness.
 > the standard of review for questions of law is correctness
-cite: Housen v Nikolaisen, 2002 SCC 33, para 8
+cite: *Housen v Nikolaisen*, 2002 SCC 33, para 8
 7. The order was within the judge's discretion.
 8. A court may stay proceedings in favour of arbitration.
 > 7 (1) If a party to an arbitration agreement commences legal proceedings, the court must stay them.
-cite: Arbitration Act, SBC 2020, c 2, s 7
+cite: *Arbitration Act*, SBC 2020, c 2, s 7
 > A respondent must file a factum.
-cite: Court of Appeal Rules, BC Reg 120/2022, R 25
+cite: *Court of Appeal Rules*, BC Reg 120/2022, R 25
 
 ## PART 4 - NATURE OF ORDER SOUGHT
 

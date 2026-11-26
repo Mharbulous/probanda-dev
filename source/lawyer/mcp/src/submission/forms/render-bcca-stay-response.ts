@@ -78,6 +78,7 @@ import { fetchRhetoric, interleave, renderRhetoricLine, type RhetoricRow } from 
 import { factsPart, fetchFacts, fetchStatementsOfFact, type FactRow, type StatementOfFactRow } from "./filing-facts.js";
 import { filingFrontmatter } from "./filing-frontmatter.js";
 import { ladderRow } from "./statement-lines.js";
+import { authorityName } from "./law-statement-line.js";
 import { rows } from "../query-rows.js";
 
 /** Statement-of-Facts paragraphs for part2-slot facts, numbered from startPara + 1, each with its
@@ -226,6 +227,7 @@ export interface AuthorityListRow {
   id: number;
   style_of_cause_or_title: string;
   citation: string | null;
+  kind: string;
 }
 
 /** Distinct authorities cited by this filing's deployed submissions, alphabetical, EXCLUDING
@@ -242,7 +244,7 @@ export interface AuthorityListRow {
 export function fetchCitedAuthorities(dbPath: string, filingId: number, proceedingId: number): AuthorityListRow[] {
   return rows<AuthorityListRow>(
     dbPath,
-    `SELECT MIN(a.id) AS id, a.style_of_cause_or_title, a.citation
+    `SELECT MIN(a.id) AS id, a.style_of_cause_or_title, a.citation, MIN(a.kind) AS kind
      FROM filing_submissions fs
      JOIN submission_law slk ON slk.submission_id = fs.submission_id
      JOIN statements_of_law sl ON sl.law_assertion_id = slk.law_assertion_id
@@ -691,7 +693,7 @@ export function renderBccaStayResponse(ctx: RenderContext): string {
     authorities.forEach((a, i) => {
       const citation = a.citation ? `, ${a.citation}` : ` ${gapMarker("gap")}`;
       recordCriterionGlyphs(ctx.inventory, citation, ["🧩"], { table: "authority_citations", id: a.id, item: `${a.style_of_cause_or_title}: citation` });
-      lines.push(`${i + 1}. ${a.style_of_cause_or_title}${citation}`);
+      lines.push(`${i + 1}. ${authorityName(a.style_of_cause_or_title, a.kind)}${citation}`);
     });
     if (unverifiedDelta) {
       lines.push(

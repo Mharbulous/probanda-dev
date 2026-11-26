@@ -24,6 +24,7 @@ import {
   type CaptionParty,
 } from "./components.js";
 import { letter } from "./arguments-page.js";
+import { authorityName } from "./law-statement-line.js";
 import { DUPLICATE_GLYPH, gapMarker, mockupMessage, rebuttalMarker, repeatsComment, repeatsPhrase } from "./markers.js";
 import { recordCriterionGlyphs } from "./proposal-inventory.js";
 import { captionHeadingFor, opposingPartyIds } from "./query.js";
@@ -123,6 +124,8 @@ export interface FactumAuthority {
   authority_id: number;
   authority: string;
   citation: string | null;
+  /** authorities.kind: fill_factum.py prints a 'doctrine' name roman, every other name italic. */
+  kind: string;
   paras: number[];
 }
 
@@ -162,7 +165,7 @@ function fetchCitedStatements(dbPath: string, lawAssertionIds: number[]): CitedS
 export function factumAuthorities(dbPath: string, lawParas: Map<number, number>): FactumAuthority[] {
   const byAuthority = new Map<number, FactumAuthority>();
   for (const s of fetchCitedStatements(dbPath, [...lawParas.keys()])) {
-    const entry = byAuthority.get(s.authority_id) ?? { authority_id: s.authority_id, authority: s.title, citation: s.citation, paras: [] };
+    const entry = byAuthority.get(s.authority_id) ?? { authority_id: s.authority_id, authority: s.title, citation: s.citation, kind: s.kind, paras: [] };
     const para = lawParas.get(s.law_assertion_id) as number;
     if (!entry.paras.includes(para)) entry.paras.push(para);
     byAuthority.set(s.authority_id, entry);
@@ -595,7 +598,7 @@ export function renderBccaFactum(ctx: RenderContext): string {
     authorities.forEach((a) => {
       const citation = a.citation ?? gapMarker("gap");
       recordCriterionGlyphs(ctx.inventory, citation, ["🧩"], { table: "authority_citations", id: a.authority_id, item: `${a.authority}: citation` });
-      lines.push(`| ${a.authority}, ${citation} | (fills in Word) | ${a.paras.join(", ")} |`);
+      lines.push(`| ${authorityName(a.authority, a.kind)}, ${citation} | (fills in Word) | ${a.paras.join(", ")} |`);
     });
   }
   lines.push("");

@@ -440,6 +440,34 @@ test("#842: an overruled authority's statement is withheld from the Form 32 file
   }
 });
 
+// shared/authority-italics.md: a secondary source ('doctrine') stays roman on the filed face, in its
+// citation line and wherever its name appears in the body, while a case stays italic.
+test("Form 32 prints a secondary source's name roman and a case's italic", async () => {
+  const f = seededDbFixture();
+  try {
+    await freshSubmissionDb(f.dbPath);
+    await seedNoticeOfApplication(f.dbPath);
+    await submissionDataExecute(
+      f.dbPath,
+      `
+      INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, kind, weight, treatment)
+        VALUES (2, 1, 'Civil Procedure Practice Guide', '(Vancouver: Example Press, 2024)', 'doctrine', 'persuasive', 'good_law');
+      INSERT INTO statements_of_law (id, proceeding_id, law_assertion_id, authority_id, pinpoint, excerpt, source, verification)
+        VALUES (2, 1, 1, 2, 'at 40', 'default follows the end of the response period', 'primary', 'verified');
+      `.trim()
+    );
+
+    const { markdown: md } = submissionFormsEmitForm32(f.dbPath, 1);
+
+    assert.match(md, /^>> Civil Procedure Practice Guide, \(Vancouver: Example Press, 2024\), at 40$/m, "secondary source roman");
+    assert.doesNotMatch(md, /\*Civil Procedure Practice Guide\*/, "never italicized in the body either");
+    assert.match(md, /^>> \*Miazga v\. Kvello Estate\*, 2009 SCC 51, para 15$/m, "case italic, citation roman");
+    assert.match(md, /^> default follows the end of the response period$/m, "excerpt unchanged");
+  } finally {
+    f.cleanup();
+  }
+});
+
 // #842, the gate half. The CITATION_MISSING filing gate counted statements the filed face no
 // longer prints, so an overruled authority with no citation refused the whole emit over a
 // placeholder that could never have appeared.

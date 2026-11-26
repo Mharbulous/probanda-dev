@@ -21,7 +21,7 @@ import { ValidationError } from "../../errors.js";
 import type { PublishWarning } from "../publish-sidecar.js";
 import { passesBriefOnlyCap } from "./brief-only-cap.js";
 import { formatTimeEstimate, pushExcerptBlockquote, STANDARD_MATERIAL_LINES } from "./components.js";
-import { CITATION_MISSING, printedPinpoint } from "./law-statement-line.js";
+import { authorityCitation, CITATION_MISSING } from "./law-statement-line.js";
 import { affidavitName, exhibitNumbersFromOrderedIds, fetchCitationLabels, fetchFilingDocuments, unattachedAffidavits } from "./exhibit-documents.js";
 import { fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions, type LawAssertionRow } from "./submission-reads.js";
 import { fetchOrdersSought } from "./orders-sought.js";
@@ -44,12 +44,10 @@ function fetchHearingDetails(dbPath: string, filingId: number): HearingDetailsRo
   return rows<HearingDetailsRow>(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId])[0];
 }
 
-/** A copy of law-statement-line.ts's function of this name, with this form's own line prefix. authority_title === null is structurally unreachable via groupSubmissionLaw's output -- kept defensive, not deleted. */
+/** law-statement-line.ts's line of this name with this form's own prefix and no tag. authority_title === null is structurally unreachable via groupSubmissionLaw's output -- kept defensive, not deleted. */
 function lawStatementCitationLine(row: LawAssertionRow): string | null {
   if (row.authority_title === null) return row.pinpoint ? `>> ${row.pinpoint}` : null;
-  const citation = row.authority_citation ?? CITATION_MISSING;
-  const pin = printedPinpoint(row.authority_citation, row.pinpoint);
-  return `>> *${row.authority_title}*, ${citation}${pin ? `, ${pin}` : ""}`;
+  return `>> ${authorityCitation(row.authority_title, row)}`;
 }
 
 /** Part 2's evidence reference (spec 2026-10-09, §4.3): the court-record document's label and the
@@ -69,14 +67,15 @@ function evidenceReference(document: string | undefined, pinpoint: string | null
 /** A matched `*…*` span (the asm32 grammar's ITALIC). */
 const ITALIC_SPAN = /(?<!\*)\*[^*\n]+\*(?!\*)/g;
 
-/** Every authority name the drafting database holds for the proceeding (case names and statute,
- * regulation and rule titles are all authorities rows), as one pattern, longest name first. Never
+/** Every primary authority name the drafting database holds for the proceeding (case names and
+ * statute, regulation and rule titles), as one pattern, longest name first. A secondary source
+ * (kind 'doctrine') stays roman (shared/authority-italics.md). Never
  * against a letter, digit or asterisk, so a wrap can neither split a word nor make `**`. Null when
  * the proceeding holds none. */
 function authorityNamePattern(dbPath: string, proceedingId: number): RegExp | null {
   const names = [
     ...new Set(
-      rows<{ name: string }>(dbPath, "SELECT style_of_cause_or_title AS name FROM authorities WHERE proceeding_id = ?", [proceedingId]).map((r) =>
+      rows<{ name: string }>(dbPath, "SELECT style_of_cause_or_title AS name FROM authorities WHERE proceeding_id = ? AND kind <> 'doctrine'", [proceedingId]).map((r) =>
         r.name.trim()
       )
     ),

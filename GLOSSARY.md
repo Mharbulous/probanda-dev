@@ -132,6 +132,7 @@ terms:
   - Recovery
   - Redirect
   - Reliance on a rule
+  - Rendered writing
   - Representative
   - Research
   - Reserve
@@ -165,6 +166,7 @@ terms:
   - Tribunal member
   - Unattended run
   - Unless-admitted guard
+  - Unrendered writing
   - Unstructured Writing
   - Up-pointer
   - Variant
@@ -720,6 +722,10 @@ _Avoid_: tombstone
 Making a result depend on a provision of a **Rule Set** or a practice direction: quoting or reproducing it in a document, resting a paragraph, argument or submission on it, or calculating a date or deadline under it. Reading, searching or asking what a provision says is not reliance. Reliance is the point at which the provision must be **Noted up**.
 _Avoid_: relying party (the party who must establish an **Element**).
 
+**Rendered writing**:
+Any writing generated from the matter's stored records each time it is shown, e.g. factums, court forms, research memos, case briefs, and letters drafted through /draft.
+_Avoid_: Structured Writing, Free-form writing (other axes: a free-form letter drafted through /draft is still rendered).
+
 **Representative**:
 The principle a **Variant** points at. In the pool it is a principle whose `variant_of` field is empty, and its cluster is that principle with every variant that points at it, one level deep. The word matters only where a variant points at the principle.
 
@@ -856,6 +862,10 @@ _Avoid_: scheduled run; background worker; AFK (wayfinder's word); `/prepare` (n
 **Unless-admitted guard**:
 Two branches silence the evidence-side work for a postulate. An admission silences it only as against the admitting party; against every other party the postulate still needs proof. A court-record link (`facts.court_record`) silences it against all parties — the one silence that is not per party. Neither branch silences the capture and locate work on the admission instrument and its response (📑 📌 or 💬 🧷, the pair set by the route), their tender (🕹️), or the court-record link's own pinpoint (📌) — every proof path ends at a pinpoint.
 _Avoid_: admitted = proven (true for one party, not the fact).
+
+**Unrendered writing**:
+Any text composed directly as words and never regenerated, e.g. .eml email drafts, quick replies, notes, and answers given in chat.
+_Avoid_: free-form writing (a different axis: a free-form letter drafted through /draft is rendered); Unstructured Writing (a Writing, and still rendered).
 
 **Unstructured Writing**:
 A Writing whose type has no declared layout yet. Its printed wording is drafted freely, and the practitioner gets the same review, revisions, Work Board and Word handoff as for any Writing. Once it is sent, it can be converted into a type with a declared layout, so the next Writing of that type is Structured. A form-bound writing with no specialist skill is drafted this way, its fixed wording copied from a saved copy of the published form.
