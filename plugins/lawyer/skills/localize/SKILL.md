@@ -31,7 +31,7 @@ description: Internal writer of every skill's knowledge tree. Learns a venue's o
 
 # localize
 
-The only writer of every knowledge tree. A caller invokes it by name. This skill decides the write target, spawns the `lawyer:localize-helper` agent, and relays what the helper returns. It never writes a tree itself, apart from the repo-session move in "Write targets".
+The only writer of every knowledge tree. A caller invokes it by name. This skill decides the write target, runs the helper playbook itself (section 4), and relays its result.
 
 Grammar, index files, resolve, overlay layout, merge, record contract and the confirmation sidecar are `shared/knowledge-tree.md` §3 to §8 and §10. This file does not restate them. The helper's tool sequences are its playbook, `references/playbook.md`.
 
@@ -73,7 +73,7 @@ This supersedes `venue-knowledge`'s "Adding a venue" and its update procedure.
 
 ## 4. Spawning the helper
 
-Run `lawyer:localize-helper` through the `lawyer:run-localize-helper` skill, which runs the helper agent itself, with its own instructions, tools and model, in a fresh context. Never run its work inline, and never in a fork that does not name the helper as its agent. Call the Skill tool with skill `lawyer:run-localize-helper` and, as args, one JSON object holding every argument of section 1 plus `run: "repo" | "matter"`. It reads its own playbook.
+"The helper" in this file is this session following `references/playbook.md`, with every argument of section 1 plus `run: "repo" | "matter"` as its dispatch.
 
 ## 5. Returns
 

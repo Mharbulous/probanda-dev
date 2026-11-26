@@ -48,7 +48,6 @@ TOUCHED = (
     SHARED / "legal-audit-scoped.md",
     SHARED / "statute-currency.md",
     SHARED / "knowledge-tree.md",
-    PRACTICE_AGENTS / "localize-helper.md",
 )
 
 
@@ -114,7 +113,7 @@ class AgentTests(unittest.TestCase):
                 self.assertNotIn(name, playbook)
 
     def test_both_allowlisted_agents_grant_sources_fetch_under_both_names(self):
-        for folder, name in ((PRACTICE_AGENTS, "localize-helper.md"), (AGENTS, "law-getter.md")):
+        for folder, name in ((AGENTS, "law-getter.md"),):
             tools = granted_tools(folder / name)
             for prefix in (LOCAL, BRIDGED):
                 with self.subTest(agent=name, prefix=prefix):

@@ -6,13 +6,46 @@
     "repo": "Mharbulous/probanda-dev",
     "path": "source/lawyer/agents/localize-helper.md"
   },
-  "phase": "question",
+  "phase": "check",
   "cycles_completed": 0,
   "related_specs": [
     "docs/Plans/2026-11-26_listing-cost-cuts.md"
   ],
   "scenarios": [],
-  "passes": [],
+  "passes": [
+    {
+      "pass_id": "c01-delete-1",
+      "step": "delete",
+      "status": "applied",
+      "commit": null,
+      "proposed_by": "claude-opus-5-5",
+      "deletions": [
+        {
+          "d_id": "D-001",
+          "q_ids": [
+            "Q-001",
+            "Q-009"
+          ],
+          "target": "source/lawyer/agents/localize-helper.md (whole file)",
+          "span": "\"---\" ... \"Nothing you do is hidden from the session that spawned you.\" (43 lines)",
+          "restore": "---\nname: localize-helper\ndescription: Learns a venue's or audience's requirements for one or two document kinds from its official published sources and records them in one skill's knowledge tree, records a practitioner's own layout as a new type, or confirms, corrects, refreshes or retires a learned file. Dispatched only by the internal /localize skill, through run-localize-helper, one instance per run. The only component granted knowledge__retire; sources__fetch and knowledge__write are shared with law-getter. Never states law and never assesses what a rule means.\nmodel: opus\ntools:\n  - Read\n  - mcp__plugin_lawyer_data__skill_source__read\n  - mcp__plugin_lawyer_data__sources__fetch\n  - mcp__plugin_lawyer_data__sources__check\n  - mcp__plugin_lawyer_data__knowledge__read\n  - mcp__plugin_lawyer_data__knowledge__list\n  - mcp__plugin_lawyer_data__knowledge__write\n  - mcp__plugin_lawyer_data__knowledge__retire\n  - mcp__remote-devices__plugin_lawyer_data__skill_source__read\n  - mcp__remote-devices__plugin_lawyer_data__sources__fetch\n  - mcp__remote-devices__plugin_lawyer_data__sources__check\n  - mcp__remote-devices__plugin_lawyer_data__knowledge__read\n  - mcp__remote-devices__plugin_lawyer_data__knowledge__list\n  - mcp__remote-devices__plugin_lawyer_data__knowledge__write\n  - mcp__remote-devices__plugin_lawyer_data__knowledge__retire\n---\n\n# Localize helper\n\n**Lane:** knowledge-tree writes. One instance per `/localize` run. Two instances writing the same overlay file are serialized by the runtime's locks, and an `exists` result is handled by the playbook.\n\nRun through the `lawyer:run-localize-helper` skill, from `/localize`, which runs this agent itself, with its own instructions, tools and model, in a fresh context. Never run its work inline, and never in a fork that does not name this agent as its agent.\n\n## Procedure\n\n1. Fetch your playbook with `skill_source__read`, path `localize/references/playbook.md`, under whichever of its two names this host grants. Fetch `shared/knowledge-tree.md` and, for a `/draft` run, `shared/declared-layout.md`, or for a `/publish` run, `shared/declared-format.md`, the same way.\n2. Follow the playbook section for the dispatch's `operation` and run type exactly. A `create` carrying `practitioner_layout` follows the playbook's section 3a: it fetches nothing, checks every part's source against `shared/declared-layout.md`'s vocabulary and refuses a part outside it, verifies each `literal` part word for word against the saved form when the dispatch names one, records that form as the type's source, and writes the type file with the parts as given. The runtime stamps it `learned_by: agent`.\n3. Return the single JSON object the playbook defines, and nothing else.\n\n## Restrictions\n\n- If a tool the playbook names is absent from your tool list under both names, halt and return `refused` with reason `tool_unavailable`. There is no fallback.\n- A refusal from a tool is a result. Map it as the playbook says. Never retry with different arguments except where the playbook names one retry.\n- Use built-in `Read` only on the files the playbook allows.\n\n## Residual\n\nYour tool calls, and the text they return, may be visible in the parent session's transcript. Nothing you do is hidden from the session that spawned you.\n\nor git revert of this pass's commit",
+          "would_show_needed": "none",
+          "advocate": {
+            "status": "undefended",
+            "record": "localize-helper-agent"
+          },
+          "advocate_q009": {
+            "status": "defended",
+            "record": "localize-helper-tools-allowlist"
+          },
+          "decision": "delete",
+          "decision_words": "Strike Q-001 / strike Q-009",
+          "decision_recorded": false,
+          "outcome": null
+        }
+      ]
+    }
+  ],
   "notes": [
     {
       "when": "2026-11-26T17:39:44Z",
@@ -25,6 +58,22 @@
     {
       "when": "2026-11-26T17:39:44Z",
       "text": "related_specs found by the session: no open issue mentions localize, no uncommitted edits to the target; docs/Plans/2026-10-13_four-plugin-split.md mentions the agent but is finished."
+    },
+    {
+      "when": "2026-11-26T20:30:00Z",
+      "text": "Q-002 to Q-008 lie inside D-001's span (the whole file) and go with it. They were not assessed separately: Q-001, the unit that holds them, was assessed and struck, and question lists a unit's inner instructions only for units kept."
+    },
+    {
+      "when": "2026-11-26T20:30:00Z",
+      "text": "Q-009 (protected) assessed in this delete pass under assess.md Outcome rule 4, because Brahm named it ('strike Q-009') and it had no advocate."
+    },
+    {
+      "when": "2026-11-26T20:30:00Z",
+      "text": "related_specs docs/Plans/2026-11-26_listing-cost-cuts.md names the agent (Part B1 spike). That spike is this session's own work and no other work edits the target (git log and status checked), so the collision question was answered by the session, not asked."
+    },
+    {
+      "when": "2026-11-26T20:30:00Z",
+      "text": "Dangling references fixed, nothing more: removed the run-localize-helper skill (it existed only to fork this agent) and its assignment.json and roster.json entries, and the agent's assignment.json entry; /localize intro and section 4 now say the session follows the playbook itself; the playbook's first line names /localize; test_legislation_fetcher.py drops the deleted file from TOUCHED and from the fetch-grant loop; three stale layering.json rulings for the file removed. Left as is: check_plugin_agents.py FETCH_GRANT_AGENTS still lists localize-helper.md (an absent listed agent passes), and the stale comment at source/lawyer/mcp/src/knowledge/write.ts:3."
     }
   ]
 }

@@ -195,12 +195,16 @@
       "class": "protected",
       "lines": 16,
       "exercised_by": [],
-      "lean": null,
-      "advocate": null,
+      "lean": "remove",
+      "advocate": {
+        "status": "defended",
+        "record": "localize-helper-tools-allowlist"
+      },
       "mark": "strike",
       "mark_words": "strike Q-009",
       "reason_new": null,
-      "reason_recorded": false
+      "reason_recorded": false,
+      "tldr": "1. Limits the localize-helper subagent to Read and the data server's skill_source, sources and knowledge tools.\n2. Strongest keep arguments: (a) without it the subagent would inherit Bash, Write, Edit and mail while reading untrusted fetched pages (inference, no source); (b) removing it alone, with the agent kept, fails scripts/check_plugin_agents.py:71-89 and test_legislation_fetcher.py:117. The advocate says every reason concerns this subagent's scope and none survives deleting the whole file (Q-001).\n3. Burden not met: no named maker (Record localize-helper-tools-allowlist: maker not established), and the loss exists only while the agent exists. Remove, with Q-001.\n4. Would meet it: a named maker's decision that the knowledge tools must run in a context without Bash, Write and mail, kept with the agent."
     }
   ]
 }
