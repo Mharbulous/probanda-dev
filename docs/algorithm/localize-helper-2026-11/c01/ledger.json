@@ -6,8 +6,8 @@
     "repo": "Mharbulous/probanda-dev",
     "path": "source/lawyer/agents/localize-helper.md"
   },
-  "phase": "check",
-  "cycles_completed": 0,
+  "phase": "closed",
+  "cycles_completed": 1,
   "related_specs": [
     "docs/Plans/2026-11-26_listing-cost-cuts.md"
   ],
@@ -16,7 +16,7 @@
     {
       "pass_id": "c01-delete-1",
       "step": "delete",
-      "status": "applied",
+      "status": "closed",
       "commit": "ea2de26e",
       "proposed_by": "claude-opus-5-5",
       "deletions": [
@@ -40,10 +40,38 @@
           },
           "decision": "delete",
           "decision_words": "Strike Q-001 / strike Q-009",
-          "decision_recorded": false,
-          "outcome": null
+          "decision_recorded": true,
+          "outcome": "deleted"
         }
-      ]
+      ],
+      "check": {
+        "evidence": "tests",
+        "tests": {
+          "command": "python scripts/build_plugin.py --check; python scripts/check_plugin.py; python scripts/check_layering.py; python -m pytest -q source/skills/legal-research/tests/test_legislation_fetcher.py",
+          "exit_code": 1,
+          "summary": "build_plugin --check: exit 1, plugins/lawyer is stale, 1 changed (skills/find-document/SKILL.md). check_plugin: exit 1, CHECK FAILED - 8 invariant(s) violated. check_layering: exit 0, 101 allowed, 0 to fix, 0 with no ruling, 0 stale rulings. pytest test_legislation_fetcher.py: exit 0, 20 passed, 98 subtests passed."
+        },
+        "run_file": null,
+        "failures": [
+          {
+            "source": "python scripts/build_plugin.py --check",
+            "id": "plugins/lawyer is stale: changed skills/find-document/SKILL.md",
+            "items": []
+          },
+          {
+            "source": "python scripts/check_plugin.py",
+            "id": "shipped-tree-purity, all seven plugins: skill folder in .claude/skills/ (the source is source/skills/): release",
+            "items": []
+          },
+          {
+            "source": "python scripts/check_plugin.py",
+            "id": "reference-resolution, developer: hitl-triage/references/suggestion-route.md -> .claude/skills/release/SKILL.md",
+            "items": []
+          }
+        ],
+        "put_back": [],
+        "rate_pct": 0.0
+      }
     }
   ],
   "notes": [
@@ -74,6 +102,14 @@
     {
       "when": "2026-11-26T20:30:00Z",
       "text": "Dangling references fixed, nothing more: removed the run-localize-helper skill (it existed only to fork this agent) and its assignment.json and roster.json entries, and the agent's assignment.json entry; /localize intro and section 4 now say the session follows the playbook itself; the playbook's first line names /localize; test_legislation_fetcher.py drops the deleted file from TOUCHED and from the fetch-grant loop; three stale layering.json rulings for the file removed. Left as is: check_plugin_agents.py FETCH_GRANT_AGENTS still lists localize-helper.md (an absent listed agent passes), and the stale comment at source/lawyer/mcp/src/knowledge/write.ts:3."
+    },
+    {
+      "when": "2026-11-26T18:44:05Z",
+      "text": "check c01-delete-1: the repo's test guard hook refused the three folder suites (source/skills/legal-research/tests, scripts/tests, source/lawyer/tests) because regression suites run only in the nightly workflow. Only the test file the pass edited was run. The three failures trace to no item of the pass: they name skills/find-document/SKILL.md (commit 173782b0) and .claude/skills/release (commit f4395c40), both committed after the pass and neither touched by it."
+    },
+    {
+      "when": "2026-11-26T18:44:05Z",
+      "text": "D-001 decisions recorded in the Record store: localize-helper-agent (commit b677f249) and localize-helper-tools-allowlist (commit 20f982b9), both now status deleted. The allowlist Record is keyed by the requirement text mcp__plugin_lawyer_data__knowledge__retire, not by the register's wording, so the first decision run for Q-009 found no Record and wrote nothing, and a second run keyed correctly recorded it."
     }
   ]
 }
