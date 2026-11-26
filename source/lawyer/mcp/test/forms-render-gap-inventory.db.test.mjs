@@ -99,6 +99,7 @@ const CASES = [
         ["form_fields", 0, "Chronology"],
         ["form_fields", 1, "Opening statement"],
         ["form_fields", 2, "Position on the appellants' statement of facts"],
+        ["form_fields", 7, "Issues on appeal"],
         ["form_fields", 3, "Submissions"],
         ["form_fields", 4, "Order sought"],
         ["form_fields", 5, "Place of signing"],
