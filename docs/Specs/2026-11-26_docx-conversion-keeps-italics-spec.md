@@ -71,3 +71,26 @@ Made by the orchestrating session's read of HEAD.
 - **Likely live bugs (traced in code, not run).** Form 33 citation lines (`> *Name*, ...`) go to `_make_excerpt_para` with italics off, so the Word file prints the asterisks. The factum and the affidavit also print `*x*` literally.
 - **Factum authority names.** `fill_factum.py` italicizes every name. It turns roman when the authorities JSON gives `kind` `doctrine` (a secondary source, per the related spec), and stays italic when `kind` is absent.
 - **Validators unchanged.** Each form's validator keeps refusing what it refuses today (for example `**` in Form 32). Fenced blocks stay raw.
+
+## 12. Verification against HEAD, 2026-11-26
+
+Fixture `See *Alpha v Beta*, _Gamma Act_ and ***Delta***.` run through each writer's own builder at HEAD (`d5eaec90`). The factum validator refuses `**`, so the factum took `See *Alpha v Beta* and _Gamma Act_.` instead. Runs are shown as `I[...]` italic, `B[...]` bold, `[...]` plain.
+
+| Writer (script, function) | Reaches it from | Output today | Verdict |
+|---|---|---|---|
+| `publish-general/scripts/fill_general.py` `runs` (body paragraph and `- ` list item, also `re` lines) | `drafting_forms__publish_general`, and `publish/scripts/render_letterhead.py` (letterhead letters) | `[See ] I[Alpha v Beta] [, _Gamma Act_ and ] B[*Delta] [*.]` | `*x*` works. `_x_` prints its underscores. `***x***` prints a stray asterisk on each side and loses the italic. |
+| `publish-vaniac-package/scripts/fill_vaniac.py` `_runs` (heading, numbered paragraph, bullet, cite, table cell) | `drafting_forms__publish_vaniac_package` | `[See ] I[Alpha v Beta] [, _Gamma Act_ and *] B[Delta] [*.]` | `*x*` works. `_x_` literal. `***x***` prints asterisks and loses the italic. |
+| same, `quote` lines | same | `[See *Alpha v Beta*, _Gamma Act_ and ***Delta***.]` | Verbatim, raw by design. |
+| `publish-bcsc-form/scripts/fill_ooxml.py` `_append_runs` with italics on (Form 32 numbered, `> ` excerpt, `>> ` citation) | `fill_parts.replace_part_bodies`, `drafting_forms__emit_form32` then the asm32 fill | `[See ] I[Alpha v Beta] [, _Gamma Act_ and ***Delta***.]` | `*x*` works. `_x_` and `***x***` literal (the asm32 validator refuses `**`). |
+| same, `_make_form33_para` (Form 33 numbered) | asm33 fill | `[See ] I[Alpha v Beta] [, _Gamma Act_ and **] I[Delta] [**.]` | `*x*` works, without `<w:iCs/>`. `_x_` literal. A second hand-rolled split. |
+| same, `_make_excerpt_para` (Form 33 `> ` line, excerpt or citation) | asm33 fill | `[See *Alpha v Beta*, _Gamma Act_ and ***Delta***.]` | **Bug confirmed**: the citation line `> *Name*, ...` prints its asterisks. |
+| same, `_append_runs` with italics off (Notice of Civil Claim, Petition, Response to Civil Claim numbered paragraphs) | Draft-mode fill of those forms | `[See *Alpha v Beta*, _Gamma Act_ and ***Delta***.]` | **Bug**: every asterisk prints. |
+| `publish-bcsc-form/scripts/fill_blocks.py` `_fill_affidavit_paragraphs` | `drafting_forms__emit_affidavit` then the asmaff fill | `[See *Alpha v Beta*, _Gamma Act_ and ] B[*Delta] [*.]` | **Bug confirmed**: only `**` is read. `*x*` prints its asterisks. |
+| `publish-bcca-factum/scripts/fill_factum.py` `_fill_parts` (opening, numbered, plain, `cite:` lines) | `drafting_forms__emit_bcca_factum` / `publish_bcca_factum` | `[See *Alpha v Beta* and _Gamma Act_.]`, cite `[*Housen v Nikolaisen*, 2002 SCC 33, para 8]` | **Bug confirmed**: no inline emphasis at all. |
+| same, `> ` quote lines | same | `[See *Alpha v Beta* and _Gamma Act_. the standard of review ...]` | Verbatim, raw. |
+| same, `_fill_authorities` (List of Authorities name) | same | `I[Housen v Nikolaisen] [, 2002 SCC 33]` | Every name italic, `kind` not read (the JSON carries none; the validator refuses any key beyond `authority`, `citation`, `paras`). |
+| `lawyer/mcp/src/correspondence/docx.ts` `inlineRuns` | `drafting_forms__reply_draft` | `[See ] I[Alpha v Beta] [, ] I[Gamma Act] [ and ] BI[Delta] [.]` | Correct. The model for the Python parser. |
+| `publish/scripts/fill_book.py` (BCCA book and Book of Authorities contents), `publish-boc` `fill_boc.py` and `fill_form63.py`, `publish-bcsc-form` scalar, caption, cover, jurat, service-block and appendix fills, `renumber-affidavit` | their own `publish` routes | Fill from JSON fields or existing .docx text, with no markdown inline emphasis in their input. | Out of scope: no emphasis markup reaches them. |
+| PDF: `assemble/*` scripts (`paginate_book.py`, `paginate.py`, `bind_general.py`, `bind_boc.py`, `bind_package.py`, `paginate_record.py`) and `publish-bcsc-form/scripts/steps/shared/render.py` | `assemble_general` and the other assemble routes | Convert a filled .docx to PDF through Word or LibreOffice. None reads markdown. | A PDF carries whatever italics its .docx carries, so fixing the .docx writers fixes the PDFs. |
+
+No path writes footnotes from markdown.
