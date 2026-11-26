@@ -17,7 +17,7 @@
       "pass_id": "c01-delete-1",
       "step": "delete",
       "status": "applied",
-      "commit": null,
+      "commit": "ea2de26e",
       "proposed_by": "claude-opus-5-5",
       "deletions": [
         {
