@@ -39,7 +39,10 @@ const FIXTURES = {
       ],
     },
   },
-  Arguments: { submissions: [], counter_arguments: [{ key: "anticipated:1", kind: "anticipated", text: "No <duty>", source: null, linked: [] }] },
+  Arguments: {
+    arguments: [{ id: 1, label: "#1", number: 1, side: "opposing", contention: "No <duty>", where: null, tags: ["Anticipated", "No rebuttal"], killed: false, facts: [], law: [], rebuts: [], rebutted_by: [] }],
+    rebuttals: [],
+  },
   "Loose Threads": {
     groups: [{ key: "research", label: "Research", colour: "#8E6620", count: 1 }],
     ideas: [
@@ -56,6 +59,7 @@ const FIXTURES = {
  * Procedural History's and Material Facts' at the split of Provable Facts (docs/ADRs/0011); Arguments' at its badge filter;
  * the rest retaken on 2026-10-29 for 8be771b7, which renamed board.css's first comment ("Job Board" to "Work Board");
  * Arguments' retaken again on 2026-10-31 for e0065be, which added the session focus pointer to arguments.js;
+ * Arguments' retaken on 2026-11-26 for fd35484e, which split the page into Arguments and Rebuttals tabs, its fixture moved to that data shape;
  * Legal Research's taken on 2026-11-01, when it replaced Legal Memos, and retaken that day when Case Briefs listed each earlier file,
  * and again for the four tabs, the noting-up badges and the Legal Memos sections, and for the file link through the page API;
  * Loose Threads' retaken on 2026-11-02 for its tabs by kind of work and its status filter. */
@@ -63,7 +67,7 @@ const PINS = {
   "Procedural History": "ac5b979ecc31f5442ad6d0e67c59f293346502cff179d0037c4f67a363ac0187",
   "Material Facts": "1970c261e8ad20d7300056baf5bcc5fe678269cd82941263d06da76ad68bf00d",
   "Legal Research": "0faafa93119733be4235e97467b87256076b340176c29ba40ccf124d41036b4b",
-  Arguments: "2b96c96b31a4815468b2f9a04efd9e05b4138150c587d002e7f0a7132e1c3d4e",
+  Arguments: "c0e6879481cda43042c03c57c5881aebe84f35a33c2b6631c409ad13711d5456",
   "Loose Threads": "2cd6a6bdc56e1be7921b96a1a19520fdce33936e89f0d53c07993ab4d4f657ce",
 };
 
