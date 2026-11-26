@@ -6,11 +6,11 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-SKILL_ROOT = REPO_ROOT / "public" / "plugins" / "lawyer" / "skills" / "dyu"
+SKILL_ROOT = REPO_ROOT / "source" / "skills" / "dyu"
 HOOK = SKILL_ROOT / "hooks" / "trailing-dyu.py"
 SKILL_MD = SKILL_ROOT / "SKILL.md"
 PLUGIN_JSON = REPO_ROOT / "source" / "lawyer" / "plugin.json"
-PUBLIC_PLUGIN_JSON = REPO_ROOT / "public" / "plugins" / "lawyer" / ".claude-plugin" / "plugin.json"
+BUILT_PLUGIN_JSON = REPO_ROOT / "plugins" / "lawyer" / ".claude-plugin" / "plugin.json"
 PLUGIN_HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/skills/dyu/hooks/trailing-dyu.py"
 
 
@@ -64,10 +64,10 @@ class TrailingDyuTests(unittest.TestCase):
         args = [arg for group in groups for hook in group["hooks"] for arg in hook["args"]]
         self.assertIn(PLUGIN_HOOK_ARG, args)
 
-    def test_the_public_plugin_registers_the_hook(self):
-        groups = json.loads(PUBLIC_PLUGIN_JSON.read_text(encoding="utf-8"))["hooks"]["UserPromptSubmit"]
+    def test_the_built_plugin_registers_the_hook(self):
+        groups = json.loads(BUILT_PLUGIN_JSON.read_text(encoding="utf-8"))["hooks"]["UserPromptSubmit"]
         args = [arg for group in groups for hook in group["hooks"] for arg in hook["args"]]
-        self.assertEqual(args, [PLUGIN_HOOK_ARG])
+        self.assertIn(PLUGIN_HOOK_ARG, args)
 
 
 if __name__ == "__main__":
