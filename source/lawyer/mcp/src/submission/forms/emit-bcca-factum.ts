@@ -10,10 +10,12 @@
 import { ValidationError } from "../../errors.js";
 import { passesBriefOnlyCap } from "./brief-only-cap.js";
 import { buildLowerCourtRoleByRole, formatNameList, groupPartiesByRole, pluralizeRole, type CaptionParty } from "./components.js";
+import { letter } from "./arguments-page.js";
 import { courtRecordCitation } from "./markers.js";
 import {
   factumAuthorities,
   factumEnactments,
+  factumIssues,
   factumRecordLabel,
   factumSigner,
   fetchChronology,
@@ -83,7 +85,9 @@ export function renderBccaFactumFiledFace(ctx: RenderContext, datedOn: string): 
   if (factsPosition.length === 0 && facts.length === 0 && factsRhetoric.length === 0) refuse("Part 1 has neither a position on the appellants' facts nor any fact");
 
   const submissions = fetchSubmissions(ctx.dbPath, filing.id, "form");
-  if (submissions.length === 0) refuse("no submission is deployed to this factum (Parts 2 and 3 would be empty)");
+  const { leadIn, issues } = factumIssues(prose);
+  if (leadIn === null || issues.length === 0) refuse("Part 2 needs the lead-in stating the respondents' position and at least one issue on appeal");
+  if (submissions.length === 0) refuse("no submission is deployed to this factum (Part 3 would be empty)");
   const submissionIds = submissions.map((s) => s.id);
   const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, submissionIds));
   const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
@@ -131,7 +135,8 @@ export function renderBccaFactumFiledFace(ctx: RenderContext, datedOn: string): 
   body.push("");
 
   body.push("## PART 2 - ISSUES ON APPEAL", "");
-  submissions.forEach((s) => body.push(`${++n}. ${oneLine(s.contention)}`));
+  body.push(`${++n}. ${oneLine(leadIn!)}`);
+  issues.forEach((issue, i) => body.push(`(${letter(i)}) ${oneLine(issue.text)}`));
   body.push("");
 
   body.push("## PART 3 - ARGUMENT", "");

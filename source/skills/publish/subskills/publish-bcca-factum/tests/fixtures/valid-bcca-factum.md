@@ -32,7 +32,8 @@ cite: (Appeal Record, Vol. 1, p. 12)
 
 ## PART 2 - ISSUES ON APPEAL
 
-3. The chambers judge applied the correct test.
+3. The respondents say the chambers judge made no error, and that the issue on this appeal is:
+(a) Did the chambers judge apply the correct test?
 
 ## PART 3 - ARGUMENT
 

@@ -58,16 +58,19 @@ The chambers judge made no error.
 
 ## PART 2 - ISSUES ON APPEAL
 
-3. The chambers judge applied the correct test.
-4. The order was within the judge's discretion.
+3. The respondents say the chambers judge made no error, and that the issues on this appeal are:
+
+(a) Did the chambers judge apply the correct test?
+
+(b) Was the order within the judge's discretion?
 
 ## PART 3 - ARGUMENT
 
-5. The chambers judge applied the correct test.
+4. The chambers judge applied the correct test.
 
-6. The arbitration was commenced on 12 May 2026. (Appeal Record, Vol. 1, p. 12)
+5. The arbitration was commenced on 12 May 2026. (Appeal Record, Vol. 1, p. 12)
 
-7. The standard of review on a question of law is correctness.
+6. The standard of review on a question of law is correctness.
 
    ```
    the standard of review for questions of law is correctness
@@ -75,9 +78,9 @@ The chambers judge made no error.
 
    > *Housen v Nikolaisen*, 2002 SCC 33, para 8
 
-8. The order was within the judge's discretion.
+7. The order was within the judge's discretion.
 
-9. A court may stay proceedings in favour of arbitration.
+8. A court may stay proceedings in favour of arbitration.
 
    ```
    7 (1) If a party to an arbitration agreement commences legal proceedings, the court must stay them.
@@ -93,11 +96,11 @@ The chambers judge made no error.
 
 ## PART 4 - NATURE OF ORDER SOUGHT
 
-10. The respondents seek an Order:
+9. The respondents seek an Order:
 
 that the appeal be dismissed, with costs to the respondents.
 
-11. All of which is respectfully submitted.
+10. All of which is respectfully submitted.
 
 Dated at the City of Vancouver, Province of British Columbia, this [month] [day] of [year].
 
@@ -108,9 +111,9 @@ Counsel for the Respondents
 
 | Authorities | Page # in factum | Para # in factum |
 | :--- | :---: | :---: |
-| Arbitration Act, SBC 2020, c 2 | (fills in Word) | 9 |
-| Court of Appeal Rules, BC Reg 120/2022 | (fills in Word) | 9 |
-| Housen v Nikolaisen, 2002 SCC 33 | (fills in Word) | 7 |
+| Arbitration Act, SBC 2020, c 2 | (fills in Word) | 8 |
+| Court of Appeal Rules, BC Reg 120/2022 | (fills in Word) | 8 |
+| Housen v Nikolaisen, 2002 SCC 33 | (fills in Word) | 6 |
 
 ## APPENDICES: ENACTMENTS
 

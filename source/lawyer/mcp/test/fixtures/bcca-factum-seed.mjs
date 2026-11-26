@@ -47,6 +47,11 @@ INSERT INTO filing_prose (filing_id, slot, text) VALUES
 
 The chambers judge made no error.'),
   (1, 'facts_position', 'The respondents agree with the appellants'' statement of facts, except as set out below.'),
+  (1, 'issues', 'The respondents say the chambers judge made no error, and that the issues on this appeal are:
+
+Did the chambers judge apply the correct test? <!-- arguments 1 -->
+
+Was the order within the judge''s discretion? <!-- arguments 2 -->'),
   (1, 'signing_place', 'Vancouver');
 INSERT INTO documents (id, proceeding_id, label) VALUES (20, 1, 'Appeal Record');
 INSERT INTO facts (id, proceeding_id, postulate, court_record, court_record_pinpoint) VALUES

@@ -79,6 +79,25 @@ test("factum: no deployed submissions stays on the mockup, off the filed face", 
   assertMockupKeepsFiledDrops(mockup, filed, "🧩", "No submissions deployed to this factum.");
 });
 
+test("factum: no issues on appeal stays on the mockup, off the filed face", async () => {
+  const { mockup, filed } = await renderBoth(FACTUM_SEED + "DELETE FROM filing_prose WHERE slot = 'issues';", "Factum", FACTUM_CASE_DATA);
+  assertMockupKeepsFiledDrops(mockup, filed, "🧩", "No issues on appeal recorded.");
+});
+
+test("factum: an issue naming no Part 3 argument, and an argument no issue names, stay on the mockup, off the filed face", async () => {
+  const issues = "The respondents say there was no error.\n\nWas the test correct? <!-- arguments 1 -->\n\nIs a further question open?";
+  const { mockup, filed } = await renderBoth(FACTUM_SEED + `UPDATE filing_prose SET text = '${issues}' WHERE slot = 'issues';`, "Factum", FACTUM_CASE_DATA);
+  assertMockupKeepsFiledDrops(mockup, filed, "🧩", "This issue names no argument in Part 3.");
+  assertMockupKeepsFiledDrops(mockup, filed, "🧩", "No issue in Part 2 names this argument.");
+  const part2 = mockup.slice(mockup.indexOf("## PART 2"), mockup.indexOf("## PART 3"));
+  assert.match(part2, /^\(a\) Was the test correct\? <!-- arguments 1 -->$/m, "the issue keeps its link on the mockup");
+  assert.match(part2, /^\(b\) Is a further question open\?\n🧩 This issue names no argument in Part 3\./m, "the flag sits under the unlinked issue");
+  const part3 = mockup.slice(mockup.indexOf("## PART 3"), mockup.indexOf("## PART 4"));
+  assert.equal(part3.split("No issue in Part 2 names this argument.").length - 1, 1, "only argument 2 is unframed");
+  assert.match(filed, /^\(a\) Was the test correct\?$/m, "the filed face drops the link comment");
+  assert.doesNotMatch(filed, /<!-- arguments/, "no link comment reaches the forum");
+});
+
 test("factum: an enactment with no excerpt stays on the mockup, off the filed face", async () => {
   // The verified statement keeps 'verified' with no excerpt: the write snapshots the pair it leaves, as
   // the v47 verified write does, so the reopen trigger has no moved pair to reset.

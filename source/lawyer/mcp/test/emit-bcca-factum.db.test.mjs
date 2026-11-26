@@ -122,6 +122,8 @@ test("names the missing cover-critical or required field", async () => {
     ["UPDATE parties SET is_client = 0;", /no party of the proceeding is recorded as the client/],
     ["DELETE FROM filing_prose WHERE slot = 'signing_place';", /place of signing is not recorded/],
     ["DELETE FROM filing_chronology;", /chronology has no events/],
+    ["DELETE FROM filing_prose WHERE slot = 'issues';", /Part 2 needs the lead-in stating the respondents' position and at least one issue/],
+    ["UPDATE filing_prose SET text = 'The respondents say there was no error.' WHERE slot = 'issues';", /at least one issue on appeal/],
     ["UPDATE authorities SET citation = NULL WHERE id = 1;", /cite an authority with no citation/],
   ];
   for (const [sql, expected] of cases) {

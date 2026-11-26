@@ -98,6 +98,16 @@ test("authorities are alphabetical with paragraphs; enactments hold statutes; ru
   assert.ok(enactments.includes("#### Court rules not in this appendix"), "rule held back for the practitioner");
 });
 
+test("Part 2 prints the lead-in and the lettered issues, never Part 3's contentions", async () => {
+  const { text } = await renderFactum();
+  const part2 = text.slice(text.indexOf("## PART 2"), text.indexOf("## PART 3"));
+  assert.match(part2, /^3\. The respondents say the chambers judge made no error, and that the issues on this appeal are:$/m, "numbered lead-in");
+  assert.match(part2, /^\(a\) Did the chambers judge apply the correct test\? <!-- arguments 1 -->$/m, "first issue, lettered, with its link");
+  assert.match(part2, /^\(b\) Was the order within the judge's discretion\? <!-- arguments 2 -->$/m, "second issue");
+  assert.doesNotMatch(part2, /The chambers judge applied the correct test\./, "no Part 3 contention in Part 2");
+  assert.doesNotMatch(text, /🧩 (This issue names no argument|No issue in Part 2 names)/, "every issue and argument is linked");
+});
+
 test("page budget and unanswered points render on the mockup and never on the filed face", async () => {
   const { text } = await renderFactum();
   assert.ok(text.includes("## Page budget"), "page budget section");

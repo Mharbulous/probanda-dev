@@ -113,8 +113,10 @@ Blank lines are ignored. Other lines take one of four forms:
 | any other text | Unnumbered paragraph |
 
 - The Opening Statement holds unnumbered paragraphs only, at least one.
-- Parts 1–3 each open with a numbered paragraph and hold only numbered
+- Parts 1 and 3 each open with a numbered paragraph and hold only numbered
   paragraphs, quote lines and cite lines.
+- Part 2 is a numbered lead-in stating the respondents' position, then its
+  lettered issues as unnumbered paragraphs (`(a) …`).
 - Part 4 is a numbered lead-in ("The respondents seek an Order:"), one or
   more unnumbered order paragraphs, then the numbered closing line ("All of
   which is respectfully submitted.").
@@ -132,7 +134,7 @@ Blank lines are ignored. Other lines take one of four forms:
 | `bad_date` | A date is not a real `YYYY-MM-DD` date |
 | `unknown_heading` / `duplicate_heading` / `heading_order` / `missing_heading` / `content_before_heading` | Body headings break the list above |
 | `bad_opening_statement` | Opening Statement empty or holds a numbered, quote or cite line |
-| `empty_part` / `numbering` / `unnumbered_paragraph` | Part 1–4 numbering broken, a Part with no numbered paragraph, or an unnumbered paragraph in Parts 1–3 |
+| `empty_part` / `numbering` / `unnumbered_paragraph` | Part 1–4 numbering broken, a Part with no numbered paragraph, or an unnumbered paragraph in Part 1 or 3 |
 | `bad_part4` | Part 4 not lead-in, orders, closing line |
 | `disallowed_markup` | `<!--` or `**` in the body |
 | `bad_input` | (fill only) The `--out-name` stem is not a bare file name stem |

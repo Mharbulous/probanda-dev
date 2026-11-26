@@ -23,6 +23,7 @@ import {
   type BccaCoverPageContact,
   type CaptionParty,
 } from "./components.js";
+import { letter } from "./arguments-page.js";
 import { gapMarker, mockupMessage, rebuttalMarker } from "./markers.js";
 import { recordCriterionGlyphs } from "./proposal-inventory.js";
 import { captionHeadingFor, opposingPartyIds } from "./query.js";
@@ -81,7 +82,7 @@ export function fetchChronology(dbPath: string, filingId: number): ChronologyRow
   return rows<ChronologyRow>(dbPath, "SELECT event_date, event FROM filing_chronology WHERE filing_id = ? ORDER BY ordinal", [filingId]);
 }
 
-export type ProseSlot = "opening_statement" | "facts_position" | "signing_place";
+export type ProseSlot = "opening_statement" | "facts_position" | "issues" | "signing_place";
 
 /** filing_prose (schema v22), one block per slot. Paragraphs are separated by blank lines. */
 export function fetchProseParagraphs(dbPath: string, filingId: number): Map<ProseSlot, string[]> {
@@ -95,6 +96,26 @@ export function fetchProseParagraphs(dbPath: string, filingId: number): Map<Pros
         .filter((p) => p !== ""),
     ])
   );
+}
+
+export interface FactumIssue {
+  text: string;
+  /** The `arguments` ids the issue frames, from its trailing `<!-- arguments 3, 4 -->`. */
+  argumentIds: number[];
+}
+
+const ISSUE_ARGUMENTS = /\s*<!--\s*arguments\s+([\d,\s]*?)\s*-->\s*$/;
+
+/** Part 2 (filing_prose slot 'issues'): the first paragraph is the lead-in stating the respondents'
+ * position, each later paragraph one issue. The mockup and the emitter letter the issues. */
+export function factumIssues(prose: Map<ProseSlot, string[]>): { leadIn: string | null; issues: FactumIssue[] } {
+  const [leadIn, ...rest] = prose.get("issues") ?? [];
+  const issues = rest.map((p) => {
+    const m = ISSUE_ARGUMENTS.exec(p);
+    if (!m) return { text: p, argumentIds: [] };
+    return { text: p.slice(0, m.index).trim(), argumentIds: m[1].split(/[\s,]+/).filter((x) => x !== "").map(Number) };
+  });
+  return { leadIn: leadIn ?? null, issues };
 }
 
 export interface FactumAuthority {
@@ -406,15 +427,22 @@ export function renderBccaFactum(ctx: RenderContext): string {
 
   lines.push("## PART 2 - ISSUES ON APPEAL");
   lines.push("");
-  if (submissions.length === 0) {
-    pushGap(ctx, lines, mockupMessage(gapMarker("gap"), "No submissions deployed to this factum."), 3, "Submissions");
+  const { leadIn, issues } = factumIssues(prose);
+  if (leadIn === null || issues.length === 0) {
+    pushGap(ctx, lines, mockupMessage(gapMarker("gap"), "No issues on appeal recorded."), 7, "Issues on appeal");
   }
-  submissions.forEach((s) => {
+  if (leadIn !== null) {
     para += 1;
-    const answers = points.filter((pt) => pt.rebuttals.some((r) => r.id === s.id)).map((pt) => pt.component ?? pt.contention);
-    lines.push(`${para}. ${s.contention}${answers.length > 0 ? ` <!-- answers: ${answers.join("; ")} -->` : ""}`);
+    lines.push(`${para}. ${leadIn}`, "");
+  }
+  issues.forEach((issue, i) => {
+    lines.push(`(${letter(i)}) ${issue.text}${issue.argumentIds.length > 0 ? ` <!-- arguments ${issue.argumentIds.join(", ")} -->` : ""}`);
+    if (!issue.argumentIds.some((id) => submissionIds.includes(id))) {
+      pushGap(ctx, lines, mockupMessage(gapMarker("gap"), "This issue names no argument in Part 3."), 7, `Issue (${letter(i)}): arguments`);
+    }
+    lines.push("");
   });
-  lines.push("");
+  const framed = new Set(issues.flatMap((issue) => issue.argumentIds));
   const unanswered = points.filter((pt) => pt.rebuttals.length === 0);
   if (unanswered.length > 0) {
     lines.push("#### Points not yet answered");
@@ -427,6 +455,9 @@ export function renderBccaFactum(ctx: RenderContext): string {
 
   lines.push("## PART 3 - ARGUMENT");
   lines.push("");
+  if (submissions.length === 0) {
+    pushGap(ctx, lines, mockupMessage(gapMarker("gap"), "No submissions deployed to this factum."), 3, "Submissions");
+  }
   const renderedLawAssertions = new Map<number, number>();
   for (const entry of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s) => s.filing_ordinal)) {
     if (entry.kind === "rhetoric") {
@@ -451,6 +482,9 @@ export function renderBccaFactum(ctx: RenderContext): string {
       { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s.no_facts_needed_on, noLawNeededOn: s.no_law_needed_on, servedOrderWordings: s.served_order_wordings }
     );
     lines.push(...result.lines);
+    if (!framed.has(s.id)) {
+      pushGap(ctx, lines, mockupMessage(gapMarker("gap"), "No issue in Part 2 names this argument."), 3, `Argument ${s.id}: issue`);
+    }
     lines.push("");
     para = result.nextPara;
   }
