@@ -451,8 +451,9 @@ export type BuildResult =
   /** An AI-noticed card the daily cap or suppression does not allow now, or whose observation was already shown. */
   | { built: false; reason: "not_raised" };
 
-/** Builds a card from the session's scrubbed draft. Refused, with nothing saved, when the full check
+/** Builds a card from the session's scrubbed draft. Refused, with no card saved, when the full check
  * could not read every record source (decision 22: building is done only when the full check passes),
+ * the practitioner's draft then kept as a held draft,
  * or while it finds a match in text the practitioner would read; a match in generated text is dropped
  * and recorded. A held draft named by held_id leaves the store in the same write, so it is offered once. */
 export async function buildCard(input: CardInput, facts: Record<string, unknown>, deps: CardDeps): Promise<BuildResult> {
@@ -466,7 +467,17 @@ export async function buildCard(input: CardInput, facts: Record<string, unknown>
   const card = newCard(input, structuredClone(facts), at);
   const { records, stopWords } = await recordsOf(deps);
   const check = runCrossCheck(cardText(card), records, stopWords);
-  if (!check.complete) return { built: false, reason: "records_unreadable", unreadable: unreadSources(check.records) };
+  if (!check.complete) {
+    // The practitioner's draft is kept unsent on this computer, to be offered in a later session;
+    // a held draft offered again stays held. An AI-noticed draft is not kept: nobody asked for it.
+    if (input.observation_id === null && input.held_id === null) {
+      const { origin, source, skill, pain_point, items, context_lines } = input;
+      await withStore(deps.env, (store) => {
+        store.records.push({ kind: "held", record_id: randomUUID(), created_at: at, draft: { origin, source, skill, pain_point, items, context_lines } });
+      });
+    }
+    return { built: false, reason: "records_unreadable", unreadable: unreadSources(check.records) };
+  }
   const readable = check.hits.filter((h) => isReadable(h.part));
   if (readable.length) {
     // The session wrote this text: it is told where each match lies, never what it matched.

@@ -18,9 +18,10 @@ that the session cannot see the key. No branch asks the model to act or names a
 tool or a skill (context-engineering rule 19, issue #227).
 
 With the key present, the hook names how many suggestions are held unposted and
-says none has been sent. Nothing is held any more: a suggestion submitted
-from its card with no key is kept unsent and sent by the data server once the key is
-stored. The held drafts are the held records of the lawyer data
+says none has been sent. A suggestion submitted from its card with no key is not
+held: it is kept unsent and sent by the data server once the key is stored. A draft
+is held when an earlier version had no key, or when its card's build could not check
+every record source. The held drafts are the held records of the lawyer data
 server's suggestion store, suggestions/suggestions.json beside probanda.json
 (source/lawyer/mcp/src/suggestions/store.ts), plus, until that store has read it,
 those of the old suggestions.local.json beside probanda.json (resolved as
@@ -53,9 +54,8 @@ UNSEEN = (
     "it is out of this session's reach. " + EFFECT
 )
 HELD = (
-    "This computer holds {count} suggestion(s) to the Probanda team, drafted while it had no Probanda "
-    "key, before suggestions were shown as cards. None of them has been sent. One is sent only if the "
-    "practitioner submits its card."
+    "This computer holds {count} suggestion(s) to the Probanda team not yet shown as cards. None of "
+    "them has been sent. One is sent only if the practitioner submits its card."
 )
 
 

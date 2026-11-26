@@ -80,6 +80,21 @@ async function raise(d, session) {
   return built.card_id;
 }
 
+test("an AI-noticed card whose check cannot read every record source is neither built nor kept", async (t) => {
+  const d = await device(t);
+  await record(d);
+  const next = await obs.nextObservation({ chat_session: "s1" }, d.f.env, d.seams);
+  const input = card.cardInput({
+    origin: "probanda", source: "llm", observation_id: next.observation.observation_id, chat_session: "s1",
+    pain_point: { text: "A step in drafting stopped with an error.", guess: true },
+    items: [{ text: "Make the step finish without the error.", guess: true }],
+  });
+  const unread = { ...RECORDS, states: { ...RECORDS.states, document_title: "unavailable" } };
+  const result = await card.buildCard(input, structuredClone(FACTS), { ...d.deps, records: async () => unread });
+  assert.deepEqual(result, { built: false, reason: "records_unreadable", unreadable: ["document title"] });
+  assert.deepEqual(stored(d.f).records.filter((r) => r.kind === "held" || r.kind === "card"), []);
+});
+
 test("an observation holds only structured Probanda output, in fixed words, and its fingerprint comes from the installed plugin", async (t) => {
   const d = await device(t);
   const id = await record(d, { ...TOOL_ERROR, counts: { calls: 3 }, text_key: "noted_as_loose_thread" });

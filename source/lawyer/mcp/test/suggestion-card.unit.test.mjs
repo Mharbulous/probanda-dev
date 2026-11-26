@@ -101,14 +101,45 @@ test("a card is built only when the full check finds nothing, and a built card p
 
 const UNREAD = { ...RECORDS, states: { ...RECORDS.states, matter: "unavailable", file_name: "partial" } };
 
-test("a build whose check could not read every record source is refused, naming only the categories, and nothing is saved", async (t) => {
+const CATEGORY = { client: "client", matter: "matter", contact: "contact", folder_name: "folder name", document_title: "document title", file_name: "file name" };
+const held = (f) => read(f).records.filter((r) => r.kind === "held");
+
+test("a build whose check could not read every record source is refused, naming only the categories, and keeps the draft unsent", async (t) => {
   const { f, deps } = await device(t);
   const result = await card.buildCard(card.cardInput(structuredClone(INPUT)), FACTS, { ...deps, records: async () => UNREAD });
   assert.deepEqual(result, { built: false, reason: "records_unreadable", unreadable: ["matter", "file name"] });
-  assert.throws(() => readFileSync(f.store), /ENOENT/, "nothing is stored");
+  const { origin, source, skill, pain_point, items, context_lines } = card.cardInput(structuredClone(INPUT));
+  assert.deepEqual(held(f).map((r) => r.draft), [{ origin, source, skill, pain_point, items, context_lines }], "the scrubbed draft is kept as a held draft");
+  assert.equal(read(f).records.length, 1, "no card and nothing to send is stored");
   const { readdirSync, existsSync: exists } = await import("node:fs");
   const folder = join(f.device, "suggestions");
   assert.ok(!exists(folder) || !readdirSync(folder).some((n) => n.startsWith("Suggestion-")), "no card page is written");
+});
+
+for (const kind of RECORD_SOURCES) {
+  test(`${kind}: readable, the card is built; unreadable or partly read, it is refused and kept unsent`, async (t) => {
+    const { f, deps } = await device(t);
+    const only = (state) => ({ ...RECORDS, states: { ...Object.fromEntries(RECORD_SOURCES.map((s) => [s, "none"])), [kind]: state } });
+    for (const state of ["unavailable", "partial"]) {
+      const refused = await card.buildCard(card.cardInput(structuredClone(INPUT)), FACTS, { ...deps, records: async () => only(state) });
+      assert.deepEqual(refused, { built: false, reason: "records_unreadable", unreadable: [CATEGORY[kind]] }, state);
+    }
+    assert.equal(read(f).records.filter((r) => r.kind === "card").length, 0, "no card while the check is incomplete");
+    assert.equal(held(f).length, 2);
+    const ok = await card.buildCard(card.cardInput(structuredClone(INPUT)), FACTS, { ...deps, records: async () => only("read") });
+    assert.equal(ok.built, true, JSON.stringify(ok));
+  });
+}
+
+test("a held draft whose build still cannot check every source stays held, once, and leaves once built", async (t) => {
+  const { f, deps } = await device(t);
+  await card.buildCard(card.cardInput(structuredClone(INPUT)), FACTS, { ...deps, records: async () => UNREAD });
+  const [{ record_id: heldId }] = held(f);
+  const again = await card.buildCard(card.cardInput({ ...structuredClone(INPUT), held_id: heldId }), FACTS, { ...deps, records: async () => UNREAD });
+  assert.equal(again.reason, "records_unreadable");
+  assert.deepEqual(held(f).map((r) => r.record_id), [heldId], "not held a second time");
+  await built(deps, { ...INPUT, held_id: heldId });
+  assert.deepEqual(held(f), []);
 });
 
 test("a Submit whose check could not read every record source sends nothing, keeps the cause locally, and can be tried again", async (t) => {

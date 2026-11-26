@@ -10,7 +10,7 @@ import { join } from "node:path";
 import test from "node:test";
 
 import { memoryKv, seedItems } from "./helpers/fake-cloud.mjs";
-import { writeCaseData } from "./helpers/matter-data-fixture.mjs";
+import { updateCaseData, writeCaseData } from "./helpers/matter-data-fixture.mjs";
 
 const { PracticeStore } = await import("../build/practice/store.js");
 const { callTool } = await import("../build/dispatch.js");
@@ -53,7 +53,7 @@ function device(t) {
     { id: "m1", kind: "matter", data: { description: "Vantressa estate", matt_num: "L901", file_number: "F-88214", folder: "Zephyrine Files" }, links: { client: "c1" } },
     { id: "p1", kind: "contact", data: { name: "Dremmond Okafor", emails: ["dokafor@example.org"], phones: [], addresses: [{ street: "12 Wrenfield Road" }], other_names: [] }, tags: { entity: "person" } },
   ]);
-  return { store: new PracticeStore(env, kv), env };
+  return { store: new PracticeStore(env, kv), env, caseData };
 }
 
 test("each record source is read, and a planted token from each is found in the card", async (t) => {
@@ -117,6 +117,29 @@ test("the planted token is found in every part, and the result carries no record
     if (!word.startsWith("[object")) assert.ok(!serialized.includes(word.replace(/<\/?p>/g, "")), `result holds ${word}`);
   }
   assert.ok(!serialized.includes("Ashgrove"));
+});
+
+test("a matter whose case data is behind the current schema is still read, every kind of it", async (t) => {
+  const { store, env, caseData } = device(t);
+  updateCaseData(caseData, "PRAGMA user_version = 90;");
+  const records = await readRecordTexts(store, env);
+  assert.deepEqual(records.states, {
+    client: "read", matter: "read", contact: "read", folder_name: "read", document_title: "read", file_name: "read",
+  });
+  for (const [source, word] of [["matter", "245678"], ["contact", "Ashgrove"], ["folder_name", "Orlavikson"], ["document_title", "Pemberforth"], ["file_name", "Yovanovich"]]) {
+    const result = runCrossCheck({ comment: `It happened near ${word} again.` }, records, STOP);
+    assert.ok(result.hits.some((h) => h.sources.includes(source)), `${source}: ${word}`);
+  }
+});
+
+test("a matter-data database that cannot be read leaves every case-data kind not fully read", async (t) => {
+  const { store, env, caseData } = device(t);
+  writeFileSync(join(caseData, "main.sqlite"), "not a database");
+  const records = await readRecordTexts(store, env);
+  assert.deepEqual(records.states, {
+    client: "read", matter: "partial", contact: "partial", folder_name: "partial", document_title: "unavailable", file_name: "unavailable",
+  });
+  assert.equal(runCrossCheck({ comment: "near nothing" }, records, STOP).complete, false);
 });
 
 test("a source that cannot be read is reported by its state only", async (t) => {

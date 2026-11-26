@@ -49,7 +49,7 @@ export function suggestionToolDefinitions(): ToolDefinition[] {
         "While it finds a match in the pain point, an item or a context line, no card is built: it returns {built: false, hits: [{part, id, index, start, end, kind, offer}]}, each where a match lies in that block's text (end exclusive), never the text; " +
         "replace each with its bracket, or reword, and call again. A match in the technical details or the raw observation is removed without asking. " +
         "When some of this computer's records could not be read, the check is not complete and no card is built: it returns {built: false, reason: \"records_unreadable\", unreadable: [...]}, " +
-        "naming each unread kind of record (client, matter, contact, folder name, document title, file name). Nothing is saved; do not build again in this session.",
+        "naming each unread kind of record (client, matter, contact, folder name, document title, file name). No card is saved; the draft is kept as a held draft (one already held stays held; an AI-noticed one is not kept). Do not build again in this session.",
       inputSchema: {
         type: "object",
         properties: {
@@ -264,7 +264,7 @@ export function suggestionToolDefinitions(): ToolDefinition[] {
         "Read this computer's suggestion store: the suggestions it sent or is sending to the Probanda team, the held drafts an earlier version kept unposted, and the cards still open. " +
         "Returns {suggestions: [{record_id, suggestion_id, title, sent_on, status, badge, shown_badge, withdrawn}], held: [{held_id, held_on, draft}], open_cards: [{card_id, created_at, card_path}]}; each list is empty when there is nothing in it. " +
         "status is \"Sending...\", \"Submitted ✓\", \"Not sent, will retry\", \"Not sent; Probanda could not be reached\" or \"Withdrawn\"; suggestion_id is null until Probanda's Cloud confirmed it. " +
-        "A held `draft` is a suggestion drafted, before suggestions were shown as cards, while this computer had no Probanda key: offer each once, as a card built with its held_id. " +
+        "A held `draft` is a suggestion not yet shown as a card: drafted by an earlier version while this computer had no Probanda key, or one a build could not check: offer each once, as a card built with its held_id. " +
         "An open card is one neither submitted nor dismissed: to show it again, present its card_path and call suggestion_card__wait.",
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       annotations: { readOnlyHint: true, openWorldHint: false },

@@ -12,11 +12,13 @@ Per folder, one of three statuses, never a bare empty list:
 
   {"status": "ok", "titles": [...], "file_names": [...], "matter": [...], "parties": [...]}
   {"status": "not_applicable", ...}  no matter-data database in the folder
-  {"status": "unavailable", ...}     a database behind the current schema
+  {"status": "unavailable", ...}     a database that cannot be read
 
-Each folder is read from a temp copy of main.sqlite only (never the native file,
-never law or privileged), through list_parties.read_staged. Takes no lock and
-writes nothing. Standard library only.
+No version guard (design decision #74): the seven columns it reads predate every
+migration, so an older database reads correctly, and one that lacks a column fails
+its read and reads unavailable. Each folder is read from a temp copy of main.sqlite
+only (never the native file, never law or privileged), through
+list_parties.read_staged. Takes no lock and writes nothing. Standard library only.
 
     python list_record_names.py <case_data_dir> [<case_data_dir> ...]
 """
@@ -26,7 +28,6 @@ import ntpath
 import sys
 
 from list_parties import read_staged
-from parties_of_record import _behind
 
 
 def _texts(con, sql):
@@ -39,9 +40,6 @@ def _base_name(path):
 
 
 def _read(con):
-    behind = _behind(con)
-    if behind:
-        return behind
     # Never the housekeeping review log: only its own operation reads it (design decision #26 (d)).
     file_names = [_base_name(p) for p in _texts(con, "SELECT file_path FROM sources ORDER BY source_id")]
     parties = []

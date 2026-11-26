@@ -75,9 +75,17 @@ class ListRecordNamesTests(unittest.TestCase):
     def test_one_result_per_folder_in_order_whatever_its_state(self):
         missing = self.root / "empty"
         missing.mkdir()
-        behind = self.build("old", version=resolve_paths.EXPECTED_USER_VERSION - 1)
-        result = list_record_names.run({"case_data_dirs": [self.build("a"), str(missing), behind]})["results"]
+        broken = self.root / "broken"
+        broken.mkdir()
+        (broken / "main.sqlite").write_bytes(b"not a database")
+        broken = str(broken)
+        result = list_record_names.run({"case_data_dirs": [self.build("a"), str(missing), broken]})["results"]
         self.assertEqual([r["status"] for r in result], ["ok", "not_applicable", "unavailable"])
+
+    def test_a_database_behind_the_current_schema_still_reads(self):
+        current = list_record_names.run({"case_data_dirs": [self.build("a")]})["results"][0]
+        behind = self.build("old", version=resolve_paths.EXPECTED_USER_VERSION - 1)
+        self.assertEqual(list_record_names.run({"case_data_dirs": [behind]})["results"][0], current)
 
     def test_nothing_is_written_and_no_staging_folder_is_left(self):
         folder = self.build("a")

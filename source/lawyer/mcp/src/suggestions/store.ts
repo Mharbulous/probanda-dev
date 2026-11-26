@@ -1,6 +1,6 @@
 // The local suggestion store (docs/Plans/2026-10-25_suggestion-design.md, decision 14): one JSON file,
 // `suggestions/suggestions.json` beside probanda.json, holding every suggestion this device sent or
-// tried to send, every suggestion an earlier version held unposted, every suggestion card (kind
+// tried to send, every suggestion held unposted (kind "held"), every suggestion card (kind
 // "card", card.ts), every dismissal of one (kind "dismissal") and every observation (kind
 // "observation", observation.ts). Its `ai_noticed` field holds the last answer observation.ts reached
 // about raising an AI-noticed card, which the lawyer plugin's Stop hook reads.
@@ -125,7 +125,8 @@ export interface WriteUp {
   attempts?: number;
 }
 
-/** A suggestion drafted while this device had no Probanda key, kept to be shown again and posted once it has one. */
+/** A suggestion kept unposted, to be shown again as a card: drafted by an earlier version while this
+ * device had no Probanda key, or a draft whose build could not check every record source (card.ts). */
 export interface HeldRecord {
   kind: "held";
   record_id: string;

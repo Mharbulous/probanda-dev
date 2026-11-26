@@ -33,7 +33,7 @@ export type CaseRecordNames =
   | { status: "ok"; titles: string[]; file_names: string[]; matter: string[]; parties: string[] }
   /** No matter-data database in the folder. */
   | { status: "not_applicable" }
-  /** A database behind the current schema, or a failed read. */
+  /** A failed read. */
   | { status: "unavailable" };
 
 /** One result per folder of `caseDataDirs`, in order. Never throws: a failed spawn reads every folder unavailable. */
