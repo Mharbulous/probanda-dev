@@ -1,4 +1,4 @@
-// build-stamp: 44dcf82c2e96
+// build-stamp: 88a64b3f6a87
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75506,7 +75506,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "44dcf82c2e96";
+var BUILD_STAMP = false ? null : "88a64b3f6a87";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -81193,7 +81193,7 @@ function suggestionToolDefinitions() {
     },
     {
       name: "suggestion_card__build",
-      description: `Build a suggestion card, Suggestion-<id>.html, from a scrubbed draft, and return {built: true, card_id, card_path, card_url}. card_url is the card as served on this computer; a copy shown where its buttons cannot work links to it by itself. Nothing is sent: the practitioner's Submit Suggestion on the card sends it, and Dismiss sends nothing. Present card_path as a file card with no chat text at all, then call suggestion_card__wait. The card shows, in its own fixed order and words, the origin cue (origin practitioner: "You suggested:"; probanda: "Probanda noticed:"), the pain_point, the items, a mockup link when any item is visual, the context_lines (constraint and evidence lines) and the raw_observation lines, a comment box, and Submit Suggestion and Dismiss. Each block's text is the practitioner's own phrases reshaped, with every name and indirect identifier replaced by one of the brackets [client], [matter], [person], [document], [file], [date], [amount]; any other bracketed word is refused. guess: true marks a block that holds words the practitioner did not use; the card labels it for them to edit. visual: true marks an item that changes how something looks (layout, colour, typography or page structure). source is user for the practitioner's own suggestion, assisted for one Probanda offered and they accepted, llm for a loose thread. skill, optional, names the one skill it is about. tool_names: every tool name this session sees, exactly as written, for the card's technical details. held_id, optional: a held draft from suggestion_log__read that this card offers, which then leaves the store. observation_id and chat_session, together: the AI-noticed card for the observation suggestion_observation__next returned, with origin probanda and source llm and no skill or raw_observation, which come from the observation itself; it is built only while the daily cap and suppression allow it, and otherwise returns {built: false, reason: "not_raised"}: then say nothing and end the reply. The full check runs first, over everything the card would send, against this computer's client, matter, contact, folder, document and file records and for emails, paths, dates and amounts. While it finds a match in the pain point, an item or a context line, no card is built: it returns {built: false, hits: [{part, id, index, start, end, kind, offer}]}, each where a match lies in that block's text (end exclusive), never the text; replace each with its bracket, or reword, and call again. A match in the technical details or the raw observation is removed without asking. When some of this computer's records could not be read, the check is not complete and no card is built: it returns {built: false, reason: "records_unreadable", unreadable: [...]}, naming each unread kind of record (client, matter, contact, folder name, document title, file name). Nothing is saved; do not build again in this session.`,
+      description: `Build a suggestion card, Suggestion-<id>.html, from a scrubbed draft, and return {built: true, card_id, card_path, card_url}. card_url is the card as served on this computer; a copy shown where its buttons cannot work links to it by itself. Nothing is sent: the practitioner's Submit Suggestion on the card sends it, and Dismiss sends nothing. Present card_path as a file card with no chat text at all, then call suggestion_card__wait. The card shows, in its own fixed order and words, the origin cue (origin practitioner: "You suggested:"; probanda: "Probanda noticed:"), the pain_point, the items, a mockup link when any item is visual, the context_lines (constraint and evidence lines) and the raw_observation lines, a comment box, and Submit Suggestion and Dismiss. Each block's text is the practitioner's own phrases reshaped, with every name and indirect identifier replaced by one of the brackets [client], [matter], [person], [document], [file], [date], [amount]; any other bracketed word is refused. guess: true marks a block that holds words the practitioner did not use; the card labels it for them to edit. visual: true marks an item that changes how something looks (layout, colour, typography or page structure). source is user for the practitioner's own suggestion, assisted for one Probanda offered and they accepted, llm for a loose thread. skill, optional, names the one skill it is about. tool_names: every tool name this session sees, exactly as written, for the card's technical details. held_id, optional: a held draft from suggestion_log__read that this card offers, which then leaves the store. observation_id and chat_session, together: the AI-noticed card for the observation suggestion_observation__next returned, with origin probanda and source llm and no skill or raw_observation, which come from the observation itself; it is built only while the daily cap and suppression allow it, and otherwise returns {built: false, reason: "not_raised"}: then say nothing and end the reply. The full check runs first, over everything the card would send, against this computer's client, matter, contact, folder, document and file records and for emails, paths, dates and amounts. While it finds a match in the pain point, an item or a context line, no card is built: it returns {built: false, hits: [{part, id, index, start, end, kind, offer}]}, each where a match lies in that block's text (end exclusive), never the text; replace each with its bracket, or reword, and call again. A match in the technical details or the raw observation is removed without asking. When some of this computer's records could not be read, the check is not complete and no card is built: it returns {built: false, reason: "records_unreadable", unreadable: [...]}, naming each unread kind of record (client, matter, contact, folder name, document title, file name). No card is saved; the draft is kept as a held draft (one already held stays held; an AI-noticed one is not kept). Do not build again in this session.`,
       inputSchema: {
         type: "object",
         properties: {
@@ -81358,7 +81358,7 @@ function suggestionToolDefinitions() {
     },
     {
       name: "suggestion_log__read",
-      description: 'Read this computer\'s suggestion store: the suggestions it sent or is sending to the Probanda team, the held drafts an earlier version kept unposted, and the cards still open. Returns {suggestions: [{record_id, suggestion_id, title, sent_on, status, badge, shown_badge, withdrawn}], held: [{held_id, held_on, draft}], open_cards: [{card_id, created_at, card_path}]}; each list is empty when there is nothing in it. status is "Sending...", "Submitted \u2713", "Not sent, will retry", "Not sent; Probanda could not be reached" or "Withdrawn"; suggestion_id is null until Probanda\'s Cloud confirmed it. A held `draft` is a suggestion drafted, before suggestions were shown as cards, while this computer had no Probanda key: offer each once, as a card built with its held_id. An open card is one neither submitted nor dismissed: to show it again, present its card_path and call suggestion_card__wait.',
+      description: 'Read this computer\'s suggestion store: the suggestions it sent or is sending to the Probanda team, the held drafts an earlier version kept unposted, and the cards still open. Returns {suggestions: [{record_id, suggestion_id, title, sent_on, status, badge, shown_badge, withdrawn}], held: [{held_id, held_on, draft}], open_cards: [{card_id, created_at, card_path}]}; each list is empty when there is nothing in it. status is "Sending...", "Submitted \u2713", "Not sent, will retry", "Not sent; Probanda could not be reached" or "Withdrawn"; suggestion_id is null until Probanda\'s Cloud confirmed it. A held `draft` is a suggestion not yet shown as a card: drafted by an earlier version while this computer had no Probanda key, or one a build could not check: offer each once, as a card built with its held_id. An open card is one neither submitted nor dismissed: to show it again, present its card_path and call suggestion_card__wait.',
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       annotations: { readOnlyHint: true, openWorldHint: false }
     },
@@ -125672,7 +125672,15 @@ async function buildCard(input, facts, deps) {
   const card2 = newCard(input, structuredClone(facts), at);
   const { records, stopWords } = await recordsOf(deps);
   const check3 = runCrossCheck(cardText2(card2), records, stopWords);
-  if (!check3.complete) return { built: false, reason: "records_unreadable", unreadable: unreadSources(check3.records) };
+  if (!check3.complete) {
+    if (input.observation_id === null && input.held_id === null) {
+      const { origin, source, skill, pain_point, items: items2, context_lines } = input;
+      await withStore(deps.env, (store) => {
+        store.records.push({ kind: "held", record_id: randomUUID16(), created_at: at, draft: { origin, source, skill, pain_point, items: items2, context_lines } });
+      });
+    }
+    return { built: false, reason: "records_unreadable", unreadable: unreadSources(check3.records) };
+  }
   const readable = check3.hits.filter((h3) => isReadable(h3.part));
   if (readable.length) {
     return {

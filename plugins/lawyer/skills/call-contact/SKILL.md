@@ -3,7 +3,7 @@ name: "call-contact"
 description: "Use when the practitioner says \"Call\" followed by a person's name (or phone/ring/dial someone): look them up in their contacts and show each of their numbers as a clickable tel: link, with a fallback page for a second calling app on request."
 ---
 
-<!-- lawyer v0.34.0 -->
+<!-- lawyer v0.34.1 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

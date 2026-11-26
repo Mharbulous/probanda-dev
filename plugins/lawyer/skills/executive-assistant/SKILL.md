@@ -4,7 +4,7 @@ user-invocable: true
 description: Explicit invocation only. Runs when the practitioner types /executive-assistant, or when a scheduled task names this skill for the morning briefing. Never trigger from natural-language requests such as "what should I work on", "what's next" or "give me a briefing" — leave those to the practitioner unless the slash command was typed.
 ---
 
-<!-- lawyer v0.34.0 -->
+<!-- lawyer v0.34.1 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

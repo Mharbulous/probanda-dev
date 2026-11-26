@@ -4,7 +4,7 @@ description: >
   Draft and revise any legal writing as a mockup: a letter, a memo, or a filing such as VanIAC submissions, BCSC applications and requisitions, BCCA stay books and factums. Use when the practitioner asks to draft, revise or keep working on a filing, letter, email, memo or release, or to supplement, add to or fill in a letter or email from their mail or files, report to a client, or reply to correspondence: anything that leaves the firm. What the law is -> /legal-research.
 ---
 
-<!-- litigator v0.30.0 -->
+<!-- litigator v0.30.1 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.
