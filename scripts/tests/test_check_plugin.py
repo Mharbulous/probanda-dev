@@ -587,6 +587,12 @@ class TestShippedTreePurity(FixtureTest):
         self.fixture.write(".claude/skills/alpha/SKILL.md", skill_md("alpha", "A project-skill copy."))
         self.assertOnlyFails("shipped-tree-purity", "skill folder in .claude/skills/ (the source is source/skills/): alpha")
 
+    def test_repo_only_project_skill_in_claude_skills_passes(self):
+        self.fixture.write(".claude/skills/release/SKILL.md", skill_md("release", "A repo-only project skill."))
+        self.fixture.build()
+        hits, _ = self.fixture.purity()
+        self.assertEqual(hits, [])
+
 
 class TestReferenceToUnshippedFile(FixtureTest):
     """reference-resolution: a target inside the skills tree must also ship, because an

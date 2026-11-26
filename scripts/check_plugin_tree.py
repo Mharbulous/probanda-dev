@@ -139,11 +139,13 @@ def shipped_tree_purity(repo, plugin, manifest, roster_names, assets, baseline, 
     tops = set(roster_names) | set(extra)
     hits = []
     shipped = set()
-    # Claude Code loads every skill folder under .claude/skills/ as a project skill, so a skill
-    # there would list a second copy beside the plugin's. The source lives in source/skills/.
+    # Claude Code loads every skill folder under .claude/skills/ as a project skill, so a copy
+    # there of a skill in source/skills/ would list a second copy beside the plugin's. A
+    # repo-only project skill (one with no source/skills/ folder) is not a copy.
     project_skills = os.path.join(repo, ".claude", "skills")
     for top in sorted(os.listdir(project_skills) if os.path.isdir(project_skills) else ()):
-        if os.path.isfile(os.path.join(project_skills, top, "SKILL.md")):
+        if (os.path.isfile(os.path.join(project_skills, top, "SKILL.md"))
+                and os.path.isdir(os.path.join(root, top))):
             hits.append(f"skill folder in .claude/skills/ (the source is source/skills/): {top}")
     for sha, arcname in manifest:
         if not arcname.startswith(SHIPPED_PREFIX):
