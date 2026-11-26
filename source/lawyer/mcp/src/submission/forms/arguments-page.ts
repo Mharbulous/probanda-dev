@@ -26,9 +26,9 @@ import sharedJs from "../../templates/view-pages/shared.js.js";
 import viewFolderCss from "../../templates/view-pages/view-folder.css.js";
 import viewHeadHtml from "../../templates/view-pages/view-head.html.js";
 import type { ViewPage } from "../view-pages.js";
-import type { FilingRow } from "./query.js";
+import { argumentsTable, type FilingRow } from "./query.js";
 import { rows } from "../query-rows.js";
-import { hasColumn } from "../schema-capabilities.js";
+import { hasColumn, hasTable } from "../schema-capabilities.js";
 
 export type Side = "ours" | "opposing" | "neutral";
 
@@ -102,15 +102,20 @@ function roman(n: number): string {
 function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merged: boolean): ArgumentsData {
   const all = rows<ArgumentRow>(
     dbPath,
-    "SELECT id, contention, side, number, anticipated, component, pinpoint, killed_on FROM arguments WHERE proceeding_id = ? ORDER BY id",
+    // On a database held below v82, argumentsTable reads its submissions as our own, unnumbered arguments.
+    `SELECT id, contention, side, number, anticipated, component, pinpoint, killed_on FROM ${argumentsTable(dbPath)} WHERE proceeding_id = ? ORDER BY id`,
     [proceedingId]
   );
   const byId = new Map(all.map((a) => [a.id, a]));
-  const links = rows<{ rebuttal_id: number; argument_id: number }>(
-    dbPath,
-    `SELECT r.rebuttal_id, r.argument_id FROM argument_rebuts r JOIN arguments a ON a.id = r.argument_id
-     WHERE a.proceeding_id = ? ORDER BY r.rowid`,
-    [proceedingId]
+  // Below v82 there is no argument_rebuts table, so no rebuttal links.
+  const links = (hasTable(dbPath, "argument_rebuts")
+    ? rows<{ rebuttal_id: number; argument_id: number }>(
+        dbPath,
+        `SELECT r.rebuttal_id, r.argument_id FROM argument_rebuts r JOIN arguments a ON a.id = r.argument_id
+         WHERE a.proceeding_id = ? ORDER BY r.rowid`,
+        [proceedingId]
+      )
+    : []
   ).filter((l) => byId.has(l.rebuttal_id));
   const deployments = rows<{ submission_id: number; filing_id: number; title: string; retired_on: string | null }>(
     dbPath,

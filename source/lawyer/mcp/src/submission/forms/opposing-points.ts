@@ -1,6 +1,7 @@
 // The opposing arguments of a proceeding.
 
 import { rows } from "../query-rows.js";
+import { hasTable } from "../schema-capabilities.js";
 
 
 export interface OpposingArgumentRow {
@@ -19,6 +20,8 @@ export interface OpposingArgumentRow {
  * the human and is stripped from the filed face, filed-face.ts) -- the filed answer to an argument
  * is the responsive submission's own verbatim-quoted anchor, not this inventory. */
 export function fetchOpposingArguments(dbPath: string, proceedingId: number): OpposingArgumentRow[] {
+  // A database held below v82 has no `arguments` table and no opposing side, so it holds no opposing argument.
+  if (!hasTable(dbPath, "arguments")) return [];
   const points = rows<Omit<OpposingArgumentRow, "rebuttals">>(
     dbPath,
     `SELECT id, component, pinpoint, contention FROM arguments

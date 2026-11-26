@@ -4,7 +4,7 @@ disable-model-invocation: true
 description: Use when asked to proofread, review, or improve legal writing (emails, letters, pleadings). Also trigger when a writing sample is pasted without instructions — ask if they'd like proofreading for spelling, grammar, and tone.
 ---
 
-<!-- lawyer v0.34.2 -->
+<!-- lawyer v0.34.3 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.
