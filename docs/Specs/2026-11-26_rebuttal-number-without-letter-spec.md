@@ -61,3 +61,15 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - Where the Arguments page builds rebuttal labels and the strip.
 - The current wording of the Arguments rule in `shared/html-pages.md`, `filing-checklists.md` and `terms-and-symbols.md`.
 - Whether `argument_rebuts` is still many-to-many.
+
+### Verification at HEAD (2026-11-26, at 6a1eaa28)
+
+| Item | Finding at HEAD |
+|---|---|
+| Where labels are built | `source/lawyer/mcp/src/submission/forms/arguments-page.ts`, `labelOf`: every rebuttal of an argument gets `letter(i)` by its index in `rebuttalsOf` (link order), a rebuttal of a rebuttal gets `roman(i+1)` ("#1.a.i"). No lowest-target or "see #N.a" logic remains. |
+| Where the strip is drawn | `source/lawyer/mcp/src/templates/view-pages/arguments.js`, `section`: each picker label is the card's `label` without "#", so card and strip share one label. Tab linking and the focus pointer key on `number`, not `label` (`keyOf`, `show(number)`, `src/page-api/focus.ts`). |
+| `shared/html-pages.md` (Arguments) | "labelled by it plus a letter in link order ("#2.a"; a rebuttal of a rebuttal "#1.a.i")". No lowest-numbered target, no "see #N.a". |
+| `drafting-data/references/filing-checklists.md` | §1 (line 71): "one `argument_rebuts(rebuttal_id, argument_id)` row (v83: one only) ... an argument may have several". No label wording. Nothing to change. |
+| `drafting-data/references/terms-and-symbols.md` | Line 151: "`argument_rebuts` (v83), one target per rebuttal". No label wording. Nothing to change. |
+| `argument_rebuts` | One-to-one per rebuttal since v83 (commit 4bd5499a): `rebuttal_id INTEGER NOT NULL UNIQUE` in `drafting-data/references/migrations.sql`. §9 Q1 is settled: the one-to-one change has landed. |
+| Other label text | Board fixture `src/board-fixtures/arguments.ts` shows a sole rebuttal as "#2.a"; `src/schema/submission-forms.ts` and `focus-view-page.ts` use "#2.a" only as an example of a lettered rebuttal. |
