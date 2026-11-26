@@ -37,6 +37,7 @@
     "references/mockup",
     "references/observations"
   ],
+  "run-technical-writer": [],
   "task-prioritization": [],
   "verify-bc-lawyer": [
     "scripts"

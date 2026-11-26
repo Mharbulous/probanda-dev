@@ -7,7 +7,7 @@ description: >
   suggestion_card__write_up_brief returned (the card's lines as sent and the environment facts),
   it reads nothing else but Probanda's own shipped files. It never reads client or matter data,
   documents, mail, the conversation or tool arguments. Returns JSON only. Dispatched by
-  /lawyer:suggestion after a waited-on card is submitted; never asks anyone anything.
+  /lawyer:suggestion, through run-technical-writer, after a waited-on card is submitted; never asks anyone anything.
 model: opus
 tools:
   - mcp__plugin_lawyer_data__skill_source__read
