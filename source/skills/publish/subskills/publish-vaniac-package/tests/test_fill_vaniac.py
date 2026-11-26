@@ -186,5 +186,44 @@ def test_a_fence_closes_only_on_a_run_at_least_its_own_length():
     assert parse(text, 't') == [('para', ['1. The point.']), ('quote', ['``` opens a line']), ('cite', 'Ex. 3')]
 
 
+
+EMPHASIS_FACE = """## Why *Alpha v Beta* applies
+
+1. The tribunal in *Alpha v Beta* and _Gamma v Delta_ held it ***firmly***.
+
+- A point from *Zeta v Eta*.
+
+```
+Verbatim *asterisks* stay.
+```
+
+   > *Alpha v Beta*, 2020 BCCA 1, para 4
+"""
+
+
+def _runs(el) -> list[tuple[str, bool, bool]]:
+    from docx_helpers import wn
+    out = []
+    for r in el.iter(wn('r')):
+        text = ''.join(t.text or '' for t in r.iter(wn('t')))
+        if text:
+            rpr = r.find(wn('rPr'))
+            out.append((text, rpr is not None and rpr.find(wn('b')) is not None,
+                        rpr is not None and rpr.find(wn('i')) is not None))
+    return out
+
+
+def test_markdown_emphasis_fills_as_word_runs_and_a_fence_stays_verbatim():
+    from fill_vaniac import _body_elements, _table, parse
+    heading, para, bullet, quote, cite = (_runs(el) for el in _body_elements(parse(EMPHASIS_FACE, 't')))
+    cell = _runs(_table([['See *Alpha v Beta*.']], [5000], ['left'], True, None))
+    for runs in (heading, para, bullet, cite, cell):
+        assert '*' not in ''.join(text for text, _, _ in runs)
+    assert ('Alpha v Beta', False, True) in heading
+    assert ('Gamma v Delta', False, True) in para and ('firmly', True, True) in para
+    assert ('Zeta v Eta', False, True) in bullet
+    assert ('Alpha v Beta', False, True) in cite and ('Alpha v Beta', False, True) in cell
+    assert quote == [('Verbatim *asterisks* stay.', False, False)]
+
 if __name__ == '__main__':
     raise SystemExit(pytest.main([__file__, '-q']))

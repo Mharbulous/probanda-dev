@@ -27,6 +27,7 @@ from lxml import etree
 # Shared with publish-bcca-book and the binder: /publish's own scripts/ folder.
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'scripts'))
 from docx_helpers import (  # noqa: E402
+    append_emphasis_runs,
     load_zip,
     para_text,
     rewrite_content_types_to_document,
@@ -119,7 +120,8 @@ def _validate_frontmatter(data: dict) -> None:
         _validate_iso(row['date'], 'chronology date')
     _require(isinstance(data['authorities'], list), 'bad_authority', 'authorities must be an array')
     for a in data['authorities']:
-        _require(isinstance(a, dict) and set(a) == {'authority', 'citation', 'paras'} and _is_text(a['authority'])
+        _require(isinstance(a, dict) and set(a) - {'kind'} == {'authority', 'citation', 'paras'}
+                 and ('kind' not in a or _is_text(a['kind'])) and _is_text(a['authority'])
                  and _is_text(a['citation']) and isinstance(a['paras'], list) and a['paras']
                  and all(isinstance(n, int) and not isinstance(n, bool) and n > 0 for n in a['paras']),
                  'bad_authority', f'bad authorities entry: {a!r}')
@@ -256,6 +258,13 @@ def _run(text: str, bold: bool = False, italic: bool = False) -> etree._Element:
     r.append(rpr)
     set_run_text(r, text)
     return r
+
+
+def _marked_para(ppr: etree._Element, text: str) -> etree._Element:
+    """A body paragraph whose markdown emphasis becomes bold and italic runs."""
+    p = _para(ppr)
+    append_emphasis_runs(p, text, etree.fromstring(_BODY_RPR))
+    return p
 
 
 def _para(ppr: etree._Element | None, *runs: etree._Element) -> etree._Element:
@@ -425,20 +434,20 @@ def _fill_parts(body: etree._Element, data: dict, sections: dict) -> dict[int, e
     numbered: dict[int, etree._Element] = {}
 
     anchor = _clear_section(body, 'OPENING STATEMENT')
-    _insert_after(anchor, [_para(opening_ppr, _run(item[1])) for item in sections['OPENING STATEMENT']] + [_para(None)])
+    _insert_after(anchor, [_marked_para(opening_ppr, item[1]) for item in sections['OPENING STATEMENT']] + [_para(None)])
 
     for heading in PART_HEADINGS:
         new: list[etree._Element] = []
         for item in sections[heading]:
             if item[0] == 'para':
-                p = _para(numbered_ppr, _run(item[2]))
+                p = _marked_para(numbered_ppr, item[2])
                 numbered[item[1]] = p
             elif item[0] == 'plain':
-                p = _para(order_ppr, _run(item[1]))
-            elif item[0] == 'quote':
+                p = _marked_para(order_ppr, item[1])
+            elif item[0] == 'quote':  # verbatim: its characters print as they stand
                 p = _para(quote_ppr, _run(item[1]))
             else:
-                p = _para(cite_ppr, _run(item[1]))
+                p = _marked_para(cite_ppr, item[1])
             new.append(p)
         if heading == PART_HEADINGS[-1]:
             _replace_text(dated_p, f"Dated at the City of {data['signing_place']}, Province of British Columbia, this "
@@ -503,7 +512,8 @@ def _fill_authorities(body: etree._Element, authorities: list[dict], numbered: d
         for child in list(name_p):
             if child.tag != wn('pPr'):
                 name_p.remove(child)
-        name_p.append(_run(a['authority'], italic=True))
+        # A secondary source (kind 'doctrine') is roman; every other authority, or one with no kind, italic.
+        name_p.append(_run(a['authority'], italic=a.get('kind') != 'doctrine'))
         name_p.append(_run(f", {a['citation']}"))
         page_p = page_cell.find(wn('p'))
         for child in list(page_p):

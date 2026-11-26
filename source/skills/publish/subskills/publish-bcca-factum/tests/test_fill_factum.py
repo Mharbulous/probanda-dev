@@ -10,6 +10,7 @@ import os
 import re
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
 
@@ -103,6 +104,7 @@ def _invalid(mutate) -> tuple[str, str]:
     (lambda t: t.replace('This appeal concerns', '1. This appeal concerns'), 'bad_opening_statement'),
     (lambda t: t.replace('2. The arbitration was commenced', '<!-- x --> The arbitration'), 'disallowed_markup'),
     (lambda t: t.replace('"paras": [7]', '"paras": [12]'), 'bad_authority'),
+    (lambda t: t.replace('"paras": [7]', '"paras": [7], "kind": ""'), 'bad_authority'),
     (lambda t: t.replace('dated_on: 2026-09-16', 'dated_on: 16 September 2026'), 'bad_date'),
     (lambda t: t.replace('that the appeal be dismissed, with costs to the respondents.\n', ''), 'bad_part4'),
 ])
@@ -213,3 +215,44 @@ def test_a_missing_folder_is_refused_and_not_created(cli):
     code, result = _cli(src, missing, '--out-name', STEM)
     assert code == 1 and result['error'] == 'no_out_dir', result
     assert not missing.exists()
+
+
+def _runs(docx: Path, starts: str) -> list[tuple[str, bool]]:
+    """(text, italic) for each text run of the one paragraph whose text is `starts` or, failing
+    that, starts with it."""
+    w = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
+    with zipfile.ZipFile(docx) as z:
+        body = ET.fromstring(z.read('word/document.xml'))
+    texts = [(p, ''.join(t.text or '' for t in p.iter(w + 't'))) for p in body.iter(w + 'p')]
+    [p] = [p for p, text in texts if text == starts] or [p for p, text in texts if text.startswith(starts)]
+    return [(''.join(t.text or '' for t in r.iter(w + 't')), r.find(f'{w}rPr/{w}i') is not None)
+            for r in p.iter(w + 'r') if ''.join(t.text or '' for t in r.iter(w + 't'))]
+
+
+def test_markdown_italics_fill_as_italic_runs_and_a_quote_stays_verbatim(tmp_path):
+    text = (VALID
+            .replace('This appeal concerns an arbitration stay.', 'This appeal concerns *Alpha v Beta*.')
+            .replace('4. The chambers judge applied the correct test.', '4. The judge applied _Alpha v Beta_.')
+            .replace('that the appeal be dismissed', 'that the appeal in *Alpha v Beta* be dismissed')
+            .replace('cite: Housen v Nikolaisen', 'cite: *Housen v Nikolaisen*')
+            .replace('> the standard of review', '> the *standard* of review'))
+    out = tmp_path / 'factum.docx'
+    fill_factum.build_factum(*fill_factum.parse_bcca_factum(text), out)
+    for starts, italic in (('This appeal concerns', 'Alpha v Beta'), ('The judge applied', 'Alpha v Beta'),
+                           ('that the appeal in', 'Alpha v Beta'), ('Housen v Nikolaisen, 2002 SCC 33, para 8', 'Housen v Nikolaisen')):
+        runs = _runs(out, starts)
+        assert (italic, True) in runs, starts
+        assert not any(c in ''.join(t for t, _ in runs) for c in '*_'), starts
+    assert _runs(out, 'the *standard* of review') == [('the *standard* of review for questions of law is correctness', False)]
+
+
+def test_a_doctrine_authority_is_roman_and_any_other_or_unkinded_italic(tmp_path):
+    text = VALID.replace('"paras": [7]}', '"paras": [7], "kind": "statute"}').replace(
+        '{"authority": "Housen v Nikolaisen", "citation": "2002 SCC 33", "paras": [5]}',
+        '{"authority": "Housen v Nikolaisen", "citation": "2002 SCC 33", "paras": [5]}, '
+        '{"authority": "Sullivan on the Construction of Statutes", "citation": "7th ed (2022)", "paras": [5], "kind": "doctrine"}')
+    out = tmp_path / 'factum.docx'
+    fill_factum.build_factum(*fill_factum.parse_bcca_factum(text), out)
+    assert _runs(out, 'Arbitration Act, SBC 2020, c 2')[0] == ('Arbitration Act', True)
+    assert _runs(out, 'Housen v Nikolaisen, 2002 SCC 33')[0] == ('Housen v Nikolaisen', True)
+    assert _runs(out, 'Sullivan on the Construction of Statutes, 7th ed (2022)')[0] == ('Sullivan on the Construction of Statutes', False)

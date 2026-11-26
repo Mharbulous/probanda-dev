@@ -1,13 +1,12 @@
 """Marked blocks: optional and repeatable template sections, and exhibit lettering."""
 from __future__ import annotations
 import copy
-import re
 import sys
 
 from lxml import etree
 
 from fill_jurat import _find_jurat_index
-from fill_ooxml import XMLSPACE, WN, _para_text
+from fill_ooxml import XMLSPACE, WN, _para_text, append_emphasis_runs
 
 
 # ---------------------------------------------------------------------------
@@ -130,7 +129,8 @@ def _fill_affidavit_paragraphs(body: etree._Element, paragraphs: list[str]) -> N
     the jurat goes: the template's own preamble, the [[BLOCK:exhibit]] block
     and its empty trailing paragraph. The emitted paragraphs already carry the
     preamble and every exhibit reference, so keeping either would double them.
-    Each paragraph is numbered by its style; `**...**` becomes a bold run.
+    Each paragraph is numbered by its style; its markdown emphasis becomes bold and
+    italic runs.
     """
     children = list(body)
     jurat = _find_jurat_index(body)
@@ -151,15 +151,7 @@ def _fill_affidavit_paragraphs(body: etree._Element, paragraphs: list[str]) -> N
     for text in paragraphs:
         p = etree.Element(WN('p'))
         p.append(copy.deepcopy(number_ppr))
-        for i, piece in enumerate(re.split(r'\*\*(.+?)\*\*', text)):
-            if not piece:
-                continue
-            run = etree.SubElement(p, WN('r'))
-            if i % 2:
-                etree.SubElement(etree.SubElement(run, WN('rPr')), WN('b'))
-            t = etree.SubElement(run, WN('t'))
-            t.text = piece
-            t.set(XMLSPACE, 'preserve')
+        append_emphasis_runs(p, text)
         new_els += [p, copy.deepcopy(spacer)]
     for offset, el in enumerate(new_els[:-1]):
         body.insert(first + offset, el)

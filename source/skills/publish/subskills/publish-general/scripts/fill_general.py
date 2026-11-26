@@ -36,7 +36,8 @@ build_body(data) reads:
     `enclosures` or `cc` that is present, not null and not a list of that shape is refused
     (list_fields_problem): a string would print one line per character.
 
-Body paragraph markup: **bold**, *italic*, __underline__. A paragraph starting with
+Body paragraph markup: __underline__, then bold and italic as docx_helpers.emphasis_runs reads
+them (**bold**, *italic* or _italic_, ***both***). A paragraph starting with
 "- ", "* " or "1. " is rendered as a hanging-indent list item; the marker prints
 verbatim, not incremented.
 
@@ -127,7 +128,7 @@ item also carries `overridden_by_letterhead: true`: on a letterhead Writing the 
 replaces every property, so its value is not applied, and the item still blocks. Exit 0 on success, 1 on a refusal, never a
 traceback.
 
-Stdlib only.
+Stdlib, plus lxml through /publish's docx_helpers.
 """
 
 import argparse
@@ -138,6 +139,10 @@ import re
 import sys
 import traceback
 import zipfile
+
+PUBLISH_SCRIPTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "scripts")
+sys.path.insert(0, os.path.abspath(PUBLISH_SCRIPTS))
+from docx_helpers import emphasis_runs  # noqa: E402
 
 # Run properties lifted verbatim from the template, so output inherits the theme fonts
 # rather than naming a typeface the theme may not use.
@@ -204,7 +209,7 @@ SIGNING_SPACE_LINES = 3
 LONG_LAST_PARAGRAPH = 1800
 
 LIST_MARKER = re.compile(r"^\s*(-|\*|\d+\.)\s+")
-EMPHASIS = re.compile(r"\*\*(.+?)\*\*|__(.+?)__|\*(.+?)\*")
+UNDERLINE = re.compile(r"__(.+?)__")
 
 # The scanned signature, inline in the signing space. Namespaces are declared on the
 # elements that use them, so the drawing parses whatever the template's root declares.
@@ -219,22 +224,12 @@ def esc(text):
 
 
 def runs(text, rpr_extra=""):
-    """Split text on **bold** / __underline__ / *italic* into `<w:r>` elements."""
+    """`<w:r>` elements for text: __underline__ here, then bold and italic by emphasis_runs."""
     out = []
-    pos = 0
-    for m in EMPHASIS.finditer(text):
-        if m.start() > pos:
-            out.append(run(text[pos:m.start()], rpr_extra))
-        bold, under, italic = m.group(1), m.group(2), m.group(3)
-        if bold is not None:
-            out.append(run(bold, rpr_extra + "<w:b/><w:bCs/>"))
-        elif under is not None:
-            out.append(run(under, rpr_extra + '<w:u w:val="single"/>'))
-        else:
-            out.append(run(italic, rpr_extra + "<w:i/><w:iCs/>"))
-        pos = m.end()
-    if pos < len(text):
-        out.append(run(text[pos:], rpr_extra))
+    for k, piece in enumerate(UNDERLINE.split(text)):
+        under = '<w:u w:val="single"/>' if k % 2 else ""
+        for part, bold, italic in emphasis_runs(piece):
+            out.append(run(part, rpr_extra + under + BOLD * bold + "<w:i/><w:iCs/>" * italic))
     return "".join(out) or run("", rpr_extra)
 
 
@@ -475,8 +470,6 @@ def build_body(data):
 # publish-general: the generic template and the CLI
 # ---------------------------------------------------------------------------
 
-PUBLISH_SCRIPTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "scripts")
-
 FORMAT_PROPERTIES = ("paper", "margins", "typeface", "font_size", "line_spacing",
                      "page_numbering", "header", "footer", "filing_stamp_reservation")
 PAPER = {"letter": (12240, 15840), "legal": (12240, 20160), "a4": (11906, 16838)}
@@ -545,9 +538,6 @@ class FillError(Exception):
 
 def _render_letterhead():
     """publish/scripts/render_letterhead.py, imported on first use, because it imports this module."""
-    path = os.path.abspath(PUBLISH_SCRIPTS)
-    if path not in sys.path:
-        sys.path.insert(0, path)
     import render_letterhead
     return render_letterhead
 

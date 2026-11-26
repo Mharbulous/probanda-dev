@@ -35,7 +35,9 @@ from lxml import etree
 
 # docx_helpers is /publish's: skills/publish/scripts.
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'scripts'))
-from docx_helpers import load_zip, rewrite_content_types_to_document, save_zip, set_run_text, wn  # noqa: E402
+from docx_helpers import (  # noqa: E402
+    append_emphasis_runs, load_zip, rewrite_content_types_to_document, save_zip, set_run_text, wn,
+)
 
 TEMPLATE = Path(__file__).resolve().parent.parent / 'templates' / 'vaniac-package.dotx'
 ROUNDS = {'opening': 'Opening', 'response': 'Response', 'reply': 'Reply',
@@ -45,7 +47,6 @@ SIDE = re.compile(r'WRITTEN ARGUMENT OF THE (CLAIMANT|RESPONDENT)')
 NUMBERED = re.compile(r'^(\d+)\.\s+(.*)$')
 EXHIBIT_NO = re.compile(r'^Ex\.\s*(\d+)$')
 SEPARATOR_CELL = re.compile(r'^:?-{3,}:?$')
-INLINE = re.compile(r'(\*\*[^*]+\*\*|\*[^*\s][^*]*\*)')
 # Lines the filed face never carries. Meeting one means the render changed
 # shape, so the fill stops rather than print it into an exchanged document.
 REFUSED_PREFIXES = ('<', '---', '~~', '# ', '####', '![', '* ', '+ ')
@@ -173,25 +174,6 @@ def parse_exhibits(text: str) -> list[dict]:
 # Word output
 # ---------------------------------------------------------------------------
 
-def _runs(parent: etree._Element, text: str, bold: bool = False) -> None:
-    for piece in INLINE.split(text):
-        if not piece:
-            continue
-        run = etree.SubElement(parent, wn('r'))
-        b, i = bold, False
-        if piece.startswith('**') and piece.endswith('**') and len(piece) > 4:
-            piece, b = piece[2:-2], True
-        elif piece.startswith('*') and piece.endswith('*') and len(piece) > 2:
-            piece, i = piece[1:-1], True
-        if b or i:
-            rpr = etree.SubElement(run, wn('rPr'))
-            if b:
-                etree.SubElement(rpr, wn('b'))
-            if i:
-                etree.SubElement(rpr, wn('i'))
-        set_run_text(run, piece)
-
-
 def _para(style: str | None, text: str = '', jc: str | None = None, bold: bool = False) -> etree._Element:
     p = etree.Element(wn('p'))
     if style or jc:
@@ -200,7 +182,11 @@ def _para(style: str | None, text: str = '', jc: str | None = None, bold: bool =
             etree.SubElement(ppr, wn('pStyle')).set(wn('val'), style)
         if jc:
             etree.SubElement(ppr, wn('jc')).set(wn('val'), jc)
-    _runs(p, text, bold)
+    rpr = None
+    if bold:
+        rpr = etree.Element(wn('rPr'))
+        etree.SubElement(rpr, wn('b'))
+    append_emphasis_runs(p, text, rpr)
     return p
 
 
@@ -249,10 +235,10 @@ def _body_elements(blocks: list[tuple]) -> list[etree._Element]:
             number, text = NUMBERED.match(first).groups()
             p = _para('VPara', f'{number}.')
             etree.SubElement(etree.SubElement(p, wn('r')), wn('tab'))
-            _runs(p, text)
+            append_emphasis_runs(p, text)
             for line in more:
                 _break_line(p)
-                _runs(p, line)
+                append_emphasis_runs(p, line)
             out.append(p)
         elif kind == 'quote':
             for line in rest[0]:
@@ -265,7 +251,7 @@ def _body_elements(blocks: list[tuple]) -> list[etree._Element]:
         elif kind == 'bullet':
             p = _para('VBullet', '•')
             etree.SubElement(etree.SubElement(p, wn('r')), wn('tab'))
-            _runs(p, rest[0])
+            append_emphasis_runs(p, rest[0])
             out.append(p)
         else:
             out.append(_para(None, rest[0]))

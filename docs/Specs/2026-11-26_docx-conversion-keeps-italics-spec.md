@@ -94,3 +94,12 @@ Fixture `See *Alpha v Beta*, _Gamma Act_ and ***Delta***.` run through each writ
 | PDF: `assemble/*` scripts (`paginate_book.py`, `paginate.py`, `bind_general.py`, `bind_boc.py`, `bind_package.py`, `paginate_record.py`) and `publish-bcsc-form/scripts/steps/shared/render.py` | `assemble_general` and the other assemble routes | Convert a filled .docx to PDF through Word or LibreOffice. None reads markdown. | A PDF carries whatever italics its .docx carries, so fixing the .docx writers fixes the PDFs. |
 
 No path writes footnotes from markdown.
+
+## 13. Implementation, 2026-11-26
+
+- **One Python parser.** `docx_helpers.emphasis_runs` (text to `(text, bold, italic)` runs) and `append_emphasis_runs` (those runs as lxml `<w:r>` elements on a base `<w:rPr>`). Every writer in §12 that read emphasis now calls it, and the five hand-rolled splits are deleted: `fill_general.runs` keeps only its `__underline__` split, then hands each piece to the parser; `fill_vaniac._runs` and `INLINE` are gone; `fill_ooxml._append_runs`, `ITALIC_SPAN` and the `italics` flag are gone, and `_make_form33_para` is `_make_numbered_para` minus the number on `Nil.`; `fill_blocks` and `fill_factum` call `append_emphasis_runs`. `publish-bcsc-form` reaches `docx_helpers` through `fill_ooxml`, as `fill_vaniac` and `fill_factum` already did. `fill_general` and `render_letterhead` now need lxml through it (their "Stdlib only" lines say so).
+- **Two safeguards beyond `docx.ts`.** A marker still open at the end of a line prints as itself (`docx.ts` italicizes to the end), and an `_` beside another `_` is literal, so a stray `*` in quoted text or a blank line `____` keeps its characters. A backslash still makes any marker literal.
+- **Verbatim text stays raw** where the grammar marks it: publish-general's fenced excerpt, the vaniac fenced quote, and the factum's `> ` quote line. Form 32 and Form 33 `> ` lines are parsed: Form 32 already italicized its excerpts (assembly-input-contract.md), and a Form 33 citation is itself a `> ` line, so the two forms now read alike.
+- **Notice of Civil Claim, Petition and Response to Civil Claim** numbered paragraphs, and party captions built by the same helper, now read emphasis too. Before, they printed every asterisk.
+- **Factum authorities.** `fill_factum.py` accepts an optional `kind` on each authorities entry and prints a `doctrine` name roman, any other name, or one with no `kind`, italic (bcca-factum-contract.md).
+- **Validators unchanged.**
