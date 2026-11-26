@@ -6,7 +6,7 @@ Goal: lower the two fixed costs every session pays before any work, the skill li
 
 - `.claude/settings.json` turns 19 unused plugins off in this repo with `"<name>@synced": false` (commit 8fb699e4). A new `claude -p` session here lists none of their skills.
 - `skillOverrides` does not apply to plugin skills (code.claude.com/docs/en/skills). The only ways to hide one plugin skill are its own `disable-model-invocation: true` (only in plugins we own) or turning its whole plugin off.
-- Open question: whether the desktop Code tab obeys `enabledPlugins` for plugins it loads from claude.ai. Evidence against: `commandments@synced` is `false` in the user settings, yet the Code tab still lists `commandments:*`. Step A1 settles it.
+- The desktop Code tab ignores `enabledPlugins` for plugins it loads from claude.ai (settled 2026-11-26): `/context` in a new Code tab session here still listed the agent `timekeeper:screenshot-reader`, although `timekeeper@synced` is `false` in this repo's settings, and Skills (9.9K) and Custom agents (9.8K) were unchanged. The Code tab's `/context` gives no per-skill breakdown, only a link to the account's plugin settings.
 - Usage in this repo's 566 transcripts: about 60 skill names were ever started, by the model or typed. Every other listed skill has never been started here.
 - Listing demand, from source files (characters / 4): skills about 17.8K tokens against a cap of about 10K (1% of a 1M window). Probanda's 39 agents about 8.5K of the 9.8K agent listing. Half of the agent cost is tool lists, about half of those being the `mcp__remote-devices__*` copies that Cowork needs, so those stay.
 
