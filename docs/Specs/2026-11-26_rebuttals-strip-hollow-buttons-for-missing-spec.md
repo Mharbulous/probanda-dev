@@ -58,3 +58,17 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 - Where the Rebuttals strip is built and from which rows.
 - The existing "rebuttal needed" rule and where it shows.
+
+### Verification against HEAD (2c72a0fa, 2026-11-26)
+
+| Claim | At HEAD | Where |
+|---|---|---|
+| The strip lists only existing rebuttals | Confirmed. `section()` builds one radio and label per card in `items`, and the Rebuttals tab is called with `data.rebuttals`, so the strip holds only rebuttal rows | `source/lawyer/mcp/src/templates/view-pages/arguments.js`, `section()` and its `section("rebuttals", ...)` call |
+| The rebuttal rows and their order | `data.rebuttals` is every argument with a rebuttal link: live first by number then label path, killed last by kill date. A merged board concatenates each proceeding's list | `source/lawyer/mcp/src/submission/forms/arguments-page.ts`, `argumentsFor()` `order` and `buildArgumentsData()` |
+| The "rebuttal needed" rule | It exists as the "No rebuttal" tag: an opposing argument, not killed, not itself a rebuttal, with no live rebuttal. The wording "rebuttal needed" appears nowhere | `arguments-page.ts`, `card()` |
+| Where it shows | As a flag tag on the argument's card, and counted in the Arguments heading ("N with no rebuttal") | `arguments-page.ts` `card()`; `arguments.js` `unanswered` count |
+| Labels | An argument's only live rebuttal takes its bare number ("#24"), several take "#41.a", "#41.b" (the sibling spec, landed in 2c72a0fa). A strip label is the card label without "#" | `arguments-page.ts` `labelOf`; `arguments.js` `section()` |
+| Tab linking | `sections[name].show(number)` lists every card and opens that number; `select(tab)` switches tabs. Both exist and are reused | `arguments.js` |
+| Paths | The spec's "installed copy" paths map to the repo paths above; the page script and its styles are `arguments.js` and `arguments.css` beside it | `source/lawyer/mcp/src/templates/view-pages/` |
+
+§9 Q1 is settled by this rule: a slot goes to each argument carrying the "No rebuttal" tag, so killed arguments and our own get none.
