@@ -188,6 +188,8 @@ def _parse_body(lines: list[str]) -> dict[str, list[tuple]]:
                 expected_n += 1
         if heading != PART_HEADINGS[-1]:
             _require(items[0][0] == 'para', 'numbering', f'{heading} must open with a numbered paragraph')
+        # Part 2's lettered issues are unnumbered paragraphs under its numbered lead-in.
+        if heading in (PART_HEADINGS[0], PART_HEADINGS[2]):
             _require(all(item[0] != 'plain' for item in items), 'unnumbered_paragraph',
                      f'{heading}: every paragraph is numbered (only quote and cite lines may follow one)')
     part4 = sections[PART_HEADINGS[-1]]
