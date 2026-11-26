@@ -56,6 +56,19 @@ export function mockupMessage(glyph: string, text: string): string {
   return `${glyph} ${text} ${MOCKUP_ONLY_TAG}`;
 }
 
+/** 👯 duplicate (symbol-table.ts row 👯): printed on each of two paragraphs that state the same fact. */
+export const DUPLICATE_GLYPH = "👯";
+
+/** "repeats para. 4" or "repeats paras. 1, 2": the paragraphs a 👯 line repeats. */
+export function repeatsPhrase(paras: readonly number[]): string {
+  return `repeats ${paras.length === 1 ? "para." : "paras."} ${paras.join(", ")}`;
+}
+
+/** The mockup comment after 👯 naming the paragraphs this one repeats. */
+export function repeatsComment(paras: readonly number[]): string {
+  return `<!-- ${repeatsPhrase(paras)} -->`;
+}
+
 export function jurisdictionSlotMarker(state: string): string {
   if (state === "needed") return "🏛️";
   if (state === "dead_end") return "🚧";
@@ -504,9 +517,9 @@ export function rebuttalMarker(rebutted: boolean): string {
  */
 export const ALL_MARKER_GLYPHS: readonly string[] = SYMBOLS.map((s) => s.glyph).sort((a, b) => b.length - a.length);
 
-/** The 31 work glyphs of work-markers.md table 1a: the SYMBOLS rows in the `work` group, a subset of
+/** The 34 work glyphs of work-markers.md table 1a: the SYMBOLS rows in the `work` group, a subset of
  * ALL_MARKER_GLYPHS. Read by counselReviewMarker alone, which fires 🧐 only on a line carrying none
- * of the other 30, so their order does not matter. */
+ * of the other 33, so their order does not matter. */
 export const WORK_MARKER_GLYPHS: readonly string[] = SYMBOLS.filter((s) => s.group === "work").map((s) => s.glyph);
 
 /** 🧐 final review (work-markers.md row 🧐; practitioner-review design §3, §5): no other 1a work

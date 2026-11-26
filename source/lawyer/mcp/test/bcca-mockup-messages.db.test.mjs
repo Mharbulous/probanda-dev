@@ -24,6 +24,7 @@ const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs
 const { assertFiledFaceDocumentsClean } = await import("./helpers/filed-face-scan.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
+const { inventoryCriterion } = await import("../build/submission/forms/goal-criteria.js");
 
 function fixture() {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-bcca-mockup-messages-"));
@@ -39,12 +40,15 @@ async function renderBoth(seed, documentType, caseData) {
     await freshSubmissionDb(f.dbPath);
     writePartiesOfRecord(dirname(f.dbPath), caseData);
     await submissionDataExecute(f.dbPath, seed);
-    const mockup = submissionFormsRender(f.dbPath, 1, {}).documents.find((d) => d.document_type === documentType).markdown;
+    const doc = submissionFormsRender(f.dbPath, 1, {}).documents.find((d) => d.document_type === documentType);
+    const mockup = doc.markdown;
+    // The mockup render's marker inventory, as its manifest saved it.
+    const inventory = JSON.parse(readFileSync(join(dirname(dirname(doc.path)), "Drafting records", "render-manifest-1.json"), "utf-8")).inventory;
     const filedResult = submissionFormsRender(f.dbPath, 1, {}, "filed");
     assert.ok(filedResult.documents.length > 0, `filed render refused: ${filedResult.note}`);
     assertFiledFaceDocumentsClean(filedResult.documents);
     const filed = filedResult.documents.find((d) => d.document_type === documentType).markdown;
-    return { mockup, filed };
+    return { mockup, filed, inventory };
   } finally {
     f.cleanup();
   }
@@ -107,6 +111,50 @@ test("factum: an enactment with no excerpt stays on the mockup, off the filed fa
     FACTUM_CASE_DATA
   );
   assertMockupKeepsFiledDrops(mockup, filed, "🧩", "No excerpt recorded for this enactment.");
+});
+
+test("factum: a facts-position paragraph restating a Part 1 fact carries 👯 on both, off the filed face", async () => {
+  const position = "The respondents agree with the appellants'' statement of facts, except as set out below.\n\nThe supply agreement was signed by both parties on 3 March 2026 and contains an arbitration clause.";
+  const sql = `
+UPDATE filing_prose SET text = '${position}' WHERE slot = 'facts_position';
+INSERT INTO facts (id, proceeding_id, postulate, court_record, court_record_pinpoint) VALUES
+  (2, 1, 'The supply agreement, signed by both parties on 3 March 2026, contains an arbitration clause.', 20, 'Appeal Record, Vol. 1, p. 14');
+INSERT INTO filing_facts (filing_id, fact_id, document, part, ordinal) VALUES (1, 2, 'form', 'part2', 2);
+`;
+  const { mockup, filed, inventory } = await renderBoth(FACTUM_SEED + sql, "Factum", FACTUM_CASE_DATA);
+  assert.deepEqual(
+    inventory.filter((e) => e.marker === "👯").map((e) => [e.generating, e.table, e.id, e.item, e.doc]),
+    [
+      [false, "filing_prose.facts_position", 2, "Part 1 para. 2: repeats para. 4", "Factum"],
+      [false, "facts", 2, "Part 1 para. 4: repeats para. 2", "Factum"],
+    ],
+    "both paragraphs are recorded for the open-items count"
+  );
+  const part1 = mockup.slice(mockup.indexOf("## PART 1"), mockup.indexOf("## PART 2"));
+  assert.match(part1, /^2\. The supply agreement was signed .* 👯 <!-- repeats para\. 4 -->$/m, "the position paragraph names the fact it repeats");
+  assert.match(part1, /^4\. The supply agreement, signed .*👯.*<!-- repeats para\. 2 -->$/m, "the fact names the position paragraph that repeats it");
+  assert.doesNotMatch(part1, /^[13]\. .*👯/m, "paragraphs that state nothing twice carry no 👯");
+  assert.match(part1, /^3\. .*🧐/m, "an unapproved fact with nothing else owed asks for review");
+  assert.doesNotMatch(part1, /^4\. .*🧐/m, "👯 is work on the line, so it holds 🧐 back");
+  assert.doesNotMatch(filed, /👯|repeats para/, "the filed face carries neither the marker nor its comment");
+});
+
+test("factum: two facts-position paragraphs restating one fact each count once toward open-items", async () => {
+  const position = "The supply agreement was signed by both parties on 3 March 2026 and contains an arbitration clause.\n\nThe respondents say the supply agreement, signed by both parties on 3 March 2026, contains an arbitration clause.";
+  const sql = `
+UPDATE filing_prose SET text = '${position}' WHERE slot = 'facts_position';
+INSERT INTO facts (id, proceeding_id, postulate, court_record, court_record_pinpoint) VALUES
+  (2, 1, 'The supply agreement, signed by both parties on 3 March 2026, contains an arbitration clause.', 20, 'Appeal Record, Vol. 1, p. 14');
+INSERT INTO filing_facts (filing_id, fact_id, document, part, ordinal) VALUES (1, 2, 'form', 'part2', 2);
+`;
+  const { mockup, inventory } = await renderBoth(FACTUM_SEED + sql, "Factum", FACTUM_CASE_DATA);
+  assert.match(mockup, /<!-- repeats paras\. 1, 2 -->/, "the fact names both position paragraphs");
+  const counted = inventoryCriterion({ id: "open-items", text: "", members: (e) => e.marker === "👯" }, inventory, new Set(), new Set());
+  assert.deepEqual(
+    counted.items,
+    ["Part 1 para. 1: repeats para. 4", "Part 1 para. 2: repeats para. 4", "Part 1 para. 4: repeats paras. 1, 2"],
+    "each flagged paragraph is its own open item"
+  );
 });
 
 test("stay response: no order sought, no positions and no opposing_authorities row stay on the mockup, off the filed face", async () => {

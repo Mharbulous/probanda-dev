@@ -65,6 +65,7 @@ export const UNATTENDED_ELIGIBLE: ReadonlyMap<string, readonly string[]> = new M
   ["🧾", []],
   ["📚", []],
   ["🧐", []],
+  ["👯", []],
 ]);
 
 /** Whether a Proposal key names an eligible marker instance: its slug's glyph lists its table. */

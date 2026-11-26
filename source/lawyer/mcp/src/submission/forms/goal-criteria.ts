@@ -74,7 +74,7 @@ const EVIDENCE: StockCriterion = {
 };
 const OPEN_ITEMS_TEXT = "Nothing is left open on the form";
 /** Open items' members on every type, bar the ⬜ instance and the ↩️ other declared criteria may count. */
-const OPEN_ITEMS_COMMON = anyOf(slugs("loose-thread", "factual-basis", "proposition", "not-recorded", "unchosen", "choose-template"), glyph("🧩"), glyph("🕵️"));
+const OPEN_ITEMS_COMMON = anyOf(slugs("loose-thread", "factual-basis", "proposition", "not-recorded", "unchosen", "choose-template"), glyph("🧩"), glyph("🕵️"), glyph("👯"));
 const COUNSEL_REVIEW: StockCriterion = { id: "counsel-review", text: "Counsel has reviewed every paragraph", members: glyph("🧐") };
 /** The 🧩 line a general Writing declaring `recipients` prints with no To recipient (#1234). */
 const NO_TO_RECIPIENT: Member = (e) => glyph("🧩")(e) && e.table === NO_TO_RECIPIENT_TABLE;

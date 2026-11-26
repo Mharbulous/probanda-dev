@@ -24,7 +24,7 @@ import {
   type CaptionParty,
 } from "./components.js";
 import { letter } from "./arguments-page.js";
-import { gapMarker, mockupMessage, rebuttalMarker } from "./markers.js";
+import { DUPLICATE_GLYPH, gapMarker, mockupMessage, rebuttalMarker, repeatsComment, repeatsPhrase } from "./markers.js";
 import { recordCriterionGlyphs } from "./proposal-inventory.js";
 import { captionHeadingFor, opposingPartyIds } from "./query.js";
 import { exhibitNumbersFromOrderedIds, fetchDocumentLabels, fetchFilingDocuments, fetchNotBestCopyMarkers } from "./exhibit-documents.js";
@@ -37,8 +37,8 @@ import { orderReviewMarkerFor } from "./review-state.js";
 import { recordParagraph, renderSubmissionParagraphs } from "./submission-paragraphs.js";
 import type { RenderContext } from "./render-context.js";
 import { recordContactGaps, renderFactParagraphsWithRhetoric } from "./render-bcca-stay-response.js";
-import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
-import { factsPart, fetchFacts } from "./filing-facts.js";
+import { fetchRhetoric, interleave, renderRhetoricLine, type RhetoricRow } from "./render-rhetoric.js";
+import { factsPart, fetchFacts, type FactRow } from "./filing-facts.js";
 import { filingFrontmatter } from "./filing-frontmatter.js";
 import { rows } from "../query-rows.js";
 
@@ -284,6 +284,52 @@ function pageBudgetLine(label: string, words: number, limit: number, limitNote: 
   return `- ${label}: ${words} words, about ${pages} page${pages === 1 ? "" : "s"} of the ${limit}-page limit.${over ? ` **Over the limit** -- ${limitNote}` : ""}`;
 }
 
+/** Function words of four letters or more, which say nothing about which fact a text states. */
+const STOPWORDS = new Set([
+  "about", "above", "after", "again", "also", "among", "been", "before", "being", "below", "between", "both",
+  "came", "come", "could", "does", "done", "down", "during", "each", "either", "even", "every", "from", "further",
+  "have", "having", "here", "into", "just", "made", "make", "many", "more", "most", "much", "must", "neither",
+  "only", "other", "ought", "over", "said", "same", "shall", "should", "since", "some", "such", "than", "that",
+  "their", "them", "then", "there", "these", "they", "this", "those", "through", "under", "until", "upon", "very",
+  "were", "what", "when", "where", "whether", "which", "while", "whom", "whose", "will", "with", "within",
+  "without", "would", "your",
+]);
+
+/** A text's distinct content words: four letters or more, lower-cased, stopwords and comments left out. */
+export function contentWords(text: string): Set<string> {
+  const words = text.replace(/<!--[\s\S]*?-->/g, " ").toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+  return new Set(words.filter((w) => w.length >= 4 && !STOPWORDS.has(w)));
+}
+
+/** Whether a facts-position paragraph restates a fact (practitioner's rule, 2026-11-26): they share at
+ * least 5 distinct content words, and those make up at least 60% of the fact's. */
+export function restatesFact(position: string, fact: string): boolean {
+  const factWords = contentWords(fact);
+  const positionWords = contentWords(position);
+  let shared = 0;
+  for (const w of factWords) if (positionWords.has(w)) shared += 1;
+  return shared >= 5 && shared >= 0.6 * factWords.size;
+}
+
+/** Part 1's 👯 pairs, by paragraph number: each facts-position paragraph that restates a Part 1 fact, and
+ * each such fact. Facts number after the position, merged with the facts part's rhetorical paragraphs by
+ * ordinal, as renderFactParagraphsWithRhetoric numbers them. */
+function part1Repeats(position: string[], facts: FactRow[], rhetoric: RhetoricRow[]): { byPosition: Map<number, number[]>; byFact: Map<number, number[]> } {
+  const byPosition = new Map<number, number[]>();
+  const byFact = new Map<number, number[]>();
+  let para = position.length;
+  for (const entry of interleave(facts, rhetoric, (f) => f.filing_ordinal)) {
+    para += 1;
+    if (entry.kind !== "host") continue;
+    position.forEach((text, i) => {
+      if (!restatesFact(text, entry.item.postulate)) return;
+      byPosition.set(i + 1, [...(byPosition.get(i + 1) ?? []), para]);
+      byFact.set(entry.item.id, [...(byFact.get(entry.item.id) ?? []), i + 1]);
+    });
+  }
+  return { byPosition, byFact };
+}
+
 export function renderBccaFactum(ctx: RenderContext): string {
   const captionParties: CaptionParty[] = ctx.parties.map((p) => ({ name: p.name, role: p.role, ordinal: p.ordinal }));
   const client = ctx.parties.find((p) => p.is_client === 1);
@@ -416,11 +462,18 @@ export function renderBccaFactum(ctx: RenderContext): string {
   if (factsPosition.length === 0) {
     pushGap(ctx, lines, mockupMessage(gapMarker("gap"), "No position on the appellants' statement of facts recorded."), 2, "Position on the appellants' statement of facts");
   }
+  const factsRhetoric = fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts");
+  const repeats = part1Repeats(factsPosition, facts, factsRhetoric);
   factsPosition.forEach((p) => {
     para += 1;
-    lines.push(`${para}. ${p}`);
+    const repeated = repeats.byPosition.get(para);
+    // Keyed per paragraph, as pushGap keys a form field, so each flagged paragraph counts once.
+    if (repeated) {
+      recordCriterionGlyphs(ctx.inventory, DUPLICATE_GLYPH, [DUPLICATE_GLYPH], { table: "filing_prose.facts_position", id: para, item: `Part 1 para. ${para}: ${repeatsPhrase(repeated)}` });
+    }
+    lines.push(`${para}. ${p}${repeated ? ` ${DUPLICATE_GLYPH} ${repeatsComment(repeated)}` : ""}`);
   });
-  const factResult = renderFactParagraphsWithRhetoric(ctx, facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), para, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  const factResult = renderFactParagraphsWithRhetoric(ctx, facts, factsRhetoric, para, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, repeats.byFact);
   lines.push(...factResult.lines);
   para = factResult.nextPara;
   lines.push("");

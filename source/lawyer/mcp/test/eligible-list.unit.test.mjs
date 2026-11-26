@@ -16,7 +16,7 @@ function workGlyphs() {
 
 test("every work marker of the symbol table is classified by the eligible list", () => {
   const glyphs = workGlyphs();
-  assert.equal(glyphs.length, 33, "the symbol table holds 33 work glyphs");
+  assert.equal(glyphs.length, 34, "the symbol table holds 34 work glyphs");
   const unclassified = glyphs.filter((g) => !UNATTENDED_ELIGIBLE.has(g));
   assert.deepEqual(unclassified, [], "a work row the eligible list does not classify");
 });

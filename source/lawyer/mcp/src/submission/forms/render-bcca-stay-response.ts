@@ -44,6 +44,7 @@ import {
   courtRecordPinpointMarker,
   dedupeLineMarkers,
   doubtMarker,
+  DUPLICATE_GLYPH,
   exhibitPinpointMarker,
   gapMarker,
   isAdmittedGuard,
@@ -51,6 +52,8 @@ import {
   noWitnessMarker,
   suppressMarker,
   printMarkerSets,
+  repeatsComment,
+  repeatsPhrase,
   statementOfFactMarkers,
   testimonyPinpointMarker,
   unpositionedOrderMarker,
@@ -89,7 +92,8 @@ export function renderFactParagraphs(
   spentGlyphByFact: ReadonlyMap<number, string>,
   suppressedFactIds: ReadonlySet<number>,
   inventory: MarkerInventory,
-  review?: ReviewState
+  review?: ReviewState,
+  repeatsByFact?: ReadonlyMap<number, readonly number[]>
 ): { lines: string[]; nextPara: number } {
   const statementsByFact = new Map<number, StatementOfFactRow[]>();
   for (const stmt of fetchStatementsOfFact(dbPath, facts.map((f) => f.id))) {
@@ -116,6 +120,12 @@ export function renderFactParagraphs(
       suppressMarker(noWitnessMarker(courtRecordLinked, stmts.length > 0, admitted, spentGlyphByFact.get(f.id) ?? ""), suppressedFactIds.has(f.id)),
       courtRecordPin,
     ];
+    // The factum's Part 1 only: 👯 on a fact a facts-position paragraph restates, before 🧐 reads the line.
+    const repeats = repeatsByFact?.get(f.id);
+    if (repeats) {
+      factTokens.push(DUPLICATE_GLYPH);
+      recordCriterionGlyphs(inventory, DUPLICATE_GLYPH, [DUPLICATE_GLYPH], { table: "facts", id: f.id, item: `Part 1 para. ${para}: ${repeatsPhrase(repeats)}` });
+    }
     const tokens: string[] = [...factTokens];
     const statementSets: string[][] = [];
     const guarded = isAdmittedGuard(courtRecordLinked, admitted);
@@ -144,7 +154,8 @@ export function renderFactParagraphs(
       if (s.purpose !== "impeachment") statementSets[i].push(reviewMarkerFor(review, inventory, lineGlyphs, "statements_of_fact", s.id, `${s.witness_name}: ${f.postulate}`));
     });
     const glyphs = printMarkerSets([dedupeLineMarkers(factTokens), ...statementSets.map(dedupeLineMarkers)]);
-    lines.push(`${para}. ${f.postulate}${glyphs ? ` ${glyphs}` : ""}${courtRecordCite ? "" : ` <!-- fact ${para} -->`}`);
+    const repeatsNote = repeats ? ` ${repeatsComment(repeats)}` : "";
+    lines.push(`${para}. ${f.postulate}${glyphs ? ` ${glyphs}` : ""}${repeatsNote}${courtRecordCite ? "" : ` <!-- fact ${para} -->`}`);
     if (courtRecordCite) lines.push(`   > ${courtRecordCite} <!-- fact ${para} -->`);
   });
   return { lines, nextPara: para };
@@ -161,14 +172,15 @@ export function renderFactParagraphsWithRhetoric(
   copyMarkers: Map<number, string>,
   admittedFactIds: ReadonlySet<number>,
   spentGlyphByFact: ReadonlyMap<number, string>,
-  suppressedFactIds: ReadonlySet<number>
+  suppressedFactIds: ReadonlySet<number>,
+  repeatsByFact?: ReadonlyMap<number, readonly number[]>
 ): { lines: string[]; nextPara: number } {
   const lines: string[] = [];
   let para = startPara;
   let run: FactRow[] = [];
   const flush = () => {
     if (run.length === 0) return;
-    const result = renderFactParagraphs(ctx.dbPath, run, para, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, ctx.inventory, ctx.review);
+    const result = renderFactParagraphs(ctx.dbPath, run, para, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, ctx.inventory, ctx.review, repeatsByFact);
     lines.push(...result.lines);
     para = result.nextPara;
     run = [];

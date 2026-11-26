@@ -41,8 +41,8 @@ export type ProposalSlug =
  * generates otherwise. ⬜ is every instance but the
  * requisition checklist's and a live Form 8 provision's. 🧐 is printed by the forum renderers since
  * practitioner-review plan Phase 5, and its entry may carry `changed`. 📇 is a statute, regulation
- * or rule found repealed or archived only (#1628): it generates otherwise. */
-export const NON_GENERATING_GLYPHS = ["🧩", "🕵️", "⬜", "👤", "🚧", "👃", "↩️", "🏆", "🧐", "🏅", "🔬", "📖", "📇"] as const;
+ * or rule found repealed or archived only (#1628): it generates otherwise. 👯 never generates. */
+export const NON_GENERATING_GLYPHS = ["🧩", "🕵️", "⬜", "👤", "🚧", "👃", "↩️", "🏆", "🧐", "🏅", "🔬", "📖", "📇", "👯"] as const;
 export type NonGeneratingGlyph = (typeof NON_GENERATING_GLYPHS)[number];
 
 /** Which instance of a non-generating glyph an entry is, where a criterion places one glyph by

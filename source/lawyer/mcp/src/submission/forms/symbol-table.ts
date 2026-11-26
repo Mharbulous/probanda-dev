@@ -668,6 +668,27 @@ export const SYMBOLS: readonly SymbolRow[] = [
       "wording alone; its plain-text tells hold nothing back); supporting_statements and basis_excerpts " +
       "snapshot keys 2026-10-08 (CoClerk spec 2026-10-08_review-snapshot-supporting-statements-spec.md; practitioner's decision on pinpoint and authority recorded in review.md)",
   },
+  {
+    glyph: "👯", name: "duplicate", group: "work",
+    meaning: "this paragraph shares most of its wording with another paragraph of the same Part, so the two appear to state the same fact",
+    work: "cite the other paragraph instead of restating it, or cut one copy",
+    actor: "drafter; practitioner where the wording was dictated",
+    modelNote: "The marker only flags. Never rewrite wording the practitioner dictated without their approval, even to clear it.",
+    condition:
+      "a BCCA respondent's factum, Part 1: a `filing_prose` `slot='facts_position'` paragraph and a Part 1 fact " +
+      "(`filing_facts` `document='form'` `part='part2'`) whose `postulate` shares at least 5 distinct content words " +
+      "with it (runs of letters and digits, 4 characters or more, lower-cased, with HTML comments and the fixed " +
+      "`STOPWORDS` list of `render-bcca-factum.ts` left out) that make up at least 60% of the postulate's own; a " +
+      "rhetorical paragraph of the Part is never compared; derived, never stored. Prints on both paragraphs, after " +
+      "the position paragraph's text and in the fact line's marker set, each line then carrying " +
+      "`<!-- repeats para. N -->` (`paras. N, M` for several) naming the other. Generates nothing. Counts toward " +
+      "`open-items`, once per flagged paragraph. Being a 1a work marker, it holds 🧐 back on the fact's line, for " +
+      "the fact and its statements alike; the position paragraph prints no 🧐. Rendered for the human on the " +
+      "mockup; never on the filed face, which the emitter builds without it",
+    history:
+      "admitted 2026-11-26 (practitioner + Fable; spec 2026-11-25_factum-part1-duplicate-facts-spec.md); derived, " +
+      "no column; render shipped on the BCCA factum's Part 1 only",
+  },
 
   // Table 1b, events: the work column is the work each routes.
   {
