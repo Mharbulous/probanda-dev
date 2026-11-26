@@ -58,3 +58,13 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 - The type file's Part 1 source sentence reads as quoted in §2.
 - Where the BCCA venue file defines its record, if anywhere.
+
+### Verification at HEAD 0aef41fc (2026-11-26)
+
+| Check | Result |
+|---|---|
+| §2: the type file's Part 1 source sentence | Confirmed. `source/skills/draft/references/CAN/BC/BCCA/Documents/respondent-factum.md` line 25 ends "each with its source: the volume and page of the appeal record or appeal book, or the volume, page and line of the transcript." No sentence there or elsewhere says these books alone are the record. |
+| §10: where the BCCA venue file defines its record | Nowhere. `source/skills/draft/references/CAN/BC/BCCA/venue.md` holds only the heading data. No appellant-factum type file exists. `stay-response-book.md` is a chambers application whose record is its own application book, so it is out of scope. |
+| Other restatements | `source/skills/drafting-data/references/filing-checklists.md` §12 Part 1 names the same three books for `facts.court_record`. It is changed to point to the definition. |
+| §8.2: any rule or brief pointing at the court below's application record for an appeal Writing | None found in `source/` (grep for "application record", "court below", "record before", "was before"). Every "application record" hit is the BCSC Rule 8-1 record or its assembly. |
+| §4.2 / §9.1: does case data mark which documents are in the appeal books | No. matter-data's `sources` has no appeal-book column, and `parent_source_id` only links a segmented affidavit to its compound book without saying which kind of book it is. drafting-data's `documents` has none either. Open item: adding a flag is a schema change to a legacy store, which the COMMANDMENTS Exception and the never-commit rule on schema DDL forbid here. It needs its own spec. |
