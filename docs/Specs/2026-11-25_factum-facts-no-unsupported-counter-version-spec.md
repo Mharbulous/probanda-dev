@@ -65,3 +65,13 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - The Part 1 bullet and §12 Part 1 read as quoted in §2.
 - Which `/draft` file orders the source-trace review, and whether it already reaches filing prose.
 - Whether a general facts-drafting rule already exists in `/draft` that should host §4.1–4.2.
+
+## 11. Verification against HEAD (2026-11-26, at 36177bc2)
+
+| Check | Finding at HEAD |
+|---|---|
+| Part 1 bullet of `source/skills/draft/references/CAN/BC/BCCA/Documents/respondent-factum.md` | Reads as quoted in §2, plus the sentence added in 75d384c0 defining "the record on appeal" (appeal record, appeal books, transcript) and saying a claim that something is absent speaks of the record on appeal. Still no rule on how to answer a disputed fact, and nothing requiring a search before an absence claim. |
+| §12 Part 1 of `source/skills/drafting-data/references/filing-checklists.md` | Reads as quoted in §2: `filing_prose` `slot='facts_position'`, free prose, then `facts` with `court_record` + `court_record_pinpoint`, which now points to the type file's record-on-appeal definition. |
+| Which `/draft` file orders the source-trace review | `source/skills/draft/references/source-trace.md` (§1 "When"), routed by `procedure.md` §15 atom `draft.ref.source-trace` (ops `letter,reply_route,present_file`) and gated by SKILL.md ban 20. Its triggers, and `litigator:source-tracer`'s `kind` input and description, name only letters, emails, memos and replies. It does not reach filing prose. |
+| A general facts-drafting rule in `/draft` | None. `overstatement.md` flags completeness claims ("the only") but only at the pre-review passes (section 13), after drafting, and checks strength rather than requiring a search. `evidence.md` covers witness statements ("A silence ... is asked about, never filled"), not answers to another party's facts. So §4.1-4.2 go in the type file's Part 1 bullet (§9 Q2 default), where other kinds' fact parts can cite them. |
+| §9 Q1 | Extend the agent's ordinary mode with a new `kind`, not reliance mode. Reliance mode checks case-data facts carrying a `fact_id`, from excerpts only, and the facts-position prose has no `fact_id`s. The ordinary mode already splits free text into assertions and reads the sources itself. The reliance-mode contract is untouched, and the only behaviour change elsewhere is a new accepted `kind`. |
