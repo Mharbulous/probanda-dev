@@ -75,7 +75,7 @@ Read the issue's Plan, Scope and Done when in full, from its latest `## Agent Br
 
 A single narrow test file named in Done when (for example one `pytest` file) is not a Windows-only suite: try it. Any Done-when check this run cannot perform itself, such as a manual or live-session check, is "a decision or check by a person": an issue is never closed with a Done-when check not run.
 
-**Minor go-ahead.** A comment on the issue that opens with `> *Decisions recorded by /hitl-triage.*` and whose `### Decisions` list records Brahm's go-ahead for a minor version of the plugins it covers. It passes the minor gate here and `.claude/commands/release.md` step 4, for those plugins only. The rollout that `release.md` step 8 gives Brahm goes in the step 6 comment. Without one, the minor gate stands.
+**Minor go-ahead.** A comment on the issue that opens with `> *Decisions recorded by /hitl-triage.*` and whose `### Decisions` list records Brahm's go-ahead for a minor version of the plugins it covers. It passes the minor gate here and `.claude/skills/release/SKILL.md` step 4, for those plugins only. The rollout that `/release` step 8 gives Brahm goes in the step 6 comment. Without one, the minor gate stands.
 
 When the issue is unsuitable only because of the cloud (Windows, a browser, the practitioner's data, a secret), mark it (step 7, "Mark local"). When any other item fails, the local lane would refuse it too, so **Hand back** instead. Then go back to step 2.
 
@@ -92,7 +92,7 @@ A **suggestion issue** is one labelled `suggestion` whose work order has a `Sugg
 - A Done-when check that runs a whole test folder or suite fails partly on Linux for reasons unrelated to the issue, because those suites run on Windows in CI. Run it on the base too (in the `/tmp/base` worktree), and count only failures that the base does not have. Give each test command a timeout of 10 minutes.
 - Run every Done-when check, and none under `### After landing`, which only CI can run. Then run `python scripts/build_plugin.py --check`, `python scripts/check_plugin.py`, `python scripts/check_layering.py`, `python scripts/check_file_ops.py` and `python scripts/check_publishable.py --new-since origin/main`. A check that fails and cannot be fixed inside the Scope: step 7, "Mark local", quoting its output.
 - For any other issue, commit the source change by pathspec. A suggestion issue's fix commits are fix-maker's, one per unit. Do not push yet.
-- Release by `.claude/commands/release.md` steps 2 to 6, then commit as its step 7 says, but do not push: step 6 pushes. A plugin it classes as minor with no **Minor go-ahead** for it: discard this issue's unpushed commits (`git reset --hard origin/main`) and **Hand back** with the reason `authorization`, naming the minor change.
+- Release by `.claude/skills/release/SKILL.md` steps 2 to 6, then commit as its step 7 says, but do not push: step 6 pushes. A plugin it classes as minor with no **Minor go-ahead** for it: discard this issue's unpushed commits (`git reset --hard origin/main`) and **Hand back** with the reason `authorization`, naming the minor change.
 
 ## 6. Land
 
