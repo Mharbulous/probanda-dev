@@ -94,7 +94,12 @@ test("a case brief's saved file is the brief alone: no party, marker, trace comm
   const m = await matter(t);
   const id = await writeBrief(m);
   const { render, saved } = saveFromRender(m, id, `${STEM}.md`);
-  const text = readFileSync(saved.path, "utf-8");
+  const saveText = readFileSync(saved.path, "utf-8");
+  // saveAnswer ends every saved file with one hidden save marker, which a same-day re-save checks: expect it, then judge the body without it.
+  const marker = /\n\n<!-- probanda-save sha256:[0-9a-f]{64} -->\n$/;
+  assert.match(saveText, marker, saveText);
+  assert.equal(saveText.split("probanda-save").length - 1, 1, "exactly one save marker");
+  const text = saveText.replace(marker, "\n");
   assert.equal("mockup_only_lines" in saved, false, "only a memo's result carries these");
   assert.equal(render.parties_drift[0].name, "Working Matter Client Ltd", "the session still sees the drift");
   assert.ok(text.startsWith("## Case\n"), text);
