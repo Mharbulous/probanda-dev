@@ -1,4 +1,4 @@
-// build-stamp: 88a64b3f6a87
+// build-stamp: 8e83489b005b
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75506,7 +75506,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "88a64b3f6a87";
+var BUILD_STAMP = false ? null : "8e83489b005b";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -94353,16 +94353,17 @@ function roman(n3) {
 function argumentsFor(dbPath, proceedingId, ids, merged) {
   const all = rows(
     dbPath,
-    "SELECT id, contention, side, number, anticipated, component, pinpoint, killed_on FROM arguments WHERE proceeding_id = ? ORDER BY id",
+    // On a database held below v82, argumentsTable reads its submissions as our own, unnumbered arguments.
+    `SELECT id, contention, side, number, anticipated, component, pinpoint, killed_on FROM ${argumentsTable(dbPath)} WHERE proceeding_id = ? ORDER BY id`,
     [proceedingId]
   );
   const byId2 = new Map(all.map((a3) => [a3.id, a3]));
-  const links = rows(
+  const links = (hasTable(dbPath, "argument_rebuts") ? rows(
     dbPath,
     `SELECT r.rebuttal_id, r.argument_id FROM argument_rebuts r JOIN arguments a ON a.id = r.argument_id
-     WHERE a.proceeding_id = ? ORDER BY r.rowid`,
+         WHERE a.proceeding_id = ? ORDER BY r.rowid`,
     [proceedingId]
-  ).filter((l3) => byId2.has(l3.rebuttal_id));
+  ) : []).filter((l3) => byId2.has(l3.rebuttal_id));
   const deployments = rows(
     dbPath,
     `SELECT DISTINCT fs.submission_id, f.id AS filing_id, f.title, f.retired_on
@@ -94493,6 +94494,7 @@ var ARGUMENTS_PAGE = {
 
 // src/submission/forms/opposing-points.ts
 function fetchOpposingArguments(dbPath, proceedingId) {
+  if (!hasTable(dbPath, "arguments")) return [];
   const points = rows(
     dbPath,
     `SELECT id, component, pinpoint, contention FROM arguments

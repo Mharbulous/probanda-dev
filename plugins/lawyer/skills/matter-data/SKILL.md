@@ -4,7 +4,7 @@ user-invocable: false
 description: SSOT for this client matter's structured case data. Use for party details and counsel, proceedings and procedural history, witnesses and experts, tribunal members, the spellings and file-name codes recorded for any of them, facts, party positions, evidence links, causes of action, issues, privileged client instructions, and the matter's stored legal authorities/concepts—both lookups or analysis and CRUD. Not the authority on what the law is (legal-research) or deadlines (docket-clerk); it stores and serves the underlying matter data they consult.
 ---
 
-<!-- lawyer v0.34.2 -->
+<!-- lawyer v0.34.3 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

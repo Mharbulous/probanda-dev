@@ -3,7 +3,7 @@ name: dyu
 description: Use when the user's message ends with /dyu or $dyu, and only then. The user types it as the last word of a message, after describing an idea, a question or a request. Restate the user's intent in plain language as an active-listening checkpoint, then stop and wait for the user to confirm before answering, implementing, critiquing, researching or expanding.
 ---
 
-<!-- lawyer v0.34.2 -->
+<!-- lawyer v0.34.3 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

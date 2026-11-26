@@ -4,7 +4,7 @@ user-invocable: false
 description: "Use before any approval ask or sign-off, including a draft presented for sign-off, before any question to the practitioner about a specific document, even one asked again, and when the practitioner asks to see a Work Board or any job on it. Also before any reply that reports what a tribunal, court, arbitrator, opposing counsel or witness said or wrote (an email, letter, direction, order or ruling), asked for or not: quote the operative words verbatim first, with author, date and source."
 ---
 
-<!-- lawyer v0.34.2 -->
+<!-- lawyer v0.34.3 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.
