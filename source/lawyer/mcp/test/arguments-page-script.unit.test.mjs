@@ -1,7 +1,7 @@
 // Runs the Arguments page's own script (templates/view-pages/arguments.js) against a minimal fake DOM:
 // exactly two tabs, Arguments and Rebuttals; a tab's badges filter its cards; a statement opens or
-// closes its number on both tabs at once; nothing is open on load; and the Arguments heading counts
-// the arguments with no rebuttal.
+// closes its number on both tabs at once; nothing is open on load; the Arguments heading counts
+// the arguments with no rebuttal; and the Rebuttals strip shows each of them as a hollow button.
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -144,6 +144,24 @@ test("one open number links both tabs: Argument #1 opens Rebuttals #1.a and #1.b
   title(r, 3);
   assert.deepEqual(a.open(), []);
   assert.deepEqual(r.open(), []);
+});
+
+test("the Rebuttals strip has a hollow button for each argument with no rebuttal, which opens it on the Arguments tab", () => {
+  const opposing = (id, label, number, extra) => card(id, label, number, { side: "opposing", ...extra });
+  const page = load({
+    arguments: [opposing(1, "#1", 1), opposing(2, "#2", 2, { tags: ["No rebuttal"] }), opposing(3, "#3", 3)],
+    rebuttals: [card(4, "#1", 1), card(5, "#3", 3)],
+  });
+  page.tab("rebuttals");
+  const r = page.section("Rebuttals");
+  const strip = r.heading.children.find((n) => n.className === "picker").children.filter((n) => n.tagName !== "input");
+  assert.deepEqual(strip.map((n) => [n.text, n.className]), [["1", ""], ["2", "hollow"], ["3", ""]]);
+  strip[1].fire("click");
+  const a = page.section("Arguments");
+  assert.equal(a.node.hidden, false);
+  assert.equal(r.node.hidden, true);
+  assert.deepEqual(a.open(), [2]);
+  assert.equal(a.cards[1].scrolled, true);
 });
 
 // The session's pointer (drafting_forms__focus_view_page): the page asks the listener, and each poll's

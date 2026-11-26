@@ -90,9 +90,10 @@
   board.appendChild(folder);
 
   // One tab's section, its picker and its cards. The picker's selected label lists that card alone,
-  // and none selected lists them all.
+  // and none selected lists them all. Each of `gaps` (arguments with no rebuttal) takes a hollow
+  // button in number order, which opens that argument on the Arguments tab.
   var sections = {};
-  function section(name, heading, items, noun, note) {
+  function section(name, heading, items, noun, note, gaps) {
     var cards = items.map(function (a) { return card(a, noun); });
     var sec = el("section");
     var h2 = el("h2", "", heading);
@@ -120,7 +121,21 @@
       return true;
     }
     sections[name] = { node: sec, size: cards.length, show: show };
+    gaps = gaps || [];
+    var g = 0;
+    // Hollow buttons for the gaps numbered below n, or for all that are left when n is null.
+    function hollow(a) {
+      var b = el("button", "hollow", a.label.replace("#", ""));
+      b.type = "button";
+      b.title = "Argument " + a.label + ": no rebuttal";
+      b.addEventListener("click", function () { if (sections.arguments.show(a.number)) select(tabs[0]); });
+      picker.appendChild(b);
+    }
+    function hollowsBefore(n) {
+      while (g < gaps.length && (n === null || (gaps[g].number !== null && gaps[g].number < n))) hollow(gaps[g++]);
+    }
     cards.forEach(function (c, i) {
+      hollowsBefore(items[i].killed ? null : items[i].number);
       var input = el("input");
       input.type = "radio";
       input.name = "pick-" + name;
@@ -136,10 +151,11 @@
       input.addEventListener("keydown", function (e) { if (e.key === " " && input.checked) clear(e); });
       stack.appendChild(c.node);
     });
+    hollowsBefore(null);
   }
-  var unanswered = data.arguments.filter(function (a) { return a.tags.indexOf("No rebuttal") >= 0; }).length;
-  section("arguments", "Arguments", data.arguments, "Argument", unanswered + " with no rebuttal");
-  section("rebuttals", "Rebuttals", data.rebuttals, "Rebuttal", null);
+  var unanswered = data.arguments.filter(function (a) { return a.tags.indexOf("No rebuttal") >= 0; });
+  section("arguments", "Arguments", data.arguments, "Argument", unanswered.length + " with no rebuttal");
+  section("rebuttals", "Rebuttals", data.rebuttals, "Rebuttal", null, unanswered);
   setOpen(null);
   var empty = el("p", "empty", "Nothing recorded on this tab.");
   folder.appendChild(empty);
