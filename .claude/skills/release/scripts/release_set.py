@@ -9,7 +9,8 @@ Runs the repo's own scripts/build_plugin.py --check and scripts/release_changes.
 merges what they list. A plugin is released when --check calls it stale, when a
 `released:` line names it, or when a `rebuild:` line names it. Its change set is
 `git diff --name-status <last bump>..HEAD` over its inputs: its skills' folders,
-source/skills/shared/, source/<plugin>/, and the build folder of each server it ships.
+source/skills/shared/, source/<plugin>/, the build folder of each server it ships, and the
+other files release_changes.py rebuilds a bundle for (source/mcp-shared/, migrate_engine.py).
 Read-only. Exit codes: 0 nothing to release, 1 something listed, 2 a stop.
 """
 
@@ -43,7 +44,8 @@ NOTHING = "nothing changed since each plugin's last bump"
 
 def unhandled(value, where):
     """Stop on an input no scenario covers, instead of guessing."""
-    sys.exit(f"error: unhandled input {value!r} in {where} (no scenario covers it)")
+    print(f"STOP: unhandled input {value!r} in {where} (no scenario covers it)", file=sys.stderr)
+    sys.exit(2)
 
 
 def run(repo, script, *args):
@@ -95,6 +97,7 @@ def process(repo):
 
     sys.path.insert(0, str(repo / "scripts"))
     import plugin_layout
+    from release_changes import MIGRATE_ENGINE, SHARED_SRC
     specs = plugin_layout.plugins(repo)
     order = ("check", "released", "rebuild")
     out = []
@@ -112,7 +115,10 @@ def process(repo):
             sys.exit(2)
         inputs = sorted({Path(plugin_layout.skill_dir(repo, s)).relative_to(repo).as_posix() for s in spec["skills"]}
                         | {"source/skills/shared", spec["source"]}
-                        | {plugin_layout.SERVERS[s]["build"] for s in spec["servers"]})
+                        | {plugin_layout.SERVERS[s]["build"] for s in spec["servers"]}
+                        # release_changes.py's other rebuild triggers, so step 4 classifies what they change
+                        | ({SHARED_SRC.rstrip("/")} if spec["servers"] else set())
+                        | ({MIGRATE_ENGINE} if "data" in spec["servers"] else set()))
         changes = git(repo, "diff", "--name-status", f"{base}..HEAD", "--", *inputs).splitlines()
         how = ", ".join(s for s in order if s in sources[name])
         out.append(f"released: {name} (last bump {base[:8]}; from {how})")
