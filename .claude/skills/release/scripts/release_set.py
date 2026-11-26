@@ -105,9 +105,9 @@ def process(repo):
         if name not in specs:
             unhandled(name, "released plugin")
         spec = specs[name]
-        base = git(repo, "log", "-1", "--format=%H", "--", f"{spec['source']}/plugin.json").strip()
+        base = git(repo, *plugin_layout.last_bump_log(spec["source"])).strip()
         if not base:
-            print(f"STOP: no commit touches {spec['source']}/plugin.json, so '{name}' has no last bump",
+            print(f"STOP: no commit sets the version in {spec['source']}/plugin.json, so '{name}' has no last bump",
                   file=sys.stderr)
             sys.exit(2)
         inputs = sorted({Path(plugin_layout.skill_dir(repo, s)).relative_to(repo).as_posix() for s in spec["skills"]}

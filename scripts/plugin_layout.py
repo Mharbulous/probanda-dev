@@ -54,6 +54,13 @@ def stop(message):
     sys.exit(2)
 
 
+def last_bump_log(source):
+    """The `git log` arguments that print the hash of the last commit to bump the plugin
+    built from `source`: the last commit whose diff adds or removes the "version" line of
+    <source>/plugin.json. An edit to another field of that file is not a bump."""
+    return ("log", "-1", "--format=%H", "-G", r'^[[:space:]]*"version"[[:space:]]*:', "--", f"{source}/plugin.json")
+
+
 def load(repo):
     path = Path(repo) / "source" / "assignment.json"
     if not path.is_file():

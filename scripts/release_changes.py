@@ -8,7 +8,7 @@ Usage:
 `build_plugin.py --check` compares source with plugins/ only. It misses a server
 source changed without a bundle rebuild, and a built file committed without a bump.
 This script compares HEAD with the commit of each plugin's last bump
-(the last commit to touch source/<plugin>/plugin.json) and prints:
+(the last commit to change the "version" line of source/<plugin>/plugin.json) and prints:
 
   rebuild: <folder> (for <plugin>)   a bundle built from <folder> must be rebuilt
   released: <plugin> (...)           plugins/<plugin>/ changed since the bump
@@ -46,9 +46,9 @@ def main():
     repo = parser.parse_args().repo.resolve()
     listed = False
     for name, spec in plugin_layout.plugins(repo).items():
-        base = git(repo, "log", "-1", "--format=%H", "--", f"{spec['source']}/plugin.json").strip()
+        base = git(repo, *plugin_layout.last_bump_log(spec["source"])).strip()
         if not base:
-            stop(f"no commit touches {spec['source']}/plugin.json, so '{name}' has no last bump")
+            stop(f"no commit sets the version in {spec['source']}/plugin.json, so '{name}' has no last bump")
         changed = git(repo, "diff", "--name-only", f"{base}..HEAD").splitlines()
         for folder in sorted({plugin_layout.SERVERS[s]["build"] for s in spec["servers"]}):
             triggers = (f"{folder}/src/", f"{folder}/scripts/", SHARED_SRC)
