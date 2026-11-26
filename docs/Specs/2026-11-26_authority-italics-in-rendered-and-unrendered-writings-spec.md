@@ -92,3 +92,23 @@ Made by the orchestrating session's read of HEAD and by Brahm in that session.
 - **Option (c) is not built.** No authority row stores a short form, so short forms are covered by the writing rule only.
 - **Earlier overlap.** Commit `77018645` (2026-11-17) added a case-name italics sentence to `source/skills/shared/research-memo-template.md` from `2026-11-17_memo-sources-case-name-italics-spec.md`. It covers cases in the memo's Sources list only. This spec replaces that sentence with a pointer to the one shared rule.
 - **Left roman on purpose.** The Book of Authorities table of contents and its bookmarks (`emit-bcca-book.ts`), because `fill_book.py` inserts text raw and Word bookmarks cannot hold italics.
+
+## 12. Verification against HEAD (d5eaec90), 2026-11-26
+
+| Item | Finding at HEAD |
+|---|---|
+| Source line `> *Name*, citation` | Built by `lawStatementCitationLine` in `source/lawyer/mcp/src/submission/forms/law-statement-line.ts:104`, italic for every kind, doctrine included. Hand-made copies: `render-form32-filed-face.ts:52` (`>> ` prefix) and `render-form33-filed-face.ts:46`. |
+| Research memo `## Authorities` list | Mockup-only section built in `render-general.ts:238-242` from `lawStatementCitationLine`, so it follows the source line. |
+| Research memo `## Sources` list | Not rendered from rows: the research agent writes it as prose, by `source/skills/shared/research-memo-template.md:76-77`. |
+| Factum List of Authorities table | `render-bcca-factum.ts:587-599`, `| ${a.authority}, ${citation} | ...`, roman. Rows from `factumAuthorities` (:162), whose `FactumAuthority` (:121-127) carries no `kind` though `fetchCitedStatements` selects it. |
+| Factum filed face | `emit-bcca-factum.ts:45-48` `lawCite` prints `cite: Name, citation`, roman. The `authorities` frontmatter JSON is `{authority, citation, paras}`, and `fill_factum.py` italicizes every name. |
+| Stay-response Table of Authorities | `render-bcca-stay-response.ts:688-695`, `n. Name, citation`, roman; `fetchCitedAuthorities` (:242) does not select `kind`. |
+| Form 32 body names | `authorityNamePattern` (`render-form32-filed-face.ts:76-89`) italicizes every authority title of the proceeding in Parts 2-4, doctrine included. |
+| HTML propositions page | `research-propositions.ts:139-144` splits the source line at `> *title*`; a line that does not start so prints whole as roman `rest`. |
+| Book of Authorities TOC and bookmarks | `emit-bcca-book.ts:157-165`, roman (kept, §11). |
+| `authorities.kind` values | `case, statute, regulation, rule, doctrine` (`source/skills/drafting-data/references/schema.sql:37`); `doctrine` is secondary (`markers.ts:643`). |
+| legal-citation italics rule | `public/plugins/researcher/skills/legal-citation/SKILL.md` rule 2: case, statute, regulation and rule names italic. Says nothing of secondary sources or short forms. |
+| Scrivener | `source/skills/shared/scrivener/references/core.md:15` covers first and short-form case citation, no italics rule. |
+| Research memo template | `research-memo-template.md:76-77`: case names italic in the Sources list only (commit `77018645`). |
+| Case-brief template | `case-brief-template.md`: no italics rule. |
+| Email route | `source/skills/shared/email.md`: no italics rule. |
