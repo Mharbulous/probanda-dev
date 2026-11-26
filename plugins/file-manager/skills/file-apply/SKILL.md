@@ -4,7 +4,7 @@ user-invocable: false
 description: Apply an approved rename manifest (files renamed in place) or an approved routing manifest (files moved to other folders), and hash a set of files before a move. The mechanical rename and move engine of the file-manager plugin, used by a caller that already holds the practitioner's approval (/route-accounting, /housekeeping, /publish's renumber-affidavit). Never proposes a name and never decides what is approved. Naming grammar -> /file-naming.
 ---
 
-<!-- file-manager v0.20.2 -->
+<!-- file-manager v0.21.0 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

@@ -4,7 +4,7 @@ user-invocable: false
 description: Sole gatekeeper for the per-matter drafting database — Writings and their proceedings, the shared substance they are built from (parties, facts, documents, witnesses, authorities, relief, arguments and rebuttals, gaps), job process state, counsel's review records, and the mockups rendered from them. Not the authority on what the law is (legal-research) or deadlines (docket-clerk); it stores and serves the underlying data they consult. Distinct from /matter-data — the drafting database is separate, not an extension of matter-data's main/law/privileged split.
 ---
 
-<!-- litigator v0.28.2 -->
+<!-- litigator v0.29.0 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.
@@ -137,7 +137,7 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 
 `references/schema.sql` is the canonical current schema (its generation, the shape and what is not stored: `references/tool-contracts.md`, "Schema notes"). Never write a deadline here: the appeal deadline is a per-render `appeal_deadline` argument.
 
-**Current version**: `db_meta.schema_version = 81` (`TARGET_SCHEMA_VERSION` in `references/scripts/migrate_engine.py`); each hop's reason is its comment in `references/migrations.sql`. `drafting_forms__open_session` migrates on every entry; below v42 it returns `migration_required`. **v42 stays readable**: a database at v42 lists and renders as current, so a refused v43 hop leaves the matter behind, never unusable. Below a later hop, that hop's feature is absent (v52 saved answers, v67 attachments, v68 deferral, v69 suppression, v74 Bring Forward, v75 discard and suggest, v76 sources to get, v80 the `kv_store` table). The rules for `kv_store` values: `references/kv-store.md`.
+**Current version**: `db_meta.schema_version = 82` (`TARGET_SCHEMA_VERSION` in `references/scripts/migrate_engine.py`); each hop's reason is its comment in `references/migrations.sql`. `drafting_forms__open_session` migrates on every entry; below v42 it returns `migration_required`. **v42 stays readable**: a database at v42 lists and renders as current, so a refused v43 hop leaves the matter behind, never unusable. Below a later hop, that hop's feature is absent (v52 saved answers, v67 attachments, v68 deferral, v69 suppression, v74 Bring Forward, v75 discard and suggest, v76 sources to get, v80 the `kv_store` table). The rules for `kv_store` values: `references/kv-store.md`.
 
 ## CRUD guidance
 

@@ -1,4 +1,4 @@
-// build-stamp: 19aa09e7b5e5
+// build-stamp: cab3cc526382
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75506,7 +75506,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "19aa09e7b5e5";
+var BUILD_STAMP = false ? null : "cab3cc526382";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -80026,16 +80026,16 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("focus_view_page"),
-      description: "Point the practitioner's open Arguments page at one card while the two of you discuss it: the page switches to that section's tab, opens the card and scrolls to it within a few seconds. filing_id is a view_page_paths entry's filing_id; section is submissions, counter (Counter-arguments), rebuttals or killed. Name the card by exactly one of item, its record (a submission's id, or a counter-argument's `raised:<opposing point id>` or `anticipated:<anticipated point id>`), and number, its number in its section as its tag shows it (\"Raised #2\" and \"Anticipated #2\" are both counter 2), when the practitioner names it that way. Either is checked against the page's data, built as the page builds it. The page moves only where it can reach this data server (the desktop app's file card, not a staged copy). Never read the page to check: the result does not say whether it moved. Refusals write nothing: unsupported_page, invalid_section, invalid_target, no_page, no_such_card. Writes no database and no page. Returns { focused, section, number, note }.",
+      description: `Point the practitioner's open Arguments page at one card while the two of you discuss it: the page switches to that tab, opens every card of that argument number on both tabs and scrolls to it within a few seconds. filing_id is a view_page_paths entry's filing_id; section is arguments or rebuttals. Name the card by exactly one of item, its argument id, and number, its argument number as its tag shows it ("Argument #2", and 2 for "Rebuttal #2.a"). Either is checked against the page's data, built as the page builds it. The page moves only where it can reach this data server (the desktop app's file card, not a staged copy). Never read the page to check: the result does not say whether it moved. Refusals write nothing: unsupported_page, invalid_section, invalid_target, no_page, no_such_card. Writes no database and no page. Returns { focused, section, number, note }.`,
       inputSchema: {
         type: "object",
         properties: {
           db_path: { type: "string" },
           filing_id: { type: "number" },
           page: { type: "string", enum: ["Arguments"] },
-          section: { type: "string", enum: ["submissions", "counter", "rebuttals", "killed"] },
+          section: { type: "string", enum: ["arguments", "rebuttals"] },
           number: { type: "number" },
-          item: { type: ["number", "string"] }
+          item: { type: "number" }
         },
         required: ["db_path", "filing_id", "page", "section"],
         additionalProperties: false
@@ -87809,11 +87809,14 @@ function linkedProvisionsColumn(dbPath) {
              WHERE o.law_assertion_id = sl.law_assertion_id AND o.id <> sl.id
                AND oa.kind IN ('statute', 'regulation', 'rule') AND oa.killed_on IS NULL) AS linked_provisions`;
 }
+function argumentsTable(dbPath) {
+  return hasTable(dbPath, "arguments") ? "arguments" : "(SELECT *, 'ours' AS side, NULL AS number, 0 AS anticipated, NULL AS component, NULL AS pinpoint FROM submissions)";
+}
 function noFactsNeededColumn(dbPath) {
-  return hasColumn(dbPath, "submissions", "no_facts_needed_on") ? "s.no_facts_needed_on" : "NULL AS no_facts_needed_on";
+  return hasColumn(dbPath, "arguments", "no_facts_needed_on") || hasColumn(dbPath, "submissions", "no_facts_needed_on") ? "s.no_facts_needed_on" : "NULL AS no_facts_needed_on";
 }
 function noLawNeededColumn(dbPath) {
-  return hasColumn(dbPath, "submissions", "no_law_needed_on") ? "s.no_law_needed_on" : "NULL AS no_law_needed_on";
+  return hasColumn(dbPath, "arguments", "no_law_needed_on") || hasColumn(dbPath, "submissions", "no_law_needed_on") ? "s.no_law_needed_on" : "NULL AS no_law_needed_on";
 }
 function suppressedWitnessFactIds(dbPath, factIds) {
   if (factIds.length === 0) return /* @__PURE__ */ new Set();
@@ -88331,8 +88334,8 @@ var SYMBOLS = [
     meaning: "their statement, of fact or law, is unanswered",
     work: "answer it",
     actor: "drafter",
-    condition: "`opposing_point.answered_by` \u2205 (\u2192 submission)",
-    history: "v1; target renamed v3 (#323: answers are submissions)"
+    condition: "a live `arguments` row (`killed_on` \u2205) with `side='opposing'` and `anticipated=0` that no `argument_rebuts` row links to from a live rebuttal",
+    history: "v1; target renamed v3 (#323: answers are submissions); v82: one `arguments` table, and every `argument_rebuts` link answers"
   },
   {
     glyph: "\u{1F443}",
@@ -88764,9 +88767,9 @@ var SYMBOLS = [
     meaning: "harmful to our own position: a fact flagged adverse, or a point we predict the other side may run",
     work: "decide on disclosure and prepare a rebuttal, at application review",
     actor: "practitioner",
-    modelNote: "The pipeline never decides whether disclosure is required; that question goes through /legal-research. When a predicted point is actually raised, record it as their point to answer and remove the prediction; no link is kept.",
-    condition: "\u{1F6A9} **adverse** \u2014 disclosure judgment (candour) and rebuttal preparation deferred \u2192 practitioner, at application review; printed on no page \u2014 the pipeline never decides whether disclosure is required (routes through `/legal-research`). Two predicates, one posture: `facts.adverse=1` (assertion level) \u2295 an `anticipated_points` row existing (the practitioner's own prediction of a point the other side may run, not yet raised). Orthogonal to \u{1F0A1}, not a subset of it like \u{1F925} \u2014 reads no deployment state at all: `anticipated_points` is never pointed to by any document, so it must never be read by \u{1F0A1}'s \"deployed by no document\" predicate (which would otherwise fire vacuously on every row); a `facts.adverse` flag is likewise silent to deployment, so an adverse fact can be deployed \u2014 even disclosed \u2014 and still carry \u{1F6A9} (\xA74 \u2192 adverse orthogonal).",
-    history: ""
+    modelNote: "The pipeline never decides whether disclosure is required; that question goes through /legal-research. When a predicted argument is actually raised, one update records it: anticipated = 0 with its component and pinpoint.",
+    condition: "\u{1F6A9} **adverse** \u2014 disclosure judgment (candour) and rebuttal preparation deferred \u2192 practitioner, at application review; printed on no page \u2014 the pipeline never decides whether disclosure is required (routes through `/legal-research`). Two predicates, one posture: `facts.adverse=1` (assertion level) \u2295 a live `arguments` row with `anticipated=1` (the practitioner's own prediction of an argument the other side may run, not yet raised). Orthogonal to \u{1F0A1}, not a subset of it like \u{1F925} \u2014 reads no deployment state at all: an anticipated argument has `side='opposing'` and is never pointed to by any document, and \u{1F0A1} reads `side='ours'` rows only, so its \"deployed by no document\" predicate never fires on it; a `facts.adverse` flag is likewise silent to deployment, so an adverse fact can be deployed \u2014 even disclosed \u2014 and still carry \u{1F6A9} (\xA74 \u2192 adverse orthogonal).",
+    history: "v82: the prediction is an `arguments` row with `anticipated=1`, was an `anticipated_points` row"
   }
 ];
 var COMBINATIONS = [
@@ -89228,10 +89231,10 @@ function exhibitPinpointMarker(exhibitId, exhibitPinpoint) {
 function testimonyPinpointMarker(instrument, pinpoint, execution) {
   return instrument !== null && execution !== null && (pinpoint === null || pinpoint === "") ? "\u{1F9F7}" : "";
 }
-function exhibitLetterIndex(letter) {
-  if (!/^[A-Z]{1,2}$/.test(letter)) return -1;
-  const code2 = (i3) => letter.charCodeAt(i3) - 65;
-  return letter.length === 1 ? code2(0) : 26 + code2(0) * 26 + code2(1);
+function exhibitLetterIndex(letter2) {
+  if (!/^[A-Z]{1,2}$/.test(letter2)) return -1;
+  const code2 = (i3) => letter2.charCodeAt(i3) - 65;
+  return letter2.length === 1 ? code2(0) : 26 + code2(0) * 26 + code2(1);
 }
 function exhibitLetterItem(item) {
   const [from, to2 = from, ...rest] = item.split("-");
@@ -89275,7 +89278,7 @@ function courtRecordPinpointMarker(courtRecord, courtRecordPinpoint, recordExecu
   if (cited2 === null) return "\u{1F4CC}";
   if (cited2.length === 0) return "";
   const sworn = swornExhibitLetters(recordExhibitLetters);
-  return sworn === null || cited2.some((letter) => !sworn.has(letter)) ? "\u{1F4CC}" : "";
+  return sworn === null || cited2.some((letter2) => !sworn.has(letter2)) ? "\u{1F4CC}" : "";
 }
 function courtRecordCitation(courtRecord, courtRecordPinpoint) {
   if (courtRecord === null || courtRecordPinpoint === null || courtRecordPinpoint === "") return "";
@@ -89320,8 +89323,8 @@ function printMarkerSets(sets) {
   }
   return out.join(" ");
 }
-function rebuttalMarker(answeredBySubmissionId) {
-  return answeredBySubmissionId === null ? "\u21A9\uFE0F" : "";
+function rebuttalMarker(rebutted) {
+  return rebutted ? "" : "\u21A9\uFE0F";
 }
 var ALL_MARKER_GLYPHS = SYMBOLS.map((s3) => s3.glyph).sort((a3, b3) => b3.length - a3.length);
 var WORK_MARKER_GLYPHS = SYMBOLS.filter((s3) => s3.group === "work").map((s3) => s3.glyph);
@@ -92534,7 +92537,7 @@ function fetchSubmissions(dbPath, filingId, document2) {
     dbPath,
     `SELECT s.id, s.contention, fs.ordinal AS filing_ordinal, fs.id AS pointer_id, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()}
      FROM filing_submissions fs
-     JOIN submissions s ON s.id = fs.submission_id
+     JOIN ${argumentsTable(dbPath)} s ON s.id = fs.submission_id
      WHERE fs.filing_id = ? AND fs.document = ? AND s.killed_on IS NULL
      ORDER BY fs.ordinal`,
     [filingId, document2]
@@ -92603,7 +92606,7 @@ function fetchDeployedIds(dbPath, filingId, document2) {
       rows(
         dbPath,
         `SELECT fs.submission_id FROM filing_submissions fs
-         JOIN submissions s ON s.id = fs.submission_id
+         JOIN ${argumentsTable(dbPath)} s ON s.id = fs.submission_id
          WHERE fs.filing_id = ? AND fs.document = ? AND s.killed_on IS NULL`,
         [filingId, document2]
       ).map((r3) => r3.submission_id)
@@ -92622,7 +92625,7 @@ function fetchOrdersSought(dbPath, filingId, document2) {
             o.crossed_out_on, fo.ordinal AS filing_ordinal, fo.id AS pointer_id,
             EXISTS(
               SELECT 1 FROM order_sought_served_by sb
-              JOIN submissions s ON s.id = sb.submission_id
+              JOIN ${argumentsTable(dbPath)} s ON s.id = sb.submission_id
               WHERE sb.order_sought_id = o.id AND s.killed_on IS NULL
             ) AS has_served_by
      FROM filing_orders fo
@@ -92714,7 +92717,7 @@ function fetchReviewState(dbPath, proceedingId) {
   const noteHeld = treatmentNoteHeld(dbPath);
   const current = rows(
     dbPath,
-    tables.map((t3) => `SELECT '${t3}' AS entity, id AS entity_id, ${reviewSnapshotSql(t3, noteHeld)} AS snapshot FROM ${t3} WHERE ${scope(t3)}`).join(" UNION ALL "),
+    tables.map((t3) => `SELECT '${t3}' AS entity, id AS entity_id, ${reviewSnapshotSql(t3, noteHeld)} AS snapshot FROM ${t3 === "submissions" ? argumentsTable(dbPath) : t3} WHERE ${scope(t3)}`).join(" UNION ALL "),
     Array(tables.length).fill(proceedingId)
   );
   const approved = rows(
@@ -94032,17 +94035,22 @@ function renderStateFor(dbPath, stamp3, filing, digest) {
 }
 
 // src/submission/forms/opposing-points.ts
-function fetchOpposingPoints(dbPath, proceedingId) {
-  return rows(
+function fetchOpposingArguments(dbPath, proceedingId) {
+  const points = rows(
     dbPath,
-    `SELECT op.id, op.component, op.pinpoint, op.verbatim_words, op.answered_by_submission_id,
-            s.contention AS answered_by_contention
-     FROM opposing_points op
-     LEFT JOIN submissions s ON s.id = op.answered_by_submission_id
-     WHERE op.proceeding_id = ?
-     ORDER BY op.ordinal`,
+    `SELECT id, component, pinpoint, contention FROM arguments
+     WHERE proceeding_id = ? AND side = 'opposing' AND anticipated = 0 AND killed_on IS NULL
+     ORDER BY ordinal, id`,
     [proceedingId]
   );
+  const links = rows(
+    dbPath,
+    `SELECT r.argument_id, a.id, a.contention FROM argument_rebuts r
+     JOIN arguments a ON a.id = r.rebuttal_id AND a.killed_on IS NULL
+     WHERE a.proceeding_id = ? ORDER BY r.rowid`,
+    [proceedingId]
+  );
+  return points.map((p3) => ({ ...p3, rebuttals: links.filter((l3) => l3.argument_id === p3.id).map((l3) => ({ id: l3.id, contention: l3.contention })) }));
 }
 
 // src/submission/forms/filing-frontmatter.ts
@@ -94652,7 +94660,7 @@ function renderBccaFactum(ctx) {
   const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
   const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
   const orders = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
-  const points = fetchOpposingPoints(ctx.dbPath, ctx.proceeding.id);
+  const points = fetchOpposingArguments(ctx.dbPath, ctx.proceeding.id);
   const contacts = roleGroups.map((g3) => {
     const rep = ctx.parties.find((p3) => p3.role === g3.role);
     return {
@@ -94758,16 +94766,16 @@ function renderBccaFactum(ctx) {
   }
   submissions.forEach((s3) => {
     para2 += 1;
-    const answers = points.filter((pt3) => pt3.answered_by_submission_id === s3.id).map((pt3) => pt3.component);
+    const answers = points.filter((pt3) => pt3.rebuttals.some((r3) => r3.id === s3.id)).map((pt3) => pt3.component ?? pt3.contention);
     lines2.push(`${para2}. ${s3.contention}${answers.length > 0 ? ` <!-- answers: ${answers.join("; ")} -->` : ""}`);
   });
   lines2.push("");
-  const unanswered = points.filter((pt3) => pt3.answered_by_submission_id === null);
+  const unanswered = points.filter((pt3) => pt3.rebuttals.length === 0);
   if (unanswered.length > 0) {
     lines2.push("#### Points not yet answered");
     lines2.push("");
     unanswered.forEach((pt3) => {
-      lines2.push(`- ${pt3.component}${pt3.pinpoint ? ` (${pt3.pinpoint})` : ""}: ${pt3.verbatim_words ?? ""} ${rebuttalMarker(null)} <!-- opposing_point ${pt3.id} -->`);
+      lines2.push(`- ${pt3.component ?? ""}${pt3.pinpoint ? ` (${pt3.pinpoint})` : ""}: ${pt3.contention !== pt3.component ? pt3.contention : ""} ${rebuttalMarker(false)} <!-- opposing_argument ${pt3.id} -->`);
     });
     lines2.push("");
   }
@@ -95781,17 +95789,18 @@ function renderWrittenArguments(ctx, documentKey) {
     lines2.push(`~~${wording}~~ <!-- order crossed-out order_sought_id ${r3.id} -->`);
   }
   if (crossedOutRelief.length > 0) lines2.push("");
-  const opposingPoints = fetchOpposingPoints(ctx.dbPath, ctx.proceeding.id);
-  if (opposingPoints.length > 0) {
-    lines2.push("## Opposing points");
+  const opposingArguments = fetchOpposingArguments(ctx.dbPath, ctx.proceeding.id);
+  if (opposingArguments.length > 0) {
+    lines2.push("## Opposing arguments");
     lines2.push("");
-    for (const op of opposingPoints) {
+    for (const op of opposingArguments) {
+      const component = op.component ?? "";
       const pinpointPart = op.pinpoint ? `, ${op.pinpoint}` : "";
-      const quotePart = op.verbatim_words ? `: "${op.verbatim_words}"` : "";
-      const rebuttal = rebuttalMarker(op.answered_by_submission_id);
-      const status3 = op.answered_by_submission_id === null ? rebuttal : `\u2014 answered by: ${op.answered_by_contention}`;
-      recordCriterionGlyphs(ctx.inventory, rebuttal, ["\u21A9\uFE0F"], { table: "opposing_points", id: op.id, item: `${op.component}${pinpointPart}${quotePart}` });
-      lines2.push(`- ${op.component}${pinpointPart}${quotePart}${status3 ? ` ${status3}` : ""} <!-- opposing_point_id ${op.id} -->`);
+      const quotePart = op.contention !== op.component ? `: "${op.contention}"` : "";
+      const rebuttal = rebuttalMarker(op.rebuttals.length > 0);
+      const status3 = op.rebuttals.length === 0 ? rebuttal : `\u2014 answered by: ${op.rebuttals.map((r3) => r3.contention).join("; ")}`;
+      recordCriterionGlyphs(ctx.inventory, rebuttal, ["\u21A9\uFE0F"], { table: "submissions", id: op.id, item: `${component}${pinpointPart}${quotePart}` });
+      lines2.push(`- ${component}${pinpointPart}${quotePart}${status3 ? ` ${status3}` : ""} <!-- opposing_argument_id ${op.id} -->`);
     }
     lines2.push("");
   }
@@ -95803,8 +95812,8 @@ function fetchProceedingOrders(dbPath, proceedingId) {
     `SELECT o.id, o.wording, o.crossed_out_on,
             EXISTS(
               SELECT 1 FROM order_sought_served_by sb
-              JOIN submissions s ON s.id = sb.submission_id
-              WHERE sb.order_sought_id = o.id AND s.killed_on IS NULL
+              JOIN ${argumentsTable(dbPath)} s ON s.id = sb.submission_id
+              WHERE sb.order_sought_id = o.id AND s.killed_on IS NULL AND s.side = 'ours'
             ) AS has_served_by
      FROM order_sought o WHERE o.proceeding_id = ? ORDER BY o.id`,
     [proceedingId]
@@ -95837,7 +95846,7 @@ function fetchLiveReliedLawAssertions(dbPath, proceedingId) {
     dbPath,
     `SELECT sl.law_assertion_id FROM submission_law sl
        JOIN filing_submissions fs ON fs.submission_id = sl.submission_id
-       JOIN submissions s ON s.id = fs.submission_id AND s.killed_on IS NULL
+       JOIN ${argumentsTable(dbPath)} s ON s.id = fs.submission_id AND s.killed_on IS NULL
        JOIN filings f ON f.id = fs.filing_id
       WHERE f.proceeding_id = ? AND f.retired_on IS NULL
      UNION
@@ -95852,7 +95861,7 @@ function fetchLiveReliedLawAssertions(dbPath, proceedingId) {
 function fetchProceedingSubmissions(dbPath, proceedingId) {
   return rows(
     dbPath,
-    `SELECT s.id, s.contention, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()} FROM submissions s WHERE s.proceeding_id = ? AND s.killed_on IS NULL ORDER BY s.ordinal, s.id`,
+    `SELECT s.id, s.contention, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()} FROM ${argumentsTable(dbPath)} s WHERE s.proceeding_id = ? AND s.killed_on IS NULL AND s.side = 'ours' ORDER BY s.ordinal, s.id`,
     [proceedingId]
   );
 }
@@ -96954,7 +96963,7 @@ var DECLARABLE_LIST = [
   EXCERPTS,
   NOTING_UP,
   EVIDENCE,
-  { id: "opposing-points", text: "Every opposing point is answered", members: glyph("\u21A9\uFE0F") },
+  { id: "opposing-points", text: "Every opposing argument has a rebuttal", members: glyph("\u21A9\uFE0F") },
   COUNSEL_REVIEW,
   // 📌 and 📍 on clause rows (shared/declared-layout.md section 6).
   { id: "terms-traced", text: "Every clause traces to the offer or acceptance", members: (e3) => e3.table === "clauses" && (e3.marker === "\u{1F4D1}" || e3.marker === "\u{1F4CC}" || e3.marker === "\u{1F4CD}") },
@@ -97118,7 +97127,7 @@ function proposalsFor(ctx, board) {
   );
   const contentions = rows(
     ctx.dbPath,
-    `SELECT s.contention FROM filing_submissions fs JOIN submissions s ON s.id = fs.submission_id
+    `SELECT s.contention FROM filing_submissions fs JOIN ${argumentsTable(ctx.dbPath)} s ON s.id = fs.submission_id
       WHERE fs.filing_id = ? AND s.killed_on IS NULL ORDER BY fs.document, fs.ordinal`,
     [ctx.filing.id]
   ).map((r3) => r3.contention);
@@ -97979,7 +97988,7 @@ function withPartiesDriftLines(markdown2, rows5) {
 }
 
 // src/submission/schema-ceiling.ts
-var BAKED_SCHEMA_VERSION = false ? null : 81;
+var BAKED_SCHEMA_VERSION = false ? null : 82;
 var OVERRIDE_ENV = "COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA";
 var CEILING_SEAM_ENV = "COCLERK_SUBMISSION_BUNDLE_SCHEMA_VERSION";
 var OFF = /* @__PURE__ */ new Set(["", "0", "false", "no", "off"]);
@@ -99292,7 +99301,7 @@ import { basename as basename7, dirname as dirname22, join as join35, resolve as
 import { join as join34 } from "node:path";
 
 // src/templates/view-pages/arguments.css.ts
-var arguments_css_default = '.picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}\n.picker input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}\n.picker label{display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #1d5e4a;color:#025056;font-family:var(--sans);font-size:13px;font-weight:600;line-height:1;padding-bottom:1px;font-variant-numeric:tabular-nums;cursor:pointer}\n.picker input:checked+label{width:31px;height:31px;background:#a8691c;border-color:#a8691c;color:#fff;font-size:15px;font-weight:800}\n.picker input:focus-visible+label{outline:2px solid #1d5e4a;outline-offset:2px}\narticle.arg{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.arg>.text{position:relative;font-weight:400;margin:0;padding-bottom:22px;white-space:pre-wrap;cursor:pointer}\n.arg>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:var(--frame);transition:transform .15s}\n.arg.open>.text::before{transform:rotate(90deg)}\n.arg>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.arg .tag{position:absolute;right:0;bottom:0;padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}\n.arg .detail{display:flex;flex-direction:column;gap:6px}\n.arg .where,.arg .label,.arg .none{margin:0;font-size:12.5px;color:var(--muted)}\n.arg .head{margin:4px 0 0;font-size:17px;font-weight:700}\n.arg ul{margin:0;padding-left:20px}\n.arg li{margin:2px 0;white-space:pre-wrap}\n.arg li.omitted{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}\n.arg .linked{border-top:1px solid var(--line);padding-top:6px}';
+var arguments_css_default = '.picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}\n.picker input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}\n.picker label{display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #1d5e4a;color:#025056;font-family:var(--sans);font-size:13px;font-weight:600;line-height:1;padding-bottom:1px;font-variant-numeric:tabular-nums;cursor:pointer}\n.picker input:checked+label{width:31px;height:31px;background:#a8691c;border-color:#a8691c;color:#fff;font-size:15px;font-weight:800}\n.picker input:focus-visible+label{outline:2px solid #1d5e4a;outline-offset:2px}\narticle.arg{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.arg>.text{position:relative;font-weight:400;margin:0;padding-bottom:22px;white-space:pre-wrap;cursor:pointer}\n.arg>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:var(--frame);transition:transform .15s}\n.arg.open>.text::before{transform:rotate(90deg)}\n.arg>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.arg .tags{position:absolute;right:0;bottom:0;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px}\n.arg .tag.flag{background:#a8691c}\narticle.arg.killed{opacity:.55}\n.folder section>h2 .count{font-size:13px;font-weight:600;color:var(--muted)}\n.arg .tag{padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}\n.arg .detail{display:flex;flex-direction:column;gap:6px}\n.arg .where,.arg .label,.arg .none{margin:0;font-size:12.5px;color:var(--muted)}\n.arg .head{margin:4px 0 0;font-size:17px;font-weight:700}\n.arg ul{margin:0;padding-left:20px}\n.arg li{margin:2px 0;white-space:pre-wrap}\n.arg li.omitted{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}\n.arg .linked{border-top:1px solid var(--line);padding-top:6px}';
 
 // src/templates/view-pages/arguments.html.ts
 var arguments_html_default = '@@include(view-head.html)@@\n<title>Arguments</title>\n<style>\n@@include(board.css)@@\n\n\n@@include(view-folder.css)@@\n\n@@include(arguments.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Arguments</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(arguments.js)@@\n</script>\n</body>\n</html>\n';
@@ -99317,60 +99326,66 @@ var arguments_js_default = `(function () {
     items.forEach(function (item) { ul.appendChild(el("li", cls ? cls(item) : "", typeof item === "string" ? item : item.text)); });
     return ul;
   }
+  function links(label, items) {
+    var linked = el("div", "linked");
+    linked.appendChild(el("p", "label", label));
+    linked.appendChild(list(items));
+    return linked;
+  }
 
-  var byId = {};
-  data.submissions.forEach(function (a) { byId[a.id] = a; });
-  var counterByKey = {};
-  data.counter_arguments.forEach(function (c) { counterByKey[c.key] = c; });
-  var KIND_LABEL = { submission: "Submission", rebuttal: "Rebuttal", killed: "Killed", raised: "Raised", anticipated: "Anticipated" };
+  // One open number for both tabs: a card opens with every card of its number on either tab. A card
+  // with no number opens alone.
+  function keyOf(a) { return a.number !== null ? "n" + a.number : "id" + a.id; }
+  var openKey = null;
+  var allCards = [];
+  function setOpen(key) {
+    openKey = key;
+    allCards.forEach(function (c) {
+      var on = c.key === key;
+      c.node.classList.toggle("open", on);
+      c.detail.hidden = !on;
+      c.title.setAttribute("aria-expanded", String(on));
+    });
+  }
 
-  // A card: its statement, which toggles it and ends in its tag, then its detail.
-  function card(cls, kind, text, n) {
-    var node = el("article", cls);
+  // A card: its statement, which toggles it and ends in its tags, then its detail.
+  function card(a, noun) {
+    var node = el("article", "arg " + a.side + (a.killed ? " killed" : ""));
     var title = el("p", "text");
     title.setAttribute("role", "button");
     title.tabIndex = 0;
-    title.appendChild(el("span", "", text));
-    title.appendChild(el("span", "tag", KIND_LABEL[kind] + " #" + n));
+    title.appendChild(el("span", "", a.contention));
+    var tags = el("span", "tags");
+    tags.appendChild(el("span", "tag", noun + " " + a.label));
+    a.tags.forEach(function (t) { tags.appendChild(el("span", "tag flag", t)); });
+    title.appendChild(tags);
     node.appendChild(title);
     var detail = el("div", "detail");
     node.appendChild(detail);
-    return { node: node, title: title, detail: detail };
-  }
-  function argumentCard(a, i) {
-    var c = card("arg " + a.kind, a.kind, a.contention, i + 1);
-    c.detail.appendChild(el("p", "where", a.where));
+    if (a.where) detail.appendChild(el("p", "where", a.where));
     if (a.law.length > 0) {
-      c.detail.appendChild(el("p", "head", "Law"));
-      c.detail.appendChild(list(a.law.map(function (l) {
+      detail.appendChild(el("p", "head", "Law"));
+      detail.appendChild(list(a.law.map(function (l) {
         return { text: l.killed_on ? l.text + " (omitted " + l.killed_on + ")" : l.text, omitted: !!l.killed_on };
       }), function (l) { return l.omitted ? "omitted" : ""; }));
     } else {
-      c.detail.appendChild(el("p", "none", "No law linked"));
+      detail.appendChild(el("p", "none", "No law linked"));
     }
     if (a.facts.length > 0) {
-      c.detail.appendChild(el("p", "head", "Facts"));
-      c.detail.appendChild(list(a.facts));
+      detail.appendChild(el("p", "head", "Facts"));
+      detail.appendChild(list(a.facts));
     } else {
-      c.detail.appendChild(el("p", "none", "No facts linked"));
+      detail.appendChild(el("p", "none", "No facts linked"));
     }
-    if (a.rebuts.length > 0) {
-      var linked = el("div", "linked");
-      linked.appendChild(el("p", "label", "Linked to counter-arguments"));
-      linked.appendChild(list(a.rebuts.map(function (k) { return KIND_LABEL[counterByKey[k].kind] + ": " + counterByKey[k].text; })));
-      c.detail.appendChild(linked);
-    }
-    return c;
-  }
-  function counterCard(x, i) {
-    var c = card("arg counter", x.kind, x.text, i + 1);
-    if (x.source) c.detail.appendChild(el("p", "where", x.source));
-    if (x.linked.length > 0) {
-      var linked = el("div", "linked");
-      linked.appendChild(el("p", "label", "Linked arguments"));
-      linked.appendChild(list(x.linked.map(function (id) { return KIND_LABEL[byId[id].kind] + ": " + byId[id].contention; })));
-      c.detail.appendChild(linked);
-    }
+    if (a.rebuts.length > 0) detail.appendChild(links("Rebuts", a.rebuts));
+    if (a.rebutted_by.length > 0) detail.appendChild(links("Rebuttals", a.rebutted_by));
+    var c = { node: node, title: title, detail: detail, key: keyOf(a), number: a.number };
+    function toggle() { setOpen(openKey === c.key ? null : c.key); }
+    title.addEventListener("click", toggle);
+    title.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
+    });
+    allCards.push(c);
     return c;
   }
 
@@ -99383,12 +99398,14 @@ var arguments_js_default = `(function () {
   folder.setAttribute("role", "tabpanel");
   board.appendChild(folder);
 
-  // One section, its picker and its cards. The picker's selected number lists that card alone, and
-  // none selected lists them all. A statement opens or closes its card, at most one open.
+  // One tab's section, its picker and its cards. The picker's selected label lists that card alone,
+  // and none selected lists them all.
   var sections = {};
-  function section(name, heading, cards) {
+  function section(name, heading, items, noun, note) {
+    var cards = items.map(function (a) { return card(a, noun); });
     var sec = el("section");
     var h2 = el("h2", "", heading);
+    if (note) h2.appendChild(el("span", "count", note));
     var picker = el("span", "picker");
     picker.setAttribute("role", "radiogroup");
     picker.setAttribute("aria-label", heading + ": show card");
@@ -99397,36 +99414,28 @@ var arguments_js_default = `(function () {
     var stack = el("div", "stack");
     sec.appendChild(stack);
     folder.appendChild(sec);
-    var opened = -1;
     var radios = [];
-    // A session's pointer (focus): every card listed, this one opened.
-    function show(index) {
-      radios.forEach(function (r) { r.checked = false; });
-      filter(-1);
-      open(index);
-      cards[index].node.scrollIntoView({ block: "start" });
-    }
-    sections[name] = { node: sec, size: cards.length, show: show };
-
-    function open(index) {
-      opened = index;
-      cards.forEach(function (c, i) {
-        var on = i === index;
-        c.node.classList.toggle("open", on);
-        c.detail.hidden = !on;
-        c.title.setAttribute("aria-expanded", String(on));
-      });
-    }
     function filter(index) {
       cards.forEach(function (c, i) { c.node.hidden = index >= 0 && i !== index; });
     }
+    // A session's pointer (focus): every card listed, that number opened.
+    function show(number) {
+      var first = cards.filter(function (c) { return c.number === number; })[0];
+      if (!first) return false;
+      radios.forEach(function (r) { r.checked = false; });
+      filter(-1);
+      setOpen(first.key);
+      first.node.scrollIntoView({ block: "start" });
+      return true;
+    }
+    sections[name] = { node: sec, size: cards.length, show: show };
     cards.forEach(function (c, i) {
       var input = el("input");
       input.type = "radio";
       input.name = "pick-" + name;
       input.id = "pick-" + name + "-" + (i + 1);
       radios.push(input);
-      var label = el("label", "", String(i + 1));
+      var label = el("label", "", items[i].label.replace("#", ""));
       label.htmlFor = input.id;
       picker.appendChild(input);
       picker.appendChild(label);
@@ -99434,22 +99443,17 @@ var arguments_js_default = `(function () {
       input.addEventListener("change", function () { if (input.checked) filter(i); });
       label.addEventListener("click", function (e) { if (input.checked) clear(e); });
       input.addEventListener("keydown", function (e) { if (e.key === " " && input.checked) clear(e); });
-      c.title.addEventListener("click", function () { open(opened === i ? -1 : i); });
-      c.title.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(opened === i ? -1 : i); }
-      });
       stack.appendChild(c.node);
     });
-    open(-1);
   }
-  section("submissions", "Submissions", data.submissions.filter(function (a) { return a.kind === "submission"; }).map(argumentCard));
-  section("counter", "Counter-arguments", data.counter_arguments.map(counterCard));
-  section("rebuttals", "Rebuttals", data.submissions.filter(function (a) { return a.kind === "rebuttal"; }).map(argumentCard));
-  section("killed", "Killed", data.submissions.filter(function (a) { return a.kind === "killed"; }).map(argumentCard));
-  var empty = el("p", "empty", "Nothing recorded under this filter.");
+  var unanswered = data.arguments.filter(function (a) { return a.tags.indexOf("No rebuttal") >= 0; }).length;
+  section("arguments", "Arguments", data.arguments, "Argument", unanswered + " with no rebuttal");
+  section("rebuttals", "Rebuttals", data.rebuttals, "Rebuttal", null);
+  setOpen(null);
+  var empty = el("p", "empty", "Nothing recorded on this tab.");
   folder.appendChild(empty);
 
-  var TABS = [["all", "All"], ["submissions", "Submissions"], ["counter", "Counter-arguments"], ["rebuttals", "Rebuttals"], ["killed", "Killed"]];
+  var TABS = [["arguments", "Arguments"], ["rebuttals", "Rebuttals"]];
   var tabs = TABS.map(function (t) {
     var b = el("button", "", t[1]);
     b.type = "button";
@@ -99461,26 +99465,20 @@ var arguments_js_default = `(function () {
     return b;
   });
 
-  var current = "all";
+  var current = "arguments";
   try {
     var saved = localStorage.getItem(KEY);
     if (TABS.some(function (t) { return t[0] === saved; })) current = saved;
   } catch (e) {}
   function apply() {
-    var any = false;
-    Object.keys(sections).forEach(function (name) {
-      var size = sections[name].size;
-      var on = current === name ? size > 0 : current === "all" && name !== "killed" && (size > 0 || name === "submissions");
-      sections[name].node.hidden = !on;
-      if (on) any = true;
-    });
+    Object.keys(sections).forEach(function (name) { sections[name].node.hidden = name !== current; });
     tabs.forEach(function (b) {
       var on = b.getAttribute("data-filter") === current;
       b.setAttribute("aria-selected", String(on));
       b.tabIndex = on ? 0 : -1;
       if (on) folder.setAttribute("aria-labelledby", b.id);
     });
-    empty.hidden = any;
+    empty.hidden = sections[current].size > 0;
   }
   function select(b) {
     current = b.getAttribute("data-filter");
@@ -99500,9 +99498,9 @@ var arguments_js_default = `(function () {
   });
   apply();
 
-  // A session can point this page at a card (drafting_forms__focus_view_page): the page asks the data
-  // server's listener every 2 s and moves to each new pointer. A pointer older than 30 s when the
-  // page opens is old news and left alone. Without the listener the page stays as it is.
+  // A session can point this page at an argument number (drafting_forms__focus_view_page): the page
+  // asks the data server's listener every 2 s and moves to each new pointer. A pointer older than 30 s
+  // when the page opens is old news and left alone. Without the listener the page stays as it is.
   var api = data.api;
   if (!api) return;
   var seen = null;
@@ -99519,9 +99517,9 @@ var arguments_js_default = `(function () {
       if (!f || f.id === seen) return;
       seen = f.id;
       var s = sections[f.section];
-      if (!fresh || !s || f.number < 1 || f.number > s.size) return;
-      select(tabs.filter(function (b) { return b.getAttribute("data-filter") === f.section; })[0]);
-      s.show(f.number - 1);
+      if (!fresh || !s) return;
+      var tab = tabs.filter(function (b) { return b.getAttribute("data-filter") === f.section; })[0];
+      if (s.show(f.number)) select(tab);
     }).catch(function () {}).then(function () { setTimeout(poll, 2000); });
   }
   poll();
@@ -99533,31 +99531,34 @@ var shared_js_default = '(function () {\n  "use strict";\n  var view = window.VI
 // src/submission/forms/arguments-page.ts
 function buildArgumentsData(dbPath, filing) {
   const filings = Array.isArray(filing) ? filing : [filing];
-  const out = { submissions: [], counter_arguments: [] };
+  const out = { arguments: [], rebuttals: [] };
   for (const proceedingId of [...new Set(filings.map((f3) => f3.proceeding_id))]) {
     const part = argumentsFor(dbPath, proceedingId, filings.filter((f3) => f3.proceeding_id === proceedingId).map((f3) => f3.id), filings.length > 1);
-    out.submissions.push(...part.submissions);
-    out.counter_arguments.push(...part.counter_arguments);
+    out.arguments.push(...part.arguments);
+    out.rebuttals.push(...part.rebuttals);
   }
   return out;
 }
+var letter = (i3) => String.fromCharCode(97 + i3 % 26).repeat(Math.floor(i3 / 26) + 1);
+function roman2(n3) {
+  const steps = [[1e3, "m"], [900, "cm"], [500, "d"], [400, "cd"], [100, "c"], [90, "xc"], [50, "l"], [40, "xl"], [10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"]];
+  let out = "";
+  for (const [value2, digits2] of steps) for (; n3 >= value2; n3 -= value2) out += digits2;
+  return out;
+}
 function argumentsFor(dbPath, proceedingId, ids, merged) {
-  const inIds = `(${ids.map(() => "?").join(", ")})`;
-  const submissions = rows(
+  const all = rows(
     dbPath,
-    `SELECT s.id, s.contention FROM submissions s
-     LEFT JOIN filing_submissions fs ON fs.submission_id = s.id AND fs.filing_id IN ${inIds}
-     WHERE s.proceeding_id = ? AND s.killed_on IS NULL
-     GROUP BY s.id
-     ORDER BY MIN(fs.id) IS NULL, MIN(CASE fs.document WHEN 'form' THEN 0 ELSE 1 END),
-              MIN(CASE fs.document WHEN 'form' THEN fs.ordinal END), MIN(fs.ordinal), s.ordinal, s.id`,
-    [...ids, proceedingId]
-  );
-  const killed = rows(
-    dbPath,
-    "SELECT id, contention, killed_on FROM submissions WHERE proceeding_id = ? AND killed_on IS NOT NULL ORDER BY killed_on, id",
+    "SELECT id, contention, side, number, anticipated, component, pinpoint, killed_on FROM arguments WHERE proceeding_id = ? ORDER BY id",
     [proceedingId]
   );
+  const byId2 = new Map(all.map((a3) => [a3.id, a3]));
+  const links = rows(
+    dbPath,
+    `SELECT r.rebuttal_id, r.argument_id FROM argument_rebuts r JOIN arguments a ON a.id = r.argument_id
+     WHERE a.proceeding_id = ? ORDER BY r.rowid`,
+    [proceedingId]
+  ).filter((l3) => byId2.has(l3.rebuttal_id));
   const deployments = rows(
     dbPath,
     `SELECT DISTINCT fs.submission_id, f.id AS filing_id, f.title, f.retired_on
@@ -99580,49 +99581,94 @@ function argumentsFor(dbPath, proceedingId, ids, merged) {
      WHERE la.proceeding_id = ? ORDER BY la.id`,
     [proceedingId]
   );
-  const raisedLinks = hasTable(dbPath, "submission_rebuts_opposing_points") ? rows(dbPath, "SELECT submission_id, opposing_point_id AS point_id FROM submission_rebuts_opposing_points") : [];
-  const anticipatedLinks = hasTable(dbPath, "submission_rebuts_anticipated_points") ? rows(dbPath, "SELECT submission_id, anticipated_point_id AS point_id FROM submission_rebuts_anticipated_points") : [];
-  const links = [
-    ...raisedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `raised:${l3.point_id}` })),
-    ...anticipatedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `anticipated:${l3.point_id}` }))
-  ];
-  const live = new Set(submissions.map((s3) => s3.id));
-  const counterArguments = [
-    ...fetchOpposingPoints(dbPath, proceedingId).map((p3) => ({
-      key: `raised:${p3.id}`,
-      kind: "raised",
-      text: p3.verbatim_words ?? "(no words recorded)",
-      source: [p3.component, p3.pinpoint].filter((part) => part !== null && part !== "").join(", "),
-      linked: []
-    })),
-    ...rows(dbPath, "SELECT id, point FROM anticipated_points WHERE proceeding_id = ? ORDER BY id", [proceedingId]).map(
-      (p3) => ({ key: `anticipated:${p3.id}`, kind: "anticipated", text: p3.point, source: null, linked: [] })
-    )
-  ];
-  const counterByKey = new Map(counterArguments.map((c3) => [c3.key, c3]));
+  const targetsOf = /* @__PURE__ */ new Map();
+  const rebuttalsOf = /* @__PURE__ */ new Map();
   for (const l3 of links) {
-    const counter = counterByKey.get(l3.key);
-    if (counter !== void 0 && live.has(l3.submission_id) && !counter.linked.includes(l3.submission_id)) counter.linked.push(l3.submission_id);
+    targetsOf.set(l3.rebuttal_id, [...targetsOf.get(l3.rebuttal_id) ?? [], l3.argument_id]);
+    rebuttalsOf.set(l3.argument_id, [...rebuttalsOf.get(l3.argument_id) ?? [], l3.rebuttal_id]);
   }
-  const counterOrder = new Map(counterArguments.map((c3, i3) => [c3.key, i3]));
-  const item = (s3, kind, where) => ({
-    id: s3.id,
-    kind,
-    contention: s3.contention,
-    where,
-    facts: facts.filter((f3) => f3.submission_id === s3.id).map((f3) => f3.postulate),
-    law: law.filter((l3) => l3.submission_id === s3.id).map((l3) => ({ text: l3.proposition, killed_on: l3.killed_on })),
-    rebuts: links.filter((l3) => l3.submission_id === s3.id && counterByKey.has(l3.key)).map((l3) => l3.key).sort((a3, b3) => (counterOrder.get(a3) ?? 0) - (counterOrder.get(b3) ?? 0))
-  });
-  const items2 = submissions.map((s3) => {
-    const deployedOn = deployments.filter((d3) => d3.submission_id === s3.id);
+  const numbers = /* @__PURE__ */ new Map();
+  const numberOf = (id, seen = /* @__PURE__ */ new Set()) => {
+    const targets = targetsOf.get(id);
+    if (targets === void 0) return byId2.get(id)?.number ?? null;
+    if (numbers.has(id)) return numbers.get(id);
+    if (seen.has(id)) return null;
+    seen.add(id);
+    const found2 = targets.map((t3) => numberOf(t3, seen)).filter((n4) => n4 !== null);
+    const n3 = found2.length > 0 ? Math.min(...found2) : null;
+    numbers.set(id, n3);
+    return n3;
+  };
+  const primaryOf = (id) => {
+    const targets = targetsOf.get(id);
+    const n3 = numberOf(id);
+    return targets.find((t3) => numberOf(t3) === n3) ?? targets[0];
+  };
+  const labels = /* @__PURE__ */ new Map();
+  const labelOf = (id, seen = /* @__PURE__ */ new Set()) => {
+    const known = labels.get(id);
+    if (known !== void 0) return known;
+    let out;
+    const n3 = numberOf(id);
+    if (!targetsOf.has(id)) out = { label: n3 === null ? "#?" : `#${n3}`, path: [] };
+    else if (seen.has(id)) out = { label: "#?", path: [] };
+    else {
+      seen.add(id);
+      const parent = primaryOf(id);
+      const base = labelOf(parent, seen);
+      const i3 = (rebuttalsOf.get(parent) ?? []).filter((r3) => primaryOf(r3) === parent).indexOf(id);
+      out = { label: `${base.label}.${base.path.length % 2 === 0 ? letter(i3) : roman2(i3 + 1)}`, path: [...base.path, i3] };
+    }
+    labels.set(id, out);
+    return out;
+  };
+  const byNumber = (a3, b3) => {
+    const x3 = numberOf(a3);
+    const y3 = numberOf(b3);
+    return x3 === y3 ? 0 : x3 === null ? 1 : y3 === null ? -1 : x3 - y3;
+  };
+  const card2 = (a3) => {
+    const deployedOn = deployments.filter((d3) => d3.submission_id === a3.id);
     const here = deployedOn.filter((d3) => ids.includes(d3.filing_id));
     const elsewhere = deployedOn.map((d3) => d3.retired_on === null ? d3.title : `${d3.title} (retired)`).join("; ");
-    const where = here.length > 0 ? merged ? `On this board: ${here.map((d3) => d3.title).join("; ")}` : "On this Writing" : deployedOn.length > 0 ? `On ${elsewhere}` : "Held in reserve";
-    return item(s3, deployedOn.length > 0 ? "submission" : "rebuttal", where);
-  });
-  for (const s3 of killed) items2.push(item(s3, "killed", `Killed ${s3.killed_on}`));
-  return { submissions: items2, counter_arguments: counterArguments };
+    const source = [a3.component, a3.pinpoint].filter((part) => part !== null && part !== "").join(", ");
+    const where = here.length > 0 ? merged ? `On this board: ${here.map((d3) => d3.title).join("; ")}` : "On this Writing" : deployedOn.length > 0 ? `On ${elsewhere}` : source || null;
+    const rebuttals = rebuttalsOf.get(a3.id) ?? [];
+    const tags = [];
+    if (a3.side === "ours" && a3.killed_on === null && deployedOn.length === 0) tags.push("Held in reserve");
+    if (a3.anticipated === 1) tags.push("Anticipated");
+    if (a3.side === "opposing" && a3.killed_on === null && !targetsOf.has(a3.id) && !rebuttals.some((r3) => byId2.get(r3)?.killed_on === null)) tags.push("No rebuttal");
+    if (a3.killed_on !== null) tags.push(`Killed ${a3.killed_on}`);
+    return {
+      id: a3.id,
+      label: labelOf(a3.id).label,
+      number: numberOf(a3.id),
+      side: a3.side,
+      contention: a3.contention,
+      where,
+      tags,
+      killed: a3.killed_on !== null,
+      facts: facts.filter((f3) => f3.submission_id === a3.id).map((f3) => f3.postulate),
+      law: law.filter((l3) => l3.submission_id === a3.id).map((l3) => ({ text: l3.proposition, killed_on: l3.killed_on })),
+      rebuts: [...targetsOf.get(a3.id) ?? []].sort(byNumber).map((t3) => labelOf(t3).label),
+      rebutted_by: rebuttals.map((r3) => primaryOf(r3) === a3.id ? labelOf(r3).label : `see ${labelOf(r3).label}`)
+    };
+  };
+  const order = (x3, y3) => {
+    if (x3.killed_on === null !== (y3.killed_on === null)) return x3.killed_on === null ? -1 : 1;
+    if (x3.killed_on !== null && y3.killed_on !== null && x3.killed_on !== y3.killed_on) return x3.killed_on < y3.killed_on ? -1 : 1;
+    const byN = byNumber(x3.id, y3.id);
+    if (byN !== 0) return byN;
+    const px = labelOf(x3.id).path;
+    const py = labelOf(y3.id).path;
+    for (let i3 = 0; i3 < Math.min(px.length, py.length); i3++) if (px[i3] !== py[i3]) return px[i3] - py[i3];
+    return px.length - py.length || x3.id - y3.id;
+  };
+  const sorted = [...all].sort(order);
+  return {
+    arguments: sorted.filter((a3) => !targetsOf.has(a3.id)).map(card2),
+    rebuttals: sorted.filter((a3) => targetsOf.has(a3.id)).map(card2)
+  };
 }
 var ARGUMENTS_PAGE = {
   name: "Arguments",
@@ -100473,7 +100519,7 @@ function viewTargets(groups, folders2) {
 import { createHash as createHash10 } from "node:crypto";
 import { existsSync as existsSync35, mkdirSync as mkdirSync17, readdirSync as readdirSync19, readFileSync as readFileSync32, renameSync as renameSync6, unlinkSync as unlinkSync10, writeFileSync as writeFileSync9 } from "node:fs";
 import { join as join31 } from "node:path";
-var QUICK_EDIT_MIN_SCHEMA = 79;
+var QUICK_EDIT_MIN_SCHEMA = 82;
 var MAP_KEEP = 20;
 var LINE_NUMBER = /^([A-Z]{0,3})(\d+)\. /;
 var HEADING = /^#{1,6} +(.+?)\s*$/;
@@ -100501,6 +100547,9 @@ var TEXT_COLUMN = {
   statements_of_fact: "excerpt",
   statements_of_law: "excerpt"
 };
+function entityTable(entity2) {
+  return entity2 === "submissions" ? "arguments" : entity2;
+}
 function sha256Text(text12) {
   return createHash10("sha256").update(text12, "utf-8").digest("hex");
 }
@@ -100569,7 +100618,7 @@ function readTexts(dbPath, entity2, ids) {
   if (unique.length === 0) return out;
   const marks = unique.map(() => "?").join(", ");
   const column = entity2 === "statements_of_fact" ? "CASE WHEN exhibit_id IS NOT NULL THEN exhibit_excerpt ELSE excerpt END" : TEXT_COLUMN[entity2];
-  for (const r3 of rows3(dbPath, `SELECT id, ${column} AS text FROM ${entity2} WHERE id IN (${marks})`, unique)) {
+  for (const r3 of rows3(dbPath, `SELECT id, ${column} AS text FROM ${entityTable(entity2)} WHERE id IN (${marks})`, unique)) {
     out.set(Number(r3.id), String(r3.text ?? ""));
   }
   return out;
@@ -100923,7 +100972,7 @@ function reliedOn(dbPath, filingIds, kinds) {
          OR sl.law_assertion_id IN (SELECT r.law_assertion_id FROM order_sought_requires r JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id WHERE fo.filing_id IN ${inIds})
          OR sl.law_assertion_id IN (
            SELECT sbl.law_assertion_id FROM submission_law sbl
-           JOIN submissions s ON s.id = sbl.submission_id AND s.killed_on IS NULL
+           JOIN ${argumentsTable(dbPath)} s ON s.id = sbl.submission_id AND s.killed_on IS NULL
            JOIN filing_submissions fs ON fs.submission_id = s.id
            WHERE fs.filing_id IN ${inIds}))
      ORDER BY a.style_of_cause_or_title, a.id`,
@@ -101151,23 +101200,23 @@ function propositionsFor(dbPath, proceedingId, ids, merged) {
   const links = rows(
     dbPath,
     `SELECT sbl.law_assertion_id, s.id AS submission_id, s.contention, s.killed_on
-     FROM submission_law sbl JOIN submissions s ON s.id = sbl.submission_id
-     WHERE s.proceeding_id = ?
+     FROM submission_law sbl JOIN ${argumentsTable(dbPath)} s ON s.id = sbl.submission_id
+     WHERE s.proceeding_id = ? AND s.side = 'ours'
      ORDER BY s.ordinal, s.id`,
     [proceedingId]
   );
   const onFiling = rows(
     dbPath,
     `SELECT s.id, s.contention
-     FROM filing_submissions fs JOIN submissions s ON s.id = fs.submission_id
+     FROM filing_submissions fs JOIN ${argumentsTable(dbPath)} s ON s.id = fs.submission_id
      WHERE fs.filing_id IN ${inIds} AND s.killed_on IS NULL
      ORDER BY CASE fs.document WHEN 'form' THEN 0 ELSE 1 END, fs.ordinal, fs.id`,
     ids
   );
   const elsewhere = rows(
     dbPath,
-    `SELECT s.id, s.contention FROM submissions s
-     WHERE s.proceeding_id = ? AND s.killed_on IS NULL
+    `SELECT s.id, s.contention FROM ${argumentsTable(dbPath)} s
+     WHERE s.proceeding_id = ? AND s.killed_on IS NULL AND s.side = 'ours'
        AND NOT EXISTS (SELECT 1 FROM filing_submissions fs WHERE fs.submission_id = s.id AND fs.filing_id IN ${inIds})
      ORDER BY s.ordinal, s.id`,
     [proceedingId, ...ids]
@@ -102294,9 +102343,9 @@ function inPlaceCards(dbPath, proceedings, draftDir, boards = []) {
   const closed2 = filings.filter((f3) => f3.kind === MILESTONE_KIND).map((f3) => ({ tab: "work_boards", record: `Work Board #${f3.id}`, title: f3.title, status: "Closed", date: f3.retired_on, url: null, path: null }));
   const killed = rows(
     dbPath,
-    `SELECT id, contention, killed_on FROM submissions WHERE killed_on IS NOT NULL AND proceeding_id IN (${list2(proceedings)}) ORDER BY killed_on DESC, id`,
+    `SELECT id, number, contention, killed_on FROM ${argumentsTable(dbPath)} WHERE killed_on IS NOT NULL AND side = 'ours' AND proceeding_id IN (${list2(proceedings)}) ORDER BY killed_on DESC, id`,
     proceedings
-  ).map((s3) => ({ tab: "arguments", record: `Submission #${s3.id}`, title: s3.contention, status: "Killed", date: s3.killed_on, url: null, path: null }));
+  ).map((s3) => ({ tab: "arguments", record: s3.number === null ? `Argument id ${s3.id}` : `Argument #${s3.number}`, title: s3.contention, status: "Killed", date: s3.killed_on, url: null, path: null }));
   return [...jobs2, ...propositions, ...memos, ...letters, ...killed, ...closed2];
 }
 
@@ -104423,14 +104472,14 @@ var GAP_LINE_RE = /^🧩 _+ <!-- (.*) -->[ \t]*\n?/gm;
 var MOCKUP_ONLY_HEADINGS = [
   "Source trace",
   "Facts attributed to this witness, not yet in this statement",
-  "Opposing points",
+  "Opposing arguments",
   // Application Response (build #386): opposing_orders with no filing_positions row for this
   // filing -- belt-and-suspenders, since Form 33's real filed face comes from the separate
   // assembly-mode emitter (assembly-application-response.ts), not this transform. BCCA stay
   // response (renderer compliance fix following #436): emitted as #### inside "### Part 2:
   // Issues" -- stripSections' level-aware matching handles both without a kind-specific branch.
   "Positions not yet taken",
-  // BCCA factum (#648): opposing points no submission answers yet, the Enactments appendix's
+  // BCCA factum (#648): opposing arguments no submission answers yet, the Enactments appendix's
   // held-back court rules, and the page budget estimate.
   "Points not yet answered",
   "Court rules not in this appendix",
@@ -104607,7 +104656,7 @@ function fetchUnplacedFacts(dbPath, filing) {
     dbPath,
     `SELECT fs.submission_id, sf.fact_id, f.postulate
      FROM filing_submissions fs
-     JOIN submissions s ON s.id = fs.submission_id AND s.killed_on IS NULL
+     JOIN ${argumentsTable(dbPath)} s ON s.id = fs.submission_id AND s.killed_on IS NULL
      JOIN submission_facts sf ON sf.submission_id = fs.submission_id
      JOIN facts f ON f.id = sf.fact_id
      WHERE fs.filing_id = ? AND fs.document = 'form'
@@ -118642,7 +118691,7 @@ var TOKEN_PRUNE_MS = 24 * 60 * 60 * 1e3;
 var TRIAL_TABLES = [
   "facts",
   "statements_of_fact",
-  "submissions",
+  "arguments",
   "law_assertions",
   "statements_of_law",
   "order_sought",
@@ -118915,7 +118964,7 @@ function planReword(plan2, op, t3, rewords) {
       values.push(op.states_fact ? 1 : 0);
     }
   }
-  plan2.push(`reword ${entity2} ${rowId}`, `UPDATE ${entity2} SET ${sets.join(", ")} WHERE id = ? AND ${field} = ?`, [...values, rowId, current], 1);
+  plan2.push(`reword ${entity2} ${rowId}`, `UPDATE ${entityTable(entity2)} SET ${sets.join(", ")} WHERE id = ? AND ${field} = ?`, [...values, rowId, current], 1);
   plan2.written.add(`${entity2}:${rowId}`);
   plan2.audit({ op: "reword", document: t3.document, entity: entity2, entity_id: rowId, deployment_id: null, from: null, to: null, old_hash: sha256Text(current), new_hash: sha256Text(op.new_text) });
   rewords.push({ new_text: op.new_text, choice: op.choice });
@@ -118997,7 +119046,7 @@ function planRecast(plan2, op, t3, a3, i3, menu) {
     }
     plan2.push(
       `${label2}: create the submission`,
-      "INSERT INTO submissions (proceeding_id, contention, ordinal) SELECT ?, ?, COALESCE(MAX(ordinal), 0) + 1 FROM submissions WHERE proceeding_id = ?",
+      "INSERT INTO arguments (proceeding_id, contention, ordinal, number) SELECT ?, ?, COALESCE(MAX(ordinal), 0) + 1, COALESCE(MAX(number), 0) + 1 FROM arguments WHERE proceeding_id = ?",
       [plan2.filing.proceeding_id, text12, plan2.filing.proceeding_id],
       1
     );
@@ -119071,7 +119120,7 @@ function planKill(plan2, t3) {
   if (t3.sub !== 0 || t3.entity !== "submissions" && t3.entity !== "law_assertions") {
     throw new Refusal("unsupported", `${describe3(t3)} is a ${t3.sub ? "statement printed under a paragraph" : KIND[t3.entity]}; only a submission or a proposition is killed.`);
   }
-  plan2.push(`kill ${KIND[t3.entity]} ${t3.row_id}`, `UPDATE ${t3.entity} SET killed_on = ${todaySql()} WHERE id = ? AND killed_on IS NULL`, [t3.row_id], 1);
+  plan2.push(`kill ${KIND[t3.entity]} ${t3.row_id}`, `UPDATE ${entityTable(t3.entity)} SET killed_on = ${todaySql()} WHERE id = ? AND killed_on IS NULL`, [t3.row_id], 1);
   plan2.written.add(`${t3.entity}:${t3.row_id}`);
   if (t3.entity === "submissions") {
     const elsewhere = Number(
@@ -119107,7 +119156,7 @@ function foreignJobs(db, session, pairs) {
   for (const [table3, ids] of pairs) {
     const list4 = [...ids].filter((id) => id > 0);
     clauses.push(`(s.entity = ? AND (s.entity_id IS NULL${list4.length > 0 ? ` OR s.entity_id IN (${list4.map(() => "?").join(", ")})` : ""}))`);
-    params.push(table3, ...list4);
+    params.push(table3 === "arguments" ? "submissions" : table3, ...list4);
   }
   if (clauses.length === 0) return [];
   return rows4(
@@ -119376,7 +119425,7 @@ async function submissionFormsPreviewEdit(args) {
       const k3 = `${table3}:${id}`;
       if (rowsSeen.has(k3) || id <= 0) return;
       rowsSeen.add(k3);
-      const sql = `SELECT * FROM "${table3}" WHERE rowid = ?`;
+      const sql = `SELECT * FROM "${entityTable(table3)}" WHERE rowid = ?`;
       preconditions.push({ label: `${table3} row ${id}`, sql, params: [id], hash: hashRows(db, sql, [id]) });
     };
     for (const r3 of resolved) {
@@ -119507,7 +119556,7 @@ function appendLog(db, stored, results, revision) {
   const appliedAt = (/* @__PURE__ */ new Date()).toISOString();
   const text12 = stored.log.map((e3) => {
     const entityId = id(e3.entity_id);
-    const to2 = e3.op === "kill" ? String(rows4(db, `SELECT killed_on FROM "${e3.entity}" WHERE id = ?`, [entityId])[0].killed_on) : e3.to;
+    const to2 = e3.op === "kill" ? String(rows4(db, `SELECT killed_on FROM "${entityTable(e3.entity)}" WHERE id = ?`, [entityId])[0].killed_on) : e3.to;
     return JSON.stringify({
       applied_at: appliedAt,
       session_token: stored.session_token,
@@ -119534,7 +119583,7 @@ function appendLog(db, stored, results, revision) {
 import { createHash as createHash13, randomUUID as randomUUID13 } from "node:crypto";
 import { existsSync as existsSync55, mkdirSync as mkdirSync26, readFileSync as readFileSync45 } from "node:fs";
 import { dirname as dirname38, join as join59 } from "node:path";
-var FOCUS_SECTIONS = ["submissions", "counter", "rebuttals", "killed"];
+var FOCUS_SECTIONS = ["arguments", "rebuttals"];
 function focusPath(dbPath, filingId, env) {
   const name = createHash13("sha256").update(`${dbPath}
 ${filingId}`).digest("hex").slice(0, 32);
@@ -119568,20 +119617,19 @@ function submissionFormsFocusViewPage(args, env = process.env) {
   const writings = index.filings.filter((f3) => sameBoard(index.survivorOf({ filing_id: f3.id, proceeding_id: f3.proceeding_id }), board)).map((f3) => fetchFiling(args.db_path, f3.id)).filter((f3) => !f3.retired_on && !isJobOnlyBoard(f3));
   if (writings.length === 0) throw new ValidationError("That board holds no live Writing, so it has no Arguments page.", "no_page");
   const data = buildArgumentsData(args.db_path, writings);
-  const kind = { submissions: "submission", counter: null, rebuttals: "rebuttal", killed: "killed" }[args.section];
-  const keys = kind === null ? data.counter_arguments.map((c3) => c3.key) : data.submissions.filter((s3) => s3.kind === kind).map((s3) => String(s3.id));
+  const cards = data[args.section];
   if (args.number === void 0 === (args.item === void 0)) throw new ValidationError("Pass exactly one of number and item.", "invalid_target");
-  const number3 = args.item !== void 0 ? keys.indexOf(String(args.item)) + 1 : args.number;
-  if (args.item !== void 0 && number3 === 0) throw new ValidationError(`The ${args.section} section has no card for ${args.item}.`, "no_such_card");
-  if (!Number.isInteger(number3) || number3 < 1 || number3 > keys.length) {
-    throw new ValidationError(`The ${args.section} section has ${keys.length} card${keys.length === 1 ? "" : "s"}, so there is no #${number3}.`, "no_such_card");
+  const card2 = args.item !== void 0 ? cards.find((c3) => c3.id === Number(args.item)) : cards.find((c3) => c3.number === args.number);
+  if (card2 === void 0 || card2.number === null) {
+    throw new ValidationError(`The ${args.section} tab has no card for ${args.item !== void 0 ? `argument id ${args.item}` : `#${args.number}`}.`, "no_such_card");
   }
+  const number3 = card2.number;
   writeFocus(args.db_path, args.filing_id, args.section, number3, env);
   return {
     focused: true,
     section: args.section,
     number: number3,
-    note: "An open Arguments page that can reach the data server moves to this card within a few seconds. Whether it moved is not known here."
+    note: "An open Arguments page that can reach the data server opens this number within a few seconds. Whether it moved is not known here."
   };
 }
 
@@ -120145,8 +120193,8 @@ function renderRefusal(render) {
   return flag2 ? { success: false, error: flag2[0], detail: render.note, render } : null;
 }
 var json2 = (value2) => JSON.stringify(value2, null, 2);
-function withMarker(letter, layout) {
-  const { marker: _caller, ...rest } = letter;
+function withMarker(letter2, layout) {
+  const { marker: _caller, ...rest } = letter2;
   return layout?.letterhead === true && typeof layout.marker === "string" ? { ...rest, marker: layout.marker } : rest;
 }
 function publishGeneral(args, env = process.env, installRoot) {
@@ -127616,30 +127664,79 @@ var PRACTICE_BOARD_FIXTURE = {
 var ARGUMENTS_FIXTURE = {
   meta: { filing: "Opening Submissions Package", matter: "L4801", client: "Ashbourne", revision: 12, rendered: "2026-01-15 09:00" },
   data: {
-    submissions: [
+    arguments: [
       {
         id: 1,
-        kind: "submission",
+        label: "#1",
+        number: 1,
+        side: "ours",
         contention: "The seller repudiated the agreement by refusing delivery.",
         where: "On this Writing",
+        tags: [],
+        killed: false,
         facts: ["The parties signed the purchase agreement on 3 March 2025.", "The seller refused delivery on 1 May 2025."],
         law: [{ text: "A party who refuses delivery without cause repudiates the contract.", killed_on: null }],
-        rebuts: ["raised:1"]
+        rebuts: [],
+        rebutted_by: []
       },
       {
+        id: 4,
+        label: "#2",
+        number: 2,
+        side: "opposing",
+        contention: "The goods were never ordered.",
+        where: "Application Response, Part 3, para. 2",
+        tags: [],
+        killed: false,
+        facts: [],
+        law: [],
+        rebuts: [],
+        rebutted_by: ["#2.a"]
+      },
+      {
+        id: 5,
+        label: "#3",
+        number: 3,
+        side: "opposing",
+        contention: "The buyer waived delivery by silence.",
+        where: null,
+        tags: ["Anticipated"],
+        killed: false,
+        facts: [],
+        law: [],
+        rebuts: [],
+        rebutted_by: ["see #2.a"]
+      },
+      {
+        id: 3,
+        label: "#4",
+        number: 4,
+        side: "ours",
+        contention: "In the alternative, the buyer is owed restitution of the deposit.",
+        where: null,
+        tags: ["Held in reserve"],
+        killed: false,
+        facts: [],
+        law: [],
+        rebuts: [],
+        rebutted_by: []
+      }
+    ],
+    rebuttals: [
+      {
         id: 2,
-        kind: "rebuttal",
+        label: "#2.a",
+        number: 2,
+        side: "ours",
         contention: "The goods were ordered: the order log records the order.",
         where: "On Notice of Application for Document Production",
+        tags: [],
+        killed: false,
         facts: ["The buyer paid the deposit of $10,000 on 10 March 2025."],
         law: [{ text: "Punitive damages follow any breach.", killed_on: "2026-01-09" }],
-        rebuts: ["raised:1", "anticipated:1"]
-      },
-      { id: 3, kind: "submission", contention: "In the alternative, the buyer is owed restitution of the deposit.", where: "Held in reserve", facts: [], law: [], rebuts: [] }
-    ],
-    counter_arguments: [
-      { key: "raised:1", kind: "raised", text: "The goods were never ordered.", source: "Application Response, Part 3, para. 2", linked: [1, 2] },
-      { key: "anticipated:1", kind: "anticipated", text: "The buyer waived delivery by silence.", source: null, linked: [2] }
+        rebuts: ["#2", "#3"],
+        rebutted_by: []
+      }
     ]
   }
 };
@@ -127665,7 +127762,7 @@ var LOOSE_THREADS_FIXTURE = {
     ],
     in_place: [
       { tab: "jobs", record: "Job #9", title: "Compare the two expert reports", status: "Shelved", date: "2026-01-08", url: null, path: null },
-      { tab: "arguments", record: "Submission #4", title: "The delay alone defeats the application.", status: "Killed", date: "2026-01-06", url: null, path: null }
+      { tab: "arguments", record: "Argument #4", title: "The delay alone defeats the application.", status: "Killed", date: "2026-01-06", url: null, path: null }
     ],
     api: { port: 0, db_path: "", proceeding_id: 1, token: "" }
   }
