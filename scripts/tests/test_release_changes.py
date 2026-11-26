@@ -76,5 +76,37 @@ class LastBump(unittest.TestCase):
         self.assertEqual((code, lines), (0, ["nothing changed since each plugin's last bump"]))
 
 
+class BundleRebuild(unittest.TestCase):
+    """A server source change needs a rebuild only if no later commit rebuilt that folder's bundles."""
+    SRC = "source/lawyer/mcp/src/arguments-page.ts"
+    DIST = "source/lawyer/mcp/dist/litigation-mcp.js"
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.repo = Repo(self.tmp.name)
+        assignment = {"status": "cutover", "plugins": {
+            "billing": {"requires": [], "skills": [], "agents": [], "hooks": {}, "servers": ["timekeeping"]}}}
+        self.bump = self.repo.commit("Billing 0.1.0", {
+            "source/assignment.json": json.dumps(assignment),
+            "source/billing/plugin.json": json.dumps({"name": "billing", "version": "0.1.0"}, indent=2) + "\n",
+            self.SRC: "v1\n", self.DIST: "bundle v1\n"})
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_source_change_rebuilt_in_a_later_commit_needs_no_rebuild(self):
+        self.repo.commit("Fix the page", {self.SRC: "v2\n"})
+        self.repo.commit("Lawyer release: rebuild bundles", {self.DIST: "bundle v2\n"})
+        code, lines = release_changes(self.tmp.name)
+        self.assertEqual((code, lines), (0, ["nothing changed since each plugin's last bump"]))
+
+    def test_source_change_after_the_last_rebuild_needs_a_rebuild(self):
+        self.repo.commit("Rebuild bundles", {self.DIST: "bundle v2\n"})
+        self.repo.commit("Fix the page", {self.SRC: "v2\n"})
+        code, lines = release_changes(self.tmp.name)
+        self.assertEqual((code, lines), (1, [
+            f"rebuild: source/lawyer/mcp (for billing, 1 source files changed since {self.bump[:8]})"]))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -40,6 +40,19 @@ def git(repo, *args):
     return result.stdout
 
 
+def rebuilt_since(repo, folder, base):
+    """The later of `base` and the last commit that rebuilt <folder>'s bundles.
+
+    One bundle.mjs run writes every bundle of a folder, so a commit to <folder>/dist/ made
+    after `base` already holds each source change before it. A source change older than that
+    commit needs no rebuild for any plugin, even one whose own bundle came out byte-identical.
+    """
+    rebuilt = git(repo, "log", "-1", "--no-merges", "--format=%H", "--", f"{folder}/dist/").strip()
+    if rebuilt and subprocess.run(["git", "-C", str(repo), "merge-base", "--is-ancestor", base, rebuilt]).returncode == 0:
+        return rebuilt
+    return base
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--repo", type=Path, default=REPO, help="repo to read (for tests)")
@@ -52,7 +65,9 @@ def main():
         changed = git(repo, "diff", "--name-only", f"{base}..HEAD").splitlines()
         for folder in sorted({plugin_layout.SERVERS[s]["build"] for s in spec["servers"]}):
             triggers = (f"{folder}/src/", f"{folder}/scripts/", SHARED_SRC)
-            hits = [p for p in changed if p.startswith(triggers)
+            since = rebuilt_since(repo, folder, base)
+            source_changed = changed if since == base else git(repo, "diff", "--name-only", f"{since}..HEAD").splitlines()
+            hits = [p for p in source_changed if p.startswith(triggers)
                     or (p == MIGRATE_ENGINE and "data" in spec["servers"])]
             if hits:
                 print(f"rebuild: {folder} (for {name}, {len(hits)} source files changed since {base[:8]})")
