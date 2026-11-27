@@ -11,8 +11,9 @@ REPO_ROOT = SKILL_ROOT.parents[2]
 FULL_PROJECTION = REPO_ROOT / "source" / "skills" / "safe-file-deletion" / "SKILL.md"
 
 FRONTMATTER_TOKENS = (
-    "client-matter project",
-    "Does NOT apply inside a Git worktree",
+    "client-matter folder",
+    "even inside a Git worktree",
+    "Not for other files in a Git worktree",
 )
 
 BODY_TOKENS = (
