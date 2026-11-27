@@ -24,6 +24,8 @@ sources:
 
 Rule text lives in `Sources/`. Quote a rule only as it stands there. "R." means the VanIAC Domestic Arbitration Rules; "Part A" marks a Part A rule relied on to fill a Part B silence.
 
+**Official hosts** for a form, rule or guideline: `vaniac.org` (the Centre's rules and forms) and `www.bclaws.gov.bc.ca` (the *Arbitration Act*).
+
 **How Part A fills gaps.** Part B governs. A Part A rule may be relied on only to fill a gap Part B leaves, and only where it contradicts no Part B provision. Name the gap each time a Part A rule is used.
 
 ## 1. Commencement

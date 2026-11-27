@@ -14,3 +14,5 @@
 # Court of Appeal for British Columbia
 
 The venue heading the BCCA renderers print today: the court-name line, the file-number and registry labels, and the display label. Each kind's own guidance is its type file in `Documents/`.
+
+**Official hosts** for a form, practice directive or guideline: `www.bclaws.gov.bc.ca` (the Court of Appeal Rules and their forms) and `www.bccourts.ca` (the court's own forms, practice directives and filing directives).
