@@ -46,3 +46,18 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 Confirm draft/references/unstructured.md §2's current text, where venue.md files record sources, and whether /localize already has a fetch route this could reuse.
+
+### Verification against HEAD (7371fdeb6, 2026-11-27)
+
+| Claim | At HEAD | Where |
+|---|---|---|
+| §2 step 1 asks the practitioner to save the form | Confirmed, word for word as quoted in §2 | `source/skills/draft/references/unstructured.md:16` |
+| The `form-source` gap and `unwritten_gate_failed` refusal | Confirmed. Step 2 links the file as a `documents` row with `role = 'other'` | `unstructured.md:17-19`, `source/skills/drafting-data/references/filing-checklists.md:451` |
+| A second ask of the practitioner | Also present: the conversion job asks the form's page address "of the practitioner once when not known" | `unstructured.md:49` |
+| venue.md files record sources | No venue.md names a host or URL. Only VanIAC's has front matter (`track`, `sources:` naming `Sources/` records). BCCA and BCSC open with the JSON block. Every venue.md JSON block is validated by a unit test | the three `source/skills/draft/references/CAN/BC/*/venue.md`, `source/lawyer/mcp/test/knowledge-declared-layout.unit.test.mjs:48` |
+| Stock `unstructured` type per venue | Confirmed at BCCA, BCSC and VanIAC, each with a `form-source` part | `.../CAN/BC/*/Documents/unstructured.md:10` |
+| /localize has a fetch route | Yes. `/localize` already fetches official sources unasked through `sources__fetch`, with `save: true` for a PDF. Only an unlisted host (`host_not_allowed`, then `allow_host` on a yes) or a failed fetch (`fetch_failed`, then the practitioner saves into `_inbox\`) asks the practitioner | `source/skills/localize/references/playbook.md:25-26,47`, `source/skills/localize/SKILL.md:35` |
+| Fetch allowlist | `www.bclaws.gov.bc.ca`, `bclaws.gov.bc.ca`, `vaniac.org`, `laws-lois.justice.gc.ca`. `www.bccourts.ca` and `www2.gov.bc.ca` are not on it. The second list is `SOURCES_ALLOWED_HOSTS` in `scripts/check_plugin_bundles.py:13`, not `direct_mode.py` as the header says | `source/lawyer/mcp/src/sources/hosts.ts:7-10,25` |
+| Filing a fetched page into the matter | `research_filing__file_fetched` files a page `sources__fetch` fetched into an existing `6. LAW` folder with a manifest record, without a second request. An HTML page is written as `.md`, a PDF as its bytes. A .docx is neither | `source/lawyer/mcp/src/files/research-filing.ts:706-785` |
+| Filing a browser download | `research_filing__file_download` copies (never moves) a Downloads file into a `6. LAW` folder. `file_ops__move_from_downloads` is file-manager's | `research-filing.ts:107-135` |
+| A test pins §2's wording | None. `source/skills/draft/tests/test_writes_no_job.py` names the file but not §2 | |
