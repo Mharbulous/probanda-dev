@@ -573,5 +573,55 @@ class StatementBlockTest(unittest.TestCase):
         ])
 
 
+CAPTION_FACE = """| | | |
+| :--- | :---: | ---: |
+| | | Court of Appeal File No. CA00001 |
+| | **COURT OF APPEAL FOR BRITISH COLUMBIA** | |
+| BETWEEN: | | |
+| | ALEX EXAMPLE | |
+| | | *Appellant* |
+| AND: | | |
+| | SAM SAMPLE | |
+| | | *Respondent* |
+
+1. The first paragraph.
+
+________________________________
+Pat Example
+"""
+
+
+class TestCaption(Base):
+    """The general renderer's caption is a pipe table: Word gets a real table, never its source."""
+    face = CAPTION_FACE
+
+    def caption_document(self, fmt=FORMAT):
+        proc, result = self.fill(format_read(fmt))
+        self.assertEqual(proc.returncode, 0, result)
+        return ET.fromstring(parts_of(self.deliverable)["word/document.xml"]).find("{%s}body" % W)
+
+    def test_the_caption_is_a_word_table_and_no_pipe_text_reaches_document_xml(self):
+        body = self.caption_document()
+        self.assertEqual(body[0].tag, "{%s}tbl" % W)
+        texts = [t.text or "" for t in body.iter("{%s}t" % W)]
+        self.assertFalse([t for t in texts if "|" in t or ":---" in t], texts)
+        rows = [[text(tc) for tc in tr.iter("{%s}tc" % W)] for tr in body[0].iter("{%s}tr" % W)]
+        self.assertEqual(rows[1], ["", "COURT OF APPEAL FOR BRITISH COLUMBIA", ""])
+        self.assertEqual(rows[-1], ["", "", "Respondent"])
+        self.assertEqual(len(rows), 8)
+
+    def test_a_filing_stamp_reservation_spaces_an_empty_paragraph_above_the_caption(self):
+        fmt = {**FORMAT, "filing_stamp_reservation": {"value": "2 in", "rule_ref": "F-stamp"}}
+        body = self.caption_document(fmt)
+        self.assertEqual(body[0].find("{%s}pPr/{%s}spacing" % (W, W)).get("{%s}before" % W), "2880")
+        self.assertEqual(body[1].tag, "{%s}tbl" % W)
+
+    def test_a_table_after_the_caption_is_out_of_grammar(self):
+        import fill_general
+        with self.assertRaises(fill_general.FillError) as caught:
+            fill_general.filed_blocks(CAPTION_FACE + "\n| a | b | c |\n", "t")
+        self.assertEqual(caught.exception.code, "out_of_grammar")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -36,7 +36,8 @@ from lxml import etree
 # docx_helpers is /publish's: skills/publish/scripts.
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'scripts'))
 from docx_helpers import (  # noqa: E402
-    append_emphasis_runs, load_zip, rewrite_content_types_to_document, save_zip, set_run_text, wn,
+    append_emphasis_runs, caption_table, load_zip, rewrite_content_types_to_document, save_zip, set_run_text,
+    styled_para as _para, table as _table, wn,
 )
 
 TEMPLATE = Path(__file__).resolve().parent.parent / 'templates' / 'vaniac-package.dotx'
@@ -174,22 +175,6 @@ def parse_exhibits(text: str) -> list[dict]:
 # Word output
 # ---------------------------------------------------------------------------
 
-def _para(style: str | None, text: str = '', jc: str | None = None, bold: bool = False) -> etree._Element:
-    p = etree.Element(wn('p'))
-    if style or jc:
-        ppr = etree.SubElement(p, wn('pPr'))
-        if style:
-            etree.SubElement(ppr, wn('pStyle')).set(wn('val'), style)
-        if jc:
-            etree.SubElement(ppr, wn('jc')).set(wn('val'), jc)
-    rpr = None
-    if bold:
-        rpr = etree.Element(wn('rPr'))
-        etree.SubElement(rpr, wn('b'))
-    append_emphasis_runs(p, text, rpr)
-    return p
-
-
 def _break_line(p: etree._Element) -> None:
     etree.SubElement(etree.SubElement(p, wn('r')), wn('br'))
 
@@ -200,29 +185,8 @@ def _page_break() -> etree._Element:
     return p
 
 
-def _table(rows: list[list[str]], widths: list[int], jcs: list[str], borders: bool,
-           style: str | None, bold_rows: set[int] = frozenset()) -> etree._Element:
-    tbl = etree.Element(wn('tbl'))
-    tblpr = etree.SubElement(tbl, wn('tblPr'))
-    etree.SubElement(tblpr, wn('tblW')).attrib.update({wn('w'): str(sum(widths)), wn('type'): 'dxa'})
-    edges = etree.SubElement(tblpr, wn('tblBorders'))
-    for edge in ('top', 'left', 'bottom', 'right', 'insideH', 'insideV'):
-        etree.SubElement(edges, wn(edge)).attrib.update(
-            {wn('val'): 'single' if borders else 'nil', wn('sz'): '4', wn('space'): '0', wn('color'): 'auto'})
-    grid = etree.SubElement(tbl, wn('tblGrid'))
-    for w in widths:
-        etree.SubElement(grid, wn('gridCol')).set(wn('w'), str(w))
-    for k, row in enumerate(rows):
-        tr = etree.SubElement(tbl, wn('tr'))
-        for text, w, jc in zip(row, widths, jcs):
-            tc = etree.SubElement(tr, wn('tc'))
-            etree.SubElement(etree.SubElement(tc, wn('tcPr')), wn('tcW')).attrib.update({wn('w'): str(w), wn('type'): 'dxa'})
-            tc.append(_para(style, text, jc, bold=k in bold_rows))
-    return tbl
-
-
 def _caption(rows: list[list[str]]) -> etree._Element:
-    return _table(rows, [2340, 4680, 2340], ['left', 'center', 'right'], False, 'VCaption')
+    return caption_table(rows, 'VCaption')
 
 
 def _body_elements(blocks: list[tuple]) -> list[etree._Element]:

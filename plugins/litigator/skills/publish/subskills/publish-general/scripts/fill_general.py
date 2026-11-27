@@ -142,7 +142,8 @@ import zipfile
 
 PUBLISH_SCRIPTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "scripts")
 sys.path.insert(0, os.path.abspath(PUBLISH_SCRIPTS))
-from docx_helpers import emphasis_runs  # noqa: E402
+from docx_helpers import caption_table, emphasis_runs  # noqa: E402
+from lxml import etree  # noqa: E402
 
 # Run properties lifted verbatim from the template, so output inherits the theme fonts
 # rather than naming a typeface the theme may not use.
@@ -659,17 +660,34 @@ def template_settings(fmt):
 
 def filed_blocks(markdown, name):
     """The filed face as blocks: ("title" | "heading" | "cite", text), ("quote", [lines]) for a
-    fenced excerpt, and ("para", [lines]) for lines up to a blank line. A fence closes only on a
+    fenced excerpt, ("para", [lines]) for lines up to a blank line, and ("caption", [rows]) for
+    the face's opening three-column table, the style of proceeding, its empty header and
+    separator rows dropped. No other table is in the face's grammar. A fence closes only on a
     bare run of at least its own length, so an excerpt line starting ``` stays quoted."""
-    blocks, lines, fence, opener = [], [], None, ""
+    blocks, lines, fence, opener, caption = [], [], None, "", None
 
     def close():
+        nonlocal caption
         if lines:
             blocks.append(("para", lines[:]))
             del lines[:]
+        if caption is not None:
+            header, *rows = caption
+            if any(header) or any(len(row) != 3 for row in caption):
+                raise FillError("out_of_grammar", "%s: the caption is not a three-column table under "
+                                "an empty header row" % name)
+            blocks.append(("caption", [r for r in rows if not all(re.fullmatch(":?-{3,}:?", c) for c in r)]))
+            caption = None
 
     for raw in markdown.splitlines():
         line = raw.rstrip()
+        if fence is None and line.lstrip().startswith("|"):
+            if caption is None and (blocks or lines):
+                raise FillError("out_of_grammar", "%s: a table line after the caption: %r" % (name, line))
+            caption = (caption or []) + [[c.strip() for c in line.strip().strip("|").split("|")]]
+            continue
+        if caption is not None:
+            close()
         if fence is not None:
             if re.fullmatch("`{%d,}" % len(opener), line.strip()):
                 blocks.append(("quote", fence))
@@ -705,7 +723,9 @@ def normalized(text):
 def face_texts(blocks):
     """Every paragraph and line of the filed face, whitespace-normalized."""
     texts = set()
-    for _kind, value in blocks:
+    for kind, value in blocks:
+        if kind == "caption":
+            value = [cell for row in value for cell in row if cell]
         for text in ([value] if isinstance(value, str) else value + [" ".join(value)]):
             texts.add(normalized(text))
     return texts
@@ -715,6 +735,10 @@ def block_paragraphs(block):
     """One block's paragraphs, each as (xml, text). Runs carry no font: the template's
     docDefaults set it."""
     kind, value = block
+    if kind == "caption":
+        holder = etree.Element("{%s}body" % W_NS, nsmap={"w": W_NS})
+        holder.append(caption_table(value))
+        return [(etree.tostring(holder[0], encoding="unicode"), " ".join(c for row in value for c in row if c))]
     if kind == "title":
         return [(para(value, '<w:keepNext/><w:jc w:val="center"/>', BOLD, markup=True), value)]
     if kind == "heading":
@@ -744,8 +768,9 @@ def body_xml(blocks, warning, reservation):
     # The recipient lines close the face and flow freely after the signature block.
     if blocks and blocks[-1][0] == "para" and all(RECIPIENT_LINE.match(l) for l in blocks[-1][1]):
         tail = [paras.pop()]
-    chain = paras[-SIGNATURE_CHAIN:]
-    start = len(paras) - len(chain)
+    # The caption table opens the face and is never part of the signature chain.
+    start = max(len(paras) - SIGNATURE_CHAIN, int(bool(blocks) and blocks[0][0] == "caption"))
+    chain = paras[start:]
     for i, (xml, text) in enumerate(chain):
         last = i == len(chain) - 1
         split = i == 0 and not last and len(text) > LONG_LAST_PARAGRAPH
@@ -754,6 +779,8 @@ def body_xml(blocks, warning, reservation):
     if warning:
         paras.insert(0, (para(warning, "", BOLD), warning))
     if reservation and paras:
+        if not paras[0][0].startswith("<w:p>"):  # the caption table: the space goes on an empty paragraph above it
+            paras.insert(0, ("<w:p><w:pPr></w:pPr></w:p>", ""))
         paras[0] = (with_space_before(paras[0][0], twips(reservation)), paras[0][1])
     return "".join(xml for xml, _text in paras + tail)
 

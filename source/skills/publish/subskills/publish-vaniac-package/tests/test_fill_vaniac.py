@@ -214,9 +214,10 @@ def _runs(el) -> list[tuple[str, bool, bool]]:
 
 
 def test_markdown_emphasis_fills_as_word_runs_and_a_fence_stays_verbatim():
-    from fill_vaniac import _body_elements, _table, parse
+    from docx_helpers import table
+    from fill_vaniac import _body_elements, parse
     heading, para, bullet, quote, cite = (_runs(el) for el in _body_elements(parse(EMPHASIS_FACE, 't')))
-    cell = _runs(_table([['See *Alpha v Beta*.']], [5000], ['left'], True, None))
+    cell = _runs(table([['See *Alpha v Beta*.']], [5000], ['left'], True, None))
     for runs in (heading, para, bullet, cite, cell):
         assert '*' not in ''.join(text for text, _, _ in runs)
     assert ('Alpha v Beta', False, True) in heading

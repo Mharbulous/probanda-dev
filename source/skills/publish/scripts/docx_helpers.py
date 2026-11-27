@@ -90,6 +90,51 @@ def append_emphasis_runs(parent: etree._Element, text: str,
         set_run_text(run, piece)
 
 
+def styled_para(style: str | None, text: str = '', jc: str | None = None, bold: bool = False) -> etree._Element:
+    """A new <w:p> of emphasis runs, with an optional paragraph style and alignment."""
+    p = etree.Element(wn('p'))
+    if style or jc:
+        ppr = etree.SubElement(p, wn('pPr'))
+        if style:
+            etree.SubElement(ppr, wn('pStyle')).set(wn('val'), style)
+        if jc:
+            etree.SubElement(ppr, wn('jc')).set(wn('val'), jc)
+    rpr = None
+    if bold:
+        rpr = etree.Element(wn('rPr'))
+        etree.SubElement(rpr, wn('b'))
+    append_emphasis_runs(p, text, rpr)
+    return p
+
+
+def table(rows: list[list[str]], widths: list[int], jcs: list[str], borders: bool,
+          style: str | None, bold_rows: set[int] = frozenset()) -> etree._Element:
+    """A <w:tbl> of one styled_para per cell, columns `widths` twips wide and aligned by `jcs`."""
+    tbl = etree.Element(wn('tbl'))
+    tblpr = etree.SubElement(tbl, wn('tblPr'))
+    etree.SubElement(tblpr, wn('tblW')).attrib.update({wn('w'): str(sum(widths)), wn('type'): 'dxa'})
+    edges = etree.SubElement(tblpr, wn('tblBorders'))
+    for edge in ('top', 'left', 'bottom', 'right', 'insideH', 'insideV'):
+        etree.SubElement(edges, wn(edge)).attrib.update(
+            {wn('val'): 'single' if borders else 'nil', wn('sz'): '4', wn('space'): '0', wn('color'): 'auto'})
+    grid = etree.SubElement(tbl, wn('tblGrid'))
+    for w in widths:
+        etree.SubElement(grid, wn('gridCol')).set(wn('w'), str(w))
+    for k, row in enumerate(rows):
+        tr = etree.SubElement(tbl, wn('tr'))
+        for text, w, jc in zip(row, widths, jcs):
+            tc = etree.SubElement(tr, wn('tc'))
+            etree.SubElement(etree.SubElement(tc, wn('tcPr')), wn('tcW')).attrib.update({wn('w'): str(w), wn('type'): 'dxa'})
+            tc.append(styled_para(style, text, jc, bold=k in bold_rows))
+    return tbl
+
+
+def caption_table(rows: list[list[str]], style: str | None = None) -> etree._Element:
+    """The style of proceeding in Word: the renderers' three-column caption rows (separator row
+    dropped) as a borderless table, left, centred and right."""
+    return table(rows, [2340, 4680, 2340], ['left', 'center', 'right'], False, style)
+
+
 def make_para(text: str, ppr_template: etree._Element | None = None,
               bold: bool = False, size: int | None = None) -> etree._Element:
     """A new <w:p> with one run, optionally cloning a template's <w:pPr>."""
