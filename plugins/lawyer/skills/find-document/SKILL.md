@@ -3,7 +3,7 @@ name: find-document
 description: "Use for any 'show me', 'open', 'pull up' or 'where is' request for an existing matter document or email, before listing or sending any file yourself. Sends every form of it unless one is named. Not for an approval ask."
 ---
 
-<!-- lawyer v0.34.3 -->
+<!-- lawyer v0.34.4 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

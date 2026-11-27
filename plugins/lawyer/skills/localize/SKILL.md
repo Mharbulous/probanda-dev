@@ -4,7 +4,7 @@ user-invocable: false
 description: "Internal. Only when a skill that owns a knowledge tree names it: learns a venue's or audience's requirements for a document kind from official sources, or confirms, corrects, refreshes or retires a learned file. Never from a user request."
 ---
 
-<!-- lawyer v0.34.3 -->
+<!-- lawyer v0.34.4 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

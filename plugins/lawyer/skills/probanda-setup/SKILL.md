@@ -3,7 +3,7 @@ name: probanda-setup
 description: "Use when a practice-data tool reports probanda.json not found or config_status reports exists false, or when a skill reports that Probanda does not know where the practitioner keeps each kind of document. Not for a settings file that exists but is broken, or a tool failing on a device already set up."
 ---
 
-<!-- lawyer v0.34.3 -->
+<!-- lawyer v0.34.4 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

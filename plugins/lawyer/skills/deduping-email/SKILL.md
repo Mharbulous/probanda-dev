@@ -3,7 +3,7 @@ name: deduping-email
 description: "Use for 'dedupe my email', 'remove duplicate emails' or 'this folder has duplicates', in named mail folders or the whole mailbox. Soft-deletes only copies whose information another copy holds, each batch on approval. Not for sorting or filing mail."
 ---
 
-<!-- lawyer v0.34.3 -->
+<!-- lawyer v0.34.4 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

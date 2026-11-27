@@ -3,7 +3,7 @@ name: compare-documents
 description: "Use for 'did anything change', 'compare these two PDFs', 'check this copy against the original' or 'verify flattened documents': two PDF copies of one document, such as an e-filed, converted or returned signed copy against its source. Not for redlining two Word drafts."
 ---
 
-<!-- lawyer v0.34.3 -->
+<!-- lawyer v0.34.4 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

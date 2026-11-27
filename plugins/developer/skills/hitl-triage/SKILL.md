@@ -3,7 +3,7 @@ name: hitl-triage
 description: Use only when Brahm invokes /hitl-triage in a Claude Code session in the probanda-dev repo. Takes one issue left waiting on Brahm's decision, whether it came from the Suggestion Box or anywhere else, and asks him each decision one message at a time, so the issue can be queued for an agent or closed.
 ---
 
-<!-- developer v0.16.1 -->
+<!-- developer v0.16.2 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

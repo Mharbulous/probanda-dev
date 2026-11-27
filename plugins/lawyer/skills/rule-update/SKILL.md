@@ -3,7 +3,7 @@ name: rule-update
 description: "Use when a docket-clerk reply names /rule-update, when the practitioner says a BC court rule changed or asks to update the rules for an amending regulation, or when the morning briefing reports a rule change. Never from a drafting session. Never edits the shipped rule files."
 ---
 
-<!-- lawyer v0.34.3 -->
+<!-- lawyer v0.34.4 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

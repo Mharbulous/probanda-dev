@@ -1,4 +1,4 @@
-// build-stamp: 8e83489b005b
+// build-stamp: f89608fc8931
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75506,7 +75506,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "8e83489b005b";
+var BUILD_STAMP = false ? null : "f89608fc8931";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -94099,7 +94099,7 @@ function pageApiCardTokenValid(token, cardId, env = process.env) {
 }
 
 // src/templates/view-pages/arguments.css.ts
-var arguments_css_default = '.picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}\n.picker input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}\n.picker label{display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #1d5e4a;color:#025056;font-family:var(--sans);font-size:13px;font-weight:600;line-height:1;padding-bottom:1px;font-variant-numeric:tabular-nums;cursor:pointer}\n.picker input:checked+label{width:31px;height:31px;background:#a8691c;border-color:#a8691c;color:#fff;font-size:15px;font-weight:800}\n.picker input:focus-visible+label{outline:2px solid #1d5e4a;outline-offset:2px}\narticle.arg{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.arg>.text{position:relative;font-weight:400;margin:0;padding-bottom:22px;white-space:pre-wrap;cursor:pointer}\n.arg>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:var(--frame);transition:transform .15s}\n.arg.open>.text::before{transform:rotate(90deg)}\n.arg>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.arg .tags{position:absolute;right:0;bottom:0;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px}\n.arg .tag.flag{background:#a8691c}\narticle.arg.killed{opacity:.55}\n.folder section>h2 .count{font-size:13px;font-weight:600;color:var(--muted)}\n.arg .tag{padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}\n.arg .detail{display:flex;flex-direction:column;gap:6px}\n.arg .where,.arg .label,.arg .none{margin:0;font-size:12.5px;color:var(--muted)}\n.arg .head{margin:4px 0 0;font-size:17px;font-weight:700}\n.arg ul{margin:0;padding-left:20px}\n.arg li{margin:2px 0;white-space:pre-wrap}\n.arg li.omitted{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}\n.arg .linked{border-top:1px solid var(--line);padding-top:6px}';
+var arguments_css_default = '.picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}\n.picker input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}\n.picker label,.picker .hollow{display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #1d5e4a;color:#025056;font-family:var(--sans);font-size:13px;font-weight:600;line-height:1;padding:0 0 1px;font-variant-numeric:tabular-nums;cursor:pointer}\n.picker .hollow{background:transparent;border-style:dashed}\n.picker input:checked+label{width:31px;height:31px;background:#a8691c;border-color:#a8691c;color:#fff;font-size:15px;font-weight:800}\n.picker input:focus-visible+label,.picker .hollow:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}\narticle.arg{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.arg>.text{position:relative;font-weight:400;margin:0;padding-bottom:22px;white-space:pre-wrap;cursor:pointer}\n.arg>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:var(--frame);transition:transform .15s}\n.arg.open>.text::before{transform:rotate(90deg)}\n.arg>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.arg .tags{position:absolute;right:0;bottom:0;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px}\n.arg .tag.flag{background:#a8691c}\narticle.arg.killed{opacity:.55}\n.folder section>h2 .count{font-size:13px;font-weight:600;color:var(--muted)}\n.arg .tag{padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}\n.arg .detail{display:flex;flex-direction:column;gap:6px}\n.arg .where,.arg .label,.arg .none{margin:0;font-size:12.5px;color:var(--muted)}\n.arg .head{margin:4px 0 0;font-size:17px;font-weight:700}\n.arg ul{margin:0;padding-left:20px}\n.arg li{margin:2px 0;white-space:pre-wrap}\n.arg li.omitted{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}\n.arg .linked{border-top:1px solid var(--line);padding-top:6px}';
 
 // src/templates/view-pages/arguments.html.ts
 var arguments_html_default = '@@include(view-head.html)@@\n<title>Arguments</title>\n<style>\n@@include(board.css)@@\n\n\n@@include(view-folder.css)@@\n\n@@include(arguments.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Arguments</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(arguments.js)@@\n</script>\n</body>\n</html>\n';
@@ -94197,9 +94197,10 @@ var arguments_js_default = `(function () {
   board.appendChild(folder);
 
   // One tab's section, its picker and its cards. The picker's selected label lists that card alone,
-  // and none selected lists them all.
+  // and none selected lists them all. Each of \`gaps\` (arguments with no rebuttal) takes a hollow
+  // button in number order, which opens that argument on the Arguments tab.
   var sections = {};
-  function section(name, heading, items, noun, note) {
+  function section(name, heading, items, noun, note, gaps) {
     var cards = items.map(function (a) { return card(a, noun); });
     var sec = el("section");
     var h2 = el("h2", "", heading);
@@ -94227,7 +94228,21 @@ var arguments_js_default = `(function () {
       return true;
     }
     sections[name] = { node: sec, size: cards.length, show: show };
+    gaps = gaps || [];
+    var g = 0;
+    // Hollow buttons for the gaps numbered below n, or for all that are left when n is null.
+    function hollow(a) {
+      var b = el("button", "hollow", a.label.replace("#", ""));
+      b.type = "button";
+      b.title = "Argument " + a.label + ": no rebuttal";
+      b.addEventListener("click", function () { if (sections.arguments.show(a.number)) select(tabs[0]); });
+      picker.appendChild(b);
+    }
+    function hollowsBefore(n) {
+      while (g < gaps.length && (n === null || (gaps[g].number !== null && gaps[g].number < n))) hollow(gaps[g++]);
+    }
     cards.forEach(function (c, i) {
+      hollowsBefore(items[i].killed ? null : items[i].number);
       var input = el("input");
       input.type = "radio";
       input.name = "pick-" + name;
@@ -94243,10 +94258,11 @@ var arguments_js_default = `(function () {
       input.addEventListener("keydown", function (e) { if (e.key === " " && input.checked) clear(e); });
       stack.appendChild(c.node);
     });
+    hollowsBefore(null);
   }
-  var unanswered = data.arguments.filter(function (a) { return a.tags.indexOf("No rebuttal") >= 0; }).length;
-  section("arguments", "Arguments", data.arguments, "Argument", unanswered + " with no rebuttal");
-  section("rebuttals", "Rebuttals", data.rebuttals, "Rebuttal", null);
+  var unanswered = data.arguments.filter(function (a) { return a.tags.indexOf("No rebuttal") >= 0; });
+  section("arguments", "Arguments", data.arguments, "Argument", unanswered.length + " with no rebuttal");
+  section("rebuttals", "Rebuttals", data.rebuttals, "Rebuttal", null, unanswered);
   setOpen(null);
   var empty = el("p", "empty", "Nothing recorded on this tab.");
   folder.appendChild(empty);
@@ -94399,6 +94415,11 @@ function argumentsFor(dbPath, proceedingId, ids, merged) {
     seen.add(id);
     return numberOf(target2, seen);
   };
+  const soleRebuttalOf = (argument) => {
+    const all2 = rebuttalsOf.get(argument) ?? [];
+    const live = all2.filter((r3) => byId2.get(r3)?.killed_on === null);
+    return live.length === 1 ? live[0] : all2.length === 1 ? all2[0] : void 0;
+  };
   const labels = /* @__PURE__ */ new Map();
   const labelOf = (id, seen = /* @__PURE__ */ new Set()) => {
     const known = labels.get(id);
@@ -94411,8 +94432,9 @@ function argumentsFor(dbPath, proceedingId, ids, merged) {
     else {
       seen.add(id);
       const base = labelOf(parent, seen);
-      const i3 = (rebuttalsOf.get(parent) ?? []).indexOf(id);
-      out = { label: `${base.label}.${base.path.length % 2 === 0 ? letter(i3) : roman(i3 + 1)}`, path: [...base.path, i3] };
+      const sole = targetOf.has(parent) ? void 0 : soleRebuttalOf(parent);
+      const i3 = (rebuttalsOf.get(parent) ?? []).filter((r3) => r3 !== sole).indexOf(id);
+      out = id === sole ? { label: base.label, path: [...base.path, -1] } : { label: `${base.label}.${base.path.length % 2 === 0 ? letter(i3) : roman(i3 + 1)}`, path: [...base.path, i3] };
     }
     labels.set(id, out);
     return out;
@@ -127852,7 +127874,7 @@ var ARGUMENTS_FIXTURE = {
         facts: [],
         law: [],
         rebuts: [],
-        rebutted_by: ["#2.a"]
+        rebutted_by: ["#2"]
       },
       {
         id: 5,
@@ -127886,7 +127908,7 @@ var ARGUMENTS_FIXTURE = {
     rebuttals: [
       {
         id: 2,
-        label: "#2.a",
+        label: "#2",
         number: 2,
         side: "ours",
         contention: "The goods were ordered: the order log records the order.",

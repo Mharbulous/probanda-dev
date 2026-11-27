@@ -3,7 +3,7 @@ name: legal-citation
 description: "Use whenever writing or displaying a legal citation to the practitioner: case or statute name, citation, pinpoint, as an italicized block quote."
 ---
 
-<!-- researcher v0.24.1 -->
+<!-- researcher v0.24.2 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

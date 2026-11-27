@@ -3,7 +3,7 @@ name: precedents
 description: "Use for 'make this a precedent', 'update the precedent', 'organize my precedents', or a standard form that may not exist ('my standard retainer', 'the form we use'). Not for filling one in for a client, and not for court forms."
 ---
 
-<!-- lawyer v0.34.3 -->
+<!-- lawyer v0.34.4 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

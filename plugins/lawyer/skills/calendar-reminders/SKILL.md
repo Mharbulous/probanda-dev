@@ -3,7 +3,7 @@ name: calendar-reminders
 description: "Use for 'what do I need to do?', 'what have I put off?', 'ask me if I finished things', a calendar reminder check or the session-start reminder check: triages likely obligations and unfinished tasks from calendar events. Never writes to the calendar."
 ---
 
-<!-- lawyer v0.34.3 -->
+<!-- lawyer v0.34.4 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

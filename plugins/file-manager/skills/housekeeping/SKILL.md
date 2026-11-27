@@ -4,7 +4,7 @@ disable-model-invocation: true
 description: Read the loose files in a litigation matter's main folder into the case database, name each one by the firm's file naming convention (date + code + author/recipient + re/encl/srv + subject + amount) and file it into the matter's folders, and tidy files already in its subfolders that were never read in or carry non-standard names, after the practitioner approves each file on a local approval page. Use for 'housekeeping', or to clean up, organize, audit, standardize, or fix non-standard file names in a litigation matter folder. Litigation matters only.
 ---
 
-<!-- file-manager v0.22.1 -->
+<!-- file-manager v0.22.2 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.

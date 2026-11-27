@@ -4,7 +4,7 @@ user-invocable: false
 description: "Use to look up, analyse or change this matter's case data: parties and counsel, proceedings and procedural history, witnesses, experts, tribunal members and their recorded spellings and file codes, facts, positions, evidence, causes of action, issues, client instructions and stored authorities. Not for what the law is or for deadlines."
 ---
 
-<!-- lawyer v0.34.3 -->
+<!-- lawyer v0.34.4 -->
 > **Installed copy.** Relative paths below cite this skill's shipped tree.
 > Resolve in order: current file's dir, `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is `${CLAUDE_SKILL_DIR}/../shared/x.md`).
 > `${CLAUDE_SKILL_DIR}` is this SKILL.md's directory even if unsubstituted: never search or guess.
