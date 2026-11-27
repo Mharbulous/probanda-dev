@@ -4,7 +4,7 @@ Status 2026-11-27: design note. Nothing here is built, and nothing is to be buil
 
 ## Context
 
-The practitioner works on two Windows PCs. Matter folders sync between them through SharePoint by the OneDrive app. A Cowork session is linked to one PC. Opened from the other, the app shows "This session is linked to <computer>" with "Not now" and "Use this computer instead". Until that button is clicked, every tool that runs on the PC fails with "The device this session is bound to is not connected to the bridge", and the session's deferred tool list drops, then returns on reconnect.
+The practitioner works on two Windows PCs. Matter folders sync between them through SharePoint by Microsoft's file sync app. A Cowork session is linked to one PC. Opened from the other, the app shows "This session is linked to <computer>" with "Not now" and "Use this computer instead". Until that button is clicked, every tool that runs on the PC fails with "The device this session is bound to is not connected to the bridge", and the session's deferred tool list drops, then returns on reconnect.
 
 On 2026-11-27 a `/researcher:legal-research` run passed its preflight, the practitioner approved the wording of two research jobs, and the next call on the PC failed. The session could only say the computer was disconnected.
 
@@ -70,7 +70,7 @@ The practitioner's own step, with no admin rights: set "Always keep on this devi
 
 - **D1. Device identity.** Build decision 1 of `2026-11-11_bill-multi-device.md` on its own: `device_id` and `device_name` in each PC's `probanda.json`, returned by `config_status` and the research preflight. It lets a session say "this is a different computer than before", names a job's holder, and makes D3 and D4 possible. Recommended: yes.
 - **D2. The kv stores' structure.** Either one file per device merged on read (the 2026-11-11 design, extended to `practice.db` and `loose_threads.db`), or staged writes with the drafting lost-write record. Both are minor bumps. Recommended: the 2026-11-11 design for `time_pipeline`, staged writes for the other two.
-- **D3. A sync-settled guard.** Each device keeps its write count in a small synced file of its own, which no other device writes. A session compares that count with the count inside the database and knows when the other PC's writes have not arrived. Refuse or warn is the decision. Whether OneDrive exposes its own pending state without admin rights is not known and needs a spike first.
+- **D3. A sync-settled guard.** Each device keeps its write count in a small synced file of its own, which no other device writes. A session compares that count with the count inside the database and knows when the other PC's writes have not arrived. Refuse or warn is the decision. Whether the file sync exposes its own pending state without admin rights is not known and needs a spike first.
 - **D4. Device-only work (finding 5).** Move ingest runs and staged results into the synced folder, or keep them local and say "this was started on <computer>, finish it there". Recommended: keep them local and say so, which needs D1.
 - **D5. Matters not yet relocated.** Relocate each with the existing `matter_data__relocate`, or give the drafting resolver matter-data's fallback. Recommended: relocate.
 - **D6. Housekeeping proposals across PCs.** Low harm, and it fails closed. Recommended: leave it.
@@ -81,4 +81,4 @@ The practitioner's own step, with no admin rights: set "Always keep on this devi
 - Each skill's full step order. Only `legal-research` and a sample were walked, so N2's list of skills that ask first may be short.
 - Whether any existing file in a store's folder matches the wider conflict-copy pattern by accident.
 - Whether `research_filing__append_manifest` accepts a new record kind for N6.
-- Whether either PC's Downloads folder is redirected into OneDrive.
+- Whether either PC's Downloads folder is redirected into the synced tree.
