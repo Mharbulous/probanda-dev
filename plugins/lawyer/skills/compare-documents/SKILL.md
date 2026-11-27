@@ -1,6 +1,6 @@
 ---
 name: compare-documents
-description: "Compare two PDF copies of one document and say what changed: a court e-filing system's flattened copy against the original ('verify flattened documents'), a converted or re-saved PDF against its source, or a returned signed copy against the version sent. Use for 'did anything change', 'compare these two PDFs', 'check this copy against the original'. Redlining two drafts of a Word document -> not this skill."
+description: "Use for 'did anything change', 'compare these two PDFs', 'check this copy against the original' or 'verify flattened documents': two PDF copies of one document, such as an e-filed, converted or returned signed copy against its source. Not for redlining two Word drafts."
 ---
 
 <!-- lawyer v0.34.3 -->

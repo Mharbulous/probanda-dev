@@ -1,6 +1,6 @@
 ---
 name: "call-contact"
-description: "Use when the practitioner says \"Call\" followed by a person's name (or phone/ring/dial someone): look them up in their contacts and show each of their numbers as a clickable tel: link, with a fallback page for a second calling app on request."
+description: "Use when the practitioner says 'call', 'phone', 'ring' or 'dial' and a person's name: shows each of their numbers as a clickable link."
 ---
 
 <!-- lawyer v0.34.3 -->

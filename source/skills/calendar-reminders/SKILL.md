@@ -1,11 +1,6 @@
 ---
 name: calendar-reminders
-description: >-
-  Triage likely obligations and unfinished tasks from calendar events.
-  Use for calendar reminder checks, personal obligation triage, "what do I need
-  to do?", "what have I put off?", "ask me if I finished things", and
-  session-start reminder checks. Reads the calendar through the lawyer plugin's
-  calendar tools and never writes to it.
+description: "Use for 'what do I need to do?', 'what have I put off?', 'ask me if I finished things', a calendar reminder check or the session-start reminder check: triages likely obligations and unfinished tasks from calendar events. Never writes to the calendar."
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.

@@ -1,7 +1,7 @@
 ---
 name: localize
 user-invocable: false
-description: Internal writer of every skill's knowledge tree. Learns a venue's or audience's requirements for one or two document kinds from official published sources and records them in the calling skill's tree, or confirms, corrects, refreshes or retires a learned file. Invoked by name by a tree-owning skill (draft, publish, or the docket-clerk agent's caller), never by the user.
+description: "Internal. Only when a skill that owns a knowledge tree names it: learns a venue's or audience's requirements for a document kind from official sources, or confirms, corrects, refreshes or retires a learned file. Never from a user request."
 ---
 
 <!-- lawyer v0.34.3 -->

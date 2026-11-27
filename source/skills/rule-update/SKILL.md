@@ -1,13 +1,6 @@
 ---
 name: rule-update
-description: >
-  Update the firm's court-rule set when a modelled BC rule changes: fetch the amending text,
-  have the docket-clerk agent draft overlay records, take the practitioner's approval of each
-  under /show-me, then have the clerk write them and recalculate the blocked deadlines. Use
-  when a docket-clerk reply names /rule-update (a workflow-10 open item, a rule_stale block or
-  a step-0a refusal that an amendment is in force), when the practitioner says a rule changed
-  or asks to update the rules for an amending regulation, or when the morning briefing reports
-  a rule change. Never from a drafting session. Never edits the shipped rule files.
+description: "Use when a docket-clerk reply names /rule-update, when the practitioner says a BC court rule changed or asks to update the rules for an amending regulation, or when the morning briefing reports a rule change. Never from a drafting session. Never edits the shipped rule files."
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.

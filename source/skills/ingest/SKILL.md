@@ -1,9 +1,6 @@
 ---
 name: ingest
-description: >
-  Use when asked to ingest, import, or add a litigation document into the case database —
-  affidavits, pleadings, transcripts, exhibits, correspondence, or case law.
-  Matches: "ingest [path]", "add this to the file", "import this document."
+description: "Use for 'ingest [path]', 'add this to the file' or 'import this document': a pleading, affidavit, transcript, exhibit, letter or case into the matter's case data."
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.

@@ -351,6 +351,16 @@ class TestPlantedViolations(FixtureTest):
         self.assertTrue(ok)
         self.assertIn("PLUGIN LIST BUDGET:", detail)
 
+    def test_plugin_description_budget_skips_disable_model_invocation(self):
+        self.fixture.write("source/skills/alpha/SKILL.md", SOURCE_SKILL_MD.replace(
+            "description: Fixture roster skill.", "description: Fixture roster skill.\ndisable-model-invocation: true"))
+        self.fixture.build()
+        with mock.patch.object(check_plugin_skill_md, "PLUGIN_DESCRIPTION_BUDGET_CHARS", 20), \
+             mock.patch.object(check_plugin_skill_md, "PLUGIN_DESCRIPTION_WARN_CHARS", 15):
+            ok, detail = self.fixture.results()["description-length"]
+        self.assertTrue(ok)
+        self.assertIn("48/20 chars across 2 skills", detail)  # drafting-data and legal-commons; alpha left out
+
     def test_html_pages_preamble_is_conditional(self):
         self.fixture.write("source/skills/alpha/SKILL.md", SOURCE_SKILL_MD)
         self.fixture.build()

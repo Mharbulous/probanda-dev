@@ -1,6 +1,6 @@
 ---
 name: suggestion
-description: "Use when the practitioner gives feedback on Probanda or reports a bug (\"Probanda should…\", \"tell the developers…\", \"from now on, always…\"), when a finished task took corrections, when Probanda cannot do what is needed, when a reminder names it, or when the session-start note says this computer holds suggestions not yet sent. Not for edits to their own draft, or loose threads."
+description: "Use when the practitioner gives feedback on Probanda or reports a bug ('Probanda should…', 'tell the developers…', 'from now on, always…'), when a finished task took corrections, when Probanda cannot do what is needed, or when a reminder or the session-start note names it. Not for edits to their own draft, or loose threads."
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.

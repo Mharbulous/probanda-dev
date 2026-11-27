@@ -1,9 +1,6 @@
 ---
 name: reflect
-description: >
-  Session retrospective. Use for /reflect or "how did this session go". Go straight to its
-  E2E report for /introspection, "document what just happened", "E2E report", "capture agent
-  behavior" or "turn this session into an E2E test". Not for root-cause analysis or bug diagnosis.
+description: "Use for /reflect, 'how did this session go', /introspection, 'document what just happened', 'E2E report', 'capture agent behavior' or 'turn this session into an E2E test'. Not for root-cause analysis or bug diagnosis."
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.

@@ -1,7 +1,7 @@
 ---
 name: executive-assistant
 user-invocable: true
-description: Explicit invocation only. Runs when the practitioner types /executive-assistant, or when a scheduled task names this skill for the morning briefing. Never trigger from natural-language requests such as "what should I work on", "what's next" or "give me a briefing" — leave those to the practitioner unless the slash command was typed.
+description: "Only when the practitioner types /executive-assistant, or a scheduled task names it for the morning briefing. Never for 'what should I work on', 'what's next' or 'give me a briefing' asked in words."
 ---
 
 <!-- lawyer v0.34.3 -->

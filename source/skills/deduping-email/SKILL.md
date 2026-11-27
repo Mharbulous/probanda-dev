@@ -1,12 +1,6 @@
 ---
 name: deduping-email
-description: >-
-  Remove duplicate emails from named mail folders or the whole mailbox: byte-identical
-  copies first, then copies that share a Message-ID but differ, judged so that only a copy
-  whose information another copy holds can go. Copies are soft-deleted to Trash only, each
-  batch on the practitioner's approval, and on a mail server without one-step MOVE or a
-  Trash folder it only lists them for the practitioner to remove. Use for "dedupe my email", "remove duplicate emails"
-  or "this folder has duplicates". Not for sorting or filing mail.
+description: "Use for 'dedupe my email', 'remove duplicate emails' or 'this folder has duplicates', in named mail folders or the whole mailbox. Soft-deletes only copies whose information another copy holds, each batch on approval. Not for sorting or filing mail."
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.

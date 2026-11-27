@@ -1,6 +1,6 @@
 ---
 name: file-naming
-description: Check a filename against the firm's file naming convention (date + code + author/recipient + re/encl/srv + subject + amount), or propose a conforming name from a document's content. Domain-agnostic — knows the grammar and code registry, not any folder layout. Use for "check this file name", "what should I call this file", or when another skill (housekeeping, ingest) needs the grammar or the gate. Applying a rename -> /file-apply. Covers .pdf/.docx/.doc/.eml/.msg/.xls.
+description: "Use for 'check this file name' or 'what should I call this file', or when another skill needs the firm's file naming grammar or its check. Checks a name against the convention or proposes one from the document. Not for applying a rename."
 ---
 
 <!-- lawyer v0.34.3 -->

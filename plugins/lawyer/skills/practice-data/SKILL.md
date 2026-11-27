@@ -1,7 +1,7 @@
 ---
 name: practice-data
 user-invocable: false
-description: The firm's practice records for each client and matter. Look up or update trust and retainer balances, unbilled time, time entries, invoices, amounts owing, tasks or file status. Not for deadlines (docket-clerk) or case facts (matter-data).
+description: "Use to look up or update the firm's records for a client or matter: trust and retainer balances, unbilled time, time entries, invoices, amounts owing, tasks or file status. Not for deadlines or case facts."
 ---
 
 <!-- lawyer v0.34.3 -->

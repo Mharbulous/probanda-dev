@@ -124,8 +124,11 @@ def check_description_length(repo, plugin):
         n = description_length(skill_md(repo, s))
         if n is None:
             continue
-        total_chars += n
-        counted += 1
+        # A disable-model-invocation skill's description serves only the human menu, never the model's list.
+        dmi = field(read_frontmatter_lines(skill_md(repo, s)), "disable-model-invocation")
+        if not (dmi and scalar_value(dmi).strip().lower() == "true"):
+            total_chars += n
+            counted += 1
         if n > DESCRIPTION_MAX_CHARS:
             long_hits.append(f"{s}: {n} chars, {n - DESCRIPTION_MAX_CHARS} over")
         elif n >= DESCRIPTION_WARN_CHARS:

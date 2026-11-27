@@ -1,7 +1,7 @@
 ---
 name: matter-data
 user-invocable: false
-description: SSOT for this client matter's structured case data. Use for party details and counsel, proceedings and procedural history, witnesses and experts, tribunal members, the spellings and file-name codes recorded for any of them, facts, party positions, evidence links, causes of action, issues, privileged client instructions, and the matter's stored legal authorities/concepts—both lookups or analysis and CRUD. Not the authority on what the law is (legal-research) or deadlines (docket-clerk); it stores and serves the underlying matter data they consult.
+description: "Use to look up, analyse or change this matter's case data: parties and counsel, proceedings and procedural history, witnesses, experts, tribunal members and their recorded spellings and file codes, facts, positions, evidence, causes of action, issues, client instructions and stored authorities. Not for what the law is or for deadlines."
 ---
 
 <!-- lawyer v0.34.3 -->

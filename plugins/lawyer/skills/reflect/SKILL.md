@@ -1,9 +1,6 @@
 ---
 name: reflect
-description: >
-  Session retrospective. Use for /reflect or "how did this session go". Go straight to its
-  E2E report for /introspection, "document what just happened", "E2E report", "capture agent
-  behavior" or "turn this session into an E2E test". Not for root-cause analysis or bug diagnosis.
+description: "Use for /reflect, 'how did this session go', /introspection, 'document what just happened', 'E2E report', 'capture agent behavior' or 'turn this session into an E2E test'. Not for root-cause analysis or bug diagnosis."
 ---
 
 <!-- lawyer v0.34.3 -->

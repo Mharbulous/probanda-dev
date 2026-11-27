@@ -1,6 +1,6 @@
 ---
 name: precedents
-description: "Use when the practitioner says 'make this a precedent', 'update the precedent', 'organize my precedents', or expects a standard form that may not exist ('my standard retainer', 'the form we use'). Creates a reusable Word precedent from their own saved document, saves an edited copy as a new version, and tidies the precedents folder. A precedent is a Word file whose variable fields are in square brackets and highlighted yellow. Not for filling a precedent in for a client, and not for court forms."
+description: "Use for 'make this a precedent', 'update the precedent', 'organize my precedents', or a standard form that may not exist ('my standard retainer', 'the form we use'). Not for filling one in for a client, and not for court forms."
 ---
 
 <!-- lawyer v0.34.3 -->

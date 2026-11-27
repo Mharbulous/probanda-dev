@@ -40,7 +40,6 @@
     {"file": "source/skills/legal-research/references/research-board.md", "target": "work", "why": "caller", "note": "/work hands the session to board mode."},
     {"file": "source/skills/case-brief/SKILL.md", "target": "apply-to-facts", "why": "signpost", "note": "The description says whether a case helps this matter belongs to apply-to-facts."},
     {"file": "source/skills/case-brief/SKILL.md", "target": "drafting-data", "why": "conditional", "note": "Without litigator: each case is briefed now and the skill says no job was written."},
-    {"file": "source/skills/matter-data/SKILL.md", "target": "legal-research", "why": "signpost", "note": "The description says what the law is belongs to legal-research."},
     {"file": "source/skills/matter-data/operations/ingest-extract.md", "target": "draft", "why": "mention", "note": "The execution status `draft`, and one note that /draft reads the served document itself."},
     {"file": "source/skills/matter-data/operations/order-effects.md", "target": "drafting-data", "why": "caller", "note": "Says /drafting-data's counsel offer-back can reach this operation."},
     {"file": "source/skills/matter-data/operations/push-state.md", "target": "commons server", "why": "caller", "note": "Serves the push skill, which makes the commons calls."},

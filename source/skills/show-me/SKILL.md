@@ -1,7 +1,7 @@
 ---
 name: show-me
 user-invocable: false
-description: "Use before any approval ask or sign-off, including a draft presented for sign-off, before any question to the practitioner about a specific document, even one asked again, and when the practitioner asks to see a Work Board or any job on it. Also before any reply that reports what a tribunal, court, arbitrator, opposing counsel or witness said or wrote (an email, letter, direction, order or ruling), asked for or not: quote the operative words verbatim first, with author, date and source."
+description: "Use before any approval ask or sign-off, before any question about a specific document (even one asked again), when the practitioner asks to see a Work Board or a job on it, and before any reply reporting what a tribunal, court, arbitrator, opposing counsel or witness said or wrote."
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.

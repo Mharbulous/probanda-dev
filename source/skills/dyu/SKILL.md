@@ -1,6 +1,6 @@
 ---
 name: dyu
-description: Use when the user's message ends with /dyu or $dyu, and only then. The user types it as the last word of a message, after describing an idea, a question or a request. Restate the user's intent in plain language as an active-listening checkpoint, then stop and wait for the user to confirm before answering, implementing, critiquing, researching or expanding.
+description: "Use when the user's message ends with /dyu or $dyu, and only then: restate their intent in plain language and wait for them to confirm before doing anything else."
 ---
 
 # DYU

@@ -1,6 +1,6 @@
 ---
 name: task-prioritization
-description: Maintain and rank the practitioner's to-do registry (retainer-first). Use to add or complete a to-do, see the ranked to-do list, or which files need attention, or to show the Practice Board (every matter's open work on one page). 'What should I work on' is answered only when the practitioner types /executive-assistant; do not route to it. Re-ranks when a retainer notice is sent, a trust balance changes, or a deadline updates.
+description: "Use to add or complete a to-do, see the ranked to-do list or which files need attention, or show the Practice Board. Not for 'what should I work on', which only a typed /executive-assistant answers."
 user-invocable: true
 ---
 

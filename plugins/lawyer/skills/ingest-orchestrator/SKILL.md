@@ -1,6 +1,6 @@
 ---
 name: ingest-orchestrator
-description: Ingest several litigation documents into a matter's case data in one run, or any affidavit, with the extraction done by background extractors and the writes done by tools, so no extracted text and no SQL pass through this session. /ingest hands it every request covering two or more documents and any affidavit, and /matter-data's unattended ingest runs its loop. Use for "ingest these files", "ingest this affidavit", or when /ingest hands a run over.
+description: "Use for 'ingest these files' or 'ingest this affidavit', or when /ingest or /matter-data hands a run over: two or more litigation documents, or any affidavit, into a matter's case data in one run."
 ---
 
 <!-- lawyer v0.34.3 -->
