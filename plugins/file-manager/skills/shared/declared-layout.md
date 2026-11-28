@@ -44,11 +44,11 @@ Each part is an object:
 
 `source` is a closed vocabulary owned by the runtime. A part's `source` is one of:
 
-- a **projection**, which prints Writing content the runtime already holds: `caption`, `orders-sought`, `facts`, `legal-basis`, `material-relied-on`, `witness-statements`, `positions`, `hearing-details`, `parties`, `addressee`, `sender`, `signature-block`, `terms`, `form-source`
+- a **projection**, which prints Writing content the runtime already holds: `caption`, `orders-sought`, `facts`, `legal-basis`, `material-relied-on`, `witness-statements`, `positions`, `hearing-details`, `parties`, `addressee`, `sender`, `signature-block`, `approved-as-to-form`, `terms`, `form-source`
 - `slot:<name>`, a free-text slot. The part declares the slot and the Writing holds its text. A venue part that matches no projection is declared as a slot, never guessed.
 - `literal`, a fixed sentence carried in the part's `text`
 
-Four projections carry rules of their own:
+These projections carry rules of their own:
 
 - `addressee` and `sender` print the address and sender lines, which are the Writing's own text. They never read party roles. Who receives the Writing comes from the proceeding's service list, not from these lines.
 - `signature-block` prints the signer's block (section 5, `signer`). The lines depend on the signer and on `letterhead`:
@@ -56,6 +56,7 @@ Four projections carry rules of their own:
   - A `lawyer` signer on a layout with `letterhead: true` (a letter): the roster `closing` and a blank line, a blank signing space unless the lawyer is the person on this machine, then the lawyer's name, designation and the firm name. No counsel line.
   - A `lawyer` signer on a layout without `letterhead: true`: no closing. A blank signing space unless the lawyer is the person on this machine, then the lawyer's name, designation, the firm name, and a counsel line, `Counsel for the {role}`, the same wording for every venue. The role is the role of the first party marked as the client, pluralised when more than one party in the proceeding shares that role. When no party is marked as the client, the line is a gap that shows on the mockup and never reaches the filed face.
   - The sentence "All of which is respectfully submitted." is not part of the block. A type that wants it declares a `literal` part before the `signature-block`.
+- `approved-as-to-form` prints a BCCA Form 13 consent order's signature group, in place of `signature-block`: "APPROVED AS TO FORM:", "FOR THE COURT", the first role group's counsel lines, a signing space and "Deputy Registrar", then each other group's counsel lines. Each group's counsel lines are, for each distinct counsel read live from case data, a signing space, the counsel's name and `Counsel for the {role}`. A party with no counsel recorded prints a gap in place of the name. The group is one paragraph, so the Word document keeps it with the paragraph before it.
 - `terms` prints the Writing's ordered clauses. It serves any `_NoVenue` document with numbered operative clauses, such as a release, an undertaking or a settlement agreement. A slot cannot carry clauses because a slot holds no provenance, and `orders-sought` is relief asked of a forum.
 - `form-source` stands for the saved copy of the published form whose fixed wording the Writing copies, which `/drafting-data` links to the Writing. Linked, it prints only a comment naming that document, which never reaches the filed face. Unlinked, it is a gap, rendered for the human and withheld from the forum, and the filed render refuses until a copy is linked. A venue's stock `unstructured` type declares it.
 

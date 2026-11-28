@@ -115,7 +115,8 @@ It is never in a header or footer part, and no document property carries it.
 The signature block keeps with the paragraph before it. On the letterhead, build_body()
 chains it. Otherwise the last three paragraphs of the body, before the recipient lines,
 keep with the next: the signature-block projection prints at most two paragraphs, the
-closing and then the signing lines, so the chain always reaches the paragraph before it.
+closing and then the signing lines, and approved-as-to-form one, so the chain always reaches
+the paragraph before it.
 That paragraph keeps its lines together unless it is longer than LONG_LAST_PARAGRAPH.
 
 Prints one JSON line: {"success": true, "deliverable": ..., "versioned_from"?: ...,
