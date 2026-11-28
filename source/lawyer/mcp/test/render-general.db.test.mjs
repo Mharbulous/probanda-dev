@@ -782,6 +782,41 @@ test("a caption under a venue with no registry prints its file-number row from a
   assert.ok(!md.includes("Registry"), md);
 });
 
+test("a caption under BCCA prints the court's form heading, no registry row, and each role below or a gap (BCCA Form 13)", async (t) => {
+  const g = await generalWritingFixture(t);
+  installCaptionedNote(g, "BCCA");
+  await g.execute(`UPDATE proceedings SET registry = 'Vancouver', file_number = 'CA1' WHERE id = 3;
+    INSERT INTO parties (id, proceeding_id, name, role, ordinal, is_client, lower_court_role, case_party_id) VALUES
+      (5, 3, 'Ada Client', 'Appellant', 1, 1, 'Plaintiff', 3), (6, 3, 'Bert Other', 'Respondent', 2, 0, NULL, 4);`);
+  const { filing_id } = await g.create({ proceeding_id: 3, tree: { country: "CAN", jurisdiction: "BC", venue: "BCCA" }, kind: "captioned_note", title: "Captioned note" });
+  await g.prose(filing_id, "body", "The note's body.");
+
+  const caption = (md) => md.slice(md.indexOf("| | | |"), md.indexOf("The note's body."));
+  const rows = [
+    "| | | |",
+    "| :--- | :---: | ---: |",
+    "| | | Court of Appeal File No. CA1 |",
+    "| | **COURT OF APPEAL FOR BRITISH COLUMBIA** | |",
+    "| BETWEEN: | | |",
+    "| | ADA CLIENT | |",
+    "| | | *Appellant* |",
+    "| | | *Plaintiff* |",
+    "| AND: | | |",
+    "| | BERT OTHER | |",
+    "| | | *Respondent* |",
+  ];
+  assert.equal(caption(docOf(render(g, filing_id), "General_writing").markdown).trim(),
+    [...rows, "| | | 🧩 ________ <!-- role in the proceeding appealed from not recorded --> |"].join("\n"));
+  // A stored file number sends the filed render's counsel check to case data, which this fixture lacks.
+  await g.execute("UPDATE proceedings SET file_number = NULL WHERE id = 3;");
+  const result = render(g, filing_id, "filed");
+  assert.ok(result.documents?.length, JSON.stringify(result));
+  const filed = caption(result.documents[0].markdown);
+  assert.ok(filed.includes(rows.slice(3).join("\n")), filed);
+  assert.match(filed, /\| \| \| *________ *\|\s*$/, "the gap leaves the form's blank line");
+  assert.doesNotMatch(filed, /🧩|<!--|Registry/);
+});
+
 // Plan Phase 17: the `terms` projection. A vetted _NoVenue release the client signs, printing the
 // Writing's selected clauses under one heading. work-markers.md rows 📑 📌 📍 🔬 🧐 and §1 give each
 // clause line's markers; `terms-traced` (shared/declared-layout.md section 6) counts 📑, 📌 and 📍.

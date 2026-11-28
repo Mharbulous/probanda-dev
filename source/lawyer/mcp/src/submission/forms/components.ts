@@ -62,12 +62,22 @@ export interface CaptionHeading {
   registry_label: string | null;
 }
 
+/** Each party group's role in the proceeding appealed from, keyed by appeal role
+ * (buildLowerCourtRoleByRole). `missing` gives the cell for a group with none recorded; without it
+ * that group prints no such row. */
+export interface LowerCourtRoles {
+  byRole: Record<string, string>;
+  missing?: () => string;
+}
+
 export interface CaptionOptions {
   heading: CaptionHeading;
   registry?: string | null;
   fileNumber?: string | null;
   /** Bold title line rendered as the caption's last row, e.g. "NOTICE OF APPLICATION"; absent, no title row prints. */
   titleLine?: string;
+  /** Present, each party group's role row is followed by its role in the proceeding appealed from (BCCA Form 13). */
+  lowerCourtRoles?: LowerCourtRoles;
   /** BCSC consent order's fuller caption includes a counterclaim party group the requisition caption omits (issue #293 §2) -- callers filter `parties` before calling, this flag only controls whether the registry/file-number rows render. */
 }
 
@@ -106,21 +116,35 @@ export function formatNameList(names: string[]): string {
   return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
 }
 
+/** The caption table's opening rows: its empty header, its separator, then the registry and
+ * file-number rows shared/declared-layout.md section 8 prescribes. */
+function captionTop(heading: CaptionHeading, registry: string | null | undefined, fileNumber: string | null | undefined): string[] {
+  const lines = ["| | | |", "| :--- | :---: | ---: |"];
+  if (heading.registry_label !== null) lines.push(`| | | ${registry ?? ""} ${heading.registry_label} |`);
+  if (heading.registry_label !== null || fileNumber) lines.push(`| | | ${heading.file_number_label} ${fileNumber ?? ""} |`);
+  return lines;
+}
+
+/** The caption's party rows, the only place a style of proceeding lists its parties: "BETWEEN:"
+ * then "AND:" before each role group, its names uppercased, its role, and, with `lowerCourt`, its
+ * role in the proceeding appealed from. */
+function captionPartyRows(parties: CaptionParty[], lowerCourt?: LowerCourtRoles): string[] {
+  return groupPartiesByRole(parties).flatMap((group, i) => {
+    const below = lowerCourt?.byRole[group.role] ? `*${lowerCourt.byRole[group.role]}*` : lowerCourt?.missing?.();
+    return [
+      `| ${i === 0 ? "BETWEEN:" : "AND:"} | | |`,
+      `| | ${group.names.map((n) => n.toUpperCase()).join(" and ")} | |`,
+      `| | | *${pluralizeRole(group.role, group.names.length)}* |`,
+      ...(below ? [`| | | ${below} |`] : []),
+    ];
+  });
+}
+
 /** Component 2: style of proceeding -- the caption block, three-column table, role-grouped party listing. */
 export function styleOfProceedingCaption(parties: CaptionParty[], opts: CaptionOptions): string {
-  const lines: string[] = [];
-  lines.push("| | | |");
-  lines.push("| :--- | :---: | ---: |");
-  const { heading } = opts;
-  if (heading.registry_label !== null) lines.push(`| | | ${opts.registry ?? ""} ${heading.registry_label} |`);
-  if (heading.registry_label !== null || opts.fileNumber) lines.push(`| | | ${heading.file_number_label} ${opts.fileNumber ?? ""} |`);
-  for (const line of [heading.caption_lines].flat()) lines.push(`| | **${line}** | |`);
-  const groups = groupPartiesByRole(parties);
-  groups.forEach((group, i) => {
-    lines.push(`| ${i === 0 ? "BETWEEN:" : "AND:"} | | |`);
-    lines.push(`| | ${group.names.map((n) => n.toUpperCase()).join(" and ")} | |`);
-    lines.push(`| | | *${pluralizeRole(group.role, group.names.length)}* |`);
-  });
+  const lines = captionTop(opts.heading, opts.registry, opts.fileNumber);
+  for (const line of [opts.heading.caption_lines].flat()) lines.push(`| | **${line}** | |`);
+  lines.push(...captionPartyRows(parties, opts.lowerCourtRoles));
   if (opts.titleLine !== undefined) lines.push(`| | **${opts.titleLine}** | |`);
   return lines.join("\n");
 }
@@ -280,13 +304,8 @@ export function contactCells(c: BccaCoverPageContact, gapMarker: string): { colu
  * tpl_ca_book_cover_page.dotx and tpl_written_argument_general.dotx sharing the same field
  * shape apart from onAppealFrom/accessRestrictions (outer cover only). */
 export function bccaCoverPage(parties: CaptionParty[], fields: BccaCoverPageFields): string {
-  const lines: string[] = [];
-  lines.push("| | | |");
-  lines.push("| :--- | :---: | ---: |");
-  if (fields.heading.registry_label !== null) {
-    lines.push(`| | | ${fields.registry ?? ""} ${fields.heading.registry_label} |`);
-    lines.push(`| | | ${fields.heading.file_number_label} ${fields.fileNumber ?? ""} |`);
-  }
+  // The cover templates print the registry line, which the court's Rules forms, and so the venue block, do not.
+  const lines = captionTop({ ...fields.heading, registry_label: "Registry" }, fields.registry, fields.fileNumber);
   lines.push(`| | | ${fields.recordLabel} |`);
   lines.push("| | **COURT OF APPEAL** | |");
   if (fields.onAppealFrom && fields.onAppealFrom.judge && fields.onAppealFrom.court && fields.onAppealFrom.pronounced) {
@@ -294,14 +313,7 @@ export function bccaCoverPage(parties: CaptionParty[], fields: BccaCoverPageFiel
       `| | ON APPEAL FROM the order of ${fields.onAppealFrom.judge} of the ${fields.onAppealFrom.court} pronounced on ${fields.onAppealFrom.pronounced} | |`
     );
   }
-  const groups = groupPartiesByRole(parties);
-  groups.forEach((group, i) => {
-    lines.push(`| ${i === 0 ? "BETWEEN:" : "AND:"} | | |`);
-    lines.push(`| | ${group.names.map((n) => n.toUpperCase()).join(" and ")} | |`);
-    lines.push(`| | | *${pluralizeRole(group.role, group.names.length)}* |`);
-    const lowerCourtRole = fields.lowerCourtRoleByRole?.[group.role];
-    if (lowerCourtRole) lines.push(`| | | *${lowerCourtRole}* |`);
-  });
+  lines.push(...captionPartyRows(parties, { byRole: fields.lowerCourtRoleByRole ?? {} }));
   if (fields.accessRestrictions) {
     for (const line of fields.accessRestrictions.split("\n")) lines.push(`| | ${line} | |`);
   }

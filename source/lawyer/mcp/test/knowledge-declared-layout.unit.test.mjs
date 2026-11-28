@@ -158,13 +158,8 @@ test("each shipped BCSC form-identity file records its form, version and templat
 const HEAD = ["| | | |", "| :--- | :---: | ---: |"];
 const BRANCH_CAPTIONS = {
   "CAN/BC/BCSC": [...HEAD, "| | | Vancouver Registry |", "| | | No. X-1 |", "| | **IN THE SUPREME COURT OF BRITISH COLUMBIA** | |", "| | **TITLE** | |"],
-  "CAN/BC/BCCA": [
-    ...HEAD,
-    "| | | Vancouver Registry |",
-    "| | | Court of Appeal File No. X-1 |",
-    "| | **IN THE COURT OF APPEAL FOR BRITISH COLUMBIA** | |",
-    "| | **TITLE** | |",
-  ],
+  // The court's Rules forms (Form 13): no registry row, and the heading without "IN THE".
+  "CAN/BC/BCCA": [...HEAD, "| | | Court of Appeal File No. X-1 |", "| | **COURT OF APPEAL FOR BRITISH COLUMBIA** | |", "| | **TITLE** | |"],
   "CAN/BC/Vancouver-International-Arbitration-Centre": [
     ...HEAD,
     // A registry-less venue prints its file-number row from a stored number (#1246); the label is Brahm's (#1248).

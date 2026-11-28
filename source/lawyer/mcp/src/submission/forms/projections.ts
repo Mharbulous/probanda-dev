@@ -29,7 +29,7 @@ import { recordParagraph, renderSubmissionParagraphs } from "./submission-paragr
 import type { RenderContext } from "./render-context.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
 import { captionHeadingFor, clientParty, fetchFilingLaw, isResearchWriting, opposingPartyIds, type FilingLawRow } from "./query.js";
-import { BLANK_UNDERLINE, pluralizeRole, styleOfProceedingCaption } from "./components.js";
+import { BLANK_UNDERLINE, buildLowerCourtRoleByRole, pluralizeRole, styleOfProceedingCaption } from "./components.js";
 import { formatFlag, proseFormatRules, REFUSED_FORMAT_RULES } from "./prose-format.js";
 import { hasTable } from "../schema-capabilities.js";
 
@@ -221,14 +221,25 @@ function slot(ctx: RenderContext, name: string, part: LayoutPart, state: Project
   return spaced(withReview(ctx, name, row.id, numbered));
 }
 
+/** Forums whose forms print, under each party's role, its role in the proceeding appealed from (BCCA Form 13). */
+const APPEAL_FORUMS = new Set(["CAN/BC/BCCA"]);
+
 /** The caption (shared/declared-layout.md section 8): the stored venue block's heading rows, the
- * proceeding's registry and file number, and the parties by role. No title row: the title prints as
- * the document's own heading. Writing creation refuses a caption part under _NoVenue, which has no
+ * proceeding's registry and file number, and the parties by role, each followed at an appeal forum
+ * by its role below, or a gap where none is recorded. No title row: the title prints as the
+ * document's own heading. Writing creation refuses a caption part under _NoVenue, which has no
  * venue block. */
-const caption: Projection = (ctx) =>
+const caption: Projection = (ctx, _part, state) =>
   styleOfProceedingCaption(
     ctx.parties.map((p) => ({ name: p.name, role: p.role, ordinal: p.ordinal })),
-    { heading: captionHeadingFor(ctx.filing, ctx.proceeding), registry: ctx.proceeding.registry, fileNumber: ctx.proceeding.file_number }
+    {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      lowerCourtRoles: APPEAL_FORUMS.has(ctx.proceeding.forum ?? "")
+        ? { byRole: buildLowerCourtRoleByRole(ctx.parties), missing: () => gap(ctx, state, "role in the proceeding appealed from not recorded") }
+        : undefined,
+    }
   ).split("\n");
 
 const parties: Projection = (ctx, _part, state) =>
