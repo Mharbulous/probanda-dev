@@ -59,7 +59,7 @@ export function extractJsonBlock(content: string, file: string, exactlyOne: bool
 
 export const PROJECTIONS: readonly string[] = [
   "caption", "orders-sought", "facts", "legal-basis", "material-relied-on", "witness-statements",
-  "positions", "hearing-details", "parties", "addressee", "sender", "signature-block", "terms", "form-source",
+  "positions", "hearing-details", "parties", "addressee", "sender", "signature-block", "approved-as-to-form", "terms", "form-source",
 ];
 export const GOAL_CRITERIA: readonly string[] = [
   "orders-sought", "orders-positioned", "primary-authority", "excerpts", "noting-up",

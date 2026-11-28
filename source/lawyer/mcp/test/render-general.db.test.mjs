@@ -817,6 +817,36 @@ test("a caption under BCCA prints the court's form heading, no registry row, and
   assert.doesNotMatch(filed, /🧩|<!--|Registry/);
 });
 
+test("approved-as-to-form prints each counsel's signature lines around the Registrar's, in BCCA Form 13's order, counsel read live", async (t) => {
+  const g = await generalWritingFixture(t);
+  const docs = "draft/CAN/BC/BCCA/Documents";
+  const part = (source) => ({ heading: null, heading_numbering: "none", paragraph_numbering: "none", source });
+  g.f.local(`${docs}/kinds.local.json`, { kinds: [{ file: "consent-note", name: "Consent note", aliases: [{ name: "consent_note", source: "agent", ref: "L0000", recorded: "2026-09-20" }] }] });
+  g.f.local(`${docs}/consent-note.md`, knowledgeFile(null, {
+    renderer: "general", needs_forum_parts: false, title: "Consent note", exhibit_numbering: "writing",
+    parts: [part("caption"), part("slot:body"), part("approved-as-to-form")],
+  }));
+  await g.execute(`INSERT INTO parties (id, proceeding_id, name, role, ordinal, is_client, lower_court_role, case_party_id) VALUES
+    (5, 3, 'Ada Client', 'Appellant', 1, 1, 'Plaintiff', 3), (6, 3, 'Bert Other', 'Respondent', 2, 0, 'Defendant', 4);`);
+  updateCaseData(dirname(g.dbPath), "UPDATE parties SET lawyer_name = 'Pat Example' WHERE party_id = 3;");
+  const { filing_id } = await g.create({ proceeding_id: 3, tree: { country: "CAN", jurisdiction: "BC", venue: "BCCA" }, kind: "consent_note", title: "Consent note" });
+  await g.prose(filing_id, "body", "The operative paragraph.");
+
+  const S = "________________________________";
+  const group = (respondentCounsel, body = "The operative paragraph. 🧐") => [body, "", "APPROVED AS TO FORM:", "FOR THE COURT", S, "Pat Example", "Counsel for the Appellant",
+    S, "Deputy Registrar", S, respondentCounsel, "Counsel for the Respondent"].join("\n");
+  const mockup = docOf(render(g, filing_id), "General_writing").markdown;
+  assert.ok(mockup.includes(group(gapLine("counsel for Bert Other not recorded"))), mockup);
+
+  updateCaseData(dirname(g.dbPath), "UPDATE parties SET lawyer_name = 'Cara Counsel' WHERE party_id = 4;");
+  assert.ok(docOf(render(g, filing_id), "General_writing").markdown.includes(group("Cara Counsel")));
+  const result = render(g, filing_id, "filed");
+  assert.ok(result.documents?.length, JSON.stringify(result));
+  const face = result.documents[0].markdown;
+  assert.ok(face.trimEnd().endsWith(group("Cara Counsel", "The operative paragraph.")), face);
+  assert.doesNotMatch(face.slice(face.indexOf("The operative paragraph.")), /\||🧩|<!--/);
+});
+
 // Plan Phase 17: the `terms` projection. A vetted _NoVenue release the client signs, printing the
 // Writing's selected clauses under one heading. work-markers.md rows 📑 📌 📍 🔬 🧐 and §1 give each
 // clause line's markers; `terms-traced` (shared/declared-layout.md section 6) counts 📑, 📌 and 📍.

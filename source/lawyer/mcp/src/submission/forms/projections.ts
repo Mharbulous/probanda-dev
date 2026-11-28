@@ -28,7 +28,7 @@ import { orderReviewMarkerFor, reviewMarkerFor } from "./review-state.js";
 import { recordParagraph, renderSubmissionParagraphs } from "./submission-paragraphs.js";
 import type { RenderContext } from "./render-context.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
-import { captionHeadingFor, clientParty, fetchFilingLaw, isResearchWriting, opposingPartyIds, type FilingLawRow } from "./query.js";
+import { captionHeadingFor, clientParty, fetchFilingLaw, isResearchWriting, opposingPartyIds, type FilingLawRow, type PartyRow } from "./query.js";
 import { BLANK_UNDERLINE, buildLowerCourtRoleByRole, pluralizeRole, styleOfProceedingCaption } from "./components.js";
 import { formatFlag, proseFormatRules, REFUSED_FORMAT_RULES } from "./prose-format.js";
 import { hasTable } from "../schema-capabilities.js";
@@ -506,6 +506,23 @@ const signatureBlock: Projection = (ctx, _part, state) => {
   return lines;
 };
 
+/** A BCCA Form 13 consent order's signature group (shared/declared-layout.md section 4), as one
+ * paragraph: the approval and court labels, the first role group's counsel lines, the Registrar's
+ * signing space, then every other group's counsel lines. Counsel is read live from case data. */
+const approvedAsToForm: Projection = (ctx, _part, state) => {
+  const groups = new Map<string, PartyRow[]>();
+  for (const p of [...ctx.parties].sort((a, b) => a.ordinal - b.ordinal)) groups.set(p.role, [...(groups.get(p.role) ?? []), p]);
+  if (groups.size === 0) return [empty(ctx, "approved-as-to-form", state)];
+  const counsel = [...groups].map(([role, group]) => {
+    const label = `Counsel for the ${pluralizeRole(role, group.length)}`;
+    const names = [...new Set(group.flatMap((p) => p.counsel_name ?? []))].map((name) => [SIGNING_SPACE, name, label]);
+    const none = group.find((p) => p.counsel_name === null);
+    if (none) names.push([SIGNING_SPACE, gap(ctx, state, `counsel for ${none.name} not recorded`, { table: "parties", id: none.id }), label]);
+    return names.flat();
+  });
+  return ["APPROVED AS TO FORM:", "FOR THE COURT", ...counsel[0], SIGNING_SPACE, "Deputy Registrar", ...counsel.slice(1).flat()];
+};
+
 /** Every projection this runtime prints. */
 export const BUILT_PROJECTIONS: ReadonlyMap<string, Projection> = new Map<string, Projection>([
   ["addressee", ownLines("addressee")],
@@ -517,6 +534,7 @@ export const BUILT_PROJECTIONS: ReadonlyMap<string, Projection> = new Map<string
   ["material-relied-on", materialReliedOn],
   ["form-source", formSource],
   ["signature-block", signatureBlock],
+  ["approved-as-to-form", approvedAsToForm],
   ["terms", terms],
 ]);
 

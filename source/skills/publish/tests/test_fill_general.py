@@ -623,5 +623,28 @@ class TestCaption(Base):
         self.assertEqual(caught.exception.code, "out_of_grammar")
 
 
+# A two-counsel BCCA consent order's filed face, its signature group as the approved-as-to-form
+# projection prints it (render-general.db.test.mjs).
+SIGNING = "________________________________"
+APPROVAL_GROUP = ["APPROVED AS TO FORM:", "FOR THE COURT", SIGNING, "Pat Example", "Counsel for the Appellant",
+                  SIGNING, "Deputy Registrar", SIGNING, "Cara Counsel", "Counsel for the Respondent"]
+CONSENT_FACE = CAPTION_FACE.split("\n\n")[0] + "\n\nThe operative paragraph.\n\n" + "\n".join(APPROVAL_GROUP) + "\n"
+
+
+class TestApprovedAsToForm(Base):
+    face = CONSENT_FACE
+
+    def test_the_signature_group_prints_in_the_forms_order_kept_with_the_operative_paragraph(self):
+        proc, result = self.fill(format_read())
+        self.assertEqual(proc.returncode, 0, result)
+        body = ET.fromstring(parts_of(self.deliverable)["word/document.xml"]).find("{%s}body" % W)
+        texts = [t.text or "" for t in body.iter("{%s}t" % W)]
+        self.assertFalse([t for t in texts if "|" in t or ":---" in t], texts)
+        paras = [p for p in body if p.tag == "{%s}p" % W]
+        self.assertEqual([t.text for t in paras[-1].iter("{%s}t" % W)], APPROVAL_GROUP)
+        self.assertEqual(text(paras[-2]), "The operative paragraph.")
+        self.assertEqual(ppr_children(paras[-2])[:2], ["keepNext", "keepLines"])
+
+
 if __name__ == "__main__":
     unittest.main()
