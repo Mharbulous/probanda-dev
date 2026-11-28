@@ -53,3 +53,17 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 Confirm in source: the fill script (publish-general/scripts/fill_general.py, UNVERIFIED), the general renderer's caption projection, the BCCA venue.md caption block (draft/CAN/BC/BCCA/venue.md), and the layout part vocabulary for signature-block.
+
+### Verification against HEAD (e8e0d71cb, 2026-11-27)
+
+Parts (a) and (b), and criteria 1, 2 and 4, landed in 8106ef318 and e8e0d71cb from another session. This table checks what part (c) builds on.
+
+| Item | Found at HEAD |
+|---|---|
+| Fill script | `source/skills/publish/subskills/publish-general/scripts/fill_general.py`. `filed_blocks` reads the face's opening pipe table as one `caption` block, written as a borderless Word table by `docx_helpers.caption_table`, and refuses any later table line (`out_of_grammar`). (a) landed in 8106ef318. |
+| Signature chain | `body_xml` keeps the last 3 paragraphs (`SIGNATURE_CHAIN`) together, skipping the caption and any closing recipient lines. A multi-line paragraph prints as one Word paragraph with line breaks. |
+| Caption projection | `source/lawyer/mcp/src/submission/forms/projections.ts` `caption`. At `CAN/BC/BCCA` each party group's role is followed by its role below from `parties.lower_court_role`, or a mockup gap. (b) landed in e8e0d71cb. |
+| BCCA venue block | `source/skills/draft/references/CAN/BC/BCCA/venue.md`: `caption_lines` "COURT OF APPEAL FOR BRITISH COLUMBIA", `registry_label` null. Landed in e8e0d71cb. |
+| Part vocabulary | `source/lawyer/mcp/src/knowledge/declared-layout.ts` `PROJECTIONS` and `shared/declared-layout.md` §4. `signature-block` prints only the firm's signer (or a party signer). No part prints another party's counsel. |
+| BCCA types | `Documents/` holds letter, respondent-factum, stay-response-book and unstructured. No consent-order or Form 13 type. The stock `unstructured` type's parts are caption, form-source, slot:body, signature-block. |
+| Party counsel | `PartyRow.counsel_name` is filled live from case data (party/counsel SSOT). |
